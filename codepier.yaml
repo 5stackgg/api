@@ -1,0 +1,7 @@
+namespaces: [5stack]
+image: node:20
+deployment: api
+sync:
+  - .:/opt/5stack
+ignore:
+  - "/dist"

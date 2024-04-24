@@ -1,0 +1,22 @@
+table:
+  name: v_player_arch_nemesis
+  schema: public
+object_relationships:
+  - name: nemsis
+    using:
+      manual_configuration:
+        column_mapping:
+          attacker_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          victim_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public

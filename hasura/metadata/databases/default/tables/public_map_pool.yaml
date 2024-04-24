@@ -1,0 +1,3 @@
+table:
+  name: map_pool
+  schema: public

@@ -1,0 +1,61 @@
+import session from "express-session";
+import { NestFactory } from "@nestjs/core";
+import { Transport } from "@nestjs/microservices";
+import { AppModule } from "./app.module";
+import RedisStore from "connect-redis";
+import { getCookieOptions } from "./utilities/getCookieOptions";
+import { NestExpressApplication } from "@nestjs/platform-express";
+import passport from "passport";
+import { WsAdapter } from "@nestjs/platform-ws";
+import { RedisManagerService } from "./redis/redis-manager/redis-manager.service";
+import { ConfigService } from "@nestjs/config";
+import { RedisConfig } from "./configs/types/RedisConfig";
+import { AppConfig } from "./configs/types/AppConfig";
+
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  const configService = app.get(ConfigService);
+
+  app.connectMicroservice({
+    transport: Transport.REDIS,
+    options: {
+      ...configService.get<RedisConfig>("redis").connections.default,
+      wildcards: true,
+    },
+  });
+
+  app.set("trust proxy", () => {
+    // TODO - trust proxy
+    return true;
+  });
+
+  const redisManagerService = app.get(RedisManagerService);
+
+  const appConfig = configService.get<AppConfig>("app");
+
+  app.use(
+    session({
+      rolling: true,
+      resave: false,
+      name: appConfig.name,
+      saveUninitialized: false,
+      secret: appConfig.encSecret,
+      cookie: getCookieOptions(),
+      store: new RedisStore({
+        prefix: appConfig.name,
+        client: redisManagerService.getConnection(),
+      }),
+    })
+  );
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  app.useWebSocketAdapter(new WsAdapter(app));
+
+  await app.startAllMicroservices();
+  await app.listen(5585);
+}
+
+bootstrap();

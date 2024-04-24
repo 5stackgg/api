@@ -1,0 +1,33 @@
+table:
+  name: maps
+  schema: public
+object_relationships:
+  - name: e_match_type
+    using:
+      foreign_key_constraint_on: type
+array_relationships:
+  - name: match_maps
+    using:
+      foreign_key_constraint_on:
+        column: map_id
+        table:
+          name: match_maps
+          schema: public
+  - name: match_veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: map_id
+        table:
+          name: match_veto_picks
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - active_pool
+        - id
+        - name
+        - type
+        - workshop_map_id
+      filter: {}
+    comment: ""

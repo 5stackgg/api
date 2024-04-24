@@ -1,0 +1,26 @@
+table:
+  name: player_objectives
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - match_id
+        - match_map_id
+        - player_steam_id
+        - round
+        - time
+        - type
+      filter: {}
+    comment: ""

@@ -1,0 +1,12 @@
+table:
+  name: e_objective_types
+  schema: public
+is_enum: true
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

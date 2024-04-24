@@ -1,0 +1,33 @@
+table:
+  name: player_assists
+  schema: public
+object_relationships:
+  - name: attacked_player
+    using:
+      foreign_key_constraint_on: attacked_steam_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: player
+    using:
+      foreign_key_constraint_on: attacker_steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - attacked_steam_id
+        - attacker_steam_id
+        - flash
+        - round
+        - attacked_team
+        - attacker_team
+        - time
+        - id
+        - match_id
+        - match_map_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""

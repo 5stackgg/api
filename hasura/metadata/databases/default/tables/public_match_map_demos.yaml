@@ -1,0 +1,3 @@
+table:
+  name: match_map_demos
+  schema: public

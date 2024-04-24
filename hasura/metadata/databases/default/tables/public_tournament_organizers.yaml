@@ -1,0 +1,10 @@
+table:
+  name: tournament_organizers
+  schema: public
+object_relationships:
+  - name: organizer
+    using:
+      foreign_key_constraint_on: steam_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id

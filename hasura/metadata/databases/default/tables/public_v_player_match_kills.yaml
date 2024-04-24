@@ -1,0 +1,23 @@
+table:
+  name: v_player_match_kills
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          player_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - avg_kills_per_game
+        - kills
+        - player_steam_id
+        - total_matches
+      filter: {}
+    comment: ""

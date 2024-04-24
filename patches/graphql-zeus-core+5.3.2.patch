@@ -1,0 +1,13 @@
+diff --git a/node_modules/graphql-zeus-core/lib/TreeToTS/index.js b/node_modules/graphql-zeus-core/lib/TreeToTS/index.js
+index 4fb8e6c..33d718a 100644
+--- a/node_modules/graphql-zeus-core/lib/TreeToTS/index.js
++++ b/node_modules/graphql-zeus-core/lib/TreeToTS/index.js
+@@ -60,7 +60,7 @@ class TreeToTS {
+     }
+     static resolveTreeSplit({ tree, env = 'browser', host, esModule, headers, subscriptions = 'legacy', }) {
+         return {
+-            indexImports: `import { AllTypesProps, ReturnTypes, Ops } from './const${esModule || env === 'node' ? '.js' : ''}';`.concat(env === 'node'
++            indexImports: `import { AllTypesProps, ReturnTypes, Ops } from './const${esModule ? '.js' : ''}';`.concat(env === 'node'
+                 ? `
+ import fetch, { Response } from 'node-fetch';
+ import WebSocket from 'ws';`

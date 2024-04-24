@@ -1,0 +1,32 @@
+table:
+  name: match_map_rounds
+  schema: public
+object_relationships:
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+array_relationships:
+  - name: kills
+    using:
+      manual_configuration:
+        column_mapping:
+          match_map_id: match_map_id
+          round: round
+        insertion_order: null
+        remote_table:
+          name: player_kills
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - match_map_id
+        - round
+        - lineup_1_money
+        - lineup_1_score
+        - lineup_2_money
+        - lineup_2_score
+        - time
+      filter: {}
+    comment: ""
