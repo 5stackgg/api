@@ -1,19 +1,18 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
-import { HasuraService } from '../../hasura/hasura.service';
-import { MatchAssistantService } from '../match-assistant/match-assistant.service';
-import { S3Service } from '../../s3/s3.service';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
+import { HasuraService } from "../../hasura/hasura.service";
+import { MatchAssistantService } from "../match-assistant/match-assistant.service";
+import { S3Service } from "../../s3/s3.service";
 
 export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   round: string;
   match_map_id: string;
 }> {
-
   constructor(
     hasura: HasuraService,
     matchAssistant: MatchAssistantService,
-    private readonly s3: S3Service,
+    private readonly s3: S3Service
   ) {
-    super(hasura, matchAssistant)
+    super(hasura, matchAssistant);
   }
 
   public async process() {

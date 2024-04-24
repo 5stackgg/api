@@ -9,7 +9,7 @@ import {
 
 @Injectable()
 export class SteamStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly hasuraService: HasuraService) {
+  constructor(private readonly hasura: HasuraService) {
     super({
       passReqToCallback: true,
       realm: process.env.WEB_DOMAIN,
@@ -21,7 +21,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
   async validate(req, identifier, profile, done): Promise<any> {
     const { steamid, personaname, profileurl, avatarfull } = profile._json;
 
-    const { insert_players_one } = await this.hasuraService.mutation({
+    const { insert_players_one } = await this.hasura.mutation({
       insert_players_one: [
         {
           object: {

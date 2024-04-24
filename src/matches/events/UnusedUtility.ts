@@ -1,4 +1,4 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class UnusedUtility extends MatchEventProcessor<void> {
   public async process() {

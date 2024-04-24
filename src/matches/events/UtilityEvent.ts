@@ -1,5 +1,5 @@
-import { e_utility_types_enum } from '../../../generated/zeus';
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
+import { e_utility_types_enum } from "../../../generated/zeus";
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class UtilityEvent extends MatchEventProcessor<{
   time: string;

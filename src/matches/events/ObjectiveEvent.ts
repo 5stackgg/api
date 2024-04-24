@@ -1,5 +1,5 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
-import { e_objective_types_enum } from '../../../generated/zeus';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
+import { e_objective_types_enum } from "../../../generated/zeus";
 
 export default class ObjectiveEvent extends MatchEventProcessor<{
   time: string;

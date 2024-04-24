@@ -18,7 +18,7 @@ import {
   CheckOnDemandServerJob,
   CheckOnDemandServerJobEvents,
 } from "./jobs/CheckOnDemandServerJob";
-import { MatchEvents } from './events';
+import { MatchEvents } from "./events";
 
 @Module({
   imports: [

@@ -1,4 +1,4 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class KillEvent extends MatchEventProcessor<{
   time: string;

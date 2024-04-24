@@ -57,7 +57,7 @@ export class EventsController {
 
     return await handler.resolved[handler.name].bind(
       handler.resolved,
-      request
+      request.data
     )();
   }
 }

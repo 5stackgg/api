@@ -1,5 +1,8 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
-import { players_constraint, players_update_column } from '../../../generated/zeus';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
+import {
+  players_constraint,
+  players_update_column,
+} from "../../../generated/zeus";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   lineups: {

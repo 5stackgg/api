@@ -15,10 +15,10 @@ import { MatchAssistantService } from "./match-assistant/match-assistant.service
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
 import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice-channels/discord-bot-voice-channels.service";
-import { EventPattern, Payload, Ctx, NatsContext } from '@nestjs/microservices';
-import { ModuleRef } from '@nestjs/core';
-import { MatchEvents } from './events';
-import MatchEventProcessor from './events/abstracts/MatchEventProcessor';
+import { EventPattern, Payload, Ctx, NatsContext } from "@nestjs/microservices";
+import { ModuleRef } from "@nestjs/core";
+import { MatchEvents } from "./events";
+import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
 
 @Controller("matches")
 export class MatchesController extends MatchAbstractController {
@@ -406,19 +406,24 @@ export class MatchesController extends MatchAbstractController {
     };
   }
 
-  @EventPattern('matches:*')
-  public async matchEvent(@Payload() { event, data }, @Ctx() context: NatsContext) {
+  @EventPattern("matches:*")
+  public async matchEvent(
+    @Payload() { event, data },
+    @Ctx() context: NatsContext
+  ) {
     const Processor = MatchEvents[event];
-    if(!Processor) {
+    if (!Processor) {
       console.warn("unable to find event handler", event);
       return;
     }
 
-    const processor = await this.moduleRef.resolve<MatchEventProcessor<any>>(Processor);
+    const processor = await this.moduleRef.resolve<MatchEventProcessor<any>>(
+      Processor
+    );
 
-    const [,matchId] = context.getArgByIndex(0).split(":");
+    const [, matchId] = context.getArgByIndex(0).split(":");
 
-    processor.setData(matchId, data)
+    processor.setData(matchId, data);
 
     await processor.process();
   }

@@ -1,4 +1,4 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class AssistEvent extends MatchEventProcessor<{
   time: string;

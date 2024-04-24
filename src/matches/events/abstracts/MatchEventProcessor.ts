@@ -1,6 +1,6 @@
-import { Injectable, Scope } from '@nestjs/common';
-import { HasuraService } from '../../../hasura/hasura.service';
-import { MatchAssistantService } from '../../match-assistant/match-assistant.service';
+import { Injectable, Scope } from "@nestjs/common";
+import { HasuraService } from "../../../hasura/hasura.service";
+import { MatchAssistantService } from "../../match-assistant/match-assistant.service";
 
 @Injectable({ scope: Scope.REQUEST })
 export default abstract class MatchEventProcessor<T> {
@@ -9,10 +9,8 @@ export default abstract class MatchEventProcessor<T> {
 
   constructor(
     protected readonly hasura: HasuraService,
-    protected readonly matchAssistant: MatchAssistantService,
-  ) {
-
-  }
+    protected readonly matchAssistant: MatchAssistantService
+  ) {}
 
   public setData(matchId: string, data: T) {
     this.data = data;

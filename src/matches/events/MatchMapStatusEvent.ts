@@ -1,10 +1,9 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import { e_match_map_status_enum } from '../../../generated/zeus';
+import { e_match_map_status_enum } from "../../../generated/zeus";
 
 export default class MatchMapStatusEvent extends MatchEventProcessor<{
   status: e_match_map_status_enum;
 }> {
-
   public async process() {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: [

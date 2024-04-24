@@ -5,6 +5,7 @@ import { PassportModule } from "@nestjs/passport";
 import { SteamStrategy } from "./strategies/SteamStrategy";
 import { HasuraModule } from "../hasura/hasura.module";
 import { SteamSerializer } from "./strategies/SteamSerializer";
+import { DiscordStrategy } from "./strategies/DiscordStrategy";
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { SteamSerializer } from "./strategies/SteamSerializer";
     }),
     HasuraModule,
   ],
-  providers: [AuthService, SteamStrategy, SteamSerializer],
+  providers: [AuthService, SteamStrategy, DiscordStrategy, SteamSerializer],
   controllers: [AuthController],
 })
 export class AuthModule {}

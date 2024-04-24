@@ -8,7 +8,7 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import passport from "passport";
 import { WsAdapter } from "@nestjs/platform-ws";
 import { RedisManagerService } from "./redis/redis-manager/redis-manager.service";
-import { ConfigService } from '@nestjs/config';
+import { ConfigService } from "@nestjs/config";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,7 +18,7 @@ async function bootstrap() {
   app.connectMicroservice({
     transport: Transport.REDIS,
     options: {
-      ...configService.get('redis').connections.default,
+      ...configService.get("redis").connections.default,
       wildcards: true,
     },
   });

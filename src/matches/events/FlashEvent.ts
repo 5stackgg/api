@@ -1,4 +1,4 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class FlashEvent extends MatchEventProcessor<{
   time: string;

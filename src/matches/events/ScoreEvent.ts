@@ -1,5 +1,8 @@
-import MatchEventProcessor from './abstracts/MatchEventProcessor';
-import { match_map_rounds_constraint, match_map_rounds_update_column } from '../../../generated/zeus';
+import MatchEventProcessor from "./abstracts/MatchEventProcessor";
+import {
+  match_map_rounds_constraint,
+  match_map_rounds_update_column,
+} from "../../../generated/zeus";
 
 export default class ScoreEvent extends MatchEventProcessor<{
   time: string;
