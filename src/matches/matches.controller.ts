@@ -1,8 +1,11 @@
 import { Controller, Get, Request } from "@nestjs/common";
 import {
   e_match_status_enum,
+  GraphQLTypes,
+  InputType,
   match_veto_picks_select_column,
   matches_select_column,
+  Selector,
 } from "../../generated/zeus";
 import { HasuraEvent } from "../hasura/events/events.controller";
 import { HasuraAction } from "../hasura/actions/actions.controller";
@@ -141,10 +144,9 @@ export class MatchesController extends MatchAbstractController {
   }
 
   @HasuraEvent()
-  public async match_events(data: HasuraEventData<matches_select_column>) {
-    const matchId = data.new.id || data.old.id;
+  public async match_events(data: HasuraEventData<"matches">) {
+    const matchId = (data.new.id || data.old.id) as string;
 
-    // @ts-ignorer
     const status: e_match_status_enum = data.new.status || data.old.status;
 
     /**
@@ -363,10 +365,8 @@ export class MatchesController extends MatchAbstractController {
   }
 
   @HasuraEvent()
-  public async match_veto_pick(
-    data: HasuraEventData<match_veto_picks_select_column>
-  ) {
-    const matchId = data.new.match_id || data.old.match_id;
+  public async match_veto_pick(data: HasuraEventData<"match_veto_picks">) {
+    const matchId = (data.new.match_id || data.old.match_id) as string;
     await this.discordMatchOverview.updateMatchOverview(matchId);
   }
 
