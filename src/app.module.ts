@@ -1,6 +1,5 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { HasuraModule } from "./hasura/hasura.module";
 import { RconModule } from "./rcon/rcon.module";
 import { TypeSenseModule } from "./type-sense/type-sense.module";
@@ -58,7 +57,6 @@ import { ExpressAdapter } from "@bull-board/express";
     PostgresModule,
   ],
   controllers: [AppController, QuickConnectController],
-  providers: [AppService],
 })
 export class AppModule {
   constructor(
