@@ -20,10 +20,10 @@ export class CacheTag {
       return values;
     });
   }
-  async has(key: string): Promise<any> {
+  async has(key: string): Promise<boolean> {
     return (await this.get(key)) !== undefined;
   }
-  async put(key: string, value: any, seconds?: number) {
+  async put(key: string, value: CachedValue, seconds?: number) {
     return await this.waitForLock(async () => {
       const values = (await this.cacheStore.get(this.tag)) || {};
       values[key] = value;
