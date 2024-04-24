@@ -1,8 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { ChannelType, GuildChannel, User, VoiceChannel } from "discord.js";
+import { ChannelType, GuildChannel, VoiceChannel } from "discord.js";
 import { CacheService } from "../../cache/cache.service";
 import { CacheTag } from "../../cache/CacheTag";
 import { DiscordBotService } from "../discord-bot.service";
+import { CachedDiscordUser } from "../types/CachedDiscordUser";
 
 @Injectable()
 export class DiscordBotVoiceChannelsService {
@@ -78,7 +79,7 @@ export class DiscordBotVoiceChannelsService {
   public async moveMemberToTeamChannel(
     matchId: string,
     lineupId: string,
-    user: User
+    user: CachedDiscordUser
   ) {
     try {
       const voiceCache = await this.getVoiceCache(matchId, lineupId);

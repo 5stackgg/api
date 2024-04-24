@@ -28,8 +28,8 @@ export class DiscordBotVetoService {
     const votes = await this.getVotes(matchId);
 
     const mapVotes = {};
-    for (const user of Object.keys(votes)) {
-      const maps = votes[user];
+    for (const userId of Object.keys(votes)) {
+      const maps = votes[userId];
 
       for (const mapIndex of maps) {
         if (!mapVotes[mapIndex]) {

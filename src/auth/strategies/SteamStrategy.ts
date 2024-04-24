@@ -18,7 +18,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(req, identifier, profile, done): Promise<any> {
+  async validate(req, identifier, profile, done): Promise<void> {
     const { steamid, personaname, profileurl, avatarfull } = profile._json;
 
     const { insert_players_one } = await this.hasura.mutation({

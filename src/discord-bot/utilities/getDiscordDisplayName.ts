@@ -1,5 +1,5 @@
-import { User } from "discord.js";
+import { CachedDiscordUser } from "../types/CachedDiscordUser";
 
-export function getDiscordDisplayName(user: User) {
+export function getDiscordDisplayName(user: CachedDiscordUser) {
   return user.globalName || user.username;
 }

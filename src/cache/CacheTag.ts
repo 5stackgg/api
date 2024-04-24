@@ -1,4 +1,5 @@
 import { CacheService } from "./cache.service";
+import { CachedValue } from "./types/CachedValue";
 
 export class CacheTag {
   private cacheStore: CacheService;
@@ -10,7 +11,7 @@ export class CacheTag {
     this.tag = tags.join(":");
     this.forgetTag = `forget:${this.tag}`;
   }
-  async get(key?: string) {
+  async get(key?: string): Promise<CachedValue> {
     return await this.waitForLock(async () => {
       const values = await this.cacheStore.get(this.tag);
       if (key) {
@@ -54,7 +55,7 @@ export class CacheTag {
       return true;
     });
   }
-  async waitForLock(callback) {
+  async waitForLock(callback): Promise<CachedValue> {
     return await this.cacheStore.lock(this.tag, callback, 60);
   }
 }

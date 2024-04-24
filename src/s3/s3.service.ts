@@ -28,7 +28,7 @@ export class S3Service {
   public async put(
     filename: string,
     stream: ReadableStream<Uint8Array>,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.client.putObject(
       this.bucket,

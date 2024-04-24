@@ -1,7 +1,15 @@
 import { Controller, Post, Request } from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
 
-const _events: Record<string, any> = [];
+const _events: Record<
+  string,
+  {
+    name: string;
+    target: unknown;
+    resolved?: boolean;
+  }
+> = {};
+
 export const HasuraEvent = (): MethodDecorator => {
   return (target, propertyKey: string): void => {
     _events[propertyKey] = {

@@ -2,7 +2,14 @@ import { Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
 import { SteamGuard } from "../../auth/strategies/SteamGuard";
 import { ModulesContainer } from "@nestjs/core";
 
-const _actions: Record<string, any> = [];
+const _actions: Record<
+  string,
+  {
+    name: string;
+    target: unknown;
+    resolved?: boolean;
+  }
+> = {};
 export const HasuraAction = (): MethodDecorator => {
   return (target, propertyKey: string): void => {
     _actions[propertyKey] = {

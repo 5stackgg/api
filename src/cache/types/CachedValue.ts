@@ -1,0 +1,1 @@
+export type CachedValue = any;

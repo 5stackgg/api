@@ -19,6 +19,7 @@ import { MatchAssistantService } from "../../matches/match-assistant/match-assis
 import { DiscordBotMessagingService } from "../discord-bot-messaging/discord-bot-messaging.service";
 import { getRandomNumber } from "../utilities/getRandomNumber";
 import { DiscordBotVoiceChannelsService } from "../discord-bot-voice-channels/discord-bot-voice-channels.service";
+import { CachedDiscordUser } from "../types/CachedDiscordUser";
 
 @Injectable()
 export class DiscordPickPlayerService {
@@ -34,9 +35,17 @@ export class DiscordPickPlayerService {
   ) {}
 
   public async setAvailablePlayerPool(matchId: string, users: User[]) {
-    await this.cache.put(this.getAvailableUsersCacheKey(matchId), users);
+    const _users: Array<CachedDiscordUser> = users.map((user) => {
+      return {
+        id: user.id,
+        username: user.username,
+        globalName: user.globalName,
+      };
+    });
 
-    return users;
+    await this.cache.put(this.getAvailableUsersCacheKey(matchId), _users);
+
+    return _users;
   }
 
   public async getAvailablePlayerPool(
@@ -149,16 +158,17 @@ export class DiscordPickPlayerService {
         }
         pickedUserIds = [];
         while (pickedUserIds.length < picks) {
-          const user =
-            availableUsers[getRandomNumber(0, availableUsers.length - 1)];
-          if (!pickedUserIds.includes(user.value)) {
-            pickedUserIds.push(user.value);
+          const { value } = availableUsers[
+            getRandomNumber(0, availableUsers.length - 1)
+          ];
+          if (!pickedUserIds.includes(value)) {
+            pickedUserIds.push(value);
           }
         }
       }
     }
 
-    const pickedUsers = [];
+    const pickedUsers: Array<CachedDiscordUser> = [];
     for (const userId of pickedUserIds) {
       pickedDiscordUserIds.push(userId);
 
@@ -225,7 +235,7 @@ export class DiscordPickPlayerService {
   public async addDiscordUserToLineup(
     matchId: string,
     lineupId: string,
-    user: User,
+    user: CachedDiscordUser,
     captain = false
   ) {
     const { players } = await this.hasura.query({

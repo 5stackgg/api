@@ -29,7 +29,7 @@ export class ServerGateway {
   handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
     request
-  ): any {
+  ) {
     const appName = process.env.APP_NAME || "5stack";
 
     session({

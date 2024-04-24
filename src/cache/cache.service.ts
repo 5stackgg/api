@@ -2,6 +2,7 @@ import Redis from "ioredis";
 import { Injectable } from "@nestjs/common";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { CacheTag } from "./CacheTag";
+import { CachedValue } from "./types/CachedValue";
 
 @Injectable()
 export class CacheService {
@@ -23,7 +24,7 @@ export class CacheService {
     return (await this.get(key)) !== undefined;
   }
 
-  public async put(key: string, value: any, seconds?: number) {
+  public async put(key: string, value: CachedValue, seconds?: number) {
     try {
       await this.connection.set(key, JSON.stringify(value));
 
@@ -48,7 +49,11 @@ export class CacheService {
     }
   }
 
-  public async remember(key: string, callback: () => any, seconds: number) {
+  public async remember(
+    key: string,
+    callback: () => CachedValue,
+    seconds: number
+  ) {
     const value = await this.get(key);
     if (value !== undefined) {
       return value;
@@ -61,7 +66,7 @@ export class CacheService {
     }
   }
 
-  public async rememberForever(key: string, callback: () => any) {
+  public async rememberForever(key: string, callback: () => CachedValue) {
     const value = await this.get(key);
     if (value !== undefined) {
       return value;
@@ -76,9 +81,9 @@ export class CacheService {
 
   public async lock(
     key: string,
-    callback: () => void,
+    callback: () => Promise<CachedValue>,
     expires = 60
-  ): Promise<any> {
+  ): Promise<CachedValue> {
     const lockKey = `lock:${key}`;
     if (await this.connection.set(lockKey, 1, "EX", expires, "NX")) {
       try {

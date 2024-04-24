@@ -1,4 +1,4 @@
-import { LazyModuleLoader, ModuleRef } from "@nestjs/core";
+import { LazyModuleLoader } from "@nestjs/core";
 import { Injectable } from "@nestjs/common";
 import {
   ButtonInteraction,
@@ -13,48 +13,25 @@ import { e_match_types_enum } from "../../generated/zeus";
 import { ChatCommands } from "./enums/ChatCommands";
 import { ButtonActions } from "./enums/ButtonActions";
 import { HasuraService } from "../hasura/hasura.service";
+import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 
 const _interactions: {
-  chat: Partial<
-    Record<
-      ChatCommands,
-      {
-        target: any;
-        action: string;
-        resolved?: any;
-      }
-    >
-  >;
-  buttons: Partial<
-    Record<
-      ButtonActions,
-      {
-        target: any;
-        action: string;
-        resolved?: any;
-      }
-    >
-  >;
+  chat: Partial<Record<ChatCommands, DiscordInteraction>>;
+  buttons: Partial<Record<ButtonActions, DiscordInteraction>>;
 } = {
   chat: {},
   buttons: {},
 };
 
-export function BotButtonInteraction(action: ButtonActions) {
-  return function (target: any) {
-    _interactions.buttons[action] = {
-      target,
-      action,
-    };
+export function BotButtonInteraction(action: ButtonActions): ClassDecorator {
+  return function (target) {
+    _interactions.buttons[action] = (target as unknown) as DiscordInteraction;
   };
 }
 
-export function BotChatCommand(action: ChatCommands) {
-  return function (target: any) {
-    _interactions.chat[action] = {
-      target,
-      action,
-    };
+export function BotChatCommand(action: ChatCommands): ClassDecorator {
+  return function (target) {
+    _interactions.chat[action] = (target as unknown) as DiscordInteraction;
   };
 }
 
@@ -95,14 +72,14 @@ export class DiscordBotService {
             _interactions.chat[interaction.commandName]
           );
           return await moduleRef
-            .get(_interactions.chat[interaction.commandName].target)
+            .get(_interactions.chat[interaction.commandName])
             .handler(interaction);
         }
 
         if (interaction.isButton()) {
           const [type] = (interaction as ButtonInteraction).customId.split(":");
           return await moduleRef
-            .get(_interactions.buttons[type].target)
+            .get(_interactions.buttons[type])
             .handler(interaction);
         }
       })

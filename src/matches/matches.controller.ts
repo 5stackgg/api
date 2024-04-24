@@ -417,9 +417,9 @@ export class MatchesController extends MatchAbstractController {
       return;
     }
 
-    const processor = await this.moduleRef.resolve<MatchEventProcessor<any>>(
-      Processor
-    );
+    const processor = await this.moduleRef.resolve<
+      MatchEventProcessor<unknown>
+    >(Processor);
 
     const [, matchId] = context.getArgByIndex(0).split(":");
 
