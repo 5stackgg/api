@@ -1,0 +1,50 @@
+table:
+  name: player_damages
+  schema: public
+object_relationships:
+  - name: attacked_player
+    using:
+      foreign_key_constraint_on: attacked_steam_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: player
+    using:
+      foreign_key_constraint_on: attacker_steam_id
+computed_fields:
+  - name: team_damage
+    definition:
+      function:
+        name: is_team_damage
+        schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - attacked_steam_id
+        - attacker_steam_id
+        - armor
+        - damage
+        - damage_armor
+        - health
+        - round
+        - attacked_location
+        - attacked_location_coordinates
+        - attacked_team
+        - attacker_location
+        - attacker_location_coordinates
+        - attacker_team
+        - hitgroup
+        - with
+        - time
+        - id
+        - match_id
+        - match_map_id
+      computed_fields:
+        - team_damage
+      filter: {}
+      allow_aggregations: true
+    comment: ""

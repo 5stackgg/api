@@ -1,0 +1,83 @@
+table:
+  name: servers
+  schema: public
+object_relationships:
+  - name: owner
+    using:
+      foreign_key_constraint_on: player_steam_id
+array_relationships:
+  - name: matches
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: matches
+          schema: public
+  - name: tournament_servers
+    using:
+      foreign_key_constraint_on:
+        column: server_id
+        table:
+          name: tournament_servers
+          schema: public
+computed_fields:
+  - name: current_match_id
+    definition:
+      function:
+        name: get_server_current_match_id
+        schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        on_demand: "false"
+        player_steam_id: x-hasura-user-id
+      columns:
+        - enabled
+        - host
+        - label
+        - port
+        - rcon_password
+        - tv_port
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - api_password
+        - enabled
+        - host
+        - id
+        - label
+        - port
+        - tv_port
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - enabled
+        - host
+        - label
+        - port
+        - rcon_password
+        - tv_port
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

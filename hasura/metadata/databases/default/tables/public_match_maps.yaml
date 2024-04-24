@@ -1,0 +1,146 @@
+table:
+  name: match_maps
+  schema: public
+object_relationships:
+  - name: e_match_map_status
+    using:
+      foreign_key_constraint_on: status
+  - name: map
+    using:
+      foreign_key_constraint_on: map_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+array_relationships:
+  - name: flashes
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_flashes
+          schema: public
+  - name: objectives
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_objectives
+          schema: public
+  - name: player_assists
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_assists
+          schema: public
+  - name: player_damages
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_damages
+          schema: public
+  - name: player_kills
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_kills
+          schema: public
+  - name: player_unused_utilities
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_unused_utility
+          schema: public
+  - name: rounds
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: match_map_rounds
+          schema: public
+  - name: utility
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: player_utility
+          schema: public
+  - name: vetos
+    using:
+      manual_configuration:
+        column_mapping:
+          map_id: map_id
+          match_id: match_id
+        insertion_order: null
+        remote_table:
+          name: match_veto_picks
+          schema: public
+computed_fields:
+  - name: lineup_1_score
+    definition:
+      function:
+        name: lineup_1_score
+        schema: public
+  - name: lineup_2_score
+    definition:
+      function:
+        name: lineup_2_score
+        schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        match:
+          organizer_steam_id:
+            _eq: x-hasura-user-id
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - match_id
+        - order
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - match_id
+        - order
+        - status
+      computed_fields:
+        - lineup_1_score
+        - lineup_2_score
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - order
+      filter:
+        match:
+          organizer_steam_id:
+            _eq: x-hasura-user-id
+      check:
+        match:
+          organizer_steam_id:
+            _eq: x-hasura-user-id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        match:
+          organizer_steam_id:
+            _eq: x-hasura-user-id
+    comment: ""

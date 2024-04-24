@@ -1,0 +1,55 @@
+table:
+  name: tournament_stages
+  schema: public
+object_relationships:
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        tournament:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+      columns:
+        - order
+        - settings
+        - tournament_id
+        - type
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - order
+        - settings
+        - type
+        - id
+        - tournament_id
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - order
+        - settings
+        - type
+      filter:
+        tournament:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+      check:
+        tournament:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        tournament:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+    comment: ""

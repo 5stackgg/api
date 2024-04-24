@@ -1,0 +1,34 @@
+table:
+  name: v_match_captains
+  schema: public
+object_relationships:
+  - name: lineup
+    using:
+      manual_configuration:
+        column_mapping:
+          match_lineup_id: id
+        insertion_order: null
+        remote_table:
+          name: match_lineups
+          schema: public
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - captain
+        - discord_id
+        - placeholder_name
+        - id
+        - match_lineup_id
+      filter: {}
+    comment: ""

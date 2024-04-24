@@ -1,0 +1,42 @@
+type Mutation {
+  acceptTeamInvite(
+    invite_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  cancelMatch(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Query {
+  me: MeResponse!
+}
+
+type Mutation {
+  scheduleMatch(
+    match_id: uuid!
+    time: timestamptz
+  ): SuccessOutput
+}
+
+type Mutation {
+  startMatch(
+    match_id: uuid!
+    server_id: uuid
+  ): SuccessOutput
+}
+
+type MeResponse {
+  name: String!
+  steam_id: String!
+  avatar_url: String!
+  profile_url: String
+  discord_id: String
+}
+
+type SuccessOutput {
+  success: Boolean!
+}
+

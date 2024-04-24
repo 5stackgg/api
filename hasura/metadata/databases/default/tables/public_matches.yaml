@@ -1,0 +1,256 @@
+table:
+  name: matches
+  schema: public
+object_relationships:
+  - name: e_match_status
+    using:
+      foreign_key_constraint_on: status
+  - name: e_match_type
+    using:
+      foreign_key_constraint_on: type
+  - name: map_pool
+    using:
+      foreign_key_constraint_on: match_pool_id
+  - name: organizer
+    using:
+      manual_configuration:
+        column_mapping:
+          organizer_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: server
+    using:
+      foreign_key_constraint_on: server_id
+array_relationships:
+  - name: lineups
+    using:
+      manual_configuration:
+        column_mapping:
+          id: match_id
+        insertion_order: null
+        remote_table:
+          name: match_lineups
+          schema: public
+  - name: match_maps
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_maps
+          schema: public
+  - name: player_assists
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_assists
+          schema: public
+  - name: player_damages
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_damages
+          schema: public
+  - name: player_flashes
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_flashes
+          schema: public
+  - name: player_kills
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_kills
+          schema: public
+  - name: player_objectives
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_objectives
+          schema: public
+  - name: player_unused_utilities
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_unused_utility
+          schema: public
+  - name: player_utility
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: player_utility
+          schema: public
+  - name: veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_veto_picks
+          schema: public
+computed_fields:
+  - name: connection_link
+    definition:
+      function:
+        name: get_match_connection_link
+        schema: public
+      session_argument: hasura_session
+  - name: connection_string
+    definition:
+      function:
+        name: get_match_connection_string
+        schema: public
+      session_argument: hasura_session
+  - name: current_match_map_id
+    definition:
+      function:
+        name: get_current_match_map
+        schema: public
+  - name: is_match_server_available
+    definition:
+      function:
+        name: is_match_server_available
+        schema: public
+  - name: lineup_1_id
+    definition:
+      function:
+        name: get_match_lineup_1_id
+        schema: public
+  - name: lineup_2_id
+    definition:
+      function:
+        name: get_match_lineup_2_id
+        schema: public
+  - name: teams
+    definition:
+      function:
+        name: get_match_teams
+        schema: public
+  - name: tv_connection_link
+    definition:
+      function:
+        name: get_match_tv_connection_link
+        schema: public
+      session_argument: hasura_session
+  - name: tv_connection_string
+    definition:
+      function:
+        name: get_match_tv_connection_string
+        schema: public
+      session_argument: hasura_session
+  - name: veto_picking_lineup_id
+    definition:
+      function:
+        name: get_veto_picking_lineup_id
+        schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - best_of
+        - coaches
+        - knife_round
+        - label
+        - map_veto
+        - match_pool_id
+        - mr
+        - number_of_substitutes
+        - overtime
+        - password
+        - scheduled_at
+        - server_id
+        - tech_timeout_setting
+        - timeout_setting
+        - type
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - best_of
+        - coaches
+        - created_at
+        - id
+        - knife_round
+        - label
+        - map_veto
+        - match_pool_id
+        - mr
+        - number_of_substitutes
+        - organizer_steam_id
+        - overtime
+        - scheduled_at
+        - server_id
+        - status
+        - tech_timeout_setting
+        - timeout_setting
+        - type
+        - updated_at
+      computed_fields:
+        - connection_link
+        - connection_string
+        - current_match_map_id
+        - is_match_server_available
+        - lineup_1_id
+        - lineup_2_id
+        - tv_connection_link
+        - tv_connection_string
+        - veto_picking_lineup_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - best_of
+        - knife_round
+        - label
+        - mr
+        - organizer_steam_id
+        - overtime
+        - scheduled_at
+        - server_id
+        - tech_timeout_setting
+        - timeout_setting
+        - type
+      filter:
+        organizer_steam_id:
+          _eq: x-hasura-user-id
+      check:
+        organizer_steam_id:
+          _eq: x-hasura-user-id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        organizer_steam_id:
+          _eq: x-hasura-user-id
+    comment: ""
+event_triggers:
+  - name: match_events
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 6
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

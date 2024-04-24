@@ -1,0 +1,57 @@
+table:
+  name: team_roster
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - player_steam_id
+        - role
+        - team_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - role
+      filter:
+        team:
+          owner_steam_id:
+            _eq: x-hasura-user-id
+      check:
+        team:
+          owner_steam_id:
+            _eq: x-hasura-user-id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        team:
+          owner_steam_id:
+            _eq: x-hasura-user-id
+    comment: ""
+event_triggers:
+  - name: team_roster_events
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

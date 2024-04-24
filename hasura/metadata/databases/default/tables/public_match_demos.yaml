@@ -1,0 +1,3 @@
+table:
+  name: match_demos
+  schema: public

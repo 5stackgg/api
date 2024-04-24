@@ -1,0 +1,14 @@
+table:
+  name: v_player_multi_kills
+  schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - attacker_steam_id
+        - kills
+        - match_id
+        - round
+      filter: {}
+      allow_aggregations: true
+    comment: ""

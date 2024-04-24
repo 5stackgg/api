@@ -1,0 +1,95 @@
+import { Injectable } from "@nestjs/common";
+import IORedis, { Redis, RedisOptions } from "ioredis";
+import { ConfigService } from "@nestjs/config";
+import { RedisConfig } from "../../config/types/RedisConfig";
+
+@Injectable()
+export class RedisManagerService {
+  private config: RedisConfig;
+
+  protected connections: {
+    [key: string]: Redis;
+  } = {};
+
+  constructor(private readonly configService: ConfigService) {
+    this.config = this.configService.get("redis");
+  }
+
+  public getConnection(connection = "default"): Redis {
+    if (!this.connections[connection]) {
+      const currentConnection: Redis = (this.connections[
+        connection
+      ] = new IORedis(this.getConfig(connection)));
+
+      for (const status of ["ready", "close", "end"]) {
+        currentConnection.on(status, () => {
+          currentConnection.emit("status", status);
+          currentConnection.emit("online", status === "ready");
+        });
+      }
+
+      currentConnection.on("error", (error) => {
+        currentConnection.emit("status", "error");
+        currentConnection.emit("online", false);
+        if (
+          !error.message.includes("ECONNRESET") &&
+          !error.message.includes("EPIPE") &&
+          !error.message.includes("ETIMEDOUT")
+        ) {
+          console.error("redis error", error);
+        }
+      });
+
+      /**
+       * We may get disconnected, and we may need to force a re-connect.
+       */
+      let setupPingPong = false;
+      currentConnection.on("online", () => {
+        if (setupPingPong) {
+          return;
+        }
+        setupPingPong = true;
+
+        const pingTimeoutError = `did not receive ping in time (5 seconds)`;
+
+        setInterval(async () => {
+          if (currentConnection.status === "ready") {
+            await new Promise(async (resolve, reject) => {
+              const timer = setTimeout(() => {
+                console.warn(pingTimeoutError);
+                reject(new Error(pingTimeoutError));
+              }, 5000);
+
+              await currentConnection.ping(() => {
+                clearTimeout(timer);
+                resolve(true);
+              });
+            }).catch((error) => {
+              if (error.message !== pingTimeoutError) {
+                console.error("error", error);
+              }
+              currentConnection.disconnect(true);
+            });
+          }
+        }, 5000);
+      });
+    }
+    return this.connections[connection];
+  }
+
+  public getConfig(connection: string): RedisOptions {
+    return Object.assign(
+      {},
+      {
+        enableReadyCheck: false,
+        enableOfflineQueue: true,
+        maxRetriesPerRequest: null,
+        showFriendlyErrorStack: !!process.env.DEV,
+        retryStrategy() {
+          return 5 * 1000;
+        },
+      },
+      this.config.connections[connection]
+    );
+  }
+}

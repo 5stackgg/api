@@ -1,0 +1,93 @@
+table:
+  name: tournaments
+  schema: public
+object_relationships:
+  - name: admin
+    using:
+      foreign_key_constraint_on: organizer_steam_id
+array_relationships:
+  - name: organizers
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_organizers
+          schema: public
+  - name: rosters
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_roster
+          schema: public
+  - name: servers
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_servers
+          schema: public
+  - name: stages
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_stages
+          schema: public
+  - name: teams
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_teams
+          schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - id
+        - name
+        - start
+        - status
+        - type
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - organizer_steam_id
+        - description
+        - name
+        - status
+        - type
+        - start
+        - id
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - description
+        - name
+        - start
+        - status
+        - type
+      filter:
+        organizer_steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        organizer_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        organizer_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

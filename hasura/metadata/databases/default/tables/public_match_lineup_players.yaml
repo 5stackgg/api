@@ -1,0 +1,60 @@
+table:
+  name: match_lineup_players
+  schema: public
+object_relationships:
+  - name: lineup
+    using:
+      foreign_key_constraint_on: match_lineup_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        lineup:
+          match:
+            organizer_steam_id:
+              _eq: x-hasura-user-id
+      columns:
+        - captain
+        - match_lineup_id
+        - steam_id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - captain
+        - id
+        - match_lineup_id
+        - placeholder_name
+        - steam_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - captain
+      filter:
+        lineup:
+          match:
+            organizer_steam_id:
+              _eq: x-hasura-user-id
+      check:
+        lineup:
+          match:
+            organizer_steam_id:
+              _eq: x-hasura-user-id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        lineup:
+          match:
+            organizer_steam_id:
+              _eq: x-hasura-user-id
+    comment: ""

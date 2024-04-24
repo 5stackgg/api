@@ -1,0 +1,41 @@
+table:
+  name: v_pool_maps
+  schema: public
+object_relationships:
+  - name: map_pool
+    using:
+      manual_configuration:
+        column_mapping:
+          map_pool_id: id
+        insertion_order: null
+        remote_table:
+          name: map_pools
+          schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        map_pool:
+          owner_steam_id:
+            _eq: X-Hasura-User-Id
+      columns:
+        - id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - active_pool
+        - id
+        - name
+        - type
+        - workshop_map_id
+      filter:
+        _or:
+          - map_pool:
+              owner_steam_id:
+                _eq: X-Hasura-User-Id
+          - map_pool:
+              owner_steam_id:
+                _is_null: true
+    comment: ""
