@@ -11,21 +11,16 @@ import { Request, Response } from "express";
 import zlib from "zlib";
 import path from "path";
 import archiver from "archiver";
-import MatchAbstractController from "../MatchAbstractController";
-import { HasuraService } from "../../hasura/hasura.service";
-import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { S3Service } from "../../s3/s3.service";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { S3Interceptor } from "../../s3/s3.interceptor";
+import { HasuraService } from "../../hasura/hasura.service";
 
 @Controller("/matches/:matchId/backup-rounds")
-export class BackupRoundsController extends MatchAbstractController {
+export class BackupRoundsController {
   constructor(
-    hasura: HasuraService,
-    matchAssistant: MatchAssistantService,
-    private readonly s3: S3Service
-  ) {
-    super(hasura, matchAssistant);
-  }
+    private readonly s3: S3Service,
+    private readonly hasura: HasuraService
+  ) {}
 
   @Get("map/:mapId")
   public async downloadMapBackupRounds(
@@ -33,11 +28,6 @@ export class BackupRoundsController extends MatchAbstractController {
     @Res() response: Response
   ) {
     const { matchId, mapId } = request.params;
-
-    if (!(await this.verifyApiPassword(request, matchId))) {
-      response.status(401).end();
-      return;
-    }
 
     const { match_map_rounds } = await this.hasura.query({
       match_map_rounds: [
@@ -82,36 +72,35 @@ export class BackupRoundsController extends MatchAbstractController {
   }
 
   @Post("map/:mapId/round/:round")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(
+    S3Interceptor((request: Request, file: Express.Multer.File) => {
+      const { matchId, mapId } = request.params;
+
+      return `${matchId}/${mapId}/backup-rounds/${file.originalname}`;
+    })
+  )
   public async uploadBackupRound(
     @Req() request: Request,
-    @UploadedFile() file: File
+    @UploadedFile() file: Express.Multer.File
   ) {
     const { matchId, mapId, round } = request.params;
 
-    if (!(await this.verifyApiPassword(request, matchId))) {
-      return;
-    }
-    const filename = `${matchId}/${mapId}/backup-rounds/${file.name}`;
-
-    void this.s3.put(filename, file.stream()).then(async () => {
-      await this.hasura.mutation({
-        update_match_map_rounds: [
-          {
-            where: {
-              round: {
-                _eq: parseInt(round) + 1,
-              },
-            },
-            _set: {
-              backup_file: filename,
+    await this.hasura.mutation({
+      update_match_map_rounds: [
+        {
+          where: {
+            round: {
+              _eq: parseInt(round) + 1,
             },
           },
-          {
-            affected_rows: true,
+          _set: {
+            backup_file: `${matchId}/${mapId}/backup-rounds/${file.originalname}`,
           },
-        ],
-      });
+        },
+        {
+          affected_rows: true,
+        },
+      ],
     });
   }
 }

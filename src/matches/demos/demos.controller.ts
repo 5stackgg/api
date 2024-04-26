@@ -11,21 +11,16 @@ import { Request, Response } from "express";
 import zlib from "zlib";
 import path from "path";
 import archiver from "archiver";
-import MatchAbstractController from "../MatchAbstractController";
 import { HasuraService } from "../../hasura/hasura.service";
-import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { S3Service } from "../../s3/s3.service";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { S3Interceptor } from "../../s3/s3.interceptor";
 
 @Controller("/matches/:matchId/demos")
-export class DemosController extends MatchAbstractController {
+export class DemosController {
   constructor(
-    hasura: HasuraService,
-    matchAssistant: MatchAssistantService,
-    private readonly s3: S3Service
-  ) {
-    super(hasura, matchAssistant);
-  }
+    private readonly s3: S3Service,
+    private readonly hasura: HasuraService
+  ) {}
 
   @Get("/")
   @Get("map/:mapId?")
@@ -94,33 +89,37 @@ export class DemosController extends MatchAbstractController {
   }
 
   @Post("map/:mapId")
-  @UseInterceptors(FileInterceptor("file"))
-  public async uploadDemo(@Req() request: Request, @UploadedFile() file: File) {
+  @UseInterceptors(
+    S3Interceptor((request: Request, file: Express.Multer.File) => {
+      const { matchId, mapId } = request.params;
+
+      return `${matchId}/${mapId}/demos/${file.originalname}`;
+    })
+  )
+  public async uploadDemo(
+    @Req() request: Request,
+    @UploadedFile() file: Express.Multer.File
+  ) {
     const { matchId, mapId } = request.params;
 
-    if (!(await this.verifyApiPassword(request, matchId))) {
-      return;
-    }
-    const filename = `${matchId}/${mapId}/demos/${file.name}`;
+    const filename = `${matchId}/${mapId}/demos/${file.originalname}`;
 
     const size = file.size;
 
-    void this.s3.put(filename, file.stream()).then(async () => {
-      await this.hasura.mutation({
-        insert_match_map_demos_one: [
-          {
-            object: {
-              size,
-              file: filename,
-              match_id: matchId,
-              match_map_id: mapId,
-            },
+    await this.hasura.mutation({
+      insert_match_map_demos_one: [
+        {
+          object: {
+            size,
+            file: filename,
+            match_id: matchId,
+            match_map_id: mapId,
           },
-          {
-            id: true,
-          },
-        ],
-      });
+        },
+        {
+          id: true,
+        },
+      ],
     });
   }
 }

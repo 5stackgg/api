@@ -1,4 +1,10 @@
-import { forwardRef, Module } from "@nestjs/common";
+import {
+  forwardRef,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from "@nestjs/common";
 import { MatchesController } from "./matches.controller";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { HasuraModule } from "../hasura/hasura.module";
@@ -20,6 +26,7 @@ import {
 } from "./jobs/CheckOnDemandServerJob";
 import { MatchEvents } from "./events";
 import { loggerFactory } from "../utilities/LoggerFactory";
+import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
 
 @Module({
   imports: [
@@ -48,4 +55,13 @@ import { loggerFactory } from "../utilities/LoggerFactory";
     loggerFactory(),
   ],
 })
-export class MatchesModule {}
+export class MatchesModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(MatchServerMiddlewareMiddleware)
+      .forRoutes(
+        { path: "matches/current-match/:serverId", method: RequestMethod.ALL },
+        { path: "matches/:matchId/*", method: RequestMethod.ALL }
+      );
+  }
+}

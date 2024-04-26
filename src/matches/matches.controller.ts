@@ -5,7 +5,6 @@ import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { safeJsonStringify } from "../utilities/safeJsonStringify";
-import MatchAbstractController from "./MatchAbstractController";
 import { HasuraService } from "../hasura/hasura.service";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
@@ -17,18 +16,16 @@ import { MatchEvents } from "./events";
 import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
 
 @Controller("matches")
-export class MatchesController extends MatchAbstractController {
+export class MatchesController {
   constructor(
-    protected readonly logger: Logger,
-    protected readonly moduleRef: ModuleRef,
-    protected readonly hasura: HasuraService,
-    protected readonly matchAssistant: MatchAssistantService,
-    protected readonly discordBotMessaging: DiscordBotMessagingService,
-    protected readonly discordMatchOverview: DiscordBotOverviewService,
-    protected readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService
-  ) {
-    super(hasura, matchAssistant);
-  }
+    private readonly logger: Logger,
+    private readonly moduleRef: ModuleRef,
+    private readonly hasura: HasuraService,
+    private readonly matchAssistant: MatchAssistantService,
+    private readonly discordBotMessaging: DiscordBotMessagingService,
+    private readonly discordMatchOverview: DiscordBotOverviewService,
+    private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService
+  ) {}
 
   @Get("current-match/:serverId")
   public async getMatchDetails(@Req() request: Request) {
@@ -109,10 +106,6 @@ export class MatchesController extends MatchAbstractController {
     });
 
     if (!matches_by_pk) {
-      throw Error("unable to find match");
-    }
-
-    if (!(await this.verifyApiPassword(request, matches_by_pk.id))) {
       throw Error("unable to find match");
     }
 

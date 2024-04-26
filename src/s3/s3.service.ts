@@ -1,5 +1,6 @@
 import { Client } from "minio";
 import { Readable } from "stream";
+import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import { S3Config } from "../configs/types/S3Config";
 import { Injectable, Logger } from "@nestjs/common";
@@ -24,19 +25,46 @@ export class S3Service {
     });
   }
 
+  public multerStorage(
+    uploadPath: (request: Request, file: Express.Multer.File) => string
+  ) {
+    return {
+      _handleFile: async (
+        request: Request,
+        file: Express.Multer.File,
+        callback: (error?: string, file?: Express.Multer.File) => void
+      ) => {
+        try {
+          await this.put(uploadPath(request, file), file.stream);
+
+          request.file = file;
+
+          callback(null, file);
+        } catch (error) {
+          callback(error);
+        }
+      },
+      _removeFile: async (
+        request: Request,
+        file: Express.Multer.File,
+        callback: (error?: string) => void
+      ) => {
+        try {
+          await this.remove(uploadPath(request, file));
+          callback();
+        } catch (error) {
+          callback(error);
+        }
+      },
+    };
+  }
+
   public async get(filename: string): Promise<Readable> {
     return await this.client.getObject(this.bucket, filename);
   }
 
-  public async put(
-    filename: string,
-    stream: ReadableStream<Uint8Array>
-  ): Promise<void> {
-    await this.client.putObject(
-      this.bucket,
-      filename,
-      (stream as unknown) as Readable
-    );
+  public async put(filename: string, stream: Readable | Buffer): Promise<void> {
+    await this.client.putObject(this.bucket, filename, stream);
   }
 
   public async remove(filename: string): Promise<boolean> {
