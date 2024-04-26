@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
 import {
   ActionRowBuilder,
+  ComponentType,
   Message,
   SelectMenuInteraction,
   StringSelectMenuBuilder,
@@ -114,9 +115,7 @@ export class DiscordPickPlayerService {
 
       await this.discordBotMessaging.sendToMatchThread(
         matchId,
-        {
-          content: "error: not enough users for team selection"
-        }
+        "error: not enough users for team selection"
       );
 
       return;
@@ -147,9 +146,13 @@ export class DiscordPickPlayerService {
       });
 
       try {
-        pickedUserIds = ((await captainMessage.awaitMessageComponent({
-          time: this.PlayerSelectionTimeoutSeconds * 1000,
-        })) as SelectMenuInteraction).values;
+        const result = await captainMessage.awaitMessageComponent<ComponentType.StringSelect>(
+          {
+            time: this.PlayerSelectionTimeoutSeconds * 1000,
+          }
+        );
+
+        pickedUserIds = result.values;
       } catch (error) {
         if (
           !error.message.includes(

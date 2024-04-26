@@ -22,11 +22,11 @@ export class DiscordBotVoiceChannelsService {
   ) {
     const guild = await this.getGuild(guildId);
 
-    const voiceChannel = (await guild.channels.create({
+    const voiceChannel = await guild.channels.create<ChannelType.GuildVoice>({
       name: `${lineupId} [${matchId}]`,
       parent: categoryChannelId,
       type: ChannelType.GuildVoice,
-    })) as VoiceChannel;
+    });
 
     await this.setVoiceCache(
       matchId,

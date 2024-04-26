@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { e_match_types_enum } from "@/../generated/zeus";
 
 import {
+  ComponentType,
   CategoryChannel,
   ChannelType,
   ChatInputCommandInteraction,
@@ -10,7 +11,6 @@ import {
   User as DiscordUser,
   ActionRowBuilder,
   StringSelectMenuBuilder,
-  SelectMenuInteraction,
   Message,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
@@ -26,8 +26,6 @@ import { AppConfig } from "../../configs/types/AppConfig";
 @BotChatCommand(ChatCommands.ScheduleWingMan)
 export default class ScheduleMatch extends DiscordInteraction {
   public async handler(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply();
-
     let matchType: e_match_types_enum;
 
     switch (interaction.commandName) {
@@ -49,9 +47,11 @@ export default class ScheduleMatch extends DiscordInteraction {
     let serverId: string;
     if (options["on-demand-server"] === false) {
       serverId = await this.askForDedicatedServerId(interaction);
-
       if (!serverId) {
-        return;
+        await interaction.editReply({
+          components: [],
+          content: `Server was not selected`,
+        });
       }
     }
 
@@ -64,10 +64,20 @@ export default class ScheduleMatch extends DiscordInteraction {
     const usersInChannel = await this.getUsersInChannel(teamSelectionChannel);
 
     if (usersInChannel.length < ExpectedPlayers[matchType]) {
-      await interaction.followUp({
+      const notEnoughUsersMessage = `Not enough users for captain selection`;
+      if (interaction.replied) {
+        await interaction.editReply({
+          components: [],
+          content: notEnoughUsersMessage,
+        });
+        return;
+      }
+
+      await interaction.reply({
         ephemeral: true,
-        content: `Not enough users for captain selection`,
+        content: notEnoughUsersMessage,
       });
+
       return;
     }
 
@@ -359,31 +369,25 @@ export default class ScheduleMatch extends DiscordInteraction {
       );
 
       try {
-        serverReply = await interaction.followUp({
+        serverReply = await interaction.reply({
           fetchReply: true,
+          ephemeral: true,
           content: "Please select an option:",
           components: [row],
         });
 
-        const serverInteraction = (await serverReply.awaitMessageComponent({
-          time: 15 * 1000,
-        })) as SelectMenuInteraction;
+        const serverInteraction = await serverReply.awaitMessageComponent<ComponentType.StringSelect>(
+          {
+            time: 15 * 1000,
+          }
+        );
 
         serverId = serverInteraction.values?.[0];
-
-        await serverReply.delete();
       } catch (error) {
         this.logger.warn("unknown error", error);
       }
     }
 
-    if (serverId) {
-      return serverId;
-    }
-
-    await interaction.followUp({
-      ephemeral: true,
-      content: `Dedicated Server Not Selected`,
-    });
+    return serverId;
   }
 }
