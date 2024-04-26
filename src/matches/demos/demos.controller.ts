@@ -91,7 +91,6 @@ export class DemosController {
   @Post("map/:mapId")
   @UseInterceptors(
     S3Interceptor((request: Request, file: Express.Multer.File) => {
-      console.info("LETS GO", file);
       const { matchId, mapId } = request.params;
 
       return `${matchId}/${mapId}/demos/${file.originalname}`;

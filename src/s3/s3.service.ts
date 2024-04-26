@@ -34,26 +34,15 @@ export class S3Service {
         file: Express.Multer.File,
         callback: (error?: string, file?: Express.Multer.File) => void
       ) => {
-        const passThrough = new PassThrough();
+        try {
+          await this.put(uploadPath(request, file), file.stream);
 
-        file.stream.on("data", (data) => {
-          console.info("uploading", data.byteLength);
-          passThrough.write(data);
-        });
+          request.file = file;
 
-        file.stream.on("close", () => {
-          passThrough.end();
-        });
-
-        this.put(uploadPath(request, file), passThrough)
-          .then(() => {
-            console.info("done!");
-            request.file = file;
-            callback(null, file);
-          })
-          .catch((error) => {
-            callback(error);
-          });
+          callback(null, file);
+        } catch (error) {
+          callback(error);
+        }
       },
       _removeFile: async (
         request: Request,
