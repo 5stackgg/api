@@ -704,6 +704,23 @@ BEGIN
     RETURN OLD;
 END;
 $$;
+CREATE FUNCTION public.tbiu_check_match_map_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _match_id uuid;
+    match_best_of INTEGER;
+	match_maps_count INTEGER;
+BEGIN
+	_match_id := COALESCE(NEW.match_id, OLD.match_id);
+	SELECT best_of INTO match_best_of FROM matches m WHERE m.id = _match_id; 
+	SELECT count(*) INTO match_maps_count from match_maps where match_id = _match_id;
+	IF (OLD.match_id IS DISTINCT FROM NEW.match_id AND match_maps_count >= match_best_of) THEN
+		RAISE EXCEPTION 'Match already has the maximum number of picked maps' USING ERRCODE = '22000';
+	END IF;	
+    RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.tbu_match_player_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1278,6 +1295,7 @@ CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_pla
 CREATE TRIGGER tbi_match_lineups BEFORE INSERT ON public.match_lineups FOR EACH ROW EXECUTE FUNCTION public.check_max_match_lineups();
 CREATE TRIGGER tbi_team_invite BEFORE INSERT OR UPDATE ON public.team_invites FOR EACH ROW EXECUTE FUNCTION public.team_invite_check_for_existing_member();
 CREATE TRIGGER tbiu_can_pick_veto BEFORE INSERT OR UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.can_pick_veto();
+CREATE TRIGGER tbiu_check_match_map_count BEFORE INSERT OR UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbiu_check_match_map_count();
 CREATE TRIGGER tbu_match_player_count BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_player_count();
 CREATE TRIGGER tbu_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_status();
 CREATE TRIGGER tbui_match_lineup_players BEFORE INSERT OR UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbui_match_lineup_players();
