@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -27,6 +27,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 @Injectable()
 export class DiscordBotOverviewService {
   constructor(
+    private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly matchAssistant: MatchAssistantService,
@@ -48,10 +49,10 @@ export class DiscordBotOverviewService {
         return;
       }
 
-      console.trace(`[${matchId}] update match overview`);
+      this.logger.verbose(`[${matchId}] update match overview`);
       await this.discordBotMessaging.updateMatchReply(matchId, embed);
     } catch (error) {
-      console.warn(`[${matchId}] unable to update match overview`, error);
+      this.logger.warn(`[${matchId}] unable to update match overview`, error);
     }
   }
 

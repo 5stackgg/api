@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from "@nestjs/common";
+import { Controller, Get, Logger, Req } from "@nestjs/common";
 import { Request } from "express";
 import { e_match_status_enum } from "../../generated/zeus";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
@@ -19,6 +19,7 @@ import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
 @Controller("matches")
 export class MatchesController extends MatchAbstractController {
   constructor(
+    protected readonly logger: Logger,
     protected readonly moduleRef: ModuleRef,
     protected readonly hasura: HasuraService,
     protected readonly matchAssistant: MatchAssistantService,
@@ -188,7 +189,7 @@ export class MatchesController extends MatchAbstractController {
       case e_match_status_enum.Live:
         if (match.server) {
           if (!(await this.matchAssistant.isMatchServerAvailable(matchId))) {
-            console.warn(
+            this.logger.warn(
               `[${matchId}] another match is currently live, moving back to scheduled`
             );
             await this.matchAssistant.updateMatchStatus(
@@ -414,7 +415,7 @@ export class MatchesController extends MatchAbstractController {
     const Processor = MatchEvents[event as keyof typeof MatchEvents];
 
     if (!Processor) {
-      console.warn("unable to find event handler", event);
+      this.logger.warn("unable to find event handler", event);
       return;
     }
 

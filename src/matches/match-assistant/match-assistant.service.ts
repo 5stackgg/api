@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
 import {
   e_match_status_enum,
@@ -26,6 +26,7 @@ export class MatchAssistantService {
   private readonly SERVER_PORT_END: number;
 
   constructor(
+    private readonly logger: Logger,
     private readonly rcon: RconService,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
@@ -51,7 +52,7 @@ export class MatchAssistantService {
       await this.serverAuth.addMatchById(matchId);
       await this.command(matchId, `get_match`);
     } catch (error) {
-      console.warn(
+      this.logger.warn(
         `[${matchId}] unable to send match to server`,
         error.message
       );
@@ -62,7 +63,7 @@ export class MatchAssistantService {
     try {
       await this.command(matchId, `api_restore_round ${round}`);
     } catch (error) {
-      console.warn(
+      this.logger.warn(
         `[${matchId}] unable to send restore round to server`,
         error.message
       );
@@ -216,7 +217,7 @@ export class MatchAssistantService {
   }
 
   public async assignOnDemandServer(matchId: string): Promise<boolean> {
-    console.info(`[${matchId}] assigning on demand server`);
+    this.logger.debug(`[${matchId}] assigning on demand server`);
     await this.stopOnDemandServer(matchId);
 
     const { matches_by_pk: match } = await this.hasura.query({
@@ -245,7 +246,7 @@ export class MatchAssistantService {
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
     try {
-      console.trace(`[${matchId}] create job for on demand server`);
+      this.logger.verbose(`[${matchId}] create job for on demand server`);
 
       await batch.createNamespacedJob(this.namespace, {
         apiVersion: "batch/v1",
@@ -342,7 +343,7 @@ export class MatchAssistantService {
 
       const { tvPort, gamePort } = await this.getServerPorts();
 
-      console.trace(`[${matchId}] create service for on demand server`);
+      this.logger.verbose(`[${matchId}] create service for on demand server`);
 
       await core.createNamespacedService(this.namespace, {
         apiVersion: "v1",
@@ -427,7 +428,7 @@ export class MatchAssistantService {
     } catch (error) {
       await this.stopOnDemandServer(matchId);
 
-      console.error(
+      this.logger.error(
         `[${matchId}] unable to create on demand server`,
         error?.response?.body?.message || error.response
       );
@@ -474,13 +475,13 @@ export class MatchAssistantService {
       try {
         await this.rcon.connect(server.id);
       } catch (error) {
-        console.warn("unable to connect to server:", error.message);
+        this.logger.warn("unable to connect to server:", error.message);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.warn(
+      this.logger.warn(
         `unable to check server status`,
         error?.response?.body?.message || error
       );
@@ -522,7 +523,7 @@ export class MatchAssistantService {
       return;
     }
 
-    console.info(`[${matchId}] stopping match server`);
+    this.logger.debug(`[${matchId}] stopping match server`);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
@@ -542,14 +543,14 @@ export class MatchAssistantService {
         `job-name=${jobName}`
       );
       for (const pod of pods.items) {
-        console.trace(`[${matchId}] remove pod`);
+        this.logger.verbose(`[${matchId}] remove pod`);
         await core.deleteNamespacedPod(pod.metadata!.name!, this.namespace);
       }
 
-      console.trace(`[${matchId}] remove job`);
+      this.logger.verbose(`[${matchId}] remove job`);
       await batch.deleteNamespacedJob(jobName, this.namespace);
 
-      console.trace(`[${matchId}] remove service`);
+      this.logger.verbose(`[${matchId}] remove service`);
       await core.deleteNamespacedService(jobName, this.namespace);
 
       await this.hasura.mutation({
@@ -563,7 +564,7 @@ export class MatchAssistantService {
         ],
       });
     } catch (error) {
-      console.error(
+      this.logger.error(
         `[${matchId}] unable to stop on demand server`,
         error?.response?.body?.message || error
       );
@@ -625,7 +626,7 @@ export class MatchAssistantService {
   private async command(matchId: string, command: Array<string> | string) {
     const server = await this.getMatchServer(matchId);
     if (!server) {
-      console.warn(`[${matchId}] server was not assigned to this match`);
+      this.logger.warn(`[${matchId}] server was not assigned to this match`);
       return;
     }
     const rcon = await this.rcon.connect(server.id);

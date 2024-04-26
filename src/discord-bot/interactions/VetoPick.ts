@@ -63,7 +63,7 @@ export default class VetoPick extends DiscordInteraction {
       await interaction.reply({ ephemeral: true });
     } catch (error) {
       if (!error.message.includes("empty message")) {
-        console.error(`[${matchId}] unable to reply to interaction`, error);
+        this.logger.error(`[${matchId}] unable to reply to interaction`, error);
       }
     }
   }

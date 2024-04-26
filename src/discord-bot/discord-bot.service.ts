@@ -98,7 +98,7 @@ export class DiscordBotService {
         }
       })
       .on("error", (error) => {
-        console.warn("unhandled error", error);
+        this.logger.warn("unhandled error", error);
       });
 
     await this.client.login(this.discordConfig.token);
@@ -128,9 +128,9 @@ export class DiscordBotService {
         ],
       });
 
-      console.info("successfully reloaded application (/) interactions.");
+      this.logger.debug("successfully reloaded application (/) interactions.");
     } catch (error) {
-      console.error(`unable to reload application (/) commands`, error);
+      this.logger.error(`unable to reload application (/) commands`, error);
     }
   }
 

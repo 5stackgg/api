@@ -8,7 +8,7 @@ import { CachedValue } from "./types/CachedValue";
 export class CacheService {
   private connection: Redis;
 
-  constructor(redis: RedisManagerService, private readonly logger: Logger) {
+  constructor(redis: RedisManagerService, public readonly logger: Logger) {
     this.connection = redis.getConnection();
   }
 
@@ -34,7 +34,7 @@ export class CacheService {
 
       return true;
     } catch (error) {
-      console.error("unable to put value into redis", error);
+      this.logger.error("unable to put value into redis", error);
       return false;
     }
   }
@@ -44,7 +44,7 @@ export class CacheService {
       await this.connection.del(key);
       return true;
     } catch (error) {
-      console.error("unable to remove value from redis", error);
+      this.logger.error("unable to remove value from redis", error);
       return false;
     }
   }

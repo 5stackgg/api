@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ChannelType, GuildChannel, VoiceChannel } from "discord.js";
 import { CacheService } from "../../cache/cache.service";
 import { CacheTag } from "../../cache/CacheTag";
@@ -8,6 +8,7 @@ import { CachedDiscordUser } from "../types/CachedDiscordUser";
 @Injectable()
 export class DiscordBotVoiceChannelsService {
   constructor(
+    private readonly logger: Logger,
     private readonly cache: CacheService,
     private readonly bot: DiscordBotService
   ) {}
@@ -94,7 +95,7 @@ export class DiscordBotVoiceChannelsService {
 
       await member.voice.setChannel(voiceCache.voiceChannelId);
     } catch (error) {
-      console.warn(`[${matchId}] unable to move user`, error);
+      this.logger.warn(`[${matchId}] unable to move user`, error);
     }
   }
 
@@ -136,7 +137,7 @@ export class DiscordBotVoiceChannelsService {
         for (const [, member] of channel.members) {
           await member.voice.setChannel(originalChannelId).catch((error) => {
             // do nothing as the member may have moved already
-            console.warn(`[${matchId}] unable to move player back`, error);
+            this.logger.warn(`[${matchId}] unable to move player back`, error);
           });
         }
 
@@ -147,14 +148,17 @@ export class DiscordBotVoiceChannelsService {
 
           await channel.delete().catch((error) => {
             // do nothing as it may have been deleted already
-            console.warn(`[${matchId}] unable to delete voice channel`, error);
+            this.logger.warn(
+              `[${matchId}] unable to delete voice channel`,
+              error
+            );
           });
         }, 5 * 1000);
       }
 
       await tag.forget();
     } catch (error) {
-      console.warn(
+      this.logger.warn(
         `[${matchId}] unable to remove team channels`,
         error.message
       );

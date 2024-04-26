@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import Redis from "ioredis";
 import { CacheService } from "../../cache/cache.service";
@@ -18,6 +18,7 @@ export class ServerAuthService {
   private redis: Redis;
 
   constructor(
+    private readonly logger: Logger,
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
     readonly redisManager: RedisManagerService
@@ -35,7 +36,10 @@ export class ServerAuthService {
 
     for (const match of matches) {
       void this.addMatch(match).catch((error) => {
-        console.warn(`unable to setup redis ACL for match ${match.id}`, error);
+        this.logger.warn(
+          `unable to setup redis ACL for match ${match.id}`,
+          error
+        );
       });
     }
   }

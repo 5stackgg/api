@@ -373,7 +373,7 @@ export default class ScheduleMatch extends DiscordInteraction {
 
         await serverReply.delete();
       } catch (error) {
-        console.warn("unknown error", error);
+        this.logger.warn("unknown error", error);
       }
     }
 

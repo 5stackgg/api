@@ -1,4 +1,4 @@
-import { Injectable, Scope } from "@nestjs/common";
+import { Injectable, Logger, Scope } from "@nestjs/common";
 import { HasuraService } from "../../../hasura/hasura.service";
 import { MatchAssistantService } from "../../match-assistant/match-assistant.service";
 
@@ -8,6 +8,7 @@ export default abstract class MatchEventProcessor<T> {
   protected matchId: string;
 
   constructor(
+    protected readonly logger: Logger,
     protected readonly hasura: HasuraService,
     protected readonly matchAssistant: MatchAssistantService
   ) {}

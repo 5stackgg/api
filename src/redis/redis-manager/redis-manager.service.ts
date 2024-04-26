@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import IORedis, { Redis, RedisOptions } from "ioredis";
 import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "../../configs/types/RedisConfig";
@@ -11,7 +11,10 @@ export class RedisManagerService {
     [key: string]: Redis;
   } = {};
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly logger: Logger,
+    private readonly configService: ConfigService
+  ) {
     this.config = this.configService.get("redis");
   }
 
@@ -36,7 +39,7 @@ export class RedisManagerService {
           !error.message.includes("EPIPE") &&
           !error.message.includes("ETIMEDOUT")
         ) {
-          console.error("redis error", error);
+          this.logger.error("redis error", error);
         }
       });
 
@@ -56,7 +59,7 @@ export class RedisManagerService {
           if (currentConnection.status === "ready") {
             await new Promise(async (resolve, reject) => {
               const timer = setTimeout(() => {
-                console.warn(pingTimeoutError);
+                this.logger.warn(pingTimeoutError);
                 reject(new Error(pingTimeoutError));
               }, 5000);
 
@@ -66,7 +69,7 @@ export class RedisManagerService {
               });
             }).catch((error) => {
               if (error.message !== pingTimeoutError) {
-                console.error("error", error);
+                this.logger.error("error", error);
               }
               currentConnection.disconnect(true);
             });

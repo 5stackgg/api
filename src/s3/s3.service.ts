@@ -2,7 +2,7 @@ import { Client } from "minio";
 import { Readable } from "stream";
 import { ConfigService } from "@nestjs/config";
 import { S3Config } from "../configs/types/S3Config";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class S3Service {
@@ -10,7 +10,10 @@ export class S3Service {
   private bucket: string;
   private config: S3Config;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly logger: Logger,
+    private readonly configService: ConfigService
+  ) {
     this.config = this.configService.get("s3");
 
     this.bucket = this.config.bucket;
@@ -43,7 +46,7 @@ export class S3Service {
       if (error.code === "NoSuchKey") {
         return false;
       }
-      console.error("unable to remove", error.code);
+      this.logger.error("unable to remove", error.code);
       return false;
     }
     return true;

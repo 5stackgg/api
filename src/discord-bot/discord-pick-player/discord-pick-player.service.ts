@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
 import {
   ActionRowBuilder,
@@ -26,6 +26,7 @@ export class DiscordPickPlayerService {
   private PlayerSelectionTimeoutSeconds = process.env.DEV ? 15 : 30;
 
   constructor(
+    private readonly logger: Logger,
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
     private readonly bot: DiscordBotService,
@@ -154,7 +155,7 @@ export class DiscordPickPlayerService {
           )
         ) {
           // TODO - we should be able to detect this.
-          console.warn(`[${matchId}] unable to send user to pick`, captain);
+          this.logger.warn(`[${matchId}] unable to send user to pick`, captain);
         }
         pickedUserIds = [];
         while (pickedUserIds.length < picks) {

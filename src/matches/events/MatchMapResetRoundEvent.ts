@@ -2,17 +2,19 @@ import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { S3Service } from "../../s3/s3.service";
+import { Logger } from "@nestjs/common";
 
 export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   round: string;
   match_map_id: string;
 }> {
   constructor(
+    logger: Logger,
     hasura: HasuraService,
     matchAssistant: MatchAssistantService,
     private readonly s3: S3Service
   ) {
-    super(hasura, matchAssistant);
+    super(logger, hasura, matchAssistant);
   }
 
   public async process() {
@@ -65,7 +67,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       try {
         await this.s3.remove(match_map_round.backup_file);
       } catch (error) {
-        console.warn("unable to delete backup round", error);
+        this.logger.warn("unable to delete backup round", error);
       }
 
       await this.hasura.mutation({
@@ -80,7 +82,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       });
     }
 
-    console.warn(
+    this.logger.warn(
       `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`
     );
 

@@ -1,18 +1,22 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { PostgresService } from "../../postgres/postgres.service";
 import { PostgresQueues } from "../enums/PostgresQueues";
+import { Logger } from "@nestjs/common";
 
 @Processor(PostgresQueues.Postgres)
 export class PostgresAnalyzeJob extends WorkerHost {
-  constructor(private readonly postgres: PostgresService) {
+  constructor(
+    private readonly logger: Logger,
+    private readonly postgres: PostgresService
+  ) {
     super();
   }
   async process(): Promise<void> {
-    console.info("Running Analyze");
+    this.logger.debug("Running Analyze");
 
     await this.postgres.query(`Analyze`);
 
-    console.info("Analyze Finished");
+    this.logger.debug("Analyze Finished");
     return;
   }
 }

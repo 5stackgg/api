@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import crypto from "crypto";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
@@ -17,7 +17,10 @@ import { AppConfig } from "../configs/types/AppConfig";
 export class EncryptionService {
   private appKey: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly logger: Logger,
+    private readonly config: ConfigService
+  ) {
     this.appKey = this.config.get<AppConfig>("app").appKey;
   }
 
@@ -48,7 +51,7 @@ export class EncryptionService {
 
       return Buffer.concat([salt, iv, tag, encrypted]).toString("base64");
     } catch (error) {
-      console.warn("unable to encrypt key", error.message);
+      this.logger.warn("unable to encrypt key", error.message);
     }
   }
 
@@ -75,7 +78,7 @@ export class EncryptionService {
       // encrypt the given text
       return decipher.update(text) + decipher.final("utf8");
     } catch (error) {
-      console.warn("unable to decode", error.message);
+      this.logger.warn("unable to decode", error.message);
     }
   }
 }

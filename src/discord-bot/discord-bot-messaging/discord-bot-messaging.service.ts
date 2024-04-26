@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "../../cache/cache.service";
 import { DiscordBotService } from "../discord-bot.service";
 import {
@@ -12,6 +12,7 @@ import {
 @Injectable()
 export class DiscordBotMessagingService {
   constructor(
+    private readonly logger: Logger,
     private readonly cache: CacheService,
     private readonly bot: DiscordBotService
   ) {}
@@ -31,7 +32,7 @@ export class DiscordBotMessagingService {
     try {
       const reply = await this.getMatchReply(matchId);
       if (!reply) {
-        console.warn(`[${matchId}] missing thread`);
+        this.logger.warn(`[${matchId}] missing thread`);
         return;
       }
       await reply.delete();
@@ -39,7 +40,7 @@ export class DiscordBotMessagingService {
       await this.forgetMatchReplyCache(matchId);
       await this.forgetMatchThreadCache(matchId);
     } catch (error) {
-      console.warn(`[${matchId}] unable to remove thread`, error.message);
+      this.logger.warn(`[${matchId}] unable to remove thread`, error.message);
     }
   }
 
@@ -151,7 +152,7 @@ export class DiscordBotMessagingService {
     const thread = await this.getMatchThread(matchId);
 
     if (!thread) {
-      console.warn(`[${matchId}] unable to get thread`);
+      this.logger.warn(`[${matchId}] unable to get thread`);
       return;
     }
 

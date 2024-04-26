@@ -33,7 +33,7 @@ export class CacheTag {
         }
         await this.cacheStore.put(this.tag, values, seconds);
       } catch (error) {
-        console.error("unable to put value into redis", error);
+        this.cacheStore.logger.error("unable to put value into redis", error);
         return false;
       }
       return true;
