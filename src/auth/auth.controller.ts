@@ -13,6 +13,7 @@ export class AuthController {
   @UseGuards(SteamGuard)
   @Get("steam")
   public async steamLogin(@Req() request: Request) {
+    console.info("OKWTF?")
     const { redirect } = request.query;
 
     request.session.redirect = this.config.get<AppConfig>("app").webDomain;

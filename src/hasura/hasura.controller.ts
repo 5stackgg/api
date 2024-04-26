@@ -74,7 +74,7 @@ export class HasuraController {
 
     const resolver = this.getResolver(_events[trigger.name]);
 
-    return await resolver[event.name].bind(resolver, {
+    return await resolver[trigger.name].bind(resolver, {
       op: event.op,
       old: event.data.old || {},
       new: event.data.new || {},

@@ -6,9 +6,10 @@ export class SteamGuard extends AuthGuard("steam") {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    if (!request.url || (!request.user && request.url.startsWith("auth"))) {
+    if (!request.url || (!request.user && request.url.startsWith("/auth"))) {
       await super.canActivate(context);
       await super.logIn(request);
+      return true;
     }
 
     return !!request.user;
