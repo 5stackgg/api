@@ -1,12 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { Client } from "typesense";
 import { HasuraService } from "../hasura/hasura.service";
+import { ConfigService } from "@nestjs/config";
+import { TypeSenseConfig } from "../configs/types/TypeSenseConfig";
 
 @Injectable()
 export class TypeSenseService {
   private client: Client;
 
-  constructor(private readonly hasura: HasuraService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly hasura: HasuraService
+  ) {
     this.client = new Client({
       nodes: [
         {
@@ -15,7 +20,7 @@ export class TypeSenseService {
           protocol: "http",
         },
       ],
-      apiKey: process.env.TYPESENSE_API_KEY as string,
+      apiKey: this.config.get<TypeSenseConfig>("typesense").apiKey,
       connectionTimeoutSeconds: 2,
     });
   }

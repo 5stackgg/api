@@ -3,15 +3,19 @@ import { Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
+import { ConfigService } from "@nestjs/config";
+import { AppConfig } from "../configs/types/AppConfig";
 
 @Controller("auth")
 export class AuthController {
+  constructor(private readonly config: ConfigService) {}
+
   @UseGuards(SteamGuard)
   @Get("steam")
   public async steamLogin(@Req() request: Request) {
     const { redirect } = request.query;
 
-    request.session.redirect = process.env.WEB_DOMAIN;
+    request.session.redirect = this.config.get<AppConfig>("app").webDomain;
 
     if (process.env.DEV && redirect) {
       request.session.redirect = redirect as string;

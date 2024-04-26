@@ -8,6 +8,9 @@ import {
 } from "../../../generated/zeus";
 import { Request } from "express";
 import { DoneCallback } from "passport";
+import { AppConfig } from "../../configs/types/AppConfig";
+import { ConfigService } from "@nestjs/config";
+import { SteamConfig } from "../../configs/types/SteamConfig";
 
 interface SteamProfile {
   provider: "steam";
@@ -38,12 +41,17 @@ interface SteamProfile {
 
 @Injectable()
 export class SteamStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly hasura: HasuraService) {
+  constructor(
+    readonly config: ConfigService,
+    private readonly hasura: HasuraService
+  ) {
+    const webDomain = config.get<AppConfig>("app").webDomain;
+
     super({
       passReqToCallback: true,
-      realm: process.env.WEB_DOMAIN,
-      apiKey: process.env.CS_AUTH_KEY,
-      returnURL: `${process.env.WEB_DOMAIN}/auth/steam/callback`,
+      realm: webDomain,
+      apiKey: config.get<SteamConfig>("steam").steamApiKey,
+      returnURL: `${webDomain}/auth/steam/callback`,
     });
   }
 

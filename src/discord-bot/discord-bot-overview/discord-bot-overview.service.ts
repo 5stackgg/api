@@ -21,10 +21,13 @@ import { DiscordBotQueues } from "../enums/DiscordBotQueues";
 import { Queue } from "bullmq";
 import { MapSelectionTimeoutSeconds } from "../constants/MapBanSelectionTimeout";
 import { DiscordJobs } from "../enums/DiscordJobs";
+import { ConfigService } from "@nestjs/config";
+import { AppConfig } from "../../configs/types/AppConfig";
 
 @Injectable()
 export class DiscordBotOverviewService {
   constructor(
+    private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordMatchBotVeto: DiscordBotVetoService,
@@ -183,7 +186,7 @@ export class DiscordBotOverviewService {
 
       if (serverAvailable && match.server.port === 27015) {
         details.url = `${
-          process.env.API_DOMAIN
+          this.config.get<AppConfig>("app").apiDomain
         }/quick-connect?link=${encodeURIComponent(
           `steam://connect/${match.server.host}:${match.server.port};password/${match.password}`
         )}`;

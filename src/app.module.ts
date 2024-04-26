@@ -13,16 +13,14 @@ import { S3Module } from "./s3/s3.module";
 import { QuickConnectController } from "./quick-connect/quick-connect.controller";
 import { RedisModule } from "./redis/redis.module";
 import { ConfigModule } from "@nestjs/config";
-import redis from "./config/redis";
-import s3 from "./config/s3";
 import { DiscordBotService } from "./discord-bot/discord-bot.service";
 import { TypeSenseService } from "./type-sense/type-sense.service";
 import { BullModule } from "@nestjs/bullmq";
 import { RedisManagerService } from "./redis/redis-manager/redis-manager.service";
 import { PostgresModule } from "./postgres/postgres.module";
-import postgres from "./config/postgres";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { ExpressAdapter } from "@bull-board/express";
+import configs from "./configs";
 
 @Module({
   imports: [
@@ -52,7 +50,7 @@ import { ExpressAdapter } from "@bull-board/express";
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [redis, s3, postgres],
+      load: configs,
     }),
     PostgresModule,
   ],

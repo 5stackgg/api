@@ -1,7 +1,7 @@
 import { Client, Pool } from "pg";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { PostgresConfig } from "../config/types/PostgresConfig";
+import { PostgresConfig } from "../configs/types/PostgresConfig";
 
 @Injectable()
 export class PostgresService {

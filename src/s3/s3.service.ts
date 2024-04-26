@@ -1,7 +1,7 @@
 import { Client } from "minio";
 import { Readable } from "stream";
 import { ConfigService } from "@nestjs/config";
-import { S3Config } from "../config/types/S3Config";
+import { S3Config } from "../configs/types/S3Config";
 import { Injectable } from "@nestjs/common";
 
 @Injectable()

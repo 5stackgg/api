@@ -19,6 +19,7 @@ import { BotChatCommand } from "../discord-bot.service";
 import { ExpectedPlayers } from "../enums/ExpectedPlayers";
 import { DiscordMatchOptions } from "../types/DiscordMatchOptions";
 import { getRandomNumber } from "../utilities/getRandomNumber";
+import { AppConfig } from "../../configs/types/AppConfig";
 
 @BotChatCommand(ChatCommands.ScheduleComp)
 @BotChatCommand(ChatCommands.ScheduleScrimmage)
@@ -214,7 +215,7 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async createMatchesCategory(
     interaction: ChatInputCommandInteraction
   ) {
-    const channelName = `${process.env.APP_NAME} Matches`;
+    const channelName = `${this.config.get<AppConfig>("app").name} Matches`;
 
     let category: CategoryChannel;
     for (const [, channel] of interaction.guild.channels.cache) {

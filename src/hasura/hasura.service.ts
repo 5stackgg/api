@@ -1,5 +1,7 @@
 import { Chain, ValueTypes, ZeusScalars } from "../../generated/zeus";
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { HasuraConfig } from "../configs/types/HasuraConfig";
 
 const scalars = ZeusScalars({
   uuid: {
@@ -19,6 +21,12 @@ const scalars = ZeusScalars({
 
 @Injectable()
 export class HasuraService {
+  private config: HasuraConfig;
+
+  constructor(readonly configService: ConfigService) {
+    this.config = configService.get<HasuraConfig>("hasura");
+  }
+
   public async query<Z extends ValueTypes["query_root"]>(
     gql: Z | ValueTypes["query_root"]
   ) {
@@ -37,10 +45,10 @@ export class HasuraService {
   }
 
   private getClient() {
-    return Chain(`${process.env.HASURA_GRAPHQL_ENDPOINT}/v1/graphql`, {
+    return Chain(`${this.config.endpoint}/v1/graphql`, {
       headers: {
         "Content-Type": "application/json",
-        "x-hasura-admin-secret": process.env.HASURA_GRAPHQL_ADMIN_SECRET,
+        "x-hasura-admin-secret": this.config.secret,
       },
     });
   }

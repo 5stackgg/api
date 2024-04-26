@@ -8,17 +8,19 @@ import { DiscordBotOverviewService } from "../../discord-bot-overview/discord-bo
 import { DiscordBotVetoService } from "../../discord-bot-veto/discord-bot-veto.service";
 import { HasuraService } from "../../../hasura/hasura.service";
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export default abstract class DiscordInteraction {
   constructor(
-    protected readonly bot: DiscordBotService,
+    protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
+    protected readonly bot: DiscordBotService,
     protected readonly matchAssistant: MatchAssistantService,
     protected readonly discordBotVeto: DiscordBotVetoService,
     protected readonly discordPickPlayer: DiscordPickPlayerService,
-    protected readonly discordMatchOverview: DiscordBotOverviewService,
     protected readonly discordBotMessaging: DiscordBotMessagingService,
+    protected readonly discordMatchOverview: DiscordBotOverviewService,
     protected readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService
   ) {}
 

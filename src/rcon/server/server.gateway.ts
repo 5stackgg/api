@@ -13,6 +13,8 @@ import { User } from "../../auth/types/User";
 import { RconService } from "../rcon.service";
 import { getCookieOptions } from "../../utilities/getCookieOptions";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
+import { ConfigService } from "@nestjs/config";
+import { AppConfig } from "../../configs/types/AppConfig";
 
 type FiveStackWebSocketClient = WebSocket.WebSocket & {
   user: User;
@@ -23,6 +25,7 @@ type FiveStackWebSocketClient = WebSocket.WebSocket & {
 })
 export class ServerGateway {
   constructor(
+    private readonly config: ConfigService,
     private readonly rconService: RconService,
     private readonly redisManager: RedisManagerService
   ) {}
@@ -31,20 +34,22 @@ export class ServerGateway {
     @ConnectedSocket() client: FiveStackWebSocketClient,
     request: Request
   ) {
-    const appName = process.env.APP_NAME || "5stack";
+    const appConfig = this.config.get<AppConfig>("app");
 
     session({
       rolling: true,
       resave: false,
-      name: appName,
+      name: appConfig.name,
       saveUninitialized: false,
-      secret: process.env.ENC_SECRET as string,
+      secret: appConfig.encSecret,
       cookie: getCookieOptions(),
       store: new RedisStore({
-        prefix: appName,
+        prefix: appConfig.name,
         client: this.redisManager.getConnection(),
       }),
       // @ts-ignore
+      // luckily in this case the middlewares do not require teh response
+      // this is a hack to get the session loaded in a websocket
     })(request, {}, () => {
       passport.session()(request, {}, () => {
         if (!request.user) {

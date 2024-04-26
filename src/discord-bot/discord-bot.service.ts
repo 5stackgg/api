@@ -14,6 +14,8 @@ import { ChatCommands } from "./enums/ChatCommands";
 import { ButtonActions } from "./enums/ButtonActions";
 import { HasuraService } from "../hasura/hasura.service";
 import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
+import { ConfigService } from "@nestjs/config";
+import { DiscordConfig } from "../configs/types/DiscordConfig";
 
 const _interactions: {
   chat: Partial<Record<ChatCommands, DiscordInteraction>>;
@@ -41,12 +43,15 @@ let client: Client;
 @Injectable()
 export class DiscordBotService {
   public client: Client;
+  private discordConfig: DiscordConfig;
 
   constructor(
+    readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly lazyModuleLoader: LazyModuleLoader
   ) {
     this.client = client;
+    this.discordConfig = config.get<DiscordConfig>("discord");
   }
 
   public async login() {
@@ -95,37 +100,32 @@ export class DiscordBotService {
         console.warn("unhandled error", error);
       });
 
-    await this.client.login(process.env.DISCORD_TOKEN);
+    await this.client.login(this.discordConfig.token);
   }
 
   private async setupBot() {
-    const rest = new REST({ version: "10" }).setToken(
-      process.env.DISCORD_TOKEN
-    );
+    const rest = new REST({ version: "10" }).setToken(this.discordConfig.token);
 
     try {
-      await rest.put(
-        Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
-        {
-          body: [
-            await this.addBaseOptions(
-              new SlashCommandBuilder()
-                .setName(ChatCommands.ScheduleComp)
-                .setDescription("Creates a Competitive Match")
-            ),
-            await this.addBaseOptions(
-              new SlashCommandBuilder()
-                .setName(ChatCommands.ScheduleScrimmage)
-                .setDescription("Creates a Scrimmage")
-            ),
-            await this.addBaseOptions(
-              new SlashCommandBuilder()
-                .setName(ChatCommands.ScheduleWingMan)
-                .setDescription("Creates a Wingman Match")
-            ),
-          ],
-        }
-      );
+      await rest.put(Routes.applicationCommands(this.discordConfig.clientId), {
+        body: [
+          await this.addBaseOptions(
+            new SlashCommandBuilder()
+              .setName(ChatCommands.ScheduleComp)
+              .setDescription("Creates a Competitive Match")
+          ),
+          await this.addBaseOptions(
+            new SlashCommandBuilder()
+              .setName(ChatCommands.ScheduleScrimmage)
+              .setDescription("Creates a Scrimmage")
+          ),
+          await this.addBaseOptions(
+            new SlashCommandBuilder()
+              .setName(ChatCommands.ScheduleWingMan)
+              .setDescription("Creates a Wingman Match")
+          ),
+        ],
+      });
 
       console.info("successfully reloaded application (/) interactions.");
     } catch (error) {

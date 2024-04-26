@@ -13,24 +13,30 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { MatchJobs } from "../enums/MatchJobs";
+import { ConfigService } from "@nestjs/config";
+import { GameServersConfig } from "../../configs/types/GameServersConfig";
+import { SteamConfig } from "../../configs/types/SteamConfig";
 
 @Injectable()
 export class MatchAssistantService {
+  private gameServerConfig: GameServersConfig;
+
   private readonly namespace: string;
   private readonly SERVER_PORT_START: number;
   private readonly SERVER_PORT_END: number;
 
   constructor(
     private readonly rcon: RconService,
+    private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly serverAuth: ServerAuthService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue
   ) {
-    this.namespace = process.env.SERVER_NAMESPACE as string;
+    this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
 
-    const [start, end] = (process.env.SERVER_PORT_RANGE || "30000:30085").split(
-      ":"
-    );
+    this.namespace = this.gameServerConfig.namespace;
+
+    const [start, end] = this.gameServerConfig.portRange;
 
     this.SERVER_PORT_START = parseInt(start);
     this.SERVER_PORT_END = parseInt(end);
@@ -260,7 +266,7 @@ export class MatchAssistantService {
               containers: [
                 {
                   name: "server",
-                  image: process.env.SERVER_IMAGE,
+                  image: this.gameServerConfig.serverImage,
                   ports: [
                     { containerPort: 27015, protocol: "TCP" },
                     { containerPort: 27015, protocol: "UDP" },
@@ -273,11 +279,21 @@ export class MatchAssistantService {
                     { name: "GAME_PORT", value: "27015" },
                     {
                       name: "GAME_PARAMS",
-                      value: `-dedicated -dev +map de_inferno -usercon  +rcon_password ${process.env.DEFAULT_RCON_PASSWORD}
-                         +sv_password ${match.password} -authkey ${process.env.CS_AUTH_KEY} -maxplayers 13`,
+                      value: `-dedicated -dev +map de_inferno -usercon  +rcon_password ${
+                        this.gameServerConfig.defaultRconPassword
+                      }
+                         +sv_password ${match.password} -authkey ${
+                        this.config.get<SteamConfig>("steam").steamApiKey
+                      } -maxplayers 13`,
                     },
-                    { name: "USERNAME", value: process.env.CS_USERNAME },
-                    { name: "PASSWRD", value: process.env.CS_PASSWORD },
+                    {
+                      name: "USERNAME",
+                      value: this.gameServerConfig.csUsername,
+                    },
+                    {
+                      name: "PASSWRD",
+                      value: this.gameServerConfig.csPassword,
+                    },
                     { name: "UID", value: "1000" },
                     { name: "GID", value: "1000" },
                     { name: "SERVER_ID", value: serverId },
@@ -381,8 +397,8 @@ export class MatchAssistantService {
               port: gamePort,
               tv_port: tvPort,
               label: `${jobName}`,
-              host: process.env.SERVER_DOMAIN,
-              rcon_password: process.env.DEFAULT_RCON_PASSWORD,
+              host: this.gameServerConfig.serverDomain,
+              rcon_password: this.gameServerConfig.defaultRconPassword,
             },
           },
           {

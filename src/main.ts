@@ -9,6 +9,8 @@ import passport from "passport";
 import { WsAdapter } from "@nestjs/platform-ws";
 import { RedisManagerService } from "./redis/redis-manager/redis-manager.service";
 import { ConfigService } from "@nestjs/config";
+import { RedisConfig } from "./configs/types/RedisConfig";
+import { AppConfig } from "./configs/types/AppConfig";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,12 +20,10 @@ async function bootstrap() {
   app.connectMicroservice({
     transport: Transport.REDIS,
     options: {
-      ...configService.get("redis").connections.default,
+      ...configService.get<RedisConfig>("redis").connections.default,
       wildcards: true,
     },
   });
-
-  const appName = process.env.APP_NAME || "5stack";
 
   app.set("trust proxy", () => {
     // TODO - trust proxy
@@ -32,16 +32,18 @@ async function bootstrap() {
 
   const redisManagerService = app.get(RedisManagerService);
 
+  const appConfig = configService.get<AppConfig>("app");
+
   app.use(
     session({
       rolling: true,
       resave: false,
-      name: appName,
+      name: appConfig.name,
       saveUninitialized: false,
-      secret: process.env.ENC_SECRET as string,
+      secret: appConfig.encSecret,
       cookie: getCookieOptions(),
       store: new RedisStore({
-        prefix: appName,
+        prefix: appConfig.name,
         client: redisManagerService.getConnection(),
       }),
     })

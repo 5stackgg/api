@@ -1,5 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import crypto from "crypto";
+import { ConfigService } from "@nestjs/config";
+import { AppConfig } from "../configs/types/AppConfig";
 
 /**
  * +--------------------+-----------------------+----------------+----------------+
@@ -15,8 +17,8 @@ import crypto from "crypto";
 export class EncryptionService {
   private appKey: string;
 
-  constructor() {
-    this.appKey = process.env.APP_KEY as string;
+  constructor(private readonly config: ConfigService) {
+    this.appKey = this.config.get<AppConfig>("app").appKey;
   }
 
   public encrypt(text: string, masterKey?: string) {

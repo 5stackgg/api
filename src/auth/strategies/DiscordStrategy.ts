@@ -4,15 +4,25 @@ import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
 import { Request } from "express";
 import { DoneCallback } from "passport";
+import { ConfigService } from "@nestjs/config";
+import { DiscordConfig } from "../../configs/types/DiscordConfig";
+import { AppConfig } from "../../configs/types/AppConfig";
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly hasura: HasuraService) {
+  constructor(
+    private config: ConfigService,
+    private readonly hasura: HasuraService
+  ) {
+    const discordService = config.get<DiscordConfig>("discord");
+
     super({
       passReqToCallback: true,
-      clientID: process.env.DISCORD_CLIENT_ID,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      callbackURL: `${process.env.WEB_DOMAIN}/auth/discord/callback`,
+      clientID: discordService.clientId,
+      clientSecret: discordService.clientSecret,
+      callbackURL: `${
+        config.get<AppConfig>("app").webDomain
+      }/auth/discord/callback`,
       scope: ["identify"],
     });
   }

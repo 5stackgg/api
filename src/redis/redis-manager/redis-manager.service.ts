@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import IORedis, { Redis, RedisOptions } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { RedisConfig } from "../../config/types/RedisConfig";
+import { RedisConfig } from "../../configs/types/RedisConfig";
 
 @Injectable()
 export class RedisManagerService {
