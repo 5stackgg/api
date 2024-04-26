@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from "@nestjs/config";
 import { readMessage, decrypt } from "openpgp";
 import { AppConfig } from "../configs/types/AppConfig";
@@ -7,7 +7,10 @@ import { AppConfig } from "../configs/types/AppConfig";
 export class EncryptionService {
   private appKey: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly logger: Logger,
+    private readonly config: ConfigService
+  ) {
     this.appKey = this.config.get<AppConfig>("app").appKey;
   }
 
@@ -31,7 +34,7 @@ export class EncryptionService {
       // utf8 returns as a string
       return decryptedData as string;
     } catch (error) {
-      console.error("Error decrypting data:", error);
+      this.logger.error("Error decrypting data:", error);
       throw error;
     }
   }
