@@ -8,6 +8,7 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { HasuraQueues } from "./enums/HasuraQueues";
 import { HasuraController } from "./hasura.controller";
+import { loggerFactory } from "../utilities/LoggerFactory";
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { HasuraController } from "./hasura.controller";
       adapter: BullMQAdapter,
     }),
   ],
-  providers: [HasuraService, HasuraMaintenanceJob],
+  providers: [HasuraService, HasuraMaintenanceJob, loggerFactory()],
   exports: [HasuraService],
   controllers: [HasuraController],
 })

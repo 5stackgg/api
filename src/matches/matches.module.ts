@@ -19,6 +19,7 @@ import {
   CheckOnDemandServerJobEvents,
 } from "./jobs/CheckOnDemandServerJob";
 import { MatchEvents } from "./events";
+import { loggerFactory } from "../utilities/LoggerFactory";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MatchEvents } from "./events";
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     ...Object.values(MatchEvents),
+    loggerFactory(),
   ],
 })
 export class MatchesModule {}

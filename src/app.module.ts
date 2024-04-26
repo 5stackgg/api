@@ -21,6 +21,7 @@ import { PostgresModule } from "./postgres/postgres.module";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { ExpressAdapter } from "@bull-board/express";
 import configs from "./configs";
+import { loggerFactory } from "./utilities/LoggerFactory";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import configs from "./configs";
     CacheModule,
     S3Module,
     RedisModule,
+    PostgresModule,
     BullModule.forRootAsync({
       imports: [RedisModule],
       inject: [RedisManagerService],
@@ -52,8 +54,8 @@ import configs from "./configs";
       isGlobal: true,
       load: configs,
     }),
-    PostgresModule,
   ],
+  providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
 })
 export class AppModule {

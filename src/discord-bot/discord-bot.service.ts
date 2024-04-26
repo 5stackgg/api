@@ -1,5 +1,5 @@
 import { LazyModuleLoader } from "@nestjs/core";
-import { Injectable } from "@nestjs/common";
+import { Logger, Injectable } from "@nestjs/common";
 import {
   ButtonInteraction,
   ChannelType,
@@ -47,6 +47,7 @@ export class DiscordBotService {
 
   constructor(
     readonly config: ConfigService,
+    private readonly logger: Logger,
     private readonly hasura: HasuraService,
     private readonly lazyModuleLoader: LazyModuleLoader
   ) {
@@ -68,7 +69,7 @@ export class DiscordBotService {
 
     this.client
       .on("ready", () => {
-        console.info(`logged in as ${this.client.user.tag}!`);
+        this.logger.log(`logged in as ${this.client.user.tag}!`);
       })
       .on("interactionCreate", async (interaction) => {
         if (interaction.isChatInputCommand()) {

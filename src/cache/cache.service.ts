@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { CacheTag } from "./CacheTag";
 import { CachedValue } from "./types/CachedValue";
@@ -8,7 +8,7 @@ import { CachedValue } from "./types/CachedValue";
 export class CacheService {
   private connection: Redis;
 
-  constructor(redis: RedisManagerService) {
+  constructor(redis: RedisManagerService, private readonly logger: Logger) {
     this.connection = redis.getConnection();
   }
 

@@ -6,6 +6,7 @@ import { SteamStrategy } from "./strategies/SteamStrategy";
 import { HasuraModule } from "../hasura/hasura.module";
 import { SteamSerializer } from "./strategies/SteamSerializer";
 import { DiscordStrategy } from "./strategies/DiscordStrategy";
+import { loggerFactory } from "../utilities/LoggerFactory";
 
 @Module({
   imports: [
@@ -14,7 +15,13 @@ import { DiscordStrategy } from "./strategies/DiscordStrategy";
     }),
     HasuraModule,
   ],
-  providers: [AuthService, SteamStrategy, DiscordStrategy, SteamSerializer],
+  providers: [
+    AuthService,
+    SteamStrategy,
+    DiscordStrategy,
+    SteamSerializer,
+    loggerFactory(),
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

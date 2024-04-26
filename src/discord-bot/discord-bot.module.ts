@@ -14,6 +14,7 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { DiscordBotQueues } from "./enums/DiscordBotQueues";
 import { UpdateDiscordMatchVetoJob } from "./jobs/UpdateDiscordMatchVetoJob";
+import { loggerFactory } from "../utilities/LoggerFactory";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { UpdateDiscordMatchVetoJob } from "./jobs/UpdateDiscordMatchVetoJob";
     DiscordBotVoiceChannelsService,
     DiscordPickPlayerService,
     UpdateDiscordMatchVetoJob,
+    loggerFactory(),
   ],
   exports: [
     DiscordBotService,
