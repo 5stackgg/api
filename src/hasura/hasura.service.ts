@@ -1,5 +1,21 @@
-import { Chain, ValueTypes } from "../../generated/zeus";
+import { Chain, ValueTypes, ZeusScalars } from "../../generated/zeus";
 import { Injectable } from "@nestjs/common";
+
+const scalars = ZeusScalars({
+  uuid: {
+    decode: (value: string) => {
+      return value;
+    },
+  },
+  bigint: {
+    encode: (value: string) => {
+      return value.toString();
+    },
+    decode: (value: string) => {
+      return BigInt(value);
+    },
+  },
+});
 
 @Injectable()
 export class HasuraService {
@@ -7,18 +23,7 @@ export class HasuraService {
     gql: Z | ValueTypes["query_root"]
   ) {
     return await this.getClient()("query", {
-      scalars: {
-        uuid: {
-          decode: (value: string) => {
-            return value;
-          },
-        },
-        bigint: {
-          decode: (value: string) => {
-            return BigInt(value);
-          },
-        },
-      },
+      scalars,
     })(gql);
   }
 
@@ -27,18 +32,7 @@ export class HasuraService {
     variables?: Record<string, unknown>
   ) {
     return await this.getClient()("mutation", {
-      scalars: {
-        uuid: {
-          decode: (value: string) => {
-            return value;
-          },
-        },
-        bigint: {
-          encode: (value: string) => {
-            return value.toString();
-          },
-        },
-      },
+      scalars,
     })(gql, { variables });
   }
 

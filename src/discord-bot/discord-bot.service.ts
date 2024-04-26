@@ -36,7 +36,7 @@ export function BotChatCommand(action: ChatCommands): ClassDecorator {
 }
 
 // TODO - this service loads twice because of the lazy loading
-let client;
+let client: Client;
 
 @Injectable()
 export class DiscordBotService {
@@ -67,19 +67,27 @@ export class DiscordBotService {
       })
       .on("interactionCreate", async (interaction) => {
         if (interaction.isChatInputCommand()) {
-          console.info(
-            `[${interaction.commandName}]`,
-            _interactions.chat[interaction.commandName]
-          );
+          const DiscordInteraction =
+            _interactions.chat[
+              interaction.commandName as keyof typeof _interactions.chat
+            ];
+
           return await moduleRef
-            .get(_interactions.chat[interaction.commandName])
+            .get<symbol, DiscordInteraction>(
+              (DiscordInteraction as unknown) as symbol
+            )
             .handler(interaction);
         }
 
         if (interaction.isButton()) {
           const [type] = (interaction as ButtonInteraction).customId.split(":");
+          const DiscordInteraction =
+            _interactions.buttons[type as keyof typeof _interactions.buttons];
+
           return await moduleRef
-            .get(_interactions.buttons[type])
+            .get<symbol, DiscordInteraction>(
+              (DiscordInteraction as unknown) as symbol
+            )
             .handler(interaction);
         }
       })

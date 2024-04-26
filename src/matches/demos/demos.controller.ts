@@ -1,12 +1,13 @@
 import {
   Controller,
   Get,
-  Request,
-  Response,
+  Req,
+  Res,
   Post,
   UseInterceptors,
   UploadedFile,
 } from "@nestjs/common";
+import { Request, Response } from "express";
 import zlib from "zlib";
 import path from "path";
 import archiver from "archiver";
@@ -28,7 +29,10 @@ export class DemosController extends MatchAbstractController {
 
   @Get("/")
   @Get("map/:mapId?")
-  public async downloadDemo(@Request() request, @Response() response) {
+  public async downloadDemo(
+    @Req() request: Request,
+    @Res() response: Response
+  ) {
     const { matchId, mapId } = request.params;
 
     const { match_map_demos: demos } = await this.hasura.query({
@@ -91,7 +95,7 @@ export class DemosController extends MatchAbstractController {
 
   @Post("map/:mapId")
   @UseInterceptors(FileInterceptor("file"))
-  public async uploadDemo(@Request() request, @UploadedFile() file: File) {
+  public async uploadDemo(@Req() request: Request, @UploadedFile() file: File) {
     const { matchId, mapId } = request.params;
 
     if (!(await this.verifyApiPassword(request, matchId))) {

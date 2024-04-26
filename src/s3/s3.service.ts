@@ -27,14 +27,12 @@ export class S3Service {
 
   public async put(
     filename: string,
-    stream: ReadableStream<Uint8Array>,
-    metadata?: Record<string, unknown>
+    stream: ReadableStream<Uint8Array>
   ): Promise<void> {
     await this.client.putObject(
       this.bucket,
       filename,
-      (stream as unknown) as Readable,
-      metadata
+      (stream as unknown) as Readable
     );
   }
 

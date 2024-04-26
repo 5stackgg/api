@@ -121,7 +121,12 @@ export default class ScheduleMatch extends DiscordInteraction {
     _options: readonly CommandInteractionOption[],
     matchType: e_match_types_enum
   ) {
-    const options: DiscordMatchOptions = {
+    const options: DiscordMatchOptions & {
+      // this is to handle the foor loop of _options
+      // technically it could have any, but we dont really want to
+      // put it on the type it self
+      [key: string]: any;
+    } = {
       mr: 12,
       best_of: 1,
       knife: true,

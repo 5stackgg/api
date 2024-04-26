@@ -1,14 +1,7 @@
-import { Controller, Get, Request } from "@nestjs/common";
-import {
-  e_match_status_enum,
-  GraphQLTypes,
-  InputType,
-  match_veto_picks_select_column,
-  matches_select_column,
-  Selector,
-} from "../../generated/zeus";
-import { HasuraEvent } from "../hasura/events/events.controller";
-import { HasuraAction } from "../hasura/actions/actions.controller";
+import { Controller, Get, Req } from "@nestjs/common";
+import { Request } from "express";
+import { e_match_status_enum } from "../../generated/zeus";
+import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { safeJsonStringify } from "../utilities/safeJsonStringify";
@@ -37,7 +30,7 @@ export class MatchesController extends MatchAbstractController {
   }
 
   @Get(":serverId/current-match")
-  public async getMatchDetails(@Request() request) {
+  public async getMatchDetails(@Req() request: Request) {
     const serverId = request.params.serverId;
 
     const { servers_by_pk: server } = await this.hasura.query({
@@ -408,10 +401,18 @@ export class MatchesController extends MatchAbstractController {
 
   @EventPattern("matches:*")
   public async matchEvent(
-    @Payload() { event, data },
+    @Payload()
+    {
+      event,
+      data,
+    }: {
+      event: string;
+      data: Record<string, unknown>;
+    },
     @Ctx() context: NatsContext
   ) {
-    const Processor = MatchEvents[event];
+    const Processor = MatchEvents[event as keyof typeof MatchEvents];
+
     if (!Processor) {
       console.warn("unable to find event handler", event);
       return;

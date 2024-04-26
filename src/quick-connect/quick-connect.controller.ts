@@ -1,10 +1,14 @@
-import { Controller, Get, Request, Response } from "@nestjs/common";
+import { Request, Response } from "express";
+import { Controller, Get, Req, Res } from "@nestjs/common";
 import { resolve4 } from "dns/promises";
 
 @Controller("quick-connect")
 export class QuickConnectController {
   @Get()
-  public async quickConnect(@Request() request, @Response() response) {
+  public async quickConnect(
+    @Req() request: Request,
+    @Res() response: Response
+  ) {
     let link: string = request.query.link as string;
 
     const host = link.match(/steam:\/\/connect\/(.*):/)?.[1];

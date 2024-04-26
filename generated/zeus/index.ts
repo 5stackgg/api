@@ -13,7 +13,6 @@ export const apiSubscription = (options: chainOptions) => (query: string) => {
     const wsString = queryString.replace('http', 'ws');
     const host = (options.length > 1 && options[1]?.websocket?.[0]) || wsString;
     const webSocketOptions = options[1]?.websocket || [host];
-    // @ts-ignore
     const ws = new WebSocket(...webSocketOptions);
     return {
       ws,

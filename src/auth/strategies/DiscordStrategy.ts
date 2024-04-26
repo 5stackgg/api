@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { Strategy } from "passport-discord";
+import { Profile, Strategy } from "passport-discord";
 import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
+import { Request } from "express";
+import { DoneCallback } from "passport";
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy) {
@@ -15,7 +17,13 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  public async validate(request, accessToken, refreshToken, profile, done) {
+  public async validate(
+    request: Request,
+    accessToken: string,
+    refreshToken: string,
+    profile: Profile,
+    done: DoneCallback
+  ) {
     await this.hasura.mutation({
       update_players_by_pk: [
         {

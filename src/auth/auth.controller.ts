@@ -1,13 +1,14 @@
-import { Controller, Get, UseGuards, Request, Response } from "@nestjs/common";
+import { Controller, Get, UseGuards, Req, Res } from "@nestjs/common";
+import { Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
-import { HasuraAction } from "../hasura/actions/actions.controller";
+import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
 
 @Controller("auth")
 export class AuthController {
   @UseGuards(SteamGuard)
   @Get("steam")
-  public async steamLogin(@Request() request) {
+  public async steamLogin(@Req() request: Request) {
     const { redirect } = request.query;
 
     request.session.redirect = process.env.WEB_DOMAIN;
@@ -21,9 +22,9 @@ export class AuthController {
 
   @UseGuards(SteamGuard)
   @Get("steam/callback")
-  public steamCallback(@Request() request, @Response() response) {
+  public steamCallback(@Req() request: Request, @Res() res: Response) {
     // TODO - handle dev redirect
-    return response.redirect("/");
+    return res.redirect("/");
   }
 
   @UseGuards(DiscordGuard)
@@ -34,12 +35,12 @@ export class AuthController {
 
   @UseGuards(DiscordGuard)
   @Get("discord/callback")
-  public linkDiscordCallback(@Request() request, @Response() response) {
-    return response.redirect("/");
+  public linkDiscordCallback(@Req() request: Request, @Res() res: Response) {
+    return res.redirect("/");
   }
 
   @HasuraAction()
-  public async me(@Request() request) {
+  public async me(@Req() request: Request) {
     return request.user;
   }
 }

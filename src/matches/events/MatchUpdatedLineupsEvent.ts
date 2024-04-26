@@ -3,6 +3,7 @@ import {
   players_constraint,
   players_update_column,
 } from "../../../generated/zeus";
+import { MatchEvents } from "./index";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   lineups: {
@@ -45,7 +46,9 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
     }> = [];
 
     for (const lineup in this.data.lineups) {
-      for (const player of this.data.lineups[lineup]) {
+      for (const player of this.data.lineups[
+        lineup as keyof typeof this.data.lineups
+      ]) {
         players.push({
           discord_id: player.name,
           captain: player.captain,
@@ -57,7 +60,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
             lineup === "lineup_1" ? match.lineup_1_id : match.lineup_2_id,
         });
 
-        if (player.steam_id === 0) {
+        if (player.steam_id === "0") {
           continue;
         }
 

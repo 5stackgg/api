@@ -1,6 +1,6 @@
 import { Controller } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
-import { HasuraAction } from "../hasura/actions/actions.controller";
+import { HasuraAction } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { e_team_roles_enum } from "../../generated/zeus";
 
@@ -28,7 +28,7 @@ export class TeamsController {
       throw Error("unable to find team invite");
     }
 
-    if (team_invites_by_pk.steam_id.toString() !== user.steam_id) {
+    if (team_invites_by_pk.steam_id !== user.steam_id) {
       return {
         success: false,
       };

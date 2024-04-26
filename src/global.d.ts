@@ -1,4 +1,4 @@
-import { User as _User } from "./auth/typestypes/User";
+import { User as _User } from "./auth/types/User";
 
 declare global {
   namespace Express {

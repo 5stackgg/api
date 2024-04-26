@@ -1,9 +1,9 @@
-import { Controller, Get, Request, UseGuards } from "@nestjs/common";
-
+import { Controller, Get, Req } from "@nestjs/common";
+import { Request } from "express";
 @Controller()
 export class AppController {
   @Get("me")
-  me(@Request() request): string {
+  public me(@Req() request: Request) {
     return request.user;
   }
 }

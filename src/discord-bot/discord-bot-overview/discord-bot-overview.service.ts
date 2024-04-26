@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonComponent,
+  ButtonStyle,
+} from "discord.js";
 import { ButtonActions } from "../enums/ButtonActions";
 import {
   e_match_map_status_enum,
@@ -34,11 +39,14 @@ export class DiscordBotOverviewService {
         return;
       }
 
+      const embed = await this.generateMatchOverviewEmbed(matchId);
+
+      if (!embed) {
+        return;
+      }
+
       console.trace(`[${matchId}] update match overview`);
-      await this.discordBotMessaging.updateMatchReply(
-        matchId,
-        await this.generateMatchOverviewEmbed(matchId)
-      );
+      await this.discordBotMessaging.updateMatchReply(matchId, embed);
     } catch (error) {
       console.warn(`[${matchId}] unable to update match overview`, error);
     }
@@ -58,7 +66,7 @@ export class DiscordBotOverviewService {
     const embeds = [];
     const components = [];
 
-    const row = new ActionRowBuilder();
+    const row = new ActionRowBuilder<ButtonBuilder>();
 
     const matchControls = {
       Knife: new ButtonBuilder()
@@ -117,6 +125,7 @@ export class DiscordBotOverviewService {
     components.push(row);
 
     const details = {
+      url: "",
       title: "Match Details",
       fields: [
         {
@@ -140,7 +149,6 @@ export class DiscordBotOverviewService {
           inline: true,
         },
       ],
-      url: undefined,
     };
 
     if (match.server) {
@@ -363,7 +371,7 @@ export class DiscordBotOverviewService {
       const row = Math.floor(selectedCount++ / 5);
 
       if (!components[row]) {
-        components[row] = new ActionRowBuilder();
+        components[row] = new ActionRowBuilder<ButtonBuilder>();
       }
 
       components[row].addComponents(
@@ -385,6 +393,8 @@ export class DiscordBotOverviewService {
     return {
       components,
       embed: {
+        color: 0,
+        description: "",
         // TODO - veto type when we do box series
         title: `${votingLineUpName}: ${e_veto_pick_types_enum.Ban}`,
         footer: {

@@ -1,6 +1,6 @@
 import { Controller } from "@nestjs/common";
 import { TypeSenseService } from "./type-sense.service";
-import { HasuraEvent } from "../hasura/events/events.controller";
+import { HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 
 @Controller("type-sense")

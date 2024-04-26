@@ -27,7 +27,7 @@ export class DiscordBotVetoService {
   ): Promise<Record<string, number>> {
     const votes = await this.getVotes(matchId);
 
-    const mapVotes = {};
+    const mapVotes: Record<string, number> = {};
     for (const userId of Object.keys(votes)) {
       const maps = votes[userId];
 

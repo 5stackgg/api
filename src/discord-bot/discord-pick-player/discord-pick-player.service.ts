@@ -119,7 +119,7 @@ export class DiscordPickPlayerService {
       return;
     }
 
-    let pickedUserIds = [];
+    let pickedUserIds: Array<string> = [];
 
     if (availableUsers.length === 1) {
       pickedUserIds.push(availableUsers[0].value);

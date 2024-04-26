@@ -694,8 +694,12 @@ export class MatchAssistantService {
     };
   }
 
-  private getAvailablePortIndices(array) {
-    return array.reduce((acc, isAvailable, index) => {
+  private getAvailablePortIndices(
+    ports: Array<{
+      isAvailable: boolean;
+    }>
+  ) {
+    return ports.reduce((acc, isAvailable, index) => {
       if (isAvailable) {
         acc.push(index);
       }
@@ -717,7 +721,7 @@ export class MatchAssistantService {
       ],
     });
 
-    if (match?.organizer_steam_id?.toString() !== user.steam_id) {
+    if (match?.organizer_steam_id !== user.steam_id) {
       throw Error("Not Authorized");
     }
   }

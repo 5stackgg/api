@@ -6,6 +6,7 @@ import {
 } from "@nestjs/websockets";
 import WebSocket from "ws";
 import passport from "passport";
+import { Request } from "express";
 import session from "express-session";
 import RedisStore from "connect-redis";
 import { User } from "../../auth/types/User";
@@ -28,7 +29,7 @@ export class ServerGateway {
 
   handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
-    request
+    request: Request
   ) {
     const appName = process.env.APP_NAME || "5stack";
 

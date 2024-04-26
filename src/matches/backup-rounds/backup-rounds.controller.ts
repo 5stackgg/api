@@ -1,12 +1,13 @@
 import {
   Controller,
   Get,
-  Request,
-  Response,
+  Req,
+  Res,
   Post,
   UseInterceptors,
   UploadedFile,
 } from "@nestjs/common";
+import { Request, Response } from "express";
 import zlib from "zlib";
 import path from "path";
 import archiver from "archiver";
@@ -28,8 +29,8 @@ export class BackupRoundsController extends MatchAbstractController {
 
   @Get("map/:mapId")
   public async downloadMapBackupRounds(
-    @Request() request,
-    @Response() response
+    @Req() request: Request,
+    @Res() response: Response
   ) {
     const { matchId, mapId } = request.params;
 
@@ -83,7 +84,7 @@ export class BackupRoundsController extends MatchAbstractController {
   @Post("map/:mapId/round/:round")
   @UseInterceptors(FileInterceptor("file"))
   public async uploadBackupRound(
-    @Request() request,
+    @Req() request: Request,
     @UploadedFile() file: File
   ) {
     const { matchId, mapId, round } = request.params;

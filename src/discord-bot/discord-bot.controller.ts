@@ -1,9 +1,10 @@
-import { Controller, Get, Request, Response } from "@nestjs/common";
+import { Controller, Get, Req, Res } from "@nestjs/common";
+import { Request, Response } from "express";
 
 @Controller("discord-bot")
 export class DiscordBotController {
   @Get("/discord-bot")
-  public async bot(@Request() request, @Response() response) {
+  public async bot(@Req() request: Request, @Res() response: Response) {
     // https://discordapi.com/permissions.html
     const permissions = `326434581584`;
 
