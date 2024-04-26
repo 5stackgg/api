@@ -55,9 +55,7 @@ export class DiscordBotVoiceChannelsService {
       voiceChannelData
     );
 
-    const tag = this.cache.tags(
-      this.getLineupVoiceChannelsCacheKey(matchId)
-    ) as CacheTag;
+    const tag = this.cache.tags(this.getLineupVoiceChannelsCacheKey(matchId));
 
     await tag.put(lineupId, {
       guildId,
@@ -105,9 +103,7 @@ export class DiscordBotVoiceChannelsService {
 
   public async removeTeamChannels(matchId: string) {
     try {
-      const tag = this.cache.tags(
-        this.getLineupVoiceChannelsCacheKey(matchId)
-      ) as CacheTag;
+      const tag = this.cache.tags(this.getLineupVoiceChannelsCacheKey(matchId));
 
       const lineupVoiceChannels = (await tag.get()) as Record<
         string,

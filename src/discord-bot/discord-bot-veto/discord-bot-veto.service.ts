@@ -160,6 +160,6 @@ export class DiscordBotVetoService {
   }
 
   private getBanVoteTag(matchId: string) {
-    return this.cache.tags(["bot", matchId, "votes"]) as CacheTag;
+    return this.cache.tags(["bot", matchId, "votes"]);
   }
 }
