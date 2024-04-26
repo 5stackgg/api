@@ -20,6 +20,7 @@ export default class KillEvent extends MatchEventProcessor<{
   thru_wall: boolean;
   headshot: boolean;
   assisted: boolean;
+  in_air: boolean;
 }> {
   public async process() {
     const attacker_data = {
@@ -42,6 +43,7 @@ export default class KillEvent extends MatchEventProcessor<{
             blinded: this.data.blinded,
             thru_smoke: this.data.thru_smoke,
             thru_wall: this.data.thru_wall,
+            in_air: this.data.in_air,
             headshot: this.data.headshot,
             assisted: this.data.assisted,
 

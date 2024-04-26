@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { readMessage, decrypt } from "openpgp";
 import { AppConfig } from "../configs/types/AppConfig";

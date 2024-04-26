@@ -18,27 +18,28 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - attacked_steam_id
-        - attacker_steam_id
         - assisted
-        - blinded
-        - headshot
-        - no_scope
-        - thru_smoke
-        - thru_wall
-        - round
         - attacked_location
         - attacked_location_coordinates
+        - attacked_steam_id
         - attacked_team
         - attacker_location
         - attacker_location_coordinates
+        - attacker_steam_id
         - attacker_team
+        - blinded
+        - headshot
         - hitgroup
-        - with
-        - time
         - id
+        - in_air
         - match_id
         - match_map_id
+        - no_scope
+        - round
+        - thru_smoke
+        - thru_wall
+        - time
+        - with
       filter: {}
       allow_aggregations: true
     comment: ""
