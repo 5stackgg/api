@@ -997,7 +997,8 @@ CREATE TABLE public.player_kills (
     thru_smoke boolean DEFAULT false NOT NULL,
     headshot boolean DEFAULT false NOT NULL,
     assisted boolean DEFAULT false NOT NULL,
-    thru_wall boolean DEFAULT false NOT NULL
+    thru_wall boolean DEFAULT false NOT NULL,
+    in_air boolean DEFAULT false NOT NULL
 );
 CREATE TABLE public.player_objectives (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
