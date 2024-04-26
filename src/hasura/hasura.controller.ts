@@ -56,11 +56,11 @@ export class HasuraController {
 
     request.body = input;
 
-    const handler = _actions[action.name];
+    const resolver = this.getResolver(_actions[action.name]);
 
     input.user = request.user;
 
-    return await handler.resolved[action.name].bind(handler.resolved, input)();
+    return resolver[action.name].bind(resolver, input)();
   }
 
   @HasuraAction()
@@ -87,7 +87,7 @@ export class HasuraController {
     }
 
     /**
-     * im sure this is a terrible idea, but i guess it only happens once....
+     * im sure this is a terrible idea
      */
     let resolved;
     const modules = [...this.modulesContainer.values()];

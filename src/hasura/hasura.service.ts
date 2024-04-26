@@ -14,7 +14,7 @@ const scalars = ZeusScalars({
       return value.toString();
     },
     decode: (value: string) => {
-      return BigInt(value);
+      return value;
     },
   },
 });
