@@ -104,7 +104,7 @@ export class DiscordBotService {
     await this.client.login(this.discordConfig.token);
   }
 
-  private async setupBot() {
+  public async setupBot() {
     const rest = new REST({ version: "10" }).setToken(this.discordConfig.token);
 
     try {

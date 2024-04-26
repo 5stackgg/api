@@ -114,7 +114,9 @@ export class DiscordPickPlayerService {
 
       await this.discordBotMessaging.sendToMatchThread(
         matchId,
-        "error: not enough users for team selection"
+        {
+          content: "error: not enough users for team selection"
+        }
       );
 
       return;
