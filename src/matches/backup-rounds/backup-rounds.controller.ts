@@ -89,6 +89,9 @@ export class BackupRoundsController {
       update_match_map_rounds: [
         {
           where: {
+            match_map_id: {
+              _eq: mapId,
+            },
             round: {
               _eq: parseInt(round) + 1,
             },
