@@ -7,9 +7,9 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id") values
     ('de_inferno', 'Competitive', 'true',  null),
     ('de_mirage', 'Competitive', 'true',  null),
     ('de_nuke', 'Competitive', 'true',  null),
-    ('de_overpass', 'Competitive', 'true',  null),
+    ('de_overpass', 'Competitive', 'false',  null),
     ('de_vertigo', 'Competitive', 'true',  null),
-    ('de_dust2', 'Competitive', 'false',  null),
+    ('de_dust2', 'Competitive', 'true',  null),
 
     -- Competitive Workshop
     ('de_cache', 'Competitive', 'false',  '3070596702'),
@@ -23,14 +23,14 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id") values
     --  Wingman
     ('de_inferno', 'Wingman', 'true',  null),
     ('de_nuke', 'Wingman', 'true',  null),
-    ('de_overpass', 'Wingman', 'true',  null),
+    ('de_overpass', 'Wingman', 'false',  null),
     ('de_vertigo', 'Wingman', 'true',  null),
 
     --  Wingman Workshop
-    ('assembly', 'Wingman', 'true',  '3071005299'),
-    ('de_brewery', 'Wingman', 'true',  '3070290240'),
-    ('drawbridge', 'Wingman', 'true',  '3070192462'),
-    ('foroglio', 'Wingman', 'true',  '3132854332')
+    ('assembly', 'Wingman', 'false',  '3071005299'),
+    ('de_brewery', 'Wingman', 'false',  '3070290240'),
+    ('drawbridge', 'Wingman', 'false',  '3070192462'),
+    ('foroglio', 'Wingman', 'false',  '3132854332')
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id";
 
