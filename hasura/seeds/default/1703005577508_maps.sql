@@ -10,6 +10,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id") values
     ('de_overpass', 'Competitive', 'false',  null),
     ('de_vertigo', 'Competitive', 'true',  null),
     ('de_dust2', 'Competitive', 'true',  null),
+    ('de_thera', 'Competitive', 'false',  null),
+    ('de_mills', 'Competitive', 'false',  null),
 
     -- Competitive Workshop
     ('de_cache', 'Competitive', 'false',  '3070596702'),
@@ -17,17 +19,17 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id") values
     ('de_cbble', 'Competitive', 'false',  '3070212801'),
     ('de_biome', 'Competitive', 'false',  '3075706807'),
     ('drawbridge', 'Competitive', 'false',  '3070192462'),
-    ('thera', 'Competitive', 'false',  '3121217565'),
     ('foroglio', 'Competitive', 'false',  '3132854332'),
 
     --  Wingman
-    ('de_inferno', 'Wingman', 'true',  null),
-    ('de_nuke', 'Wingman', 'true',  null),
+    ('de_inferno', 'Wingman', 'false',  null),
+    ('de_nuke', 'Wingman', 'false',  null),
     ('de_overpass', 'Wingman', 'false',  null),
-    ('de_vertigo', 'Wingman', 'true',  null),
+    ('de_vertigo', 'Wingman', 'false',  null),
+    ('de_assembly', 'Wingman', 'false',  null),
+    ('de_memento', 'Wingman', 'false',  null),
 
     --  Wingman Workshop
-    ('assembly', 'Wingman', 'false',  '3071005299'),
     ('de_brewery', 'Wingman', 'false',  '3070290240'),
     ('drawbridge', 'Wingman', 'false',  '3070192462'),
     ('foroglio', 'Wingman', 'false',  '3132854332')
