@@ -10,8 +10,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id") values
     ('de_overpass', 'Competitive', 'false',  null),
     ('de_vertigo', 'Competitive', 'true',  null),
     ('de_dust2', 'Competitive', 'true',  null),
-    ('de_thera', 'Competitive', 'true',  null),
-    ('de_mills', 'Competitive', 'true',  null),
+    ('de_thera', 'Competitive', 'false',  null),
+    ('de_mills', 'Competitive', 'false',  null),
 
     -- Competitive Workshop
     ('de_cache', 'Competitive', 'false',  '3070596702'),
