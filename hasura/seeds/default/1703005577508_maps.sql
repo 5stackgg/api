@@ -22,12 +22,12 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id") values
     ('foroglio', 'Competitive', 'false',  '3132854332'),
 
     --  Wingman
-    ('de_inferno', 'Wingman', 'true',  null),
-    ('de_nuke', 'Wingman', 'true',  null),
+    ('de_inferno', 'Wingman', 'false',  null),
+    ('de_nuke', 'Wingman', 'false',  null),
     ('de_overpass', 'Wingman', 'false',  null),
-    ('de_vertigo', 'Wingman', 'true',  null),
-    ('de_assembly', 'Wingman', 'true',  null),
-    ('de_memento', 'Wingman', 'true',  null),
+    ('de_vertigo', 'Wingman', 'false',  null),
+    ('de_assembly', 'Wingman', 'false',  null),
+    ('de_memento', 'Wingman', 'false',  null),
 
     --  Wingman Workshop
     ('de_brewery', 'Wingman', 'false',  '3070290240'),
