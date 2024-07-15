@@ -4,6 +4,4 @@ export type GameServersConfig = {
   namespace: string;
   portRange: [string, string];
   defaultRconPassword: string;
-  csUsername: string;
-  csPassword: string;
 };

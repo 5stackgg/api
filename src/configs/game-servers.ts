@@ -12,7 +12,5 @@ export default (): {
       string
     ],
     defaultRconPassword: process.env.DEFAULT_RCON_PASSWORD,
-    csUsername: process.env.CS_USERNAME,
-    csPassword: process.env.CS_PASSWORD,
   },
 });

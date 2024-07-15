@@ -17,9 +17,12 @@ export class QuickConnectController {
       return response.status(500);
     }
 
-    const [address] = await resolve4(host);
-
-    link = link.replace(host, address);
+    try {
+      const [address] = await resolve4(host);
+      link = link.replace(host, address);
+    } catch(error) {
+      console.warn("unable to get address from host", error.message);
+    }
 
     return response.redirect(307, link);
   }

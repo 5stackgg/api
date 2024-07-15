@@ -248,6 +248,28 @@ export class MatchAssistantService {
     try {
       this.logger.verbose(`[${matchId}] create job for on demand server`);
 
+      const { tvPort, gamePort } = await this.getServerPorts();
+
+      const { insert_servers_one: server } = await this.hasura.mutation({
+        insert_servers_one: [
+          {
+            object: {
+              id: serverId,
+              on_demand: true,
+              port: gamePort,
+              tv_port: tvPort,
+              label: `${jobName}`,
+              host: this.gameServerConfig.serverDomain,
+              rcon_password: this.gameServerConfig.defaultRconPassword,
+            },
+          },
+          {
+            id: true,
+            api_password: true,
+          },
+        ],
+      });
+
       await batch.createNamespacedJob(this.namespace, {
         apiVersion: "batch/v1",
         kind: "Job",
@@ -269,35 +291,27 @@ export class MatchAssistantService {
                   name: "server",
                   image: this.gameServerConfig.serverImage,
                   ports: [
-                    { containerPort: 27015, protocol: "TCP" },
-                    { containerPort: 27015, protocol: "UDP" },
-                    { containerPort: 27020, protocol: "TCP" },
-                    { containerPort: 27020, protocol: "UDP" },
+                    { containerPort: gamePort, protocol: "TCP" },
+                    { containerPort: gamePort, protocol: "UDP" },
+                    { containerPort: tvPort, protocol: "TCP" },
+                    { containerPort: tvPort, protocol: "UDP" },
                   ],
                   env: [
-                    { name: "GAME_ID", value: "730" },
-                    { name: "GAME_NAME", value: "counter-strike" },
-                    { name: "GAME_PORT", value: "27015" },
                     {
                       name: "GAME_PARAMS",
-                      value: `-dedicated -dev +map de_inferno -usercon  +rcon_password ${
+                      value: `-ip 0.0.0.0 -port ${gamePort} +tv_port ${tvPort} -dedicated -dev +map de_inferno -usercon +rcon_password ${
                         this.gameServerConfig.defaultRconPassword
                       }
                          +sv_password ${match.password} -authkey ${
                         this.config.get<SteamConfig>("steam").steamApiKey
-                      } -maxplayers 13`,
+                      }
+                      +sv_setsteamaccount ${
+                        this.config.get<SteamConfig>("steam").steamAccount
+                      }
+                       -maxplayers 13`,
                     },
-                    {
-                      name: "USERNAME",
-                      value: this.gameServerConfig.csUsername,
-                    },
-                    {
-                      name: "PASSWRD",
-                      value: this.gameServerConfig.csPassword,
-                    },
-                    { name: "UID", value: "1000" },
-                    { name: "GID", value: "1000" },
-                    { name: "SERVER_ID", value: serverId },
+                    { name: "SERVER_ID", value: server.id },
+                    { name: "SERVER_API_PASSWORD", value: server.api_password }
                   ],
                   volumeMounts: [
                     {
@@ -341,8 +355,6 @@ export class MatchAssistantService {
         },
       });
 
-      const { tvPort, gamePort } = await this.getServerPorts();
-
       this.logger.verbose(`[${matchId}] create service for on demand server`);
 
       await core.createNamespacedService(this.namespace, {
@@ -355,29 +367,29 @@ export class MatchAssistantService {
           type: "NodePort",
           ports: [
             {
-              port: 27015,
-              targetPort: 27015,
+              port: gamePort,
+              targetPort: gamePort,
               nodePort: gamePort,
               name: "rcon",
               protocol: "TCP",
             },
             {
-              port: 27015,
-              targetPort: 27015,
+              port: gamePort,
+              targetPort: gamePort,
               nodePort: gamePort,
               name: "game",
               protocol: "UDP",
             },
             {
-              port: 27020,
-              targetPort: 27020,
+              port: tvPort,
+              targetPort: tvPort,
               nodePort: tvPort,
               name: "tv",
               protocol: "TCP",
             },
             {
-              port: 27020,
-              targetPort: 27020,
+              port: tvPort,
+              targetPort: tvPort,
               nodePort: tvPort,
               name: "tv-udp",
               protocol: "UDP",
@@ -387,25 +399,6 @@ export class MatchAssistantService {
             job: jobName,
           },
         },
-      });
-
-      await this.hasura.mutation({
-        insert_servers_one: [
-          {
-            object: {
-              id: serverId,
-              on_demand: true,
-              port: gamePort,
-              tv_port: tvPort,
-              label: `${jobName}`,
-              host: this.gameServerConfig.serverDomain,
-              rcon_password: this.gameServerConfig.defaultRconPassword,
-            },
-          },
-          {
-            id: true,
-          },
-        ],
       });
 
       await this.hasura.mutation({
@@ -517,12 +510,6 @@ export class MatchAssistantService {
   }
 
   private async stopOnDemandServer(matchId: string) {
-    const server = await this.getMatchServer(matchId);
-
-    if (!server || !server.on_demand) {
-      return;
-    }
-
     this.logger.debug(`[${matchId}] stopping match server`);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
@@ -552,6 +539,12 @@ export class MatchAssistantService {
 
       this.logger.verbose(`[${matchId}] remove service`);
       await core.deleteNamespacedService(jobName, this.namespace);
+
+      const server = await this.getMatchServer(matchId);
+
+      if (!server || !server.on_demand) {
+        return;
+      }
 
       await this.hasura.mutation({
         delete_servers_by_pk: [
