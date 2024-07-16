@@ -166,6 +166,7 @@ export class MatchesController {
           status: true,
           server: {
             id: true,
+            on_demand: true,
           },
         },
       ],
@@ -173,6 +174,10 @@ export class MatchesController {
 
     if (!match) {
       throw Error("unable to find match");
+    }
+
+    if(match.server?.on_demand === false) {
+      await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
     switch (match.status) {

@@ -509,7 +509,7 @@ export class MatchAssistantService {
     await this.stopOnDemandServer(matchId);
   }
 
-  private async stopOnDemandServer(matchId: string) {
+  public async stopOnDemandServer(matchId: string) {
     this.logger.debug(`[${matchId}] stopping match server`);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
@@ -529,16 +529,29 @@ export class MatchAssistantService {
         undefined,
         `job-name=${jobName}`
       );
+
       for (const pod of pods.items) {
         this.logger.verbose(`[${matchId}] remove pod`);
-        await core.deleteNamespacedPod(pod.metadata!.name!, this.namespace);
+        await core.deleteNamespacedPod(pod.metadata!.name!, this.namespace).catch((error) => {
+          if(error?.statusCode !== 404) {
+            throw error;
+          }
+        });
       }
 
       this.logger.verbose(`[${matchId}] remove job`);
-      await batch.deleteNamespacedJob(jobName, this.namespace);
+      await batch.deleteNamespacedJob(jobName, this.namespace).catch((error) => {
+        if(error?.statusCode !== 404) {
+          throw error;
+        }
+      });
 
       this.logger.verbose(`[${matchId}] remove service`);
-      await core.deleteNamespacedService(jobName, this.namespace);
+      await core.deleteNamespacedService(jobName, this.namespace).catch((error) => {
+        if(error?.statusCode !== 404) {
+          throw error;
+        }
+      });
 
       const server = await this.getMatchServer(matchId);
 
