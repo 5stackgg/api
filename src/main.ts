@@ -46,7 +46,7 @@ async function bootstrap() {
         prefix: appConfig.name,
         client: redisManagerService.getConnection(),
       }),
-    })
+    }),
   );
 
   app.use(passport.initialize());

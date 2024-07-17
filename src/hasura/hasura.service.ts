@@ -28,7 +28,7 @@ export class HasuraService {
   }
 
   public async query<Z extends ValueTypes["query_root"]>(
-    gql: Z | ValueTypes["query_root"]
+    gql: Z | ValueTypes["query_root"],
   ) {
     return await this.getClient()("query", {
       scalars,
@@ -37,7 +37,7 @@ export class HasuraService {
 
   public async mutation<Z extends ValueTypes["mutation_root"]>(
     gql: Z | ValueTypes["mutation_root"],
-    variables?: Record<string, unknown>
+    variables?: Record<string, unknown>,
   ) {
     return await this.getClient()("mutation", {
       scalars,

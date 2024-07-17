@@ -10,7 +10,7 @@ export default abstract class MatchEventProcessor<T> {
   constructor(
     protected readonly logger: Logger,
     protected readonly hasura: HasuraService,
-    protected readonly matchAssistant: MatchAssistantService
+    protected readonly matchAssistant: MatchAssistantService,
   ) {}
 
   public setData(matchId: string, data: T) {

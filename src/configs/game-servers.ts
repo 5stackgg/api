@@ -9,7 +9,7 @@ export default (): {
     namespace: process.env.SERVER_NAMESPACE,
     portRange: (process.env.SERVER_PORT_RANGE || "30000:30085").split(":") as [
       string,
-      string
+      string,
     ],
     defaultRconPassword: process.env.DEFAULT_RCON_PASSWORD,
   },

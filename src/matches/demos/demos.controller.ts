@@ -19,14 +19,14 @@ import { S3Interceptor } from "../../s3/s3.interceptor";
 export class DemosController {
   constructor(
     private readonly s3: S3Service,
-    private readonly hasura: HasuraService
+    private readonly hasura: HasuraService,
   ) {}
 
   @Get("/")
   @Get("map/:mapId?")
   public async downloadDemo(
     @Req() request: Request,
-    @Res() response: Response
+    @Res() response: Response,
   ) {
     const { matchId, mapId } = request.params;
 
@@ -94,11 +94,11 @@ export class DemosController {
       const { matchId, mapId } = request.params;
 
       return `${matchId}/${mapId}/demos/${file.originalname}`;
-    })
+    }),
   )
   public async uploadDemo(
     @Req() request: Request,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile() file: Express.Multer.File,
   ) {
     const { matchId, mapId } = request.params;
 

@@ -10,7 +10,7 @@ export class DiscordBotVoiceChannelsService {
   constructor(
     private readonly logger: Logger,
     private readonly cache: CacheService,
-    private readonly bot: DiscordBotService
+    private readonly bot: DiscordBotService,
   ) {}
 
   public async createMatchVoiceChannel(
@@ -18,7 +18,7 @@ export class DiscordBotVoiceChannelsService {
     guildId: string,
     originalChannelId: string,
     categoryChannelId: string,
-    lineupId: string
+    lineupId: string,
   ) {
     const guild = await this.getGuild(guildId);
 
@@ -33,7 +33,7 @@ export class DiscordBotVoiceChannelsService {
       lineupId,
       originalChannelId,
       voiceChannel.id,
-      voiceChannel.guildId
+      voiceChannel.guildId,
     );
   }
 
@@ -42,7 +42,7 @@ export class DiscordBotVoiceChannelsService {
     lineupId: string,
     originalChannelId: string,
     voiceChannelId: string,
-    guildId: string
+    guildId: string,
   ) {
     const voiceChannelData = {
       guildId: guildId,
@@ -52,7 +52,7 @@ export class DiscordBotVoiceChannelsService {
 
     await this.cache.put(
       this.getLineupVoiceChannelCacheKey(matchId, lineupId),
-      voiceChannelData
+      voiceChannelData,
     );
 
     const tag = this.cache.tags(this.getLineupVoiceChannelsCacheKey(matchId));
@@ -68,17 +68,17 @@ export class DiscordBotVoiceChannelsService {
 
   public async getVoiceCache(
     matchId: string,
-    lineupId: string
+    lineupId: string,
   ): Promise<ReturnType<this["setVoiceCache"]>> {
     return await this.cache.get(
-      this.getLineupVoiceChannelCacheKey(matchId, lineupId)
+      this.getLineupVoiceChannelCacheKey(matchId, lineupId),
     );
   }
 
   public async moveMemberToTeamChannel(
     matchId: string,
     lineupId: string,
-    user: CachedDiscordUser
+    user: CachedDiscordUser,
   ) {
     try {
       const voiceCache = await this.getVoiceCache(matchId, lineupId);
@@ -115,11 +115,8 @@ export class DiscordBotVoiceChannelsService {
       >;
 
       for (const lineupId in lineupVoiceChannels) {
-        const {
-          guildId,
-          voiceChannelId,
-          originalChannelId,
-        } = lineupVoiceChannels[lineupId];
+        const { guildId, voiceChannelId, originalChannelId } =
+          lineupVoiceChannels[lineupId];
 
         const guild = await this.getGuild(guildId);
         if (!guild) {
@@ -127,7 +124,7 @@ export class DiscordBotVoiceChannelsService {
         }
 
         const channel = (await guild.channels.fetch(
-          voiceChannelId
+          voiceChannelId,
         )) as GuildChannel;
 
         for (const [, member] of channel.members) {
@@ -139,14 +136,14 @@ export class DiscordBotVoiceChannelsService {
 
         setTimeout(async () => {
           await this.cache.forget(
-            this.getLineupVoiceChannelCacheKey(matchId, lineupId)
+            this.getLineupVoiceChannelCacheKey(matchId, lineupId),
           );
 
           await channel.delete().catch((error) => {
             // do nothing as it may have been deleted already
             this.logger.warn(
               `[${matchId}] unable to delete voice channel`,
-              error
+              error,
             );
           });
         }, 5 * 1000);
@@ -156,7 +153,7 @@ export class DiscordBotVoiceChannelsService {
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to remove team channels`,
-        error.message
+        error.message,
       );
     }
   }

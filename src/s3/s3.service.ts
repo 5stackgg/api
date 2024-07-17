@@ -13,7 +13,7 @@ export class S3Service {
 
   constructor(
     private readonly logger: Logger,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     this.config = this.configService.get("s3");
 
@@ -26,13 +26,13 @@ export class S3Service {
   }
 
   public multerStorage(
-    uploadPath: (request: Request, file: Express.Multer.File) => string
+    uploadPath: (request: Request, file: Express.Multer.File) => string,
   ) {
     return {
       _handleFile: async (
         request: Request,
         file: Express.Multer.File,
-        callback: (error?: string, file?: Express.Multer.File) => void
+        callback: (error?: string, file?: Express.Multer.File) => void,
       ) => {
         try {
           await this.put(uploadPath(request, file), file.stream);
@@ -47,7 +47,7 @@ export class S3Service {
       _removeFile: async (
         request: Request,
         file: Express.Multer.File,
-        callback: (error?: string) => void
+        callback: (error?: string) => void,
       ) => {
         try {
           await this.remove(uploadPath(request, file));

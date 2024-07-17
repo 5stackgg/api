@@ -15,7 +15,7 @@ export class DiscordBotVetoService {
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
     private readonly matchAssistant: MatchAssistantService,
-    @InjectQueue(DiscordBotQueues.DiscordBot) private readonly queue: Queue
+    @InjectQueue(DiscordBotQueues.DiscordBot) private readonly queue: Queue,
   ) {}
 
   static UPDATE_MAP_BANS_JOB_ID(matchId: string) {
@@ -23,7 +23,7 @@ export class DiscordBotVetoService {
   }
 
   public async getMapBanVotes(
-    matchId: string
+    matchId: string,
   ): Promise<Record<string, number>> {
     const votes = await this.getVotes(matchId);
 
@@ -45,13 +45,13 @@ export class DiscordBotVetoService {
   public async getTotalBanVotes(matchId: string) {
     return Object.values(await this.getMapBanVotes(matchId)).reduce(
       (acc, currentValue) => acc + currentValue,
-      0
+      0,
     );
   }
 
   public async getTimeLeft(matchId: string) {
     const job = await this.queue.getJob(
-      DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId)
+      DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId),
     );
     if (!job) {
       return 10;
@@ -66,7 +66,7 @@ export class DiscordBotVetoService {
 
   public async clearBanTimeout(matchId: string) {
     await this.queue.remove(
-      DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId)
+      DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId),
     );
   }
 
@@ -129,7 +129,7 @@ export class DiscordBotVetoService {
   }
 
   private async getVotes(
-    matchId: string
+    matchId: string,
   ): Promise<Record<string, Array<string>>> {
     return (await this.getBanVoteTag(matchId).get()) || {};
   }
@@ -137,7 +137,7 @@ export class DiscordBotVetoService {
   public async updateUserVotes(
     matchId: string,
     userId: string,
-    mapIds: Array<string>
+    mapIds: Array<string>,
   ) {
     await this.getBanVoteTag(matchId).put(userId, mapIds);
 
@@ -146,7 +146,7 @@ export class DiscordBotVetoService {
 
   public async getUserVotes(
     matchId: string,
-    userId: string
+    userId: string,
   ): Promise<ReturnType<this["updateUserVotes"]>> {
     const voteTag = this.getBanVoteTag(matchId);
 

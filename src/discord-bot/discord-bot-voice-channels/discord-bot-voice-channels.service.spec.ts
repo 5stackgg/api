@@ -10,7 +10,7 @@ describe("DiscordBotVoiceChannelsService", () => {
     }).compile();
 
     service = module.get<DiscordBotVoiceChannelsService>(
-      DiscordBotVoiceChannelsService
+      DiscordBotVoiceChannelsService,
     );
   });
 

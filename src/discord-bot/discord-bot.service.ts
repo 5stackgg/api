@@ -27,13 +27,13 @@ const _interactions: {
 
 export function BotButtonInteraction(action: ButtonActions): ClassDecorator {
   return function (target) {
-    _interactions.buttons[action] = (target as unknown) as DiscordInteraction;
+    _interactions.buttons[action] = target as unknown as DiscordInteraction;
   };
 }
 
 export function BotChatCommand(action: ChatCommands): ClassDecorator {
   return function (target) {
-    _interactions.chat[action] = (target as unknown) as DiscordInteraction;
+    _interactions.chat[action] = target as unknown as DiscordInteraction;
   };
 }
 
@@ -49,7 +49,7 @@ export class DiscordBotService {
     readonly config: ConfigService,
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
-    private readonly lazyModuleLoader: LazyModuleLoader
+    private readonly lazyModuleLoader: LazyModuleLoader,
   ) {
     this.client = client;
     this.discordConfig = config.get<DiscordConfig>("discord");
@@ -64,7 +64,7 @@ export class DiscordBotService {
       "./interactions/discord-bot-interaction.module"
     );
     const moduleRef = await this.lazyModuleLoader.load(
-      () => DiscordBotInteractionModule
+      () => DiscordBotInteractionModule,
     );
 
     this.client
@@ -79,9 +79,10 @@ export class DiscordBotService {
             ];
 
           return await moduleRef
-            .get<symbol, DiscordInteraction>(
-              (DiscordInteraction as unknown) as symbol
-            )
+            .get<
+              symbol,
+              DiscordInteraction
+            >(DiscordInteraction as unknown as symbol)
             .handler(interaction);
         }
 
@@ -91,9 +92,10 @@ export class DiscordBotService {
             _interactions.buttons[type as keyof typeof _interactions.buttons];
 
           return await moduleRef
-            .get<symbol, DiscordInteraction>(
-              (DiscordInteraction as unknown) as symbol
-            )
+            .get<
+              symbol,
+              DiscordInteraction
+            >(DiscordInteraction as unknown as symbol)
             .handler(interaction);
         }
       })
@@ -113,17 +115,17 @@ export class DiscordBotService {
           await this.addBaseOptions(
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleComp)
-              .setDescription("Creates a Competitive Match")
+              .setDescription("Creates a Competitive Match"),
           ),
           await this.addBaseOptions(
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleScrimmage)
-              .setDescription("Creates a Scrimmage")
+              .setDescription("Creates a Scrimmage"),
           ),
           await this.addBaseOptions(
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleWingMan)
-              .setDescription("Creates a Wingman Match")
+              .setDescription("Creates a Wingman Match"),
           ),
         ],
       });
@@ -142,44 +144,44 @@ export class DiscordBotService {
         option
           .setName("team-selection")
           .setDescription(
-            "This channel should have at least 10 or 4 people to start a match based on the type."
+            "This channel should have at least 10 or 4 people to start a match based on the type.",
           )
           .setRequired(true)
-          .addChannelTypes(ChannelType.GuildVoice)
+          .addChannelTypes(ChannelType.GuildVoice),
       )
       .addBooleanOption((option) =>
         option
           .setName("knife")
-          .setDescription("Knife Round to pick sides (default: true)")
+          .setDescription("Knife Round to pick sides (default: true)"),
       )
       .addBooleanOption((option) =>
         option
           .setName("overtime")
-          .setDescription("Allow Overtime (default: true)")
+          .setDescription("Allow Overtime (default: true)"),
       )
       .addStringOption((option) =>
         option
           .setName("map")
           .setDescription("override map")
-          .addChoices(...mapChoices)
+          .addChoices(...mapChoices),
       )
       .addBooleanOption((option) =>
         option
           .setName("captains")
-          .setDescription("Captain Picks (default: true)")
+          .setDescription("Captain Picks (default: true)"),
       )
       .addUserOption((option) =>
-        option.setName("captain-1").setDescription("Captain #1")
+        option.setName("captain-1").setDescription("Captain #1"),
       )
       .addUserOption((option) =>
-        option.setName("captain-2").setDescription("Captain #2")
+        option.setName("captain-2").setDescription("Captain #2"),
       )
       .addBooleanOption((option) =>
         option
           .setName("on-demand-server")
           .setDescription(
-            "Use On Demand Server. If disabled, it will ask to use one of your servers (default: true)"
-          )
+            "Use On Demand Server. If disabled, it will ask to use one of your servers (default: true)",
+          ),
       )
       .addStringOption((option) =>
         option
@@ -189,8 +191,8 @@ export class DiscordBotService {
             { name: "MR3", value: "3" },
             { name: "MR8", value: "8" },
             { name: "MR12", value: "12" },
-            { name: "MR15", value: "15" }
-          )
+            { name: "MR15", value: "15" },
+          ),
       );
   }
 

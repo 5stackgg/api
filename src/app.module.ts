@@ -61,7 +61,7 @@ import { loggerFactory } from "./utilities/LoggerFactory";
 export class AppModule {
   constructor(
     private readonly typesense: TypeSenseService,
-    private readonly discordBot: DiscordBotService
+    private readonly discordBot: DiscordBotService,
   ) {
     void this.setup();
   }

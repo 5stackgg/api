@@ -30,7 +30,7 @@ export class PostgresModule {
         repeat: {
           pattern: "0 * * * *",
         },
-      }
+      },
     );
   }
 }

@@ -21,7 +21,7 @@ export class ServerAuthService {
     private readonly logger: Logger,
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
-    readonly redisManager: RedisManagerService
+    readonly redisManager: RedisManagerService,
   ) {
     this.redis = redisManager.getConnection();
 
@@ -38,7 +38,7 @@ export class ServerAuthService {
       void this.addMatch(match).catch((error) => {
         this.logger.warn(
           `unable to setup redis ACL for match ${match.id}`,
-          error
+          error,
         );
       });
     }
@@ -68,8 +68,8 @@ export class ServerAuthService {
     });
 
     return matches as Array<
-      Omit<typeof matches[number], "server"> & {
-        server: Required<NonNullable<typeof matches[number]["server"]>>;
+      Omit<(typeof matches)[number], "server"> & {
+        server: Required<NonNullable<(typeof matches)[number]["server"]>>;
       }
     >;
   }

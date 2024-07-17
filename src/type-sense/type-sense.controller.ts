@@ -20,7 +20,7 @@ export class TypeSenseController {
   @HasuraEvent()
   public async team_roster_events(data: HasuraEventData<"team_roster">) {
     await this.typeSense.updatePlayer(
-      (data.new.player_steam_id || data.old.player_steam_id) as string
+      (data.new.player_steam_id || data.old.player_steam_id) as string,
     );
   }
 }

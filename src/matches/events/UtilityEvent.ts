@@ -21,8 +21,8 @@ export default class UtilityEvent extends MatchEventProcessor<{
             round: this.data.round,
             type: this.data.type,
             attacker_steam_id: this.data.attacker_steam_id,
-            attacker_location_coordinates: this.data
-              .attacker_location_coordinates,
+            attacker_location_coordinates:
+              this.data.attacker_location_coordinates,
           },
         },
         {

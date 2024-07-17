@@ -24,7 +24,7 @@ export class MatchesController {
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,
-    private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService
+    private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
   ) {}
 
   @Get("current-match/:serverId")
@@ -176,32 +176,27 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if(match.server?.on_demand === false) {
+    if (match.server?.on_demand === false) {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
-    switch (match.status) {
-      case e_match_status_enum.Scheduled:
-        break;
-      case e_match_status_enum.Veto:
-      case e_match_status_enum.Live:
-        if (match.server) {
-          if (!(await this.matchAssistant.isMatchServerAvailable(matchId))) {
-            this.logger.warn(
-              `[${matchId}] another match is currently live, moving back to scheduled`
-            );
-            await this.matchAssistant.updateMatchStatus(
-              match.id,
-              e_match_status_enum.Scheduled
-            );
-          }
-        } else {
-          /**
-           * if we don't have a server id it means we need to assign it one
-           */
-          await this.matchAssistant.assignOnDemandServer(matchId);
+    if (match.status === e_match_status_enum.Live) {
+      if (match.server) {
+        if (!(await this.matchAssistant.isMatchServerAvailable(matchId))) {
+          this.logger.warn(
+            `[${matchId}] another match is currently live, moving back to scheduled`,
+          );
+          await this.matchAssistant.updateMatchStatus(
+            match.id,
+            e_match_status_enum.Scheduled,
+          );
         }
-        break;
+      } else {
+        /**
+         * if we don't have a server id it means we need to assign it one
+         */
+        await this.matchAssistant.assignOnDemandServer(matchId);
+      }
     }
 
     const matchServer = await this.matchAssistant.getMatchServer(matchId);
@@ -220,7 +215,7 @@ export class MatchesController {
     ) {
       await this.matchAssistant.updateMatchStatus(
         matchId,
-        e_match_status_enum.Scheduled
+        e_match_status_enum.Scheduled,
       );
     }
 
@@ -343,7 +338,7 @@ export class MatchesController {
     // TODO - right now the DB doesn't have an idea how many on demands servers we allow
     if (updated_match.status !== nextPhase) {
       throw Error(
-        "Server is not available, another match is using this server currently"
+        "Server is not available, another match is using this server currently",
       );
     }
 
@@ -408,7 +403,7 @@ export class MatchesController {
       event: string;
       data: Record<string, unknown>;
     },
-    @Ctx() context: NatsContext
+    @Ctx() context: NatsContext,
   ) {
     const Processor = MatchEvents[event as keyof typeof MatchEvents];
 
@@ -417,9 +412,8 @@ export class MatchesController {
       return;
     }
 
-    const processor = await this.moduleRef.resolve<
-      MatchEventProcessor<unknown>
-    >(Processor);
+    const processor =
+      await this.moduleRef.resolve<MatchEventProcessor<unknown>>(Processor);
 
     const [, matchId] = context.getArgByIndex(0).split(":");
 

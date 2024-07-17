@@ -8,7 +8,10 @@ import { CachedValue } from "./types/CachedValue";
 export class CacheService {
   private connection: Redis;
 
-  constructor(redis: RedisManagerService, public readonly logger: Logger) {
+  constructor(
+    redis: RedisManagerService,
+    public readonly logger: Logger,
+  ) {
     this.connection = redis.getConnection();
   }
 
@@ -52,7 +55,7 @@ export class CacheService {
   public async remember(
     key: string,
     callback: () => CachedValue,
-    seconds: number
+    seconds: number,
   ) {
     const value = await this.get(key);
     if (value !== undefined) {
@@ -82,7 +85,7 @@ export class CacheService {
   public async lock(
     key: string,
     callback: () => Promise<CachedValue>,
-    expires = 60
+    expires = 60,
   ): Promise<CachedValue> {
     const lockKey = `lock:${key}`;
     if (await this.connection.set(lockKey, 1, "EX", expires, "NX")) {

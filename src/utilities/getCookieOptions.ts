@@ -35,7 +35,7 @@ export function getCookieOptions(
     domain: process.env.AUTH_COOKIE_DOMAIN,
     maxAge: 14 * 24 * 60 * 60 * 1000,
     secure: true,
-  }
+  },
 ): CookieOptions {
   return Object.assign({}, defaultOptions, options);
 }

@@ -19,13 +19,13 @@ import { HasuraService } from "../../hasura/hasura.service";
 export class BackupRoundsController {
   constructor(
     private readonly s3: S3Service,
-    private readonly hasura: HasuraService
+    private readonly hasura: HasuraService,
   ) {}
 
   @Get("map/:mapId")
   public async downloadMapBackupRounds(
     @Req() request: Request,
-    @Res() response: Response
+    @Res() response: Response,
   ) {
     const { matchId, mapId } = request.params;
 
@@ -77,11 +77,11 @@ export class BackupRoundsController {
       const { matchId, mapId } = request.params;
 
       return `${matchId}/${mapId}/backup-rounds/${file.originalname}`;
-    })
+    }),
   )
   public async uploadBackupRound(
     @Req() request: Request,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile() file: Express.Multer.File,
   ) {
     const { matchId, mapId, round } = request.params;
 

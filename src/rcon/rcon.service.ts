@@ -8,7 +8,7 @@ export class RconService {
   constructor(
     private readonly logger: Logger,
     private readonly hasuraService: HasuraService,
-    private readonly encryption: EncryptionService
+    private readonly encryption: EncryptionService,
   ) {}
 
   private CONNECTION_TIMEOUT = 10 * 1000;

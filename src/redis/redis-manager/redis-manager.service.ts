@@ -13,16 +13,15 @@ export class RedisManagerService {
 
   constructor(
     private readonly logger: Logger,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     this.config = this.configService.get("redis");
   }
 
   public getConnection(connection = "default"): Redis {
     if (!this.connections[connection]) {
-      const currentConnection: Redis = (this.connections[
-        connection
-      ] = new IORedis(this.getConfig(connection)));
+      const currentConnection: Redis = (this.connections[connection] =
+        new IORedis(this.getConfig(connection)));
 
       for (const status of ["ready", "close", "end"]) {
         currentConnection.on(status, () => {
@@ -92,7 +91,7 @@ export class RedisManagerService {
           return 5 * 1000;
         },
       },
-      this.config.connections[connection]
+      this.config.connections[connection],
     );
   }
 }

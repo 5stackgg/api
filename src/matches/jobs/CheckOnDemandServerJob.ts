@@ -14,14 +14,14 @@ import { DiscordBotOverviewService } from "../../discord-bot/discord-bot-overvie
 export class CheckOnDemandServerJob extends WorkerHost {
   constructor(
     private readonly matchAssistant: MatchAssistantService,
-    private readonly discordMatchOverview: DiscordBotOverviewService
+    private readonly discordMatchOverview: DiscordBotOverviewService,
   ) {
     super();
   }
   async process(
     job: Job<{
       matchId: string;
-    }>
+    }>,
   ): Promise<void> {
     const { matchId } = job.data;
 

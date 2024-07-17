@@ -10,7 +10,7 @@ export class DiscordBotController {
 
     return response.redirect(
       302,
-      `https://discord.com/oauth2/authorize?client_id=1168695390502141982&permissions=${permissions}&scope=bot%20applications.commands`
+      `https://discord.com/oauth2/authorize?client_id=1168695390502141982&permissions=${permissions}&scope=bot%20applications.commands`,
     );
   }
 }

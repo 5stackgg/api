@@ -12,7 +12,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
     logger: Logger,
     hasura: HasuraService,
     matchAssistant: MatchAssistantService,
-    private readonly s3: S3Service
+    private readonly s3: S3Service,
   ) {
     super(logger, hasura, matchAssistant);
   }
@@ -83,7 +83,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
     }
 
     this.logger.warn(
-      `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`
+      `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`,
     );
 
     await this.matchAssistant.restoreMatchRound(this.matchId, round);

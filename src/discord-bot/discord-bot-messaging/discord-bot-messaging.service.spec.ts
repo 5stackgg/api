@@ -10,7 +10,7 @@ describe("DiscordBotMessagingService", () => {
     }).compile();
 
     service = module.get<DiscordBotMessagingService>(
-      DiscordBotMessagingService
+      DiscordBotMessagingService,
     );
   });
 

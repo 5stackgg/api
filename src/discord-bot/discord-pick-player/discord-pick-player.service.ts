@@ -33,7 +33,7 @@ export class DiscordPickPlayerService {
     private readonly bot: DiscordBotService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
-    private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService
+    private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
   ) {}
 
   public async setAvailablePlayerPool(matchId: string, users: User[]) {
@@ -51,7 +51,7 @@ export class DiscordPickPlayerService {
   }
 
   public async getAvailablePlayerPool(
-    matchId: string
+    matchId: string,
   ): Promise<ReturnType<this["setAvailablePlayerPool"]>> {
     return this.cache.get(this.getAvailableUsersCacheKey(matchId));
   }
@@ -77,15 +77,15 @@ export class DiscordPickPlayerService {
     }
 
     const captain = await this.bot.client.users.fetch(
-      currentCaptain.discord_id
+      currentCaptain.discord_id,
     );
 
     const otherCaptainDiscordUser = await this.bot.client.users.fetch(
-      otherCaptain.discord_id
+      otherCaptain.discord_id,
     );
 
     const otherCaptainMessage = await otherCaptainDiscordUser.send(
-      `Other captain is picking ${picks} ${picks > 1 ? "people" : "person"}`
+      `Other captain is picking ${picks} ${picks > 1 ? "people" : "person"}`,
     );
 
     const users = await this.getAvailablePlayerPool(matchId);
@@ -115,7 +115,7 @@ export class DiscordPickPlayerService {
 
       await this.discordBotMessaging.sendToMatchThread(
         matchId,
-        "error: not enough users for team selection"
+        "error: not enough users for team selection",
       );
 
       return;
@@ -140,23 +140,24 @@ export class DiscordPickPlayerService {
       captainMessage = await captain.send({
         components: [
           new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-            UserSelector
+            UserSelector,
           ),
         ],
       });
 
       try {
-        const result = await captainMessage.awaitMessageComponent<ComponentType.StringSelect>(
-          {
-            time: this.PlayerSelectionTimeoutSeconds * 1000,
-          }
-        );
+        const result =
+          await captainMessage.awaitMessageComponent<ComponentType.StringSelect>(
+            {
+              time: this.PlayerSelectionTimeoutSeconds * 1000,
+            },
+          );
 
         pickedUserIds = result.values;
       } catch (error) {
         if (
           !error.message.includes(
-            "Collector received no interactions before ending with reason: time"
+            "Collector received no interactions before ending with reason: time",
           )
         ) {
           // TODO - we should be able to detect this.
@@ -164,9 +165,8 @@ export class DiscordPickPlayerService {
         }
         pickedUserIds = [];
         while (pickedUserIds.length < picks) {
-          const { value } = availableUsers[
-            getRandomNumber(0, availableUsers.length - 1)
-          ];
+          const { value } =
+            availableUsers[getRandomNumber(0, availableUsers.length - 1)];
           if (!pickedUserIds.includes(value)) {
             pickedUserIds.push(value);
           }
@@ -193,7 +193,7 @@ export class DiscordPickPlayerService {
 
     await this.discordBotMessaging.sendToMatchThread(
       matchId,
-      `**${captain.globalName || captain.username}** ${pickedMsg}`
+      `**${captain.globalName || captain.username}** ${pickedMsg}`,
     );
 
     if (captainMessage) {
@@ -204,7 +204,7 @@ export class DiscordPickPlayerService {
     }
 
     await otherCaptainMessage.edit(
-      `**${captain.globalName || captain.username}** ${pickedMsg}`
+      `**${captain.globalName || captain.username}** ${pickedMsg}`,
     );
 
     if (
@@ -213,7 +213,7 @@ export class DiscordPickPlayerService {
       [...new Set(pickedDiscordUserIds)].length === ExpectedPlayers[match.type]
     ) {
       const mapVotingLink = `Map Voting is starting: ${await this.discordBotMessaging.getMatchReplyLink(
-        matchId
+        matchId,
       )}`;
       await captain.send(mapVotingLink);
       await otherCaptainDiscordUser.send(mapVotingLink);
@@ -229,12 +229,12 @@ export class DiscordPickPlayerService {
       match.type === e_match_types_enum.Wingman
         ? 1
         : /**
-         * Pick Order: 1 -> 2 -> 1 by 1
-         */
-        // 3 because the 2 captains are in the total
-        pickedDiscordUserIds.length === 3
-        ? 2
-        : 1
+           * Pick Order: 1 -> 2 -> 1 by 1
+           */
+          // 3 because the 2 captains are in the total
+          pickedDiscordUserIds.length === 3
+          ? 2
+          : 1,
     );
   }
 
@@ -242,7 +242,7 @@ export class DiscordPickPlayerService {
     matchId: string,
     lineupId: string,
     user: CachedDiscordUser,
-    captain = false
+    captain = false,
   ) {
     const { players } = await this.hasura.query({
       players: [
@@ -281,7 +281,7 @@ export class DiscordPickPlayerService {
     await this.discordBotVoiceChannels.moveMemberToTeamChannel(
       matchId,
       lineupId,
-      user
+      user,
     );
   }
 
@@ -290,7 +290,7 @@ export class DiscordPickPlayerService {
 
     await this.matchAssistant.updateMatchStatus(
       matchId,
-      e_match_status_enum.Veto
+      e_match_status_enum.Veto,
     );
   }
 

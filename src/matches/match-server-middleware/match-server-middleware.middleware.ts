@@ -9,7 +9,7 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
   async use(
     @Req() request: Request,
     @Res() response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) {
     const { matchId, serverId } = request.params;
 

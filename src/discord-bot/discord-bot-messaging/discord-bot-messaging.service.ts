@@ -14,7 +14,7 @@ export class DiscordBotMessagingService {
   constructor(
     private readonly logger: Logger,
     private readonly cache: CacheService,
-    private readonly bot: DiscordBotService
+    private readonly bot: DiscordBotService,
   ) {}
 
   public async getMatchThread(matchId: string) {
@@ -80,7 +80,7 @@ export class DiscordBotMessagingService {
 
   public async sendInitialReply(
     interaction: ChatInputCommandInteraction,
-    matchId: string
+    matchId: string,
   ) {
     const reply = await interaction.followUp({
       fetchReply: true,
@@ -106,7 +106,7 @@ export class DiscordBotMessagingService {
   }
 
   public async getMatchReplyCache(
-    matchId: string
+    matchId: string,
   ): Promise<ReturnType<this["setMatchReplyCache"]>> {
     return await this.cache.get(this.getMatchReplyCacheKey(matchId));
   }
@@ -127,7 +127,7 @@ export class DiscordBotMessagingService {
   }
 
   public async getMatchThreadCache(
-    matchId: string
+    matchId: string,
   ): Promise<ReturnType<this["setMatchThreadCache"]>> {
     return await this.cache.get(this.getMatchThreadCacheKey(matchId));
   }
