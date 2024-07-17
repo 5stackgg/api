@@ -8,7 +8,7 @@ BEGIN
 	RETURN NEW;
 END;
 $$;
-CREATE FUNCTION public.can_pick_veto() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.can_pick_veto() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -17,11 +17,12 @@ DECLARE
     match_type VARCHAR(255);
     match_best_of INTEGER;
     pickType VARCHAR(255);
-    pickPattern VARCHAR[];
+    vetoPattern VARCHAR[];
     lastPick match_veto_picks%ROWTYPE;
     totalPicks int;
     lineup_id uuid;
     _match matches;
+    map_pool uuid[];
     available_maps uuid[];
     use_active_pool BOOLEAN;
 BEGIN
@@ -33,17 +34,14 @@ BEGIN
     -- Get match type and best_of from matches table
     SELECT type, best_of INTO match_type, match_best_of FROM matches m WHERE m.id = _match_id;
 
-    -- Get available maps for the match
-    SELECT array_agg(mp.map_id) INTO available_maps
+    -- Get map pool for the match
+    SELECT array_agg(mp.map_id) INTO map_pool
         FROM matches m
         LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
         LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
-        WHERE m.id = NEW.match_id
-        AND mvp IS NULL;
+        WHERE m.id = NEW.match_id;
 
-
---     ARRAY['Ban', 'Ban', 'Pick', 'Side', 'Pick', 'Side']
-
+    vetoPattern = get_veto_pattern(map_pool, best_of);
 
     -- Get the last pick from match_veto_picks table
     SELECT * INTO lastPick FROM match_veto_picks WHERE match_id = _match_id ORDER BY created_at DESC LIMIT 1;
@@ -53,12 +51,20 @@ BEGIN
     IF match_best_of = 1 THEN
         pickType := 'Ban';
     ELSE
-        pickType := pickPattern[(totalPicks % array_length(pickPattern, 1)) + 1];
+        pickType := vetoPattern[(totalPicks % array_length(vetoPattern, 1)) + 1];
     END IF;
 
-    -- If only one map is available, set pickType to 'LeftOver'
+    -- Get available maps for the match
+    SELECT array_agg(mp.map_id) INTO available_maps
+        FROM matches m
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
+        WHERE m.id = NEW.match_id
+        AND mvp IS NULL;
+        
+    -- If only one map is available, set pickType to 'Decider'
     IF array_length(available_maps, 1) = 1 THEN
-        pickType := 'LeftOver';
+        pickType := 'Decider';
     END IF;
     -- Check if the pickType matches the type of the new veto
     IF NEW.type != pickType THEN
@@ -175,10 +181,10 @@ BEGIN
     SELECT * INTO _match FROM matches WHERE id = NEW.match_id LIMIT 1;
     -- Determine the lineup ID for veto picking
     SELECT * INTO lineup_id FROM get_veto_picking_lineup_id(_match); 
-    -- Insert the leftover map into match_veto_picks table
+    -- Insert the Decider map into match_veto_picks table
     INSERT INTO match_veto_picks (match_id, type, match_lineup_id, map_id)
-    VALUES (NEW.match_id, 'LeftOver', lineup_id, available_maps[1]);
-    -- Update the total number of maps for the match and insert the leftover map into match_maps
+    VALUES (NEW.match_id, 'Decider', lineup_id, available_maps[1]);
+    -- Update the total number of maps for the match and insert the Decider map into match_maps
     SELECT count(*) INTO total_maps FROM match_maps WHERE match_id = NEW.match_id;
     INSERT INTO match_maps (match_id, map_id, "order")
     VALUES (NEW.match_id, available_maps[1], total_maps + 1);
