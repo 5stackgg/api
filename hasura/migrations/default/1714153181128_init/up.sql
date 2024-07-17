@@ -17,7 +17,7 @@ DECLARE
     match_type VARCHAR(255);
     match_best_of INTEGER;
     pickType VARCHAR(255);
-    pickPattern VARCHAR[] := ARRAY['Ban', 'Ban', 'Pick', 'Side', 'Pick', 'Side'];
+    pickPattern VARCHAR[];
     lastPick match_veto_picks%ROWTYPE;
     totalPicks int;
     lineup_id uuid;
@@ -25,11 +25,26 @@ DECLARE
     available_maps uuid[];
     use_active_pool BOOLEAN;
 BEGIN
+    -- TOOD - https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
+
     -- Get match_id and match_lineup_id from NEW or OLD depending on their availability
     _match_id := COALESCE(NEW.match_id, OLD.match_id);
     _match_lineup_id := COALESCE(NEW.match_lineup_id, OLD.match_lineup_id);
     -- Get match type and best_of from matches table
-    SELECT type, best_of INTO match_type, match_best_of FROM matches m WHERE m.id = _match_id; 
+    SELECT type, best_of INTO match_type, match_best_of FROM matches m WHERE m.id = _match_id;
+
+    -- Get available maps for the match
+    SELECT array_agg(mp.map_id) INTO available_maps
+        FROM matches m
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
+        WHERE m.id = NEW.match_id
+        AND mvp IS NULL;
+
+
+--     ARRAY['Ban', 'Ban', 'Pick', 'Side', 'Pick', 'Side']
+
+
     -- Get the last pick from match_veto_picks table
     SELECT * INTO lastPick FROM match_veto_picks WHERE match_id = _match_id ORDER BY created_at DESC LIMIT 1;
     -- Count total picks for the match
@@ -40,13 +55,7 @@ BEGIN
     ELSE
         pickType := pickPattern[(totalPicks % array_length(pickPattern, 1)) + 1];
     END IF;
-    -- Get available maps for the match
-  SELECT array_agg(mp.map_id) INTO available_maps
-  FROM matches m
-  LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-  LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
-  WHERE m.id = NEW.match_id
-  AND mvp IS NULL;
+
     -- If only one map is available, set pickType to 'LeftOver'
     IF array_length(available_maps, 1) = 1 THEN
         pickType := 'LeftOver';
