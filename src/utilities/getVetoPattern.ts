@@ -1,6 +1,6 @@
 const basePattern = ["Ban", "Ban", "Pick", "Pick"];
 
-export default function getPattern(pool: Array<string>, bestOf: number) {
+export default function getVetoPattern(pool: Array<string>, bestOf: number) {
   const pattern: Array<string> = [];
 
   while(pattern.length !== pool.length - 1) {
