@@ -44,7 +44,7 @@ BEGIN
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
   LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-  LEFT JOIN match_veto_picks mvp ON mvp.map_id = mp.map_id 
+  LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
   WHERE m.id = NEW.match_id
   AND mvp IS NULL;
     -- If only one map is available, set pickType to 'LeftOver'
@@ -157,7 +157,7 @@ BEGIN
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
   LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-  LEFT JOIN match_veto_picks mvp ON mvp.map_id = mp.map_id 
+  LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
   WHERE m.id = NEW.match_id
   AND mvp IS NULL;
   -- If only one map is available for veto
