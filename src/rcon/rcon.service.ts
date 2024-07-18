@@ -43,7 +43,9 @@ export class RconService {
     const rcon = new RconClient({
       host: server.host,
       port: server.port,
-      password: await this.encryption.decrypt(server.rcon_password as unknown as string),
+      password: await this.encryption.decrypt(
+        server.rcon_password as unknown as string,
+      ),
     });
 
     rcon.send = async (command) => {
