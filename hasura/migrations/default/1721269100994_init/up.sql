@@ -923,9 +923,6 @@ CREATE TABLE public._map_pool (
     map_id uuid NOT NULL,
     map_pool_id uuid NOT NULL
 );
-CREATE TABLE public.available_maps (
-    array_agg uuid[]
-);
 CREATE TABLE public.e_match_map_status (
     value text NOT NULL,
     description text NOT NULL
