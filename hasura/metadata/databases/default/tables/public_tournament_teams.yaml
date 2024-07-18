@@ -25,6 +25,7 @@ select_permissions:
     permission:
       columns:
         - id
+        - name
         - team_id
         - tournament_id
       filter: {}

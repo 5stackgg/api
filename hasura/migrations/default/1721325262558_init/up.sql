@@ -863,6 +863,23 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+
+CREATE OR REPLACE FUNCTION public.update_tournament_stage()
+RETURNS TRIGGER AS $$
+DECLARE
+    stages tournament_stages[];
+BEGIN
+    SELECT stages INTO stages
+    FROM tournament
+    WHERE id = NEW.tournament_id;
+
+    -- You can add additional logic here to process the stages array
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE FUNCTION public.tbui_match_lineup_players() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1398,6 +1415,7 @@ CREATE TRIGGER tbiu_update_total_damage_trigger BEFORE INSERT OR UPDATE ON publi
 CREATE TRIGGER tbu_match_player_count BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_player_count();
 CREATE TRIGGER tbu_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_status();
 CREATE TRIGGER tbui_match_lineup_players BEFORE INSERT OR UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbui_match_lineup_players();
+CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public._map_pool

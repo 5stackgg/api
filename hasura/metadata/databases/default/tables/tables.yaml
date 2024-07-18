@@ -29,6 +29,7 @@
 - "!include public_team_invites.yaml"
 - "!include public_team_roster.yaml"
 - "!include public_teams.yaml"
+- "!include public_tournament_brackets.yaml"
 - "!include public_tournament_organizers.yaml"
 - "!include public_tournament_roster.yaml"
 - "!include public_tournament_servers.yaml"

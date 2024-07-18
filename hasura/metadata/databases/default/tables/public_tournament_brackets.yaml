@@ -1,0 +1,16 @@
+table:
+  name: tournament_brackets
+  schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - match_id
+        - parent_bracket_id
+        - roster_1_id
+        - roster_2_id
+        - tournament_stage_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""

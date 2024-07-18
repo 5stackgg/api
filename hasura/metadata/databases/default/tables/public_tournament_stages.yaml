@@ -22,12 +22,15 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - max_teams
+        - min_teams
         - order
         - settings
         - type
         - id
         - tournament_id
       filter: {}
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: user
