@@ -1,9 +1,5 @@
 SET check_function_bodies = false;
-CREATE TYPE public.e_veto_pick_types_enum AS ENUM (
-    'Ban',
-    'Pick',
-    'Side'
-);
+
 CREATE FUNCTION public.add_owner_to_team() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
