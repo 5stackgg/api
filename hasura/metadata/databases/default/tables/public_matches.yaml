@@ -129,6 +129,11 @@ computed_fields:
       function:
         name: get_match_lineup_2_id
         schema: public
+  - name: server_type
+    definition:
+      function:
+        name: get_match_server_type
+        schema: public
   - name: teams
     definition:
       function:
@@ -209,6 +214,7 @@ select_permissions:
         - is_match_server_available
         - lineup_1_id
         - lineup_2_id
+        - server_type
         - tv_connection_link
         - tv_connection_string
         - veto_picking_lineup_id
