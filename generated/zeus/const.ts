@@ -2548,9 +2548,6 @@ export const AllTypesProps: Record<string,any> = {
 		delete_v_match_captains:{
 			where:"v_match_captains_bool_exp"
 		},
-		delete_v_pool_maps:{
-			where:"v_pool_maps_bool_exp"
-		},
 		insert__map_pool:{
 			objects:"_map_pool_insert_input",
 			on_conflict:"_map_pool_on_conflict"
@@ -2852,12 +2849,6 @@ export const AllTypesProps: Record<string,any> = {
 		},
 		insert_v_match_captains_one:{
 			object:"v_match_captains_insert_input"
-		},
-		insert_v_pool_maps:{
-			objects:"v_pool_maps_insert_input"
-		},
-		insert_v_pool_maps_one:{
-			object:"v_pool_maps_insert_input"
 		},
 		scheduleMatch:{
 			match_id:"uuid",
@@ -8247,6 +8238,8 @@ export const AllTypesProps: Record<string,any> = {
 		map_pool:"map_pools_bool_exp",
 		map_pool_id:"uuid_comparison_exp",
 		name:"String_comparison_exp",
+		patch:"String_comparison_exp",
+		poster:"String_comparison_exp",
 		type:"String_comparison_exp",
 		workshop_map_id:"String_comparison_exp"
 	},
@@ -8259,6 +8252,8 @@ export const AllTypesProps: Record<string,any> = {
 		id:"order_by",
 		map_pool_id:"order_by",
 		name:"order_by",
+		patch:"order_by",
+		poster:"order_by",
 		type:"order_by",
 		workshop_map_id:"order_by"
 	},
@@ -8266,6 +8261,8 @@ export const AllTypesProps: Record<string,any> = {
 		id:"order_by",
 		map_pool_id:"order_by",
 		name:"order_by",
+		patch:"order_by",
+		poster:"order_by",
 		type:"order_by",
 		workshop_map_id:"order_by"
 	},
@@ -8275,6 +8272,8 @@ export const AllTypesProps: Record<string,any> = {
 		map_pool:"map_pools_order_by",
 		map_pool_id:"order_by",
 		name:"order_by",
+		patch:"order_by",
+		poster:"order_by",
 		type:"order_by",
 		workshop_map_id:"order_by"
 	},
@@ -9451,7 +9450,6 @@ export const ReturnTypes: Record<string,any> = {
 		delete_tournaments:"tournaments_mutation_response",
 		delete_tournaments_by_pk:"tournaments",
 		delete_v_match_captains:"v_match_captains_mutation_response",
-		delete_v_pool_maps:"v_pool_maps_mutation_response",
 		insert__map_pool:"_map_pool_mutation_response",
 		insert__map_pool_one:"_map_pool",
 		insert_e_match_map_status:"e_match_map_status_mutation_response",
@@ -9528,8 +9526,6 @@ export const ReturnTypes: Record<string,any> = {
 		insert_tournaments_one:"tournaments",
 		insert_v_match_captains:"v_match_captains_mutation_response",
 		insert_v_match_captains_one:"v_match_captains",
-		insert_v_pool_maps:"v_pool_maps_mutation_response",
-		insert_v_pool_maps_one:"v_pool_maps",
 		scheduleMatch:"SuccessOutput",
 		startMatch:"SuccessOutput",
 		update__map_pool:"_map_pool_mutation_response",
@@ -12003,6 +11999,8 @@ export const ReturnTypes: Record<string,any> = {
 		map_pool:"map_pools",
 		map_pool_id:"uuid",
 		name:"String",
+		patch:"String",
+		poster:"String",
 		type:"String",
 		workshop_map_id:"String"
 	},
@@ -12019,6 +12017,8 @@ export const ReturnTypes: Record<string,any> = {
 		id:"uuid",
 		map_pool_id:"uuid",
 		name:"String",
+		patch:"String",
+		poster:"String",
 		type:"String",
 		workshop_map_id:"String"
 	},
@@ -12026,12 +12026,10 @@ export const ReturnTypes: Record<string,any> = {
 		id:"uuid",
 		map_pool_id:"uuid",
 		name:"String",
+		patch:"String",
+		poster:"String",
 		type:"String",
 		workshop_map_id:"String"
-	},
-	v_pool_maps_mutation_response:{
-		affected_rows:"Int",
-		returning:"v_pool_maps"
 	}
 }
 

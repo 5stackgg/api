@@ -5328,8 +5328,6 @@ delete_tournaments?: [{	/** filter the rows which have to be deleted */
 delete_tournaments_by_pk?: [{	id: ValueTypes["uuid"] | Variable<any, string>},ValueTypes["tournaments"]],
 delete_v_match_captains?: [{	/** filter the rows which have to be deleted */
 	where: ValueTypes["v_match_captains_bool_exp"] | Variable<any, string>},ValueTypes["v_match_captains_mutation_response"]],
-delete_v_pool_maps?: [{	/** filter the rows which have to be deleted */
-	where: ValueTypes["v_pool_maps_bool_exp"] | Variable<any, string>},ValueTypes["v_pool_maps_mutation_response"]],
 insert__map_pool?: [{	/** the rows to be inserted */
 	objects: Array<ValueTypes["_map_pool_insert_input"]> | Variable<any, string>,	/** upsert condition */
 	on_conflict?: ValueTypes["_map_pool_on_conflict"] | undefined | null | Variable<any, string>},ValueTypes["_map_pool_mutation_response"]],
@@ -5556,10 +5554,6 @@ insert_v_match_captains?: [{	/** the rows to be inserted */
 	objects: Array<ValueTypes["v_match_captains_insert_input"]> | Variable<any, string>},ValueTypes["v_match_captains_mutation_response"]],
 insert_v_match_captains_one?: [{	/** the row to be inserted */
 	object: ValueTypes["v_match_captains_insert_input"] | Variable<any, string>},ValueTypes["v_match_captains"]],
-insert_v_pool_maps?: [{	/** the rows to be inserted */
-	objects: Array<ValueTypes["v_pool_maps_insert_input"]> | Variable<any, string>},ValueTypes["v_pool_maps_mutation_response"]],
-insert_v_pool_maps_one?: [{	/** the row to be inserted */
-	object: ValueTypes["v_pool_maps_insert_input"] | Variable<any, string>},ValueTypes["v_pool_maps"]],
 scheduleMatch?: [{	match_id: ValueTypes["uuid"] | Variable<any, string>,	time?: ValueTypes["timestamptz"] | undefined | null | Variable<any, string>},ValueTypes["SuccessOutput"]],
 startMatch?: [{	match_id: ValueTypes["uuid"] | Variable<any, string>,	server_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>},ValueTypes["SuccessOutput"]],
 update__map_pool?: [{	/** sets the columns of the filtered rows to the given values */
@@ -14275,6 +14269,8 @@ count?: [{	columns?: Array<ValueTypes["v_player_opening_duels_select_column"]> |
 	map_pool?:ValueTypes["map_pools"],
 	map_pool_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
+	patch?:boolean | `@${string}`,
+	poster?:boolean | `@${string}`,
 	type?:boolean | `@${string}`,
 	workshop_map_id?:boolean | `@${string}`,
 		__typename?: boolean | `@${string}`
@@ -14335,6 +14331,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	map_pool?: ValueTypes["map_pools_bool_exp"] | undefined | null | Variable<any, string>,
 	map_pool_id?: ValueTypes["uuid_comparison_exp"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
+	patch?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
+	poster?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
 	type?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
 	workshop_map_id?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>
 };
@@ -14345,6 +14343,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	map_pool?: ValueTypes["map_pools_obj_rel_insert_input"] | undefined | null | Variable<any, string>,
 	map_pool_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	name?: string | undefined | null | Variable<any, string>,
+	patch?: string | undefined | null | Variable<any, string>,
+	poster?: string | undefined | null | Variable<any, string>,
 	type?: string | undefined | null | Variable<any, string>,
 	workshop_map_id?: string | undefined | null | Variable<any, string>
 };
@@ -14353,6 +14353,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	id?:boolean | `@${string}`,
 	map_pool_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
+	patch?:boolean | `@${string}`,
+	poster?:boolean | `@${string}`,
 	type?:boolean | `@${string}`,
 	workshop_map_id?:boolean | `@${string}`,
 		__typename?: boolean | `@${string}`
@@ -14362,6 +14364,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	map_pool_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	patch?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	poster?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	type?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	workshop_map_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>
 };
@@ -14370,6 +14374,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	id?:boolean | `@${string}`,
 	map_pool_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
+	patch?:boolean | `@${string}`,
+	poster?:boolean | `@${string}`,
 	type?:boolean | `@${string}`,
 	workshop_map_id?:boolean | `@${string}`,
 		__typename?: boolean | `@${string}`
@@ -14379,17 +14385,11 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	map_pool_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	patch?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	poster?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	type?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	workshop_map_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>
 };
-	/** response of any mutation on the table "v_pool_maps" */
-["v_pool_maps_mutation_response"]: AliasType<{
-	/** number of rows affected by the mutation */
-	affected_rows?:boolean | `@${string}`,
-	/** data from the rows affected by the mutation */
-	returning?:ValueTypes["v_pool_maps"],
-		__typename?: boolean | `@${string}`
-}>;
 	/** Ordering options when selecting data from "v_pool_maps". */
 ["v_pool_maps_order_by"]: {
 	active_pool?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
@@ -14397,6 +14397,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	map_pool?: ValueTypes["map_pools_order_by"] | undefined | null | Variable<any, string>,
 	map_pool_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	patch?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	poster?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	type?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	workshop_map_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>
 };
@@ -14419,6 +14421,8 @@ count?: [{	columns?: Array<ValueTypes["v_pool_maps_select_column"]> | undefined 
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	map_pool_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	name?: string | undefined | null | Variable<any, string>,
+	patch?: string | undefined | null | Variable<any, string>,
+	poster?: string | undefined | null | Variable<any, string>,
 	type?: string | undefined | null | Variable<any, string>,
 	workshop_map_id?: string | undefined | null | Variable<any, string>
 }
@@ -18907,8 +18911,6 @@ delete_tournaments?: [{	/** filter the rows which have to be deleted */
 delete_tournaments_by_pk?: [{	id: ResolverInputTypes["uuid"]},ResolverInputTypes["tournaments"]],
 delete_v_match_captains?: [{	/** filter the rows which have to be deleted */
 	where: ResolverInputTypes["v_match_captains_bool_exp"]},ResolverInputTypes["v_match_captains_mutation_response"]],
-delete_v_pool_maps?: [{	/** filter the rows which have to be deleted */
-	where: ResolverInputTypes["v_pool_maps_bool_exp"]},ResolverInputTypes["v_pool_maps_mutation_response"]],
 insert__map_pool?: [{	/** the rows to be inserted */
 	objects: Array<ResolverInputTypes["_map_pool_insert_input"]>,	/** upsert condition */
 	on_conflict?: ResolverInputTypes["_map_pool_on_conflict"] | undefined | null},ResolverInputTypes["_map_pool_mutation_response"]],
@@ -19135,10 +19137,6 @@ insert_v_match_captains?: [{	/** the rows to be inserted */
 	objects: Array<ResolverInputTypes["v_match_captains_insert_input"]>},ResolverInputTypes["v_match_captains_mutation_response"]],
 insert_v_match_captains_one?: [{	/** the row to be inserted */
 	object: ResolverInputTypes["v_match_captains_insert_input"]},ResolverInputTypes["v_match_captains"]],
-insert_v_pool_maps?: [{	/** the rows to be inserted */
-	objects: Array<ResolverInputTypes["v_pool_maps_insert_input"]>},ResolverInputTypes["v_pool_maps_mutation_response"]],
-insert_v_pool_maps_one?: [{	/** the row to be inserted */
-	object: ResolverInputTypes["v_pool_maps_insert_input"]},ResolverInputTypes["v_pool_maps"]],
 scheduleMatch?: [{	match_id: ResolverInputTypes["uuid"],	time?: ResolverInputTypes["timestamptz"] | undefined | null},ResolverInputTypes["SuccessOutput"]],
 startMatch?: [{	match_id: ResolverInputTypes["uuid"],	server_id?: ResolverInputTypes["uuid"] | undefined | null},ResolverInputTypes["SuccessOutput"]],
 update__map_pool?: [{	/** sets the columns of the filtered rows to the given values */
@@ -27854,6 +27852,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_player_opening_duels_select_col
 	map_pool?:ResolverInputTypes["map_pools"],
 	map_pool_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
+	patch?:boolean | `@${string}`,
+	poster?:boolean | `@${string}`,
 	type?:boolean | `@${string}`,
 	workshop_map_id?:boolean | `@${string}`,
 		__typename?: boolean | `@${string}`
@@ -27914,6 +27914,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	map_pool?: ResolverInputTypes["map_pools_bool_exp"] | undefined | null,
 	map_pool_id?: ResolverInputTypes["uuid_comparison_exp"] | undefined | null,
 	name?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
+	patch?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
+	poster?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
 	type?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
 	workshop_map_id?: ResolverInputTypes["String_comparison_exp"] | undefined | null
 };
@@ -27924,6 +27926,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	map_pool?: ResolverInputTypes["map_pools_obj_rel_insert_input"] | undefined | null,
 	map_pool_id?: ResolverInputTypes["uuid"] | undefined | null,
 	name?: string | undefined | null,
+	patch?: string | undefined | null,
+	poster?: string | undefined | null,
 	type?: string | undefined | null,
 	workshop_map_id?: string | undefined | null
 };
@@ -27932,6 +27936,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	id?:boolean | `@${string}`,
 	map_pool_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
+	patch?:boolean | `@${string}`,
+	poster?:boolean | `@${string}`,
 	type?:boolean | `@${string}`,
 	workshop_map_id?:boolean | `@${string}`,
 		__typename?: boolean | `@${string}`
@@ -27941,6 +27947,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	id?: ResolverInputTypes["order_by"] | undefined | null,
 	map_pool_id?: ResolverInputTypes["order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
+	patch?: ResolverInputTypes["order_by"] | undefined | null,
+	poster?: ResolverInputTypes["order_by"] | undefined | null,
 	type?: ResolverInputTypes["order_by"] | undefined | null,
 	workshop_map_id?: ResolverInputTypes["order_by"] | undefined | null
 };
@@ -27949,6 +27957,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	id?:boolean | `@${string}`,
 	map_pool_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
+	patch?:boolean | `@${string}`,
+	poster?:boolean | `@${string}`,
 	type?:boolean | `@${string}`,
 	workshop_map_id?:boolean | `@${string}`,
 		__typename?: boolean | `@${string}`
@@ -27958,17 +27968,11 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	id?: ResolverInputTypes["order_by"] | undefined | null,
 	map_pool_id?: ResolverInputTypes["order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
+	patch?: ResolverInputTypes["order_by"] | undefined | null,
+	poster?: ResolverInputTypes["order_by"] | undefined | null,
 	type?: ResolverInputTypes["order_by"] | undefined | null,
 	workshop_map_id?: ResolverInputTypes["order_by"] | undefined | null
 };
-	/** response of any mutation on the table "v_pool_maps" */
-["v_pool_maps_mutation_response"]: AliasType<{
-	/** number of rows affected by the mutation */
-	affected_rows?:boolean | `@${string}`,
-	/** data from the rows affected by the mutation */
-	returning?:ResolverInputTypes["v_pool_maps"],
-		__typename?: boolean | `@${string}`
-}>;
 	/** Ordering options when selecting data from "v_pool_maps". */
 ["v_pool_maps_order_by"]: {
 	active_pool?: ResolverInputTypes["order_by"] | undefined | null,
@@ -27976,6 +27980,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	map_pool?: ResolverInputTypes["map_pools_order_by"] | undefined | null,
 	map_pool_id?: ResolverInputTypes["order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
+	patch?: ResolverInputTypes["order_by"] | undefined | null,
+	poster?: ResolverInputTypes["order_by"] | undefined | null,
 	type?: ResolverInputTypes["order_by"] | undefined | null,
 	workshop_map_id?: ResolverInputTypes["order_by"] | undefined | null
 };
@@ -27998,6 +28004,8 @@ count?: [{	columns?: Array<ResolverInputTypes["v_pool_maps_select_column"]> | un
 	id?: ResolverInputTypes["uuid"] | undefined | null,
 	map_pool_id?: ResolverInputTypes["uuid"] | undefined | null,
 	name?: string | undefined | null,
+	patch?: string | undefined | null,
+	poster?: string | undefined | null,
 	type?: string | undefined | null,
 	workshop_map_id?: string | undefined | null
 }
@@ -32036,8 +32044,6 @@ export type ModelTypes = {
 	delete_tournaments_by_pk?: ModelTypes["tournaments"] | undefined,
 	/** delete data from the table: "v_match_captains" */
 	delete_v_match_captains?: ModelTypes["v_match_captains_mutation_response"] | undefined,
-	/** delete data from the table: "v_pool_maps" */
-	delete_v_pool_maps?: ModelTypes["v_pool_maps_mutation_response"] | undefined,
 	/** insert data into the table: "_map_pool" */
 	insert__map_pool?: ModelTypes["_map_pool_mutation_response"] | undefined,
 	/** insert a single row into the table: "_map_pool" */
@@ -32190,10 +32196,6 @@ export type ModelTypes = {
 	insert_v_match_captains?: ModelTypes["v_match_captains_mutation_response"] | undefined,
 	/** insert a single row into the table: "v_match_captains" */
 	insert_v_match_captains_one?: ModelTypes["v_match_captains"] | undefined,
-	/** insert data into the table: "v_pool_maps" */
-	insert_v_pool_maps?: ModelTypes["v_pool_maps_mutation_response"] | undefined,
-	/** insert a single row into the table: "v_pool_maps" */
-	insert_v_pool_maps_one?: ModelTypes["v_pool_maps"] | undefined,
 	/** scheduleMatch */
 	scheduleMatch?: ModelTypes["SuccessOutput"] | undefined,
 	/** startMatch */
@@ -39396,6 +39398,8 @@ export type ModelTypes = {
 	map_pool?: ModelTypes["map_pools"] | undefined,
 	map_pool_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -39453,6 +39457,8 @@ export type ModelTypes = {
 	map_pool?: ModelTypes["map_pools_bool_exp"] | undefined,
 	map_pool_id?: ModelTypes["uuid_comparison_exp"] | undefined,
 	name?: ModelTypes["String_comparison_exp"] | undefined,
+	patch?: ModelTypes["String_comparison_exp"] | undefined,
+	poster?: ModelTypes["String_comparison_exp"] | undefined,
 	type?: ModelTypes["String_comparison_exp"] | undefined,
 	workshop_map_id?: ModelTypes["String_comparison_exp"] | undefined
 };
@@ -39463,6 +39469,8 @@ export type ModelTypes = {
 	map_pool?: ModelTypes["map_pools_obj_rel_insert_input"] | undefined,
 	map_pool_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -39471,6 +39479,8 @@ export type ModelTypes = {
 		id?: ModelTypes["uuid"] | undefined,
 	map_pool_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -39479,6 +39489,8 @@ export type ModelTypes = {
 	id?: ModelTypes["order_by"] | undefined,
 	map_pool_id?: ModelTypes["order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
+	patch?: ModelTypes["order_by"] | undefined,
+	poster?: ModelTypes["order_by"] | undefined,
 	type?: ModelTypes["order_by"] | undefined,
 	workshop_map_id?: ModelTypes["order_by"] | undefined
 };
@@ -39487,6 +39499,8 @@ export type ModelTypes = {
 		id?: ModelTypes["uuid"] | undefined,
 	map_pool_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -39495,15 +39509,10 @@ export type ModelTypes = {
 	id?: ModelTypes["order_by"] | undefined,
 	map_pool_id?: ModelTypes["order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
+	patch?: ModelTypes["order_by"] | undefined,
+	poster?: ModelTypes["order_by"] | undefined,
 	type?: ModelTypes["order_by"] | undefined,
 	workshop_map_id?: ModelTypes["order_by"] | undefined
-};
-	/** response of any mutation on the table "v_pool_maps" */
-["v_pool_maps_mutation_response"]: {
-		/** number of rows affected by the mutation */
-	affected_rows: number,
-	/** data from the rows affected by the mutation */
-	returning: Array<ModelTypes["v_pool_maps"]>
 };
 	/** Ordering options when selecting data from "v_pool_maps". */
 ["v_pool_maps_order_by"]: {
@@ -39512,6 +39521,8 @@ export type ModelTypes = {
 	map_pool?: ModelTypes["map_pools_order_by"] | undefined,
 	map_pool_id?: ModelTypes["order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
+	patch?: ModelTypes["order_by"] | undefined,
+	poster?: ModelTypes["order_by"] | undefined,
 	type?: ModelTypes["order_by"] | undefined,
 	workshop_map_id?: ModelTypes["order_by"] | undefined
 };
@@ -39531,6 +39542,8 @@ export type ModelTypes = {
 	id?: ModelTypes["uuid"] | undefined,
 	map_pool_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 }
@@ -43801,8 +43814,6 @@ export type GraphQLTypes = {
 	delete_tournaments_by_pk?: GraphQLTypes["tournaments"] | undefined,
 	/** delete data from the table: "v_match_captains" */
 	delete_v_match_captains?: GraphQLTypes["v_match_captains_mutation_response"] | undefined,
-	/** delete data from the table: "v_pool_maps" */
-	delete_v_pool_maps?: GraphQLTypes["v_pool_maps_mutation_response"] | undefined,
 	/** insert data into the table: "_map_pool" */
 	insert__map_pool?: GraphQLTypes["_map_pool_mutation_response"] | undefined,
 	/** insert a single row into the table: "_map_pool" */
@@ -43955,10 +43966,6 @@ export type GraphQLTypes = {
 	insert_v_match_captains?: GraphQLTypes["v_match_captains_mutation_response"] | undefined,
 	/** insert a single row into the table: "v_match_captains" */
 	insert_v_match_captains_one?: GraphQLTypes["v_match_captains"] | undefined,
-	/** insert data into the table: "v_pool_maps" */
-	insert_v_pool_maps?: GraphQLTypes["v_pool_maps_mutation_response"] | undefined,
-	/** insert a single row into the table: "v_pool_maps" */
-	insert_v_pool_maps_one?: GraphQLTypes["v_pool_maps"] | undefined,
 	/** scheduleMatch */
 	scheduleMatch?: GraphQLTypes["SuccessOutput"] | undefined,
 	/** startMatch */
@@ -51560,6 +51567,8 @@ export type GraphQLTypes = {
 	map_pool?: GraphQLTypes["map_pools"] | undefined,
 	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -51619,6 +51628,8 @@ export type GraphQLTypes = {
 	map_pool?: GraphQLTypes["map_pools_bool_exp"] | undefined,
 	map_pool_id?: GraphQLTypes["uuid_comparison_exp"] | undefined,
 	name?: GraphQLTypes["String_comparison_exp"] | undefined,
+	patch?: GraphQLTypes["String_comparison_exp"] | undefined,
+	poster?: GraphQLTypes["String_comparison_exp"] | undefined,
 	type?: GraphQLTypes["String_comparison_exp"] | undefined,
 	workshop_map_id?: GraphQLTypes["String_comparison_exp"] | undefined
 };
@@ -51629,6 +51640,8 @@ export type GraphQLTypes = {
 	map_pool?: GraphQLTypes["map_pools_obj_rel_insert_input"] | undefined,
 	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -51638,6 +51651,8 @@ export type GraphQLTypes = {
 	id?: GraphQLTypes["uuid"] | undefined,
 	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -51646,6 +51661,8 @@ export type GraphQLTypes = {
 		id?: GraphQLTypes["order_by"] | undefined,
 	map_pool_id?: GraphQLTypes["order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
+	patch?: GraphQLTypes["order_by"] | undefined,
+	poster?: GraphQLTypes["order_by"] | undefined,
 	type?: GraphQLTypes["order_by"] | undefined,
 	workshop_map_id?: GraphQLTypes["order_by"] | undefined
 };
@@ -51655,6 +51672,8 @@ export type GraphQLTypes = {
 	id?: GraphQLTypes["uuid"] | undefined,
 	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 };
@@ -51663,16 +51682,10 @@ export type GraphQLTypes = {
 		id?: GraphQLTypes["order_by"] | undefined,
 	map_pool_id?: GraphQLTypes["order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
+	patch?: GraphQLTypes["order_by"] | undefined,
+	poster?: GraphQLTypes["order_by"] | undefined,
 	type?: GraphQLTypes["order_by"] | undefined,
 	workshop_map_id?: GraphQLTypes["order_by"] | undefined
-};
-	/** response of any mutation on the table "v_pool_maps" */
-["v_pool_maps_mutation_response"]: {
-	__typename: "v_pool_maps_mutation_response",
-	/** number of rows affected by the mutation */
-	affected_rows: number,
-	/** data from the rows affected by the mutation */
-	returning: Array<GraphQLTypes["v_pool_maps"]>
 };
 	/** Ordering options when selecting data from "v_pool_maps". */
 ["v_pool_maps_order_by"]: {
@@ -51681,6 +51694,8 @@ export type GraphQLTypes = {
 	map_pool?: GraphQLTypes["map_pools_order_by"] | undefined,
 	map_pool_id?: GraphQLTypes["order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
+	patch?: GraphQLTypes["order_by"] | undefined,
+	poster?: GraphQLTypes["order_by"] | undefined,
 	type?: GraphQLTypes["order_by"] | undefined,
 	workshop_map_id?: GraphQLTypes["order_by"] | undefined
 };
@@ -51703,6 +51718,8 @@ export type GraphQLTypes = {
 	id?: GraphQLTypes["uuid"] | undefined,
 	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
+	patch?: string | undefined,
+	poster?: string | undefined,
 	type?: string | undefined,
 	workshop_map_id?: string | undefined
 }
@@ -52742,6 +52759,8 @@ export const enum v_pool_maps_select_column {
 	id = "id",
 	map_pool_id = "map_pool_id",
 	name = "name",
+	patch = "patch",
+	poster = "poster",
 	type = "type",
 	workshop_map_id = "workshop_map_id"
 }

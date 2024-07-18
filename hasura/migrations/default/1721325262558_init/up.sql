@@ -1267,6 +1267,8 @@ CREATE VIEW public.v_pool_maps AS
     maps.id,
     maps.name,
     maps.type,
+    maps.poster,
+    maps.patch,
     maps.active_pool,
     maps.workshop_map_id
    FROM (public._map_pool
@@ -1396,7 +1398,6 @@ CREATE TRIGGER tbiu_update_total_damage_trigger BEFORE INSERT OR UPDATE ON publi
 CREATE TRIGGER tbu_match_player_count BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_player_count();
 CREATE TRIGGER tbu_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_status();
 CREATE TRIGGER tbui_match_lineup_players BEFORE INSERT OR UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbui_match_lineup_players();
-CREATE TRIGGER v_map_pools_insert_trigger INSTEAD OF INSERT ON public.v_pool_maps FOR EACH ROW EXECUTE FUNCTION public.insert_into_v_map_pools();
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public._map_pool
