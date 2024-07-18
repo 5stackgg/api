@@ -5,6 +5,6 @@ export default (): {
 } => ({
   steam: {
     steamApiKey: process.env.CS_AUTH_KEY,
-    steamAccount: process.env.STEAM_ACCOUNT
+    steamAccount: process.env.STEAM_ACCOUNT,
   },
 });

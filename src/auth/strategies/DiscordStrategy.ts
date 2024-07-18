@@ -12,7 +12,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 export class DiscordStrategy extends PassportStrategy(Strategy) {
   constructor(
     private config: ConfigService,
-    private readonly hasura: HasuraService
+    private readonly hasura: HasuraService,
   ) {
     const discordService = config.get<DiscordConfig>("discord");
 
@@ -32,7 +32,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
     accessToken: string,
     refreshToken: string,
     profile: Profile,
-    done: DoneCallback
+    done: DoneCallback,
   ) {
     await this.hasura.mutation({
       update_players_by_pk: [

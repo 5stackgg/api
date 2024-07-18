@@ -22,10 +22,10 @@ export default abstract class DiscordInteraction {
     protected readonly discordPickPlayer: DiscordPickPlayerService,
     protected readonly discordBotMessaging: DiscordBotMessagingService,
     protected readonly discordMatchOverview: DiscordBotOverviewService,
-    protected readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService
+    protected readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
   ) {}
 
   public abstract handler(
-    interaction: ChatInputCommandInteraction | ButtonInteraction
+    interaction: ChatInputCommandInteraction | ButtonInteraction,
   ): Promise<void>;
 }

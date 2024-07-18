@@ -9,7 +9,7 @@ export class EncryptionService {
 
   constructor(
     private readonly logger: Logger,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
   ) {
     this.appKey = this.config.get<AppConfig>("app").appKey;
   }
@@ -21,7 +21,7 @@ export class EncryptionService {
     try {
       const encryptedMessage = await readMessage({
         binaryMessage: this.hexStringToUint8Array(
-          encryptedHex.replace("\\x", "")
+          encryptedHex.replace("\\x", ""),
         ),
       });
 

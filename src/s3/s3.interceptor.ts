@@ -19,7 +19,7 @@ import { Request } from "express";
 export function S3Interceptor(
   uploadPath: (request: Request, file: Express.Multer.File) => string,
   fieldName = "file",
-  localOptions?: MulterOptions
+  localOptions?: MulterOptions,
 ): Type<NestInterceptor> {
   class MixinInterceptor implements NestInterceptor {
     protected multer: multer.Multer;
@@ -28,7 +28,7 @@ export function S3Interceptor(
       @Optional()
       @Inject(MULTER_MODULE_OPTIONS)
       options: MulterModuleOptions = {},
-      private readonly s3: S3Service
+      private readonly s3: S3Service,
     ) {
       this.multer = multer({
         storage: this.s3.multerStorage(uploadPath),
@@ -40,7 +40,7 @@ export function S3Interceptor(
 
     async intercept(
       context: ExecutionContext,
-      next: CallHandler
+      next: CallHandler,
     ): Promise<Observable<any>> {
       const ctx = context.switchToHttp();
 
@@ -54,8 +54,8 @@ export function S3Interceptor(
               return reject(error);
             }
             resolve();
-          }
-        )
+          },
+        ),
       );
       return next.handle();
     }

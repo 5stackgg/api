@@ -12,7 +12,7 @@ export class UpdateDiscordMatchVetoJob extends WorkerHost {
   async process(
     job: Job<{
       matchId: string;
-    }>
+    }>,
   ): Promise<void> {
     const { matchId } = job.data;
     await this.vetoService.pickVeto(matchId);

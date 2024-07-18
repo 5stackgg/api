@@ -43,7 +43,7 @@ interface SteamProfile {
 export class SteamStrategy extends PassportStrategy(Strategy) {
   constructor(
     readonly config: ConfigService,
-    private readonly hasura: HasuraService
+    private readonly hasura: HasuraService,
   ) {
     const webDomain = config.get<AppConfig>("app").webDomain;
 
@@ -59,7 +59,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
     request: Request,
     identifier: string,
     profile: SteamProfile,
-    done: DoneCallback
+    done: DoneCallback,
   ): Promise<void> {
     const { steamid, personaname, profileurl, avatarfull } = profile._json;
 

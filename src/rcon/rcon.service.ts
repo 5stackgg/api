@@ -8,7 +8,7 @@ export class RconService {
   constructor(
     private readonly logger: Logger,
     private readonly hasuraService: HasuraService,
-    private readonly encryption: EncryptionService
+    private readonly encryption: EncryptionService,
   ) {}
 
   private CONNECTION_TIMEOUT = 10 * 1000;
@@ -43,7 +43,9 @@ export class RconService {
     const rcon = new RconClient({
       host: server.host,
       port: server.port,
-      password: await this.encryption.decrypt(server.rcon_password),
+      password: await this.encryption.decrypt(
+        server.rcon_password as unknown as string,
+      ),
     });
 
     rcon.send = async (command) => {

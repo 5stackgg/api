@@ -45,14 +45,14 @@ export class PostgresService {
       | Array<number>
       | Array<Date>
       | Array<bigint>
-    >
+    >,
   ): Promise<T> {
     const result = await this.pool.query(sql, bindings);
 
     if (result.rows) {
-      return (result.rows as unknown) as T;
+      return result.rows as unknown as T;
     }
 
-    return (result as unknown) as T;
+    return result as unknown as T;
   }
 }

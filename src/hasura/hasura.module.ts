@@ -34,7 +34,7 @@ export class HasuraModule {
         repeat: {
           pattern: "0 * * * *",
         },
-      }
+      },
     );
   }
 }

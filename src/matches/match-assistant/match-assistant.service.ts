@@ -31,7 +31,7 @@ export class MatchAssistantService {
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly serverAuth: ServerAuthService,
-    @InjectQueue(MatchQueues.MatchServers) private queue: Queue
+    @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
 
@@ -54,7 +54,7 @@ export class MatchAssistantService {
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send match to server`,
-        error.message
+        error.message,
       );
     }
   }
@@ -65,7 +65,7 @@ export class MatchAssistantService {
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send restore round to server`,
-        error.message
+        error.message,
       );
     }
   }
@@ -118,7 +118,7 @@ export class MatchAssistantService {
     });
 
     const lineup_players = [].concat(
-      ...matches_by_pk.lineups.map((lineup) => lineup.lineup_players)
+      ...matches_by_pk.lineups.map((lineup) => lineup.lineup_players),
     );
 
     const match = matches_by_pk as typeof matches_by_pk & {
@@ -303,15 +303,15 @@ export class MatchAssistantService {
                         this.gameServerConfig.defaultRconPassword
                       }
                          +sv_password ${match.password} -authkey ${
-                        this.config.get<SteamConfig>("steam").steamApiKey
-                      }
+                           this.config.get<SteamConfig>("steam").steamApiKey
+                         }
                       +sv_setsteamaccount ${
                         this.config.get<SteamConfig>("steam").steamAccount
                       }
                        -maxplayers 13`,
                     },
                     { name: "SERVER_ID", value: server.id },
-                    { name: "SERVER_API_PASSWORD", value: server.api_password }
+                    { name: "SERVER_API_PASSWORD", value: server.api_password },
                   ],
                   volumeMounts: [
                     {
@@ -423,7 +423,7 @@ export class MatchAssistantService {
 
       this.logger.error(
         `[${matchId}] unable to create on demand server`,
-        error?.response?.body?.message || error.response
+        error?.response?.body?.message || error.response,
       );
 
       await this.updateMatchStatus(matchId, e_match_status_enum.Scheduled);
@@ -450,7 +450,7 @@ export class MatchAssistantService {
           undefined,
           undefined,
           undefined,
-          `job-name=${jobName}`
+          `job-name=${jobName}`,
         );
         for (const pod of pods.items) {
           if (pod.status!.phase !== "Running") {
@@ -476,7 +476,7 @@ export class MatchAssistantService {
     } catch (error) {
       this.logger.warn(
         `unable to check server status`,
-        error?.response?.body?.message || error
+        error?.response?.body?.message || error,
       );
       return false;
     }
@@ -494,7 +494,7 @@ export class MatchAssistantService {
         removeOnFail: true,
         removeOnComplete: true,
         jobId: `match:${matchId}:server`,
-      }
+      },
     );
   }
 
@@ -527,31 +527,37 @@ export class MatchAssistantService {
         undefined,
         undefined,
         undefined,
-        `job-name=${jobName}`
+        `job-name=${jobName}`,
       );
 
       for (const pod of pods.items) {
         this.logger.verbose(`[${matchId}] remove pod`);
-        await core.deleteNamespacedPod(pod.metadata!.name!, this.namespace).catch((error) => {
-          if(error?.statusCode !== 404) {
-            throw error;
-          }
-        });
+        await core
+          .deleteNamespacedPod(pod.metadata!.name!, this.namespace)
+          .catch((error) => {
+            if (error?.statusCode !== 404) {
+              throw error;
+            }
+          });
       }
 
       this.logger.verbose(`[${matchId}] remove job`);
-      await batch.deleteNamespacedJob(jobName, this.namespace).catch((error) => {
-        if(error?.statusCode !== 404) {
-          throw error;
-        }
-      });
+      await batch
+        .deleteNamespacedJob(jobName, this.namespace)
+        .catch((error) => {
+          if (error?.statusCode !== 404) {
+            throw error;
+          }
+        });
 
       this.logger.verbose(`[${matchId}] remove service`);
-      await core.deleteNamespacedService(jobName, this.namespace).catch((error) => {
-        if(error?.statusCode !== 404) {
-          throw error;
-        }
-      });
+      await core
+        .deleteNamespacedService(jobName, this.namespace)
+        .catch((error) => {
+          if (error?.statusCode !== 404) {
+            throw error;
+          }
+        });
 
       const server = await this.getMatchServer(matchId);
 
@@ -572,7 +578,7 @@ export class MatchAssistantService {
     } catch (error) {
       this.logger.error(
         `[${matchId}] unable to stop on demand server`,
-        error?.response?.body?.message || error
+        error?.response?.body?.message || error,
       );
     }
   }
@@ -638,7 +644,7 @@ export class MatchAssistantService {
     const rcon = await this.rcon.connect(server.id);
 
     return await rcon.send(
-      Array.isArray(command) ? command.join(";") : command
+      Array.isArray(command) ? command.join(";") : command,
     );
   }
 
@@ -680,7 +686,7 @@ export class MatchAssistantService {
     });
 
     const availablePorts = new Array(
-      this.SERVER_PORT_END - this.SERVER_PORT_START + 1
+      this.SERVER_PORT_END - this.SERVER_PORT_START + 1,
     ).fill(true);
 
     for (const port of portsTaken) {
@@ -697,9 +703,8 @@ export class MatchAssistantService {
       availableIndices[Math.floor(Math.random() * availableIndices.length)];
     availablePorts[gamePort] = false;
 
-    const availableIndicesAfterFirstSelection = this.getAvailablePortIndices(
-      availablePorts
-    );
+    const availableIndicesAfterFirstSelection =
+      this.getAvailablePortIndices(availablePorts);
 
     if (availableIndicesAfterFirstSelection.length < 1) {
       throw new Error("not enough available ports after the first selection.");
@@ -720,7 +725,7 @@ export class MatchAssistantService {
   private getAvailablePortIndices(
     ports: Array<{
       isAvailable: boolean;
-    }>
+    }>,
   ) {
     return ports.reduce((acc, isAvailable, index) => {
       if (isAvailable) {

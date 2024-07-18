@@ -52,8 +52,8 @@ export default class KillEvent extends MatchEventProcessor<{
             attacked_steam_id: this.data.attacked_steam_id,
             attacked_team: this.data.attacked_team,
             attacked_location: this.data.attacked_location,
-            attacked_location_coordinates: this.data
-              .attacked_location_coordinates,
+            attacked_location_coordinates:
+              this.data.attacked_location_coordinates,
 
             hitgroup: this.data.hitgroup,
           },

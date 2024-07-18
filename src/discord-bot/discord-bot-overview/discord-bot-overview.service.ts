@@ -33,7 +33,7 @@ export class DiscordBotOverviewService {
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordMatchBotVeto: DiscordBotVetoService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
-    @InjectQueue(DiscordBotQueues.DiscordBot) private readonly queue: Queue
+    @InjectQueue(DiscordBotQueues.DiscordBot) private readonly queue: Queue,
   ) {}
   public async updateMatchOverview(matchId: string) {
     try {
@@ -75,13 +75,13 @@ export class DiscordBotOverviewService {
     const matchControls = {
       Knife: new ButtonBuilder()
         .setCustomId(
-          `${ButtonActions.MapStatus}:${matchId}:${e_match_map_status_enum.Knife}`
+          `${ButtonActions.MapStatus}:${matchId}:${e_match_map_status_enum.Knife}`,
         )
         .setLabel(`Knife Round`)
         .setStyle(ButtonStyle.Danger),
       CancelMatch: new ButtonBuilder()
         .setCustomId(
-          `${ButtonActions.MatchStatus}:${matchId}:${e_match_map_status_enum.Canceled}`
+          `${ButtonActions.MatchStatus}:${matchId}:${e_match_map_status_enum.Canceled}`,
         )
         .setLabel(`Cancel Match`)
         .setStyle(ButtonStyle.Danger),
@@ -166,9 +166,8 @@ export class DiscordBotOverviewService {
       ) {
         serverAvailable = true;
         if (match.server.on_demand) {
-          serverAvailable = await this.matchAssistant.isOnDemandServerRunning(
-            matchId
-          );
+          serverAvailable =
+            await this.matchAssistant.isOnDemandServerRunning(matchId);
           if (!serverAvailable) {
             await this.matchAssistant.delayCheckOnDemandServer(matchId);
           }
@@ -180,8 +179,8 @@ export class DiscordBotOverviewService {
         value: serverAvailable
           ? `connect ${match.server.host}:${match.server.port}; password ${match.password};`
           : match.status === e_match_status_enum.Scheduled
-          ? "match is scheduled, but warmup has not started"
-          : `server is being created`,
+            ? "match is scheduled, but warmup has not started"
+            : `server is being created`,
         inline: true,
       });
 
@@ -189,7 +188,7 @@ export class DiscordBotOverviewService {
         details.url = `${
           this.config.get<AppConfig>("app").apiDomain
         }/quick-connect?link=${encodeURIComponent(
-          `steam://connect/${match.server.host}:${match.server.port};password/${match.password}`
+          `steam://connect/${match.server.host}:${match.server.port};password/${match.password}`,
         )}`;
       }
     }
@@ -270,7 +269,7 @@ export class DiscordBotOverviewService {
             removeOnComplete: true,
             delay: MapSelectionTimeoutSeconds,
             jobId: DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId),
-          }
+          },
         );
       }
     }
@@ -384,13 +383,13 @@ export class DiscordBotOverviewService {
           .setLabel(
             `${availableMaps[mapIndex].name} (${
               mapVotes[mapIndex]?.toString() || "0"
-            })`
+            })`,
           )
           .setStyle(
             (banMaps || []).includes(availableMaps[mapIndex])
               ? ButtonStyle.Danger
-              : ButtonStyle.Secondary
-          )
+              : ButtonStyle.Secondary,
+          ),
       );
     }
 
@@ -403,7 +402,7 @@ export class DiscordBotOverviewService {
         title: `${votingLineUpName}: ${e_veto_pick_types_enum.Ban}`,
         footer: {
           text: `Poll Ends in ${await this.discordMatchBotVeto.getTimeLeft(
-            matchId
+            matchId,
           )} seconds`,
         },
       },

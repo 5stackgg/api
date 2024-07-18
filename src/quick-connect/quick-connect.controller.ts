@@ -7,7 +7,7 @@ export class QuickConnectController {
   @Get()
   public async quickConnect(
     @Req() request: Request,
-    @Res() response: Response
+    @Res() response: Response,
   ) {
     let link: string = request.query.link as string;
 
@@ -20,7 +20,7 @@ export class QuickConnectController {
     try {
       const [address] = await resolve4(host);
       link = link.replace(host, address);
-    } catch(error) {
+    } catch (error) {
       console.warn("unable to get address from host", error.message);
     }
 

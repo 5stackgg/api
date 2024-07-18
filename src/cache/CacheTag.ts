@@ -47,7 +47,7 @@ export class CacheTag {
         await this.cacheStore.put(
           this.tag,
           values,
-          await this.cacheStore.get(this.forgetTag)
+          await this.cacheStore.get(this.forgetTag),
         );
         return;
       }
@@ -56,7 +56,7 @@ export class CacheTag {
     });
   }
   async waitForLock(
-    callback: () => Promise<CachedValue>
+    callback: () => Promise<CachedValue>,
   ): Promise<CachedValue> {
     return await this.cacheStore.lock(this.tag, callback, 60);
   }

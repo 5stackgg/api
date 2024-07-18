@@ -57,9 +57,9 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const guild = await this.bot.client.guilds.fetch(interaction.channel);
 
-    const teamSelectionChannel = ((await guild.channels.fetch(
-      options["team-selection"]
-    )) as undefined) as GuildChannel;
+    const teamSelectionChannel = (await guild.channels.fetch(
+      options["team-selection"],
+    )) as undefined as GuildChannel;
 
     const usersInChannel = await this.getUsersInChannel(teamSelectionChannel);
 
@@ -84,7 +84,7 @@ export default class ScheduleMatch extends DiscordInteraction {
     const { captain1, captain2 } = await this.getCaptains(
       options,
       matchType,
-      usersInChannel
+      usersInChannel,
     );
 
     const match = await this.createMatch(options, matchType, serverId);
@@ -92,7 +92,7 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     await this.discordPickPlayer.setAvailablePlayerPool(
       matchId,
-      usersInChannel
+      usersInChannel,
     );
 
     await this.discordBotMessaging.sendInitialReply(interaction, matchId);
@@ -102,21 +102,21 @@ export default class ScheduleMatch extends DiscordInteraction {
     await this.createVoiceChannelsForMatch(
       teamSelectionChannel.id,
       interaction,
-      match
+      match,
     );
 
     await this.discordPickPlayer.addDiscordUserToLineup(
       matchId,
       match.lineup_1_id,
       captain1,
-      true
+      true,
     );
 
     await this.discordPickPlayer.addDiscordUserToLineup(
       matchId,
       match.lineup_2_id,
       captain2,
-      true
+      true,
     );
 
     await this.discordPickPlayer.pickMember(matchId, match.lineup_1_id, 1);
@@ -130,7 +130,7 @@ export default class ScheduleMatch extends DiscordInteraction {
 
   public getMatchOptions(
     _options: readonly CommandInteractionOption[],
-    matchType: e_match_types_enum
+    matchType: e_match_types_enum,
   ) {
     const options: DiscordMatchOptions & {
       // this is to handle the foor loop of _options
@@ -161,7 +161,7 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async createMatch(
     options: DiscordMatchOptions,
     matchType: e_match_types_enum,
-    serverId?: string
+    serverId?: string,
   ) {
     const { map_pools } = await this.hasura.query({
       map_pools: [
@@ -223,7 +223,7 @@ export default class ScheduleMatch extends DiscordInteraction {
   }
 
   private async createMatchesCategory(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction,
   ) {
     const channelName = `${this.config.get<AppConfig>("app").name} Matches`;
 
@@ -254,7 +254,7 @@ export default class ScheduleMatch extends DiscordInteraction {
         id: string;
         name?: string;
       }>;
-    }
+    },
   ) {
     const matchId = match.id;
     const categoryChannel = await this.createMatchesCategory(interaction);
@@ -265,7 +265,7 @@ export default class ScheduleMatch extends DiscordInteraction {
         categoryChannel.guildId,
         originalChannelId,
         categoryChannel.id,
-        lineup.id
+        lineup.id,
       );
     }
   }
@@ -273,7 +273,7 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async getCaptains(
     discordOptions: DiscordMatchOptions,
     matchType: e_match_types_enum,
-    users: DiscordUser[]
+    users: DiscordUser[],
   ) {
     let captain1: DiscordUser;
     let captain2: DiscordUser;
@@ -328,7 +328,7 @@ export default class ScheduleMatch extends DiscordInteraction {
   }
 
   private async askForDedicatedServerId(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction,
   ): Promise<string> {
     const { servers } = await this.hasura.query({
       servers: [
@@ -365,7 +365,7 @@ export default class ScheduleMatch extends DiscordInteraction {
         new StringSelectMenuBuilder({
           custom_id: "server-id",
           placeholder: "Pick One of Your Dedicated Servers",
-        }).addOptions(...availableServers)
+        }).addOptions(...availableServers),
       );
 
       try {
@@ -376,11 +376,10 @@ export default class ScheduleMatch extends DiscordInteraction {
           components: [row],
         });
 
-        const serverInteraction = await serverReply.awaitMessageComponent<ComponentType.StringSelect>(
-          {
+        const serverInteraction =
+          await serverReply.awaitMessageComponent<ComponentType.StringSelect>({
             time: 15 * 1000,
-          }
-        );
+          });
 
         serverId = serverInteraction.values?.[0];
       } catch (error) {

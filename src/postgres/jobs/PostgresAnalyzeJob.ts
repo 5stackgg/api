@@ -7,7 +7,7 @@ import { Logger } from "@nestjs/common";
 export class PostgresAnalyzeJob extends WorkerHost {
   constructor(
     private readonly logger: Logger,
-    private readonly postgres: PostgresService
+    private readonly postgres: PostgresService,
   ) {
     super();
   }

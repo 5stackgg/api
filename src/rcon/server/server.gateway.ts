@@ -27,12 +27,12 @@ export class ServerGateway {
   constructor(
     private readonly config: ConfigService,
     private readonly rconService: RconService,
-    private readonly redisManager: RedisManagerService
+    private readonly redisManager: RedisManagerService,
   ) {}
 
   handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
-    request: Request
+    request: Request,
   ) {
     const appConfig = this.config.get<AppConfig>("app");
 
@@ -69,7 +69,7 @@ export class ServerGateway {
       command: string;
       serverId: string;
     },
-    @ConnectedSocket() client: FiveStackWebSocketClient
+    @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
     const rcon = await this.rconService.connect(data.serverId);
 
@@ -80,7 +80,7 @@ export class ServerGateway {
           uuid: data.uuid,
           result: await rcon.send(data.command),
         },
-      })
+      }),
     );
   }
 }

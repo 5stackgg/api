@@ -10,7 +10,7 @@ export class TypeSenseService {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly hasura: HasuraService
+    private readonly hasura: HasuraService,
   ) {
     this.client = new Client({
       nodes: [
@@ -77,7 +77,7 @@ export class TypeSenseService {
           teams: player.teams?.map(({ id }) => {
             return id;
           }),
-        })
+        }),
       );
   }
 

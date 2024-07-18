@@ -1,4 +1,5 @@
 SET check_function_bodies = false;
+
 CREATE FUNCTION public.add_owner_to_team() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -17,19 +18,28 @@ DECLARE
     match_type VARCHAR(255);
     match_best_of INTEGER;
     pickType VARCHAR(255);
-    pickPattern VARCHAR[] := ARRAY['Ban', 'Ban', 'Pick', 'Side', 'Pick', 'Side'];
+    vetoPattern VARCHAR[];
     lastPick match_veto_picks%ROWTYPE;
     totalPicks int;
     lineup_id uuid;
     _match matches;
+    map_pool uuid[];
     available_maps uuid[];
     use_active_pool BOOLEAN;
 BEGIN
+    -- TOOD - https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
     -- Get match_id and match_lineup_id from NEW or OLD depending on their availability
     _match_id := COALESCE(NEW.match_id, OLD.match_id);
     _match_lineup_id := COALESCE(NEW.match_lineup_id, OLD.match_lineup_id);
     -- Get match type and best_of from matches table
-    SELECT type, best_of INTO match_type, match_best_of FROM matches m WHERE m.id = _match_id; 
+    SELECT type, best_of INTO match_type, match_best_of FROM matches m WHERE m.id = _match_id;
+    -- Get map pool for the match
+    SELECT array_agg(mp.map_id) INTO map_pool
+        FROM matches m
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
+        WHERE m.id = NEW.match_id;
+    vetoPattern = get_veto_pattern(map_pool, match_best_of);
     -- Get the last pick from match_veto_picks table
     SELECT * INTO lastPick FROM match_veto_picks WHERE match_id = _match_id ORDER BY created_at DESC LIMIT 1;
     -- Count total picks for the match
@@ -38,18 +48,18 @@ BEGIN
     IF match_best_of = 1 THEN
         pickType := 'Ban';
     ELSE
-        pickType := pickPattern[(totalPicks % array_length(pickPattern, 1)) + 1];
+        pickType := vetoPattern[totalPicks + 1];
     END IF;
     -- Get available maps for the match
-  SELECT array_agg(mp.map_id) INTO available_maps
-  FROM matches m
-  LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-  LEFT JOIN match_veto_picks mvp ON mvp.map_id = mp.map_id 
-  WHERE m.id = NEW.match_id
-  AND mvp IS NULL;
-    -- If only one map is available, set pickType to 'LeftOver'
+    SELECT array_agg(mp.map_id) INTO available_maps
+        FROM matches m
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
+        WHERE m.id = NEW.match_id
+        AND mvp IS NULL;
+    -- If only one map is available, set pickType to 'Decider'
     IF array_length(available_maps, 1) = 1 THEN
-        pickType := 'LeftOver';
+        pickType := 'Decider';
     END IF;
     -- Check if the pickType matches the type of the new veto
     IF NEW.type != pickType THEN
@@ -149,7 +159,7 @@ BEGIN
         other_side := CASE WHEN NEW.side = 'CT' THEN 'TERRORIST' ELSE 'CT' END;
         -- Insert the vetoed map into match_maps table
         INSERT INTO match_maps (match_id, map_id, "order", lineup_1_side, lineup_2_side)
-            VALUES (NEW.match_id, NEW.map_id, total_maps + 1, 
+            VALUES (NEW.match_id, NEW.map_id, total_maps + 1,
                     CASE WHEN lineup_1_id = NEW.match_lineup_id THEN NEW.side ELSE other_side END,
                     CASE WHEN lineup_2_id = NEW.match_lineup_id THEN NEW.side ELSE other_side END);
    END IF;
@@ -157,7 +167,7 @@ BEGIN
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
   LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-  LEFT JOIN match_veto_picks mvp ON mvp.map_id = mp.map_id 
+  LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
   WHERE m.id = NEW.match_id
   AND mvp IS NULL;
   -- If only one map is available for veto
@@ -165,16 +175,16 @@ BEGIN
     -- Retrieve the match details
     SELECT * INTO _match FROM matches WHERE id = NEW.match_id LIMIT 1;
     -- Determine the lineup ID for veto picking
-    SELECT * INTO lineup_id FROM get_veto_picking_lineup_id(_match); 
+    SELECT * INTO lineup_id FROM get_veto_picking_lineup_id(_match);
     -- Insert the leftover map into match_veto_picks table
     INSERT INTO match_veto_picks (match_id, type, match_lineup_id, map_id)
-    VALUES (NEW.match_id, 'LeftOver', lineup_id, available_maps[1]);
+    VALUES (NEW.match_id, 'Decider', lineup_id, available_maps[1]);
     -- Update the total number of maps for the match and insert the leftover map into match_maps
     SELECT count(*) INTO total_maps FROM match_maps WHERE match_id = NEW.match_id;
     INSERT INTO match_maps (match_id, map_id, "order")
     VALUES (NEW.match_id, available_maps[1], total_maps + 1);
- 	UPDATE matches 
-    SET status = 'Live' 
+ 	UPDATE matches
+    SET status = 'Live'
     WHERE id = NEW.match_id;
   END IF;
   RETURN NEW;
@@ -516,6 +526,54 @@ BEGIN
     ELSE 
         RETURN 'Team 2';
     END IF;
+END;
+$$;
+CREATE FUNCTION public.get_veto_pattern(pool uuid[], best_of integer) RETURNS text[]
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    pattern TEXT[] := '{}';
+    base_pattern TEXT[] := ARRAY['Ban', 'Ban', 'Pick', 'Pick'];
+    picks_count INT;
+    picks_left INT;
+    pattern_length INT;
+    i INT;
+BEGIN
+    -- Loop to build the pattern array
+    WHILE array_length(pattern, 1) IS DISTINCT FROM coalesce(array_length(pool, 1), 0) - 1 LOOP
+        -- Count the number of 'Pick' elements in the pattern array
+        picks_count := 0;
+        IF array_length(pattern, 1) IS NOT NULL THEN
+            FOR i IN 1..array_length(pattern, 1) LOOP
+                IF pattern[i] = 'Pick' THEN
+                    picks_count := picks_count + 1;
+                END IF;
+            END LOOP;
+        END IF;
+        -- Logic for adding elements to the pattern array
+        IF picks_count = best_of - 1 THEN
+            pattern := array_append(pattern, 'Ban');
+            CONTINUE;
+        END IF;
+        picks_left := coalesce(array_length(pool, 1), 0) - coalesce(array_length(pattern, 1), 0) - 1;
+        IF picks_left < picks_count + 2 THEN
+            pattern := array_append(pattern, 'Pick');
+            CONTINUE;
+        END IF;
+        pattern := pattern || base_pattern[1:picks_left];
+    END LOOP;
+    -- Insert 'Side' elements after each 'Pick' in the pattern array
+    pattern_length := coalesce(array_length(pattern, 1), 0);
+    i := 1;
+    WHILE i <= pattern_length LOOP
+        IF pattern[i] = 'Pick' THEN
+            pattern := array_cat(array_cat(pattern[1:i], ARRAY['Side']), pattern[i+1:pattern_length]);
+            pattern_length := pattern_length + 1;
+            i := i + 1; -- Skip the next element as it is newly added
+        END IF;
+        i := i + 1;
+    END LOOP;
+    RETURN pattern;
 END;
 $$;
 CREATE FUNCTION public.get_veto_picking_lineup_id(_match public.matches) RETURNS uuid

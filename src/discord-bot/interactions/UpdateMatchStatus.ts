@@ -11,7 +11,7 @@ export default class UpdateMatchStatus extends DiscordInteraction {
 
     await this.matchAssistant.updateMatchStatus(
       matchId,
-      status as e_match_status_enum
+      status as e_match_status_enum,
     );
   }
 }
