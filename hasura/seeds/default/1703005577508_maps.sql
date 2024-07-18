@@ -1,40 +1,40 @@
 SET check_function_bodies = false;
 
-insert into maps ("name", "type", "active_pool", "workshop_map_id") values
+insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "patch") values
     --  Competitive
-    ('de_ancient', 'Competitive', 'true',  null),
-    ('de_anubis', 'Competitive', 'true',  null),
-    ('de_inferno', 'Competitive', 'true',  null),
-    ('de_mirage', 'Competitive', 'true',  null),
-    ('de_nuke', 'Competitive', 'true',  null),
-    ('de_overpass', 'Competitive', 'false',  null),
-    ('de_vertigo', 'Competitive', 'true',  null),
-    ('de_dust2', 'Competitive', 'true',  null),
-    ('de_thera', 'Competitive', 'false',  null),
-    ('de_mills', 'Competitive', 'false',  null),
+    ('de_ancient', 'Competitive', 'true',  null, '/img/maps/posters/ancient.webp', '/img/maps/patches/ancient.webp'),
+    ('de_anubis', 'Competitive', 'true',  null, '/img/maps/posters/anubis.webp', '/img/maps/patches/anubis.webp'),
+    ('de_inferno', 'Competitive', 'true',  null, '/img/maps/posters/inferno.webp', '/img/maps/patches/inferno.webp'),
+    ('de_mirage', 'Competitive', 'true',  null, '/img/maps/posters/mirage.webp', '/img/maps/patches/mirage.webp'),
+    ('de_nuke', 'Competitive', 'true',  null, '/img/maps/posters/nuke.webp', '/img/maps/patches/nuke.webp'),
+    ('de_overpass', 'Competitive', 'false',  null, '/img/maps/posters/overpass.webp', '/img/maps/patches/overpass.webp'),
+    ('de_vertigo', 'Competitive', 'true',  null, '/img/maps/posters/vertigo.webp', '/img/maps/patches/vertigo.webp'),
+    ('de_dust2', 'Competitive', 'true',  null, '/img/maps/posters/dust2.webp', '/img/maps/patches/dust2.webp'),
+    ('de_thera', 'Competitive', 'false',  null, '/img/maps/posters/thera.webp', '/img/maps/patches/thera.webp'),
+    ('de_mills', 'Competitive', 'false',  null, '/img/maps/posters/mills.webp', '/img/maps/patches/mills.webp'),
 
     -- Competitive Workshop
-    ('de_cache', 'Competitive', 'false',  '3070596702'),
-    ('de_train', 'Competitive', 'false',  '3070284539'),
-    ('de_cbble', 'Competitive', 'false',  '3070212801'),
-    ('de_biome', 'Competitive', 'false',  '3075706807'),
-    ('drawbridge', 'Competitive', 'false',  '3070192462'),
-    ('foroglio', 'Competitive', 'false',  '3132854332'),
+    ('de_cache', 'Competitive', 'false',  '3070596702', null, null),
+    ('de_train', 'Competitive', 'false',  '3070284539', null, null),
+    ('de_cbble', 'Competitive', 'false',  '3070212801', null, null),
+    ('de_biome', 'Competitive', 'false',  '3075706807', null, null),
+    ('drawbridge', 'Competitive', 'false',  '3070192462', null, null),
+    ('foroglio', 'Competitive', 'false',  '3132854332', null, null),
 
     --  Wingman
-    ('de_inferno', 'Wingman', 'false',  null),
-    ('de_nuke', 'Wingman', 'false',  null),
-    ('de_overpass', 'Wingman', 'false',  null),
-    ('de_vertigo', 'Wingman', 'false',  null),
-    ('de_assembly', 'Wingman', 'false',  null),
-    ('de_memento', 'Wingman', 'false',  null),
+    ('de_inferno', 'Wingman', 'false',  null, '/img/maps/posters/inferno.webp', '/img/maps/patches/inferno.webp'),
+    ('de_nuke', 'Wingman', 'false',  null, '/img/maps/posters/nuke.webp', '/img/maps/patches/nuke.webp'),
+    ('de_overpass', 'Wingman', 'false',  null, '/img/maps/posters/overpass.webp', '/img/maps/patches/overpass.webp'),
+    ('de_vertigo', 'Wingman', 'false',  null, '/img/maps/posters/vertigo.webp', '/img/maps/patches/vertigo.webp'),
+    ('de_assembly', 'Wingman', 'false',  null, '/img/maps/posters/assembly.webp', '/img/maps/patches/assembly.webp'),
+    ('de_memento', 'Wingman', 'false',  null, '/img/maps/posters/memento.webp', '/img/maps/patches/memento.webp'),
 
     --  Wingman Workshop
-    ('de_brewery', 'Wingman', 'false',  '3070290240'),
-    ('drawbridge', 'Wingman', 'false',  '3070192462'),
-    ('foroglio', 'Wingman', 'false',  '3132854332')
+    ('de_brewery', 'Wingman', 'false',  '3070290240', null, null),
+    ('drawbridge', 'Wingman', 'false',  '3070192462', null, null),
+    ('foroglio', 'Wingman', 'false',  '3132854332', null, null)
 
-on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id";
+on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
 
 WITH new_rows AS (
   SELECT *

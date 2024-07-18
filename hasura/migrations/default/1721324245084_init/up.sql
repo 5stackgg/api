@@ -996,7 +996,9 @@ CREATE TABLE public.maps (
     name text NOT NULL,
     type text NOT NULL,
     active_pool boolean NOT NULL,
-    workshop_map_id text
+    workshop_map_id text,
+    poster text,
+    patch text
 );
 CREATE TABLE public.match_lineup_players (
     id uuid DEFAULT gen_random_uuid() NOT NULL,

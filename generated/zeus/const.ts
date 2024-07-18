@@ -810,6 +810,8 @@ export const AllTypesProps: Record<string,any> = {
 		match_veto_picks:"match_veto_picks_bool_exp",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate_bool_exp",
 		name:"String_comparison_exp",
+		patch:"String_comparison_exp",
+		poster:"String_comparison_exp",
 		type:"e_match_types_enum_comparison_exp",
 		workshop_map_id:"String_comparison_exp"
 	},
@@ -824,11 +826,15 @@ export const AllTypesProps: Record<string,any> = {
 	maps_max_order_by:{
 		id:"order_by",
 		name:"order_by",
+		patch:"order_by",
+		poster:"order_by",
 		workshop_map_id:"order_by"
 	},
 	maps_min_order_by:{
 		id:"order_by",
 		name:"order_by",
+		patch:"order_by",
+		poster:"order_by",
 		workshop_map_id:"order_by"
 	},
 	maps_obj_rel_insert_input:{
@@ -847,6 +853,8 @@ export const AllTypesProps: Record<string,any> = {
 		match_maps_aggregate:"match_maps_aggregate_order_by",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate_order_by",
 		name:"order_by",
+		patch:"order_by",
+		poster:"order_by",
 		type:"order_by",
 		workshop_map_id:"order_by"
 	},
@@ -8637,6 +8645,8 @@ export const ReturnTypes: Record<string,any> = {
 		match_veto_picks:"match_veto_picks",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate",
 		name:"String",
+		patch:"String",
+		poster:"String",
 		type:"e_match_types_enum",
 		workshop_map_id:"String"
 	},
@@ -8652,11 +8662,15 @@ export const ReturnTypes: Record<string,any> = {
 	maps_max_fields:{
 		id:"uuid",
 		name:"String",
+		patch:"String",
+		poster:"String",
 		workshop_map_id:"String"
 	},
 	maps_min_fields:{
 		id:"uuid",
 		name:"String",
+		patch:"String",
+		poster:"String",
 		workshop_map_id:"String"
 	},
 	maps_mutation_response:{
