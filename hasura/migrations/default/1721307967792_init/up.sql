@@ -1,5 +1,4 @@
 SET check_function_bodies = false;
-
 CREATE FUNCTION public.add_owner_to_team() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -15,52 +14,19 @@ CREATE FUNCTION public.can_pick_veto() RETURNS trigger
 DECLARE
     _match_id uuid;
     _match_lineup_id uuid;
-    match_type VARCHAR(255);
-    match_best_of INTEGER;
     pickType VARCHAR(255);
-    vetoPattern VARCHAR[];
-    lastPick match_veto_picks%ROWTYPE;
-    totalPicks int;
     lineup_id uuid;
     _match matches;
     map_pool uuid[];
-    available_maps uuid[];
     use_active_pool BOOLEAN;
 BEGIN
     -- TOOD - https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
     -- Get match_id and match_lineup_id from NEW or OLD depending on their availability
     _match_id := COALESCE(NEW.match_id, OLD.match_id);
     _match_lineup_id := COALESCE(NEW.match_lineup_id, OLD.match_lineup_id);
-    -- Get match type and best_of from matches table
-    SELECT type, best_of INTO match_type, match_best_of FROM matches m WHERE m.id = _match_id;
+    select * into _match from matches where id = _match_id;
     -- Get map pool for the match
-    SELECT array_agg(mp.map_id) INTO map_pool
-        FROM matches m
-        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-        LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
-        WHERE m.id = NEW.match_id;
-    vetoPattern = get_veto_pattern(map_pool, match_best_of);
-    -- Get the last pick from match_veto_picks table
-    SELECT * INTO lastPick FROM match_veto_picks WHERE match_id = _match_id ORDER BY created_at DESC LIMIT 1;
-    -- Count total picks for the match
-    SELECT COUNT(*) INTO totalPicks FROM match_veto_picks WHERE match_id = _match_id;
-    -- Determine pick type based on match_best_of and totalPicks
-    IF match_best_of = 1 THEN
-        pickType := 'Ban';
-    ELSE
-        pickType := vetoPattern[totalPicks + 1];
-    END IF;
-    -- Get available maps for the match
-    SELECT array_agg(mp.map_id) INTO available_maps
-        FROM matches m
-        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
-        LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
-        WHERE m.id = NEW.match_id
-        AND mvp IS NULL;
-    -- If only one map is available, set pickType to 'Decider'
-    IF array_length(available_maps, 1) = 1 THEN
-        pickType := 'Decider';
-    END IF;
+    pickType := get_veto_type(_match);
     -- Check if the pickType matches the type of the new veto
     IF NEW.type != pickType THEN
         RAISE EXCEPTION 'Expected pick type of %', pickType USING ERRCODE = '22000';
@@ -528,10 +494,11 @@ BEGIN
     END IF;
 END;
 $$;
-CREATE FUNCTION public.get_veto_pattern(pool uuid[], best_of integer) RETURNS text[]
+CREATE FUNCTION public.get_veto_pattern(_match public.matches) RETURNS text[]
     LANGUAGE plpgsql
     AS $$
 DECLARE
+    pool uuid[];
     pattern TEXT[] := '{}';
     base_pattern TEXT[] := ARRAY['Ban', 'Ban', 'Pick', 'Pick'];
     picks_count INT;
@@ -539,6 +506,11 @@ DECLARE
     pattern_length INT;
     i INT;
 BEGIN
+    SELECT array_agg(mp.map_id) INTO pool
+        FROM matches m
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN match_veto_picks mvp ON mvp.match_id = _match.id AND mvp.map_id = mp.map_id
+        WHERE m.id = _match.id;
     -- Loop to build the pattern array
     WHILE array_length(pattern, 1) IS DISTINCT FROM coalesce(array_length(pool, 1), 0) - 1 LOOP
         -- Count the number of 'Pick' elements in the pattern array
@@ -551,7 +523,7 @@ BEGIN
             END LOOP;
         END IF;
         -- Logic for adding elements to the pattern array
-        IF picks_count = best_of - 1 THEN
+        IF picks_count = _match.best_of - 1 THEN
             pattern := array_append(pattern, 'Ban');
             CONTINUE;
         END IF;
@@ -635,6 +607,44 @@ BEGIN
     -- Return the lineup ID
     RETURN lineup_id;
 END;
+$$;
+CREATE FUNCTION public.get_veto_type(match public.matches) RETURNS text
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    totalPicks int;
+    vetoPattern VARCHAR[];
+    pickType VARCHAR(255);
+    available_maps uuid[];
+    lastPick match_veto_picks%ROWTYPE;
+BEGIN
+	IF match.status != 'Veto' OR match.map_veto = false THEN
+	 return '';
+	END IF;
+    vetoPattern = get_veto_pattern(match);
+    -- Get the last pick from match_veto_picks table
+    SELECT * INTO lastPick FROM match_veto_picks WHERE match_id = match.id ORDER BY created_at DESC LIMIT 1;
+    -- Count total picks for the match
+    SELECT COUNT(*) INTO totalPicks FROM match_veto_picks WHERE match_id = match.id;
+    -- Determine pick type based on match_best_of and totalPicks
+    IF match.best_of = 1 THEN
+        pickType := 'Ban';
+    ELSE
+        pickType := vetoPattern[totalPicks + 1];
+    END IF;
+    -- Get available maps for the match
+    SELECT array_agg(mp.map_id) INTO available_maps
+        FROM matches m
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN match_veto_picks mvp ON mvp.match_id = match.id AND mvp.map_id = mp.map_id
+        WHERE m.id = match.id
+        AND mvp IS NULL;
+    -- If only one map is available, set pickType to 'Decider'
+    IF array_length(available_maps, 1) = 1 THEN
+        pickType := 'Decider';
+    END IF;
+	return pickType;
+END
 $$;
 CREATE FUNCTION public.insert_into_v_map_pools() RETURNS trigger
     LANGUAGE plpgsql
