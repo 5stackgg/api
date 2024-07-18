@@ -27,6 +27,8 @@ select_permissions:
         - active_pool
         - id
         - name
+        - patch
+        - poster
         - type
         - workshop_map_id
       filter: {}
