@@ -41,6 +41,18 @@ array_relationships:
         table:
           name: tournament_teams
           schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - name
+        - start
+        - type
+    comment: ""
 select_permissions:
   - role: user
     permission:
@@ -54,4 +66,27 @@ select_permissions:
         - id
       filter: {}
       allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - description
+        - name
+        - start
+        - status
+        - type
+      filter:
+        organizer_steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        organizer_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        organizer_steam_id:
+          _eq: X-Hasura-User-Id
     comment: ""

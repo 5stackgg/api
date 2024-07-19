@@ -29,6 +29,7 @@ select_permissions:
         - team_id
         - tournament_id
       filter: {}
+      allow_aggregations: true
     comment: ""
 delete_permissions:
   - role: user

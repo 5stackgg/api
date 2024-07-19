@@ -28,7 +28,7 @@ export class AuthController {
   @Get("steam/callback")
   public steamCallback(@Req() request: Request, @Res() res: Response) {
     // TODO - handle dev redirect
-    return res.redirect("/");
+    return res.redirect(request.session.redirect || "/");
   }
 
   @UseGuards(DiscordGuard)
