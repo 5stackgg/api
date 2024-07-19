@@ -1043,6 +1043,10 @@ CREATE TABLE public.e_timeout_settings (
     value text NOT NULL,
     description text NOT NULL
 );
+CREATE TABLE public.e_tournament_stage_types (
+    value text NOT NULL,
+    description text NOT NULL
+);
 CREATE TABLE public.e_utility_types (
     value text NOT NULL,
     description text NOT NULL
@@ -1231,7 +1235,8 @@ CREATE TABLE public.tournament_teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid,
     tournament_id uuid NOT NULL,
-    name text NOT NULL
+    name text NOT NULL,
+    creator_steam_id bigint NOT NULL
 );
 CREATE TABLE public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -1364,6 +1369,8 @@ ALTER TABLE ONLY public.e_sides
     ADD CONSTRAINT e_teams_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_timeout_settings
     ADD CONSTRAINT e_timeout_settings_pkey PRIMARY KEY (value);
+ALTER TABLE ONLY public.e_tournament_stage_types
+    ADD CONSTRAINT e_tournament_stage_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_utility_types
     ADD CONSTRAINT e_utility_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_veto_pick_types
@@ -1620,6 +1627,10 @@ ALTER TABLE ONLY public.tournament_servers
     ADD CONSTRAINT tournament_servers_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_stages
     ADD CONSTRAINT tournament_stages_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.tournament_stages
+    ADD CONSTRAINT tournament_stages_type_fkey FOREIGN KEY (type) REFERENCES public.e_tournament_stage_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.tournament_teams
+    ADD CONSTRAINT tournament_teams_creator_steam_id_fkey FOREIGN KEY (creator_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_teams
