@@ -21,6 +21,8 @@ insert_permissions:
           organizer_steam_id:
             _eq: X-Hasura-User-Id
       columns:
+        - max_teams
+        - min_teams
         - order
         - settings
         - tournament_id
@@ -44,6 +46,8 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - max_teams
+        - min_teams
         - order
         - settings
         - type
