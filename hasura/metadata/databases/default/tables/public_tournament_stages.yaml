@@ -2,6 +2,9 @@ table:
   name: tournament_stages
   schema: public
 object_relationships:
+  - name: e_tournament_stage_type
+    using:
+      foreign_key_constraint_on: type
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
