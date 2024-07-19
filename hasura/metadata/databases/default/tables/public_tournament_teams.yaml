@@ -2,6 +2,9 @@ table:
   name: tournament_teams
   schema: public
 object_relationships:
+  - name: creator
+    using:
+      foreign_key_constraint_on: creator_steam_id
   - name: team
     using:
       foreign_key_constraint_on: team_id
@@ -16,7 +19,10 @@ insert_permissions:
           owner:
             steam_id:
               _eq: X-Hasura-User-Id
+      set:
+        creator_steam_id: x-hasura-user-id
       columns:
+        - name
         - team_id
         - tournament_id
     comment: ""
@@ -24,6 +30,7 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - creator_steam_id
         - id
         - name
         - team_id
@@ -31,12 +38,22 @@ select_permissions:
       filter: {}
       allow_aggregations: true
     comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - name
+      filter:
+        creator_steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        creator_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        team:
-          owner:
-            steam_id:
-              _eq: X-Hasura-User-Id
+        creator_steam_id:
+          _eq: X-Hasura-User-Id
     comment: ""
