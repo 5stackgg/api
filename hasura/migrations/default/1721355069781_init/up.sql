@@ -863,23 +863,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
-
-CREATE OR REPLACE FUNCTION public.update_tournament_stage()
-RETURNS TRIGGER AS $$
-DECLARE
-    stages tournament_stages[];
-BEGIN
-    SELECT stages INTO stages
-    FROM tournament
-    WHERE id = NEW.tournament_id;
-
-    -- You can add additional logic here to process the stages array
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE FUNCTION public.tbui_match_lineup_players() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -959,6 +942,72 @@ BEGIN
     IF total_damage + NEW.damage > 100 THEN
         NEW.damage := 100 - total_damage;
     END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE FUNCTION public.update_tournament_stages() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    stage RECORD;
+    round int;
+    max_round int;
+    parents uuid[] := '{}';
+    available_parents uuid[];
+    matches_for_round int;
+	max_matches int;
+    created_matches int;
+    parent_id uuid;
+    new_id uuid;
+    match_number int;
+    stages CURSOR FOR
+        SELECT *
+        FROM tournament_stages
+        WHERE tournament_id = NEW.tournament_id
+        ORDER BY "order";
+BEGIN
+    OPEN stages;
+    LOOP
+        FETCH stages INTO stage;
+        EXIT WHEN NOT FOUND;
+        DELETE FROM tournament_brackets WHERE tournament_stage_id = stage.id;
+        -- Calculate the maximum number of rounds
+        max_round := ceil(log(stage.max_teams) / log(2));
+		max_matches := stage.max_teams - 1;
+        -- Create last match first
+        match_number := max_matches;
+        INSERT INTO tournament_brackets (round, tournament_stage_id, match_number) VALUES (max_round, stage.id, match_number) RETURNING id INTO new_id;
+ 		RAISE NOTICE 'match_number: match_number=%',
+                match_number;
+        parents := array_append(parents, new_id);
+        round := max_round - 1;
+        matches_for_round := 2;
+        match_number := match_number;
+        WHILE matches_for_round * 2 <= stage.max_teams LOOP
+            -- Calculate number of matches for this round
+            created_matches := 0;
+            available_parents := parents;
+            parents := '{}';
+            RAISE NOTICE 'Processing round: round=%, matches=%, parents=%',
+                round, matches_for_round, available_parents;
+            WHILE created_matches < matches_for_round LOOP
+                parent_id := available_parents[array_length(available_parents, 1)];
+                available_parents := array_remove(available_parents, parent_id);
+                match_number := match_number - 1;
+                INSERT INTO tournament_brackets (round, tournament_stage_id, parent_bracket_id, match_number)
+                    VALUES (round, stage.id, parent_id, match_number) RETURNING id INTO new_id;
+                parents := array_append(parents, new_id);
+                match_number := match_number - 1;
+                INSERT INTO tournament_brackets (round, tournament_stage_id, parent_bracket_id, match_number)
+                    VALUES (round, stage.id, parent_id, match_number) RETURNING id INTO new_id;
+                parents := array_append(parents, new_id);
+                created_matches := created_matches + 2;
+            END LOOP;
+            round := round - 1;
+            matches_for_round := matches_for_round * 2;
+        END LOOP;
+    END LOOP;
+    CLOSE stages;
     RETURN NEW;
 END;
 $$;
@@ -1142,16 +1191,26 @@ CREATE TABLE public.team_roster (
     team_id uuid NOT NULL,
     role text DEFAULT 'Pending'::text NOT NULL
 );
+CREATE TABLE public.tournament_brackets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tournament_stage_id uuid NOT NULL,
+    match_id uuid,
+    roster_1_id uuid,
+    roster_2_id uuid,
+    parent_bracket_id uuid,
+    round integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    match_number integer
+);
 CREATE TABLE public.tournament_organizers (
     steam_id bigint NOT NULL,
     tournament_id uuid NOT NULL,
     role text DEFAULT 'Admin'::text NOT NULL
 );
 CREATE TABLE public.tournament_roster (
-    id uuid NOT NULL,
-    team_id uuid NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tournament_team_id uuid NOT NULL,
     player_steam_id bigint NOT NULL,
-    type text NOT NULL,
     tournament_id uuid NOT NULL
 );
 CREATE TABLE public.tournament_servers (
@@ -1160,25 +1219,28 @@ CREATE TABLE public.tournament_servers (
     tournament_id uuid NOT NULL
 );
 CREATE TABLE public.tournament_stages (
-    id uuid NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_id uuid NOT NULL,
     type text NOT NULL,
     "order" integer DEFAULT 1 NOT NULL,
-    settings jsonb NOT NULL
+    settings jsonb,
+    min_teams integer NOT NULL,
+    max_teams integer NOT NULL
 );
 CREATE TABLE public.tournament_teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    team_id uuid NOT NULL,
-    tournament_id uuid NOT NULL
+    team_id uuid,
+    tournament_id uuid NOT NULL,
+    name text NOT NULL
 );
 CREATE TABLE public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     description text,
-    type text NOT NULL,
     start timestamp with time zone NOT NULL,
     organizer_steam_id bigint NOT NULL,
-    status text DEFAULT 'Setup'::text NOT NULL
+    status text DEFAULT 'Setup'::text NOT NULL,
+    type text NOT NULL
 );
 CREATE VIEW public.v_match_captains AS
  SELECT mlp.steam_id,
@@ -1372,6 +1434,8 @@ ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_name_key UNIQUE (name);
 ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.tournament_brackets
+    ADD CONSTRAINT touarnment_brackets_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_pkey PRIMARY KEY (steam_id, tournament_id);
 ALTER TABLE ONLY public.tournament_roster
@@ -1402,6 +1466,7 @@ CREATE TRIGGER set_public_players_updated_at BEFORE UPDATE ON public.players FOR
 COMMENT ON TRIGGER set_public_players_updated_at ON public.players IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.create_match_map_from_veto();
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
+CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
@@ -1415,7 +1480,6 @@ CREATE TRIGGER tbiu_update_total_damage_trigger BEFORE INSERT OR UPDATE ON publi
 CREATE TRIGGER tbu_match_player_count BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_player_count();
 CREATE TRIGGER tbu_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_status();
 CREATE TRIGGER tbui_match_lineup_players BEFORE INSERT OR UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbui_match_lineup_players();
-CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public._map_pool
@@ -1538,6 +1602,8 @@ ALTER TABLE ONLY public.team_roster
     ADD CONSTRAINT team_roster_role_fkey FOREIGN KEY (role) REFERENCES public.e_team_roles(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_owner_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.tournament_brackets
+    ADD CONSTRAINT tournament_brackets_tournament_stage_id_fkey FOREIGN KEY (tournament_stage_id) REFERENCES public.tournament_stages(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_steam_id_fkey FOREIGN KEY (steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_organizers
@@ -1545,9 +1611,9 @@ ALTER TABLE ONLY public.tournament_organizers
 ALTER TABLE ONLY public.tournament_roster
     ADD CONSTRAINT tournament_roster_player_steam_id_fkey FOREIGN KEY (player_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_roster
-    ADD CONSTRAINT tournament_roster_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournament_roster
     ADD CONSTRAINT tournament_roster_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.tournament_roster
+    ADD CONSTRAINT tournament_roster_tournament_team_id_fkey FOREIGN KEY (tournament_team_id) REFERENCES public.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_servers
     ADD CONSTRAINT tournament_servers_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_servers

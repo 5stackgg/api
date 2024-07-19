@@ -5,6 +5,14 @@ object_relationships:
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
+array_relationships:
+  - name: brackets
+    using:
+      foreign_key_constraint_on:
+        column: tournament_stage_id
+        table:
+          name: tournament_brackets
+          schema: public
 insert_permissions:
   - role: user
     permission:

@@ -1,1 +1,0 @@
-CREATE TABLE "public"."touarnment_brackets" ("id" uuid NOT NULL, "tournament_stage_id" uuid NOT NULL, "match_id" uuid, "roster_1_id" uuid, "roster_2_id" uuid, "round" integer NOT NULL, "next_bracket" uuid, PRIMARY KEY ("id") );
