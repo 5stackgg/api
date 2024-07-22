@@ -8,12 +8,30 @@ object_relationships:
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        tournament:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+      columns:
+        - steam_id
+        - tournament_id
+    comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
         - steam_id
-        - role
         - tournament_id
       filter: {}
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        tournament:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
     comment: ""
