@@ -10,7 +10,7 @@ object_relationships:
       foreign_key_constraint_on: type
   - name: map_pool
     using:
-      foreign_key_constraint_on: match_pool_id
+      foreign_key_constraint_on: map_pool_id
   - name: organizer
     using:
       manual_configuration:
@@ -173,7 +173,7 @@ insert_permissions:
         - knife_round
         - label
         - map_veto
-        - match_pool_id
+        - map_pool_id
         - mr
         - number_of_substitutes
         - overtime
@@ -195,7 +195,7 @@ select_permissions:
         - knife_round
         - label
         - map_veto
-        - match_pool_id
+        - map_pool_id
         - mr
         - number_of_substitutes
         - organizer_steam_id

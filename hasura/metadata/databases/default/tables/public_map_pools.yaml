@@ -1,6 +1,10 @@
 table:
   name: map_pools
   schema: public
+object_relationships:
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
 array_relationships:
   - name: maps
     using:
@@ -14,7 +18,7 @@ array_relationships:
   - name: matches
     using:
       foreign_key_constraint_on:
-        column: match_pool_id
+        column: map_pool_id
         table:
           name: matches
           schema: public
@@ -22,8 +26,19 @@ insert_permissions:
   - role: user
     permission:
       check:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - _and:
+              - tournament_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - _and:
+              - tournament_id:
+                  _is_null: false
+              - tournament:
+                  organizers:
+                    steam_id:
+                      _eq: X-Hasura-User-Id
       columns:
         - enabled
         - label
@@ -32,10 +47,11 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - owner_steam_id
         - enabled
-        - label
         - id
+        - label
+        - owner_steam_id
+        - tournament_id
       filter:
         _or:
           - owner_steam_id:
@@ -50,16 +66,49 @@ update_permissions:
         - enabled
         - label
       filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - _and:
+              - tournament_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - _and:
+              - tournament_id:
+                  _is_null: false
+              - tournament:
+                  organizers:
+                    steam_id:
+                      _eq: X-Hasura-User-Id
       check:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - _and:
+              - tournament_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - _and:
+              - tournament_id:
+                  _is_null: false
+              - tournament:
+                  organizers:
+                    steam_id:
+                      _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - _and:
+              - tournament_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - _and:
+              - tournament_id:
+                  _is_null: false
+              - tournament:
+                  organizers:
+                    steam_id:
+                      _eq: X-Hasura-User-Id
     comment: ""
