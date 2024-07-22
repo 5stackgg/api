@@ -2,6 +2,14 @@ table:
   name: e_utility_types
   schema: public
 is_enum: true
+array_relationships:
+  - name: player_utilities
+    using:
+      foreign_key_constraint_on:
+        column: type
+        table:
+          name: player_utility
+          schema: public
 select_permissions:
   - role: user
     permission:

@@ -5,6 +5,9 @@ object_relationships:
   - name: admin
     using:
       foreign_key_constraint_on: organizer_steam_id
+  - name: e_tournament_status
+    using:
+      foreign_key_constraint_on: status
 array_relationships:
   - name: organizers
     using:

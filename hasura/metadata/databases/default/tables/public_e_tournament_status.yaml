@@ -1,21 +1,14 @@
 table:
-  name: e_timeout_settings
+  name: e_tournament_status
   schema: public
 is_enum: true
 array_relationships:
-  - name: matches
+  - name: tournaments
     using:
       foreign_key_constraint_on:
-        column: tech_timeout_setting
+        column: status
         table:
-          name: matches
-          schema: public
-  - name: matchesByTimeoutSetting
-    using:
-      foreign_key_constraint_on:
-        column: timeout_setting
-        table:
-          name: matches
+          name: tournaments
           schema: public
 select_permissions:
   - role: user

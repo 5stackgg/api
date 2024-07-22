@@ -2,6 +2,14 @@ table:
   name: e_veto_pick_types
   schema: public
 is_enum: true
+array_relationships:
+  - name: match_veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: type
+        table:
+          name: match_veto_picks
+          schema: public
 select_permissions:
   - role: user
     permission:
