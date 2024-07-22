@@ -17,7 +17,7 @@ insert_permissions:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
           - server:
-              player_steam_id:
+              owner_steam_id:
                 _eq: X-Hasura-User-Id
       columns:
         - server_id
@@ -35,7 +35,7 @@ select_permissions:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
           - server:
-              player_steam_id:
+              owner_steam_id:
                 _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
@@ -47,6 +47,6 @@ delete_permissions:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
           - server:
-              player_steam_id:
+              owner_steam_id:
                 _eq: X-Hasura-User-Id
     comment: ""
