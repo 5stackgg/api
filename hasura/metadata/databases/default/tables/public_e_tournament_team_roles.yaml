@@ -1,0 +1,3 @@
+table:
+  name: e_tournament_team_roles
+  schema: public

@@ -4,23 +4,37 @@ table:
 object_relationships:
   - name: creator
     using:
-      foreign_key_constraint_on: creator_steam_id
+      foreign_key_constraint_on: owner_steam_id
   - name: team
     using:
       foreign_key_constraint_on: team_id
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
+array_relationships:
+  - name: roster
+    using:
+      foreign_key_constraint_on:
+        column: tournament_team_id
+        table:
+          name: tournament_team_roster
+          schema: public
 insert_permissions:
   - role: user
     permission:
       check:
-        team:
-          owner:
-            steam_id:
-              _eq: X-Hasura-User-Id
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - team_id:
+              _is_null: true
       set:
-        creator_steam_id: x-hasura-user-id
+        owner_steam_id: x-hasura-user-id
       columns:
         - name
         - team_id
@@ -30,7 +44,7 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - creator_steam_id
+        - owner_steam_id
         - id
         - name
         - team_id
@@ -44,16 +58,49 @@ update_permissions:
       columns:
         - name
       filter:
-        creator_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
       check:
-        creator_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        creator_steam_id:
-          _eq: X-Hasura-User-Id
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
     comment: ""
