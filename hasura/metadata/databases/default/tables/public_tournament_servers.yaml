@@ -27,7 +27,6 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - id
         - server_id
         - tournament_id
       filter:
