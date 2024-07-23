@@ -1,10 +1,6 @@
 table:
   name: map_pools
   schema: public
-object_relationships:
-  - name: tournament
-    using:
-      foreign_key_constraint_on: tournament_id
 array_relationships:
   - name: maps
     using:
@@ -22,14 +18,22 @@ array_relationships:
         table:
           name: matches
           schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - enabled
+        - id
+        - type
+    comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
         - enabled
         - id
-        - label
+        - type
         - seed
-        - tournament_id
       filter: {}
     comment: ""
