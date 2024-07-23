@@ -50,7 +50,7 @@ BEGIN
     -- Check if the map being picked is available for the match
     IF NOT EXISTS (
         SELECT 1 FROM matches m
-        INNER JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        INNER JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
         INNER JOIN maps ON maps.id = mp.map_id      
         WHERE maps.id = NEW.map_id AND m.id = _match_id
     ) THEN
@@ -132,7 +132,7 @@ BEGIN
   -- Retrieve available maps for veto
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
-  LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+  LEFT JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
   LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
   WHERE m.id = NEW.match_id
   AND mvp IS NULL;
@@ -524,7 +524,7 @@ DECLARE
 BEGIN
     SELECT array_agg(mp.map_id) INTO pool
         FROM matches m
-        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
         LEFT JOIN match_veto_picks mvp ON mvp.match_id = _match.id AND mvp.map_id = mp.map_id
         WHERE m.id = _match.id;
     -- Loop to build the pattern array
@@ -651,7 +651,7 @@ BEGIN
     -- Get available maps for the match
     SELECT array_agg(mp.map_id) INTO available_maps
         FROM matches m
-        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.match_pool_id
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
         LEFT JOIN match_veto_picks mvp ON mvp.match_id = match.id AND mvp.map_id = mp.map_id
         WHERE m.id = match.id
         AND mvp IS NULL;
