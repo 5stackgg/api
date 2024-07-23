@@ -42,36 +42,36 @@ WITH new_rows AS (
       ('Competitive', true, true),
       ('Wingman', true, true),
       ('Scrimmage', true, true)
-  ) AS data(label, enabled, seed)
+  ) AS data(type, enabled, seed)
 )
-INSERT INTO map_pools ("label", "enabled", "seed")
-SELECT label, enabled, seed
+INSERT INTO map_pools ("type", "enabled", "seed")
+SELECT type, enabled, seed
 FROM new_rows
 WHERE NOT EXISTS (
   SELECT 1
   FROM map_pools
-  WHERE map_pools.label = new_rows.label
+  WHERE map_pools.type = new_rows.type
     AND map_pools.seed = true
 );
 
 WITH pool_ids AS (
-    SELECT id, label
+    SELECT id, type
     FROM map_pools
-    WHERE label IN ('Competitive', 'Wingman', 'Scrimmage')
-    ORDER BY label
+    WHERE type IN ('Competitive', 'Wingman', 'Scrimmage')
+    ORDER BY type
 ),
 inserted_maps AS (
     INSERT INTO _map_pool (map_id, map_pool_id)
     SELECT m.id, p.id
     FROM maps m
     JOIN pool_ids p ON (
-        (p.label = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
-        (p.label = 'Wingman' AND m.type = 'Wingman') OR
-        (p.label = 'Scrimmage' AND m.type = 'Competitive')
+        (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
+        (p.type = 'Wingman' AND m.type = 'Wingman') OR
+        (p.type = 'Scrimmage' AND m.type = 'Competitive')
     )
     ON CONFLICT DO NOTHING
     RETURNING *
 )
-SELECT im.map_id, pi.label
+SELECT im.map_id, pi.type
 FROM inserted_maps im
 JOIN pool_ids pi ON im.map_pool_id = pi.id;
