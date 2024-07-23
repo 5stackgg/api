@@ -1061,10 +1061,9 @@ CREATE TABLE public.e_veto_pick_types (
 );
 CREATE TABLE public.map_pools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    label text,
-    owner_steam_id bigint,
+    type text NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
-    tournament_id uuid
+    seed boolean DEFAULT false NOT NULL
 );
 CREATE TABLE public.maps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -1249,7 +1248,7 @@ CREATE TABLE public.tournaments (
     organizer_steam_id bigint NOT NULL,
     status text DEFAULT 'Setup'::text NOT NULL,
     type text NOT NULL,
-    map_pool_id uuid
+    map_pool_id uuid NOT NULL
 );
 CREATE VIEW public.v_match_captains AS
  SELECT mlp.steam_id,
@@ -1385,8 +1384,6 @@ ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_pkey PRIMARY KEY (map_id, map_pool_id);
 ALTER TABLE ONLY public.map_pools
     ADD CONSTRAINT map_pools_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.map_pools
-    ADD CONSTRAINT map_pools_tournament_id_key UNIQUE (tournament_id);
 ALTER TABLE ONLY public.maps
     ADD CONSTRAINT maps_name_type_key UNIQUE (name, type);
 ALTER TABLE ONLY public.maps
@@ -1478,7 +1475,6 @@ CREATE INDEX demo_match ON public.match_map_demos USING btree (match_id);
 CREATE INDEX flashes_player_match ON public.player_flashes USING btree (attacker_steam_id, match_id);
 CREATE INDEX kills_player_match ON public.player_kills USING btree (attacker_steam_id, match_id);
 CREATE INDEX lineups_match ON public.match_lineups USING btree (match_id);
-CREATE UNIQUE INDEX map_pools_label_owner_steam_id_key ON public.map_pools USING btree (label, owner_steam_id) WHERE (owner_steam_id IS NOT NULL);
 CREATE INDEX objectives_player_match ON public.player_objectives USING btree (player_steam_id, match_id);
 CREATE INDEX unused_utility_player_match ON public.player_unused_utility USING btree (player_steam_id, match_id);
 CREATE INDEX utility_player_match ON public.player_utility USING btree (attacker_steam_id, match_id);
@@ -1508,7 +1504,7 @@ ALTER TABLE ONLY public._map_pool
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.map_pools
-    ADD CONSTRAINT map_pools_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT map_pools_type_fkey FOREIGN KEY (type) REFERENCES public.e_match_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.maps
     ADD CONSTRAINT maps_type_fkey FOREIGN KEY (type) REFERENCES public.e_match_types(value) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_map_demos
@@ -1655,6 +1651,8 @@ ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.tournaments
+    ADD CONSTRAINT tournaments_map_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournaments
     ADD CONSTRAINT tournaments_organizer_steam_id_fkey FOREIGN KEY (organizer_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournaments
