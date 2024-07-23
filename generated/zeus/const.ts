@@ -105,6 +105,13 @@ export const AllTypesProps: Record<string,any> = {
 		value:"String_comparison_exp"
 	},
 	e_map_pool_types_constraint: "enum" as const,
+	e_map_pool_types_enum: "enum" as const,
+	e_map_pool_types_enum_comparison_exp:{
+		_eq:"e_map_pool_types_enum",
+		_in:"e_map_pool_types_enum",
+		_neq:"e_map_pool_types_enum",
+		_nin:"e_map_pool_types_enum"
+	},
 	e_map_pool_types_insert_input:{
 
 	},
@@ -997,13 +1004,14 @@ export const AllTypesProps: Record<string,any> = {
 		matches:"matches_bool_exp",
 		matches_aggregate:"matches_aggregate_bool_exp",
 		seed:"Boolean_comparison_exp",
-		type:"String_comparison_exp"
+		type:"e_map_pool_types_enum_comparison_exp"
 	},
 	map_pools_constraint: "enum" as const,
 	map_pools_insert_input:{
 		id:"uuid",
 		maps:"v_pool_maps_arr_rel_insert_input",
-		matches:"matches_arr_rel_insert_input"
+		matches:"matches_arr_rel_insert_input",
+		type:"e_map_pool_types_enum"
 	},
 	map_pools_obj_rel_insert_input:{
 		data:"map_pools_insert_input",
@@ -1027,14 +1035,16 @@ export const AllTypesProps: Record<string,any> = {
 	},
 	map_pools_select_column: "enum" as const,
 	map_pools_set_input:{
-		id:"uuid"
+		id:"uuid",
+		type:"e_map_pool_types_enum"
 	},
 	map_pools_stream_cursor_input:{
 		initial_value:"map_pools_stream_cursor_value_input",
 		ordering:"cursor_ordering"
 	},
 	map_pools_stream_cursor_value_input:{
-		id:"uuid"
+		id:"uuid",
+		type:"e_map_pool_types_enum"
 	},
 	map_pools_update_column: "enum" as const,
 	map_pools_updates:{
@@ -9475,7 +9485,7 @@ export const ReturnTypes: Record<string,any> = {
 		matches:"matches",
 		matches_aggregate:"matches_aggregate",
 		seed:"Boolean",
-		type:"String"
+		type:"e_map_pool_types_enum"
 	},
 	map_pools_aggregate:{
 		aggregate:"map_pools_aggregate_fields",
@@ -9487,12 +9497,10 @@ export const ReturnTypes: Record<string,any> = {
 		min:"map_pools_min_fields"
 	},
 	map_pools_max_fields:{
-		id:"uuid",
-		type:"String"
+		id:"uuid"
 	},
 	map_pools_min_fields:{
-		id:"uuid",
-		type:"String"
+		id:"uuid"
 	},
 	map_pools_mutation_response:{
 		affected_rows:"Int",
