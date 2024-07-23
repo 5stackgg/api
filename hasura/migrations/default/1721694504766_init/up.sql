@@ -184,7 +184,7 @@ CREATE TABLE public.matches (
     coaches boolean DEFAULT false NOT NULL,
     number_of_substitutes integer DEFAULT 0 NOT NULL,
     map_veto boolean DEFAULT false NOT NULL,
-    match_pool_id uuid,
+    map_pool_id uuid,
     timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL,
     tech_timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL
 );
@@ -433,7 +433,7 @@ CREATE TABLE public.servers (
     tv_port integer,
     on_demand boolean DEFAULT false NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
-    player_steam_id bigint,
+    owner_steam_id bigint,
     api_password uuid DEFAULT gen_random_uuid() NOT NULL
 );
 CREATE FUNCTION public.get_server_current_match_id(server public.servers) RETURNS text
@@ -1047,6 +1047,10 @@ CREATE TABLE public.e_tournament_stage_types (
     value text NOT NULL,
     description text NOT NULL
 );
+CREATE TABLE public.e_tournament_status (
+    value text NOT NULL,
+    description text NOT NULL
+);
 CREATE TABLE public.e_utility_types (
     value text NOT NULL,
     description text NOT NULL
@@ -1059,7 +1063,8 @@ CREATE TABLE public.map_pools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     label text,
     owner_steam_id bigint,
-    enabled boolean DEFAULT true NOT NULL
+    enabled boolean DEFAULT true NOT NULL,
+    tournament_id uuid
 );
 CREATE TABLE public.maps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -1208,17 +1213,9 @@ CREATE TABLE public.tournament_brackets (
 );
 CREATE TABLE public.tournament_organizers (
     steam_id bigint NOT NULL,
-    tournament_id uuid NOT NULL,
-    role text DEFAULT 'Admin'::text NOT NULL
-);
-CREATE TABLE public.tournament_roster (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tournament_team_id uuid NOT NULL,
-    player_steam_id bigint NOT NULL,
     tournament_id uuid NOT NULL
 );
 CREATE TABLE public.tournament_servers (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
     server_id uuid NOT NULL,
     tournament_id uuid NOT NULL
 );
@@ -1231,12 +1228,18 @@ CREATE TABLE public.tournament_stages (
     min_teams integer NOT NULL,
     max_teams integer NOT NULL
 );
+CREATE TABLE public.tournament_team_roster (
+    tournament_team_id uuid NOT NULL,
+    player_steam_id bigint NOT NULL,
+    tournament_id uuid NOT NULL,
+    role text DEFAULT 'Member'::text NOT NULL
+);
 CREATE TABLE public.tournament_teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid,
     tournament_id uuid NOT NULL,
     name text NOT NULL,
-    creator_steam_id bigint NOT NULL
+    owner_steam_id bigint NOT NULL
 );
 CREATE TABLE public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -1245,7 +1248,8 @@ CREATE TABLE public.tournaments (
     start timestamp with time zone NOT NULL,
     organizer_steam_id bigint NOT NULL,
     status text DEFAULT 'Setup'::text NOT NULL,
-    type text NOT NULL
+    type text NOT NULL,
+    map_pool_id uuid
 );
 CREATE VIEW public.v_match_captains AS
  SELECT mlp.steam_id,
@@ -1371,6 +1375,8 @@ ALTER TABLE ONLY public.e_timeout_settings
     ADD CONSTRAINT e_timeout_settings_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_tournament_stage_types
     ADD CONSTRAINT e_tournament_stage_types_pkey PRIMARY KEY (value);
+ALTER TABLE ONLY public.e_tournament_status
+    ADD CONSTRAINT e_tournament_status_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_utility_types
     ADD CONSTRAINT e_utility_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_veto_pick_types
@@ -1379,6 +1385,8 @@ ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_pkey PRIMARY KEY (map_id, map_pool_id);
 ALTER TABLE ONLY public.map_pools
     ADD CONSTRAINT map_pools_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.map_pools
+    ADD CONSTRAINT map_pools_tournament_id_key UNIQUE (tournament_id);
 ALTER TABLE ONLY public.maps
     ADD CONSTRAINT maps_name_type_key UNIQUE (name, type);
 ALTER TABLE ONLY public.maps
@@ -1445,14 +1453,22 @@ ALTER TABLE ONLY public.tournament_brackets
     ADD CONSTRAINT touarnment_brackets_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_pkey PRIMARY KEY (steam_id, tournament_id);
-ALTER TABLE ONLY public.tournament_roster
-    ADD CONSTRAINT tournament_roster_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.tournament_team_roster
+    ADD CONSTRAINT tournament_roster_pkey PRIMARY KEY (player_steam_id, tournament_id);
+ALTER TABLE ONLY public.tournament_team_roster
+    ADD CONSTRAINT tournament_roster_player_steam_id_tournament_id_key UNIQUE (player_steam_id, tournament_id);
 ALTER TABLE ONLY public.tournament_servers
-    ADD CONSTRAINT tournament_servers_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT tournament_servers_pkey PRIMARY KEY (server_id, tournament_id);
+ALTER TABLE ONLY public.tournament_servers
+    ADD CONSTRAINT tournament_servers_server_id_tournament_id_key UNIQUE (server_id, tournament_id);
 ALTER TABLE ONLY public.tournament_stages
     ADD CONSTRAINT tournament_stages_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tournament_teams
+    ADD CONSTRAINT tournament_teams_creator_steam_id_tournament_id_key UNIQUE (owner_steam_id, tournament_id);
+ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.tournament_teams
+    ADD CONSTRAINT tournament_teams_tournament_id_team_id_key UNIQUE (tournament_id, team_id);
 ALTER TABLE ONLY public.tournaments
     ADD CONSTRAINT tournaments_pkey PRIMARY KEY (id);
 CREATE INDEX assists_player_match ON public.player_assists USING btree (attacker_steam_id, match_id);
@@ -1491,6 +1507,8 @@ ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.map_pools
+    ADD CONSTRAINT map_pools_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.maps
     ADD CONSTRAINT maps_type_fkey FOREIGN KEY (type) REFERENCES public.e_match_types(value) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_map_demos
@@ -1528,7 +1546,7 @@ ALTER TABLE ONLY public.match_veto_picks
 ALTER TABLE ONLY public.match_veto_picks
     ADD CONSTRAINT match_veto_picks_type_fkey FOREIGN KEY (type) REFERENCES public.e_veto_pick_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.matches
-    ADD CONSTRAINT matches_match_pool_id_fkey FOREIGN KEY (match_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE SET NULL;
+    ADD CONSTRAINT matches_match_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY public.matches
     ADD CONSTRAINT matches_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY public.matches
@@ -1594,7 +1612,7 @@ ALTER TABLE ONLY public.player_utility
 ALTER TABLE ONLY public.player_utility
     ADD CONSTRAINT player_utility_type_fkey FOREIGN KEY (type) REFERENCES public.e_utility_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.servers
-    ADD CONSTRAINT servers_player_steam_id_fkey FOREIGN KEY (player_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT servers_player_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.team_invites
     ADD CONSTRAINT team_invites_invited_by_player_steam_id_fkey FOREIGN KEY (invited_by_player_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.team_invites
@@ -1615,11 +1633,11 @@ ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_steam_id_fkey FOREIGN KEY (steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournament_roster
+ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_player_steam_id_fkey FOREIGN KEY (player_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournament_roster
+ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournament_roster
+ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_tournament_team_id_fkey FOREIGN KEY (tournament_team_id) REFERENCES public.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_servers
     ADD CONSTRAINT tournament_servers_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id) ON UPDATE CASCADE ON DELETE CASCADE;
@@ -1629,11 +1647,15 @@ ALTER TABLE ONLY public.tournament_stages
     ADD CONSTRAINT tournament_stages_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_stages
     ADD CONSTRAINT tournament_stages_type_fkey FOREIGN KEY (type) REFERENCES public.e_tournament_stage_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.tournament_team_roster
+    ADD CONSTRAINT tournament_team_roster_role_fkey FOREIGN KEY (role) REFERENCES public.e_team_roles(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_teams
-    ADD CONSTRAINT tournament_teams_creator_steam_id_fkey FOREIGN KEY (creator_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT tournament_teams_creator_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournaments
     ADD CONSTRAINT tournaments_organizer_steam_id_fkey FOREIGN KEY (organizer_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.tournaments
+    ADD CONSTRAINT tournaments_status_fkey FOREIGN KEY (status) REFERENCES public.e_tournament_status(value) ON UPDATE CASCADE ON DELETE RESTRICT;
