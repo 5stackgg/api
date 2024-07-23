@@ -71,7 +71,12 @@ select_permissions:
         - type
         - start
         - id
-      filter: {}
+      filter:
+        _or:
+          - organizer_steam_id:
+              _eq: X-Hasura-User-Id
+          - status:
+              _neq: Setup
       allow_aggregations: true
     comment: ""
 update_permissions:
