@@ -1015,6 +1015,10 @@ CREATE TABLE public._map_pool (
     map_id uuid NOT NULL,
     map_pool_id uuid NOT NULL
 );
+CREATE TABLE public.e_map_pool_types (
+    value text NOT NULL,
+    description text
+);
 CREATE TABLE public.e_match_map_status (
     value text NOT NULL,
     description text NOT NULL
@@ -1360,6 +1364,8 @@ CREATE VIEW public.v_pool_maps AS
     maps.workshop_map_id
    FROM (public._map_pool
      LEFT JOIN public.maps ON ((_map_pool.map_id = maps.id)));
+ALTER TABLE ONLY public.e_map_pool_types
+    ADD CONSTRAINT e_map_pool_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_match_status
     ADD CONSTRAINT e_match_status_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_match_types
@@ -1505,7 +1511,7 @@ ALTER TABLE ONLY public._map_pool
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.map_pools
-    ADD CONSTRAINT map_pools_type_fkey FOREIGN KEY (type) REFERENCES public.e_match_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT map_pools_type_fkey FOREIGN KEY (type) REFERENCES public.e_map_pool_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.maps
     ADD CONSTRAINT maps_type_fkey FOREIGN KEY (type) REFERENCES public.e_match_types(value) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_map_demos
