@@ -29,11 +29,7 @@ select_permissions:
         - enabled
         - id
         - label
+        - seed
         - tournament_id
-      filter:
-        _or:
-          - owner_steam_id:
-              _eq: X-Hasura-User-Id
-          - owner_steam_id:
-              _is_null: true
+      filter: {}
     comment: ""
