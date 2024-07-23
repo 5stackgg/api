@@ -167,7 +167,7 @@ export default class ScheduleMatch extends DiscordInteraction {
       map_pools: [
         {
           where: {
-            label: {
+            type: {
               _eq: matchType,
             },
           },
