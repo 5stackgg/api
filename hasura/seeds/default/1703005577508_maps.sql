@@ -26,8 +26,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_nuke', 'Wingman', 'false',  null, '/img/maps/posters/nuke.webp', '/img/maps/patches/nuke.webp'),
     ('de_overpass', 'Wingman', 'false',  null, '/img/maps/posters/overpass.webp', '/img/maps/patches/overpass.webp'),
     ('de_vertigo', 'Wingman', 'false',  null, '/img/maps/posters/vertigo.webp', '/img/maps/patches/vertigo.webp'),
-    ('de_assembly', 'Wingman', 'false',  null, '/img/maps/posters/assembly.webp', '/img/maps/patches/assembly.webp'),
-    ('de_memento', 'Wingman', 'false',  null, '/img/maps/posters/memento.webp', '/img/maps/patches/memento.webp'),
+    ('de_assembly', 'Wingman', 'false',  null, null, null),
+    ('de_memento', 'Wingman', 'false',  null, null, null),
 
     --  Wingman Workshop
     ('de_brewery', 'Wingman', 'false',  '3070290240', null, null),
@@ -39,19 +39,19 @@ on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "w
 WITH new_rows AS (
   SELECT *
   FROM (VALUES
-      ('Competitive', true, null::bigint),
-      ('Wingman', true, null::bigint),
-      ('Scrimmage', true, null::bigint)
-  ) AS data(label, enabled, owner_steam_id)
+      ('Competitive', true, true),
+      ('Wingman', true, true),
+      ('Scrimmage', true, true)
+  ) AS data(label, enabled, seed)
 )
-INSERT INTO map_pools ("label", "enabled", "owner_steam_id")
-SELECT label, enabled, owner_steam_id
+INSERT INTO map_pools ("label", "enabled", "seed")
+SELECT label, enabled, seed
 FROM new_rows
 WHERE NOT EXISTS (
   SELECT 1
   FROM map_pools
   WHERE map_pools.label = new_rows.label
-    AND map_pools.owner_steam_id IS NULL
+    AND map_pools.seed = true
 );
 
 WITH pool_ids AS (

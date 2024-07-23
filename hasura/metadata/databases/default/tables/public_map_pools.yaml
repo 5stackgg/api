@@ -22,27 +22,6 @@ array_relationships:
         table:
           name: matches
           schema: public
-insert_permissions:
-  - role: user
-    permission:
-      check:
-        _or:
-          - _and:
-              - tournament_id:
-                  _is_null: true
-              - owner_steam_id:
-                  _eq: X-Hasura-User-Id
-          - _and:
-              - tournament_id:
-                  _is_null: false
-              - tournament:
-                  organizers:
-                    steam_id:
-                      _eq: X-Hasura-User-Id
-      columns:
-        - enabled
-        - label
-    comment: ""
 select_permissions:
   - role: user
     permission:
@@ -50,7 +29,6 @@ select_permissions:
         - enabled
         - id
         - label
-        - owner_steam_id
         - tournament_id
       filter:
         _or:
@@ -58,57 +36,4 @@ select_permissions:
               _eq: X-Hasura-User-Id
           - owner_steam_id:
               _is_null: true
-    comment: ""
-update_permissions:
-  - role: user
-    permission:
-      columns:
-        - enabled
-        - label
-      filter:
-        _or:
-          - _and:
-              - tournament_id:
-                  _is_null: true
-              - owner_steam_id:
-                  _eq: X-Hasura-User-Id
-          - _and:
-              - tournament_id:
-                  _is_null: false
-              - tournament:
-                  organizers:
-                    steam_id:
-                      _eq: X-Hasura-User-Id
-      check:
-        _or:
-          - _and:
-              - tournament_id:
-                  _is_null: true
-              - owner_steam_id:
-                  _eq: X-Hasura-User-Id
-          - _and:
-              - tournament_id:
-                  _is_null: false
-              - tournament:
-                  organizers:
-                    steam_id:
-                      _eq: X-Hasura-User-Id
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        _or:
-          - _and:
-              - tournament_id:
-                  _is_null: true
-              - owner_steam_id:
-                  _eq: X-Hasura-User-Id
-          - _and:
-              - tournament_id:
-                  _is_null: false
-              - tournament:
-                  organizers:
-                    steam_id:
-                      _eq: X-Hasura-User-Id
     comment: ""

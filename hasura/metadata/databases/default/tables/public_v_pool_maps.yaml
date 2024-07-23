@@ -16,8 +16,8 @@ insert_permissions:
     permission:
       check:
         map_pool:
-          owner_steam_id:
-            _eq: X-Hasura-User-Id
+          seed:
+            _eq: false
       columns:
         - id
     comment: ""
@@ -32,12 +32,5 @@ select_permissions:
         - poster
         - type
         - workshop_map_id
-      filter:
-        _or:
-          - map_pool:
-              owner_steam_id:
-                _eq: X-Hasura-User-Id
-          - map_pool:
-              owner_steam_id:
-                _is_null: true
+      filter: {}
     comment: ""
