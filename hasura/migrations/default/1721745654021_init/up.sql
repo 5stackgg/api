@@ -184,7 +184,7 @@ CREATE TABLE public.matches (
     coaches boolean DEFAULT false NOT NULL,
     number_of_substitutes integer DEFAULT 0 NOT NULL,
     map_veto boolean DEFAULT false NOT NULL,
-    map_pool_id uuid,
+    map_pool_id uuid NOT NULL,
     timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL,
     tech_timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL
 );
