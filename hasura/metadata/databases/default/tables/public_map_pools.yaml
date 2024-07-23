@@ -23,7 +23,6 @@ insert_permissions:
     permission:
       check: {}
       columns:
-        - enabled
         - id
         - type
     comment: ""
