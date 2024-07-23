@@ -1546,7 +1546,7 @@ ALTER TABLE ONLY public.match_veto_picks
 ALTER TABLE ONLY public.match_veto_picks
     ADD CONSTRAINT match_veto_picks_type_fkey FOREIGN KEY (type) REFERENCES public.e_veto_pick_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.matches
-    ADD CONSTRAINT matches_match_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE SET NULL;
+    ADD CONSTRAINT matches_map_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY public.matches
     ADD CONSTRAINT matches_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY public.matches
