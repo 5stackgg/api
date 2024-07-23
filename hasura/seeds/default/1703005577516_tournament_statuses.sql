@@ -5,5 +5,5 @@ insert into e_tournament_status ("value", "description") values
     ('Live', 'Live'),
     ('Planned', 'Planned'),
     ('Cancelled', 'Cancelled'),
-     ('Finished', 'Finished')
+    ('Finished', 'Finished')
 on conflict(value) do update set "description" = EXCLUDED."description"
