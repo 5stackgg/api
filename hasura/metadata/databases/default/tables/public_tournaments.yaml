@@ -56,21 +56,21 @@ insert_permissions:
       columns:
         - description
         - map_pool_id
+        - match_options_id
         - name
         - start
-        - type
     comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
-        - organizer_steam_id
         - description
-        - name
-        - status
-        - type
-        - start
         - id
+        - match_options_id
+        - name
+        - organizer_steam_id
+        - start
+        - status
       filter:
         _or:
           - organizer_steam_id:
@@ -88,7 +88,6 @@ update_permissions:
         - name
         - start
         - status
-        - type
       filter:
         organizer_steam_id:
           _eq: X-Hasura-User-Id

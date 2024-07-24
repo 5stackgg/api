@@ -282,8 +282,10 @@ export class MatchesController {
           id: match_id,
         },
         {
-          map_veto: true,
-          best_of: true,
+          options: {
+            map_veto: true,
+            best_of: true,
+          },
           match_maps: [
             {},
             {
@@ -294,12 +296,15 @@ export class MatchesController {
       ],
     });
 
-    if (!match) {
+    if (!match || !match.options) {
       throw Error("unable to find match");
     }
 
     let nextPhase = e_match_status_enum.Live;
-    if (match.map_veto && match.match_maps.length !== match.best_of) {
+    if (
+      match.options.map_veto &&
+      match.match_maps.length !== match.options.best_of
+    ) {
       nextPhase = e_match_status_enum.Veto;
     }
 

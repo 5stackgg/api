@@ -10,13 +10,6 @@ array_relationships:
         table:
           name: maps
           schema: public
-  - name: matches
-    using:
-      foreign_key_constraint_on:
-        column: type
-        table:
-          name: matches
-          schema: public
 select_permissions:
   - role: user
     permission:

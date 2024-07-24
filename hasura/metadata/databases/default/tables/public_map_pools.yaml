@@ -11,13 +11,6 @@ array_relationships:
         remote_table:
           name: v_pool_maps
           schema: public
-  - name: matches
-    using:
-      foreign_key_constraint_on:
-        column: map_pool_id
-        table:
-          name: matches
-          schema: public
 insert_permissions:
   - role: user
     permission:

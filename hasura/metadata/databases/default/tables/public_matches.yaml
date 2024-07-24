@@ -5,12 +5,9 @@ object_relationships:
   - name: e_match_status
     using:
       foreign_key_constraint_on: status
-  - name: e_match_type
+  - name: options
     using:
-      foreign_key_constraint_on: type
-  - name: map_pool
-    using:
-      foreign_key_constraint_on: map_pool_id
+      foreign_key_constraint_on: match_options_id
   - name: organizer
     using:
       manual_configuration:
@@ -168,44 +165,24 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
-        - best_of
-        - coaches
-        - knife_round
         - label
-        - map_veto
-        - map_pool_id
-        - mr
-        - number_of_substitutes
-        - overtime
+        - match_options_id
         - password
         - scheduled_at
         - server_id
-        - tech_timeout_setting
-        - timeout_setting
-        - type
     comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
-        - best_of
-        - coaches
         - created_at
         - id
-        - knife_round
         - label
-        - map_veto
-        - map_pool_id
-        - mr
-        - number_of_substitutes
+        - match_options_id
         - organizer_steam_id
-        - overtime
         - scheduled_at
         - server_id
         - status
-        - tech_timeout_setting
-        - timeout_setting
-        - type
         - updated_at
       computed_fields:
         - connection_link
@@ -226,17 +203,10 @@ update_permissions:
   - role: user
     permission:
       columns:
-        - best_of
-        - knife_round
         - label
-        - mr
         - organizer_steam_id
-        - overtime
         - scheduled_at
         - server_id
-        - tech_timeout_setting
-        - timeout_setting
-        - type
       filter:
         organizer_steam_id:
           _eq: x-hasura-user-id

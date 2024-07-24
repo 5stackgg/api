@@ -1,10 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonComponent,
-  ButtonStyle,
-} from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { ButtonActions } from "../enums/ButtonActions";
 import {
   e_match_map_status_enum,
@@ -128,6 +123,7 @@ export class DiscordBotOverviewService {
     row.addComponents(matchControls.CancelMatch);
     components.push(row);
 
+    const matchOptions = match.options;
     const details = {
       url: "",
       title: "Match Details",
@@ -135,15 +131,15 @@ export class DiscordBotOverviewService {
         {
           name: "Rules",
           value: `
-            ${match.type}
-            MR: ${match.mr}
-            Best of ${match.best_of}
-            Knife: ${match.knife_round}
-            Overtime: ${match.overtime}
-            Coaches: ${match.coaches}
-            Substitutes: ${match.number_of_substitutes}
-            Timeouts: ${match.timeout_setting}
-            Tech Timeouts: ${match.tech_timeout_setting}
+            ${matchOptions.type}
+            MR: ${matchOptions.mr}
+            Best of ${matchOptions.best_of}
+            Knife: ${matchOptions.knife_round}
+            Overtime: ${matchOptions.overtime}
+            Coaches: ${matchOptions.coaches}
+            Substitutes: ${matchOptions.number_of_substitutes}
+            Timeouts: ${matchOptions.timeout_setting}
+            Tech Timeouts: ${matchOptions.tech_timeout_setting}
           `,
           inline: true,
         },
@@ -285,22 +281,24 @@ export class DiscordBotOverviewService {
         },
         {
           id: true,
-          type: true,
-          mr: true,
-          best_of: true,
-          coaches: true,
           status: true,
-          overtime: true,
           password: true,
-          current_match_map_id: true,
-          veto_picking_lineup_id: true,
           lineup_1_id: true,
           lineup_2_id: true,
-          knife_round: true,
-          number_of_substitutes: true,
-          tech_timeout_setting: true,
-          timeout_setting: true,
-          map_veto: true,
+          current_match_map_id: true,
+          veto_picking_lineup_id: true,
+          options: {
+            mr: true,
+            type: true,
+            best_of: true,
+            coaches: true,
+            map_veto: true,
+            overtime: true,
+            knife_round: true,
+            timeout_setting: true,
+            tech_timeout_setting: true,
+            number_of_substitutes: true,
+          },
           lineups: [
             {},
             {

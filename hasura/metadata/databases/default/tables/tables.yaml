@@ -18,6 +18,7 @@
 - "!include public_match_map_demos.yaml"
 - "!include public_match_map_rounds.yaml"
 - "!include public_match_maps.yaml"
+- "!include public_match_options.yaml"
 - "!include public_match_veto_picks.yaml"
 - "!include public_matches.yaml"
 - "!include public_player_assists.yaml"

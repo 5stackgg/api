@@ -77,10 +77,12 @@ export class MatchAssistantService {
           id: matchId,
         },
         {
-          type: true,
           lineup_1_id: true,
           lineup_2_id: true,
           veto_picking_lineup_id: true,
+          options: {
+            type: true,
+          },
           lineups: [
             {},
             {
@@ -590,14 +592,16 @@ export class MatchAssistantService {
           id: matchId,
         },
         {
-          map_pool: {
-            maps: [
-              {},
-              {
-                id: true,
-                name: true,
-              },
-            ],
+          options: {
+            map_pool: {
+              maps: [
+                {},
+                {
+                  id: true,
+                  name: true,
+                },
+              ],
+            },
           },
           veto_picks: [
             {
@@ -624,11 +628,11 @@ export class MatchAssistantService {
       ],
     });
 
-    if (!matches_by_pk?.map_pool) {
+    if (!matches_by_pk?.options?.map_pool) {
       throw Error("unable to find match maps");
     }
 
-    return matches_by_pk.map_pool.maps.filter((map) => {
+    return matches_by_pk.options.map_pool.maps.filter((map) => {
       return !matches_by_pk.veto_picks.find((veto) => {
         return veto.map_id === map.id;
       });
