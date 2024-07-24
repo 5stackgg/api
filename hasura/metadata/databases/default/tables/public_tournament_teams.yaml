@@ -39,8 +39,6 @@ insert_permissions:
           - tournament:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
-      set:
-        owner_steam_id: x-hasura-user-id
       columns:
         - name
         - owner_steam_id
