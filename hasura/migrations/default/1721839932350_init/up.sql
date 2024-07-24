@@ -536,6 +536,7 @@ CREATE FUNCTION public.get_veto_pattern(_match public.matches) RETURNS text[]
     AS $$
 DECLARE
     pool uuid[];
+	best_of int;
     pattern TEXT[] := '{}';
     base_pattern TEXT[] := ARRAY['Ban', 'Ban', 'Pick', 'Pick'];
     picks_count INT;
@@ -543,9 +544,10 @@ DECLARE
     pattern_length INT;
     i INT;
 BEGIN
-    SELECT array_agg(mp.map_id) INTO pool
+    SELECT array_agg(mp.map_id), mo.best_of INTO pool, best_of
         FROM matches m
-        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
+        INNER JOIN match_options mo on mo.id = m.match_options_id
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
         LEFT JOIN match_veto_picks mvp ON mvp.match_id = _match.id AND mvp.map_id = mp.map_id
         WHERE m.id = _match.id;
     -- Loop to build the pattern array
@@ -821,7 +823,9 @@ DECLARE
 	match_maps_count INTEGER;
 BEGIN
 	_match_id := COALESCE(NEW.match_id, OLD.match_id);
-	SELECT best_of INTO match_best_of FROM matches m WHERE m.id = _match_id; 
+	SELECT mo.best_of INTO match_best_of FROM matches m
+	    inner join match_options mo on mo.id = m.match_options_id
+	 WHERE m.id = _match_id;
 	SELECT count(*) INTO match_maps_count from match_maps where match_id = _match_id;
 	IF (OLD.match_id IS DISTINCT FROM NEW.match_id AND match_maps_count >= match_best_of) THEN
 		RAISE EXCEPTION 'Match already has the maximum number of picked maps' USING ERRCODE = '22000';
@@ -870,14 +874,19 @@ CREATE FUNCTION public.tbu_match_status() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
+    best_of int;
+    map_veto boolean;
     match_map_count int;
 BEGIN
     IF (NEW.status != 'Live' AND NEW.status != 'Veto') OR NEW.server_id IS NULL THEN
         RETURN NEW;
     END IF;
-    IF NEW.map_veto = FALSE THEN
+    SELECT mo.map_veto, mo.best_of INTO map_veto, best_of FROM matches m
+        inner join match_options mo on mo.id = m.match_options_id
+     WHERE m.id = NEW.id;
+    IF map_veto = FALSE THEN
         SELECT COUNT(*) INTO match_map_count FROM match_maps WHERE match_id = NEW.id;	
-        IF match_map_count != NEW.best_of THEN 
+        IF match_map_count != best_of THEN 
             RAISE EXCEPTION 'Cannot start match because a map needs to be selected' USING ERRCODE = '22000';
         END IF;
     END IF;
@@ -940,7 +949,9 @@ BEGIN
     DECLARE
         match_best_of INT;
     BEGIN
-        SELECT best_of INTO match_best_of FROM matches WHERE id = NEW.match_id;
+        SELECT mo.best_of INTO match_best_of FROM matches
+        inner join match_options mo on mo.id = m.match_options_id
+         WHERE id = NEW.match_id;
         IF (NEW.order = match_best_of AND NEW.status = 'Finished') THEN
             UPDATE matches SET status = 'Finished' WHERE id = NEW.match_id;
         END IF;
