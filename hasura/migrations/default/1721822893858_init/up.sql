@@ -96,6 +96,37 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+CREATE FUNCTION public.check_team_eligibility() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    roster_count INT;
+    tournament_type TEXT;
+    min_players INT;
+BEGIN
+    SELECT COUNT(ttr.*) INTO roster_count
+    FROM tournament_teams tt
+    INNER JOIN tournament_team_roster ttr ON ttr.tournament_team_id = tt.id
+    WHERE tt.id = NEW.tournament_team_id
+    GROUP BY tt.tournament_id
+    LIMIT 1;
+    SELECT t.type INTO tournament_type FROM tournaments t WHERE t.id = NEW.tournament_id;
+    min_players := CASE
+                   WHEN tournament_type = 'Wingman' THEN 2
+                      ELSE 5
+                   END;
+    IF roster_count < min_players THEN
+    	UPDATE tournament_teams
+		    SET eligible_at = null
+		    WHERE id = NEW.tournament_team_id;
+        RETURN NEW;
+    END IF;
+    UPDATE tournament_teams
+    SET eligible_at = NOW()
+    WHERE id = NEW.tournament_team_id;
+    RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.create_match_map_from_veto() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1242,7 +1273,8 @@ CREATE TABLE public.tournament_teams (
     team_id uuid,
     tournament_id uuid NOT NULL,
     name text NOT NULL,
-    owner_steam_id bigint NOT NULL
+    owner_steam_id bigint NOT NULL,
+    eligible_at timestamp with time zone
 );
 CREATE TABLE public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -1492,6 +1524,7 @@ COMMENT ON TRIGGER set_public_players_updated_at ON public.players IS 'trigger t
 CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.create_match_map_from_veto();
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
 CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
+CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
