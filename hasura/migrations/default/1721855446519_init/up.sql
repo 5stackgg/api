@@ -1061,22 +1061,44 @@ DECLARE
     parent_id uuid;
     new_id uuid;
     match_number int;
+    tournament_status text;
+    total_teams int;
+    _tournament_id uuid;
 BEGIN
-    -- Create a temporary table to hold stages
-    CREATE TEMP TABLE temp_tournament_stages AS
-    SELECT *
-    FROM tournament_stages
-    WHERE tournament_id = COALESCE(NEW.tournament_id, NEW.id)
-    ORDER BY "order";
-    -- Loop through each stage in the temporary table
+    -- Determine the correct tournament_id to use based on the table
+    IF TG_TABLE_NAME = 'tournament_stages' THEN
+        _tournament_id := NEW.tournament_id;
+    ELSIF TG_TABLE_NAME = 'tournaments' THEN
+        _tournament_id := NEW.id;
+    ELSE
+        RAISE EXCEPTION 'Trigger function is not compatible with the table: %', TG_TABLE_NAME;
+    END IF;
+    -- Get the tournament status
+    SELECT status INTO tournament_status 
+    FROM tournaments 
+    WHERE id = _tournament_id;
+    -- Get the total number of teams
+    SELECT count(*) INTO total_teams 
+    FROM tournament_teams 
+    WHERE tournament_id = _tournament_id;
+    -- Process each stage
     FOR stage IN
-        SELECT * FROM temp_tournament_stages
+        SELECT *
+        FROM tournament_stages
+        WHERE tournament_id = _tournament_id
+        ORDER BY "order"
     LOOP
         -- Delete existing brackets for this stage
         DELETE FROM tournament_brackets WHERE tournament_stage_id = stage.id;
-        -- Calculate the maximum number of rounds and matches
-        max_round := ceil(log(stage.max_teams) / log(2));
-        max_matches := stage.max_teams - 1;
+        -- Calculate the maximum number of rounds and matches based on the status
+        IF tournament_status = 'Setup' THEN
+            max_round := ceil(log(stage.max_teams) / log(2));
+            max_matches := stage.max_teams - 1;
+        ELSE
+            max_round := ceil(log(total_teams) / log(2));
+            max_matches := total_teams - 1;
+        END IF;
+		 RAISE NOTICE 'totals: max_round=%, max_matches=%', max_round,max_matches;
         match_number := max_matches;
         -- Create the last match first
         INSERT INTO tournament_brackets (round, tournament_stage_id, match_number)
@@ -1086,7 +1108,7 @@ BEGIN
         -- Initialize for the next rounds
         round := max_round - 1;
         matches_for_round := 2;
-        WHILE matches_for_round * 2 <= stage.max_teams LOOP
+        WHILE round > 0 AND matches_for_round * 2 <= COALESCE(stage.max_teams, total_teams) LOOP
             created_matches := 0;
             available_parents := parents;
             parents := '{}';
@@ -1109,8 +1131,6 @@ BEGIN
             matches_for_round := matches_for_round * 2;
         END LOOP;
     END LOOP;
-    -- Clean up temporary table
-    DROP TABLE temp_tournament_stages;
     RETURN NEW;
 END;
 $$;
@@ -1592,7 +1612,7 @@ CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
 CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
-CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION public.update_tournament_stages();
+CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW WHEN (((old.status IS DISTINCT FROM new.status) AND (new.status = 'Scheduled'::text))) EXECUTE FUNCTION public.update_tournament_stages();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
