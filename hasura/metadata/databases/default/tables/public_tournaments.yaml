@@ -47,6 +47,13 @@ array_relationships:
         table:
           name: tournament_teams
           schema: public
+computed_fields:
+  - name: can_join_tournament
+    definition:
+      function:
+        name: can_join_tournament
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: user
     permission:
@@ -70,6 +77,8 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+      computed_fields:
+        - can_join_tournament
       filter:
         _or:
           - organizer_steam_id:

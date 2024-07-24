@@ -8,6 +8,31 @@ BEGIN
 	RETURN NEW;
 END;
 $$;
+CREATE TABLE public.tournaments (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    start timestamp with time zone NOT NULL,
+    organizer_steam_id bigint NOT NULL,
+    status text DEFAULT 'Setup'::text NOT NULL,
+    match_options_id uuid NOT NULL
+);
+CREATE FUNCTION public.can_join_tournament(tournament public.tournaments, hasura_session json) RETURNS boolean
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    on_roster boolean;    
+BEGIN
+    SELECT EXISTS (
+        SELECT 1
+        FROM tournament_team_roster ttr
+        WHERE
+         tournament_id = tournament.id 
+         AND player_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
+    ) INTO on_roster;
+    RETURN NOT on_roster;
+END;
+$$;
 CREATE FUNCTION public.can_pick_veto() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1318,15 +1343,6 @@ CREATE TABLE public.tournament_teams (
     owner_steam_id bigint NOT NULL,
     eligible_at timestamp with time zone,
     seed integer
-);
-CREATE TABLE public.tournaments (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    description text,
-    start timestamp with time zone NOT NULL,
-    organizer_steam_id bigint NOT NULL,
-    status text DEFAULT 'Setup'::text NOT NULL,
-    match_options_id uuid NOT NULL
 );
 CREATE VIEW public.v_match_captains AS
  SELECT mlp.steam_id,
