@@ -44,9 +44,11 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - owner_steam_id
+        - eligible_at
         - id
         - name
+        - owner_steam_id
+        - seed
         - team_id
         - tournament_id
       filter: {}
