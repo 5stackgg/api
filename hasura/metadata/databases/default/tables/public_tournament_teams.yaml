@@ -31,12 +31,19 @@ insert_permissions:
                       _eq: Admin
                   - player_steam_id:
                       _eq: X-Hasura-User-Id
-          - team_id:
-              _is_null: true
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
       set:
         owner_steam_id: x-hasura-user-id
       columns:
         - name
+        - owner_steam_id
         - team_id
         - tournament_id
     comment: ""
@@ -73,6 +80,9 @@ update_permissions:
                   _is_null: true
               - owner_steam_id:
                   _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
       check:
         _or:
           - team:
@@ -87,6 +97,9 @@ update_permissions:
                   _is_null: true
               - owner_steam_id:
                   _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
@@ -105,4 +118,7 @@ delete_permissions:
                   _is_null: true
               - owner_steam_id:
                   _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
     comment: ""
