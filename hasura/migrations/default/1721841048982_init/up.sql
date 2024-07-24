@@ -50,7 +50,7 @@ BEGIN
     -- Check if the map being picked is available for the match
     IF NOT EXISTS (
         SELECT 1 FROM matches m
-        INNER JOIN match_options mo on mo.id = mp.match_options_id
+        INNER JOIN match_options mo on mo.id = m.match_options_id
         INNER JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
         INNER JOIN maps ON maps.id = mp.map_id      
         WHERE maps.id = NEW.map_id AND m.id = _match_id
