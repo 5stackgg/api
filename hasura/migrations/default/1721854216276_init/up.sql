@@ -23,6 +23,9 @@ CREATE FUNCTION public.can_join_tournament(tournament public.tournaments, hasura
 DECLARE
     on_roster boolean;    
 BEGIN
+	IF tournament.status = 'Setup' THEN
+		return false;	
+	END IF;
     SELECT EXISTS (
         SELECT 1
         FROM tournament_team_roster ttr
@@ -1053,36 +1056,37 @@ DECLARE
     parents uuid[] := '{}';
     available_parents uuid[];
     matches_for_round int;
-	max_matches int;
+    max_matches int;
     created_matches int;
     parent_id uuid;
     new_id uuid;
     match_number int;
-    stages CURSOR FOR
-        SELECT *
-        FROM tournament_stages
-        WHERE tournament_id = NEW.tournament_id
-        ORDER BY "order";
 BEGIN
-    OPEN stages;
+    -- Create a temporary table to hold stages
+    CREATE TEMP TABLE temp_tournament_stages AS
+    SELECT *
+    FROM tournament_stages
+    WHERE tournament_id = COALESCE(NEW.tournament_id, NEW.id)
+    ORDER BY "order";
+    -- Loop through each stage in the temporary table
+    FOR stage IN
+        SELECT * FROM temp_tournament_stages
     LOOP
-        FETCH stages INTO stage;
-        EXIT WHEN NOT FOUND;
+        -- Delete existing brackets for this stage
         DELETE FROM tournament_brackets WHERE tournament_stage_id = stage.id;
-        -- Calculate the maximum number of rounds
+        -- Calculate the maximum number of rounds and matches
         max_round := ceil(log(stage.max_teams) / log(2));
-		max_matches := stage.max_teams - 1;
-        -- Create last match first
+        max_matches := stage.max_teams - 1;
         match_number := max_matches;
-        INSERT INTO tournament_brackets (round, tournament_stage_id, match_number) VALUES (max_round, stage.id, match_number) RETURNING id INTO new_id;
- 		RAISE NOTICE 'match_number: match_number=%',
-                match_number;
+        -- Create the last match first
+        INSERT INTO tournament_brackets (round, tournament_stage_id, match_number)
+        VALUES (max_round, stage.id, match_number) RETURNING id INTO new_id;
+        RAISE NOTICE 'match_number: match_number=%', match_number;
         parents := array_append(parents, new_id);
+        -- Initialize for the next rounds
         round := max_round - 1;
         matches_for_round := 2;
-        match_number := match_number;
         WHILE matches_for_round * 2 <= stage.max_teams LOOP
-            -- Calculate number of matches for this round
             created_matches := 0;
             available_parents := parents;
             parents := '{}';
@@ -1092,12 +1096,12 @@ BEGIN
                 parent_id := available_parents[array_length(available_parents, 1)];
                 available_parents := array_remove(available_parents, parent_id);
                 match_number := match_number - 1;
+                -- Create two matches for each parent
                 INSERT INTO tournament_brackets (round, tournament_stage_id, parent_bracket_id, match_number)
                     VALUES (round, stage.id, parent_id, match_number) RETURNING id INTO new_id;
                 parents := array_append(parents, new_id);
-                match_number := match_number - 1;
                 INSERT INTO tournament_brackets (round, tournament_stage_id, parent_bracket_id, match_number)
-                    VALUES (round, stage.id, parent_id, match_number) RETURNING id INTO new_id;
+                    VALUES (round, stage.id, parent_id, match_number - 1) RETURNING id INTO new_id;
                 parents := array_append(parents, new_id);
                 created_matches := created_matches + 2;
             END LOOP;
@@ -1105,7 +1109,8 @@ BEGIN
             matches_for_round := matches_for_round * 2;
         END LOOP;
     END LOOP;
-    CLOSE stages;
+    -- Clean up temporary table
+    DROP TABLE temp_tournament_stages;
     RETURN NEW;
 END;
 $$;
@@ -1587,6 +1592,7 @@ CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
 CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
+CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION public.update_tournament_stages();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
