@@ -8,6 +8,9 @@ object_relationships:
   - name: e_tournament_status
     using:
       foreign_key_constraint_on: status
+  - name: options
+    using:
+      foreign_key_constraint_on: match_options_id
 array_relationships:
   - name: organizers
     using:

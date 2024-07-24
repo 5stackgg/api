@@ -20,6 +20,12 @@ array_relationships:
         table:
           name: matches
           schema: public
+computed_fields:
+  - name: has_active_matches
+    definition:
+      function:
+        name: has_active_matches
+        schema: public
 insert_permissions:
   - role: user
     permission:
@@ -74,18 +80,6 @@ update_permissions:
         _and:
           - _or:
               - matches:
-                  id:
-                    _is_null: true
-              - matches:
-                  status:
-                    _nin:
-                      - Veto
-                      - Live
-                      - Scheduled
-                      - Finished
-                      - Canceled
-          - _or:
-              - matches:
                   organizer_steam_id:
                     _eq: X-Hasura-User-Id
               - tournament:
@@ -93,22 +87,15 @@ update_permissions:
                     _and:
                       - steam_id:
                           _eq: X-Hasura-User-Id
+              - tournament:
+                  organizer_steam_id:
+                    _eq: X-Hasura-User-Id
+          - has_active_matches:
+              _eq: false
       check:
         _and:
           - _or:
               - matches:
-                  id:
-                    _is_null: true
-              - matches:
-                  status:
-                    _nin:
-                      - Veto
-                      - Live
-                      - Scheduled
-                      - Finished
-                      - Canceled
-          - _or:
-              - matches:
                   organizer_steam_id:
                     _eq: X-Hasura-User-Id
               - tournament:
@@ -116,4 +103,9 @@ update_permissions:
                     _and:
                       - steam_id:
                           _eq: X-Hasura-User-Id
+              - tournament:
+                  organizer_steam_id:
+                    _eq: X-Hasura-User-Id
+          - has_active_matches:
+              _eq: false
     comment: ""

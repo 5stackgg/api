@@ -112,7 +112,9 @@ BEGIN
     WHERE tt.id = NEW.tournament_team_id
     GROUP BY tt.tournament_id
     LIMIT 1;
-    SELECT t.type INTO tournament_type FROM tournaments t WHERE t.id = NEW.tournament_id;
+    SELECT mo.type INTO tournament_type FROM tournaments t
+        inner join match_options mo on mo.id = t.match_options_id  
+        WHERE t.id = NEW.tournament_id;
     min_players := CASE
                    WHEN tournament_type = 'Wingman' THEN 2
                       ELSE 5
@@ -695,6 +697,35 @@ BEGIN
 	return pickType;
 END
 $$;
+CREATE TABLE public.match_options (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    overtime boolean NOT NULL,
+    knife_round boolean NOT NULL,
+    mr integer NOT NULL,
+    best_of integer NOT NULL,
+    coaches boolean NOT NULL,
+    number_of_substitutes integer DEFAULT 0 NOT NULL,
+    map_veto boolean NOT NULL,
+    timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL,
+    tech_timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL,
+    map_pool_id uuid NOT NULL,
+    type text DEFAULT 'competitive'::text NOT NULL
+);
+CREATE FUNCTION public.has_active_matches(match_options public.match_options) RETURNS boolean
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    match_exists boolean;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1
+        FROM match_options mo
+        INNER JOIN matches m ON m.match_options_id = mo.id
+        WHERE mo.id = match_options.id AND m.status != 'PickingPlayers'
+    ) INTO match_exists;
+    RETURN match_exists;
+END;
+$$;
 CREATE FUNCTION public.insert_into_v_map_pools() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1150,20 +1181,6 @@ CREATE TABLE public.match_map_rounds (
     lineup_2_timeouts_available integer NOT NULL,
     backup_file text
 );
-CREATE TABLE public.match_options (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    overtime boolean NOT NULL,
-    knife_round boolean NOT NULL,
-    mr integer NOT NULL,
-    best_of integer NOT NULL,
-    coaches boolean NOT NULL,
-    number_of_substitutes integer DEFAULT 0 NOT NULL,
-    map_veto boolean NOT NULL,
-    timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL,
-    tech_timeout_setting text DEFAULT 'CoachAndPlayers'::text NOT NULL,
-    map_pool_id uuid NOT NULL,
-    type text DEFAULT 'competitive'::text NOT NULL
-);
 CREATE TABLE public.match_veto_picks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
@@ -1309,7 +1326,6 @@ CREATE TABLE public.tournaments (
     start timestamp with time zone NOT NULL,
     organizer_steam_id bigint NOT NULL,
     status text DEFAULT 'Setup'::text NOT NULL,
-    type text NOT NULL,
     match_options_id uuid NOT NULL
 );
 CREATE VIEW public.v_match_captains AS
