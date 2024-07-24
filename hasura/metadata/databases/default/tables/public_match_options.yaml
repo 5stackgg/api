@@ -23,14 +23,7 @@ array_relationships:
 insert_permissions:
   - role: user
     permission:
-      check:
-        _or:
-          - matches:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
-          - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+      check: {}
       columns:
         - best_of
         - coaches

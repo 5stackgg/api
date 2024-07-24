@@ -207,7 +207,7 @@ CREATE TABLE public.matches (
     organizer_steam_id bigint,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    match_options_id uuid NOT NULL
+    match_options_id uuid
 );
 CREATE FUNCTION public.get_current_match_map(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
@@ -649,13 +649,16 @@ CREATE FUNCTION public.get_veto_type(match public.matches) RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
+    bestOf int;
     totalPicks int;
+    hasMapVeto boolean;
     vetoPattern VARCHAR[];
     pickType VARCHAR(255);
     available_maps uuid[];
     lastPick match_veto_picks%ROWTYPE;
 BEGIN
-	IF match.status != 'Veto' OR match.map_veto = false THEN
+    select map_veto, best_of into hasMapVeto, bestOf from match_options where id = match.match_options_id;
+	IF match.status != 'Veto' OR hasMapVeto = false THEN
 	 return '';
 	END IF;
     vetoPattern = get_veto_pattern(match);
@@ -664,7 +667,7 @@ BEGIN
     -- Count total picks for the match
     SELECT COUNT(*) INTO totalPicks FROM match_veto_picks WHERE match_id = match.id;
     -- Determine pick type based on match_best_of and totalPicks
-    IF match.best_of = 1 THEN
+    IF bestOf = 1 THEN
         pickType := 'Ban';
     ELSE
         pickType := vetoPattern[totalPicks + 1];
@@ -843,8 +846,8 @@ DECLARE
    	match_type VARCHAR(255);
 BEGIN
 	SELECT type into match_type 
-		from matches 
-		where id = NEW.id;
+		from match_options
+		where id = NEW.match_option_id;
 	IF match_type = 'Scrimmage' or NEW.status = 'PickingPlayers' or NEW.status = 'Canceled' THEN
         return NEW;
     END IF;
@@ -1289,7 +1292,6 @@ CREATE TABLE public.tournaments (
     organizer_steam_id bigint NOT NULL,
     status text DEFAULT 'Setup'::text NOT NULL,
     type text NOT NULL,
-    map_pool_id uuid NOT NULL,
     match_options_id uuid NOT NULL
 );
 CREATE VIEW public.v_match_captains AS
@@ -1703,8 +1705,6 @@ ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_teams
     ADD CONSTRAINT tournament_teams_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournaments
-    ADD CONSTRAINT tournaments_map_pool_id_fkey FOREIGN KEY (map_pool_id) REFERENCES public.map_pools(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournaments
     ADD CONSTRAINT tournaments_match_options_id_fkey FOREIGN KEY (match_options_id) REFERENCES public.match_options(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournaments

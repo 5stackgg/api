@@ -13963,9 +13963,6 @@ count?: [{	columns?: Array<ValueTypes["tournament_teams_select_column"]> | undef
 	/** An object relationship */
 	e_tournament_status?:ValueTypes["e_tournament_status"],
 	id?:boolean | `@${string}`,
-	/** An object relationship */
-	map_pool?:ValueTypes["map_pools"],
-	map_pool_id?:boolean | `@${string}`,
 	match_options_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
 	organizer_steam_id?:boolean | `@${string}`,
@@ -14102,8 +14099,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 	description?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
 	e_tournament_status?: ValueTypes["e_tournament_status_bool_exp"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid_comparison_exp"] | undefined | null | Variable<any, string>,
-	map_pool?: ValueTypes["map_pools_bool_exp"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["uuid_comparison_exp"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["uuid_comparison_exp"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["bigint_comparison_exp"] | undefined | null | Variable<any, string>,
@@ -14133,8 +14128,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 	description?: string | undefined | null | Variable<any, string>,
 	e_tournament_status?: ValueTypes["e_tournament_status_obj_rel_insert_input"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
-	map_pool?: ValueTypes["map_pools_obj_rel_insert_input"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	name?: string | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["bigint"] | undefined | null | Variable<any, string>,
@@ -14151,7 +14144,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 ["tournaments_max_fields"]: AliasType<{
 	description?:boolean | `@${string}`,
 	id?:boolean | `@${string}`,
-	map_pool_id?:boolean | `@${string}`,
 	match_options_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
 	organizer_steam_id?:boolean | `@${string}`,
@@ -14163,7 +14155,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 ["tournaments_max_order_by"]: {
 	description?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
@@ -14174,7 +14165,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 ["tournaments_min_fields"]: AliasType<{
 	description?:boolean | `@${string}`,
 	id?:boolean | `@${string}`,
-	map_pool_id?:boolean | `@${string}`,
 	match_options_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
 	organizer_steam_id?:boolean | `@${string}`,
@@ -14186,7 +14176,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 ["tournaments_min_order_by"]: {
 	description?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
@@ -14219,8 +14208,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 	description?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	e_tournament_status?: ValueTypes["e_tournament_status_order_by"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
-	map_pool?: ValueTypes["map_pools_order_by"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
@@ -14243,7 +14230,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 ["tournaments_set_input"]: {
 	description?: string | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	name?: string | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["bigint"] | undefined | null | Variable<any, string>,
@@ -14289,7 +14275,6 @@ count?: [{	columns?: Array<ValueTypes["tournaments_select_column"]> | undefined 
 ["tournaments_stream_cursor_value_input"]: {
 	description?: string | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
-	map_pool_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	match_options_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	name?: string | undefined | null | Variable<any, string>,
 	organizer_steam_id?: ValueTypes["bigint"] | undefined | null | Variable<any, string>,
@@ -28836,9 +28821,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournament_teams_select_column"]>
 	/** An object relationship */
 	e_tournament_status?:ResolverInputTypes["e_tournament_status"],
 	id?:boolean | `@${string}`,
-	/** An object relationship */
-	map_pool?:ResolverInputTypes["map_pools"],
-	map_pool_id?:boolean | `@${string}`,
 	match_options_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
 	organizer_steam_id?:boolean | `@${string}`,
@@ -28975,8 +28957,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 	description?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
 	e_tournament_status?: ResolverInputTypes["e_tournament_status_bool_exp"] | undefined | null,
 	id?: ResolverInputTypes["uuid_comparison_exp"] | undefined | null,
-	map_pool?: ResolverInputTypes["map_pools_bool_exp"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["uuid_comparison_exp"] | undefined | null,
 	match_options_id?: ResolverInputTypes["uuid_comparison_exp"] | undefined | null,
 	name?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["bigint_comparison_exp"] | undefined | null,
@@ -29006,8 +28986,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 	description?: string | undefined | null,
 	e_tournament_status?: ResolverInputTypes["e_tournament_status_obj_rel_insert_input"] | undefined | null,
 	id?: ResolverInputTypes["uuid"] | undefined | null,
-	map_pool?: ResolverInputTypes["map_pools_obj_rel_insert_input"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["uuid"] | undefined | null,
 	match_options_id?: ResolverInputTypes["uuid"] | undefined | null,
 	name?: string | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["bigint"] | undefined | null,
@@ -29024,7 +29002,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 ["tournaments_max_fields"]: AliasType<{
 	description?:boolean | `@${string}`,
 	id?:boolean | `@${string}`,
-	map_pool_id?:boolean | `@${string}`,
 	match_options_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
 	organizer_steam_id?:boolean | `@${string}`,
@@ -29036,7 +29013,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 ["tournaments_max_order_by"]: {
 	description?: ResolverInputTypes["order_by"] | undefined | null,
 	id?: ResolverInputTypes["order_by"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["order_by"] | undefined | null,
 	match_options_id?: ResolverInputTypes["order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["order_by"] | undefined | null,
@@ -29047,7 +29023,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 ["tournaments_min_fields"]: AliasType<{
 	description?:boolean | `@${string}`,
 	id?:boolean | `@${string}`,
-	map_pool_id?:boolean | `@${string}`,
 	match_options_id?:boolean | `@${string}`,
 	name?:boolean | `@${string}`,
 	organizer_steam_id?:boolean | `@${string}`,
@@ -29059,7 +29034,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 ["tournaments_min_order_by"]: {
 	description?: ResolverInputTypes["order_by"] | undefined | null,
 	id?: ResolverInputTypes["order_by"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["order_by"] | undefined | null,
 	match_options_id?: ResolverInputTypes["order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["order_by"] | undefined | null,
@@ -29092,8 +29066,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 	description?: ResolverInputTypes["order_by"] | undefined | null,
 	e_tournament_status?: ResolverInputTypes["e_tournament_status_order_by"] | undefined | null,
 	id?: ResolverInputTypes["order_by"] | undefined | null,
-	map_pool?: ResolverInputTypes["map_pools_order_by"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["order_by"] | undefined | null,
 	match_options_id?: ResolverInputTypes["order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["order_by"] | undefined | null,
@@ -29116,7 +29088,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 ["tournaments_set_input"]: {
 	description?: string | undefined | null,
 	id?: ResolverInputTypes["uuid"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["uuid"] | undefined | null,
 	match_options_id?: ResolverInputTypes["uuid"] | undefined | null,
 	name?: string | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["bigint"] | undefined | null,
@@ -29162,7 +29133,6 @@ count?: [{	columns?: Array<ResolverInputTypes["tournaments_select_column"]> | un
 ["tournaments_stream_cursor_value_input"]: {
 	description?: string | undefined | null,
 	id?: ResolverInputTypes["uuid"] | undefined | null,
-	map_pool_id?: ResolverInputTypes["uuid"] | undefined | null,
 	match_options_id?: ResolverInputTypes["uuid"] | undefined | null,
 	name?: string | undefined | null,
 	organizer_steam_id?: ResolverInputTypes["bigint"] | undefined | null,
@@ -34440,9 +34410,9 @@ export type ModelTypes = {
 	match_maps: Array<ModelTypes["match_maps"]>,
 	/** An aggregate relationship */
 	match_maps_aggregate: ModelTypes["match_maps_aggregate"],
-	match_options_id: ModelTypes["uuid"],
+	match_options_id?: ModelTypes["uuid"] | undefined,
 	/** An object relationship */
-	options: ModelTypes["match_options"],
+	options?: ModelTypes["match_options"] | undefined,
 	/** An object relationship */
 	organizer?: ModelTypes["players"] | undefined,
 	organizer_steam_id?: ModelTypes["bigint"] | undefined,
@@ -41611,9 +41581,6 @@ export type ModelTypes = {
 	/** An object relationship */
 	e_tournament_status: ModelTypes["e_tournament_status"],
 	id: ModelTypes["uuid"],
-	/** An object relationship */
-	map_pool: ModelTypes["map_pools"],
-	map_pool_id: ModelTypes["uuid"],
 	match_options_id: ModelTypes["uuid"],
 	name: string,
 	organizer_steam_id: ModelTypes["bigint"],
@@ -41706,8 +41673,6 @@ export type ModelTypes = {
 	description?: ModelTypes["String_comparison_exp"] | undefined,
 	e_tournament_status?: ModelTypes["e_tournament_status_bool_exp"] | undefined,
 	id?: ModelTypes["uuid_comparison_exp"] | undefined,
-	map_pool?: ModelTypes["map_pools_bool_exp"] | undefined,
-	map_pool_id?: ModelTypes["uuid_comparison_exp"] | undefined,
 	match_options_id?: ModelTypes["uuid_comparison_exp"] | undefined,
 	name?: ModelTypes["String_comparison_exp"] | undefined,
 	organizer_steam_id?: ModelTypes["bigint_comparison_exp"] | undefined,
@@ -41736,8 +41701,6 @@ export type ModelTypes = {
 	description?: string | undefined,
 	e_tournament_status?: ModelTypes["e_tournament_status_obj_rel_insert_input"] | undefined,
 	id?: ModelTypes["uuid"] | undefined,
-	map_pool?: ModelTypes["map_pools_obj_rel_insert_input"] | undefined,
-	map_pool_id?: ModelTypes["uuid"] | undefined,
 	match_options_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: ModelTypes["bigint"] | undefined,
@@ -41754,7 +41717,6 @@ export type ModelTypes = {
 ["tournaments_max_fields"]: {
 		description?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
-	map_pool_id?: ModelTypes["uuid"] | undefined,
 	match_options_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: ModelTypes["bigint"] | undefined,
@@ -41765,7 +41727,6 @@ export type ModelTypes = {
 ["tournaments_max_order_by"]: {
 	description?: ModelTypes["order_by"] | undefined,
 	id?: ModelTypes["order_by"] | undefined,
-	map_pool_id?: ModelTypes["order_by"] | undefined,
 	match_options_id?: ModelTypes["order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
 	organizer_steam_id?: ModelTypes["order_by"] | undefined,
@@ -41776,7 +41737,6 @@ export type ModelTypes = {
 ["tournaments_min_fields"]: {
 		description?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
-	map_pool_id?: ModelTypes["uuid"] | undefined,
 	match_options_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: ModelTypes["bigint"] | undefined,
@@ -41787,7 +41747,6 @@ export type ModelTypes = {
 ["tournaments_min_order_by"]: {
 	description?: ModelTypes["order_by"] | undefined,
 	id?: ModelTypes["order_by"] | undefined,
-	map_pool_id?: ModelTypes["order_by"] | undefined,
 	match_options_id?: ModelTypes["order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
 	organizer_steam_id?: ModelTypes["order_by"] | undefined,
@@ -41819,8 +41778,6 @@ export type ModelTypes = {
 	description?: ModelTypes["order_by"] | undefined,
 	e_tournament_status?: ModelTypes["e_tournament_status_order_by"] | undefined,
 	id?: ModelTypes["order_by"] | undefined,
-	map_pool?: ModelTypes["map_pools_order_by"] | undefined,
-	map_pool_id?: ModelTypes["order_by"] | undefined,
 	match_options_id?: ModelTypes["order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
 	organizer_steam_id?: ModelTypes["order_by"] | undefined,
@@ -41842,7 +41799,6 @@ export type ModelTypes = {
 ["tournaments_set_input"]: {
 	description?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
-	map_pool_id?: ModelTypes["uuid"] | undefined,
 	match_options_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: ModelTypes["bigint"] | undefined,
@@ -41885,7 +41841,6 @@ export type ModelTypes = {
 ["tournaments_stream_cursor_value_input"]: {
 	description?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
-	map_pool_id?: ModelTypes["uuid"] | undefined,
 	match_options_id?: ModelTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: ModelTypes["bigint"] | undefined,
@@ -47299,9 +47254,9 @@ export type GraphQLTypes = {
 	match_maps: Array<GraphQLTypes["match_maps"]>,
 	/** An aggregate relationship */
 	match_maps_aggregate: GraphQLTypes["match_maps_aggregate"],
-	match_options_id: GraphQLTypes["uuid"],
+	match_options_id?: GraphQLTypes["uuid"] | undefined,
 	/** An object relationship */
-	options: GraphQLTypes["match_options"],
+	options?: GraphQLTypes["match_options"] | undefined,
 	/** An object relationship */
 	organizer?: GraphQLTypes["players"] | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint"] | undefined,
@@ -54795,9 +54750,6 @@ export type GraphQLTypes = {
 	/** An object relationship */
 	e_tournament_status: GraphQLTypes["e_tournament_status"],
 	id: GraphQLTypes["uuid"],
-	/** An object relationship */
-	map_pool: GraphQLTypes["map_pools"],
-	map_pool_id: GraphQLTypes["uuid"],
 	match_options_id: GraphQLTypes["uuid"],
 	name: string,
 	organizer_steam_id: GraphQLTypes["bigint"],
@@ -54893,8 +54845,6 @@ export type GraphQLTypes = {
 	description?: GraphQLTypes["String_comparison_exp"] | undefined,
 	e_tournament_status?: GraphQLTypes["e_tournament_status_bool_exp"] | undefined,
 	id?: GraphQLTypes["uuid_comparison_exp"] | undefined,
-	map_pool?: GraphQLTypes["map_pools_bool_exp"] | undefined,
-	map_pool_id?: GraphQLTypes["uuid_comparison_exp"] | undefined,
 	match_options_id?: GraphQLTypes["uuid_comparison_exp"] | undefined,
 	name?: GraphQLTypes["String_comparison_exp"] | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint_comparison_exp"] | undefined,
@@ -54924,8 +54874,6 @@ export type GraphQLTypes = {
 	description?: string | undefined,
 	e_tournament_status?: GraphQLTypes["e_tournament_status_obj_rel_insert_input"] | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
-	map_pool?: GraphQLTypes["map_pools_obj_rel_insert_input"] | undefined,
-	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	match_options_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint"] | undefined,
@@ -54943,7 +54891,6 @@ export type GraphQLTypes = {
 	__typename: "tournaments_max_fields",
 	description?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
-	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	match_options_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint"] | undefined,
@@ -54954,7 +54901,6 @@ export type GraphQLTypes = {
 ["tournaments_max_order_by"]: {
 		description?: GraphQLTypes["order_by"] | undefined,
 	id?: GraphQLTypes["order_by"] | undefined,
-	map_pool_id?: GraphQLTypes["order_by"] | undefined,
 	match_options_id?: GraphQLTypes["order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
 	organizer_steam_id?: GraphQLTypes["order_by"] | undefined,
@@ -54966,7 +54912,6 @@ export type GraphQLTypes = {
 	__typename: "tournaments_min_fields",
 	description?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
-	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	match_options_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint"] | undefined,
@@ -54977,7 +54922,6 @@ export type GraphQLTypes = {
 ["tournaments_min_order_by"]: {
 		description?: GraphQLTypes["order_by"] | undefined,
 	id?: GraphQLTypes["order_by"] | undefined,
-	map_pool_id?: GraphQLTypes["order_by"] | undefined,
 	match_options_id?: GraphQLTypes["order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
 	organizer_steam_id?: GraphQLTypes["order_by"] | undefined,
@@ -55010,8 +54954,6 @@ export type GraphQLTypes = {
 	description?: GraphQLTypes["order_by"] | undefined,
 	e_tournament_status?: GraphQLTypes["e_tournament_status_order_by"] | undefined,
 	id?: GraphQLTypes["order_by"] | undefined,
-	map_pool?: GraphQLTypes["map_pools_order_by"] | undefined,
-	map_pool_id?: GraphQLTypes["order_by"] | undefined,
 	match_options_id?: GraphQLTypes["order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
 	organizer_steam_id?: GraphQLTypes["order_by"] | undefined,
@@ -55034,7 +54976,6 @@ export type GraphQLTypes = {
 ["tournaments_set_input"]: {
 		description?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
-	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	match_options_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint"] | undefined,
@@ -55080,7 +55021,6 @@ export type GraphQLTypes = {
 ["tournaments_stream_cursor_value_input"]: {
 		description?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
-	map_pool_id?: GraphQLTypes["uuid"] | undefined,
 	match_options_id?: GraphQLTypes["uuid"] | undefined,
 	name?: string | undefined,
 	organizer_steam_id?: GraphQLTypes["bigint"] | undefined,
@@ -57583,7 +57523,6 @@ export const enum tournaments_constraint {
 export const enum tournaments_select_column {
 	description = "description",
 	id = "id",
-	map_pool_id = "map_pool_id",
 	match_options_id = "match_options_id",
 	name = "name",
 	organizer_steam_id = "organizer_steam_id",
@@ -57595,7 +57534,6 @@ export const enum tournaments_select_column {
 export const enum tournaments_update_column {
 	description = "description",
 	id = "id",
-	map_pool_id = "map_pool_id",
 	match_options_id = "match_options_id",
 	name = "name",
 	organizer_steam_id = "organizer_steam_id",

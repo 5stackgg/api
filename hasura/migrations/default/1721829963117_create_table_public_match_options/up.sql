@@ -1,2 +1,0 @@
-CREATE TABLE "public"."match_options" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "overtime" boolean NOT NULL, "knife_round" boolean NOT NULL, "mr" integer NOT NULL, "best_of" integer NOT NULL, "coaches" boolean NOT NULL, "number_of_substitutes" integer NOT NULL DEFAULT 0, "map_veto" boolean NOT NULL, "timeout_setting" text NOT NULL DEFAULT 'CoachAndPlayers', "tech_timeout_setting" text NOT NULL DEFAULT 'CoachAndPlayers', PRIMARY KEY ("id") );
-CREATE EXTENSION IF NOT EXISTS pgcrypto;

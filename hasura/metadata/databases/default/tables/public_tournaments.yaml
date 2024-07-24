@@ -8,9 +8,6 @@ object_relationships:
   - name: e_tournament_status
     using:
       foreign_key_constraint_on: status
-  - name: map_pool
-    using:
-      foreign_key_constraint_on: map_pool_id
 array_relationships:
   - name: organizers
     using:
@@ -55,7 +52,6 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
-        - map_pool_id
         - match_options_id
         - name
         - start
@@ -84,7 +80,6 @@ update_permissions:
     permission:
       columns:
         - description
-        - map_pool_id
         - name
         - start
         - status
