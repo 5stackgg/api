@@ -50,7 +50,8 @@ BEGIN
     -- Check if the map being picked is available for the match
     IF NOT EXISTS (
         SELECT 1 FROM matches m
-        INNER JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
+        INNER JOIN match_options mo on mo.id = mp.match_options_id
+        INNER JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
         INNER JOIN maps ON maps.id = mp.map_id      
         WHERE maps.id = NEW.map_id AND m.id = _match_id
     ) THEN
@@ -68,8 +69,9 @@ DECLARE
    match_type VARCHAR(255);
 	substitutes INTEGER;
 BEGIN
-    SELECT type, number_of_substitutes INTO match_type, substitutes 
+    SELECT mo.type, mo.number_of_substitutes INTO match_type, substitutes 
     FROM matches m
+    INNER JOIN match_options mo on mo.id = m.match_options_id
     inner join match_lineups ml on ml.match_id = m.id
     WHERE ml.id = NEW.match_lineup_id;
     max_players := 5;
@@ -163,7 +165,8 @@ BEGIN
   -- Retrieve available maps for veto
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
-  LEFT JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
+  INNER JOIN match_options mo on mo.id = m.match_options_id
+  LEFT JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
   LEFT JOIN match_veto_picks mvp ON mvp.match_id = NEW.match_id AND mvp.map_id = mp.map_id
   WHERE m.id = NEW.match_id
   AND mvp IS NULL;
@@ -544,7 +547,10 @@ DECLARE
     pattern_length INT;
     i INT;
 BEGIN
-    SELECT array_agg(mp.map_id), mo.best_of INTO pool, best_of
+	SELECT mo.best_of INTO best_of
+        FROM matches m
+        INNER JOIN match_options mo on mo.id = m.match_options_id;
+    SELECT array_agg(mp.map_id) INTO pool
         FROM matches m
         INNER JOIN match_options mo on mo.id = m.match_options_id
         LEFT JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
@@ -562,7 +568,7 @@ BEGIN
             END LOOP;
         END IF;
         -- Logic for adding elements to the pattern array
-        IF picks_count = _match.best_of - 1 THEN
+        IF picks_count = best_of - 1 THEN
             pattern := array_append(pattern, 'Ban');
             CONTINUE;
         END IF;
@@ -677,7 +683,8 @@ BEGIN
     -- Get available maps for the match
     SELECT array_agg(mp.map_id) INTO available_maps
         FROM matches m
-        LEFT JOIN _map_pool mp ON mp.map_pool_id = m.map_pool_id
+        INNER JOIN match_options mo on mo.id = m.match_options_id
+        LEFT JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
         LEFT JOIN match_veto_picks mvp ON mvp.match_id = match.id AND mvp.map_id = mp.map_id
         WHERE m.id = match.id
         AND mvp IS NULL;
@@ -851,7 +858,7 @@ DECLARE
 BEGIN
 	SELECT type into match_type 
 		from match_options
-		where id = NEW.match_option_id;
+		where id = NEW.match_options_id;
 	IF match_type = 'Scrimmage' or NEW.status = 'PickingPlayers' or NEW.status = 'Canceled' THEN
         return NEW;
     END IF;
