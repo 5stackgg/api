@@ -170,7 +170,6 @@ DECLARE
   available_maps uuid[];
   lineup_id uuid;
   _match matches;
-  pickType VARCHAR(255);
 BEGIN
   -- Check if the veto type is 'Side'
   IF NEW.type = 'Side' THEN
@@ -193,7 +192,9 @@ BEGIN
                     CASE WHEN lineup_1_id = NEW.match_lineup_id THEN NEW.side ELSE other_side END,
                     CASE WHEN lineup_2_id = NEW.match_lineup_id THEN NEW.side ELSE other_side END);
    END IF;
- 	pickType := get_veto_type(_match);
+   IF NEW.type = 'Pick' THEN
+     RETURN NEW;
+   END IF;
   -- Retrieve available maps for veto
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
@@ -721,7 +722,7 @@ BEGIN
         WHERE m.id = match.id
         AND mvp IS NULL;
     -- If only one map is available, set pickType to 'Decider'
-    IF array_length(available_maps, 1) = 1 THEN
+    IF pickType != 'Side' AND array_length(available_maps, 1) = 1 THEN
         pickType := 'Decider';
     END IF;
 	return pickType;
