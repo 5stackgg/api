@@ -589,8 +589,7 @@ BEGIN
         INNER JOIN match_options mo on mo.id = m.match_options_id
         LEFT JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
         LEFT JOIN match_veto_picks mvp ON mvp.match_id = _match.id AND mvp.map_id = mp.map_id
-        WHERE m.id = _match.id;
-	raise notice 'best_of=%', best_of;     
+        WHERE m.id = _match.id; 
     -- Loop to build the pattern array
     WHILE array_length(pattern, 1) IS DISTINCT FROM coalesce(array_length(pool, 1), 0) - 1 LOOP
         -- Count the number of 'Pick' elements in the pattern array
@@ -715,7 +714,6 @@ BEGIN
     ELSE
         pickType := vetoPattern[totalPicks + 1];
     END IF;
-	RAISE notice 'vetoPattern=%', vetoPattern;
     -- Get available maps for the match
     SELECT array_agg(mp.map_id) INTO available_maps
         FROM matches m
