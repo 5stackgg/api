@@ -170,6 +170,7 @@ DECLARE
   available_maps uuid[];
   lineup_id uuid;
   _match matches;
+  pickType VARCHAR(255);
 BEGIN
   -- Check if the veto type is 'Side'
   IF NEW.type = 'Side' THEN
@@ -192,6 +193,7 @@ BEGIN
                     CASE WHEN lineup_1_id = NEW.match_lineup_id THEN NEW.side ELSE other_side END,
                     CASE WHEN lineup_2_id = NEW.match_lineup_id THEN NEW.side ELSE other_side END);
    END IF;
+ 	pickType := get_veto_type(_match);
   -- Retrieve available maps for veto
   SELECT array_agg(mp.map_id) INTO available_maps
   FROM matches m
@@ -1889,6 +1891,8 @@ ALTER TABLE ONLY public.team_roster
     ADD CONSTRAINT team_roster_role_fkey FOREIGN KEY (role) REFERENCES public.e_team_roles(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_owner_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.tournament_brackets
+    ADD CONSTRAINT tournament_brackets_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_brackets
     ADD CONSTRAINT tournament_brackets_tournament_stage_id_fkey FOREIGN KEY (tournament_stage_id) REFERENCES public.tournament_stages(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_brackets

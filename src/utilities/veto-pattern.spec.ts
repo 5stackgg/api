@@ -1,6 +1,19 @@
 import getVetoPattern from "./getVetoPattern";
 
 describe("veto-pattern", () => {
+  it("should generate correct pattern for pool size 5 and bestOf 3", () => {
+    const expectedPattern = [
+      "Ban",
+      "Ban",
+      "Pick",
+      "Side",
+      "Pick",
+      "Side",
+    ];
+    const pattern = getVetoPattern(new Array(7), 3);
+    expect(pattern).toEqual(expectedPattern);
+  });
+
   it("should generate correct pattern for pool size 7 and bestOf 3", () => {
     const expectedPattern = [
       "Ban",
@@ -99,3 +112,4 @@ describe("veto-pattern", () => {
     expect(pattern).toEqual(expectedPattern);
   });
 });
+
