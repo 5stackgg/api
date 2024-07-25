@@ -22,6 +22,7 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { ExpressAdapter } from "@bull-board/express";
 import configs from "./configs";
 import { loggerFactory } from "./utilities/LoggerFactory";
+import { TournamentsModule } from "./tournaments/tournaments.module";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { loggerFactory } from "./utilities/LoggerFactory";
     S3Module,
     RedisModule,
     PostgresModule,
+    TournamentsModule,
     BullModule.forRootAsync({
       imports: [RedisModule],
       inject: [RedisManagerService],

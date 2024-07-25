@@ -34,9 +34,9 @@ export class HasuraService {
       return await this.getClient()("query", {
         scalars,
       })(gql);
-    } catch(error) {
-      if(error?.response) {
-        throw error?.response.errors
+    } catch (error) {
+      if (error?.response) {
+        throw error?.response.errors;
       }
       throw error;
     }
@@ -50,9 +50,9 @@ export class HasuraService {
       return await this.getClient()("mutation", {
         scalars,
       })(gql, { variables });
-    } catch(error) {
-      if(error?.response) {
-        throw error?.response.errors
+    } catch (error) {
+      if (error?.response) {
+        throw error?.response.errors;
       }
       throw error;
     }

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { e_match_types_enum } from "@/../generated/zeus";
+import { ValueTypes, e_match_types_enum } from "@/../generated/zeus";
 
 import {
   ComponentType,
@@ -188,24 +188,26 @@ export default class ScheduleMatch extends DiscordInteraction {
       ],
     });
 
-    const { id: match_pool_id } = map_pools.at(0);
-
-    // TODO - if they pick a map we dont want to do a veto
+    const { id: map_pool_id } = map_pools.at(0);
 
     const { insert_matches_one } = await this.hasura.mutation({
       insert_matches_one: [
         {
           object: {
-            map_veto: true,
-            mr: options.mr,
-            best_of: options.best_of,
-            type: matchType,
-            overtime: options.overtime,
-            knife_round: options.knife,
-            password: uuidv4(),
             map: options.map,
-            match_pool_id,
+            password: uuidv4(),
             server_id: serverId,
+            options: {
+              data: {
+                map_pool_id,
+                map_veto: true,
+                mr: options.mr,
+                type: matchType,
+                best_of: options.best_of,
+                overtime: options.overtime,
+                knife_round: options.knife,
+              },
+            },
             lineups: {
               data: [
                 { lineup_players: { data: [] } },
