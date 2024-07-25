@@ -97,7 +97,8 @@ export class TournamentsService {
             {
               object: {
                 match_options_id: tournaments_by_pk.match_options_id,
-                status: e_match_status_enum.Live,
+                // TODO - its not hard coced to veto
+                status: e_match_status_enum.Veto,
                 organizer_steam_id: tournaments_by_pk.organizer_steam_id,
                 // TODO - coaches
                 lineups: {
