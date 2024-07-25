@@ -23,7 +23,7 @@ CREATE FUNCTION public.can_join_tournament(tournament public.tournaments, hasura
 DECLARE
     on_roster boolean;    
 BEGIN
-	IF tournament.status = 'Setup' THEN
+	IF tournament.status != 'Scheduled' THEN
 		return false;	
 	END IF;
     SELECT EXISTS (
@@ -861,6 +861,46 @@ BEGIN
 	return score;	
 END;
 $$;
+CREATE FUNCTION public.seed_tournament() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    available_teams uuid[];
+    bracket RECORD;
+    team_id uuid;
+    team_id1 uuid;
+    team_id2 uuid;
+BEGIN
+    IF (NEW.status IS NOT DISTINCT FROM OLD.status) OR (NEW.status != 'Live') THEN
+        RETURN NEW;
+    END IF;
+    PERFORM update_tournament_stages(NEW.id);
+    -- Fetch all available team ids into an array
+    SELECT array_agg(id) INTO available_teams 
+    FROM tournament_teams 
+    WHERE tournament_id = NEW.id AND eligible_at IS NOT NULL;
+    -- Ensure there are teams available to seed
+    IF array_length(available_teams, 1) IS NULL THEN
+        RETURN NEW;
+    END IF;
+    -- Iterate through each bracket and update with team ids
+    FOR bracket IN
+        SELECT tb.*
+        FROM tournament_brackets tb
+        INNER JOIN tournament_stages ts on ts.id = tb.tournament_stage_id and ts.order = 1
+        WHERE tournament_id = NEW.id
+        ORDER BY match_number ASC
+    LOOP
+        -- Pop two teams from the available teams array
+     	team_id1 := available_teams[1];
+        available_teams := array_remove(available_teams, team_id1);
+		team_id2 := available_teams[1];
+        available_teams := array_remove(available_teams, team_id1);
+        UPDATE tournament_brackets SET  tournament_team_id_1 = team_id1, tournament_team_id_2 = team_id2 WHERE id = bracket.id;
+    END LOOP;
+    RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.set_current_timestamp_updated_at() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1008,6 +1048,21 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+CREATE FUNCTION public.tounament_stage_updated() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+   	RETURN NEW;
+END;
+$$;
+CREATE FUNCTION public.tournament_stage_updated() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+   	PERFORM update_tournament_stages(NEW.tournament_id);
+   	RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.update_match_state() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1132,6 +1187,85 @@ BEGIN
         END LOOP;
     END LOOP;
     RETURN NEW;
+END;
+$$;
+CREATE FUNCTION public.update_tournament_stages(_tournament_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    stage RECORD;
+    round int;
+    max_round int;
+    parents uuid[] := '{}';
+    available_parents uuid[];
+    matches_for_round int;
+    max_matches int;
+    created_matches int;
+    parent_id uuid;
+    new_id uuid;
+    match_number int;
+    tournament_status text;
+    total_teams int;
+BEGIN
+    -- Get the tournament status
+    SELECT status INTO tournament_status 
+    FROM tournaments 
+    WHERE id = _tournament_id;
+    -- Get the total number of teams
+    SELECT count(*) INTO total_teams 
+    FROM tournament_teams 
+    WHERE tournament_id = _tournament_id;
+    -- Process each stage
+    FOR stage IN
+        SELECT *
+        FROM tournament_stages
+        WHERE tournament_id = _tournament_id
+        ORDER BY "order"
+    LOOP
+        -- Delete existing brackets for this stage
+        DELETE FROM tournament_brackets WHERE tournament_stage_id = stage.id;
+        -- Calculate the maximum number of rounds and matches based on the status
+        IF tournament_status = 'Setup' OR tournament_status = 'Scheduled'  THEN
+            max_round := ceil(log(stage.max_teams) / log(2));
+            max_matches := stage.max_teams - 1;
+        ELSE
+            max_round := ceil(log(total_teams) / log(2));
+            max_matches := total_teams - 1;
+        END IF;
+        RAISE NOTICE 'totals: max_round=%, max_matches=%', max_round, max_matches;
+        match_number := max_matches;
+        -- Create the last match first
+        INSERT INTO tournament_brackets (round, tournament_stage_id, match_number)
+        VALUES (max_round, stage.id, match_number) RETURNING id INTO new_id;
+        RAISE NOTICE 'match_number: match_number=%', match_number;
+        parents := array_append(parents, new_id);
+        -- Initialize for the next rounds
+        round := max_round - 1;
+        matches_for_round := 2;
+        WHILE round > 0 AND matches_for_round * 2 <= COALESCE(stage.max_teams, total_teams) LOOP
+            created_matches := 0;
+            available_parents := parents;
+            parents := '{}';
+            RAISE NOTICE 'Processing round: round=%, matches=%, parents=%',
+                round, matches_for_round, available_parents;
+            WHILE created_matches < matches_for_round LOOP
+                parent_id := available_parents[array_length(available_parents, 1)];
+                available_parents := array_remove(available_parents, parent_id);
+                match_number := match_number - 1;
+                -- Create two matches for each parent
+                INSERT INTO tournament_brackets (round, tournament_stage_id, parent_bracket_id, match_number)
+                    VALUES (round, stage.id, parent_id, match_number) RETURNING id INTO new_id;
+                parents := array_append(parents, new_id);
+                INSERT INTO tournament_brackets (round, tournament_stage_id, parent_bracket_id, match_number)
+                    VALUES (round, stage.id, parent_id, match_number - 1) RETURNING id INTO new_id;
+                parents := array_append(parents, new_id);
+                created_matches := created_matches + 2;
+            END LOOP;
+            round := round - 1;
+            matches_for_round := matches_for_round * 2;
+        END LOOP;
+    END LOOP;
+    RETURN;
 END;
 $$;
 CREATE TABLE public._map_pool (
@@ -1330,8 +1464,8 @@ CREATE TABLE public.tournament_brackets (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_stage_id uuid NOT NULL,
     match_id uuid,
-    roster_1_id uuid,
-    roster_2_id uuid,
+    tournament_team_id_1 uuid,
+    tournament_team_id_2 uuid,
     parent_bracket_id uuid,
     round integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -1571,6 +1705,8 @@ ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tournament_brackets
     ADD CONSTRAINT touarnment_brackets_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.tournament_brackets
+    ADD CONSTRAINT tournament_brackets_id_tournament_team_id_1_tournament_team_id_ UNIQUE (id, tournament_team_id_1, tournament_team_id_2);
 ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_pkey PRIMARY KEY (steam_id, tournament_id);
 ALTER TABLE ONLY public.tournament_team_roster
@@ -1610,9 +1746,9 @@ CREATE TRIGGER set_public_players_updated_at BEFORE UPDATE ON public.players FOR
 COMMENT ON TRIGGER set_public_players_updated_at ON public.players IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.create_match_map_from_veto();
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
-CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.update_tournament_stages();
+CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tournament_stage_updated();
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
-CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW WHEN (((old.status IS DISTINCT FROM new.status) AND (new.status = 'Scheduled'::text))) EXECUTE FUNCTION public.update_tournament_stages();
+CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
@@ -1755,6 +1891,10 @@ ALTER TABLE ONLY public.teams
     ADD CONSTRAINT teams_owner_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_brackets
     ADD CONSTRAINT tournament_brackets_tournament_stage_id_fkey FOREIGN KEY (tournament_stage_id) REFERENCES public.tournament_stages(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.tournament_brackets
+    ADD CONSTRAINT tournament_brackets_tournament_team_id_1_fkey FOREIGN KEY (tournament_team_id_1) REFERENCES public.tournament_teams(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY public.tournament_brackets
+    ADD CONSTRAINT tournament_brackets_tournament_team_id_2_fkey FOREIGN KEY (tournament_team_id_2) REFERENCES public.tournament_teams(id) ON UPDATE CASCADE ON DELETE SET NULL;
 ALTER TABLE ONLY public.tournament_organizers
     ADD CONSTRAINT tournament_organizers_steam_id_fkey FOREIGN KEY (steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.tournament_organizers
