@@ -7,7 +7,8 @@ insert into e_match_status ("value", "description") values
     ('Scheduled', 'Scheduled'),
     ('Finished', 'Finished'),
     ('Canceled', 'Canceled'),
-    ('Forfeit', 'Forfeit')
+    ('Forfeit', 'Forfeit'),
+    ('Tie', 'Tie')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
 
