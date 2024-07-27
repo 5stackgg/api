@@ -144,6 +144,7 @@ export class MatchesController {
      */
     if (
       data.op === "DELETE" ||
+      status === e_match_status_enum.Forfeit ||
       status === e_match_status_enum.Canceled ||
       status === e_match_status_enum.Finished
     ) {
@@ -213,6 +214,7 @@ export class MatchesController {
 
   private async stopServer(matchId: string, status: e_match_status_enum) {
     if (
+      status !== e_match_status_enum.Forfeit &&
       status !== e_match_status_enum.Canceled &&
       status !== e_match_status_enum.Finished
     ) {

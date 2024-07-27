@@ -664,6 +664,7 @@ export class MatchAssistantService {
               status: {
                 _nin: [
                   e_match_status_enum.Scheduled,
+                  e_match_status_enum.Forfeit,
                   e_match_status_enum.Canceled,
                   e_match_status_enum.Finished,
                 ],

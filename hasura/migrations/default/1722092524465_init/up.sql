@@ -243,7 +243,8 @@ CREATE TABLE public.matches (
     organizer_steam_id bigint,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    match_options_id uuid
+    match_options_id uuid,
+    winning_lineup_id uuid
 );
 CREATE FUNCTION public.get_current_match_map(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE

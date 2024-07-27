@@ -56668,6 +56668,7 @@ export const enum e_match_status_constraint {
 export const enum e_match_status_enum {
 	Canceled = "Canceled",
 	Finished = "Finished",
+	Forfeit = "Forfeit",
 	Live = "Live",
 	PickingPlayers = "PickingPlayers",
 	Scheduled = "Scheduled",
@@ -56805,6 +56806,7 @@ export const enum e_tournament_status_enum {
 	Cancelled = "Cancelled",
 	Finished = "Finished",
 	Live = "Live",
+	Planned = "Planned",
 	Scheduled = "Scheduled",
 	Setup = "Setup"
 }
