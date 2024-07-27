@@ -20,6 +20,15 @@ object_relationships:
   - name: server
     using:
       foreign_key_constraint_on: server_id
+  - name: winner
+    using:
+      manual_configuration:
+        column_mapping:
+          winning_lineup_id: id
+        insertion_order: null
+        remote_table:
+          name: match_lineups
+          schema: public
 array_relationships:
   - name: lineups
     using:
@@ -184,6 +193,7 @@ select_permissions:
         - server_id
         - status
         - updated_at
+        - winning_lineup_id
       computed_fields:
         - connection_link
         - connection_string
