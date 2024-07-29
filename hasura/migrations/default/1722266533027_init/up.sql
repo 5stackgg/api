@@ -100,7 +100,7 @@ BEGIN
     SELECT mo.type, mo.number_of_substitutes INTO match_type, substitutes 
     FROM matches m
     INNER JOIN match_options mo on mo.id = m.match_options_id
-    inner join vs_match_lineups ml on ml.match_id = m.id
+    inner join v_match_lineups ml on ml.match_id = m.id
     WHERE ml.id = NEW.match_lineup_id;
     max_players := 5;
     IF match_type = 'Wingman' THEN
@@ -373,7 +373,7 @@ BEGIN
     RETURN QUERY 
     SELECT DISTINCT t.*
     FROM public.matches m
-    INNER JOIN vs_match_lineups ml ON ml.match_id = m.id
+    INNER JOIN v_match_lineups ml ON ml.match_id = m.id
     INNER JOIN teams t ON t.id = ml.team_id
     WHERE ml.team_id IS NOT NULL
     and m.id = match.id;
