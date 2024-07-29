@@ -8,3 +8,57 @@ object_relationships:
   - name: player
     using:
       foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        lineup:
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
+      columns:
+        - captain
+        - match_lineup_id
+        - steam_id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - captain
+        - discord_id
+        - placeholder_name
+        - id
+        - match_lineup_id
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - captain
+      filter:
+        lineup:
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
+      check:
+        lineup:
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        lineup:
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
+    comment: ""

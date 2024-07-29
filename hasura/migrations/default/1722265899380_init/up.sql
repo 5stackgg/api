@@ -279,7 +279,7 @@ BEGIN
     SELECT
 	 m.password INTO password
     FROM matches m
-    INNER JOIN match_lineups ml on ml.match_id = m.id
+    INNER JOIN v_match_lineups ml on ml.match_id = m.id
     INNER JOIN match_lineup_players mlp on mlp.match_lineup_id = ml.id
     WHERE m.id = match.id AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
 	 IF password IS NULL THEN
@@ -307,7 +307,7 @@ BEGIN
     SELECT m.password
     INTO password
     FROM matches m
-INNER JOIN match_lineups ml on ml.match_id = m.id
+INNER JOIN v_match_lineups ml on ml.match_id = m.id
     INNER JOIN match_lineup_players mlp on mlp.match_lineup_id = ml.id
     WHERE m.id = match.id AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
 	 IF password IS NULL THEN
@@ -502,13 +502,13 @@ CREATE FUNCTION public.get_team_name(match_lineup public.match_lineups) RETURNS 
     AS $$
 DECLARE
     team_name TEXT;
-    lineup_id_1 uuid;
+    lineup_1_id uuid;
 BEGIN
-    SELECT t.name, m.lineup_id_1 INTO team_name, lineup_id_1
+    SELECT t.name, m.lineup_1_id INTO team_name, lineup_1_id
     FROM matches m
-    INNER JOIN match_lineups ml ON ml.match_id = m.id 
+    INNER JOIN v_match_lineups ml ON ml.match_id = m.id 
     LEFT JOIN teams t ON t.id = ml.team_id
-    WHERE ml.match_id = match_lineup.match_id AND ml.team_id = match_lineup.team_id;
+    WHERE ml.id = match_lineup.id;
     -- If team ids match, return the team name
     IF team_name IS NOT NULL THEN
         RETURN team_name;
@@ -524,7 +524,7 @@ BEGIN
         RETURN concat('Team ', team_name);
     END IF;
     -- If no captain, detect if it's a lineup 1 or 2 and display it as Team 1 or Team 2
-    IF match_lineup.id = lineup_id_1 THEN 
+    IF match_lineup.id = lineup_1_id THEN 
         RETURN 'Team 1';
     ELSE 
         RETURN 'Team 2';
@@ -1545,6 +1545,13 @@ CREATE VIEW public.v_match_captains AS
     mlp.id
    FROM public.match_lineup_players mlp
   WHERE (mlp.captain = true);
+CREATE VIEW public.v_match_lineups AS
+ SELECT ml.id,
+    ml.team_id,
+    ml.coach_steam_id,
+    m.id AS match_id
+   FROM (public.match_lineups ml
+     JOIN public.matches m ON (((m.lineup_1_id = ml.id) OR (m.lineup_2_id = ml.id))));
 CREATE VIEW public.v_player_arch_nemesis AS
  SELECT DISTINCT ON (player_kills.attacker_steam_id) player_kills.attacker_steam_id AS attacker_id,
     player_kills.attacked_steam_id AS victim_id,

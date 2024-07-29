@@ -1,0 +1,22 @@
+table:
+  name: v_match_lineups
+  schema: public
+object_relationships:
+  - name: lineup
+    using:
+      manual_configuration:
+        column_mapping:
+          id: id
+        insertion_order: null
+        remote_table:
+          name: match_lineups
+          schema: public
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public

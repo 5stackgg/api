@@ -26,6 +26,15 @@ object_relationships:
   - name: team
     using:
       foreign_key_constraint_on: team_id
+  - name: v_match_lineup
+    using:
+      manual_configuration:
+        column_mapping:
+          id: id
+        insertion_order: null
+        remote_table:
+          name: v_match_lineups
+          schema: public
 array_relationships:
   - name: lineup_players
     using:
@@ -68,24 +77,14 @@ update_permissions:
     permission:
       columns:
         - coach_steam_id
-      filter:
+      filter: {}
+      check:
         _or:
-          - matches:
-              organizer_steam_id:
-                _eq: x-hasura-user-id
           - captain:
               steam_id:
                 _eq: X-Hasura-User-Id
-      check:
-        matches:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        matches:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
+          - v_match_lineup:
+              match:
+                organizer_steam_id:
+                  _eq: X-Hasura-User-Id
     comment: ""
