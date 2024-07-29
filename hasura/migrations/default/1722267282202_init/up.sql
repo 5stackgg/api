@@ -164,7 +164,7 @@ BEGIN
   -- Check if the veto type is 'Side'
   IF NEW.type = 'Side' THEN
         -- Retrieve lineup IDs for the match
-        SELECT lineup_1_id, lineup_2_id INTO lineup_1_id, lineup_2_id
+        SELECT m.lineup_1_id, m.lineup_2_id INTO lineup_1_id, lineup_2_id
         FROM matches m
         WHERE m.id = NEW.match_id
         LIMIT 1;
