@@ -1,9 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
-import {
-  e_match_status_enum,
-  order_by,
-} from "../../generated/zeus";
+import { e_match_status_enum, order_by } from "../../generated/zeus";
 
 @Injectable()
 export class TournamentsService {
@@ -12,7 +9,8 @@ export class TournamentsService {
     private readonly hasura: HasuraService,
   ) {}
 
-  public async checkMatch(matchId) {
+  public async checkMatch(matchId: string) {
+    console.info("CHECK MATCH");
     // const tournamentId = await this.hasura.query({
     //
     // })

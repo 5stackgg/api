@@ -20,7 +20,7 @@ import { ExpectedPlayers } from "../enums/ExpectedPlayers";
 import { DiscordMatchOptions } from "../types/DiscordMatchOptions";
 import { getRandomNumber } from "../utilities/getRandomNumber";
 import { AppConfig } from "../../configs/types/AppConfig";
-import { e_map_pool_types_enum } from "../../../generated/zeus";
+import { e_map_pool_types_enum, UnwrapPromise } from "../../../generated/zeus";
 
 @BotChatCommand(ChatCommands.ScheduleComp)
 @BotChatCommand(ChatCommands.ScheduleScrimmage)
@@ -260,26 +260,26 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async createVoiceChannelsForMatch(
     originalChannelId: string,
     interaction: ChatInputCommandInteraction,
-    match: {
-      id: string;
-      lineups: Array<{
-        id: string;
-        name?: string;
-      }>;
-    },
+    match: UnwrapPromise<ReturnType<typeof this.createMatch>>,
   ) {
     const matchId = match.id;
     const categoryChannel = await this.createMatchesCategory(interaction);
 
-    for (const lineup of match.lineups) {
-      await this.discordBotVoiceChannels.createMatchVoiceChannel(
-        matchId,
-        categoryChannel.guildId,
-        originalChannelId,
-        categoryChannel.id,
-        lineup.id,
-      );
-    }
+    await this.discordBotVoiceChannels.createMatchVoiceChannel(
+      matchId,
+      categoryChannel.guildId,
+      originalChannelId,
+      categoryChannel.id,
+      match.lineup_1_id,
+    );
+
+    await this.discordBotVoiceChannels.createMatchVoiceChannel(
+      matchId,
+      categoryChannel.guildId,
+      originalChannelId,
+      categoryChannel.id,
+      match.lineup_2_id,
+    );
   }
 
   private async getCaptains(

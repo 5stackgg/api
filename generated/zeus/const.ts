@@ -1298,6 +1298,11 @@ export const AllTypesProps: Record<string,any> = {
 			distinct_on:"match_veto_picks_select_column",
 			order_by:"match_veto_picks_order_by",
 			where:"match_veto_picks_bool_exp"
+		},
+		matches:{
+			distinct_on:"matches_select_column",
+			order_by:"matches_order_by",
+			where:"matches_bool_exp"
 		}
 	},
 	match_lineups_aggregate_bool_exp:{
@@ -1343,14 +1348,14 @@ export const AllTypesProps: Record<string,any> = {
 		id:"uuid_comparison_exp",
 		lineup_players:"match_lineup_players_bool_exp",
 		lineup_players_aggregate:"match_lineup_players_aggregate_bool_exp",
-		match:"matches_bool_exp",
-		match_id:"uuid_comparison_exp",
 		match_veto_picks:"match_veto_picks_bool_exp",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate_bool_exp",
+		matches:"matches_bool_exp",
 		name:"String_comparison_exp",
 		player:"players_bool_exp",
 		team:"teams_bool_exp",
-		team_id:"uuid_comparison_exp"
+		team_id:"uuid_comparison_exp",
+		v_match_lineup:"v_match_lineups_bool_exp"
 	},
 	match_lineups_constraint: "enum" as const,
 	match_lineups_inc_input:{
@@ -1362,23 +1367,20 @@ export const AllTypesProps: Record<string,any> = {
 		coach_steam_id:"bigint",
 		id:"uuid",
 		lineup_players:"match_lineup_players_arr_rel_insert_input",
-		match:"matches_obj_rel_insert_input",
-		match_id:"uuid",
 		match_veto_picks:"match_veto_picks_arr_rel_insert_input",
 		player:"players_obj_rel_insert_input",
 		team:"teams_obj_rel_insert_input",
-		team_id:"uuid"
+		team_id:"uuid",
+		v_match_lineup:"v_match_lineups_obj_rel_insert_input"
 	},
 	match_lineups_max_order_by:{
 		coach_steam_id:"order_by",
 		id:"order_by",
-		match_id:"order_by",
 		team_id:"order_by"
 	},
 	match_lineups_min_order_by:{
 		coach_steam_id:"order_by",
 		id:"order_by",
-		match_id:"order_by",
 		team_id:"order_by"
 	},
 	match_lineups_obj_rel_insert_input:{
@@ -1396,13 +1398,13 @@ export const AllTypesProps: Record<string,any> = {
 		coach_steam_id:"order_by",
 		id:"order_by",
 		lineup_players_aggregate:"match_lineup_players_aggregate_order_by",
-		match:"matches_order_by",
-		match_id:"order_by",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate_order_by",
+		matches_aggregate:"matches_aggregate_order_by",
 		name:"order_by",
 		player:"players_order_by",
 		team:"teams_order_by",
-		team_id:"order_by"
+		team_id:"order_by",
+		v_match_lineup:"v_match_lineups_order_by"
 	},
 	match_lineups_pk_columns_input:{
 		id:"uuid"
@@ -1411,7 +1413,6 @@ export const AllTypesProps: Record<string,any> = {
 	match_lineups_set_input:{
 		coach_steam_id:"bigint",
 		id:"uuid",
-		match_id:"uuid",
 		team_id:"uuid"
 	},
 	match_lineups_stddev_order_by:{
@@ -1430,7 +1431,6 @@ export const AllTypesProps: Record<string,any> = {
 	match_lineups_stream_cursor_value_input:{
 		coach_steam_id:"bigint",
 		id:"uuid",
-		match_id:"uuid",
 		team_id:"uuid"
 	},
 	match_lineups_sum_order_by:{
@@ -2255,16 +2255,6 @@ export const AllTypesProps: Record<string,any> = {
 		where:"match_veto_picks_bool_exp"
 	},
 	matches:{
-		lineups:{
-			distinct_on:"match_lineups_select_column",
-			order_by:"match_lineups_order_by",
-			where:"match_lineups_bool_exp"
-		},
-		lineups_aggregate:{
-			distinct_on:"match_lineups_select_column",
-			order_by:"match_lineups_order_by",
-			where:"match_lineups_bool_exp"
-		},
 		match_maps:{
 			distinct_on:"match_maps_select_column",
 			order_by:"match_maps_order_by",
@@ -2406,10 +2396,10 @@ export const AllTypesProps: Record<string,any> = {
 		id:"uuid_comparison_exp",
 		is_match_server_available:"Boolean_comparison_exp",
 		label:"String_comparison_exp",
-		lineup_1_id:"String_comparison_exp",
-		lineup_2_id:"String_comparison_exp",
-		lineups:"match_lineups_bool_exp",
-		lineups_aggregate:"match_lineups_aggregate_bool_exp",
+		lineup_1:"match_lineups_bool_exp",
+		lineup_1_id:"uuid_comparison_exp",
+		lineup_2:"match_lineups_bool_exp",
+		lineup_2_id:"uuid_comparison_exp",
 		match_maps:"match_maps_bool_exp",
 		match_maps_aggregate:"match_maps_aggregate_bool_exp",
 		match_options_id:"uuid_comparison_exp",
@@ -2455,7 +2445,10 @@ export const AllTypesProps: Record<string,any> = {
 		created_at:"timestamptz",
 		e_match_status:"e_match_status_obj_rel_insert_input",
 		id:"uuid",
-		lineups:"match_lineups_arr_rel_insert_input",
+		lineup_1:"match_lineups_obj_rel_insert_input",
+		lineup_1_id:"uuid",
+		lineup_2:"match_lineups_obj_rel_insert_input",
+		lineup_2_id:"uuid",
 		match_maps:"match_maps_arr_rel_insert_input",
 		match_options_id:"uuid",
 		options:"match_options_obj_rel_insert_input",
@@ -2481,6 +2474,8 @@ export const AllTypesProps: Record<string,any> = {
 		created_at:"order_by",
 		id:"order_by",
 		label:"order_by",
+		lineup_1_id:"order_by",
+		lineup_2_id:"order_by",
 		match_options_id:"order_by",
 		organizer_steam_id:"order_by",
 		password:"order_by",
@@ -2493,6 +2488,8 @@ export const AllTypesProps: Record<string,any> = {
 		created_at:"order_by",
 		id:"order_by",
 		label:"order_by",
+		lineup_1_id:"order_by",
+		lineup_2_id:"order_by",
 		match_options_id:"order_by",
 		organizer_steam_id:"order_by",
 		password:"order_by",
@@ -2519,9 +2516,10 @@ export const AllTypesProps: Record<string,any> = {
 		id:"order_by",
 		is_match_server_available:"order_by",
 		label:"order_by",
+		lineup_1:"match_lineups_order_by",
 		lineup_1_id:"order_by",
+		lineup_2:"match_lineups_order_by",
 		lineup_2_id:"order_by",
-		lineups_aggregate:"match_lineups_aggregate_order_by",
 		match_maps_aggregate:"match_maps_aggregate_order_by",
 		match_options_id:"order_by",
 		options:"match_options_order_by",
@@ -2557,6 +2555,8 @@ export const AllTypesProps: Record<string,any> = {
 	matches_set_input:{
 		created_at:"timestamptz",
 		id:"uuid",
+		lineup_1_id:"uuid",
+		lineup_2_id:"uuid",
 		match_options_id:"uuid",
 		organizer_steam_id:"bigint",
 		scheduled_at:"date",
@@ -2581,6 +2581,8 @@ export const AllTypesProps: Record<string,any> = {
 	matches_stream_cursor_value_input:{
 		created_at:"timestamptz",
 		id:"uuid",
+		lineup_1_id:"uuid",
+		lineup_2_id:"uuid",
 		match_options_id:"uuid",
 		organizer_steam_id:"bigint",
 		scheduled_at:"date",
@@ -6077,6 +6079,16 @@ export const AllTypesProps: Record<string,any> = {
 			order_by:"v_match_captains_order_by",
 			where:"v_match_captains_bool_exp"
 		},
+		v_match_lineups:{
+			distinct_on:"v_match_lineups_select_column",
+			order_by:"v_match_lineups_order_by",
+			where:"v_match_lineups_bool_exp"
+		},
+		v_match_lineups_aggregate:{
+			distinct_on:"v_match_lineups_select_column",
+			order_by:"v_match_lineups_order_by",
+			where:"v_match_lineups_bool_exp"
+		},
 		v_player_arch_nemesis:{
 			distinct_on:"v_player_arch_nemesis_select_column",
 			order_by:"v_player_arch_nemesis_order_by",
@@ -6993,6 +7005,20 @@ export const AllTypesProps: Record<string,any> = {
 		v_match_captains_stream:{
 			cursor:"v_match_captains_stream_cursor_input",
 			where:"v_match_captains_bool_exp"
+		},
+		v_match_lineups:{
+			distinct_on:"v_match_lineups_select_column",
+			order_by:"v_match_lineups_order_by",
+			where:"v_match_lineups_bool_exp"
+		},
+		v_match_lineups_aggregate:{
+			distinct_on:"v_match_lineups_select_column",
+			order_by:"v_match_lineups_order_by",
+			where:"v_match_lineups_bool_exp"
+		},
+		v_match_lineups_stream:{
+			cursor:"v_match_lineups_stream_cursor_input",
+			where:"v_match_lineups_bool_exp"
 		},
 		v_player_arch_nemesis:{
 			distinct_on:"v_player_arch_nemesis_select_column",
@@ -8720,6 +8746,52 @@ export const AllTypesProps: Record<string,any> = {
 		_set:"v_match_captains_set_input",
 		where:"v_match_captains_bool_exp"
 	},
+	v_match_lineups_aggregate_fields:{
+		count:{
+			columns:"v_match_lineups_select_column"
+		}
+	},
+	v_match_lineups_bool_exp:{
+		_and:"v_match_lineups_bool_exp",
+		_not:"v_match_lineups_bool_exp",
+		_or:"v_match_lineups_bool_exp",
+		coach_steam_id:"bigint_comparison_exp",
+		id:"uuid_comparison_exp",
+		lineup:"match_lineups_bool_exp",
+		match:"matches_bool_exp",
+		match_id:"uuid_comparison_exp",
+		team_id:"uuid_comparison_exp"
+	},
+	v_match_lineups_insert_input:{
+		coach_steam_id:"bigint",
+		id:"uuid",
+		lineup:"match_lineups_obj_rel_insert_input",
+		match:"matches_obj_rel_insert_input",
+		match_id:"uuid",
+		team_id:"uuid"
+	},
+	v_match_lineups_obj_rel_insert_input:{
+		data:"v_match_lineups_insert_input"
+	},
+	v_match_lineups_order_by:{
+		coach_steam_id:"order_by",
+		id:"order_by",
+		lineup:"match_lineups_order_by",
+		match:"matches_order_by",
+		match_id:"order_by",
+		team_id:"order_by"
+	},
+	v_match_lineups_select_column: "enum" as const,
+	v_match_lineups_stream_cursor_input:{
+		initial_value:"v_match_lineups_stream_cursor_value_input",
+		ordering:"cursor_ordering"
+	},
+	v_match_lineups_stream_cursor_value_input:{
+		coach_steam_id:"bigint",
+		id:"uuid",
+		match_id:"uuid",
+		team_id:"uuid"
+	},
 	v_player_arch_nemesis_aggregate_fields:{
 		count:{
 			columns:"v_player_arch_nemesis_select_column"
@@ -9683,14 +9755,14 @@ export const ReturnTypes: Record<string,any> = {
 		id:"uuid",
 		lineup_players:"match_lineup_players",
 		lineup_players_aggregate:"match_lineup_players_aggregate",
-		match:"matches",
-		match_id:"uuid",
 		match_veto_picks:"match_veto_picks",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate",
+		matches:"matches",
 		name:"String",
 		player:"players",
 		team:"teams",
-		team_id:"uuid"
+		team_id:"uuid",
+		v_match_lineup:"v_match_lineups"
 	},
 	match_lineups_aggregate:{
 		aggregate:"match_lineups_aggregate_fields",
@@ -9715,14 +9787,12 @@ export const ReturnTypes: Record<string,any> = {
 	match_lineups_max_fields:{
 		coach_steam_id:"bigint",
 		id:"uuid",
-		match_id:"uuid",
 		name:"String",
 		team_id:"uuid"
 	},
 	match_lineups_min_fields:{
 		coach_steam_id:"bigint",
 		id:"uuid",
-		match_id:"uuid",
 		name:"String",
 		team_id:"uuid"
 	},
@@ -10230,10 +10300,10 @@ export const ReturnTypes: Record<string,any> = {
 		id:"uuid",
 		is_match_server_available:"Boolean",
 		label:"String",
-		lineup_1_id:"String",
-		lineup_2_id:"String",
-		lineups:"match_lineups",
-		lineups_aggregate:"match_lineups_aggregate",
+		lineup_1:"match_lineups",
+		lineup_1_id:"uuid",
+		lineup_2:"match_lineups",
+		lineup_2_id:"uuid",
 		match_maps:"match_maps",
 		match_maps_aggregate:"match_maps_aggregate",
 		match_options_id:"uuid",
@@ -10298,8 +10368,8 @@ export const ReturnTypes: Record<string,any> = {
 		current_match_map_id:"uuid",
 		id:"uuid",
 		label:"String",
-		lineup_1_id:"String",
-		lineup_2_id:"String",
+		lineup_1_id:"uuid",
+		lineup_2_id:"uuid",
 		match_options_id:"uuid",
 		organizer_steam_id:"bigint",
 		password:"String",
@@ -10320,8 +10390,8 @@ export const ReturnTypes: Record<string,any> = {
 		current_match_map_id:"uuid",
 		id:"uuid",
 		label:"String",
-		lineup_1_id:"String",
-		lineup_2_id:"String",
+		lineup_1_id:"uuid",
+		lineup_2_id:"uuid",
 		match_options_id:"uuid",
 		organizer_steam_id:"bigint",
 		password:"String",
@@ -11657,6 +11727,8 @@ export const ReturnTypes: Record<string,any> = {
 		tournaments_by_pk:"tournaments",
 		v_match_captains:"v_match_captains",
 		v_match_captains_aggregate:"v_match_captains_aggregate",
+		v_match_lineups:"v_match_lineups",
+		v_match_lineups_aggregate:"v_match_lineups_aggregate",
 		v_player_arch_nemesis:"v_player_arch_nemesis",
 		v_player_arch_nemesis_aggregate:"v_player_arch_nemesis_aggregate",
 		v_player_damage:"v_player_damage",
@@ -11943,6 +12015,9 @@ export const ReturnTypes: Record<string,any> = {
 		v_match_captains:"v_match_captains",
 		v_match_captains_aggregate:"v_match_captains_aggregate",
 		v_match_captains_stream:"v_match_captains",
+		v_match_lineups:"v_match_lineups",
+		v_match_lineups_aggregate:"v_match_lineups_aggregate",
+		v_match_lineups_stream:"v_match_lineups",
 		v_player_arch_nemesis:"v_player_arch_nemesis",
 		v_player_arch_nemesis_aggregate:"v_player_arch_nemesis_aggregate",
 		v_player_arch_nemesis_stream:"v_player_arch_nemesis",
@@ -12743,6 +12818,67 @@ export const ReturnTypes: Record<string,any> = {
 	},
 	v_match_captains_variance_fields:{
 		steam_id:"Float"
+	},
+	v_match_lineups:{
+		coach_steam_id:"bigint",
+		id:"uuid",
+		lineup:"match_lineups",
+		match:"matches",
+		match_id:"uuid",
+		team_id:"uuid"
+	},
+	v_match_lineups_aggregate:{
+		aggregate:"v_match_lineups_aggregate_fields",
+		nodes:"v_match_lineups"
+	},
+	v_match_lineups_aggregate_fields:{
+		avg:"v_match_lineups_avg_fields",
+		count:"Int",
+		max:"v_match_lineups_max_fields",
+		min:"v_match_lineups_min_fields",
+		stddev:"v_match_lineups_stddev_fields",
+		stddev_pop:"v_match_lineups_stddev_pop_fields",
+		stddev_samp:"v_match_lineups_stddev_samp_fields",
+		sum:"v_match_lineups_sum_fields",
+		var_pop:"v_match_lineups_var_pop_fields",
+		var_samp:"v_match_lineups_var_samp_fields",
+		variance:"v_match_lineups_variance_fields"
+	},
+	v_match_lineups_avg_fields:{
+		coach_steam_id:"Float"
+	},
+	v_match_lineups_max_fields:{
+		coach_steam_id:"bigint",
+		id:"uuid",
+		match_id:"uuid",
+		team_id:"uuid"
+	},
+	v_match_lineups_min_fields:{
+		coach_steam_id:"bigint",
+		id:"uuid",
+		match_id:"uuid",
+		team_id:"uuid"
+	},
+	v_match_lineups_stddev_fields:{
+		coach_steam_id:"Float"
+	},
+	v_match_lineups_stddev_pop_fields:{
+		coach_steam_id:"Float"
+	},
+	v_match_lineups_stddev_samp_fields:{
+		coach_steam_id:"Float"
+	},
+	v_match_lineups_sum_fields:{
+		coach_steam_id:"bigint"
+	},
+	v_match_lineups_var_pop_fields:{
+		coach_steam_id:"Float"
+	},
+	v_match_lineups_var_samp_fields:{
+		coach_steam_id:"Float"
+	},
+	v_match_lineups_variance_fields:{
+		coach_steam_id:"Float"
 	},
 	v_player_arch_nemesis:{
 		attacker_id:"bigint",

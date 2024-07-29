@@ -19,9 +19,11 @@ export class TournamentsController {
   }
 
   @HasuraEvent()
-  public async tournament_bracket(data: HasuraEventData<"tournament_brackets">) {
+  public async tournament_bracket(
+    data: HasuraEventData<"tournament_brackets">,
+  ) {
     console.info("WEE", {
-      data
-    })
+      data,
+    });
   }
 }

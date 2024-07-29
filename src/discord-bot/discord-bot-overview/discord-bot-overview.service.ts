@@ -54,13 +54,7 @@ export class DiscordBotOverviewService {
   private async generateMatchOverviewEmbed(matchId: string) {
     const match = await this.getMatchDetails(matchId);
 
-    const lineup_1 = match.lineups.find((lineup) => {
-      return lineup.id === match.lineup_1_id;
-    });
-
-    const lineup_2 = match.lineups.find((lineup) => {
-      return lineup.id === match.lineup_2_id;
-    });
+    const { lineup_1, lineup_2 } = match;
 
     const embeds = [];
     const components = [];
@@ -299,22 +293,32 @@ export class DiscordBotOverviewService {
             tech_timeout_setting: true,
             number_of_substitutes: true,
           },
-          lineups: [
-            {},
-            {
-              id: true,
-              name: true,
-              lineup_players: [
-                {},
-                {
-                  placeholder_name: true,
-                  player: {
-                    name: true,
-                  },
+          lineup_1: {
+            id: true,
+            name: true,
+            lineup_players: [
+              {},
+              {
+                placeholder_name: true,
+                player: {
+                  name: true,
                 },
-              ],
-            },
-          ],
+              },
+            ],
+          },
+          lineup_2: {
+            id: true,
+            name: true,
+            lineup_players: [
+              {},
+              {
+                placeholder_name: true,
+                player: {
+                  name: true,
+                },
+              },
+            ],
+          },
           veto_picks: [
             {},
             {

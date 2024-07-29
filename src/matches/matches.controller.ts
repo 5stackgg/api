@@ -83,27 +83,42 @@ export class MatchesController {
               lineup_2_timeouts_available: true,
             },
           ],
-          lineups: [
-            {},
-            {
-              id: true,
-              name: true,
-              coach_steam_id: true,
-              lineup_players: [
-                {},
-                {
-                  captain: true,
-                  steam_id: true,
-                  match_lineup_id: true,
-                  __alias: {
-                    name: {
-                      placeholder_name: true,
-                    },
+          lineup_1: {
+            id: true,
+            name: true,
+            coach_steam_id: true,
+            lineup_players: [
+              {},
+              {
+                captain: true,
+                steam_id: true,
+                match_lineup_id: true,
+                __alias: {
+                  name: {
+                    placeholder_name: true,
                   },
                 },
-              ],
-            },
-          ],
+              },
+            ],
+          },
+          lineup_2: {
+            id: true,
+            name: true,
+            coach_steam_id: true,
+            lineup_players: [
+              {},
+              {
+                captain: true,
+                steam_id: true,
+                match_lineup_id: true,
+                __alias: {
+                  name: {
+                    placeholder_name: true,
+                  },
+                },
+              },
+            ],
+          },
         },
       ],
     });
@@ -112,25 +127,7 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    const lineup_1 = matches_by_pk.lineups.find((lineup) => {
-      return lineup.id === matches_by_pk.lineup_1_id;
-    });
-
-    const lineup_2 = matches_by_pk.lineups.find((lineup) => {
-      return lineup.id === matches_by_pk.lineup_2_id;
-    });
-
-    const match = matches_by_pk as typeof matches_by_pk & {
-      lineup_1: typeof lineup_1;
-      lineup_2: typeof lineup_2;
-    };
-
-    match.lineup_1 = lineup_1;
-    match.lineup_2 = lineup_2;
-
-    delete match.lineups;
-
-    return JSON.parse(safeJsonStringify(match));
+    return JSON.parse(safeJsonStringify(matches_by_pk));
   }
 
   @HasuraEvent()
