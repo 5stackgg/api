@@ -5,6 +5,12 @@ object_relationships:
   - name: e_match_status
     using:
       foreign_key_constraint_on: status
+  - name: lineup_1
+    using:
+      foreign_key_constraint_on: lineup_1_id
+  - name: lineup_2
+    using:
+      foreign_key_constraint_on: lineup_2_id
   - name: options
     using:
       foreign_key_constraint_on: match_options_id
@@ -125,16 +131,6 @@ computed_fields:
       function:
         name: is_match_server_available
         schema: public
-  - name: lineup_1_id
-    definition:
-      function:
-        name: get_match_lineup_1_id
-        schema: public
-  - name: lineup_2_id
-    definition:
-      function:
-        name: get_match_lineup_2_id
-        schema: public
   - name: server_type
     definition:
       function:
@@ -187,6 +183,8 @@ select_permissions:
         - created_at
         - id
         - label
+        - lineup_1_id
+        - lineup_2_id
         - match_options_id
         - organizer_steam_id
         - scheduled_at
@@ -199,8 +197,6 @@ select_permissions:
         - connection_string
         - current_match_map_id
         - is_match_server_available
-        - lineup_1_id
-        - lineup_2_id
         - server_type
         - tv_connection_link
         - tv_connection_string

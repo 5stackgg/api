@@ -17,4 +17,11 @@ export class TournamentsController {
       await this.tournamentsService.scheduleMatches(data.new.id as string);
     }
   }
+
+  @HasuraEvent()
+  public async tournament_bracket(data: HasuraEventData<"tournament_brackets">) {
+    console.info("WEE", {
+      data
+    })
+  }
 }

@@ -3,7 +3,6 @@ import { HasuraService } from "../hasura/hasura.service";
 import {
   e_match_status_enum,
   order_by,
-  ValueTypes,
 } from "../../generated/zeus";
 
 @Injectable()
@@ -12,6 +11,12 @@ export class TournamentsService {
     public readonly logger: Logger,
     private readonly hasura: HasuraService,
   ) {}
+
+  public async checkMatch(matchId) {
+    // const tournamentId = await this.hasura.query({
+    //
+    // })
+  }
 
   public async scheduleMatches(tournamentId: string) {
     const { tournaments_by_pk } = await this.hasura.query({

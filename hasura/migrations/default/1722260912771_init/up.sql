@@ -244,7 +244,9 @@ CREATE TABLE public.matches (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     match_options_id uuid,
-    winning_lineup_id uuid
+    winning_lineup_id uuid,
+    lineup_1_id uuid,
+    lineup_2_id uuid
 );
 CREATE FUNCTION public.get_current_match_map(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
@@ -915,6 +917,15 @@ BEGIN
   _new := NEW;
   _new."updated_at" = NOW();
   RETURN _new;
+END;
+$$;
+CREATE FUNCTION public.tbau_match_status() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    bracket tournament_brackets;
+BEGIN
+        RETURN NEW;
 END;
 $$;
 CREATE FUNCTION public.tbd_remove_match_map() RETURNS trigger
@@ -1811,6 +1822,7 @@ CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournamen
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
 CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
+CREATE TRIGGER tbau_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbau_match_status();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
 CREATE TRIGGER tbi_match_lineups BEFORE INSERT ON public.match_lineups FOR EACH ROW EXECUTE FUNCTION public.check_max_match_lineups();
@@ -1874,6 +1886,10 @@ ALTER TABLE ONLY public.match_veto_picks
     ADD CONSTRAINT match_veto_picks_match_lineup_id_fkey FOREIGN KEY (match_lineup_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.match_veto_picks
     ADD CONSTRAINT match_veto_picks_type_fkey FOREIGN KEY (type) REFERENCES public.e_veto_pick_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_lineup_1_id_fkey FOREIGN KEY (lineup_1_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_lineup_2_id_fkey FOREIGN KEY (lineup_2_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.matches
     ADD CONSTRAINT matches_match_options_id_fkey FOREIGN KEY (match_options_id) REFERENCES public.match_options(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.matches

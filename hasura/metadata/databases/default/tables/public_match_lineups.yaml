@@ -50,16 +50,6 @@ computed_fields:
       function:
         name: get_team_name
         schema: public
-insert_permissions:
-  - role: user
-    permission:
-      check:
-        match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
-      columns:
-        - team_id
-    comment: ""
 select_permissions:
   - role: user
     permission:
@@ -77,6 +67,7 @@ update_permissions:
     permission:
       columns:
         - coach_steam_id
+        - team_id
       filter:
         _or:
           - match:
@@ -86,14 +77,6 @@ update_permissions:
               steam_id:
                 _eq: X-Hasura-User-Id
       check:
-        match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
         match:
           organizer_steam_id:
             _eq: x-hasura-user-id
