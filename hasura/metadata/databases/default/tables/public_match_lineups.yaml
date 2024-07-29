@@ -52,3 +52,40 @@ computed_fields:
       function:
         name: get_team_name
         schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - coach_steam_id
+        - id
+        - team_id
+      computed_fields:
+        - name
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - coach_steam_id
+      filter:
+        _or:
+          - matches:
+              organizer_steam_id:
+                _eq: x-hasura-user-id
+          - captain:
+              steam_id:
+                _eq: X-Hasura-User-Id
+      check:
+        matches:
+          organizer_steam_id:
+            _eq: x-hasura-user-id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        matches:
+          organizer_steam_id:
+            _eq: x-hasura-user-id
+    comment: ""
