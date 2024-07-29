@@ -36,15 +36,6 @@ object_relationships:
           name: match_lineups
           schema: public
 array_relationships:
-  - name: lineups
-    using:
-      manual_configuration:
-        column_mapping:
-          id: match_id
-        insertion_order: null
-        remote_table:
-          name: match_lineups
-          schema: public
   - name: match_maps
     using:
       foreign_key_constraint_on:

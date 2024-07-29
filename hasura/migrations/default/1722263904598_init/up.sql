@@ -116,16 +116,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-CREATE FUNCTION public.check_max_match_lineups() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF (SELECT count(*) FROM match_lineups WHERE match_id = NEW.match_id) >= 2 THEN
-    	RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Match cannot have more than two lineups';
-    END IF;
-    RETURN NEW;
-END;
-$$;
 CREATE FUNCTION public.check_team_eligibility() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -174,11 +164,7 @@ BEGIN
   -- Check if the veto type is 'Side'
   IF NEW.type = 'Side' THEN
         -- Retrieve lineup IDs for the match
-        SELECT get_match_lineup_1_id(m.*) INTO lineup_1_id
-        FROM matches m
-        WHERE m.id = NEW.match_id
-        LIMIT 1;
-        SELECT get_match_lineup_2_id(m.*) INTO lineup_2_id
+        SELECT lineup_1_id, lineup_2_id INTO lineup_1_id, lineup_2_id
         FROM matches m
         WHERE m.id = NEW.match_id
         LIMIT 1;
@@ -245,8 +231,8 @@ CREATE TABLE public.matches (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     match_options_id uuid,
     winning_lineup_id uuid,
-    lineup_1_id uuid,
-    lineup_2_id uuid
+    lineup_1_id uuid NOT NULL,
+    lineup_2_id uuid NOT NULL
 );
 CREATE FUNCTION public.get_current_match_map(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
@@ -261,6 +247,24 @@ BEGIN
     ORDER BY mm.order ASC
     LIMIT 1;
     RETURN match_map_id;
+END;
+$$;
+CREATE TABLE public.match_lineups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    team_id uuid,
+    coach_steam_id bigint
+);
+COMMENT ON TABLE public.match_lineups IS 'relational table for assigning a team to a match and lineup';
+CREATE FUNCTION public.get_lineup_match(match_lineup public.match_lineups) RETURNS public.matches
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    match public.matches;
+BEGIN
+     SELECT m.id INTO match
+        FROM matches m
+        INNER JOIN match_lineups ml ON ml.id = m.lineup_1_id OR ml.id = m.lineup_2_id;
+        return match;
 END;
 $$;
 CREATE FUNCTION public.get_match_connection_link(match public.matches, hasura_session json) RETURNS text
@@ -320,38 +324,6 @@ INNER JOIN match_lineups ml on ml.match_id = m.id
     END IF;
     connection_string := CONCAT('connect ', server_host, ':', server_port, '; password ', password);
     RETURN connection_string;
-END;
-$$;
-CREATE FUNCTION public.get_match_lineup_1_id(match public.matches) RETURNS text
-    LANGUAGE plpgsql STABLE
-    AS $$
-DECLARE
-    lineup_id uuid;
-BEGIN
-    SELECT ml.id
-    INTO lineup_id
-    FROM matches m
-    INNER JOIN match_lineups ml ON ml.match_id = m.id
-    WHERE m.id = match.id
-    order by id desc
-    LIMIT 1;
-	return lineup_id;
-END;
-$$;
-CREATE FUNCTION public.get_match_lineup_2_id(match public.matches) RETURNS text
-    LANGUAGE plpgsql STABLE
-    AS $$
-DECLARE
-    lineup_id uuid;
-BEGIN
-    SELECT ml.id
-    INTO lineup_id
-    FROM matches m
-    INNER JOIN match_lineups ml ON ml.match_id = m.id
-    WHERE m.id = match.id
-    order by id asc
-    LIMIT 1;
-	return lineup_id;
 END;
 $$;
 CREATE FUNCTION public.get_match_server(match public.matches, hasura_session json) RETURNS text
@@ -525,13 +497,6 @@ BEGIN
        where t.id = team.id;
 END;
 $$;
-CREATE TABLE public.match_lineups (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    team_id uuid,
-    match_id uuid NOT NULL,
-    coach_steam_id bigint
-);
-COMMENT ON TABLE public.match_lineups IS 'relational table for assigning a team to a match and lineup';
 CREATE FUNCTION public.get_team_name(match_lineup public.match_lineups) RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
@@ -539,7 +504,7 @@ DECLARE
     team_name TEXT;
     lineup_id_1 uuid;
 BEGIN
-    SELECT t.name INTO team_name
+    SELECT t.name, m.lineup_id_1 INTO team_name, lineup_id_1
     FROM matches m
     INNER JOIN match_lineups ml ON ml.match_id = m.id 
     LEFT JOIN teams t ON t.id = ml.team_id
@@ -559,10 +524,6 @@ BEGIN
         RETURN concat('Team ', team_name);
     END IF;
     -- If no captain, detect if it's a lineup 1 or 2 and display it as Team 1 or Team 2
-    SELECT get_match_lineup_1_id(m.*) INTO lineup_id_1
-    FROM matches m 
-    WHERE m.id = match_lineup.match_id 
-    LIMIT 1;
     IF match_lineup.id = lineup_id_1 THEN 
         RETURN 'Team 1';
     ELSE 
@@ -1742,6 +1703,12 @@ ALTER TABLE ONLY public.match_lineups
 ALTER TABLE ONLY public.match_veto_picks
     ADD CONSTRAINT match_veto_picks_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_lineup_1_id_key UNIQUE (lineup_1_id);
+ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_lineup_1_id_lineup_2_id_key UNIQUE (lineup_1_id, lineup_2_id);
+ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_lineup_2_id_key UNIQUE (lineup_2_id);
+ALTER TABLE ONLY public.matches
     ADD CONSTRAINT matches_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.player_assists
     ADD CONSTRAINT player_assists_pkey PRIMARY KEY (id);
@@ -1807,7 +1774,6 @@ CREATE INDEX deaths_player_match ON public.player_kills USING btree (attacked_st
 CREATE INDEX demo_match ON public.match_map_demos USING btree (match_id);
 CREATE INDEX flashes_player_match ON public.player_flashes USING btree (attacker_steam_id, match_id);
 CREATE INDEX kills_player_match ON public.player_kills USING btree (attacker_steam_id, match_id);
-CREATE INDEX lineups_match ON public.match_lineups USING btree (match_id);
 CREATE INDEX objectives_player_match ON public.player_objectives USING btree (player_steam_id, match_id);
 CREATE INDEX unused_utility_player_match ON public.player_unused_utility USING btree (player_steam_id, match_id);
 CREATE INDEX utility_player_match ON public.player_utility USING btree (attacker_steam_id, match_id);
@@ -1825,7 +1791,6 @@ CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH
 CREATE TRIGGER tbau_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbau_match_status();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
-CREATE TRIGGER tbi_match_lineups BEFORE INSERT ON public.match_lineups FOR EACH ROW EXECUTE FUNCTION public.check_max_match_lineups();
 CREATE TRIGGER tbiu_can_pick_veto BEFORE INSERT OR UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.can_pick_veto();
 CREATE TRIGGER tbiu_check_match_map_count BEFORE INSERT OR UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbiu_check_match_map_count();
 CREATE TRIGGER tbiu_encrypt_rcon BEFORE INSERT OR UPDATE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tbiu_encrypt_rcon();
@@ -1852,8 +1817,6 @@ ALTER TABLE ONLY public.match_lineup_players
     ADD CONSTRAINT match_lineup_players_match_lineup_id_fkey FOREIGN KEY (match_lineup_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_lineups
     ADD CONSTRAINT match_lineups_coach_steam_id_fkey FOREIGN KEY (coach_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE ONLY public.match_lineups
-    ADD CONSTRAINT match_lineups_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_map_rounds
     ADD CONSTRAINT match_map_rounds_match_map_id_fkey FOREIGN KEY (match_map_id) REFERENCES public.match_maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_maps

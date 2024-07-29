@@ -20,9 +20,6 @@ object_relationships:
         remote_table:
           name: players
           schema: public
-  - name: match
-    using:
-      foreign_key_constraint_on: match_id
   - name: player
     using:
       foreign_key_constraint_on: coach_steam_id
@@ -45,39 +42,13 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
+  - name: matches
+    definition:
+      function:
+        name: get_lineup_match
+        schema: public
   - name: name
     definition:
       function:
         name: get_team_name
         schema: public
-select_permissions:
-  - role: user
-    permission:
-      columns:
-        - coach_steam_id
-        - id
-        - match_id
-        - team_id
-      computed_fields:
-        - name
-      filter: {}
-    comment: ""
-update_permissions:
-  - role: user
-    permission:
-      columns:
-        - coach_steam_id
-        - team_id
-      filter:
-        _or:
-          - match:
-              organizer_steam_id:
-                _eq: x-hasura-user-id
-          - captain:
-              steam_id:
-                _eq: X-Hasura-User-Id
-      check:
-        match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
-    comment: ""
