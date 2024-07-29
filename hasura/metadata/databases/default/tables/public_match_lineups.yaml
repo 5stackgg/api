@@ -20,9 +20,6 @@ object_relationships:
         remote_table:
           name: players
           schema: public
-  - name: player
-    using:
-      foreign_key_constraint_on: coach_steam_id
   - name: team
     using:
       foreign_key_constraint_on: team_id

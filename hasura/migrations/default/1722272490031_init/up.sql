@@ -821,6 +821,75 @@ BEGIN
 	return score;	
 END;
 $$;
+CREATE TABLE public.tournament_brackets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tournament_stage_id uuid NOT NULL,
+    match_id uuid,
+    tournament_team_id_1 uuid,
+    tournament_team_id_2 uuid,
+    parent_bracket_id uuid,
+    round integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    match_number integer
+);
+CREATE FUNCTION public.schedule_tournament_match(bracket public.tournament_brackets) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    tournament tournaments;
+    member RECORD;
+    _lineup_1_id UUID;
+    _lineup_2_id UUID;
+    _match_id UUID;
+BEGIN
+  	IF bracket.match_id IS NOT NULL THEN
+  	 return bracket.match_id;
+  	END IF;
+    IF bracket.tournament_team_id_1 IS NULL OR bracket.tournament_team_id_2 IS NULL THEN
+        RETURN NULL;
+    END IF;
+    select t.* into tournament from
+        tournament_brackets tb
+        INNER JOIN tournament_stages ts on ts.id = tb.tournament_stage_id
+        INNER JOIN tournaments t on t.id = ts.tournament_id
+        where tb.id = bracket.id;
+    INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
+    INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
+    FOR member IN
+        SELECT * FROM tournament_team_roster
+        WHERE tournament_team_id = bracket.tournament_team_id_1
+    LOOP      
+        INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+        VALUES (_lineup_1_id, member.player_steam_id);
+    END LOOP;
+    FOR member IN
+        SELECT * FROM tournament_team_roster
+        WHERE tournament_team_id = bracket.tournament_team_id_2
+    LOOP
+        INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+        VALUES (_lineup_2_id, member.player_steam_id);
+    END LOOP;
+    INSERT INTO matches (
+        status,
+        organizer_steam_id,
+        match_options_id,
+        lineup_1_id,
+        lineup_2_id
+    )
+    VALUES (
+        'Veto',
+        tournament.organizer_steam_id,
+        tournament.match_options_id,
+        _lineup_1_id,
+        _lineup_2_id
+    )
+    RETURNING id INTO _match_id;
+    UPDATE tournament_brackets
+    SET match_id = _match_id
+    WHERE id = bracket.id;
+    RETURN _match_id;
+END;
+$$;
 CREATE FUNCTION public.seed_tournament() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -872,6 +941,23 @@ BEGIN
   RETURN _new;
 END;
 $$;
+CREATE FUNCTION public.tau_match_status() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    bracket tournament_brackets;
+BEGIN
+   	select * into bracket from tournament_brackets tb 
+   		INNER JOIN tournament_brackets ptb on ptb.id = tb.parent_bracket_id
+   		where tb.match_id = NEW.id
+   		limit 1;
+   	IF bracket IS NULL THEN
+   		RETURN NEW;
+   	END IF;
+	EXECUTE schedule_tournament_match(bracket);
+    RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.tbau_match() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -905,10 +991,14 @@ DECLARE
     _lineup_1_id UUID;
     _lineup_2_id UUID;
 BEGIN
-    INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
-    INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
- 	NEW.lineup_1_id = _lineup_1_id;
-    NEW.lineup_2_id = _lineup_2_id;
+	IF NEW.lineup_1_id IS NULL THEN
+	 INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
+     NEW.lineup_1_id = _lineup_1_id;
+	END IF;
+	IF NEW.lineup_2_id IS NULL THEN
+       INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
+ 	   NEW.lineup_2_id = _lineup_2_id;
+	END IF;
     RETURN NEW;
 END;
 $$;
@@ -1500,17 +1590,6 @@ CREATE TABLE public.team_roster (
     team_id uuid NOT NULL,
     role text DEFAULT 'Pending'::text NOT NULL
 );
-CREATE TABLE public.tournament_brackets (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tournament_stage_id uuid NOT NULL,
-    match_id uuid,
-    tournament_team_id_1 uuid,
-    tournament_team_id_2 uuid,
-    parent_bracket_id uuid,
-    round integer NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    match_number integer
-);
 CREATE TABLE public.tournament_organizers (
     steam_id bigint NOT NULL,
     tournament_id uuid NOT NULL
@@ -1800,6 +1879,7 @@ CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
 CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tournament_stage_updated();
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
+CREATE TRIGGER tau_match_status AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tau_match_status();
 CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();

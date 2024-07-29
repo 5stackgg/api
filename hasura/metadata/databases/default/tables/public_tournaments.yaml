@@ -109,15 +109,3 @@ delete_permissions:
         organizer_steam_id:
           _eq: X-Hasura-User-Id
     comment: ""
-event_triggers:
-  - name: tournament_events
-    definition:
-      enable_manual: false
-      update:
-        columns:
-          - status
-    retry_conf:
-      interval_sec: 10
-      num_retries: 0
-      timeout_sec: 60
-    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
