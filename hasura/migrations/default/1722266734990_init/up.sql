@@ -438,7 +438,7 @@ BEGIN
         SELECT m.*
         FROM players p
         INNER JOIN match_lineup_players mlp ON mlp.steam_id = p.steam_id
-        INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+        INNER JOIN v_match_lineups ml ON ml.id = mlp.match_lineup_id
         INNER JOIN matches m ON m.id = ml.match_id
         WHERE p.steam_id = player.steam_id;
 END;
@@ -492,7 +492,7 @@ BEGIN
     RETURN QUERY
     SELECT DISTINCT m.*
        FROM teams t
-       INNER JOIN match_lineups ml on ml.team_id = t.id
+       INNER JOIN v_match_lineups ml on ml.team_id = t.id
        INNER JOIN matches m ON m.id = ml.match_id
        where t.id = team.id;
 END;
@@ -997,7 +997,7 @@ BEGIN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'steam_id or discord_id is required';
     END IF;
     SELECT ml.match_id INTO _match_id 
-    FROM match_lineups ml
+    FROM v_match_lineups ml
     WHERE ml.id = NEW.match_lineup_id;
 	IF EXISTS (
         SELECT 1
