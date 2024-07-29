@@ -100,7 +100,7 @@ BEGIN
     SELECT mo.type, mo.number_of_substitutes INTO match_type, substitutes 
     FROM matches m
     INNER JOIN match_options mo on mo.id = m.match_options_id
-    inner join match_lineups ml on ml.match_id = m.id
+    inner join vs_match_lineups ml on ml.match_id = m.id
     WHERE ml.id = NEW.match_lineup_id;
     max_players := 5;
     IF match_type = 'Wingman' THEN
@@ -334,7 +334,7 @@ DECLARE
 BEGIN
     SELECT m.password into password
     FROM matches m
-    	INNER JOIN match_lineups ml on ml.match_id = m.id
+    	INNER JOIN v_match_lineups ml on ml.match_id = m.id
     	INNER JOIN match_lineup_players mlp on mlp.match_lineup_id = ml.id
 		INNER JOIN server s on s.id = m.server_id
     WHERE 
@@ -373,7 +373,7 @@ BEGIN
     RETURN QUERY 
     SELECT DISTINCT t.*
     FROM public.matches m
-    INNER JOIN match_lineups ml ON ml.match_id = m.id
+    INNER JOIN vs_match_lineups ml ON ml.match_id = m.id
     INNER JOIN teams t ON t.id = ml.team_id
     WHERE ml.team_id IS NOT NULL
     and m.id = match.id;
@@ -940,7 +940,7 @@ BEGIN
     END IF;
     SELECT COUNT(*) INTO player_count
     FROM match_lineup_players mlp
-    	INNER JOIN match_lineups ml on ml.id = mlp.match_lineup_id
+    	INNER JOIN v_match_lineups ml on ml.id = mlp.match_lineup_id
     	INNER JOIN matches m on m.id = ml.match_id
     	where m.id = NEW.id;
 	max_players := 10;
@@ -1002,7 +1002,7 @@ BEGIN
 	IF EXISTS (
         SELECT 1
         FROM match_lineup_players mlp
-        INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id and ml.match_id = _match_id
+        INNER JOIN v_match_lineups ml ON ml.match_id = _match_id
         WHERE mlp.steam_id = NEW.steam_id
     ) THEN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Player is already added to match';
