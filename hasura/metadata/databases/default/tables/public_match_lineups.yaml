@@ -71,6 +71,7 @@ select_permissions:
       computed_fields:
         - name
       filter: {}
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: user
