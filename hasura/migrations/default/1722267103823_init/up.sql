@@ -637,18 +637,10 @@ BEGIN
     END IF;
     -- Determine the lineup ID based on the team
     IF team = 1 THEN
-        SELECT get_match_lineup_1_id(m.*) INTO lineup_id
-        FROM matches m
-        WHERE m.id = _match.id
-        LIMIT 1;
+       RETURN _match.lineup_1_id;
     ELSE
-        SELECT get_match_lineup_2_id(m.*) INTO lineup_id
-        FROM matches m
-        WHERE m.id = _match.id
-        LIMIT 1;
+       RETURN _match.lineup_2_id;
     END IF;
-    -- Return the lineup ID
-    RETURN lineup_id;
 END;
 $$;
 CREATE FUNCTION public.get_veto_type(match public.matches) RETURNS text
@@ -1057,8 +1049,8 @@ DECLARE
     match_map public.match_maps;
 BEGIN
     -- Retrieve match best_of value
-    SELECT mo.best_of 
-    INTO match_best_of 
+    SELECT mo.best_of, lineup_1_id, lineup_2_id
+    INTO match_best_of, match_lineup_1_id, match_lineup_2_id
     FROM matches m
     INNER JOIN match_options mo 
     ON mo.id = m.match_options_id
@@ -1069,14 +1061,6 @@ BEGIN
         INTO current_match_status 
         FROM matches 
         WHERE id = NEW.match_id;
-		SELECT get_match_lineup_1_id(m.*) INTO match_lineup_1_id
-	        FROM matches m
-	        WHERE m.id = NEW.match_id
-	        LIMIT 1;
-        SELECT get_match_lineup_2_id(m.*) INTO match_lineup_2_id
-      	  FROM matches m
-	        WHERE m.id = NEW.match_id
-	        LIMIT 1;
         IF current_match_status = 'Forfeit' THEN
             RETURN NEW;
         END IF;
