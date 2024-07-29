@@ -872,6 +872,15 @@ BEGIN
   RETURN _new;
 END;
 $$;
+CREATE FUNCTION public.tbau_match() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    bracket tournament_brackets;
+BEGIN
+        RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.tbau_match_status() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -887,6 +896,20 @@ CREATE FUNCTION public.tbd_remove_match_map() RETURNS trigger
 BEGIN
     DELETE FROM match_maps WHERE map_id = OLD.map_id AND match_id = OLD.match_id;
     RETURN OLD;
+END;
+$$;
+CREATE FUNCTION public.tbi_match() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _lineup_1_id UUID;
+    _lineup_2_id UUID;
+BEGIN
+    INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
+    INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
+ 	NEW.lineup_1_id = _lineup_1_id;
+    NEW.lineup_2_id = _lineup_2_id;
+    RETURN NEW;
 END;
 $$;
 CREATE FUNCTION public.tbiu_check_match_map_count() RETURNS trigger
@@ -994,8 +1017,8 @@ BEGIN
 	IF EXISTS (
         SELECT 1
         FROM match_lineup_players mlp
-        INNER JOIN v_match_lineups ml ON ml.match_id = _match_id
-        WHERE mlp.steam_id = NEW.steam_id
+        INNER JOIN v_match_lineups ml ON ml.id = mlp.match_lineup_id
+        WHERE mlp.steam_id = NEW.steam_id and ml.match_id = _match_id
     ) THEN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Player is already added to match';
     END IF;
@@ -1779,8 +1802,8 @@ CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournamen
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
 CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
-CREATE TRIGGER tbau_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbau_match_status();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
+CREATE TRIGGER tbi_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbi_match();
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
 CREATE TRIGGER tbiu_can_pick_veto BEFORE INSERT OR UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.can_pick_veto();
 CREATE TRIGGER tbiu_check_match_map_count BEFORE INSERT OR UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbiu_check_match_map_count();
