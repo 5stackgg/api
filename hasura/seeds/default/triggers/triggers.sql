@@ -4,8 +4,6 @@
 
 
 
-DROP TRIGGER IF EXISTS tbiu_encrypt_rcon ON public.servers;
-CREATE TRIGGER tbiu_encrypt_rcon BEFORE INSERT OR UPDATE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tbiu_encrypt_rcon();
 
 DROP TRIGGER IF EXISTS tbiu_enforce_max_damage_trigger ON public.player_damages;
 CREATE TRIGGER tbiu_enforce_max_damage_trigger BEFORE INSERT OR UPDATE ON public.player_damages FOR EACH ROW EXECUTE FUNCTION public.enforce_max_damage();
