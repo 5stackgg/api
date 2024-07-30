@@ -4,9 +4,6 @@
 
 
 
-DROP TRIGGER IF EXISTS tbiu_team_invite ON public.team_invites;
-CREATE TRIGGER tbiu_team_invite BEFORE INSERT OR UPDATE ON public.team_invites FOR EACH ROW EXECUTE FUNCTION public.team_invite_check_for_existing_member();
-
 DROP TRIGGER IF EXISTS tbiu_update_total_damage_trigger ON public.player_damages;
 CREATE TRIGGER tbiu_update_total_damage_trigger BEFORE INSERT OR UPDATE ON public.player_damages FOR EACH ROW EXECUTE FUNCTION public.update_total_damage();
 
