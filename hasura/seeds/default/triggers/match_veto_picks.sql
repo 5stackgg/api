@@ -3,7 +3,6 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    PERFORM can_pick_veto(NEW);
     PERFORM create_match_map_from_veto(NEW);
     RETURN NEW;
 END;
@@ -26,8 +25,7 @@ $$;
 DROP TRIGGER IF EXISTS tbd_match_veto_picks ON public.match_veto_picks;
 CREATE TRIGGER tbd_match_veto_picks BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_match_veto_picks();
 
-
-CREATE OR REPLACE FUNCTION public.tbu_match_veto_picks()
+CREATE OR REPLACE FUNCTION public.tbiu_match_veto_picks()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -37,5 +35,5 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS tbu_match_veto_picks ON public.match_veto_picks;
-CREATE TRIGGER tbu_match_veto_picks BEFORE UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbu_match_veto_picks();
+DROP TRIGGER IF EXISTS tbiu_match_veto_picks ON public.match_veto_picks;
+CREATE TRIGGER tbiu_match_veto_picks BEFORE UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbiu_match_veto_picks();

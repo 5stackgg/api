@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.get_veto_picking_lineup_id(_match public.matches) RETURNS uuid
+CREATE OR REPLACE FUNCTION public.get_veto_picking_lineup_id(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -9,21 +9,25 @@ DECLARE
     picks_made int;
     team int;
 BEGIN
-    IF _match.status != 'Veto' THEN
+    IF match.status != 'Veto' THEN
         RETURN NULL;
     END IF;
+
     -- Count the total number of picks made for the match
     SELECT COUNT(*) INTO total_picks
     FROM match_veto_picks mvp
-    WHERE mvp.match_id = _match.id;
+    WHERE mvp.match_id = match.id;
+
     -- Calculate the round number
     round_num := floor(total_picks / 6);
+
     -- Determine the starting team based on the round number
     IF round_num % 2 = 0 THEN
         starting_team := 1;
     ELSE
         starting_team := 2;
     END IF;
+
     -- Determine the team based on the number of picks made within the round
     picks_made := total_picks % 6;
     IF picks_made < 4 THEN
@@ -42,11 +46,12 @@ BEGIN
             team := 1;
         END IF;
     END IF;
+
     -- Determine the lineup ID based on the team
     IF team = 1 THEN
-       RETURN _match.lineup_1_id;
+       RETURN match.lineup_1_id;
     ELSE
-       RETURN _match.lineup_2_id;
+       RETURN match.lineup_2_id;
     END IF;
 END;
 $$;
