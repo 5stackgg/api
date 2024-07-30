@@ -57210,6 +57210,7 @@ export const enum e_match_types_constraint {
 export const enum e_match_types_enum {
 	Competitive = "Competitive",
 	Scrimmage = "Scrimmage",
+	ScrimmageNight = "ScrimmageNight",
 	Wingman = "Wingman"
 }
 /** select columns of table "e_match_types" */
