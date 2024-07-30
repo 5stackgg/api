@@ -2,8 +2,6 @@ CREATE OR REPLACE FUNCTION public.can_pick_veto(match_veto_pick match_veto_picks
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    _match_id uuid;
-    _match_lineup_id uuid;
     pickType VARCHAR(255);
     lineup_id uuid;
     _match matches;
@@ -12,9 +10,7 @@ DECLARE
 BEGIN
     -- TOOD - https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
     -- Get match_id and match_lineup_id from match_veto_pick or OLD depending on their availability
-    _match_id := COALESCE(match_veto_pick.match_id, OLD.match_id);
-    _match_lineup_id := COALESCE(match_veto_pick.match_lineup_id, OLD.match_lineup_id);
-    select * into _match from matches where id = _match_id;
+    select * into _match from matches where id = match_veto_pick.match_id;
     -- Get map pool for the match
     pickType := get_veto_type(_match);
     -- Check if the pickType matches the type of the match_veto_pick veto
@@ -24,7 +20,7 @@ BEGIN
     -- Get the lineup_id for the match
     SELECT * INTO lineup_id FROM get_veto_picking_lineup_id(_match);
     -- Check if the lineup_id matches the lineup_id provided in the match_veto_pick veto
-    IF _match_lineup_id != lineup_id THEN
+    IF match_veto_pick.match_lineup_id != lineup_id THEN
         RAISE EXCEPTION 'Expected other lineup for %', pickType USING ERRCODE = '22000';
     END IF;
     -- Ensure that a side is picked for 'Side' type veto
@@ -43,7 +39,7 @@ BEGIN
         INNER JOIN match_options mo on mo.id = m.match_options_id
         INNER JOIN _map_pool mp ON mp.map_pool_id = mo.map_pool_id
         INNER JOIN maps ON maps.id = mp.map_id
-        WHERE maps.id = match_veto_pick.map_id AND m.id = _match_id
+        WHERE maps.id = match_veto_pick.map_id AND m.id = match_veto_pick.match_id
     ) THEN
         RAISE EXCEPTION 'Map not available for picking' USING ERRCODE = '22000';
     END IF;
