@@ -2,8 +2,6 @@
 
 
 
-DROP TRIGGER IF EXISTS tbi_match ON public.matches;
-CREATE TRIGGER tbi_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbi_match();
 
 DROP TRIGGER IF EXISTS tbi_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
