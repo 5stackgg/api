@@ -1,5 +1,12 @@
 SET check_function_bodies = false;
 
+insert into e_match_types ("value", "description") values
+    ('Competitive', '5 vs 5 match using active map pool'),
+    ('Scrimmage', '5 vs 5 match using all available map pools'),
+    ('ScrimmageNight', '5 vs 5 match using the night map pool'),
+    ('Wingman', '2 vs 2 match')
+on conflict(value) do update set "description" = EXCLUDED."description"
+
 insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "patch") values
     --  Competitive
     ('de_ancient', 'Competitive', 'true',  null, '/img/maps/posters/ancient.webp', '/img/maps/patches/ancient.webp'),
@@ -20,6 +27,12 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_biome', 'Competitive', 'false',  '3075706807', null, null),
     ('drawbridge', 'Competitive', 'false',  '3070192462', null, null),
     ('foroglio', 'Competitive', 'false',  '3132854332', null, null),
+
+    ('de_dust2_night', 'ScrimmageNight', 'false', '3296013569', null, null),
+    ('de_ancient_night', 'ScrimmageNight', 'false', '3299281893', null, null),
+    ('de_overpass_night', 'ScrimmageNight', 'false', '3285124923', null, null),
+    ('de_nuke_night', 'ScrimmageNight', 'false', '3253703883', null, null),
+    ('de_inferno_night', 'ScrimmageNight', 'false', '3253703883', null, null),
 
     --  Wingman
     ('de_inferno', 'Wingman', 'false',  null, '/img/maps/posters/inferno.webp', '/img/maps/patches/inferno.webp'),
