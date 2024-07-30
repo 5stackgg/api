@@ -1,5 +1,3 @@
-DROP TRIGGER IF EXISTS tai_create_match_map_from_veto ON public.match_veto_picks;
-
 CREATE OR REPLACE FUNCTION public.tai_match_veto_picks()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -14,8 +12,18 @@ DROP TRIGGER IF EXISTS tai_match_veto_picks ON public.match_veto_picks;
 CREATE TRIGGER tai_match_veto_picks AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tai_match_veto_picks();
 
 
+CREATE OR REPLACE FUNCTION public.tai_teams() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM add_owner_to_team(NEW);
+	RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS tai_teams ON public.teams;
-CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
+CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.tai_teams();
+
 
 DROP TRIGGER IF EXISTS taiu_tournament_stages ON public.tournament_stages;
 CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tournament_stage_updated();
