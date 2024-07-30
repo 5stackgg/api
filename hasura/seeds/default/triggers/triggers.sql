@@ -1,5 +1,18 @@
 DROP TRIGGER IF EXISTS tai_create_match_map_from_veto ON public.match_veto_picks;
-CREATE TRIGGER tai_create_match_map_from_veto AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.create_match_map_from_veto();
+DROP TRIGGER IF EXISTS tai_match_veto_picks ON public.match_veto_picks;
+
+CREATE OR REPLACE FUNCTION public.tai_match_veto_picks()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM create_match_map_from_veto(NEW);
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER tai_match_veto_picks AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tai_match_veto_picks();
+
 
 DROP TRIGGER IF EXISTS tai_teams ON public.teams;
 CREATE TRIGGER tai_teams AFTER INSERT ON public.teams FOR EACH ROW EXECUTE FUNCTION public.add_owner_to_team();
