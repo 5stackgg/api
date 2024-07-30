@@ -1,5 +1,4 @@
 DROP TRIGGER IF EXISTS tai_create_match_map_from_veto ON public.match_veto_picks;
-DROP TRIGGER IF EXISTS tai_match_veto_picks ON public.match_veto_picks;
 
 CREATE OR REPLACE FUNCTION public.tai_match_veto_picks()
 RETURNS trigger
@@ -11,6 +10,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS tai_match_veto_picks ON public.match_veto_picks;
 CREATE TRIGGER tai_match_veto_picks AFTER INSERT ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tai_match_veto_picks();
 
 
