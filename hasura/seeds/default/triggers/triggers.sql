@@ -93,13 +93,23 @@ $$;
 DROP TRIGGER IF EXISTS tau_tournament_brackets ON public.tournament_brackets;
 CREATE TRIGGER tau_tournament_brackets AFTER UPDATE ON public.tournament_brackets FOR EACH ROW EXECUTE FUNCTION public.tau_tournament_brackets();
 
+CREATE OR REPLACE FUNCTION public.tau_match_maps() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM update_match_state(NEW);
+
+	RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_match_maps ON public.match_maps;
+CREATE TRIGGER tau_match_maps AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tau_match_maps();
 
 
 
 
 
-DROP TRIGGER IF EXISTS tau_update_match_state ON public.match_maps;
-CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 
 DROP TRIGGER IF EXISTS tbd_remove_match_map ON public.match_veto_picks;
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.update_match_state() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.update_match_state(_match_map match_maps) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -20,21 +20,21 @@ BEGIN
     FROM matches m
     INNER JOIN match_options mo
     ON mo.id = m.match_options_id
-    WHERE m.id = NEW.match_id;
-    IF (NEW.status = 'Finished') THEN
+    WHERE m.id = _match_map.match_id;
+    IF (_match_map.status = 'Finished') THEN
         -- Get current match status and lineups
         SELECT status
         INTO current_match_status
         FROM matches
-        WHERE id = NEW.match_id;
+        WHERE id = _match_map.match_id;
         IF current_match_status = 'Forfeit' THEN
-            RETURN NEW;
+            RETURN;
         END IF;
         -- Loop through match maps and calculate wins
         FOR match_map IN
             SELECT *
             FROM match_maps
-            WHERE match_id = NEW.match_id
+            WHERE match_id = _match_map.match_id
         LOOP
          	map_lineup_1_score := lineup_1_score(match_map);
             map_lineup_2_score := lineup_2_score(match_map);
@@ -57,9 +57,9 @@ BEGIN
             -- Update match status and winning lineup
             UPDATE matches
             SET status = 'Finished', winning_lineup_id = match_winning_lineup_id
-            WHERE id = NEW.match_id;
+            WHERE id = _match_map.match_id;
         END IF;
     END IF;
-    RETURN NEW;
+    RETURN;
 END;
 $$;
