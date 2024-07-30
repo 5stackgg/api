@@ -3,8 +3,6 @@
 
 
 
-DROP TRIGGER IF EXISTS tbiu_check_match_map_count ON public.match_maps;
-CREATE TRIGGER tbiu_check_match_map_count BEFORE INSERT OR UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbiu_check_match_map_count();
 
 DROP TRIGGER IF EXISTS tbiu_encrypt_rcon ON public.servers;
 CREATE TRIGGER tbiu_encrypt_rcon BEFORE INSERT OR UPDATE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tbiu_encrypt_rcon();
