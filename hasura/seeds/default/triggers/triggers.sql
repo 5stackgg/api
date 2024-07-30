@@ -4,10 +4,6 @@
 
 
 
-
-DROP TRIGGER IF EXISTS tbiu_enforce_max_damage_trigger ON public.player_damages;
-CREATE TRIGGER tbiu_enforce_max_damage_trigger BEFORE INSERT OR UPDATE ON public.player_damages FOR EACH ROW EXECUTE FUNCTION public.enforce_max_damage();
-
 DROP TRIGGER IF EXISTS tbiu_team_invite ON public.team_invites;
 CREATE TRIGGER tbiu_team_invite BEFORE INSERT OR UPDATE ON public.team_invites FOR EACH ROW EXECUTE FUNCTION public.team_invite_check_for_existing_member();
 
