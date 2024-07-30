@@ -7,10 +7,6 @@ BEGIN
         PERFORM seed_tournament(NEW);
     END IF;
 
-    IF NEW.status = 'Live' THEN
-        PERFORM update_tournament_stages(NEW.id);
-    END IF;
-
 	RETURN NEW;
 END;
 $$;

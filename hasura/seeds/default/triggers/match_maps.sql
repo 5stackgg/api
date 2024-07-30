@@ -3,7 +3,6 @@ CREATE OR REPLACE FUNCTION public.tau_match_maps() RETURNS TRIGGER
     AS $$
 BEGIN
     PERFORM update_match_state(NEW);
-    PERFORM check_match_map_count(NEW);
 	RETURN NEW;
 END;
 $$;
