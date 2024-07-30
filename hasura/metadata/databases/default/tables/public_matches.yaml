@@ -117,11 +117,29 @@ computed_fields:
       function:
         name: get_current_match_map
         schema: public
+  - name: is_captain
+    definition:
+      function:
+        name: is_captain
+        schema: public
+      session_argument: hasura_session
+  - name: is_coach
+    definition:
+      function:
+        name: is_coach
+        schema: public
+      session_argument: hasura_session
   - name: is_match_server_available
     definition:
       function:
         name: is_match_server_available
         schema: public
+  - name: is_organizer
+    definition:
+      function:
+        name: is_match_organizer
+        schema: public
+      session_argument: hasura_session
   - name: server_type
     definition:
       function:
@@ -186,7 +204,10 @@ select_permissions:
         - connection_link
         - connection_string
         - current_match_map_id
+        - is_captain
+        - is_coach
         - is_match_server_available
+        - is_organizer
         - server_type
         - tv_connection_link
         - tv_connection_string
