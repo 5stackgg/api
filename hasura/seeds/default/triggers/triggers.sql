@@ -48,8 +48,22 @@ $$;
 DROP TRIGGER IF EXISTS taiud_tournament_team_roster ON public.tournament_team_roster;
 CREATE TRIGGER taiud AFTER INSERT OR UPDATE OR DELETE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.taiud_tournament_team_roster();
 
-DROP TRIGGER IF EXISTS tau_match_status ON public.matches;
-CREATE TRIGGER tau_match_status AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tau_match_status();
+
+CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM update_tournament_bracket(NEW);
+	RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_matches ON public.matches;
+CREATE TRIGGER tau_matches AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tau_matches();
+
+
+
+
 
 DROP TRIGGER IF EXISTS tau_seed_tournament ON public.tournaments;
 CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.tau_match_status() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.update_tournament_bracket(match matches) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -7,30 +7,30 @@ DECLARE
     winning_team_id UUID;
     bracket_spot_1 UUID;
 BEGIN
-    -- If there's no winning lineup, return the new row as is
-    IF NEW.winning_lineup_id IS NULL THEN
-        RETURN NEW;
+    -- If there's no winning lineup, return the match row as is
+    IF match.winning_lineup_id IS NULL THEN
+        RETURN;
     END IF;
     -- Select the current bracket
     SELECT * INTO bracket
     FROM tournament_brackets
-    WHERE match_id = NEW.id
+    WHERE match_id = match.id
     LIMIT 1;
-    -- If bracket is NULL, return the new row as is
+    -- If bracket is NULL, return the match row as is
     IF bracket IS NULL THEN
-        RETURN NEW;
+        RETURN;
     END IF;
     -- Select the parent bracket
     SELECT * INTO parent_bracket
     FROM tournament_brackets
     WHERE id = bracket.parent_bracket_id
     LIMIT 1;
-    -- If parent_bracket is NULL, return the new row as is
+    -- If parent_bracket is NULL, return the match row as is
     IF parent_bracket IS NULL THEN
-        RETURN NEW;
+        RETURN;
     END IF;
     -- Determine the winning team based on the winning lineup
-    IF NEW.winning_lineup_id = NEW.lineup_1_id THEN
+    IF match.winning_lineup_id = match.lineup_1_id THEN
         winning_team_id = bracket.tournament_team_id_1;
     ELSE
         winning_team_id = bracket.tournament_team_id_2;
@@ -52,6 +52,6 @@ BEGIN
     END IF;
     -- Schedule the next match for the current bracket
     PERFORM schedule_tournament_match(bracket);
-    RETURN NEW;
+    RETURN;
 END;
 $$;
