@@ -8,4 +8,4 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS taiud_tournament_team_roster ON public.tournament_team_roster;
-CREATE TRIGGER taiud AFTER INSERT OR UPDATE OR DELETE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.taiud_tournament_team_roster();
+CREATE TRIGGER taiud_tournament_team_roster AFTER INSERT OR UPDATE OR DELETE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.taiud_tournament_team_roster();

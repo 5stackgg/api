@@ -5,6 +5,5 @@ BEGIN
 	 IF EXISTS (SELECT 1 FROM team_roster WHERE team_id = team_invite.team_id AND player_steam_id = team_invite.steam_id) THEN
 		RAISE EXCEPTION 'Player already on team.';
     END IF;
-    RETURN NEW;
 END;
 $$;
