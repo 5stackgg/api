@@ -1,4 +1,4 @@
-CREATE FUNCTION public.seed_tournament() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.seed_tournament() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

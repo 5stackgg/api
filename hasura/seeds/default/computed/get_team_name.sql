@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_team_name(match_lineup public.match_lineups) RETURNS text
+CREATE OR REPLACE FUNCTION public.get_team_name(match_lineup public.match_lineups) RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

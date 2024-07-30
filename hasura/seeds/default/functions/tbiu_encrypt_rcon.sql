@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tbiu_encrypt_rcon() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tbiu_encrypt_rcon() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

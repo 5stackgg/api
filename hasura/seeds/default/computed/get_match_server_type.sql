@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_match_server_type(match public.matches) RETURNS text
+CREATE OR REPLACE FUNCTION public.get_match_server_type(match public.matches) RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

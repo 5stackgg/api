@@ -1,4 +1,4 @@
-CREATE FUNCTION public.check_team_eligibility() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.check_team_eligibility() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

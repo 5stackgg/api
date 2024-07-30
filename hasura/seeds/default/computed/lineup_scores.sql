@@ -1,4 +1,4 @@
-CREATE FUNCTION public.lineup_1_score(match_map public.match_maps) RETURNS integer
+CREATE OR REPLACE FUNCTION public.lineup_1_score(match_map public.match_maps) RETURNS integer
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -15,7 +15,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION public.lineup_2_score(match_map public.match_maps) RETURNS integer
+CREATE OR REPLACE FUNCTION public.lineup_2_score(match_map public.match_maps) RETURNS integer
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

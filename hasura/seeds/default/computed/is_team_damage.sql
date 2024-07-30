@@ -1,4 +1,4 @@
-CREATE FUNCTION public.is_team_damage(player_damage public.player_damages) RETURNS boolean
+CREATE OR REPLACE FUNCTION public.is_team_damage(player_damage public.player_damages) RETURNS boolean
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

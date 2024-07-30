@@ -1,4 +1,4 @@
-CREATE FUNCTION public.add_owner_to_team() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.add_owner_to_team() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

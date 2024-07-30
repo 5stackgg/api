@@ -1,4 +1,4 @@
-CREATE FUNCTION public.enforce_max_damage() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.enforce_max_damage() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

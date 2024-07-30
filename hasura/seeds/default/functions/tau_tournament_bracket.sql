@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tau_tournament_bracket() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tau_tournament_bracket() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

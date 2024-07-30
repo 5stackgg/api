@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_current_match_map(match public.matches) RETURNS uuid
+CREATE OR REPLACE FUNCTION public.get_current_match_map(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

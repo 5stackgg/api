@@ -1,4 +1,4 @@
-CREATE FUNCTION public.update_total_damage() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.update_total_damage() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

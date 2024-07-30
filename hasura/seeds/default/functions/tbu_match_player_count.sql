@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tbu_match_player_count() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tbu_match_player_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

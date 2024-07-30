@@ -1,4 +1,4 @@
-CREATE FUNCTION public.can_join_tournament(tournament public.tournaments, hasura_session json) RETURNS boolean
+CREATE OR REPLACE FUNCTION public.can_join_tournament(tournament public.tournaments, hasura_session json) RETURNS boolean
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

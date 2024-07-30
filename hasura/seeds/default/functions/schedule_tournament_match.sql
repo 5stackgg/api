@@ -1,4 +1,4 @@
-CREATE FUNCTION public.schedule_tournament_match(bracket public.tournament_brackets) RETURNS uuid
+CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tournament_brackets) RETURNS uuid
      LANGUAGE plpgsql
      AS $$
  DECLARE

@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_veto_pattern(_match public.matches) RETURNS text[]
+CREATE OR REPLACE FUNCTION public.get_veto_pattern(_match public.matches) RETURNS text[]
     LANGUAGE plpgsql
     AS $$
 DECLARE

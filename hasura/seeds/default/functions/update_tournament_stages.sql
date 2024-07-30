@@ -1,5 +1,5 @@
 
-CREATE FUNCTION public.update_tournament_stages(_tournament_id uuid) RETURNS void
+CREATE OR REPLACE FUNCTION public.update_tournament_stages(_tournament_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 DECLARE

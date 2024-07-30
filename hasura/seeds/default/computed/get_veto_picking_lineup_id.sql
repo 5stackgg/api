@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_veto_picking_lineup_id(_match public.matches) RETURNS uuid
+CREATE OR REPLACE FUNCTION public.get_veto_picking_lineup_id(_match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

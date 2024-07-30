@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_match_connection_link(match public.matches, hasura_session json) RETURNS text
+CREATE OR REPLACE FUNCTION public.get_match_connection_link(match public.matches, hasura_session json) RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

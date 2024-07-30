@@ -1,5 +1,5 @@
 
-CREATE FUNCTION public.get_player_teams(player public.players) RETURNS SETOF public.teams
+CREATE OR REPLACE FUNCTION public.get_player_teams(player public.players) RETURNS SETOF public.teams
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

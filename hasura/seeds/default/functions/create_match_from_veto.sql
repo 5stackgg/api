@@ -1,4 +1,4 @@
-CREATE FUNCTION public.create_match_map_from_veto() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.create_match_map_from_veto() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

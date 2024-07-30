@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_lineup_match(match_lineup public.match_lineups) RETURNS public.matches
+CREATE OR REPLACE FUNCTION public.get_lineup_match(match_lineup public.match_lineups) RETURNS public.matches
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

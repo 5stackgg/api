@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tau_match_status() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tau_match_status() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

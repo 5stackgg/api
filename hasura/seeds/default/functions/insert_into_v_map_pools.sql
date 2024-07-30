@@ -1,4 +1,4 @@
-CREATE FUNCTION public.insert_into_v_map_pools() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.insert_into_v_map_pools() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

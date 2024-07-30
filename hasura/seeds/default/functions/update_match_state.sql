@@ -1,4 +1,4 @@
-CREATE FUNCTION public.update_match_state() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.update_match_state() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

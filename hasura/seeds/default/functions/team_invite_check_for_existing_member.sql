@@ -1,4 +1,4 @@
-CREATE FUNCTION public.team_invite_check_for_existing_member() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.team_invite_check_for_existing_member() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

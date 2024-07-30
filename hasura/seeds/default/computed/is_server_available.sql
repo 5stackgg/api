@@ -1,4 +1,4 @@
-CREATE FUNCTION public.is_server_available(match_id uuid, match_server_id uuid) RETURNS boolean
+CREATE OR REPLACE FUNCTION public.is_server_available(match_id uuid, match_server_id uuid) RETURNS boolean
     LANGUAGE plpgsql STABLE
     AS $$
 BEGIN

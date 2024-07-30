@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tbiu_check_match_map_count() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tbiu_check_match_map_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

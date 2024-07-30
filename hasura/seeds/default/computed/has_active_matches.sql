@@ -1,4 +1,4 @@
-CREATE FUNCTION public.has_active_matches(match_options public.match_options) RETURNS boolean
+CREATE OR REPLACE FUNCTION public.has_active_matches(match_options public.match_options) RETURNS boolean
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

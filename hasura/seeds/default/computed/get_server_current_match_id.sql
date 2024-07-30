@@ -1,4 +1,4 @@
-CREATE FUNCTION public.get_server_current_match_id(server public.servers) RETURNS text
+CREATE OR REPLACE FUNCTION public.get_server_current_match_id(server public.servers) RETURNS text
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE

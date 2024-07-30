@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tbau_match() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tbau_match() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

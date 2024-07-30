@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tbd_remove_match_map() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tbd_remove_match_map() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

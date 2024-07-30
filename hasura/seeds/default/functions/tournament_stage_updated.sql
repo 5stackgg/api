@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tournament_stage_updated() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tournament_stage_updated() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

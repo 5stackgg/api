@@ -1,4 +1,4 @@
-CREATE FUNCTION public.check_match_lineup_players_count() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.check_match_lineup_players_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

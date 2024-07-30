@@ -1,4 +1,4 @@
-CREATE FUNCTION public.can_pick_veto() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.can_pick_veto() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

@@ -1,4 +1,4 @@
-CREATE FUNCTION public.tbui_match_lineup_players() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.tbui_match_lineup_players() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
