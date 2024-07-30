@@ -27,6 +27,7 @@ CREATE OR REPLACE FUNCTION public.tbu_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    PERFORM check_match_status(NEW);
     PERFORM check_match_player_count(NEW);
 	RETURN NEW;
 END;

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.tbu_match_status() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.check_match_status() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE

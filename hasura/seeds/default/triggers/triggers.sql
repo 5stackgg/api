@@ -5,8 +5,7 @@
 
 
 
-DROP TRIGGER IF EXISTS tbu_match_status ON public.matches;
-CREATE TRIGGER tbu_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_status();
+
 
 DROP TRIGGER IF EXISTS tbui_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tbui_match_lineup_players BEFORE INSERT OR UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbui_match_lineup_players();
