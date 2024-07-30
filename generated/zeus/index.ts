@@ -57143,6 +57143,7 @@ export const enum e_map_pool_types_enum {
 	Competitive = "Competitive",
 	Custom = "Custom",
 	Scrimmage = "Scrimmage",
+	ScrimmageNight = "ScrimmageNight",
 	Wingman = "Wingman"
 }
 /** select columns of table "e_map_pool_types" */
