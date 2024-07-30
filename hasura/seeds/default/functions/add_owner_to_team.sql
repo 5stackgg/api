@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.add_owner_to_team(team) RETURNS VOID
+CREATE OR REPLACE FUNCTION public.add_owner_to_team(team teams) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
 BEGIN
