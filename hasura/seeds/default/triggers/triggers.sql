@@ -3,10 +3,6 @@
 
 
 
-
-DROP TRIGGER IF EXISTS tbiu_can_pick_veto ON public.match_veto_picks;
-CREATE TRIGGER tbiu_can_pick_veto BEFORE INSERT OR UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.can_pick_veto();
-
 DROP TRIGGER IF EXISTS tbiu_check_match_map_count ON public.match_maps;
 CREATE TRIGGER tbiu_check_match_map_count BEFORE INSERT OR UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbiu_check_match_map_count();
 
