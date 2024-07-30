@@ -61,12 +61,26 @@ $$;
 DROP TRIGGER IF EXISTS tau_matches ON public.matches;
 CREATE TRIGGER tau_matches AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tau_matches();
 
+CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+
+    IF (tournament.status IS DISTINCT FROM OLD.status AND tournament.status != 'Live') THEN
+        PERFORM seed_tournament(NEW);
+    END IF;
+
+	RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_tournaments ON public.tournaments;
+CREATE TRIGGER tau_tournaments AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.tau_tournaments();
 
 
 
 
-DROP TRIGGER IF EXISTS tau_seed_tournament ON public.tournaments;
-CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();
+
 
 DROP TRIGGER IF EXISTS tau_tournament_bracket ON public.tournament_brackets;
 CREATE TRIGGER tau_tournament_bracket AFTER UPDATE ON public.tournament_brackets FOR EACH ROW EXECUTE FUNCTION public.tau_tournament_bracket();
