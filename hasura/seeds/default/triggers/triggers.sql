@@ -3,8 +3,6 @@
 
 
 
-DROP TRIGGER IF EXISTS tbi_match_lineup_players ON public.match_lineup_players;
-CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.check_match_lineup_players_count();
 
 DROP TRIGGER IF EXISTS tbiu_can_pick_veto ON public.match_veto_picks;
 CREATE TRIGGER tbiu_can_pick_veto BEFORE INSERT OR UPDATE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.can_pick_veto();
