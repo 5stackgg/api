@@ -1,0 +1,20 @@
+table:
+  name: e_tournament_stage_types
+  schema: public
+is_enum: true
+array_relationships:
+  - name: tournament_stages
+    using:
+      foreign_key_constraint_on:
+        column: type
+        table:
+          name: tournament_stages
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

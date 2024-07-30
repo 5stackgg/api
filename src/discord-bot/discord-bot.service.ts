@@ -9,7 +9,10 @@ import {
   Routes,
   SlashCommandBuilder,
 } from "discord.js";
-import { e_match_types_enum } from "../../generated/zeus";
+import {
+  e_map_pool_types_enum,
+  e_match_types_enum,
+} from "../../generated/zeus";
 import { ChatCommands } from "./enums/ChatCommands";
 import { ButtonActions } from "./enums/ButtonActions";
 import { HasuraService } from "../hasura/hasura.service";
@@ -137,7 +140,9 @@ export class DiscordBotService {
   }
 
   private async addBaseOptions(builder: SlashCommandBuilder) {
-    const mapChoices = await this.getMapChoices(e_match_types_enum.Competitive);
+    const mapChoices = await this.getMapChoices(
+      e_map_pool_types_enum.Competitive,
+    );
 
     return builder
       .addChannelOption((option) =>
@@ -196,12 +201,12 @@ export class DiscordBotService {
       );
   }
 
-  private async getMapChoices(type: e_match_types_enum) {
+  private async getMapChoices(type: e_map_pool_types_enum) {
     const { map_pools } = await this.hasura.query({
       map_pools: [
         {},
         {
-          label: true,
+          type: true,
           maps: [
             {},
             {
@@ -213,8 +218,8 @@ export class DiscordBotService {
       ],
     });
 
-    const map_pool = map_pools.find(({ label }) => {
-      return label === type;
+    const map_pool = map_pools.find((pool) => {
+      return pool.type === type;
     });
 
     if (!map_pool) {

@@ -1,0 +1,111 @@
+table:
+  name: match_options
+  schema: public
+object_relationships:
+  - name: map_pool
+    using:
+      foreign_key_constraint_on: map_pool_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on:
+        column: match_options_id
+        table:
+          name: tournaments
+          schema: public
+array_relationships:
+  - name: matches
+    using:
+      foreign_key_constraint_on:
+        column: match_options_id
+        table:
+          name: matches
+          schema: public
+computed_fields:
+  - name: has_active_matches
+    definition:
+      function:
+        name: has_active_matches
+        schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - best_of
+        - coaches
+        - knife_round
+        - map_pool_id
+        - map_veto
+        - mr
+        - number_of_substitutes
+        - overtime
+        - tech_timeout_setting
+        - timeout_setting
+        - type
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - coaches
+        - knife_round
+        - map_veto
+        - overtime
+        - best_of
+        - mr
+        - number_of_substitutes
+        - tech_timeout_setting
+        - timeout_setting
+        - type
+        - id
+        - map_pool_id
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - best_of
+        - coaches
+        - knife_round
+        - map_pool_id
+        - map_veto
+        - mr
+        - number_of_substitutes
+        - overtime
+        - tech_timeout_setting
+        - timeout_setting
+        - type
+      filter:
+        _and:
+          - _or:
+              - matches:
+                  organizer_steam_id:
+                    _eq: X-Hasura-User-Id
+              - tournament:
+                  organizers:
+                    _and:
+                      - steam_id:
+                          _eq: X-Hasura-User-Id
+              - tournament:
+                  organizer_steam_id:
+                    _eq: X-Hasura-User-Id
+          - has_active_matches:
+              _eq: false
+      check:
+        _and:
+          - _or:
+              - matches:
+                  organizer_steam_id:
+                    _eq: X-Hasura-User-Id
+              - tournament:
+                  organizers:
+                    _and:
+                      - steam_id:
+                          _eq: X-Hasura-User-Id
+              - tournament:
+                  organizer_steam_id:
+                    _eq: X-Hasura-User-Id
+          - has_active_matches:
+              _eq: false
+    comment: ""

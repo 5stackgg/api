@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { e_match_types_enum } from "@/../generated/zeus";
+import { ValueTypes, e_match_types_enum } from "@/../generated/zeus";
 
 import {
   ComponentType,
@@ -20,6 +20,7 @@ import { ExpectedPlayers } from "../enums/ExpectedPlayers";
 import { DiscordMatchOptions } from "../types/DiscordMatchOptions";
 import { getRandomNumber } from "../utilities/getRandomNumber";
 import { AppConfig } from "../../configs/types/AppConfig";
+import { e_map_pool_types_enum, UnwrapPromise } from "../../../generated/zeus";
 
 @BotChatCommand(ChatCommands.ScheduleComp)
 @BotChatCommand(ChatCommands.ScheduleScrimmage)
@@ -27,16 +28,20 @@ import { AppConfig } from "../../configs/types/AppConfig";
 export default class ScheduleMatch extends DiscordInteraction {
   public async handler(interaction: ChatInputCommandInteraction) {
     let matchType: e_match_types_enum;
+    let mapPoolType: e_map_pool_types_enum;
 
     switch (interaction.commandName) {
       case ChatCommands.ScheduleComp:
         matchType = e_match_types_enum.Competitive;
+        mapPoolType = e_map_pool_types_enum.Competitive;
         break;
       case ChatCommands.ScheduleScrimmage:
         matchType = e_match_types_enum.Scrimmage;
+        mapPoolType = e_map_pool_types_enum.Scrimmage;
         break;
       case ChatCommands.ScheduleWingMan:
         matchType = e_match_types_enum.Wingman;
+        mapPoolType = e_map_pool_types_enum.Wingman;
         break;
       default:
         throw Error(`match type not supported ${interaction.type}`);
@@ -83,11 +88,15 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const { captain1, captain2 } = await this.getCaptains(
       options,
-      matchType,
       usersInChannel,
     );
 
-    const match = await this.createMatch(options, matchType, serverId);
+    const match = await this.createMatch(
+      options,
+      matchType,
+      mapPoolType,
+      serverId,
+    );
     const matchId = match.id;
 
     await this.discordPickPlayer.setAvailablePlayerPool(
@@ -161,14 +170,15 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async createMatch(
     options: DiscordMatchOptions,
     matchType: e_match_types_enum,
+    mapPoolType: e_map_pool_types_enum,
     serverId?: string,
   ) {
     const { map_pools } = await this.hasura.query({
       map_pools: [
         {
           where: {
-            label: {
-              _eq: matchType,
+            type: {
+              _eq: mapPoolType,
             },
           },
         },
@@ -178,24 +188,26 @@ export default class ScheduleMatch extends DiscordInteraction {
       ],
     });
 
-    const { id: match_pool_id } = map_pools.at(0);
-
-    // TODO - if they pick a map we dont want to do a veto
+    const { id: map_pool_id } = map_pools.at(0);
 
     const { insert_matches_one } = await this.hasura.mutation({
       insert_matches_one: [
         {
           object: {
-            map_veto: true,
-            mr: options.mr,
-            best_of: options.best_of,
-            type: matchType,
-            overtime: options.overtime,
-            knife_round: options.knife,
-            password: uuidv4(),
             map: options.map,
-            match_pool_id,
+            password: uuidv4(),
             server_id: serverId,
+            options: {
+              data: {
+                map_pool_id,
+                map_veto: true,
+                mr: options.mr,
+                type: matchType,
+                best_of: options.best_of,
+                overtime: options.overtime,
+                knife_round: options.knife,
+              },
+            },
             lineups: {
               data: [
                 { lineup_players: { data: [] } },
@@ -248,31 +260,30 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async createVoiceChannelsForMatch(
     originalChannelId: string,
     interaction: ChatInputCommandInteraction,
-    match: {
-      id: string;
-      lineups: Array<{
-        id: string;
-        name?: string;
-      }>;
-    },
+    match: UnwrapPromise<ReturnType<typeof this.createMatch>>,
   ) {
     const matchId = match.id;
     const categoryChannel = await this.createMatchesCategory(interaction);
 
-    for (const lineup of match.lineups) {
-      await this.discordBotVoiceChannels.createMatchVoiceChannel(
-        matchId,
-        categoryChannel.guildId,
-        originalChannelId,
-        categoryChannel.id,
-        lineup.id,
-      );
-    }
+    await this.discordBotVoiceChannels.createMatchVoiceChannel(
+      matchId,
+      categoryChannel.guildId,
+      originalChannelId,
+      categoryChannel.id,
+      match.lineup_1_id,
+    );
+
+    await this.discordBotVoiceChannels.createMatchVoiceChannel(
+      matchId,
+      categoryChannel.guildId,
+      originalChannelId,
+      categoryChannel.id,
+      match.lineup_2_id,
+    );
   }
 
   private async getCaptains(
     discordOptions: DiscordMatchOptions,
-    matchType: e_match_types_enum,
     users: DiscordUser[],
   ) {
     let captain1: DiscordUser;

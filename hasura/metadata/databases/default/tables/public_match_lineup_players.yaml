@@ -13,9 +13,10 @@ insert_permissions:
     permission:
       check:
         lineup:
-          match:
-            organizer_steam_id:
-              _eq: x-hasura-user-id
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
       columns:
         - captain
         - match_lineup_id
@@ -25,11 +26,12 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - steam_id
         - captain
+        - discord_id
+        - placeholder_name
         - id
         - match_lineup_id
-        - placeholder_name
-        - steam_id
       filter: {}
       allow_aggregations: true
     comment: ""
@@ -40,21 +42,24 @@ update_permissions:
         - captain
       filter:
         lineup:
-          match:
-            organizer_steam_id:
-              _eq: x-hasura-user-id
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
       check:
         lineup:
-          match:
-            organizer_steam_id:
-              _eq: x-hasura-user-id
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
         lineup:
-          match:
-            organizer_steam_id:
-              _eq: x-hasura-user-id
+          v_match_lineup:
+            match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
     comment: ""

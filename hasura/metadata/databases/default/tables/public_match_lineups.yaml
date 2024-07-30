@@ -20,15 +20,18 @@ object_relationships:
         remote_table:
           name: players
           schema: public
-  - name: match
-    using:
-      foreign_key_constraint_on: match_id
-  - name: player
-    using:
-      foreign_key_constraint_on: coach_steam_id
   - name: team
     using:
       foreign_key_constraint_on: team_id
+  - name: v_match_lineup
+    using:
+      manual_configuration:
+        column_mapping:
+          id: id
+        insertion_order: null
+        remote_table:
+          name: v_match_lineups
+          schema: public
 array_relationships:
   - name: lineup_players
     using:
@@ -45,56 +48,41 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
+  - name: matches
+    definition:
+      function:
+        name: get_lineup_match
+        schema: public
   - name: name
     definition:
       function:
         name: get_team_name
         schema: public
-insert_permissions:
-  - role: user
-    permission:
-      check:
-        match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
-      columns:
-        - team_id
-    comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
         - coach_steam_id
         - id
-        - match_id
         - team_id
       computed_fields:
         - name
       filter: {}
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: user
     permission:
       columns:
         - coach_steam_id
-      filter:
+      filter: {}
+      check:
         _or:
-          - match:
-              organizer_steam_id:
-                _eq: x-hasura-user-id
           - captain:
               steam_id:
                 _eq: X-Hasura-User-Id
-      check:
-        match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
+          - v_match_lineup:
+              match:
+                organizer_steam_id:
+                  _eq: X-Hasura-User-Id
     comment: ""

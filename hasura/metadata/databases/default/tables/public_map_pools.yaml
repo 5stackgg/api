@@ -11,55 +11,21 @@ array_relationships:
         remote_table:
           name: v_pool_maps
           schema: public
-  - name: matches
-    using:
-      foreign_key_constraint_on:
-        column: match_pool_id
-        table:
-          name: matches
-          schema: public
 insert_permissions:
   - role: user
     permission:
-      check:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+      check: {}
       columns:
-        - enabled
-        - label
+        - id
+        - type
     comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
-        - owner_steam_id
         - enabled
-        - label
         - id
-      filter:
-        _or:
-          - owner_steam_id:
-              _eq: X-Hasura-User-Id
-          - owner_steam_id:
-              _is_null: true
-    comment: ""
-update_permissions:
-  - role: user
-    permission:
-      columns:
-        - enabled
-        - label
-      filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
-      check:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        - type
+        - seed
+      filter: {}
     comment: ""

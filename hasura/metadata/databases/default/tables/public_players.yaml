@@ -144,7 +144,7 @@ array_relationships:
       foreign_key_constraint_on:
         column: player_steam_id
         table:
-          name: tournament_roster
+          name: tournament_team_roster
           schema: public
   - name: tournaments
     using:

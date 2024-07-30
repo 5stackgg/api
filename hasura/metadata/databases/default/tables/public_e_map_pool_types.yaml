@@ -1,0 +1,4 @@
+table:
+  name: e_map_pool_types
+  schema: public
+is_enum: true

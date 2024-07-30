@@ -2,6 +2,21 @@ table:
   name: e_team_roles
   schema: public
 is_enum: true
+array_relationships:
+  - name: team_rosters
+    using:
+      foreign_key_constraint_on:
+        column: role
+        table:
+          name: team_roster
+          schema: public
+  - name: tournament_team_rosters
+    using:
+      foreign_key_constraint_on:
+        column: role
+        table:
+          name: tournament_team_roster
+          schema: public
 select_permissions:
   - role: user
     permission:

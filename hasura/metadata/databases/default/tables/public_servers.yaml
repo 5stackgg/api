@@ -4,7 +4,7 @@ table:
 object_relationships:
   - name: owner
     using:
-      foreign_key_constraint_on: player_steam_id
+      foreign_key_constraint_on: owner_steam_id
 array_relationships:
   - name: matches
     using:
@@ -32,7 +32,7 @@ insert_permissions:
       check: {}
       set:
         on_demand: "false"
-        player_steam_id: x-hasura-user-id
+        owner_steam_id: x-hasura-user-id
       columns:
         - enabled
         - host
@@ -53,7 +53,7 @@ select_permissions:
         - port
         - tv_port
       filter:
-        player_steam_id:
+        owner_steam_id:
           _eq: X-Hasura-User-Id
       allow_aggregations: true
     comment: ""
@@ -68,16 +68,16 @@ update_permissions:
         - rcon_password
         - tv_port
       filter:
-        player_steam_id:
+        owner_steam_id:
           _eq: X-Hasura-User-Id
       check:
-        player_steam_id:
+        owner_steam_id:
           _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        player_steam_id:
+        owner_steam_id:
           _eq: X-Hasura-User-Id
     comment: ""

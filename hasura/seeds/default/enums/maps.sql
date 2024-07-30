@@ -26,8 +26,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_nuke', 'Wingman', 'false',  null, '/img/maps/posters/nuke.webp', '/img/maps/patches/nuke.webp'),
     ('de_overpass', 'Wingman', 'false',  null, '/img/maps/posters/overpass.webp', '/img/maps/patches/overpass.webp'),
     ('de_vertigo', 'Wingman', 'false',  null, '/img/maps/posters/vertigo.webp', '/img/maps/patches/vertigo.webp'),
-    ('de_assembly', 'Wingman', 'false',  null, '/img/maps/posters/assembly.webp', '/img/maps/patches/assembly.webp'),
-    ('de_memento', 'Wingman', 'false',  null, '/img/maps/posters/memento.webp', '/img/maps/patches/memento.webp'),
+    ('de_assembly', 'Wingman', 'false',  null, null, null),
+    ('de_memento', 'Wingman', 'false',  null, null, null),
 
     --  Wingman Workshop
     ('de_brewery', 'Wingman', 'false',  '3070290240', null, null),
@@ -39,39 +39,39 @@ on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "w
 WITH new_rows AS (
   SELECT *
   FROM (VALUES
-      ('Competitive', true, null::bigint),
-      ('Wingman', true, null::bigint),
-      ('Scrimmage', true, null::bigint)
-  ) AS data(label, enabled, owner_steam_id)
+      ('Competitive', true, true),
+      ('Wingman', true, true),
+      ('Scrimmage', true, true)
+  ) AS data(type, enabled, seed)
 )
-INSERT INTO map_pools ("label", "enabled", "owner_steam_id")
-SELECT label, enabled, owner_steam_id
+INSERT INTO map_pools ("type", "enabled", "seed")
+SELECT type, enabled, seed
 FROM new_rows
 WHERE NOT EXISTS (
   SELECT 1
   FROM map_pools
-  WHERE map_pools.label = new_rows.label
-    AND map_pools.owner_steam_id IS NULL
+  WHERE map_pools.type = new_rows.type
+    AND map_pools.seed = true
 );
 
 WITH pool_ids AS (
-    SELECT id, label
+    SELECT id, type
     FROM map_pools
-    WHERE label IN ('Competitive', 'Wingman', 'Scrimmage')
-    ORDER BY label
+    WHERE type IN ('Competitive', 'Wingman', 'Scrimmage')
+    ORDER BY type
 ),
 inserted_maps AS (
     INSERT INTO _map_pool (map_id, map_pool_id)
     SELECT m.id, p.id
     FROM maps m
     JOIN pool_ids p ON (
-        (p.label = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
-        (p.label = 'Wingman' AND m.type = 'Wingman') OR
-        (p.label = 'Scrimmage' AND m.type = 'Competitive')
+        (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
+        (p.type = 'Wingman' AND m.type = 'Wingman') OR
+        (p.type = 'Scrimmage' AND m.type = 'Competitive')
     )
     ON CONFLICT DO NOTHING
     RETURNING *
 )
-SELECT im.map_id, pi.label
+SELECT im.map_id, pi.type
 FROM inserted_maps im
 JOIN pool_ids pi ON im.map_pool_id = pi.id;

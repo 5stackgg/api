@@ -16,29 +16,6 @@ select_permissions:
         - role
         - team_id
       filter: {}
-      allow_aggregations: true
-    comment: ""
-update_permissions:
-  - role: user
-    permission:
-      columns:
-        - role
-      filter:
-        team:
-          owner_steam_id:
-            _eq: x-hasura-user-id
-      check:
-        team:
-          owner_steam_id:
-            _eq: x-hasura-user-id
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        team:
-          owner_steam_id:
-            _eq: x-hasura-user-id
     comment: ""
 event_triggers:
   - name: team_roster_events

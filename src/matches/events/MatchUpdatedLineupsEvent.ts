@@ -3,7 +3,6 @@ import {
   players_constraint,
   players_update_column,
 } from "../../../generated/zeus";
-import { MatchEvents } from "./index";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   lineups: {
@@ -22,6 +21,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   public async process() {
     const match = await this.matchAssistant.getMatchLineups(this.matchId);
 
+    // TODO - just dlete the ones missing , and inesrt the ones missing
     await this.hasura.mutation({
       delete_match_lineup_players: [
         {

@@ -77,30 +77,46 @@ export class MatchAssistantService {
           id: matchId,
         },
         {
-          type: true,
+          veto_picking_lineup_id: true,
+          options: {
+            type: true,
+          },
           lineup_1_id: true,
           lineup_2_id: true,
-          veto_picking_lineup_id: true,
-          lineups: [
-            {},
-            {
-              id: true,
-              name: true,
-              lineup_players: [
-                {},
-                {
-                  captain: true,
-                  steam_id: true,
+          lineup_1: {
+            id: true,
+            name: true,
+            lineup_players: [
+              {},
+              {
+                captain: true,
+                steam_id: true,
+                discord_id: true,
+                placeholder_name: true,
+                player: {
+                  name: true,
                   discord_id: true,
-                  placeholder_name: true,
-                  player: {
-                    name: true,
-                    discord_id: true,
-                  },
                 },
-              ],
-            },
-          ],
+              },
+            ],
+          },
+          lineup_2: {
+            id: true,
+            name: true,
+            lineup_players: [
+              {},
+              {
+                captain: true,
+                steam_id: true,
+                discord_id: true,
+                placeholder_name: true,
+                player: {
+                  name: true,
+                  discord_id: true,
+                },
+              },
+            ],
+          },
         },
       ],
     });
@@ -109,26 +125,15 @@ export class MatchAssistantService {
       return;
     }
 
-    const lineup_1 = matches_by_pk.lineups.find((lineup) => {
-      return lineup.id === matches_by_pk.lineup_1_id;
-    });
-
-    const lineup_2 = matches_by_pk.lineups.find((lineup) => {
-      return lineup.id === matches_by_pk.lineup_2_id;
-    });
-
-    const lineup_players = [].concat(
-      ...matches_by_pk.lineups.map((lineup) => lineup.lineup_players),
-    );
+    const lineup_players = [
+      ...matches_by_pk.lineup_1.lineup_players,
+      ...matches_by_pk.lineup_2.lineup_players,
+    ];
 
     const match = matches_by_pk as typeof matches_by_pk & {
-      lineup_1: typeof lineup_1;
-      lineup_2: typeof lineup_2;
       lineup_players: typeof lineup_players;
     };
 
-    match.lineup_1 = lineup_1;
-    match.lineup_2 = lineup_2;
     match.lineup_players = lineup_players;
 
     return match;
@@ -590,14 +595,16 @@ export class MatchAssistantService {
           id: matchId,
         },
         {
-          map_pool: {
-            maps: [
-              {},
-              {
-                id: true,
-                name: true,
-              },
-            ],
+          options: {
+            map_pool: {
+              maps: [
+                {},
+                {
+                  id: true,
+                  name: true,
+                },
+              ],
+            },
           },
           veto_picks: [
             {
@@ -624,11 +631,11 @@ export class MatchAssistantService {
       ],
     });
 
-    if (!matches_by_pk?.map_pool) {
+    if (!matches_by_pk?.options?.map_pool) {
       throw Error("unable to find match maps");
     }
 
-    return matches_by_pk.map_pool.maps.filter((map) => {
+    return matches_by_pk.options.map_pool.maps.filter((map) => {
       return !matches_by_pk.veto_picks.find((veto) => {
         return veto.map_id === map.id;
       });
@@ -660,6 +667,8 @@ export class MatchAssistantService {
               status: {
                 _nin: [
                   e_match_status_enum.Scheduled,
+                  e_match_status_enum.Tie,
+                  e_match_status_enum.Forfeit,
                   e_match_status_enum.Canceled,
                   e_match_status_enum.Finished,
                 ],

@@ -5,6 +5,12 @@ object_relationships:
   - name: admin
     using:
       foreign_key_constraint_on: organizer_steam_id
+  - name: e_tournament_status
+    using:
+      foreign_key_constraint_on: status
+  - name: options
+    using:
+      foreign_key_constraint_on: match_options_id
 array_relationships:
   - name: organizers
     using:
@@ -18,7 +24,7 @@ array_relationships:
       foreign_key_constraint_on:
         column: tournament_id
         table:
-          name: tournament_roster
+          name: tournament_team_roster
           schema: public
   - name: servers
     using:
@@ -41,6 +47,13 @@ array_relationships:
         table:
           name: tournament_teams
           schema: public
+computed_fields:
+  - name: can_join_tournament
+    definition:
+      function:
+        name: can_join_tournament
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: user
     permission:
@@ -49,24 +62,30 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
-        - id
+        - match_options_id
         - name
         - start
-        - status
-        - type
     comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
-        - organizer_steam_id
         - description
-        - name
-        - status
-        - type
-        - start
         - id
-      filter: {}
+        - match_options_id
+        - name
+        - organizer_steam_id
+        - start
+        - status
+      computed_fields:
+        - can_join_tournament
+      filter:
+        _or:
+          - organizer_steam_id:
+              _eq: X-Hasura-User-Id
+          - status:
+              _neq: Setup
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: user
@@ -76,7 +95,6 @@ update_permissions:
         - name
         - start
         - status
-        - type
       filter:
         organizer_steam_id:
           _eq: X-Hasura-User-Id

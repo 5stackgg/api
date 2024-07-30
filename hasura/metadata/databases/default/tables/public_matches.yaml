@@ -5,12 +5,15 @@ object_relationships:
   - name: e_match_status
     using:
       foreign_key_constraint_on: status
-  - name: e_match_type
+  - name: lineup_1
     using:
-      foreign_key_constraint_on: type
-  - name: map_pool
+      foreign_key_constraint_on: lineup_1_id
+  - name: lineup_2
     using:
-      foreign_key_constraint_on: match_pool_id
+      foreign_key_constraint_on: lineup_2_id
+  - name: options
+    using:
+      foreign_key_constraint_on: match_options_id
   - name: organizer
     using:
       manual_configuration:
@@ -23,16 +26,16 @@ object_relationships:
   - name: server
     using:
       foreign_key_constraint_on: server_id
-array_relationships:
-  - name: lineups
+  - name: winner
     using:
       manual_configuration:
         column_mapping:
-          id: match_id
+          winning_lineup_id: id
         insertion_order: null
         remote_table:
           name: match_lineups
           schema: public
+array_relationships:
   - name: match_maps
     using:
       foreign_key_constraint_on:
@@ -119,16 +122,6 @@ computed_fields:
       function:
         name: is_match_server_available
         schema: public
-  - name: lineup_1_id
-    definition:
-      function:
-        name: get_match_lineup_1_id
-        schema: public
-  - name: lineup_2_id
-    definition:
-      function:
-        name: get_match_lineup_2_id
-        schema: public
   - name: server_type
     definition:
       function:
@@ -168,52 +161,32 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
-        - best_of
-        - coaches
-        - knife_round
         - label
-        - map_veto
-        - match_pool_id
-        - mr
-        - number_of_substitutes
-        - overtime
+        - match_options_id
         - password
         - scheduled_at
         - server_id
-        - tech_timeout_setting
-        - timeout_setting
-        - type
     comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
-        - best_of
-        - coaches
         - created_at
         - id
-        - knife_round
         - label
-        - map_veto
-        - match_pool_id
-        - mr
-        - number_of_substitutes
+        - lineup_1_id
+        - lineup_2_id
+        - match_options_id
         - organizer_steam_id
-        - overtime
         - scheduled_at
         - server_id
         - status
-        - tech_timeout_setting
-        - timeout_setting
-        - type
-        - updated_at
+        - winning_lineup_id
       computed_fields:
         - connection_link
         - connection_string
         - current_match_map_id
         - is_match_server_available
-        - lineup_1_id
-        - lineup_2_id
         - server_type
         - tv_connection_link
         - tv_connection_string
@@ -226,17 +199,10 @@ update_permissions:
   - role: user
     permission:
       columns:
-        - best_of
-        - knife_round
         - label
-        - mr
         - organizer_steam_id
-        - overtime
         - scheduled_at
         - server_id
-        - tech_timeout_setting
-        - timeout_setting
-        - type
       filter:
         organizer_steam_id:
           _eq: x-hasura-user-id

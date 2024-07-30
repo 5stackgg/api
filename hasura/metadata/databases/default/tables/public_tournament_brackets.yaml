@@ -1,0 +1,32 @@
+table:
+  name: tournament_brackets
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: stage
+    using:
+      foreign_key_constraint_on: tournament_stage_id
+  - name: team_1
+    using:
+      foreign_key_constraint_on: tournament_team_id_1
+  - name: team_2
+    using:
+      foreign_key_constraint_on: tournament_team_id_2
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - id
+        - match_id
+        - match_number
+        - parent_bracket_id
+        - tournament_team_id_1
+        - tournament_team_id_2
+        - round
+        - tournament_stage_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""

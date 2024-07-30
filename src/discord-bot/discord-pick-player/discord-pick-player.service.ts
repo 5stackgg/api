@@ -208,9 +208,10 @@ export class DiscordPickPlayerService {
     );
 
     if (
-      (users.length < ExpectedPlayers[match.type] &&
+      (users.length < ExpectedPlayers[match.options.type] &&
         [...new Set(pickedDiscordUserIds)].length === users.length) ||
-      [...new Set(pickedDiscordUserIds)].length === ExpectedPlayers[match.type]
+      [...new Set(pickedDiscordUserIds)].length ===
+        ExpectedPlayers[match.options.type]
     ) {
       const mapVotingLink = `Map Voting is starting: ${await this.discordBotMessaging.getMatchReplyLink(
         matchId,
@@ -226,7 +227,7 @@ export class DiscordPickPlayerService {
     await this.pickMember(
       matchId,
       otherLineup.id,
-      match.type === e_match_types_enum.Wingman
+      match.options.type === e_match_types_enum.Wingman
         ? 1
         : /**
            * Pick Order: 1 -> 2 -> 1 by 1

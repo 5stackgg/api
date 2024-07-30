@@ -2,9 +2,20 @@ table:
   name: tournament_stages
   schema: public
 object_relationships:
+  - name: e_tournament_stage_type
+    using:
+      foreign_key_constraint_on: type
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
+array_relationships:
+  - name: brackets
+    using:
+      foreign_key_constraint_on:
+        column: tournament_stage_id
+        table:
+          name: tournament_brackets
+          schema: public
 insert_permissions:
   - role: user
     permission:
@@ -13,6 +24,8 @@ insert_permissions:
           organizer_steam_id:
             _eq: X-Hasura-User-Id
       columns:
+        - max_teams
+        - min_teams
         - order
         - settings
         - tournament_id
@@ -22,17 +35,22 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - max_teams
+        - min_teams
         - order
         - settings
         - type
         - id
         - tournament_id
       filter: {}
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: user
     permission:
       columns:
+        - max_teams
+        - min_teams
         - order
         - settings
         - type

@@ -2,21 +2,46 @@ table:
   name: tournament_teams
   schema: public
 object_relationships:
+  - name: creator
+    using:
+      foreign_key_constraint_on: owner_steam_id
   - name: team
     using:
       foreign_key_constraint_on: team_id
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
+array_relationships:
+  - name: roster
+    using:
+      foreign_key_constraint_on:
+        column: tournament_team_id
+        table:
+          name: tournament_team_roster
+          schema: public
 insert_permissions:
   - role: user
     permission:
       check:
-        team:
-          owner:
-            steam_id:
-              _eq: X-Hasura-User-Id
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
       columns:
+        - name
+        - owner_steam_id
         - team_id
         - tournament_id
     comment: ""
@@ -24,17 +49,74 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - eligible_at
         - id
+        - name
+        - owner_steam_id
+        - seed
         - team_id
         - tournament_id
       filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - name
+      filter:
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
+      check:
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        team:
-          owner:
-            steam_id:
-              _eq: X-Hasura-User-Id
+        _or:
+          - team:
+              roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+          - _and:
+              - team_id:
+                  _is_null: true
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+          - tournament:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
     comment: ""
