@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION public.tau_tournament_brackets() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-     IF NEW.tournament_team_id_1 IS NOT NULL AND NEW.tournament_team_id_2I IS NOT NULL AND NEW.match_id IS NULL THEN
+     IF NEW.tournament_team_id_1 IS NOT NULL AND NEW.tournament_team_id_2 IS NOT NULL AND NEW.match_id IS NULL THEN
          PERFORM schedule_tournament_match(NEW);
      END IF;
 

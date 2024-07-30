@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
     AS $$
 BEGIN
 
-    IF (tournament.status IS DISTINCT FROM OLD.status AND tournament.status != 'Live') THEN
+    IF (NEW.status IS DISTINCT FROM OLD.status AND NEW.status != 'Live') THEN
         PERFORM seed_tournament(NEW);
     END IF;
 
