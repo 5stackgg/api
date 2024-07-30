@@ -924,7 +924,7 @@ BEGIN
      	team_id1 := available_teams[1];
         available_teams := array_remove(available_teams, team_id1);
 		team_id2 := available_teams[1];
-        available_teams := array_remove(available_teams, team_id1);
+        available_teams := array_remove(available_teams, team_id2);
         UPDATE tournament_brackets SET  tournament_team_id_1 = team_id1, tournament_team_id_2 = team_id2 WHERE id = bracket.id;
     END LOOP;
     RETURN NEW;
