@@ -100,6 +100,12 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
+  - name: can_assign_map
+    definition:
+      function:
+        name: is_match_organizer
+        schema: public
+      session_argument: hasura_session
   - name: connection_link
     definition:
       function:
@@ -140,6 +146,11 @@ computed_fields:
         name: is_match_organizer
         schema: public
       session_argument: hasura_session
+  - name: max_players_per_lineup
+    definition:
+      function:
+        name: match_max_players_per_lineup
+        schema: public
   - name: server_type
     definition:
       function:
@@ -201,6 +212,7 @@ select_permissions:
         - status
         - winning_lineup_id
       computed_fields:
+        - can_assign_map
         - connection_link
         - connection_string
         - current_match_map_id
@@ -208,6 +220,7 @@ select_permissions:
         - is_coach
         - is_match_server_available
         - is_organizer
+        - max_players_per_lineup
         - server_type
         - tv_connection_link
         - tv_connection_string
