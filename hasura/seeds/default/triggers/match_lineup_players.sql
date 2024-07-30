@@ -12,7 +12,12 @@ CREATE OR REPLACE FUNCTION public.tbu_match_lineup_players() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM check_match_lineup_players(NEW);
+     IF NEW.captain = true THEN
+        UPDATE match_lineup_players
+            SET captain = false
+            WHERE match_lineup_id = NEW.match_lineup_id AND steam_id != NEW.steam_id;
+    END IF;
+
 	RETURN NEW;
 END;
 $$;
