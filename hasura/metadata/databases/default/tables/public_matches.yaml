@@ -181,7 +181,6 @@ select_permissions:
         - scheduled_at
         - server_id
         - status
-        - updated_at
         - winning_lineup_id
       computed_fields:
         - connection_link
