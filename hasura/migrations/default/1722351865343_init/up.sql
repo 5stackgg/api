@@ -945,29 +945,71 @@ CREATE FUNCTION public.tau_match_status() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    bracket tournament_brackets;
+    bracket tournament_brackets%ROWTYPE;
+    parent_bracket tournament_brackets%ROWTYPE;
+    winning_team_id UUID;
+    bracket_spot_1 UUID;
 BEGIN
-   	select * into bracket from tournament_brackets tb 
-   		INNER JOIN tournament_brackets ptb on ptb.id = tb.parent_bracket_id
-   		where tb.match_id = NEW.id
-   		limit 1;
-   	IF bracket IS NULL THEN
-   		RETURN NEW;
-   	END IF;
-	EXECUTE schedule_tournament_match(bracket);
+    -- If there's no winning lineup, return the new row as is
+    IF NEW.winning_lineup_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+    -- Select the current bracket
+    SELECT * INTO bracket
+    FROM tournament_brackets
+    WHERE match_id = NEW.id
+    LIMIT 1;
+    -- If bracket is NULL, return the new row as is
+    IF bracket IS NULL THEN
+        RETURN NEW;
+    END IF;
+    -- Select the parent bracket
+    SELECT * INTO parent_bracket
+    FROM tournament_brackets
+    WHERE id = bracket.parent_bracket_id
+    LIMIT 1;
+    -- If parent_bracket is NULL, return the new row as is
+    IF parent_bracket IS NULL THEN
+        RETURN NEW;
+    END IF;
+    -- Determine the winning team based on the winning lineup
+    IF NEW.winning_lineup_id = NEW.lineup_1_id THEN
+        winning_team_id = bracket.tournament_team_id_1;
+    ELSE
+        winning_team_id = bracket.tournament_team_id_2;
+    END IF;
+    -- Find the spot in the parent bracket where the winning team should go
+    SELECT tb.id INTO bracket_spot_1
+    FROM tournament_brackets tb
+    WHERE tb.parent_bracket_id = parent_bracket.id
+    AND tb.match_number = (
+        SELECT MIN(tb2.match_number)
+        FROM tournament_brackets tb2
+        WHERE tb2.parent_bracket_id = parent_bracket.id
+    );
+    -- Update the parent bracket with the winning team
+    IF bracket_spot_1 = bracket.id THEN
+        UPDATE tournament_brackets SET tournament_team_id_1 = winning_team_id WHERE id = parent_bracket.id;
+    ELSE 
+        UPDATE tournament_brackets SET tournament_team_id_2 = winning_team_id WHERE id = parent_bracket.id;
+    END IF;
+    -- Schedule the next match for the current bracket
+    PERFORM schedule_tournament_match(bracket);
+    RETURN NEW;
+END;
+$$;
+CREATE FUNCTION public.tau_tournament_bracket() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.tournament_team_id_1 IS NULL OR NEW.tournament_team_id_2 IS NULL OR NEW.match_id IS NOT NULL THEN
+        RETURN NEW;
+    END IF;
+    PERFORM schedule_tournament_match(NEW);
     RETURN NEW;
 END;
 $$;
 CREATE FUNCTION public.tbau_match() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    bracket tournament_brackets;
-BEGIN
-        RETURN NEW;
-END;
-$$;
-CREATE FUNCTION public.tbau_match_status() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -1881,6 +1923,7 @@ CREATE TRIGGER taiu_tournament_stages AFTER INSERT OR UPDATE ON public.tournamen
 CREATE TRIGGER taiud AFTER INSERT OR DELETE OR UPDATE ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.check_team_eligibility();
 CREATE TRIGGER tau_match_status AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tau_match_status();
 CREATE TRIGGER tau_seed_tournament AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.seed_tournament();
+CREATE TRIGGER tau_tournament_bracket AFTER UPDATE ON public.tournament_brackets FOR EACH ROW EXECUTE FUNCTION public.tau_tournament_bracket();
 CREATE TRIGGER tau_update_match_state AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.update_match_state();
 CREATE TRIGGER tbd_remove_match_map BEFORE DELETE ON public.match_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_remove_match_map();
 CREATE TRIGGER tbi_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbi_match();
