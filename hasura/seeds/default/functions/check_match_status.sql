@@ -7,7 +7,7 @@ DECLARE
     match_map_count int;
 BEGIN
     IF (match.status != 'Live' AND match.status != 'Veto') OR match.server_id IS NULL THEN
-        RETURN match;
+        RETURN;
     END IF;
     SELECT mo.map_veto, mo.best_of INTO map_veto, best_of FROM matches m
         inner join match_options mo on mo.id = m.match_options_id
@@ -21,6 +21,5 @@ BEGIN
     IF NOT is_server_available(match.id, match.server_id) THEN
         RAISE EXCEPTION 'Cannot start match because a server is not available' USING ERRCODE = '22000';
     END IF;
-    RETURN match;
 END;
 $$;
