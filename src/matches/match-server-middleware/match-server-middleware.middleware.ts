@@ -33,7 +33,7 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
         ],
       });
 
-      if (server.api_password !== apiPassword) {
+      if (server?.api_password !== apiPassword) {
         return response.status(401).end();
       }
       return next();
