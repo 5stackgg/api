@@ -1,5 +1,4 @@
 SET check_function_bodies = false;
-
 CREATE TABLE public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
@@ -9,8 +8,6 @@ CREATE TABLE public.tournaments (
     status text DEFAULT 'Setup'::text NOT NULL,
     match_options_id uuid NOT NULL
 );
-
-
 CREATE TABLE public.matches (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     server_id uuid,
@@ -25,21 +22,18 @@ CREATE TABLE public.matches (
     lineup_1_id uuid NOT NULL,
     lineup_2_id uuid NOT NULL
 );
-
 CREATE TABLE public.match_lineups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid,
     coach_steam_id bigint
 );
 COMMENT ON TABLE public.match_lineups IS 'relational table for assigning a team to a match and lineup';
-
 CREATE TABLE public.teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     short_name text NOT NULL,
     owner_steam_id bigint NOT NULL
 );
-
 CREATE TABLE public.players (
     steam_id bigint NOT NULL,
     name text NOT NULL,
@@ -48,7 +42,6 @@ CREATE TABLE public.players (
     discord_id text,
     created_at timestamp with time zone DEFAULT now()
 );
-
 CREATE TABLE public.servers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     host text NOT NULL,
@@ -61,8 +54,6 @@ CREATE TABLE public.servers (
     owner_steam_id bigint,
     api_password uuid DEFAULT gen_random_uuid() NOT NULL
 );
-
-
 CREATE TABLE public.match_options (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     overtime boolean NOT NULL,
@@ -77,8 +68,6 @@ CREATE TABLE public.match_options (
     map_pool_id uuid NOT NULL,
     type text DEFAULT 'competitive'::text NOT NULL
 );
-
-
 CREATE TABLE public.player_damages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
@@ -100,7 +89,6 @@ CREATE TABLE public.player_damages (
     attacker_location_coordinates text,
     attacked_location_coordinates text
 );
-
 CREATE TABLE public.match_maps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
@@ -113,7 +101,6 @@ CREATE TABLE public.match_maps (
     lineup_2_timeouts_available integer DEFAULT 2 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
-
 CREATE TABLE public.tournament_brackets (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_stage_id uuid NOT NULL,
@@ -125,7 +112,6 @@ CREATE TABLE public.tournament_brackets (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     match_number integer
 );
-
 CREATE FUNCTION public.set_current_timestamp_updated_at() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -137,7 +123,6 @@ BEGIN
   RETURN _new;
 END;
 $$;
-
 CREATE TABLE public._map_pool (
     map_id uuid NOT NULL,
     map_pool_id uuid NOT NULL
