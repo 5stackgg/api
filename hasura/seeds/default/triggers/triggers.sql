@@ -4,11 +4,6 @@
 
 
 
-DROP TRIGGER IF EXISTS tbiu_update_total_damage_trigger ON public.player_damages;
-CREATE TRIGGER tbiu_update_total_damage_trigger BEFORE INSERT OR UPDATE ON public.player_damages FOR EACH ROW EXECUTE FUNCTION public.update_total_damage();
-
-DROP TRIGGER IF EXISTS tbu_match_player_count ON public.matches;
-CREATE TRIGGER tbu_match_player_count BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_player_count();
 
 DROP TRIGGER IF EXISTS tbu_match_status ON public.matches;
 CREATE TRIGGER tbu_match_status BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_match_status();

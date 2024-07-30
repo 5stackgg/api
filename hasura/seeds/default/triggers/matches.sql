@@ -22,3 +22,15 @@ $$;
 
 DROP TRIGGER IF EXISTS tau_matches ON public.matches;
 CREATE TRIGGER tau_matches AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tau_matches();
+
+CREATE OR REPLACE FUNCTION public.tbu_matches() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM check_match_player_count(NEW);
+	RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbu_matches ON public.matches;
+CREATE TRIGGER tbu_matches BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_matches();
