@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION public.is_coach(match matches, hasura_session json)
  RETURNS boolean
  LANGUAGE plpgsql
  STABLE
-AS $function$
+AS $$
 DECLARE
 BEGIN
     RETURN EXISTS (
@@ -13,4 +13,4 @@ BEGIN
             AND ml.coach_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
     );
 END;
-$function$
+$$

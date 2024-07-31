@@ -151,6 +151,11 @@ computed_fields:
       function:
         name: match_max_players_per_lineup
         schema: public
+  - name: min_players_per_lineup
+    definition:
+      function:
+        name: match_min_players_per_lineup
+        schema: public
   - name: server_type
     definition:
       function:
@@ -221,6 +226,7 @@ select_permissions:
         - is_match_server_available
         - is_organizer
         - max_players_per_lineup
+        - min_players_per_lineup
         - server_type
         - tv_connection_link
         - tv_connection_string
