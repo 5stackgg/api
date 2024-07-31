@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION public.check_match_lineup_players_count(match_lineup_player match_lineup_players)
  RETURNS void
  LANGUAGE plpgsql
-AS $function$
+AS $$
 DECLARE
     match public.matches;
     lineup_count INTEGER;
@@ -24,4 +24,4 @@ BEGIN
 		RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Max number of players reached';
     END IF;
 END;
-$function$
+$$
