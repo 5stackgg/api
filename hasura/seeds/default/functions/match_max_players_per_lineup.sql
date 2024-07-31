@@ -11,10 +11,6 @@ BEGIN
     select mo.type, mo.number_of_substitutes into match_type, number_of_substitutes from match_options mo
         where mo.id = match.match_options_id;
 
-    IF match_type = 'Wingman' THEN
-        allowed = 2;
-    END IF;
-
-    return  allowed + number_of_substitutes;
+    return get_match_type_min_players(match_type) + number_of_substitutes;
 END;
 $function$
