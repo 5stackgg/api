@@ -54,6 +54,12 @@ computed_fields:
         name: can_join_tournament
         schema: public
       session_argument: hasura_session
+  - name: is_organizer
+    definition:
+      function:
+        name: is_tournament_organizer
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: user
     permission:
@@ -79,6 +85,7 @@ select_permissions:
         - status
       computed_fields:
         - can_join_tournament
+        - is_organizer
       filter:
         _or:
           - organizer_steam_id:

@@ -1,24 +1,20 @@
-CREATE OR REPLACE FUNCTION public.check_match_lineup_players_count(match_lineup_player match_lineup_players) RETURNS VOID
-    LANGUAGE plpgsql
-    AS $$
+CREATE OR REPLACE FUNCTION public.check_match_lineup_players_count(match_lineup_player match_lineup_players)
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
+    match public.matches;
     lineup_count INTEGER;
     max_players INTEGER;
     match_type VARCHAR(255);
 	substitutes INTEGER;
 BEGIN
-    SELECT mo.type, mo.number_of_substitutes INTO match_type, substitutes
+    SELECT m.* INTO match
         FROM matches m
-        INNER JOIN match_options mo on mo.id = m.match_options_id
         inner join v_match_lineups ml on ml.match_id = m.id
         WHERE ml.id = match_lineup_player.match_lineup_id;
 
-    max_players := 5;
-    IF match_type = 'Wingman' THEN
-        max_players := 2;
-    END IF;
-
-  	max_players := max_players + substitutes;
+  	max_players := match_max_players_per_lineup(match);
 
     SELECT COUNT(*) INTO lineup_count
     FROM match_lineup_players
@@ -28,4 +24,4 @@ BEGIN
 		RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Max number of players reached';
     END IF;
 END;
-$$;
+$function$

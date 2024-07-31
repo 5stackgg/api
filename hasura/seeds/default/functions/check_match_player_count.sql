@@ -2,27 +2,29 @@ CREATE OR REPLACE FUNCTION public.check_match_player_count(match matches) RETURN
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    player_count INTEGER;
-    max_players INTEGER;
+    min_players INTEGER;
+    lineup_1_count INTEGER;
+    lineup_2_count INTEGER;
    	match_type VARCHAR(255);
 BEGIN
 	SELECT type into match_type
 		from match_options
 		where id = match.match_options_id;
-	IF match_type = 'Scrimmage' or match.status = 'PickingPlayers' or match.status = 'Canceled' THEN
-        return;
-    END IF;
-    SELECT COUNT(*) INTO player_count
-    FROM match_lineup_players mlp
-    	INNER JOIN v_match_lineups ml on ml.id = mlp.match_lineup_id
-    	INNER JOIN matches m on m.id = ml.match_id
-    	where m.id = match.id;
-	max_players := 10;
-    IF match_type = 'Wingman' THEN
-        max_players := 4;
-    END IF;
-	IF player_count < max_players THEN
-		RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Not enough players to schedule match';
+
+	IF match.status = 'Live' or match.status = 'Scheduled' THEN
+       SELECT COUNT(*) INTO lineup_1_count
+               FROM match_lineup_players mlp
+                where mlp.id = match.lineup_1_id;
+
+        SELECT COUNT(*) INTO lineup_2_count
+            FROM match_lineup_players mlp
+            	where mlp.id = match.lineup_2_id;
+
+        min_players := get_match_type_min_players(match_type);
+
+        IF lineup_1_count < min_players OR  lineup_2_count < min_players THEN
+            RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Not enough players to schedule match';
+        END IF;
     END IF;
 END;
 $$;
