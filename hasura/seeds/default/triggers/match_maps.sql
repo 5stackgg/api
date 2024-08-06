@@ -20,4 +20,4 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS tbi_match_maps ON public.match_maps;
-CREATE TRIGGER tbi_match_maps BEFORE INSERT OR UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbi_match_maps();
+CREATE TRIGGER tbi_match_maps BEFORE INSERT ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tbi_match_maps();
