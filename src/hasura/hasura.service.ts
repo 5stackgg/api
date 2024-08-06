@@ -36,7 +36,7 @@ export class HasuraService {
       })(gql);
     } catch (error) {
       if (error?.response) {
-        throw error?.response.errors;
+        throw error?.response.errors.at(0).message;
       }
       throw error;
     }
@@ -52,7 +52,7 @@ export class HasuraService {
       })(gql, { variables });
     } catch (error) {
       if (error?.response) {
-        throw error?.response.errors;
+        throw error?.response.errors.at(0).message;
       }
       throw error;
     }

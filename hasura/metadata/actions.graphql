@@ -10,6 +10,13 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  forfeitMatch(
+    match_id: uuid!
+    winning_lineup_id: uuid!
+  ): SuccessOutput
+}
+
 type Query {
   me: MeResponse!
 }
@@ -18,6 +25,13 @@ type Mutation {
   scheduleMatch(
     match_id: uuid!
     time: timestamptz
+  ): SuccessOutput
+}
+
+type Mutation {
+  setMatchWinner(
+    match_id: uuid!
+    winning_lineup_id: uuid!
   ): SuccessOutput
 }
 

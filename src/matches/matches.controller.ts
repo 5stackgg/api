@@ -370,7 +370,6 @@ export class MatchesController {
   public async cancelMatch(data: {
     user: User;
     match_id: string;
-    server_id: string;
   }) {
     const { match_id, user } = data;
 
@@ -394,6 +393,77 @@ export class MatchesController {
     });
 
     if (!match || match.status !== e_match_status_enum.Canceled) {
+      throw Error("Unable to cancel match");
+    }
+
+    return {
+      success: true,
+    };
+  }
+
+
+  @HasuraAction()
+  public async setMatchWinner(data: {
+    user: User;
+    match_id: string;
+    winning_lineup_id: string;
+  }) {
+    const { match_id, user, winning_lineup_id } = data;
+
+    await this.matchAssistant.isMatchOrganizer(match_id, user);
+
+    await this.hasura.mutation({
+      update_matches_by_pk: [
+        {
+          pk_columns: {
+            id: match_id,
+          },
+          _set: {
+            winning_lineup_id
+          },
+        },
+        {
+          id: true,
+          status: true,
+        },
+      ],
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+
+  @HasuraAction()
+  public async forfeitMatch(data: {
+    user: User;
+    match_id: string;
+    winning_lineup_id: string;
+  }) {
+    const { match_id, user, winning_lineup_id } = data;
+
+    await this.matchAssistant.isMatchOrganizer(match_id, user);
+
+    const { update_matches_by_pk: match } = await this.hasura.mutation({
+      update_matches_by_pk: [
+        {
+          pk_columns: {
+            id: match_id,
+          },
+          _set: {
+            winning_lineup_id,
+            status: e_match_status_enum.Forfeit,
+          },
+        },
+        {
+          id: true,
+          status: true,
+        },
+      ],
+    });
+
+    if (!match || match.status !== e_match_status_enum.Forfeit) {
       throw Error("Unable to cancel match");
     }
 

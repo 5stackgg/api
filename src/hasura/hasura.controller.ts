@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
+import {Controller, Get, Post, Req, Res, UseGuards} from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
-import { Request } from "express";
+import {Request, Response} from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
 
 type Handler = {
@@ -51,7 +51,7 @@ export class HasuraController {
   }
 
   @Post("actions")
-  public async actions(@Req() request: Request) {
+  public async actions(@Req() request: Request, @Res() response: Response) {
     const { input, action } = request.body;
 
     request.body = input;
@@ -60,7 +60,13 @@ export class HasuraController {
 
     input.user = request.user;
 
-    return resolver[action.name].bind(resolver, input)();
+    try {
+      response.json(await resolver[action.name].bind(resolver, input)());
+    } catch(error) {
+      return response.status(400).json({
+        message: error?.message ?? error,
+      });
+    }
   }
 
   @HasuraAction()
