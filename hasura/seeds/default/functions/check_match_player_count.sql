@@ -14,11 +14,11 @@ BEGIN
 	IF match.status = 'Live' or match.status = 'Scheduled' THEN
        SELECT COUNT(*) INTO lineup_1_count
                FROM match_lineup_players mlp
-                where mlp.id = match.lineup_1_id;
+                where mlp.match_lineup_id = match.lineup_1_id;
 
         SELECT COUNT(*) INTO lineup_2_count
             FROM match_lineup_players mlp
-            	where mlp.id = match.lineup_2_id;
+            	where mlp.match_lineup_id = match.lineup_2_id;
 
         min_players := get_match_type_min_players(match_type);
 
