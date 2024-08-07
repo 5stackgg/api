@@ -79,6 +79,11 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
+  - name: is_current_map
+    definition:
+      function:
+        name: is_current_match_map
+        schema: public
   - name: lineup_1_score
     definition:
       function:
@@ -109,12 +114,15 @@ select_permissions:
       columns:
         - id
         - lineup_1_side
+        - lineup_1_timeouts_available
         - lineup_2_side
+        - lineup_2_timeouts_available
         - map_id
         - match_id
         - order
         - status
       computed_fields:
+        - is_current_map
         - lineup_1_score
         - lineup_2_score
       filter: {}
