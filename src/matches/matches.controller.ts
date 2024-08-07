@@ -60,7 +60,6 @@ export class MatchesController {
             type: true,
             best_of: true,
             coaches: true,
-            map_veto: true,
             overtime: true,
             knife_round: true,
             timeout_setting: true,
