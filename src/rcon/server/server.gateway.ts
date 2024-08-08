@@ -61,6 +61,35 @@ export class ServerGateway {
     });
   }
 
+  @SubscribeMessage("lobby:join")
+  async joinLobby(
+      @MessageBody()
+        data: {
+        matchId: string;
+      },
+      @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+      console.info("JOIN LBOBBY")
+  }
+
+  @SubscribeMessage("lobby:message")
+  async lobby(
+      @MessageBody()
+      data: {
+        matchId: string;
+        message: string;
+      },
+      @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    console.info("message", data)
+    // client.send(
+    //     JSON.stringify({
+    //       data,
+    //       event: "lobby:message",
+    //     }),
+    // );
+  }
+
   @SubscribeMessage("rcon")
   async rconEvent(
     @MessageBody()

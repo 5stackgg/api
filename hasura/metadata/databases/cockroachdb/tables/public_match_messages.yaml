@@ -1,0 +1,36 @@
+table:
+  name: match_messages
+  schema: public
+remote_relationships:
+  - definition:
+      to_source:
+        field_mapping:
+          match_id: id
+        relationship_type: object
+        source: default
+        table:
+          name: matches
+          schema: public
+    name: match
+  - definition:
+      to_source:
+        field_mapping:
+          player_steam_id: steam_id
+        relationship_type: object
+        source: default
+        table:
+          name: players
+          schema: public
+    name: player
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - player_steam_id
+        - match_id
+        - id
+        - updated_at
+        - created_at
+        - message
+      filter: {}
+    comment: ""
