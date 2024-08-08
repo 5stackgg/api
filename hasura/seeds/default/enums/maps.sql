@@ -9,43 +9,43 @@ on conflict(value) do update set "description" = EXCLUDED."description";
 
 insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "patch") values
     --  Competitive
-    ('de_ancient', 'Competitive', 'true',  null, '/img/maps/screenshots/de_ancient.png', '/img/maps/icons/de_ancient.svg'),
-    ('de_anubis', 'Competitive', 'true',  null, '/img/maps/screenshots/de_anubis.png', '/img/maps/icons/de_anubis.svg'),
-    ('de_inferno', 'Competitive', 'true',  null, '/img/maps/screenshots/de_inferno.png', '/img/maps/icons/de_inferno.svg'),
-    ('de_mirage', 'Competitive', 'true',  null, '/img/maps/screenshots/de_mirage.png', '/img/maps/icons/de_mirage.svg'),
-    ('de_nuke', 'Competitive', 'true',  null, '/img/maps/screenshots/de_nuke.png', '/img/maps/icons/de_nuke.svg'),
-    ('de_overpass', 'Competitive', 'false',  null, '/img/maps/screenshots/de_overpass.png', '/img/maps/icons/de_overpass.svg'),
-    ('de_vertigo', 'Competitive', 'true',  null, '/img/maps/screenshots/de_vertigo.png', '/img/maps/icons/de_vertigo.svg'),
-    ('de_dust2', 'Competitive', 'true',  null, '/img/maps/screenshots/de_dust2.png', '/img/maps/icons/de_dust2.svg'),
-    ('de_thera', 'Competitive', 'false',  null, '/img/maps/screenshots/de_thera.png', '/img/maps/icons/de_thera.svg'),
-    ('de_mills', 'Competitive', 'false',  null, '/img/maps/screenshots/de_mills.png', '/img/maps/icons/de_mills.svg'),
+    ('de_ancient', 'Competitive', 'true',  null, '/img/maps/screenshots/de_ancient.webp', '/img/maps/icons/de_ancient.svg'),
+    ('de_anubis', 'Competitive', 'true',  null, '/img/maps/screenshots/de_anubis.webp', '/img/maps/icons/de_anubis.svg'),
+    ('de_inferno', 'Competitive', 'true',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
+    ('de_mirage', 'Competitive', 'true',  null, '/img/maps/screenshots/de_mirage.webp', '/img/maps/icons/de_mirage.svg'),
+    ('de_nuke', 'Competitive', 'true',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
+    ('de_overpass', 'Competitive', 'false',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
+    ('de_vertigo', 'Competitive', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
+    ('de_dust2', 'Competitive', 'true',  null, '/img/maps/screenshots/de_dust2.webp', '/img/maps/icons/de_dust2.svg'),
+    ('de_thera', 'Competitive', 'false',  null, '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg'),
+    ('de_mills', 'Competitive', 'false',  null, '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg'),
 
     -- Competitive Workshop
-    ('de_cache', 'Competitive', 'false',  '3070596702', '/img/maps/screenshots/de_cache.png', '/img/maps/icons/de_cache.svg'),
-    ('de_train', 'Competitive', 'false',  '3070284539', '/img/maps/screenshots/de_train.png', null),
-    ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.png', null),
-    ('de_biome', 'Competitive', 'false',  '3075706807', '/img/maps/screenshots/de_biome.png', null),
-    ('drawbridge', 'Competitive', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.png', null),
-    ('foroglio', 'Competitive', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.png', null),
+    ('de_cache', 'Competitive', 'false',  '3070596702', '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg'),
+    ('de_train', 'Competitive', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null),
+    ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.webp', null),
+    ('de_biome', 'Competitive', 'false',  '3075706807', '/img/maps/screenshots/de_biome.webp', null),
+    ('drawbridge', 'Competitive', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
+    ('foroglio', 'Competitive', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
 
-    ('de_dust2_night', 'ScrimmageNight', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.png', '/img/maps/icons/de_dust2.svg'),
-    ('de_ancient_night', 'ScrimmageNight', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.png', '/img/maps/icons/de_ancient.svg'),
-    ('de_overpass_night', 'ScrimmageNight', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.png', '/img/maps/icons/de_overpass.svg'),
-    ('de_nuke_night', 'ScrimmageNight', 'false', '3253703883', '/img/maps/screenshots/de_nuke_night.png', '/img/maps/icons/de_nuke.svg'),
-    ('de_inferno_night', 'ScrimmageNight', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.png', '/img/maps/icons/de_inferno.svg'),
+    ('de_dust2_night', 'ScrimmageNight', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg'),
+    ('de_ancient_night', 'ScrimmageNight', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient.svg'),
+    ('de_overpass_night', 'ScrimmageNight', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', '/img/maps/icons/de_overpass.svg'),
+    ('de_nuke_night', 'ScrimmageNight', 'false', '3253703883', '/img/maps/screenshots/de_nuke_night.webp', '/img/maps/icons/de_nuke.svg'),
+    ('de_inferno_night', 'ScrimmageNight', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', '/img/maps/icons/de_inferno.svg'),
 
     --  Wingman
-    ('de_inferno', 'Wingman', 'false',  null, '/img/maps/screenshots/de_inferno.png', '/img/maps/icons/de_inferno.svg'),
-    ('de_nuke', 'Wingman', 'false',  null, '/img/maps/screenshots/de_nuke.png', '/img/maps/icons/de_nuke.svg'),
-    ('de_overpass', 'Wingman', 'false',  null, '/img/maps/screenshots/de_overpass.png', '/img/maps/icons/de_overpass.svg'),
-    ('de_vertigo', 'Wingman', 'false',  null, '/img/maps/screenshots/de_vertigo.png', '/img/maps/icons/de_vertigo.svg'),
-    ('de_assembly', 'Wingman', 'false',  null, '/img/maps/screenshots/de_assembly.png', '/img/maps/icons/de_assembly.svg'),
-    ('de_memento', 'Wingman', 'false',  null, '/img/maps/screenshots/de_memento.png', '/img/maps/icons/de_memento.svg'),
+    ('de_inferno', 'Wingman', 'false',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
+    ('de_nuke', 'Wingman', 'false',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
+    ('de_overpass', 'Wingman', 'false',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
+    ('de_vertigo', 'Wingman', 'false',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
+    ('de_assembly', 'Wingman', 'false',  null, '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
+    ('de_memento', 'Wingman', 'false',  null, '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
 
     --  Wingman Workshop
-    ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.png', '/img/maps/icons/de_brewery.svg'),
-    ('drawbridge', 'Wingman', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.png', null),
-    ('foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.png', null)
+    ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
+    ('drawbridge', 'Wingman', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
+    ('foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null)
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
 
