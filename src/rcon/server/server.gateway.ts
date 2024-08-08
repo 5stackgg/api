@@ -62,7 +62,7 @@ export class ServerGateway {
   }
 
   @SubscribeMessage("rcon")
-  async onEvent(
+  async rconEvent(
     @MessageBody()
     data: {
       uuid: string;
