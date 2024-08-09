@@ -366,10 +366,7 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async cancelMatch(data: {
-    user: User;
-    match_id: string;
-  }) {
+  public async cancelMatch(data: { user: User; match_id: string }) {
     const { match_id, user } = data;
 
     await this.matchAssistant.isMatchOrganizer(match_id, user);
@@ -400,7 +397,6 @@ export class MatchesController {
     };
   }
 
-
   @HasuraAction()
   public async setMatchWinner(data: {
     user: User;
@@ -418,7 +414,7 @@ export class MatchesController {
             id: match_id,
           },
           _set: {
-            winning_lineup_id
+            winning_lineup_id,
           },
         },
         {
@@ -432,7 +428,6 @@ export class MatchesController {
       success: true,
     };
   }
-
 
   @HasuraAction()
   public async forfeitMatch(data: {

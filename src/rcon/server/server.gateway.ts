@@ -24,6 +24,17 @@ type FiveStackWebSocketClient = WebSocket.WebSocket & {
   path: "/ws",
 })
 export class ServerGateway {
+  private matches: Record<
+    string,
+    Map<
+      string,
+      {
+        sessions: number;
+        client: FiveStackWebSocketClient;
+      }
+    >
+  > = {};
+
   constructor(
     private readonly config: ConfigService,
     private readonly rconService: RconService,
@@ -63,31 +74,110 @@ export class ServerGateway {
 
   @SubscribeMessage("lobby:join")
   async joinLobby(
-      @MessageBody()
-        data: {
-        matchId: string;
-      },
-      @ConnectedSocket() client: FiveStackWebSocketClient,
+    @MessageBody()
+    data: {
+      matchId: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-      console.info("JOIN LBOBBY")
+    if (!this.matches[data.matchId]) {
+      this.matches[data.matchId] = new Map();
+    }
+
+    let matchClientSessions = this.matches[data.matchId].get(
+      client.user.steam_id,
+    );
+
+    if (!matchClientSessions) {
+      matchClientSessions = {
+        client,
+        sessions: 0,
+      };
+      this.matches[data.matchId].set(client.user.steam_id, matchClientSessions);
+    }
+
+    matchClientSessions.sessions++;
+
+    const { name, steam_id, avatar_url } = client.user;
+
+    this.sendToLobby(data.matchId, {
+      event: "joined",
+      user: {
+        name,
+        steam_id,
+        avatar_url,
+      },
+      client,
+    });
+
+    client.send(
+      JSON.stringify({
+        event: "lobby",
+        data: {
+          event: "list",
+          matchId: data.matchId,
+          lobby: Array.from(this.matches[data.matchId].values()).map(
+            ({ client }) => {
+              return {
+                name: client.user.name,
+                steam_id: client.user.steam_id,
+                avatar_url: client.user.avatar_url,
+              };
+            },
+          ),
+        },
+      }),
+    );
+
+    client.on("close", () => {
+      matchClientSessions.sessions--;
+      if (matchClientSessions.sessions === 0) {
+        this.matches[data.matchId].delete(client.user.steam_id);
+        this.sendToLobby(data.matchId, {
+          event: "left",
+          user: {
+            steam_id,
+          },
+        });
+      }
+    });
   }
 
-  @SubscribeMessage("lobby:message")
+  @SubscribeMessage("lobby")
   async lobby(
-      @MessageBody()
-      data: {
-        matchId: string;
-        message: string;
-      },
-      @ConnectedSocket() client: FiveStackWebSocketClient,
+    @MessageBody()
+    data: {
+      matchId: string;
+      message: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    console.info("message", data)
-    // client.send(
-    //     JSON.stringify({
-    //       data,
-    //       event: "lobby:message",
-    //     }),
-    // );
+    this.sendToLobby(data.matchId, {
+      message: data.message,
+      client,
+    });
+  }
+
+  private sendToLobby(
+    matchId: string,
+    data: Record<string, any>,
+    sender?: FiveStackWebSocketClient,
+  ) {
+    for (const [, { client }] of this.matches[matchId]) {
+      if (sender === client) {
+        continue;
+      }
+
+      client.send(
+        JSON.stringify({
+          event: "lobby",
+          data: {
+            matchId,
+            ...data,
+          },
+        }),
+      );
+    }
   }
 
   @SubscribeMessage("rcon")
