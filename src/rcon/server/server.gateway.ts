@@ -20,6 +20,10 @@ type FiveStackWebSocketClient = WebSocket.WebSocket & {
   user: User;
 };
 
+/**
+ * TODO - use redis to keep state,
+ * right now this is not scaleable because were using a single service to track sessions
+ */
 @WebSocketGateway({
   path: "/ws",
 })
