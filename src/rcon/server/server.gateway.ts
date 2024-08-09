@@ -96,19 +96,24 @@ export class ServerGateway {
       this.matches[data.matchId].set(client.user.steam_id, matchClientSessions);
     }
 
-    matchClientSessions.sessions++;
+    if (
+      !Array.from(this.matches[data.matchId].values()).find((session) => {
+        return session.client === client;
+      })
+    ) {
+      matchClientSessions.sessions++;
+      const { name, steam_id, avatar_url } = client.user;
 
-    const { name, steam_id, avatar_url } = client.user;
-
-    this.sendToLobby(data.matchId, {
-      event: "joined",
-      user: {
-        name,
-        steam_id,
-        avatar_url,
-      },
-      client,
-    });
+      this.sendToLobby(data.matchId, {
+        event: "joined",
+        user: {
+          name,
+          steam_id,
+          avatar_url,
+        },
+        client,
+      });
+    }
 
     client.send(
       JSON.stringify({
@@ -136,7 +141,7 @@ export class ServerGateway {
         this.sendToLobby(data.matchId, {
           event: "left",
           user: {
-            steam_id,
+            steam_id: client.user.steam_id,
           },
         });
       }
