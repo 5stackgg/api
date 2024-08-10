@@ -3,22 +3,17 @@ import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 export default class KnifeSwitch extends MatchEventProcessor<void> {
   public async process() {
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: this.matchId,
         },
-        {
-          current_match_map_id: true,
-          match_maps: [
-            {},
-            {
-              id: true,
-              lineup_1_side: true,
-              lineup_2_side: true,
-            },
-          ],
+        current_match_map_id: true,
+        match_maps: {
+          id: true,
+          lineup_1_side: true,
+          lineup_2_side: true,
         },
-      ],
+      },
     });
 
     const currentMap = match.match_maps.find((match_map) => {
@@ -26,8 +21,8 @@ export default class KnifeSwitch extends MatchEventProcessor<void> {
     });
 
     await this.hasura.mutation({
-      update_match_maps_by_pk: [
-        {
+      update_match_maps_by_pk: {
+        __args: {
           pk_columns: {
             id: match.current_match_map_id,
           },
@@ -36,10 +31,7 @@ export default class KnifeSwitch extends MatchEventProcessor<void> {
             lineup_2_side: currentMap.lineup_1_side,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

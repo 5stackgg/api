@@ -1,10 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
-import {
-  e_match_status_enum,
-  e_veto_pick_types_enum,
-} from "../../../generated/zeus";
 import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
@@ -16,6 +12,7 @@ import { MatchJobs } from "../enums/MatchJobs";
 import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
+import { e_match_status_enum } from "../../../generated";
 
 @Injectable()
 export class MatchAssistantService {
@@ -72,53 +69,45 @@ export class MatchAssistantService {
 
   public async getMatchLineups(matchId: string) {
     const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
-          veto_picking_lineup_id: true,
-          options: {
-            type: true,
-          },
-          lineup_1_id: true,
-          lineup_2_id: true,
-          lineup_1: {
-            id: true,
-            name: true,
-            lineup_players: [
-              {},
-              {
-                captain: true,
-                steam_id: true,
-                discord_id: true,
-                placeholder_name: true,
-                player: {
-                  name: true,
-                  discord_id: true,
-                },
-              },
-            ],
-          },
-          lineup_2: {
-            id: true,
-            name: true,
-            lineup_players: [
-              {},
-              {
-                captain: true,
-                steam_id: true,
-                discord_id: true,
-                placeholder_name: true,
-                player: {
-                  name: true,
-                  discord_id: true,
-                },
-              },
-            ],
+        veto_picking_lineup_id: true,
+        options: {
+          type: true,
+        },
+        lineup_1_id: true,
+        lineup_2_id: true,
+        lineup_1: {
+          id: true,
+          name: true,
+          lineup_players: {
+            captain: true,
+            steam_id: true,
+            discord_id: true,
+            placeholder_name: true,
+            player: {
+              name: true,
+              discord_id: true,
+            },
           },
         },
-      ],
+        lineup_2: {
+          id: true,
+          name: true,
+          lineup_players: {
+            captain: true,
+            steam_id: true,
+            discord_id: true,
+            placeholder_name: true,
+            player: {
+              name: true,
+              discord_id: true,
+            },
+          },
+        },
+      },
     });
 
     if (!matches_by_pk) {
@@ -141,21 +130,19 @@ export class MatchAssistantService {
 
   public async getMatchServer(matchId: string) {
     const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
+        id: true,
+        server: {
           id: true,
-          server: {
-            id: true,
-            host: true,
-            port: true,
-            on_demand: true,
-            rcon_password: true,
-          },
+          host: true,
+          port: true,
+          on_demand: true,
+          rcon_password: true,
         },
-      ],
+      },
     });
 
     return matches_by_pk?.server || undefined;
@@ -169,31 +156,27 @@ export class MatchAssistantService {
     }
 
     const { servers_by_pk } = await this.hasura.query({
-      servers_by_pk: [
-        {
+      servers_by_pk: {
+        __args: {
           id: server.id,
         },
-        {
-          id: true,
-          matches_aggregate: [
-            {
-              where: {
-                id: {
-                  _neq: matchId,
-                },
-                status: {
-                  _in: [e_match_status_enum.Live, e_match_status_enum.Veto],
-                },
+        id: true,
+        matches_aggregate: {
+          __args: {
+            where: {
+              id: {
+                _neq: matchId,
+              },
+              status: {
+                _in: ["Live", "Veto"],
               },
             },
-            {
-              aggregate: {
-                count: [{}, true],
-              },
-            },
-          ],
+          },
+          aggregate: {
+            count: true,
+          },
         },
-      ],
+      },
     });
 
     if (!servers_by_pk) {
@@ -205,8 +188,8 @@ export class MatchAssistantService {
 
   public async updateMatchStatus(matchId: string, status: e_match_status_enum) {
     await this.hasura.mutation({
-      update_matches_by_pk: [
-        {
+      update_matches_by_pk: {
+        __args: {
           pk_columns: {
             id: matchId,
           },
@@ -214,10 +197,8 @@ export class MatchAssistantService {
             status: status,
           },
         },
-        {
-          id: true,
-        },
-      ],
+        id: true,
+      },
     });
   }
 
@@ -226,14 +207,12 @@ export class MatchAssistantService {
     await this.stopOnDemandServer(matchId);
 
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
-          password: true,
-        },
-      ],
+        password: true,
+      },
     });
 
     if (!match) {
@@ -256,8 +235,8 @@ export class MatchAssistantService {
       const { tvPort, gamePort } = await this.getServerPorts();
 
       const { insert_servers_one: server } = await this.hasura.mutation({
-        insert_servers_one: [
-          {
+        insert_servers_one: {
+          __args: {
             object: {
               id: serverId,
               on_demand: true,
@@ -268,11 +247,9 @@ export class MatchAssistantService {
               rcon_password: this.gameServerConfig.defaultRconPassword,
             },
           },
-          {
-            id: true,
-            api_password: true,
-          },
-        ],
+          id: true,
+          api_password: true,
+        },
       });
 
       await batch.createNamespacedJob(this.namespace, {
@@ -407,8 +384,8 @@ export class MatchAssistantService {
       });
 
       await this.hasura.mutation({
-        update_matches_by_pk: [
-          {
+        update_matches_by_pk: {
+          __args: {
             pk_columns: {
               id: matchId,
             },
@@ -416,10 +393,7 @@ export class MatchAssistantService {
               server_id: serverId,
             },
           },
-          {
-            id: true,
-          },
-        ],
+        },
       });
 
       return true;
@@ -431,7 +405,7 @@ export class MatchAssistantService {
         error?.response?.body?.message || error.response,
       );
 
-      await this.updateMatchStatus(matchId, e_match_status_enum.Scheduled);
+      await this.updateMatchStatus(matchId, "Scheduled");
 
       return false;
     }
@@ -571,14 +545,11 @@ export class MatchAssistantService {
       }
 
       await this.hasura.mutation({
-        delete_servers_by_pk: [
-          {
+        delete_servers_by_pk: {
+          __args: {
             id: server.id,
           },
-          {
-            id: true,
-          },
-        ],
+        },
       });
     } catch (error) {
       this.logger.error(
@@ -590,45 +561,38 @@ export class MatchAssistantService {
 
   public async getAvailableMaps(matchId: string) {
     const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
-          options: {
-            map_pool: {
-              maps: [
-                {},
+        options: {
+          map_pool: {
+            maps: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        veto_picks: {
+          __args: {
+            where: {
+              _or: [
                 {
-                  id: true,
-                  name: true,
+                  type: {
+                    _eq: "Ban",
+                  },
+                },
+                {
+                  type: {
+                    _eq: "Pick",
+                  },
                 },
               ],
             },
           },
-          veto_picks: [
-            {
-              where: {
-                _or: [
-                  {
-                    type: {
-                      _eq: e_veto_pick_types_enum.Ban,
-                    },
-                  },
-                  {
-                    type: {
-                      _eq: e_veto_pick_types_enum.Pick,
-                    },
-                  },
-                ],
-              },
-            },
-            {
-              map_id: true,
-            },
-          ],
+          map_id: true,
         },
-      ],
+      },
     });
 
     if (!matches_by_pk?.options?.map_pool) {
@@ -657,31 +621,23 @@ export class MatchAssistantService {
 
   private async getServerPorts() {
     const { servers } = await this.hasura.query({
-      servers: [
-        {
+      servers: {
+        __args: {
           where: {
             on_demand: {
               _eq: true,
             },
             matches: {
               status: {
-                _nin: [
-                  e_match_status_enum.Scheduled,
-                  e_match_status_enum.Tie,
-                  e_match_status_enum.Forfeit,
-                  e_match_status_enum.Canceled,
-                  e_match_status_enum.Finished,
-                ],
+                _nin: ["Scheduled", "Tie", "Forfeit", "Canceled", "Finished"],
               },
             },
           },
         },
-        {
-          id: true,
-          port: true,
-          tv_port: true,
-        },
-      ],
+        id: true,
+        port: true,
+        tv_port: true,
+      },
     });
 
     const portsTaken = servers.flatMap((server) => {
@@ -746,16 +702,14 @@ export class MatchAssistantService {
 
   public async isMatchOrganizer(matchId: string, user: User) {
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
-          id: true,
-          status: true,
-          organizer_steam_id: true,
-        },
-      ],
+        id: true,
+        status: true,
+        organizer_steam_id: true,
+      },
     });
 
     if (match?.organizer_steam_id !== user.steam_id) {

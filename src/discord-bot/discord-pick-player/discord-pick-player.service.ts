@@ -4,16 +4,11 @@ import {
   ActionRowBuilder,
   ComponentType,
   Message,
-  SelectMenuInteraction,
   StringSelectMenuBuilder,
   User,
 } from "discord.js";
 import { getDiscordDisplayName } from "../utilities/getDiscordDisplayName";
 import { ExpectedPlayers } from "../enums/ExpectedPlayers";
-import {
-  e_match_status_enum,
-  e_match_types_enum,
-} from "../../../generated/zeus";
 import { CacheService } from "../../cache/cache.service";
 import { DiscordBotService } from "../discord-bot.service";
 import { MatchAssistantService } from "../../matches/match-assistant/match-assistant.service";
@@ -227,7 +222,7 @@ export class DiscordPickPlayerService {
     await this.pickMember(
       matchId,
       otherLineup.id,
-      match.options.type === e_match_types_enum.Wingman
+      match.options.type === "Wingman"
         ? 1
         : /**
            * Pick Order: 1 -> 2 -> 1 by 1
@@ -246,25 +241,23 @@ export class DiscordPickPlayerService {
     captain = false,
   ) {
     const { players } = await this.hasura.query({
-      players: [
-        {
+      players: {
+        __args: {
           where: {
             discord_id: {
               _eq: user.id,
             },
           },
         },
-        {
-          steam_id: true,
-        },
-      ],
+        steam_id: true,
+      },
     });
 
     const player = players.at(0);
 
     await this.hasura.mutation({
-      insert_match_lineup_players_one: [
-        {
+      insert_match_lineup_players_one: {
+        __args: {
           object: {
             captain,
             discord_id: user.id,
@@ -273,10 +266,7 @@ export class DiscordPickPlayerService {
             placeholder_name: !player ? getDiscordDisplayName(user) : undefined,
           },
         },
-        {
-          __typename: true,
-        },
-      ],
+      },
     });
 
     await this.discordBotVoiceChannels.moveMemberToTeamChannel(
@@ -289,10 +279,7 @@ export class DiscordPickPlayerService {
   private async startVeto(matchId: string) {
     await this.cache.forget(this.getAvailableUsersCacheKey(matchId));
 
-    await this.matchAssistant.updateMatchStatus(
-      matchId,
-      e_match_status_enum.Veto,
-    );
+    await this.matchAssistant.updateMatchStatus(matchId, "Veto");
   }
 
   private getAvailableUsersCacheKey(matchId: string) {

@@ -24,16 +24,14 @@ export class RconService {
     }
 
     const { servers_by_pk: server } = await this.hasuraService.query({
-      servers_by_pk: [
-        {
+      servers_by_pk: {
+        __args: {
           id: serverId,
         },
-        {
-          host: true,
-          port: true,
-          rcon_password: true,
-        },
-      ],
+        host: true,
+        port: true,
+        rcon_password: true,
+      },
     });
 
     if (!server) {

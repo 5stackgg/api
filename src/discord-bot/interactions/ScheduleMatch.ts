@@ -1,6 +1,4 @@
 import { v4 as uuidv4 } from "uuid";
-import { ValueTypes, e_match_types_enum } from "@/../generated/zeus";
-
 import {
   ComponentType,
   CategoryChannel,
@@ -20,7 +18,9 @@ import { ExpectedPlayers } from "../enums/ExpectedPlayers";
 import { DiscordMatchOptions } from "../types/DiscordMatchOptions";
 import { getRandomNumber } from "../utilities/getRandomNumber";
 import { AppConfig } from "../../configs/types/AppConfig";
-import { e_map_pool_types_enum, UnwrapPromise } from "../../../generated/zeus";
+import { e_map_pool_types_enum, e_match_types_enum } from "../../../generated";
+
+type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 @BotChatCommand(ChatCommands.ScheduleComp)
 @BotChatCommand(ChatCommands.ScheduleScrimmage)
@@ -32,16 +32,16 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     switch (interaction.commandName) {
       case ChatCommands.ScheduleComp:
-        matchType = e_match_types_enum.Competitive;
-        mapPoolType = e_map_pool_types_enum.Competitive;
+        matchType = "Competitive";
+        mapPoolType = "Competitive";
         break;
       case ChatCommands.ScheduleScrimmage:
-        matchType = e_match_types_enum.Scrimmage;
-        mapPoolType = e_map_pool_types_enum.Scrimmage;
+        matchType = "Scrimmage";
+        mapPoolType = "Scrimmage";
         break;
       case ChatCommands.ScheduleWingMan:
-        matchType = e_match_types_enum.Wingman;
-        mapPoolType = e_map_pool_types_enum.Wingman;
+        matchType = "Wingman";
+        mapPoolType = "Wingman";
         break;
       default:
         throw Error(`match type not supported ${interaction.type}`);
@@ -160,7 +160,7 @@ export default class ScheduleMatch extends DiscordInteraction {
       options[option.name] = option.value;
     }
 
-    if (matchType === e_match_types_enum.Wingman && options.mr === 12) {
+    if (matchType === "Wingman" && options.mr === 12) {
       options.mr = 8;
     }
 
@@ -174,25 +174,23 @@ export default class ScheduleMatch extends DiscordInteraction {
     serverId?: string,
   ) {
     const { map_pools } = await this.hasura.query({
-      map_pools: [
-        {
+      map_pools: {
+        __args: {
           where: {
             type: {
               _eq: mapPoolType,
             },
           },
         },
-        {
-          id: true,
-        },
-      ],
+        id: true,
+      },
     });
 
     const { id: map_pool_id } = map_pools.at(0);
 
     const { insert_matches_one } = await this.hasura.mutation({
-      insert_matches_one: [
-        {
+      insert_matches_one: {
+        __args: {
           object: {
             map: options.map,
             password: uuidv4(),
@@ -216,19 +214,14 @@ export default class ScheduleMatch extends DiscordInteraction {
             },
           },
         },
-        {
+        id: true,
+        lineup_1_id: true,
+        lineup_2_id: true,
+        lineups: {
           id: true,
-          lineup_1_id: true,
-          lineup_2_id: true,
-          lineups: [
-            {},
-            {
-              id: true,
-              name: true,
-            },
-          ],
+          name: true,
         },
-      ],
+      },
     });
 
     return insert_matches_one;
@@ -342,8 +335,8 @@ export default class ScheduleMatch extends DiscordInteraction {
     interaction: ChatInputCommandInteraction,
   ): Promise<string> {
     const { servers } = await this.hasura.query({
-      servers: [
-        {
+      servers: {
+        __args: {
           where: {
             owner: {
               discord_id: {
@@ -352,13 +345,11 @@ export default class ScheduleMatch extends DiscordInteraction {
             },
           },
         },
-        {
-          id: true,
-          label: true,
-          host: true,
-          port: true,
-        },
-      ],
+        id: true,
+        label: true,
+        host: true,
+        port: true,
+      },
     });
 
     let serverId: string;

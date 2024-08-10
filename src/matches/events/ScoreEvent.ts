@@ -1,8 +1,4 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import {
-  match_map_rounds_constraint,
-  match_map_rounds_update_column,
-} from "../../../generated/zeus";
 
 export default class ScoreEvent extends MatchEventProcessor<{
   time: string;
@@ -17,8 +13,8 @@ export default class ScoreEvent extends MatchEventProcessor<{
 }> {
   public async process() {
     await this.hasura.mutation({
-      insert_match_map_rounds_one: [
-        {
+      insert_match_map_rounds_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             round: this.data.round,
@@ -32,22 +28,18 @@ export default class ScoreEvent extends MatchEventProcessor<{
             lineup_2_timeouts_available: this.data.lineup_2_timeouts_available,
           },
           on_conflict: {
-            constraint:
-              match_map_rounds_constraint.match_rounds_match_id_round_key,
+            constraint: "match_rounds_match_id_round_key",
             update_columns: [
-              match_map_rounds_update_column.lineup_1_score,
-              match_map_rounds_update_column.lineup_1_money,
-              match_map_rounds_update_column.lineup_1_timeouts_available,
-              match_map_rounds_update_column.lineup_2_score,
-              match_map_rounds_update_column.lineup_2_money,
-              match_map_rounds_update_column.lineup_2_timeouts_available,
+              "lineup_1_score",
+              "lineup_1_money",
+              "lineup_1_timeouts_available",
+              "lineup_2_score",
+              "lineup_2_money",
+              "lineup_2_timeouts_available",
             ],
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

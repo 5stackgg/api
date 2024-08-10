@@ -1,10 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
-import { e_veto_pick_types_enum } from "../../../generated/zeus";
 import { MatchAssistantService } from "../../matches/match-assistant/match-assistant.service";
 import { getRandomNumber } from "../utilities/getRandomNumber";
 import { CacheService } from "../../cache/cache.service";
-import { CacheTag } from "../../cache/CacheTag";
 import { InjectQueue } from "@nestjs/bullmq";
 import { DiscordBotQueues } from "../enums/DiscordBotQueues";
 import { Queue } from "bullmq";
@@ -93,14 +91,12 @@ export class DiscordBotVetoService {
     }
 
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
-          veto_picking_lineup_id: true,
-        },
-      ],
+        veto_picking_lineup_id: true,
+      },
     });
 
     if (!match) {
@@ -108,23 +104,17 @@ export class DiscordBotVetoService {
     }
 
     await this.hasura.mutation({
-      insert_match_veto_picks_one: [
-        {
+      insert_match_veto_picks_one: {
+        __args: {
           object: {
             match_id: matchId,
             // TODO - veto type when we do best of X series
-            type: e_veto_pick_types_enum.Ban,
+            type: "Ban",
             map_id: pickedMap.id,
             match_lineup_id: match.veto_picking_lineup_id,
           },
         },
-        {
-          id: true,
-          match: {
-            status: true,
-          },
-        },
-      ],
+      },
     });
   }
 

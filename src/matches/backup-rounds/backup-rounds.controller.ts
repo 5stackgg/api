@@ -30,8 +30,8 @@ export class BackupRoundsController {
     const { matchId, mapId } = request.params;
 
     const { match_map_rounds } = await this.hasura.query({
-      match_map_rounds: [
-        {
+      match_map_rounds: {
+        __args: {
           where: {
             match_map_id: {
               _eq: mapId,
@@ -41,10 +41,8 @@ export class BackupRoundsController {
             },
           },
         },
-        {
-          backup_file: true,
-        },
-      ],
+        backup_file: true,
+      },
     });
 
     response.writeHead(200, {
@@ -86,8 +84,8 @@ export class BackupRoundsController {
     const { matchId, mapId, round } = request.params;
 
     await this.hasura.mutation({
-      update_match_map_rounds: [
-        {
+      update_match_map_rounds: {
+        __args: {
           where: {
             match_map_id: {
               _eq: mapId,
@@ -100,10 +98,7 @@ export class BackupRoundsController {
             backup_file: `${matchId}/${mapId}/backup-rounds/${file.originalname}`,
           },
         },
-        {
-          affected_rows: true,
-        },
-      ],
+      },
     });
   }
 }

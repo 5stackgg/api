@@ -1,23 +1,14 @@
-import { Chain, ValueTypes, ZeusScalars } from "../../generated/zeus";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import {
+  createClient,
+  FieldsSelection,
+  type mutation_root,
+  type mutation_rootGenqlSelection,
+  type query_root,
+  type query_rootGenqlSelection,
+} from "../../generated";
 import { HasuraConfig } from "../configs/types/HasuraConfig";
-
-const scalars = ZeusScalars({
-  uuid: {
-    decode: (value: string) => {
-      return value;
-    },
-  },
-  bigint: {
-    encode: (value: string) => {
-      return value.toString();
-    },
-    decode: (value: string) => {
-      return value;
-    },
-  },
-});
 
 @Injectable()
 export class HasuraService {
@@ -27,13 +18,11 @@ export class HasuraService {
     this.config = configService.get<HasuraConfig>("hasura");
   }
 
-  public async query<Z extends ValueTypes["query_root"]>(
-    gql: Z | ValueTypes["query_root"],
-  ) {
+  public async query<R extends query_rootGenqlSelection>(
+    request: R & { __name?: string },
+  ): Promise<FieldsSelection<query_root, R>> {
     try {
-      return await this.getClient()("query", {
-        scalars,
-      })(gql);
+      return this.getClient().query(request);
     } catch (error) {
       if (error?.response) {
         throw error?.response.errors.at(0).message;
@@ -42,14 +31,11 @@ export class HasuraService {
     }
   }
 
-  public async mutation<Z extends ValueTypes["mutation_root"]>(
-    gql: Z | ValueTypes["mutation_root"],
-    variables?: Record<string, unknown>,
-  ) {
+  public async mutation<R extends mutation_rootGenqlSelection>(
+    request: R & { __name?: string },
+  ): Promise<FieldsSelection<mutation_root, R>> {
     try {
-      return await this.getClient()("mutation", {
-        scalars,
-      })(gql, { variables });
+      return this.getClient().mutation(request);
     } catch (error) {
       if (error?.response) {
         throw error?.response.errors.at(0).message;
@@ -59,7 +45,8 @@ export class HasuraService {
   }
 
   private getClient() {
-    return Chain(`${this.config.endpoint}/v1/graphql`, {
+    return createClient({
+      url: `${this.config.endpoint}/v1/graphql`,
       headers: {
         "Content-Type": "application/json",
         "x-hasura-admin-secret": this.config.secret,

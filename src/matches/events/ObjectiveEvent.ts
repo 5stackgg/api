@@ -1,5 +1,5 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import { e_objective_types_enum } from "../../../generated/zeus";
+import { e_objective_types_enum } from "../../../generated";
 
 export default class ObjectiveEvent extends MatchEventProcessor<{
   time: string;
@@ -10,8 +10,8 @@ export default class ObjectiveEvent extends MatchEventProcessor<{
 }> {
   public async process() {
     await this.hasura.mutation({
-      insert_player_objectives_one: [
-        {
+      insert_player_objectives_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             match_id: this.matchId,
@@ -21,10 +21,8 @@ export default class ObjectiveEvent extends MatchEventProcessor<{
             player_steam_id: this.data.player_steam_id,
           },
         },
-        {
-          id: true,
-        },
-      ],
+        id: true,
+      },
     });
   }
 }

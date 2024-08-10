@@ -46,21 +46,16 @@ export class TypeSenseService {
 
   public async updatePlayer(steamId: string) {
     const { players_by_pk: player } = await this.hasura.query({
-      players_by_pk: [
-        {
+      players_by_pk: {
+        __args: {
           steam_id: steamId,
         },
-        {
-          name: true,
-          avatar_url: true,
-          teams: [
-            {},
-            {
-              id: true,
-            },
-          ],
+        name: true,
+        avatar_url: true,
+        teams: {
+          id: true,
         },
-      ],
+      },
     });
 
     if (!player) {

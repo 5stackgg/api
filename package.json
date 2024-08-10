@@ -29,7 +29,7 @@
     "hasura:migrate": "yarn hasura migrate",
     "hasura:seed": "yarn hasura seed apply",
     "hasura:rollback": "yarn hasura migrate apply --down 1",
-    "codegen": ". ./.env && zeus $HASURA_GRAPHQL_ENDPOINT/v1/graphql ./generated --ts --td --header=x-hasura-admin-secret:$HASURA_GRAPHQL_ADMIN_SECRET"
+    "codegen": ". ./.env &&  genql --endpoint $HASURA_GRAPHQL_ENDPOINT/v1/graphql --output ./generated -H 'x-hasura-admin-secret:'$HASURA_GRAPHQL_ADMIN_SECRET''"
   },
   "dependencies": {
     "@bull-board/api": "^5.16.0",
@@ -67,6 +67,7 @@
     "ws": "^8.16.0"
   },
   "devDependencies": {
+    "@genql/cli": "^6.3.3",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

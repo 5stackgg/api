@@ -9,16 +9,13 @@ import {
   Routes,
   SlashCommandBuilder,
 } from "discord.js";
-import {
-  e_map_pool_types_enum,
-  e_match_types_enum,
-} from "../../generated/zeus";
 import { ChatCommands } from "./enums/ChatCommands";
 import { ButtonActions } from "./enums/ButtonActions";
 import { HasuraService } from "../hasura/hasura.service";
 import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 import { ConfigService } from "@nestjs/config";
 import { DiscordConfig } from "../configs/types/DiscordConfig";
+import { e_map_pool_types_enum } from "../../generated";
 
 const _interactions: {
   chat: Partial<Record<ChatCommands, DiscordInteraction>>;
@@ -140,9 +137,7 @@ export class DiscordBotService {
   }
 
   private async addBaseOptions(builder: SlashCommandBuilder) {
-    const mapChoices = await this.getMapChoices(
-      e_map_pool_types_enum.Competitive,
-    );
+    const mapChoices = await this.getMapChoices("Competitive");
 
     return builder
       .addChannelOption((option) =>
@@ -203,19 +198,13 @@ export class DiscordBotService {
 
   private async getMapChoices(type: e_map_pool_types_enum) {
     const { map_pools } = await this.hasura.query({
-      map_pools: [
-        {},
-        {
-          type: true,
-          maps: [
-            {},
-            {
-              id: true,
-              name: true,
-            },
-          ],
+      map_pools: {
+        type: true,
+        maps: {
+          id: true,
+          name: true,
         },
-      ],
+      },
     });
 
     const map_pool = map_pools.find((pool) => {
