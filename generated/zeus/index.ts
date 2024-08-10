@@ -2953,6 +2953,7 @@ count?: [{	columns?: Array<ValueTypes["maps_select_column"]> | undefined | null 
 	/** relational table for assigning a players to a match and lineup */
 ["match_lineup_players"]: AliasType<{
 	captain?:boolean | `@${string}`,
+	checked_in?:boolean | `@${string}`,
 	discord_id?:boolean | `@${string}`,
 	id?:boolean | `@${string}`,
 	/** An object relationship */
@@ -3043,6 +3044,7 @@ count?: [{	columns?: Array<ValueTypes["match_lineup_players_select_column"]> | u
 	_not?: ValueTypes["match_lineup_players_bool_exp"] | undefined | null | Variable<any, string>,
 	_or?: Array<ValueTypes["match_lineup_players_bool_exp"]> | undefined | null | Variable<any, string>,
 	captain?: ValueTypes["Boolean_comparison_exp"] | undefined | null | Variable<any, string>,
+	checked_in?: ValueTypes["Boolean_comparison_exp"] | undefined | null | Variable<any, string>,
 	discord_id?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid_comparison_exp"] | undefined | null | Variable<any, string>,
 	lineup?: ValueTypes["match_lineups_bool_exp"] | undefined | null | Variable<any, string>,
@@ -3060,6 +3062,7 @@ count?: [{	columns?: Array<ValueTypes["match_lineup_players_select_column"]> | u
 	/** input type for inserting data into table "match_lineup_players" */
 ["match_lineup_players_insert_input"]: {
 	captain?: boolean | undefined | null | Variable<any, string>,
+	checked_in?: boolean | undefined | null | Variable<any, string>,
 	discord_id?: string | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	lineup?: ValueTypes["match_lineups_obj_rel_insert_input"] | undefined | null | Variable<any, string>,
@@ -3119,6 +3122,7 @@ count?: [{	columns?: Array<ValueTypes["match_lineup_players_select_column"]> | u
 	/** Ordering options when selecting data from "match_lineup_players". */
 ["match_lineup_players_order_by"]: {
 	captain?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
+	checked_in?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	discord_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	lineup?: ValueTypes["match_lineups_order_by"] | undefined | null | Variable<any, string>,
@@ -3140,6 +3144,7 @@ count?: [{	columns?: Array<ValueTypes["match_lineup_players_select_column"]> | u
 	/** input type for updating data in table "match_lineup_players" */
 ["match_lineup_players_set_input"]: {
 	captain?: boolean | undefined | null | Variable<any, string>,
+	checked_in?: boolean | undefined | null | Variable<any, string>,
 	discord_id?: string | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	match_lineup_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
@@ -3183,6 +3188,7 @@ count?: [{	columns?: Array<ValueTypes["match_lineup_players_select_column"]> | u
 	/** Initial value of the column from where the streaming should start */
 ["match_lineup_players_stream_cursor_value_input"]: {
 	captain?: boolean | undefined | null | Variable<any, string>,
+	checked_in?: boolean | undefined | null | Variable<any, string>,
 	discord_id?: string | undefined | null | Variable<any, string>,
 	id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
 	match_lineup_id?: ValueTypes["uuid"] | undefined | null | Variable<any, string>,
@@ -3267,12 +3273,6 @@ match_veto_picks_aggregate?: [{	/** distinct select on columns */
 	offset?: number | undefined | null | Variable<any, string>,	/** sort the rows by one or more columns */
 	order_by?: Array<ValueTypes["match_veto_picks_order_by"]> | undefined | null | Variable<any, string>,	/** filter the rows returned */
 	where?: ValueTypes["match_veto_picks_bool_exp"] | undefined | null | Variable<any, string>},ValueTypes["match_veto_picks_aggregate"]],
-matches?: [{	/** distinct select on columns */
-	distinct_on?: Array<ValueTypes["matches_select_column"]> | undefined | null | Variable<any, string>,	/** limit the number of rows returned */
-	limit?: number | undefined | null | Variable<any, string>,	/** skip the first n rows. Use only with order_by */
-	offset?: number | undefined | null | Variable<any, string>,	/** sort the rows by one or more columns */
-	order_by?: Array<ValueTypes["matches_order_by"]> | undefined | null | Variable<any, string>,	/** filter the rows returned */
-	where?: ValueTypes["matches_bool_exp"] | undefined | null | Variable<any, string>},ValueTypes["matches"]],
 	/** A computed field, executes function "get_team_name" */
 	name?:boolean | `@${string}`,
 	/** An object relationship */
@@ -3354,7 +3354,6 @@ count?: [{	columns?: Array<ValueTypes["match_lineups_select_column"]> | undefine
 	lineup_players_aggregate?: ValueTypes["match_lineup_players_aggregate_bool_exp"] | undefined | null | Variable<any, string>,
 	match_veto_picks?: ValueTypes["match_veto_picks_bool_exp"] | undefined | null | Variable<any, string>,
 	match_veto_picks_aggregate?: ValueTypes["match_veto_picks_aggregate_bool_exp"] | undefined | null | Variable<any, string>,
-	matches?: ValueTypes["matches_bool_exp"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["String_comparison_exp"] | undefined | null | Variable<any, string>,
 	team?: ValueTypes["teams_bool_exp"] | undefined | null | Variable<any, string>,
 	team_id?: ValueTypes["uuid_comparison_exp"] | undefined | null | Variable<any, string>,
@@ -3436,7 +3435,6 @@ count?: [{	columns?: Array<ValueTypes["match_lineups_select_column"]> | undefine
 	id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	lineup_players_aggregate?: ValueTypes["match_lineup_players_aggregate_order_by"] | undefined | null | Variable<any, string>,
 	match_veto_picks_aggregate?: ValueTypes["match_veto_picks_aggregate_order_by"] | undefined | null | Variable<any, string>,
-	matches_aggregate?: ValueTypes["matches_aggregate_order_by"] | undefined | null | Variable<any, string>,
 	name?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
 	team?: ValueTypes["teams_order_by"] | undefined | null | Variable<any, string>,
 	team_id?: ValueTypes["order_by"] | undefined | null | Variable<any, string>,
@@ -5792,6 +5790,7 @@ count?: [{	columns?: Array<ValueTypes["matches_select_column"]> | undefined | nu
 ["mutation_root"]: AliasType<{
 acceptTeamInvite?: [{	invite_id: ValueTypes["uuid"] | Variable<any, string>},ValueTypes["SuccessOutput"]],
 cancelMatch?: [{	match_id: ValueTypes["uuid"] | Variable<any, string>},ValueTypes["SuccessOutput"]],
+checkIntoMatch?: [{	match_id: ValueTypes["uuid"] | Variable<any, string>},ValueTypes["SuccessOutput"]],
 delete__map_pool?: [{	/** filter the rows which have to be deleted */
 	where: ValueTypes["_map_pool_bool_exp"] | Variable<any, string>},ValueTypes["_map_pool_mutation_response"]],
 delete__map_pool_by_pk?: [{	map_id: ValueTypes["uuid"] | Variable<any, string>,	map_pool_id: ValueTypes["uuid"] | Variable<any, string>},ValueTypes["_map_pool"]],
@@ -18058,6 +18057,7 @@ count?: [{	columns?: Array<ResolverInputTypes["maps_select_column"]> | undefined
 	/** relational table for assigning a players to a match and lineup */
 ["match_lineup_players"]: AliasType<{
 	captain?:boolean | `@${string}`,
+	checked_in?:boolean | `@${string}`,
 	discord_id?:boolean | `@${string}`,
 	id?:boolean | `@${string}`,
 	/** An object relationship */
@@ -18148,6 +18148,7 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineup_players_select_colum
 	_not?: ResolverInputTypes["match_lineup_players_bool_exp"] | undefined | null,
 	_or?: Array<ResolverInputTypes["match_lineup_players_bool_exp"]> | undefined | null,
 	captain?: ResolverInputTypes["Boolean_comparison_exp"] | undefined | null,
+	checked_in?: ResolverInputTypes["Boolean_comparison_exp"] | undefined | null,
 	discord_id?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
 	id?: ResolverInputTypes["uuid_comparison_exp"] | undefined | null,
 	lineup?: ResolverInputTypes["match_lineups_bool_exp"] | undefined | null,
@@ -18165,6 +18166,7 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineup_players_select_colum
 	/** input type for inserting data into table "match_lineup_players" */
 ["match_lineup_players_insert_input"]: {
 	captain?: boolean | undefined | null,
+	checked_in?: boolean | undefined | null,
 	discord_id?: string | undefined | null,
 	id?: ResolverInputTypes["uuid"] | undefined | null,
 	lineup?: ResolverInputTypes["match_lineups_obj_rel_insert_input"] | undefined | null,
@@ -18224,6 +18226,7 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineup_players_select_colum
 	/** Ordering options when selecting data from "match_lineup_players". */
 ["match_lineup_players_order_by"]: {
 	captain?: ResolverInputTypes["order_by"] | undefined | null,
+	checked_in?: ResolverInputTypes["order_by"] | undefined | null,
 	discord_id?: ResolverInputTypes["order_by"] | undefined | null,
 	id?: ResolverInputTypes["order_by"] | undefined | null,
 	lineup?: ResolverInputTypes["match_lineups_order_by"] | undefined | null,
@@ -18245,6 +18248,7 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineup_players_select_colum
 	/** input type for updating data in table "match_lineup_players" */
 ["match_lineup_players_set_input"]: {
 	captain?: boolean | undefined | null,
+	checked_in?: boolean | undefined | null,
 	discord_id?: string | undefined | null,
 	id?: ResolverInputTypes["uuid"] | undefined | null,
 	match_lineup_id?: ResolverInputTypes["uuid"] | undefined | null,
@@ -18288,6 +18292,7 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineup_players_select_colum
 	/** Initial value of the column from where the streaming should start */
 ["match_lineup_players_stream_cursor_value_input"]: {
 	captain?: boolean | undefined | null,
+	checked_in?: boolean | undefined | null,
 	discord_id?: string | undefined | null,
 	id?: ResolverInputTypes["uuid"] | undefined | null,
 	match_lineup_id?: ResolverInputTypes["uuid"] | undefined | null,
@@ -18372,12 +18377,6 @@ match_veto_picks_aggregate?: [{	/** distinct select on columns */
 	offset?: number | undefined | null,	/** sort the rows by one or more columns */
 	order_by?: Array<ResolverInputTypes["match_veto_picks_order_by"]> | undefined | null,	/** filter the rows returned */
 	where?: ResolverInputTypes["match_veto_picks_bool_exp"] | undefined | null},ResolverInputTypes["match_veto_picks_aggregate"]],
-matches?: [{	/** distinct select on columns */
-	distinct_on?: Array<ResolverInputTypes["matches_select_column"]> | undefined | null,	/** limit the number of rows returned */
-	limit?: number | undefined | null,	/** skip the first n rows. Use only with order_by */
-	offset?: number | undefined | null,	/** sort the rows by one or more columns */
-	order_by?: Array<ResolverInputTypes["matches_order_by"]> | undefined | null,	/** filter the rows returned */
-	where?: ResolverInputTypes["matches_bool_exp"] | undefined | null},ResolverInputTypes["matches"]],
 	/** A computed field, executes function "get_team_name" */
 	name?:boolean | `@${string}`,
 	/** An object relationship */
@@ -18459,7 +18458,6 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineups_select_column"]> | 
 	lineup_players_aggregate?: ResolverInputTypes["match_lineup_players_aggregate_bool_exp"] | undefined | null,
 	match_veto_picks?: ResolverInputTypes["match_veto_picks_bool_exp"] | undefined | null,
 	match_veto_picks_aggregate?: ResolverInputTypes["match_veto_picks_aggregate_bool_exp"] | undefined | null,
-	matches?: ResolverInputTypes["matches_bool_exp"] | undefined | null,
 	name?: ResolverInputTypes["String_comparison_exp"] | undefined | null,
 	team?: ResolverInputTypes["teams_bool_exp"] | undefined | null,
 	team_id?: ResolverInputTypes["uuid_comparison_exp"] | undefined | null,
@@ -18541,7 +18539,6 @@ count?: [{	columns?: Array<ResolverInputTypes["match_lineups_select_column"]> | 
 	id?: ResolverInputTypes["order_by"] | undefined | null,
 	lineup_players_aggregate?: ResolverInputTypes["match_lineup_players_aggregate_order_by"] | undefined | null,
 	match_veto_picks_aggregate?: ResolverInputTypes["match_veto_picks_aggregate_order_by"] | undefined | null,
-	matches_aggregate?: ResolverInputTypes["matches_aggregate_order_by"] | undefined | null,
 	name?: ResolverInputTypes["order_by"] | undefined | null,
 	team?: ResolverInputTypes["teams_order_by"] | undefined | null,
 	team_id?: ResolverInputTypes["order_by"] | undefined | null,
@@ -20897,6 +20894,7 @@ count?: [{	columns?: Array<ResolverInputTypes["matches_select_column"]> | undefi
 ["mutation_root"]: AliasType<{
 acceptTeamInvite?: [{	invite_id: ResolverInputTypes["uuid"]},ResolverInputTypes["SuccessOutput"]],
 cancelMatch?: [{	match_id: ResolverInputTypes["uuid"]},ResolverInputTypes["SuccessOutput"]],
+checkIntoMatch?: [{	match_id: ResolverInputTypes["uuid"]},ResolverInputTypes["SuccessOutput"]],
 delete__map_pool?: [{	/** filter the rows which have to be deleted */
 	where: ResolverInputTypes["_map_pool_bool_exp"]},ResolverInputTypes["_map_pool_mutation_response"]],
 delete__map_pool_by_pk?: [{	map_id: ResolverInputTypes["uuid"],	map_pool_id: ResolverInputTypes["uuid"]},ResolverInputTypes["_map_pool"]],
@@ -32902,6 +32900,7 @@ export type ModelTypes = {
 	/** relational table for assigning a players to a match and lineup */
 ["match_lineup_players"]: {
 		captain: boolean,
+	checked_in: boolean,
 	discord_id?: string | undefined,
 	id: ModelTypes["uuid"],
 	/** An object relationship */
@@ -32988,6 +32987,7 @@ export type ModelTypes = {
 	_not?: ModelTypes["match_lineup_players_bool_exp"] | undefined,
 	_or?: Array<ModelTypes["match_lineup_players_bool_exp"]> | undefined,
 	captain?: ModelTypes["Boolean_comparison_exp"] | undefined,
+	checked_in?: ModelTypes["Boolean_comparison_exp"] | undefined,
 	discord_id?: ModelTypes["String_comparison_exp"] | undefined,
 	id?: ModelTypes["uuid_comparison_exp"] | undefined,
 	lineup?: ModelTypes["match_lineups_bool_exp"] | undefined,
@@ -33004,6 +33004,7 @@ export type ModelTypes = {
 	/** input type for inserting data into table "match_lineup_players" */
 ["match_lineup_players_insert_input"]: {
 	captain?: boolean | undefined,
+	checked_in?: boolean | undefined,
 	discord_id?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
 	lineup?: ModelTypes["match_lineups_obj_rel_insert_input"] | undefined,
@@ -33060,6 +33061,7 @@ export type ModelTypes = {
 	/** Ordering options when selecting data from "match_lineup_players". */
 ["match_lineup_players_order_by"]: {
 	captain?: ModelTypes["order_by"] | undefined,
+	checked_in?: ModelTypes["order_by"] | undefined,
 	discord_id?: ModelTypes["order_by"] | undefined,
 	id?: ModelTypes["order_by"] | undefined,
 	lineup?: ModelTypes["match_lineups_order_by"] | undefined,
@@ -33078,6 +33080,7 @@ export type ModelTypes = {
 	/** input type for updating data in table "match_lineup_players" */
 ["match_lineup_players_set_input"]: {
 	captain?: boolean | undefined,
+	checked_in?: boolean | undefined,
 	discord_id?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
 	match_lineup_id?: ModelTypes["uuid"] | undefined,
@@ -33118,6 +33121,7 @@ export type ModelTypes = {
 	/** Initial value of the column from where the streaming should start */
 ["match_lineup_players_stream_cursor_value_input"]: {
 	captain?: boolean | undefined,
+	checked_in?: boolean | undefined,
 	discord_id?: string | undefined,
 	id?: ModelTypes["uuid"] | undefined,
 	match_lineup_id?: ModelTypes["uuid"] | undefined,
@@ -33181,8 +33185,6 @@ export type ModelTypes = {
 	match_veto_picks: Array<ModelTypes["match_veto_picks"]>,
 	/** An aggregate relationship */
 	match_veto_picks_aggregate: ModelTypes["match_veto_picks_aggregate"],
-	/** A computed field, executes function "get_lineup_match" */
-	matches?: Array<ModelTypes["matches"]> | undefined,
 	/** A computed field, executes function "get_team_name" */
 	name?: string | undefined,
 	/** An object relationship */
@@ -33260,7 +33262,6 @@ export type ModelTypes = {
 	lineup_players_aggregate?: ModelTypes["match_lineup_players_aggregate_bool_exp"] | undefined,
 	match_veto_picks?: ModelTypes["match_veto_picks_bool_exp"] | undefined,
 	match_veto_picks_aggregate?: ModelTypes["match_veto_picks_aggregate_bool_exp"] | undefined,
-	matches?: ModelTypes["matches_bool_exp"] | undefined,
 	name?: ModelTypes["String_comparison_exp"] | undefined,
 	team?: ModelTypes["teams_bool_exp"] | undefined,
 	team_id?: ModelTypes["uuid_comparison_exp"] | undefined,
@@ -33338,7 +33339,6 @@ export type ModelTypes = {
 	id?: ModelTypes["order_by"] | undefined,
 	lineup_players_aggregate?: ModelTypes["match_lineup_players_aggregate_order_by"] | undefined,
 	match_veto_picks_aggregate?: ModelTypes["match_veto_picks_aggregate_order_by"] | undefined,
-	matches_aggregate?: ModelTypes["matches_aggregate_order_by"] | undefined,
 	name?: ModelTypes["order_by"] | undefined,
 	team?: ModelTypes["teams_order_by"] | undefined,
 	team_id?: ModelTypes["order_by"] | undefined,
@@ -35429,6 +35429,8 @@ export type ModelTypes = {
 	acceptTeamInvite?: ModelTypes["SuccessOutput"] | undefined,
 	/** cancelMatch */
 	cancelMatch?: ModelTypes["SuccessOutput"] | undefined,
+	/** checkIntoMatch */
+	checkIntoMatch?: ModelTypes["SuccessOutput"] | undefined,
 	/** delete data from the table: "_map_pool" */
 	delete__map_pool?: ModelTypes["_map_pool_mutation_response"] | undefined,
 	/** delete single row from the table: "_map_pool" */
@@ -45853,6 +45855,7 @@ export type GraphQLTypes = {
 ["match_lineup_players"]: {
 	__typename: "match_lineup_players",
 	captain: boolean,
+	checked_in: boolean,
 	discord_id?: string | undefined,
 	id: GraphQLTypes["uuid"],
 	/** An object relationship */
@@ -45942,6 +45945,7 @@ export type GraphQLTypes = {
 	_not?: GraphQLTypes["match_lineup_players_bool_exp"] | undefined,
 	_or?: Array<GraphQLTypes["match_lineup_players_bool_exp"]> | undefined,
 	captain?: GraphQLTypes["Boolean_comparison_exp"] | undefined,
+	checked_in?: GraphQLTypes["Boolean_comparison_exp"] | undefined,
 	discord_id?: GraphQLTypes["String_comparison_exp"] | undefined,
 	id?: GraphQLTypes["uuid_comparison_exp"] | undefined,
 	lineup?: GraphQLTypes["match_lineups_bool_exp"] | undefined,
@@ -45959,6 +45963,7 @@ export type GraphQLTypes = {
 	/** input type for inserting data into table "match_lineup_players" */
 ["match_lineup_players_insert_input"]: {
 		captain?: boolean | undefined,
+	checked_in?: boolean | undefined,
 	discord_id?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
 	lineup?: GraphQLTypes["match_lineups_obj_rel_insert_input"] | undefined,
@@ -46018,6 +46023,7 @@ export type GraphQLTypes = {
 	/** Ordering options when selecting data from "match_lineup_players". */
 ["match_lineup_players_order_by"]: {
 		captain?: GraphQLTypes["order_by"] | undefined,
+	checked_in?: GraphQLTypes["order_by"] | undefined,
 	discord_id?: GraphQLTypes["order_by"] | undefined,
 	id?: GraphQLTypes["order_by"] | undefined,
 	lineup?: GraphQLTypes["match_lineups_order_by"] | undefined,
@@ -46039,6 +46045,7 @@ export type GraphQLTypes = {
 	/** input type for updating data in table "match_lineup_players" */
 ["match_lineup_players_set_input"]: {
 		captain?: boolean | undefined,
+	checked_in?: boolean | undefined,
 	discord_id?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
 	match_lineup_id?: GraphQLTypes["uuid"] | undefined,
@@ -46082,6 +46089,7 @@ export type GraphQLTypes = {
 	/** Initial value of the column from where the streaming should start */
 ["match_lineup_players_stream_cursor_value_input"]: {
 		captain?: boolean | undefined,
+	checked_in?: boolean | undefined,
 	discord_id?: string | undefined,
 	id?: GraphQLTypes["uuid"] | undefined,
 	match_lineup_id?: GraphQLTypes["uuid"] | undefined,
@@ -46151,8 +46159,6 @@ export type GraphQLTypes = {
 	match_veto_picks: Array<GraphQLTypes["match_veto_picks"]>,
 	/** An aggregate relationship */
 	match_veto_picks_aggregate: GraphQLTypes["match_veto_picks_aggregate"],
-	/** A computed field, executes function "get_lineup_match" */
-	matches?: Array<GraphQLTypes["matches"]> | undefined,
 	/** A computed field, executes function "get_team_name" */
 	name?: string | undefined,
 	/** An object relationship */
@@ -46233,7 +46239,6 @@ export type GraphQLTypes = {
 	lineup_players_aggregate?: GraphQLTypes["match_lineup_players_aggregate_bool_exp"] | undefined,
 	match_veto_picks?: GraphQLTypes["match_veto_picks_bool_exp"] | undefined,
 	match_veto_picks_aggregate?: GraphQLTypes["match_veto_picks_aggregate_bool_exp"] | undefined,
-	matches?: GraphQLTypes["matches_bool_exp"] | undefined,
 	name?: GraphQLTypes["String_comparison_exp"] | undefined,
 	team?: GraphQLTypes["teams_bool_exp"] | undefined,
 	team_id?: GraphQLTypes["uuid_comparison_exp"] | undefined,
@@ -46315,7 +46320,6 @@ export type GraphQLTypes = {
 	id?: GraphQLTypes["order_by"] | undefined,
 	lineup_players_aggregate?: GraphQLTypes["match_lineup_players_aggregate_order_by"] | undefined,
 	match_veto_picks_aggregate?: GraphQLTypes["match_veto_picks_aggregate_order_by"] | undefined,
-	matches_aggregate?: GraphQLTypes["matches_aggregate_order_by"] | undefined,
 	name?: GraphQLTypes["order_by"] | undefined,
 	team?: GraphQLTypes["teams_order_by"] | undefined,
 	team_id?: GraphQLTypes["order_by"] | undefined,
@@ -48510,6 +48514,8 @@ export type GraphQLTypes = {
 	acceptTeamInvite?: GraphQLTypes["SuccessOutput"] | undefined,
 	/** cancelMatch */
 	cancelMatch?: GraphQLTypes["SuccessOutput"] | undefined,
+	/** checkIntoMatch */
+	checkIntoMatch?: GraphQLTypes["SuccessOutput"] | undefined,
 	/** delete data from the table: "_map_pool" */
 	delete__map_pool?: GraphQLTypes["_map_pool_mutation_response"] | undefined,
 	/** delete single row from the table: "_map_pool" */
@@ -57740,6 +57746,7 @@ export const enum match_lineup_players_constraint {
 /** select columns of table "match_lineup_players" */
 export const enum match_lineup_players_select_column {
 	captain = "captain",
+	checked_in = "checked_in",
 	discord_id = "discord_id",
 	id = "id",
 	match_lineup_id = "match_lineup_id",
@@ -57748,15 +57755,18 @@ export const enum match_lineup_players_select_column {
 }
 /** select "match_lineup_players_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_lineup_players" */
 export const enum match_lineup_players_select_column_match_lineup_players_aggregate_bool_exp_bool_and_arguments_columns {
-	captain = "captain"
+	captain = "captain",
+	checked_in = "checked_in"
 }
 /** select "match_lineup_players_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_lineup_players" */
 export const enum match_lineup_players_select_column_match_lineup_players_aggregate_bool_exp_bool_or_arguments_columns {
-	captain = "captain"
+	captain = "captain",
+	checked_in = "checked_in"
 }
 /** update columns of table "match_lineup_players" */
 export const enum match_lineup_players_update_column {
 	captain = "captain",
+	checked_in = "checked_in",
 	discord_id = "discord_id",
 	id = "id",
 	match_lineup_id = "match_lineup_id",

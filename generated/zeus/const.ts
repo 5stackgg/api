@@ -1183,6 +1183,7 @@ export const AllTypesProps: Record<string,any> = {
 		_not:"match_lineup_players_bool_exp",
 		_or:"match_lineup_players_bool_exp",
 		captain:"Boolean_comparison_exp",
+		checked_in:"Boolean_comparison_exp",
 		discord_id:"String_comparison_exp",
 		id:"uuid_comparison_exp",
 		lineup:"match_lineups_bool_exp",
@@ -1223,6 +1224,7 @@ export const AllTypesProps: Record<string,any> = {
 	},
 	match_lineup_players_order_by:{
 		captain:"order_by",
+		checked_in:"order_by",
 		discord_id:"order_by",
 		id:"order_by",
 		lineup:"match_lineups_order_by",
@@ -1298,11 +1300,6 @@ export const AllTypesProps: Record<string,any> = {
 			distinct_on:"match_veto_picks_select_column",
 			order_by:"match_veto_picks_order_by",
 			where:"match_veto_picks_bool_exp"
-		},
-		matches:{
-			distinct_on:"matches_select_column",
-			order_by:"matches_order_by",
-			where:"matches_bool_exp"
 		}
 	},
 	match_lineups_aggregate_bool_exp:{
@@ -1350,7 +1347,6 @@ export const AllTypesProps: Record<string,any> = {
 		lineup_players_aggregate:"match_lineup_players_aggregate_bool_exp",
 		match_veto_picks:"match_veto_picks_bool_exp",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate_bool_exp",
-		matches:"matches_bool_exp",
 		name:"String_comparison_exp",
 		team:"teams_bool_exp",
 		team_id:"uuid_comparison_exp",
@@ -1397,7 +1393,6 @@ export const AllTypesProps: Record<string,any> = {
 		id:"order_by",
 		lineup_players_aggregate:"match_lineup_players_aggregate_order_by",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate_order_by",
-		matches_aggregate:"matches_aggregate_order_by",
 		name:"order_by",
 		team:"teams_order_by",
 		team_id:"order_by",
@@ -2618,6 +2613,9 @@ export const AllTypesProps: Record<string,any> = {
 			invite_id:"uuid"
 		},
 		cancelMatch:{
+			match_id:"uuid"
+		},
+		checkIntoMatch:{
 			match_id:"uuid"
 		},
 		delete__map_pool:{
@@ -9690,6 +9688,7 @@ export const ReturnTypes: Record<string,any> = {
 	},
 	match_lineup_players:{
 		captain:"Boolean",
+		checked_in:"Boolean",
 		discord_id:"String",
 		id:"uuid",
 		lineup:"match_lineups",
@@ -9766,7 +9765,6 @@ export const ReturnTypes: Record<string,any> = {
 		lineup_players_aggregate:"match_lineup_players_aggregate",
 		match_veto_picks:"match_veto_picks",
 		match_veto_picks_aggregate:"match_veto_picks_aggregate",
-		matches:"matches",
 		name:"String",
 		team:"teams",
 		team_id:"uuid",
@@ -10465,6 +10463,7 @@ export const ReturnTypes: Record<string,any> = {
 	mutation_root:{
 		acceptTeamInvite:"SuccessOutput",
 		cancelMatch:"SuccessOutput",
+		checkIntoMatch:"SuccessOutput",
 		delete__map_pool:"_map_pool_mutation_response",
 		delete__map_pool_by_pk:"_map_pool",
 		delete_e_map_pool_types:"e_map_pool_types_mutation_response",

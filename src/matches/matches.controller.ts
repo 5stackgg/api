@@ -494,4 +494,45 @@ export class MatchesController {
 
     await processor.process();
   }
+
+
+  @HasuraAction()
+  public async checkIntoMatch(data: {
+    user: User;
+    match_id: string;
+  }) {
+      await this.hasura.mutation({
+        update_match_lineup_players: [{
+          where: {
+            _and: [
+              {
+                steam_id: {
+                  _eq: data.user.steam_id,
+                }
+              },
+              {
+                lineup:   {
+                  v_match_lineup: {
+                    match_id: {
+                      _eq: data.match_id,
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          _set: {
+            checked_in: true,
+          }
+        }, {
+          returning: {
+            id: true,
+          }
+        }]
+      })
+
+    return {
+        success: false
+    }
+  }
 }

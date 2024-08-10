@@ -26,12 +26,13 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - steam_id
         - captain
+        - checked_in
         - discord_id
-        - placeholder_name
         - id
         - match_lineup_id
+        - placeholder_name
+        - steam_id
       filter: {}
       allow_aggregations: true
     comment: ""

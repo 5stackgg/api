@@ -48,11 +48,6 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
-  - name: matches
-    definition:
-      function:
-        name: get_lineup_match
-        schema: public
   - name: name
     definition:
       function:
