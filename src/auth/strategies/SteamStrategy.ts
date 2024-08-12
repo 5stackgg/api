@@ -67,7 +67,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
             name: personaname,
             profile_url: profileurl,
             avatar_url: avatarfull,
-            role: "User",
+            role: "user",
           },
           on_conflict: {
             constraint: "players_steam_id_key",
