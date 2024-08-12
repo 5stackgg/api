@@ -45,7 +45,7 @@ export class HasuraController {
     }
 
     return {
-      "x-hasura-role": "user",
+      "x-hasura-role": user.role ? user.role : "user",
       "x-hasura-user-id": user.steam_id.toString(),
     };
   }

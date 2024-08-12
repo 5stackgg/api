@@ -75,6 +75,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
           },
         },
         name: true,
+        role: true,
         steam_id: true,
         profile_url: true,
         avatar_url: true,
