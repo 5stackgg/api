@@ -441,6 +441,71 @@ export type e_objective_types_select_column = 'description' | 'value'
 export type e_objective_types_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_player_roles" */
+export interface e_player_roles {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_player_roles'
+}
+
+
+/** aggregated selection of "e_player_roles" */
+export interface e_player_roles_aggregate {
+    aggregate: (e_player_roles_aggregate_fields | null)
+    nodes: e_player_roles[]
+    __typename: 'e_player_roles_aggregate'
+}
+
+
+/** aggregate fields of "e_player_roles" */
+export interface e_player_roles_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_player_roles_max_fields | null)
+    min: (e_player_roles_min_fields | null)
+    __typename: 'e_player_roles_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_player_roles" */
+export type e_player_roles_constraint = 'e_player_roles_pkey'
+
+export type e_player_roles_enum = 'admin' | 'match_organizer' | 'tournament_organizer' | 'user'
+
+
+/** aggregate max on columns */
+export interface e_player_roles_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_player_roles_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_player_roles_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_player_roles_min_fields'
+}
+
+
+/** response of any mutation on the table "e_player_roles" */
+export interface e_player_roles_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_player_roles[]
+    __typename: 'e_player_roles_mutation_response'
+}
+
+
+/** select columns of table "e_player_roles" */
+export type e_player_roles_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_player_roles" */
+export type e_player_roles_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_sides" */
 export interface e_sides {
     description: Scalars['String']
@@ -2574,6 +2639,10 @@ export interface mutation_root {
     delete_e_objective_types: (e_objective_types_mutation_response | null)
     /** delete single row from the table: "e_objective_types" */
     delete_e_objective_types_by_pk: (e_objective_types | null)
+    /** delete data from the table: "e_player_roles" */
+    delete_e_player_roles: (e_player_roles_mutation_response | null)
+    /** delete single row from the table: "e_player_roles" */
+    delete_e_player_roles_by_pk: (e_player_roles | null)
     /** delete data from the table: "e_sides" */
     delete_e_sides: (e_sides_mutation_response | null)
     /** delete single row from the table: "e_sides" */
@@ -2747,6 +2816,10 @@ export interface mutation_root {
     insert_e_objective_types: (e_objective_types_mutation_response | null)
     /** insert a single row into the table: "e_objective_types" */
     insert_e_objective_types_one: (e_objective_types | null)
+    /** insert data into the table: "e_player_roles" */
+    insert_e_player_roles: (e_player_roles_mutation_response | null)
+    /** insert a single row into the table: "e_player_roles" */
+    insert_e_player_roles_one: (e_player_roles | null)
     /** insert data into the table: "e_sides" */
     insert_e_sides: (e_sides_mutation_response | null)
     /** insert a single row into the table: "e_sides" */
@@ -2941,6 +3014,12 @@ export interface mutation_root {
     update_e_objective_types_by_pk: (e_objective_types | null)
     /** update multiples rows of table: "e_objective_types" */
     update_e_objective_types_many: ((e_objective_types_mutation_response | null)[] | null)
+    /** update data of the table: "e_player_roles" */
+    update_e_player_roles: (e_player_roles_mutation_response | null)
+    /** update single row of the table: "e_player_roles" */
+    update_e_player_roles_by_pk: (e_player_roles | null)
+    /** update multiples rows of table: "e_player_roles" */
+    update_e_player_roles_many: ((e_player_roles_mutation_response | null)[] | null)
     /** update data of the table: "e_sides" */
     update_e_sides: (e_sides_mutation_response | null)
     /** update single row of the table: "e_sides" */
@@ -4522,7 +4601,7 @@ export interface players {
     /** An aggregate relationship */
     player_unused_utilities_aggregate: player_unused_utility_aggregate
     profile_url: (Scalars['String'] | null)
-    role: Scalars['String']
+    role: e_player_roles_enum
     steam_id: Scalars['bigint']
     /** An array relationship */
     team_invites: team_invites[]
@@ -4597,7 +4676,6 @@ export interface players_max_fields {
     discord_id: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
-    role: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'players_max_fields'
 }
@@ -4610,7 +4688,6 @@ export interface players_min_fields {
     discord_id: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
-    role: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'players_min_fields'
 }
@@ -4719,6 +4796,12 @@ export interface query_root {
     e_objective_types_aggregate: e_objective_types_aggregate
     /** fetch data from the table: "e_objective_types" using primary key columns */
     e_objective_types_by_pk: (e_objective_types | null)
+    /** fetch data from the table: "e_player_roles" */
+    e_player_roles: e_player_roles[]
+    /** fetch aggregated fields from the table: "e_player_roles" */
+    e_player_roles_aggregate: e_player_roles_aggregate
+    /** fetch data from the table: "e_player_roles" using primary key columns */
+    e_player_roles_by_pk: (e_player_roles | null)
     /** fetch data from the table: "e_sides" */
     e_sides: e_sides[]
     /** fetch aggregated fields from the table: "e_sides" */
@@ -5202,6 +5285,14 @@ export interface subscription_root {
     e_objective_types_by_pk: (e_objective_types | null)
     /** fetch data from the table in a streaming manner: "e_objective_types" */
     e_objective_types_stream: e_objective_types[]
+    /** fetch data from the table: "e_player_roles" */
+    e_player_roles: e_player_roles[]
+    /** fetch aggregated fields from the table: "e_player_roles" */
+    e_player_roles_aggregate: e_player_roles_aggregate
+    /** fetch data from the table: "e_player_roles" using primary key columns */
+    e_player_roles_by_pk: (e_player_roles | null)
+    /** fetch data from the table in a streaming manner: "e_player_roles" */
+    e_player_roles_stream: e_player_roles[]
     /** fetch data from the table: "e_sides" */
     e_sides: e_sides[]
     /** fetch aggregated fields from the table: "e_sides" */
@@ -8907,6 +8998,109 @@ export interface e_objective_types_updates {
 _set?: (e_objective_types_set_input | null),
 /** filter the rows which have to be updated */
 where: e_objective_types_bool_exp}
+
+
+/** columns and relationships of "e_player_roles" */
+export interface e_player_rolesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_player_roles" */
+export interface e_player_roles_aggregateGenqlSelection{
+    aggregate?: e_player_roles_aggregate_fieldsGenqlSelection
+    nodes?: e_player_rolesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_player_roles" */
+export interface e_player_roles_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_player_roles_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_player_roles_max_fieldsGenqlSelection
+    min?: e_player_roles_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_player_roles". All fields are combined with a logical 'AND'. */
+export interface e_player_roles_bool_exp {_and?: (e_player_roles_bool_exp[] | null),_not?: (e_player_roles_bool_exp | null),_or?: (e_player_roles_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_player_roles_enum". All fields are combined with logical 'AND'. */
+export interface e_player_roles_enum_comparison_exp {_eq?: (e_player_roles_enum | null),_in?: (e_player_roles_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_player_roles_enum | null),_nin?: (e_player_roles_enum[] | null)}
+
+
+/** input type for inserting data into table "e_player_roles" */
+export interface e_player_roles_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_player_roles_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_player_roles_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_player_roles" */
+export interface e_player_roles_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_player_rolesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_player_roles" */
+export interface e_player_roles_on_conflict {constraint: e_player_roles_constraint,update_columns?: e_player_roles_update_column[],where?: (e_player_roles_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_player_roles". */
+export interface e_player_roles_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_player_roles */
+export interface e_player_roles_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_player_roles" */
+export interface e_player_roles_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_player_roles" */
+export interface e_player_roles_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_player_roles_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_player_roles_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_player_roles_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_player_roles_set_input | null),
+/** filter the rows which have to be updated */
+where: e_player_roles_bool_exp}
 
 
 /** columns and relationships of "e_sides" */
@@ -12824,6 +13018,12 @@ export interface mutation_rootGenqlSelection{
     where: e_objective_types_bool_exp} })
     /** delete single row from the table: "e_objective_types" */
     delete_e_objective_types_by_pk?: (e_objective_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_player_roles" */
+    delete_e_player_roles?: (e_player_roles_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_player_roles_bool_exp} })
+    /** delete single row from the table: "e_player_roles" */
+    delete_e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_sides" */
     delete_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -13121,6 +13321,18 @@ export interface mutation_rootGenqlSelection{
     object: e_objective_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_objective_types_on_conflict | null)} })
+    /** insert data into the table: "e_player_roles" */
+    insert_e_player_roles?: (e_player_roles_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_player_roles_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_player_roles_on_conflict | null)} })
+    /** insert a single row into the table: "e_player_roles" */
+    insert_e_player_roles_one?: (e_player_rolesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_player_roles_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_player_roles_on_conflict | null)} })
     /** insert data into the table: "e_sides" */
     insert_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -13659,6 +13871,20 @@ export interface mutation_rootGenqlSelection{
     update_e_objective_types_many?: (e_objective_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_objective_types_updates[]} })
+    /** update data of the table: "e_player_roles" */
+    update_e_player_roles?: (e_player_roles_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_player_roles_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_player_roles_bool_exp} })
+    /** update single row of the table: "e_player_roles" */
+    update_e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_player_roles_set_input | null), pk_columns: e_player_roles_pk_columns_input} })
+    /** update multiples rows of table: "e_player_roles" */
+    update_e_player_roles_many?: (e_player_roles_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_player_roles_updates[]} })
     /** update data of the table: "e_sides" */
     update_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -16902,7 +17128,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -16910,7 +17136,7 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -16920,7 +17146,6 @@ export interface players_max_fieldsGenqlSelection{
     discord_id?: boolean | number
     name?: boolean | number
     profile_url?: boolean | number
-    role?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -16934,7 +17159,6 @@ export interface players_min_fieldsGenqlSelection{
     discord_id?: boolean | number
     name?: boolean | number
     profile_url?: boolean | number
-    role?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -16971,7 +17195,7 @@ export interface players_pk_columns_input {steam_id: Scalars['bigint']}
 
 
 /** input type for updating data in table "players" */
-export interface players_set_input {avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_set_input {avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -17007,7 +17231,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface players_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -17206,6 +17430,32 @@ export interface query_rootGenqlSelection{
     where?: (e_objective_types_bool_exp | null)} })
     /** fetch data from the table: "e_objective_types" using primary key columns */
     e_objective_types_by_pk?: (e_objective_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_player_roles" */
+    e_player_roles?: (e_player_rolesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_player_roles_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_player_roles_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_player_roles_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_player_roles" */
+    e_player_roles_aggregate?: (e_player_roles_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_player_roles_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_player_roles_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_player_roles_bool_exp | null)} })
+    /** fetch data from the table: "e_player_roles" using primary key columns */
+    e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_sides" */
     e_sides?: (e_sidesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -18842,6 +19092,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_objective_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_objective_types_bool_exp | null)} })
+    /** fetch data from the table: "e_player_roles" */
+    e_player_roles?: (e_player_rolesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_player_roles_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_player_roles_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_player_roles_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_player_roles" */
+    e_player_roles_aggregate?: (e_player_roles_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_player_roles_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_player_roles_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_player_roles_bool_exp | null)} })
+    /** fetch data from the table: "e_player_roles" using primary key columns */
+    e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_player_roles" */
+    e_player_roles_stream?: (e_player_rolesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_player_roles_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_player_roles_bool_exp | null)} })
     /** fetch data from the table: "e_sides" */
     e_sides?: (e_sidesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -24942,6 +25226,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_player_roles_possibleTypes: string[] = ['e_player_roles']
+    export const ise_player_roles = (obj?: { __typename?: any } | null): obj is e_player_roles => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_player_roles"')
+      return e_player_roles_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_player_roles_aggregate_possibleTypes: string[] = ['e_player_roles_aggregate']
+    export const ise_player_roles_aggregate = (obj?: { __typename?: any } | null): obj is e_player_roles_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_player_roles_aggregate"')
+      return e_player_roles_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_player_roles_aggregate_fields_possibleTypes: string[] = ['e_player_roles_aggregate_fields']
+    export const ise_player_roles_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_player_roles_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_player_roles_aggregate_fields"')
+      return e_player_roles_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_player_roles_max_fields_possibleTypes: string[] = ['e_player_roles_max_fields']
+    export const ise_player_roles_max_fields = (obj?: { __typename?: any } | null): obj is e_player_roles_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_player_roles_max_fields"')
+      return e_player_roles_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_player_roles_min_fields_possibleTypes: string[] = ['e_player_roles_min_fields']
+    export const ise_player_roles_min_fields = (obj?: { __typename?: any } | null): obj is e_player_roles_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_player_roles_min_fields"')
+      return e_player_roles_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_player_roles_mutation_response_possibleTypes: string[] = ['e_player_roles_mutation_response']
+    export const ise_player_roles_mutation_response = (obj?: { __typename?: any } | null): obj is e_player_roles_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_player_roles_mutation_response"')
+      return e_player_roles_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_sides_possibleTypes: string[] = ['e_sides']
     export const ise_sides = (obj?: { __typename?: any } | null): obj is e_sides => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_sides"')
@@ -29309,6 +29641,27 @@ export const enumEObjectiveTypesSelectColumn = {
 }
 
 export const enumEObjectiveTypesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEPlayerRolesConstraint = {
+   e_player_roles_pkey: 'e_player_roles_pkey' as const
+}
+
+export const enumEPlayerRolesEnum = {
+   admin: 'admin' as const,
+   match_organizer: 'match_organizer' as const,
+   tournament_organizer: 'tournament_organizer' as const,
+   user: 'user' as const
+}
+
+export const enumEPlayerRolesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEPlayerRolesUpdateColumn = {
    description: 'description' as const,
    value: 'value' as const
 }

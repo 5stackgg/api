@@ -1422,6 +1422,183 @@ input e_objective_types_updates {
 }
 
 """
+columns and relationships of "e_player_roles"
+"""
+type e_player_roles {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_player_roles"
+"""
+type e_player_roles_aggregate {
+  aggregate: e_player_roles_aggregate_fields
+  nodes: [e_player_roles!]!
+}
+
+"""
+aggregate fields of "e_player_roles"
+"""
+type e_player_roles_aggregate_fields {
+  count(columns: [e_player_roles_select_column!], distinct: Boolean): Int!
+  max: e_player_roles_max_fields
+  min: e_player_roles_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_player_roles". All fields are combined with a logical 'AND'.
+"""
+input e_player_roles_bool_exp {
+  _and: [e_player_roles_bool_exp!]
+  _not: e_player_roles_bool_exp
+  _or: [e_player_roles_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_player_roles"
+"""
+enum e_player_roles_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_player_roles_pkey
+}
+
+enum e_player_roles_enum {
+  """Administrator"""
+  admin
+
+  """Ability Manage Matches and bypass restrictions"""
+  match_organizer
+
+  """Ability Create and Manage Tournaments"""
+  tournament_organizer
+
+  """Basic User"""
+  user
+}
+
+"""
+Boolean expression to compare columns of type "e_player_roles_enum". All fields are combined with logical 'AND'.
+"""
+input e_player_roles_enum_comparison_exp {
+  _eq: e_player_roles_enum
+  _in: [e_player_roles_enum!]
+  _is_null: Boolean
+  _neq: e_player_roles_enum
+  _nin: [e_player_roles_enum!]
+}
+
+"""
+input type for inserting data into table "e_player_roles"
+"""
+input e_player_roles_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_player_roles_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_player_roles_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_player_roles"
+"""
+type e_player_roles_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_player_roles!]!
+}
+
+"""
+on_conflict condition type for table "e_player_roles"
+"""
+input e_player_roles_on_conflict {
+  constraint: e_player_roles_constraint!
+  update_columns: [e_player_roles_update_column!]! = []
+  where: e_player_roles_bool_exp
+}
+
+"""Ordering options when selecting data from "e_player_roles"."""
+input e_player_roles_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_player_roles"""
+input e_player_roles_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_player_roles"
+"""
+enum e_player_roles_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_player_roles"
+"""
+input e_player_roles_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_player_roles"
+"""
+input e_player_roles_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_player_roles_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_player_roles_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_player_roles"
+"""
+enum e_player_roles_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_player_roles_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_player_roles_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_player_roles_bool_exp!
+}
+
+"""
 columns and relationships of "e_sides"
 """
 type e_sides {
@@ -8439,6 +8616,19 @@ type mutation_root {
   delete_e_objective_types_by_pk(value: String!): e_objective_types
 
   """
+  delete data from the table: "e_player_roles"
+  """
+  delete_e_player_roles(
+    """filter the rows which have to be deleted"""
+    where: e_player_roles_bool_exp!
+  ): e_player_roles_mutation_response
+
+  """
+  delete single row from the table: "e_player_roles"
+  """
+  delete_e_player_roles_by_pk(value: String!): e_player_roles
+
+  """
   delete data from the table: "e_sides"
   """
   delete_e_sides(
@@ -9054,6 +9244,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_objective_types_on_conflict
   ): e_objective_types
+
+  """
+  insert data into the table: "e_player_roles"
+  """
+  insert_e_player_roles(
+    """the rows to be inserted"""
+    objects: [e_player_roles_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_player_roles_on_conflict
+  ): e_player_roles_mutation_response
+
+  """
+  insert a single row into the table: "e_player_roles"
+  """
+  insert_e_player_roles_one(
+    """the row to be inserted"""
+    object: e_player_roles_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_player_roles_on_conflict
+  ): e_player_roles
 
   """
   insert data into the table: "e_sides"
@@ -10055,6 +10267,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_objective_types_updates!]!
   ): [e_objective_types_mutation_response]
+
+  """
+  update data of the table: "e_player_roles"
+  """
+  update_e_player_roles(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_player_roles_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_player_roles_bool_exp!
+  ): e_player_roles_mutation_response
+
+  """
+  update single row of the table: "e_player_roles"
+  """
+  update_e_player_roles_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_player_roles_set_input
+    pk_columns: e_player_roles_pk_columns_input!
+  ): e_player_roles
+
+  """
+  update multiples rows of table: "e_player_roles"
+  """
+  update_e_player_roles_many(
+    """updates to execute, in order"""
+    updates: [e_player_roles_updates!]!
+  ): [e_player_roles_mutation_response]
 
   """
   update data of the table: "e_sides"
@@ -15766,7 +16006,7 @@ type players {
     where: player_unused_utility_bool_exp
   ): player_unused_utility_aggregate!
   profile_url: String
-  role: String!
+  role: e_player_roles_enum!
   steam_id: bigint!
 
   """An array relationship"""
@@ -16081,7 +16321,7 @@ input players_bool_exp {
   player_unused_utilities: player_unused_utility_bool_exp
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   profile_url: String_comparison_exp
-  role: String_comparison_exp
+  role: e_player_roles_enum_comparison_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -16150,7 +16390,7 @@ input players_insert_input {
   player_lineup: match_lineup_players_arr_rel_insert_input
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   profile_url: String
-  role: String
+  role: e_player_roles_enum
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -16167,7 +16407,6 @@ type players_max_fields {
   discord_id: String
   name: String
   profile_url: String
-  role: String
   steam_id: bigint
 }
 
@@ -16178,7 +16417,6 @@ type players_min_fields {
   discord_id: String
   name: String
   profile_url: String
-  role: String
   steam_id: bigint
 }
 
@@ -16287,7 +16525,7 @@ input players_set_input {
   discord_id: String
   name: String
   profile_url: String
-  role: String
+  role: e_player_roles_enum
   steam_id: bigint
 }
 
@@ -16324,7 +16562,7 @@ input players_stream_cursor_value_input {
   discord_id: String
   name: String
   profile_url: String
-  role: String
+  role: e_player_roles_enum
   steam_id: bigint
 }
 
@@ -16649,6 +16887,49 @@ type query_root {
   fetch data from the table: "e_objective_types" using primary key columns
   """
   e_objective_types_by_pk(value: String!): e_objective_types
+
+  """
+  fetch data from the table: "e_player_roles"
+  """
+  e_player_roles(
+    """distinct select on columns"""
+    distinct_on: [e_player_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_player_roles_order_by!]
+
+    """filter the rows returned"""
+    where: e_player_roles_bool_exp
+  ): [e_player_roles!]!
+
+  """
+  fetch aggregated fields from the table: "e_player_roles"
+  """
+  e_player_roles_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_player_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_player_roles_order_by!]
+
+    """filter the rows returned"""
+    where: e_player_roles_bool_exp
+  ): e_player_roles_aggregate!
+
+  """fetch data from the table: "e_player_roles" using primary key columns"""
+  e_player_roles_by_pk(value: String!): e_player_roles
 
   """
   fetch data from the table: "e_sides"
@@ -19319,6 +19600,63 @@ type subscription_root {
     """filter the rows returned"""
     where: e_objective_types_bool_exp
   ): [e_objective_types!]!
+
+  """
+  fetch data from the table: "e_player_roles"
+  """
+  e_player_roles(
+    """distinct select on columns"""
+    distinct_on: [e_player_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_player_roles_order_by!]
+
+    """filter the rows returned"""
+    where: e_player_roles_bool_exp
+  ): [e_player_roles!]!
+
+  """
+  fetch aggregated fields from the table: "e_player_roles"
+  """
+  e_player_roles_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_player_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_player_roles_order_by!]
+
+    """filter the rows returned"""
+    where: e_player_roles_bool_exp
+  ): e_player_roles_aggregate!
+
+  """fetch data from the table: "e_player_roles" using primary key columns"""
+  e_player_roles_by_pk(value: String!): e_player_roles
+
+  """
+  fetch data from the table in a streaming manner: "e_player_roles"
+  """
+  e_player_roles_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_player_roles_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_player_roles_bool_exp
+  ): [e_player_roles!]!
 
   """
   fetch data from the table: "e_sides"
