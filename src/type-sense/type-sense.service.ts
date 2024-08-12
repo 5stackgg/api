@@ -34,7 +34,7 @@ export class TypeSenseService {
       await this.client.collections().create({
         name: "players",
         fields: [
-          { name: "name", type: "string", index: true, sort: true },
+          { name: "name", type: "string", index: true, sort: true, infix: true },
           { name: "steam_id", type: "string", index: true },
           { name: "avatar_url", type: "string", optional: true },
           { name: "teams", type: "string[]", optional: true },
