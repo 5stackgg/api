@@ -2,8 +2,8 @@ import { Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
 import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
-import {CacheService} from "../cache/cache.service";
-import {HasuraService} from "./hasura.service";
+import { CacheService } from "../cache/cache.service";
+import { HasuraService } from "./hasura.service";
 
 type Handler = {
   target: unknown;
@@ -36,13 +36,12 @@ export const HasuraAction = (): MethodDecorator => {
 @Controller("hasura")
 export class HasuraController {
   constructor(
-      private readonly cache: CacheService,
-      private readonly hasuraService: HasuraService,
-      private readonly modulesContainer: ModulesContainer,
+    private readonly cache: CacheService,
+    private readonly hasuraService: HasuraService,
+    private readonly modulesContainer: ModulesContainer,
   ) {}
 
-
-  public static PLAYER_CACHE_KEY(steamId: bigint | string) {
+  public static PLAYER_ROLE_CACHE_KEY(steamId: bigint | string) {
     return `user:${steamId.toString()}`;
   }
 
@@ -55,26 +54,27 @@ export class HasuraController {
       return;
     }
 
-    return await this.cache.remember(HasuraController.PLAYER_CACHE_KEY(user.steam_id), async () => {
-
-      const { players_by_pk } =  await this.hasuraService.query({
-        players_by_pk: {
-          __args: {
-            steam_id: user.steam_id
+    const playerRole = await this.cache.remember(
+      HasuraController.PLAYER_ROLE_CACHE_KEY(user.steam_id),
+      async () => {
+        const { players_by_pk } = await this.hasuraService.query({
+          players_by_pk: {
+            __args: {
+              steam_id: user.steam_id,
+            },
+            role: true,
           },
-          role: true,
-        }
-      });
+        });
 
-      if(!players_by_pk) {
-        return;
-      }
+        return players_by_pk?.role;
+      },
+      60 * 60 * 1000,
+    );
 
-      return {
-        "x-hasura-role": players_by_pk.role,
-        "x-hasura-user-id": user.steam_id.toString(),
-      };
-    }, 60 * 60 * 1000)
+    return {
+      "x-hasura-role": playerRole,
+      "x-hasura-user-id": user.steam_id.toString(),
+    };
   }
 
   @Post("actions")
@@ -94,11 +94,6 @@ export class HasuraController {
         message: error?.message ?? error,
       });
     }
-  }
-
-  @HasuraAction()
-  public async me(@Req() request: Request) {
-    return request.user;
   }
 
   @Post("events")

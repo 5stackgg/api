@@ -32,7 +32,7 @@ export class HasuraService {
 
       return await client.query(request);
     } catch (error) {
-      console.info('i am error', error.message);
+      console.info("i am error", error.message);
       if (error?.response) {
         throw error?.response.errors.at(0).message;
       }

@@ -54,6 +54,7 @@ type MeResponse {
   avatar_url: String!
   profile_url: String
   discord_id: String
+  role: String!
 }
 
 type SuccessOutput {

@@ -3,7 +3,7 @@ import { TypeSenseService } from "./type-sense.service";
 import { TypeSenseController } from "./type-sense.controller";
 import { HasuraModule } from "../hasura/hasura.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import {CacheModule} from "../cache/cache.module";
+import { CacheModule } from "../cache/cache.module";
 
 @Module({
   imports: [HasuraModule, CacheModule],

@@ -1,20 +1,24 @@
 import { Controller } from "@nestjs/common";
 import { TypeSenseService } from "./type-sense.service";
-import {HasuraController, HasuraEvent} from "../hasura/hasura.controller";
+import { HasuraController, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { players_set_input, team_roster_set_input } from "../../generated";
-import {CacheService} from "../cache/cache.service";
+import { CacheService } from "../cache/cache.service";
 
 @Controller("type-sense")
 export class TypeSenseController {
   constructor(
-      private readonly cache: CacheService,
-      private readonly typeSense: TypeSenseService
+    private readonly cache: CacheService,
+    private readonly typeSense: TypeSenseService,
   ) {}
 
   @HasuraEvent()
   public async player_events(data: HasuraEventData<players_set_input>) {
-    await this.cache.forget(HasuraController.PLAYER_CACHE_KEY(`${data.new.steam_id || data.old.steam_id}`))
+    await this.cache.forget(
+      HasuraController.PLAYER_ROLE_CACHE_KEY(
+        `${data.new.steam_id || data.old.steam_id}`,
+      ),
+    );
 
     if (data.op === "DELETE") {
       await this.typeSense.removePlayer(data.old.steam_id);

@@ -249,9 +249,24 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - label
+        - organizer_steam_id
+        - scheduled_at
+        - server_id
+        - winning_lineup_id
+      filter: {}
+      check: null
+    comment: ""
   - role: match_organizer
     permission:
       columns:
+        - label
+        - organizer_steam_id
+        - scheduled_at
+        - server_id
         - winning_lineup_id
       filter:
         tournament_brackets:
@@ -261,6 +276,23 @@ update_permissions:
         tournament_brackets:
           id:
             _is_null: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - label
+        - organizer_steam_id
+        - scheduled_at
+        - server_id
+        - winning_lineup_id
+      filter:
+        tournament_brackets:
+          id:
+            _is_null: false
+      check:
+        tournament_brackets:
+          id:
+            _is_null: false
     comment: ""
   - role: user
     permission:
