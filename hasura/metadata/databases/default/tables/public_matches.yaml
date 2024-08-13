@@ -120,6 +120,12 @@ computed_fields:
         name: is_match_organizer
         schema: public
       session_argument: hasura_session
+  - name: can_cancel
+    definition:
+      function:
+        name: can_cancel_match
+        schema: public
+      session_argument: hasura_session
   - name: connection_link
     definition:
       function:
@@ -236,6 +242,7 @@ select_permissions:
         - winning_lineup_id
       computed_fields:
         - can_assign_map
+        - can_cancel
         - connection_link
         - connection_string
         - current_match_map_id
@@ -255,47 +262,6 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - label
-        - organizer_steam_id
-        - scheduled_at
-        - server_id
-        - winning_lineup_id
-      filter: {}
-      check: null
-    comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - label
-        - organizer_steam_id
-        - scheduled_at
-        - server_id
-        - winning_lineup_id
-      filter:
-        isTournamentMatch:
-          _eq: false
-      check:
-        isTournamentMatch:
-          _eq: false
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - label
-        - organizer_steam_id
-        - scheduled_at
-        - server_id
-        - winning_lineup_id
-      filter:
-        isTournamentMatch:
-          _eq: true
-      check:
-        isTournamentMatch:
-          _eq: true
-    comment: ""
   - role: user
     permission:
       columns:
@@ -305,18 +271,18 @@ update_permissions:
         - server_id
         - winning_lineup_id
       filter:
-        organizer_steam_id:
-          _eq: x-hasura-user-id
+        is_organizer:
+          _eq: true
       check:
-        organizer_steam_id:
-          _eq: x-hasura-user-id
+        is_organizer:
+          _eq: true
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        organizer_steam_id:
-          _eq: x-hasura-user-id
+        is_organizer:
+          _eq: true
     comment: ""
 event_triggers:
   - name: match_events
