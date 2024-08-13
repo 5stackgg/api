@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+ import { Module } from "@nestjs/common";
 import { HasuraService } from "./hasura.service";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { PostgresModule } from "../postgres/postgres.module";
@@ -9,9 +9,11 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { HasuraQueues } from "./enums/HasuraQueues";
 import { HasuraController } from "./hasura.controller";
 import { loggerFactory } from "../utilities/LoggerFactory";
+ import {CacheModule} from "../cache/cache.module";
 
 @Module({
   imports: [
+    CacheModule,
     PostgresModule,
     BullModule.registerQueue({
       name: HasuraQueues.Hasura,

@@ -22,8 +22,17 @@ export class HasuraService {
     request: R & { __name?: string },
   ): Promise<FieldsSelection<query_root, R>> {
     try {
-      return this.getClient().query(request);
+      const client = createClient({
+        url: `${this.config.endpoint}/v1/graphql`,
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": this.config.secret,
+        },
+      });
+
+      return await client.query(request);
     } catch (error) {
+      console.info('i am error', error.message);
       if (error?.response) {
         throw error?.response.errors.at(0).message;
       }
@@ -35,7 +44,7 @@ export class HasuraService {
     request: R & { __name?: string },
   ): Promise<FieldsSelection<mutation_root, R>> {
     try {
-      return this.getClient().mutation(request);
+      return await this.getClient().mutation(request);
     } catch (error) {
       if (error?.response) {
         throw error?.response.errors.at(0).message;

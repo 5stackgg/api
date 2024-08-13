@@ -36,6 +36,13 @@ object_relationships:
           name: match_lineups
           schema: public
 array_relationships:
+  - name: demos
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_map_demos
+          schema: public
   - name: match_maps
     using:
       foreign_key_constraint_on:
@@ -91,6 +98,13 @@ array_relationships:
         column: match_id
         table:
           name: player_utility
+          schema: public
+  - name: tournament_brackets
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: tournament_brackets
           schema: public
   - name: veto_picks
     using:
@@ -197,7 +211,6 @@ insert_permissions:
       columns:
         - label
         - match_options_id
-        - password
         - scheduled_at
         - server_id
     comment: ""
@@ -236,6 +249,19 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - winning_lineup_id
+      filter:
+        tournament_brackets:
+          id:
+            _is_null: true
+      check:
+        tournament_brackets:
+          id:
+            _is_null: true
+    comment: ""
   - role: user
     permission:
       columns:
@@ -243,6 +269,7 @@ update_permissions:
         - organizer_steam_id
         - scheduled_at
         - server_id
+        - winning_lineup_id
       filter:
         organizer_steam_id:
           _eq: x-hasura-user-id
