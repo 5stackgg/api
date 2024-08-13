@@ -22,17 +22,8 @@ export class HasuraService {
     request: R & { __name?: string },
   ): Promise<FieldsSelection<query_root, R>> {
     try {
-      const client = createClient({
-        url: `${this.config.endpoint}/v1/graphql`,
-        headers: {
-          "Content-Type": "application/json",
-          "x-hasura-admin-secret": this.config.secret,
-        },
-      });
-
-      return await client.query(request);
+      return await this.getClient().query(request);
     } catch (error) {
-      console.info("i am error", error.message);
       if (error?.response) {
         throw error?.response.errors.at(0).message;
       }

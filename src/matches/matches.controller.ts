@@ -149,7 +149,7 @@ export class MatchesController {
         status: true,
         server: {
           id: true,
-          on_demand: true,
+          is_on_demand: true,
         },
       },
     });
@@ -158,7 +158,7 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (match.server?.on_demand === false) {
+    if (match.server?.is_on_demand === false) {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
@@ -291,7 +291,7 @@ export class MatchesController {
         status: true,
         current_match_map_id: true,
         server: {
-          on_demand: true,
+          is_on_demand: true,
         },
       },
     });
@@ -313,7 +313,7 @@ export class MatchesController {
       );
     }
 
-    if (updated_match.server?.on_demand === false) {
+    if (updated_match.server?.is_on_demand === false) {
       await this.matchAssistant.sendServerMatchId(match_id);
     }
 

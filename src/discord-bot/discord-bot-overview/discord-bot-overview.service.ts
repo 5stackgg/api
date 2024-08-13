@@ -143,7 +143,7 @@ export class DiscordBotOverviewService {
         serverAvailable = false;
       } else if (match.status === "Veto" || match.status === "Live") {
         serverAvailable = true;
-        if (match.server.on_demand) {
+        if (match.server.is_on_demand) {
           serverAvailable =
             await this.matchAssistant.isOnDemandServerRunning(matchId);
           if (!serverAvailable) {
@@ -317,7 +317,7 @@ export class DiscordBotOverviewService {
           },
         },
         server: {
-          on_demand: true,
+          is_on_demand: true,
           host: true,
           port: true,
         },

@@ -139,7 +139,7 @@ export class MatchAssistantService {
           id: true,
           host: true,
           port: true,
-          on_demand: true,
+          is_on_demand: true,
           rcon_password: true,
         },
       },
@@ -239,7 +239,7 @@ export class MatchAssistantService {
           __args: {
             object: {
               id: serverId,
-              on_demand: true,
+              is_on_demand: true,
               port: gamePort,
               tv_port: tvPort,
               label: `${jobName}`,
@@ -540,7 +540,7 @@ export class MatchAssistantService {
 
       const server = await this.getMatchServer(matchId);
 
-      if (!server || !server.on_demand) {
+      if (!server || !server.is_on_demand) {
         return;
       }
 
@@ -624,7 +624,7 @@ export class MatchAssistantService {
       servers: {
         __args: {
           where: {
-            on_demand: {
+            is_on_demand: {
               _eq: true,
             },
             matches: {

@@ -137,6 +137,11 @@ computed_fields:
       function:
         name: get_current_match_map
         schema: public
+  - name: isTournamentMatch
+    definition:
+      function:
+        name: is_tournament_match
+        schema: public
   - name: is_captain
     definition:
       function:
@@ -234,6 +239,7 @@ select_permissions:
         - connection_link
         - connection_string
         - current_match_map_id
+        - isTournamentMatch
         - is_captain
         - is_coach
         - is_match_server_available
@@ -269,13 +275,11 @@ update_permissions:
         - server_id
         - winning_lineup_id
       filter:
-        tournament_brackets:
-          id:
-            _is_null: true
+        isTournamentMatch:
+          _eq: false
       check:
-        tournament_brackets:
-          id:
-            _is_null: true
+        isTournamentMatch:
+          _eq: false
     comment: ""
   - role: tournament_organizer
     permission:
@@ -286,13 +290,11 @@ update_permissions:
         - server_id
         - winning_lineup_id
       filter:
-        tournament_brackets:
-          id:
-            _is_null: false
+        isTournamentMatch:
+          _eq: true
       check:
-        tournament_brackets:
-          id:
-            _is_null: false
+        isTournamentMatch:
+          _eq: true
     comment: ""
   - role: user
     permission:

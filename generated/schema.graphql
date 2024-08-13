@@ -49,6 +49,7 @@ type MeResponse {
   name: String!
   player: players
   profile_url: String
+  role: String!
   steam_id: String!
 }
 
@@ -1469,7 +1470,7 @@ enum e_player_roles_constraint {
 
 enum e_player_roles_enum {
   """Administrator"""
-  admin
+  administrator
 
   """Ability Manage Matches and bypass restrictions"""
   match_organizer
@@ -4781,6 +4782,17 @@ type match_map_demos_aggregate {
   nodes: [match_map_demos!]!
 }
 
+input match_map_demos_aggregate_bool_exp {
+  count: match_map_demos_aggregate_bool_exp_count
+}
+
+input match_map_demos_aggregate_bool_exp_count {
+  arguments: [match_map_demos_select_column!]
+  distinct: Boolean
+  filter: match_map_demos_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "match_map_demos"
 """
@@ -4798,9 +4810,43 @@ type match_map_demos_aggregate_fields {
   variance: match_map_demos_variance_fields
 }
 
+"""
+order by aggregate values of table "match_map_demos"
+"""
+input match_map_demos_aggregate_order_by {
+  avg: match_map_demos_avg_order_by
+  count: order_by
+  max: match_map_demos_max_order_by
+  min: match_map_demos_min_order_by
+  stddev: match_map_demos_stddev_order_by
+  stddev_pop: match_map_demos_stddev_pop_order_by
+  stddev_samp: match_map_demos_stddev_samp_order_by
+  sum: match_map_demos_sum_order_by
+  var_pop: match_map_demos_var_pop_order_by
+  var_samp: match_map_demos_var_samp_order_by
+  variance: match_map_demos_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "match_map_demos"
+"""
+input match_map_demos_arr_rel_insert_input {
+  data: [match_map_demos_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_map_demos_on_conflict
+}
+
 """aggregate avg on columns"""
 type match_map_demos_avg_fields {
   size: Float
+}
+
+"""
+order by avg() on columns of table "match_map_demos"
+"""
+input match_map_demos_avg_order_by {
+  size: order_by
 }
 
 """
@@ -4854,6 +4900,17 @@ type match_map_demos_max_fields {
   size: Int
 }
 
+"""
+order by max() on columns of table "match_map_demos"
+"""
+input match_map_demos_max_order_by {
+  file: order_by
+  id: order_by
+  match_id: order_by
+  match_map_id: order_by
+  size: order_by
+}
+
 """aggregate min on columns"""
 type match_map_demos_min_fields {
   file: String
@@ -4861,6 +4918,17 @@ type match_map_demos_min_fields {
   match_id: uuid
   match_map_id: uuid
   size: Int
+}
+
+"""
+order by min() on columns of table "match_map_demos"
+"""
+input match_map_demos_min_order_by {
+  file: order_by
+  id: order_by
+  match_id: order_by
+  match_map_id: order_by
+  size: order_by
 }
 
 """
@@ -4933,14 +5001,35 @@ type match_map_demos_stddev_fields {
   size: Float
 }
 
+"""
+order by stddev() on columns of table "match_map_demos"
+"""
+input match_map_demos_stddev_order_by {
+  size: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type match_map_demos_stddev_pop_fields {
   size: Float
 }
 
+"""
+order by stddev_pop() on columns of table "match_map_demos"
+"""
+input match_map_demos_stddev_pop_order_by {
+  size: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type match_map_demos_stddev_samp_fields {
   size: Float
+}
+
+"""
+order by stddev_samp() on columns of table "match_map_demos"
+"""
+input match_map_demos_stddev_samp_order_by {
+  size: order_by
 }
 
 """
@@ -4966,6 +5055,13 @@ input match_map_demos_stream_cursor_value_input {
 """aggregate sum on columns"""
 type match_map_demos_sum_fields {
   size: Int
+}
+
+"""
+order by sum() on columns of table "match_map_demos"
+"""
+input match_map_demos_sum_order_by {
+  size: order_by
 }
 
 """
@@ -5004,14 +5100,35 @@ type match_map_demos_var_pop_fields {
   size: Float
 }
 
+"""
+order by var_pop() on columns of table "match_map_demos"
+"""
+input match_map_demos_var_pop_order_by {
+  size: order_by
+}
+
 """aggregate var_samp on columns"""
 type match_map_demos_var_samp_fields {
   size: Float
 }
 
+"""
+order by var_samp() on columns of table "match_map_demos"
+"""
+input match_map_demos_var_samp_order_by {
+  size: order_by
+}
+
 """aggregate variance on columns"""
 type match_map_demos_variance_fields {
   size: Float
+}
+
+"""
+order by variance() on columns of table "match_map_demos"
+"""
+input match_map_demos_variance_order_by {
+  size: order_by
 }
 
 """
@@ -7352,9 +7469,50 @@ type matches {
   """
   current_match_map_id: uuid
 
+  """An array relationship"""
+  demos(
+    """distinct select on columns"""
+    distinct_on: [match_map_demos_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_demos_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_demos_bool_exp
+  ): [match_map_demos!]!
+
+  """An aggregate relationship"""
+  demos_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_map_demos_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_demos_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_demos_bool_exp
+  ): match_map_demos_aggregate!
+
   """An object relationship"""
   e_match_status: e_match_status!
   id: uuid!
+
+  """
+  A computed field, executes function "is_tournament_match"
+  """
+  isTournamentMatch: Boolean
 
   """
   A computed field, executes function "is_captain"
@@ -7723,6 +7881,42 @@ type matches {
     where: teams_bool_exp
   ): [teams!]
 
+  """An array relationship"""
+  tournament_brackets(
+    """distinct select on columns"""
+    distinct_on: [tournament_brackets_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_brackets_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_brackets_bool_exp
+  ): [tournament_brackets!]!
+
+  """An aggregate relationship"""
+  tournament_brackets_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_brackets_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_brackets_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_brackets_bool_exp
+  ): tournament_brackets_aggregate!
+
   """
   A computed field, executes function "get_match_tv_connection_link"
   """
@@ -7880,8 +8074,11 @@ input matches_bool_exp {
   connection_string: String_comparison_exp
   created_at: timestamptz_comparison_exp
   current_match_map_id: uuid_comparison_exp
+  demos: match_map_demos_bool_exp
+  demos_aggregate: match_map_demos_aggregate_bool_exp
   e_match_status: e_match_status_bool_exp
   id: uuid_comparison_exp
+  isTournamentMatch: Boolean_comparison_exp
   is_captain: Boolean_comparison_exp
   is_coach: Boolean_comparison_exp
   is_match_server_available: Boolean_comparison_exp
@@ -7920,6 +8117,8 @@ input matches_bool_exp {
   server_type: String_comparison_exp
   status: e_match_status_enum_comparison_exp
   teams: teams_bool_exp
+  tournament_brackets: tournament_brackets_bool_exp
+  tournament_brackets_aggregate: tournament_brackets_aggregate_bool_exp
   tv_connection_link: String_comparison_exp
   tv_connection_string: String_comparison_exp
   veto_picking_lineup_id: uuid_comparison_exp
@@ -7967,6 +8166,7 @@ input type for inserting data into table "matches"
 """
 input matches_insert_input {
   created_at: timestamptz
+  demos: match_map_demos_arr_rel_insert_input
   e_match_status: e_match_status_obj_rel_insert_input
   id: uuid
   label: String
@@ -7991,6 +8191,7 @@ input matches_insert_input {
   server: servers_obj_rel_insert_input
   server_id: uuid
   status: e_match_status_enum
+  tournament_brackets: tournament_brackets_arr_rel_insert_input
   veto_picks: match_veto_picks_arr_rel_insert_input
   winner: match_lineups_obj_rel_insert_input
   winning_lineup_id: uuid
@@ -8195,8 +8396,10 @@ input matches_order_by {
   connection_string: order_by
   created_at: order_by
   current_match_map_id: order_by
+  demos_aggregate: match_map_demos_aggregate_order_by
   e_match_status: e_match_status_order_by
   id: order_by
+  isTournamentMatch: order_by
   is_captain: order_by
   is_coach: order_by
   is_match_server_available: order_by
@@ -8227,6 +8430,7 @@ input matches_order_by {
   server_type: order_by
   status: order_by
   teams_aggregate: teams_aggregate_order_by
+  tournament_brackets_aggregate: tournament_brackets_aggregate_order_by
   tv_connection_link: order_by
   tv_connection_string: order_by
   veto_picking_lineup_id: order_by
@@ -18151,9 +18355,7 @@ type query_root {
   """fetch data from the table: "teams" using primary key columns"""
   teams_by_pk(id: uuid!): teams
 
-  """
-  fetch data from the table: "tournament_brackets"
-  """
+  """An array relationship"""
   tournament_brackets(
     """distinct select on columns"""
     distinct_on: [tournament_brackets_select_column!]
@@ -18171,9 +18373,7 @@ type query_root {
     where: tournament_brackets_bool_exp
   ): [tournament_brackets!]!
 
-  """
-  fetch aggregated fields from the table: "tournament_brackets"
-  """
+  """An aggregate relationship"""
   tournament_brackets_aggregate(
     """distinct select on columns"""
     distinct_on: [tournament_brackets_select_column!]
@@ -18818,6 +19018,7 @@ type servers {
   enabled: Boolean!
   host: String!
   id: uuid!
+  is_on_demand: Boolean!
   label: String!
 
   """An array relationship"""
@@ -18855,7 +19056,6 @@ type servers {
     """filter the rows returned"""
     where: matches_bool_exp
   ): matches_aggregate!
-  on_demand: Boolean!
 
   """An object relationship"""
   owner: players
@@ -18945,10 +19145,10 @@ input servers_bool_exp {
   enabled: Boolean_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
+  is_on_demand: Boolean_comparison_exp
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
-  on_demand: Boolean_comparison_exp
   owner: players_bool_exp
   owner_steam_id: bigint_comparison_exp
   port: Int_comparison_exp
@@ -18985,9 +19185,9 @@ input servers_insert_input {
   enabled: Boolean
   host: String
   id: uuid
+  is_on_demand: Boolean
   label: String
   matches: matches_arr_rel_insert_input
-  on_demand: Boolean
   owner: players_obj_rel_insert_input
   owner_steam_id: bigint
   port: Int
@@ -19065,9 +19265,9 @@ input servers_order_by {
   enabled: order_by
   host: order_by
   id: order_by
+  is_on_demand: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
-  on_demand: order_by
   owner: players_order_by
   owner_steam_id: order_by
   port: order_by
@@ -19098,10 +19298,10 @@ enum servers_select_column {
   id
 
   """column name"""
-  label
+  is_on_demand
 
   """column name"""
-  on_demand
+  label
 
   """column name"""
   owner_steam_id
@@ -19124,8 +19324,8 @@ input servers_set_input {
   enabled: Boolean
   host: String
   id: uuid
+  is_on_demand: Boolean
   label: String
-  on_demand: Boolean
   owner_steam_id: bigint
   port: Int
   rcon_password: bytea
@@ -19170,8 +19370,8 @@ input servers_stream_cursor_value_input {
   enabled: Boolean
   host: String
   id: uuid
+  is_on_demand: Boolean
   label: String
-  on_demand: Boolean
   owner_steam_id: bigint
   port: Int
   rcon_password: bytea
@@ -19202,10 +19402,10 @@ enum servers_update_column {
   id
 
   """column name"""
-  label
+  is_on_demand
 
   """column name"""
-  on_demand
+  label
 
   """column name"""
   owner_steam_id
@@ -21281,9 +21481,7 @@ type subscription_root {
     where: teams_bool_exp
   ): [teams!]!
 
-  """
-  fetch data from the table: "tournament_brackets"
-  """
+  """An array relationship"""
   tournament_brackets(
     """distinct select on columns"""
     distinct_on: [tournament_brackets_select_column!]
@@ -21301,9 +21499,7 @@ type subscription_root {
     where: tournament_brackets_bool_exp
   ): [tournament_brackets!]!
 
-  """
-  fetch aggregated fields from the table: "tournament_brackets"
-  """
+  """An aggregate relationship"""
   tournament_brackets_aggregate(
     """distinct select on columns"""
     distinct_on: [tournament_brackets_select_column!]
