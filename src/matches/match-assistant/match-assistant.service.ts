@@ -727,15 +727,15 @@ export class MatchAssistantService {
 
   public async canCancel(matchId: string, user: User) {
     const { matches_by_pk } = await this.hasura.query(
-        {
-          matches_by_pk: {
-            __args: {
-              id: matchId,
-            },
-            can_cancel: true,
+      {
+        matches_by_pk: {
+          __args: {
+            id: matchId,
           },
+          can_cancel: true,
         },
-        user,
+      },
+      user,
     );
 
     return matches_by_pk.can_cancel;

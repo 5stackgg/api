@@ -41,23 +41,23 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       },
     });
 
-    for(const type of [
-        'player_kills',
-        `player_assists`,
-        'player_damages',
-        'player_flashes',
-        'player_utility',
-        'player_objectives',
-        'player_unused_utility',
+    for (const type of [
+      "player_kills",
+      `player_assists`,
+      "player_damages",
+      "player_flashes",
+      "player_utility",
+      "player_objectives",
+      "player_unused_utility",
     ]) {
       await this.hasura.mutation({
         [`delete_${type}`]: {
           __args: {
             where: {
-              round:  {
-                _gte: statsRound
-              }
-            }
+              round: {
+                _gte: statsRound,
+              },
+            },
           },
           __typename: true,
         },
@@ -84,7 +84,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         });
       }
 
-      if(match_map_round.round < matchRound) {
+      if (match_map_round.round < matchRound) {
         continue;
       }
 
@@ -108,8 +108,8 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`,
     );
 
-    if(match_map_rounds.length === 0) {
-      this.logger.warn('unable to reset round , stats are gone.');
+    if (match_map_rounds.length === 0) {
+      this.logger.warn("unable to reset round , stats are gone.");
       return;
     }
 
