@@ -9,12 +9,12 @@ import passport from "passport";
 import { Request } from "express";
 import session from "express-session";
 import RedisStore from "connect-redis";
-import { User } from "../../auth/types/User";
-import { RconService } from "../rcon.service";
-import { getCookieOptions } from "../../utilities/getCookieOptions";
-import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
+import { User } from "../auth/types/User";
+import { RconService } from "../rcon/rcon.service";
+import { getCookieOptions } from "../utilities/getCookieOptions";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { ConfigService } from "@nestjs/config";
-import { AppConfig } from "../../configs/types/AppConfig";
+import { AppConfig } from "../configs/types/AppConfig";
 
 type FiveStackWebSocketClient = WebSocket.WebSocket & {
   user: User;
@@ -33,8 +33,8 @@ export class ServerGateway {
     Map<
       string,
       {
-        sessions: number;
-        client: FiveStackWebSocketClient;
+        user: User;
+        sessions: Array<FiveStackWebSocketClient>;
       }
     >
   > = {};
@@ -88,27 +88,20 @@ export class ServerGateway {
       this.matches[data.matchId] = new Map();
     }
 
-    let matchClientSessions = this.matches[data.matchId].get(
-      client.user.steam_id,
-    );
+    let userData = this.matches[data.matchId].get(client.user.steam_id);
 
-    if (!matchClientSessions) {
-      matchClientSessions = {
-        client,
-        sessions: 0,
+    if (!userData) {
+      userData = {
+        sessions: [],
+        user: client.user,
       };
-      this.matches[data.matchId].set(client.user.steam_id, matchClientSessions);
+      this.matches[data.matchId].set(client.user.steam_id, userData);
     }
 
-    if (
-      !Array.from(this.matches[data.matchId].values()).find((session) => {
-        return session.client === client;
-      })
-    ) {
-      matchClientSessions.sessions++;
-      const { name, steam_id, avatar_url } = client.user;
+    const { name, steam_id, avatar_url } = client.user;
 
-      this.sendToLobby(data.matchId, {
+    if (userData.sessions.length === 0) {
+      this.sendToLobby(`lobby`, data.matchId, {
         event: "joined",
         user: {
           name,
@@ -119,6 +112,8 @@ export class ServerGateway {
       });
     }
 
+    userData.sessions.push(client);
+
     client.send(
       JSON.stringify({
         event: "lobby",
@@ -126,12 +121,8 @@ export class ServerGateway {
           event: "list",
           matchId: data.matchId,
           lobby: Array.from(this.matches[data.matchId].values()).map(
-            ({ client }) => {
-              return {
-                name: client.user.name,
-                steam_id: client.user.steam_id,
-                avatar_url: client.user.avatar_url,
-              };
+            ({ user }) => {
+              return user;
             },
           ),
         },
@@ -139,10 +130,13 @@ export class ServerGateway {
     );
 
     client.on("close", () => {
-      matchClientSessions.sessions--;
-      if (matchClientSessions.sessions === 0) {
+      userData.sessions = userData.sessions.filter((_client) => {
+        return _client !== client;
+      });
+
+      if (userData.sessions.length === 0) {
         this.matches[data.matchId].delete(client.user.steam_id);
-        this.sendToLobby(data.matchId, {
+        this.sendToLobby("lobby", data.matchId, {
           event: "left",
           user: {
             steam_id: client.user.steam_id,
@@ -152,7 +146,7 @@ export class ServerGateway {
     });
   }
 
-  @SubscribeMessage("lobby")
+  @SubscribeMessage("lobby:chat")
   async lobby(
     @MessageBody()
     data: {
@@ -161,31 +155,43 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    this.sendToLobby(data.matchId, {
-      message: data.message,
-      client,
+    this.sendToLobby("lobby:chat", data.matchId, {
+      event: "message",
+      data: {
+        message: data.message,
+        time: new Date().toISOString(),
+        from: {
+          name: client.user.name,
+          steam_id: client.user.steam_id,
+          avatar_url: client.user.avatar_url,
+          profile_url: client.user.profile_url,
+        },
+      },
     });
   }
 
   private sendToLobby(
+    event: string,
     matchId: string,
     data: Record<string, any>,
     sender?: FiveStackWebSocketClient,
   ) {
-    for (const [, { client }] of this.matches[matchId]) {
-      if (sender === client) {
-        continue;
-      }
+    for (const [, data] of this.matches[matchId]) {
+      for (const session of data.sessions) {
+        if (sender === session) {
+          continue;
+        }
 
-      client.send(
-        JSON.stringify({
-          event: "lobby",
-          data: {
-            matchId,
-            ...data,
-          },
-        }),
-      );
+        session.send(
+          JSON.stringify({
+            event,
+            data: {
+              matchId,
+              ...data,
+            },
+          }),
+        );
+      }
     }
   }
 
