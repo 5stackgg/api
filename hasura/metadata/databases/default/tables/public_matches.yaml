@@ -161,6 +161,12 @@ computed_fields:
         name: is_coach
         schema: public
       session_argument: hasura_session
+  - name: is_in_lineup
+    definition:
+      function:
+        name: is_in_lineup
+        schema: public
+      session_argument: hasura_session
   - name: is_match_server_available
     definition:
       function:
@@ -255,6 +261,7 @@ select_permissions:
         - current_match_map_id
         - is_captain
         - is_coach
+        - is_in_lineup
         - is_match_server_available
         - is_organizer
         - is_tournament_match
