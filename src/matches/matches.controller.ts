@@ -485,11 +485,11 @@ export class MatchesController {
         __args: {
           id: data.match_id,
         },
+        status: true,
       },
-      status: true,
     });
 
-    if (matches_by_pk?.status !== "WaitingForCheckIn") {
+    if (matches_by_pk.status !== "WaitingForCheckIn") {
       throw Error("match is not accepting check in's at this time");
     }
 
