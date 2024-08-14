@@ -7466,6 +7466,11 @@ type matches {
   can_cancel: Boolean
 
   """
+  A computed field, executes function "can_schedule_match"
+  """
+  can_schedule: Boolean
+
+  """
   A computed field, executes function "can_start_match"
   """
   can_start: Boolean
@@ -8093,6 +8098,7 @@ input matches_bool_exp {
   _or: [matches_bool_exp!]
   can_assign_map: Boolean_comparison_exp
   can_cancel: Boolean_comparison_exp
+  can_schedule: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
   connection_link: String_comparison_exp
   connection_string: String_comparison_exp
@@ -8418,6 +8424,7 @@ input matches_on_conflict {
 input matches_order_by {
   can_assign_map: order_by
   can_cancel: order_by
+  can_schedule: order_by
   can_start: order_by
   connection_link: order_by
   connection_string: order_by

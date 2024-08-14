@@ -10428,6 +10428,9 @@ export default {
             "can_cancel": [
                 0
             ],
+            "can_schedule": [
+                0
+            ],
             "can_start": [
                 0
             ],
@@ -11216,6 +11219,9 @@ export default {
             "can_cancel": [
                 1
             ],
+            "can_schedule": [
+                1
+            ],
             "can_start": [
                 1
             ],
@@ -11754,6 +11760,9 @@ export default {
                 658
             ],
             "can_cancel": [
+                658
+            ],
+            "can_schedule": [
                 658
             ],
             "can_start": [

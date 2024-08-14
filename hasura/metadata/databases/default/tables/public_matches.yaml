@@ -126,6 +126,12 @@ computed_fields:
         name: can_cancel_match
         schema: public
       session_argument: hasura_session
+  - name: can_schedule
+    definition:
+      function:
+        name: can_schedule_match
+        schema: public
+      session_argument: hasura_session
   - name: can_start
     definition:
       function:
@@ -255,6 +261,7 @@ select_permissions:
       computed_fields:
         - can_assign_map
         - can_cancel
+        - can_schedule
         - can_start
         - connection_link
         - connection_string
