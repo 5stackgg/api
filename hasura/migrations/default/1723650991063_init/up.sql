@@ -1,13 +1,11 @@
 SET check_function_bodies = false;
-CREATE TABLE public.tournaments (
+CREATE TABLE public.teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
-    description text,
-    start timestamp with time zone NOT NULL,
-    organizer_steam_id bigint NOT NULL,
-    status text DEFAULT 'Setup'::text NOT NULL,
-    match_options_id uuid NOT NULL
+    short_name text NOT NULL,
+    owner_steam_id bigint NOT NULL
 );
+
 CREATE TABLE public.matches (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     server_id uuid,
@@ -22,26 +20,69 @@ CREATE TABLE public.matches (
     lineup_1_id uuid NOT NULL,
     lineup_2_id uuid NOT NULL
 );
-CREATE TABLE public.match_lineups (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    team_id uuid,
-    coach_steam_id bigint
-);
-COMMENT ON TABLE public.match_lineups IS 'relational table for assigning a team to a match and lineup';
-CREATE TABLE public.teams (
+
+CREATE TABLE public.tournaments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
-    short_name text NOT NULL,
-    owner_steam_id bigint NOT NULL
+    description text,
+    start timestamp with time zone NOT NULL,
+    organizer_steam_id bigint NOT NULL,
+    status text DEFAULT 'Setup'::text NOT NULL,
+    match_options_id uuid NOT NULL
 );
+
+CREATE TABLE public.match_veto_picks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    match_id uuid NOT NULL,
+    type text NOT NULL,
+    match_lineup_id uuid NOT NULL,
+    map_id uuid NOT NULL,
+    side text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.match_lineup_players (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    steam_id bigint,
+    match_lineup_id uuid NOT NULL,
+    discord_id text,
+    captain boolean DEFAULT false NOT NULL,
+    placeholder_name text,
+    checked_in boolean DEFAULT false NOT NULL,
+    CONSTRAINT chk_null_steam_id_place_holder_name CHECK ((((steam_id IS NOT NULL) AND (placeholder_name IS NULL)) OR ((steam_id IS NULL) AND (placeholder_name IS NOT NULL))))
+);
+COMMENT ON TABLE public.match_lineup_players IS 'relational table for assigning a players to a match and lineup';
+
+CREATE TABLE public.match_maps (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    match_id uuid NOT NULL,
+    map_id uuid NOT NULL,
+    "order" integer NOT NULL,
+    status text DEFAULT 'Scheduled'::text NOT NULL,
+    lineup_1_side text DEFAULT 'CT'::text NOT NULL,
+    lineup_2_side text DEFAULT 'TERRORIST'::text,
+    lineup_1_timeouts_available integer DEFAULT 2 NOT NULL,
+    lineup_2_timeouts_available integer DEFAULT 2 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.tournament_team_roster (
+    tournament_team_id uuid NOT NULL,
+    player_steam_id bigint NOT NULL,
+    tournament_id uuid NOT NULL,
+    role text DEFAULT 'Member'::text NOT NULL
+);
+
 CREATE TABLE public.players (
     steam_id bigint NOT NULL,
     name text NOT NULL,
     profile_url text,
     avatar_url text,
     discord_id text,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    role text DEFAULT 'user'::text NOT NULL
 );
+
 CREATE TABLE public.servers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     host text NOT NULL,
@@ -49,11 +90,19 @@ CREATE TABLE public.servers (
     rcon_password bytea NOT NULL,
     port integer DEFAULT 27015 NOT NULL,
     tv_port integer,
-    on_demand boolean DEFAULT false NOT NULL,
+    is_on_demand boolean DEFAULT false NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
     owner_steam_id bigint,
     api_password uuid DEFAULT gen_random_uuid() NOT NULL
 );
+
+CREATE TABLE public.match_lineups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    team_id uuid,
+    coach_steam_id bigint
+);
+COMMENT ON TABLE public.match_lineups IS 'relational table for assigning a team to a match and lineup';
+
 CREATE TABLE public.match_options (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     overtime boolean NOT NULL,
@@ -68,6 +117,7 @@ CREATE TABLE public.match_options (
     map_pool_id uuid NOT NULL,
     type text DEFAULT 'competitive'::text NOT NULL
 );
+
 CREATE TABLE public.player_damages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
@@ -89,18 +139,7 @@ CREATE TABLE public.player_damages (
     attacker_location_coordinates text,
     attacked_location_coordinates text
 );
-CREATE TABLE public.match_maps (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    match_id uuid NOT NULL,
-    map_id uuid NOT NULL,
-    "order" integer NOT NULL,
-    status text DEFAULT 'Scheduled'::text NOT NULL,
-    lineup_1_side text DEFAULT 'CT'::text NOT NULL,
-    lineup_2_side text DEFAULT 'TERRORIST'::text,
-    lineup_1_timeouts_available integer DEFAULT 2 NOT NULL,
-    lineup_2_timeouts_available integer DEFAULT 2 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
+
 CREATE TABLE public.tournament_brackets (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_stage_id uuid NOT NULL,
@@ -112,17 +151,15 @@ CREATE TABLE public.tournament_brackets (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     match_number integer
 );
-CREATE FUNCTION public.set_current_timestamp_updated_at() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-  _new record;
-BEGIN
-  _new := NEW;
-  _new."updated_at" = NOW();
-  RETURN _new;
-END;
-$$;
+
+CREATE TABLE public.team_invites (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    team_id uuid NOT NULL,
+    steam_id bigint NOT NULL,
+    invited_by_player_steam_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE public._map_pool (
     map_id uuid NOT NULL,
     map_pool_id uuid NOT NULL
@@ -144,6 +181,10 @@ CREATE TABLE public.e_match_types (
     description text NOT NULL
 );
 CREATE TABLE public.e_objective_types (
+    value text NOT NULL,
+    description text NOT NULL
+);
+CREATE TABLE public.e_player_roles (
     value text NOT NULL,
     description text NOT NULL
 );
@@ -175,6 +216,18 @@ CREATE TABLE public.e_veto_pick_types (
     value text NOT NULL,
     description text NOT NULL
 );
+CREATE TABLE public.events (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text NOT NULL,
+    invite_only boolean NOT NULL,
+    owner_steam_id bigint NOT NULL,
+    start date NOT NULL,
+    "end" date NOT NULL
+);
+CREATE TABLE public.lineup_2_count (
+    count bigint
+);
 CREATE TABLE public.map_pools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     type text NOT NULL,
@@ -190,16 +243,6 @@ CREATE TABLE public.maps (
     poster text,
     patch text
 );
-CREATE TABLE public.match_lineup_players (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    steam_id bigint,
-    match_lineup_id uuid NOT NULL,
-    discord_id text,
-    captain boolean DEFAULT false NOT NULL,
-    placeholder_name text,
-    CONSTRAINT chk_null_steam_id_place_holder_name CHECK ((((steam_id IS NOT NULL) AND (placeholder_name IS NULL)) OR ((steam_id IS NULL) AND (placeholder_name IS NOT NULL))))
-);
-COMMENT ON TABLE public.match_lineup_players IS 'relational table for assigning a players to a match and lineup';
 CREATE TABLE public.match_map_demos (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     file text NOT NULL,
@@ -219,15 +262,6 @@ CREATE TABLE public.match_map_rounds (
     lineup_1_timeouts_available integer NOT NULL,
     lineup_2_timeouts_available integer NOT NULL,
     backup_file text
-);
-CREATE TABLE public.match_veto_picks (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    match_id uuid NOT NULL,
-    type text NOT NULL,
-    match_lineup_id uuid NOT NULL,
-    map_id uuid NOT NULL,
-    side text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 CREATE TABLE public.player_assists (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -303,13 +337,6 @@ CREATE TABLE public.player_utility (
     attacker_steam_id bigint NOT NULL,
     attacker_location_coordinates text
 );
-CREATE TABLE public.team_invites (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    team_id uuid NOT NULL,
-    steam_id bigint NOT NULL,
-    invited_by_player_steam_id bigint NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
 CREATE TABLE public.team_roster (
     player_steam_id bigint NOT NULL,
     team_id uuid NOT NULL,
@@ -331,12 +358,6 @@ CREATE TABLE public.tournament_stages (
     settings jsonb,
     min_teams integer NOT NULL,
     max_teams integer NOT NULL
-);
-CREATE TABLE public.tournament_team_roster (
-    tournament_team_id uuid NOT NULL,
-    player_steam_id bigint NOT NULL,
-    tournament_id uuid NOT NULL,
-    role text DEFAULT 'Member'::text NOT NULL
 );
 CREATE TABLE public.tournament_teams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -472,6 +493,8 @@ ALTER TABLE ONLY public.e_match_types
     ADD CONSTRAINT e_match_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_objective_types
     ADD CONSTRAINT e_objective__pkey PRIMARY KEY (value);
+ALTER TABLE ONLY public.e_player_roles
+    ADD CONSTRAINT e_player_roles_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_team_roles
     ADD CONSTRAINT e_team_roles_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_sides
@@ -486,6 +509,8 @@ ALTER TABLE ONLY public.e_utility_types
     ADD CONSTRAINT e_utility_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_veto_pick_types
     ADD CONSTRAINT e_veto_pick_type_pkey PRIMARY KEY (value);
+ALTER TABLE ONLY public.events
+    ADD CONSTRAINT leagues_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_pkey PRIMARY KEY (map_id, map_pool_id);
 ALTER TABLE ONLY public.map_pools
@@ -596,6 +621,7 @@ CREATE INDEX objectives_player_match ON public.player_objectives USING btree (pl
 CREATE INDEX unused_utility_player_match ON public.player_unused_utility USING btree (player_steam_id, match_id);
 CREATE INDEX utility_player_match ON public.player_utility USING btree (attacker_steam_id, match_id);
 CREATE INDEX veto_match ON public.match_veto_picks USING btree (match_id);
+
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public._map_pool
@@ -708,6 +734,8 @@ ALTER TABLE ONLY public.player_utility
     ADD CONSTRAINT player_utility_match_map_id_fkey FOREIGN KEY (match_map_id) REFERENCES public.match_maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.player_utility
     ADD CONSTRAINT player_utility_type_fkey FOREIGN KEY (type) REFERENCES public.e_utility_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_role_fkey FOREIGN KEY (role) REFERENCES public.e_player_roles(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.servers
     ADD CONSTRAINT servers_player_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.team_invites
