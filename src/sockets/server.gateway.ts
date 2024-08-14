@@ -139,11 +139,11 @@ export class ServerGateway {
         data: {
           event: "messages",
           matchId: data.matchId,
-          messages: (
-            await this.redis.lrange(`chat:${data.matchId}`, 0, -1)
-          ).map((data) => {
-            return JSON.parse(data);
-          }).reverse(),
+          messages: (await this.redis.lrange(`chat:${data.matchId}`, 0, -1))
+            .map((data) => {
+              return JSON.parse(data);
+            })
+            .reverse(),
         },
       }),
     );
@@ -176,7 +176,7 @@ export class ServerGateway {
   ) {
     const timestamp = new Date();
 
-    const message  =  {
+    const message = {
       message: data.message,
       timestamp: timestamp.toISOString(),
       from: {
@@ -186,11 +186,8 @@ export class ServerGateway {
         avatar_url: client.user.avatar_url,
         profile_url: client.user.profile_url,
       },
-    }
-    await this.redis.lpush(
-      `chat:${data.matchId}`,
-      JSON.stringify(message),
-    );
+    };
+    await this.redis.lpush(`chat:${data.matchId}`, JSON.stringify(message));
     // TODO - dont need to set this every time
     await this.redis.expire(`chat:${data.matchId}`, 86400);
 
