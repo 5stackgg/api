@@ -229,6 +229,7 @@ export class MatchesController {
           },
           _set: {
             status: "Scheduled",
+            scheduled_at: time,
           },
         },
         id: true,

@@ -12,7 +12,7 @@ CREATE TABLE public.matches (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     server_id uuid,
     label text,
-    scheduled_at date,
+    scheduled_at timestamp with time zone,
     password text DEFAULT gen_random_uuid() NOT NULL,
     status text DEFAULT 'PickingPlayers'::text NOT NULL,
     organizer_steam_id bigint,
