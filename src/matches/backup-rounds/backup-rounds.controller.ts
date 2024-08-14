@@ -54,6 +54,7 @@ export class BackupRoundsController {
       zlib: { level: zlib.constants.Z_NO_COMPRESSION },
     });
 
+    // @ts-ignore
     archive.pipe(response);
 
     for (const map_round of match_map_rounds) {

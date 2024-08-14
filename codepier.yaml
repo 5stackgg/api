@@ -1,5 +1,5 @@
 namespaces: [5stack]
-image: node:20
+image: node:22
 deployment: api
 sync:
   - .:/opt/5stack

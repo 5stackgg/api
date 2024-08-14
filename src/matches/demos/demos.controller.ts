@@ -61,6 +61,7 @@ export class DemosController {
       zlib: { level: zlib.constants.Z_NO_COMPRESSION },
     });
 
+    // @ts-ignore
     archive.pipe(response);
 
     for (const demo of demos) {

@@ -88,7 +88,7 @@ export class MatchesController {
             captain: true,
             steam_id: true,
             match_lineup_id: true,
-            name: true,
+            placeholder_name: true,
           },
         },
         lineup_2: {
@@ -96,10 +96,11 @@ export class MatchesController {
           name: true,
           coach_steam_id: true,
           lineup_players: {
+            ok: true,
             captain: true,
             steam_id: true,
             match_lineup_id: true,
-            name: true,
+            placeholder_name: true,
           },
         },
       },
@@ -350,7 +351,7 @@ export class MatchesController {
   public async cancelMatch(data: { user: User; match_id: string }) {
     const { match_id, user } = data;
 
-    if (!(await this.matchAssistant.canStart(match_id, user))) {
+    if (!(await this.matchAssistant.canCancel(match_id, user))) {
       throw Error(
         "you are not a match organizer or the match is waiting for players to check in",
       );
