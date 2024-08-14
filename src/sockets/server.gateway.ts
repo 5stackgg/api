@@ -133,17 +133,19 @@ export class ServerGateway {
       }),
     );
 
+    const messagesObject = await this.redis.hgetall(`chat_${data.matchId}`);
+
+    const messages = Object.entries(messagesObject)
+      .map(([, value]) => JSON.parse(value))
+      .reverse();
+
     client.send(
       JSON.stringify({
         event: "lobby",
         data: {
           event: "messages",
           matchId: data.matchId,
-          messages: (await this.redis.lrange(`chat:${data.matchId}`, 0, -1))
-            .map((data) => {
-              return JSON.parse(data);
-            })
-            .reverse(),
+          messages: messages,
         },
       }),
     );
@@ -176,6 +178,7 @@ export class ServerGateway {
   ) {
     const timestamp = new Date();
 
+    // TODO - we should fetch the user on the UI instead
     const message = {
       message: data.message,
       timestamp: timestamp.toISOString(),
@@ -187,14 +190,24 @@ export class ServerGateway {
         profile_url: client.user.profile_url,
       },
     };
-    await this.redis.lpush(`chat:${data.matchId}`, JSON.stringify(message));
-    // TODO - dont need to set this every time
-    await this.redis.expire(`chat:${data.matchId}`, 86400);
 
-    this.sendToLobby("lobby:chat", data.matchId, {
-      event: "message",
-      data: message,
-    });
+    const messageKey = `chat_${data.matchId}`;
+    const messageField = `${client.user.steam_id}:${Date.now().toString()}`;
+    await this.redis.hset(messageKey, messageField, JSON.stringify(message));
+
+    await this.redis.sendCommand(
+      new Redis.Command("HEXPIRE", [
+        messageKey,
+        60 * 60,
+        "FIELDS",
+        1,
+        messageField,
+      ]),
+    );
+
+    console.info("WEEE");
+
+    this.sendToLobby("lobby:chat", data.matchId, message);
   }
 
   private sendToLobby(
