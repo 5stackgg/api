@@ -35431,8 +35431,7 @@ export default {
                         "uuid!"
                     ],
                     "time": [
-                        1136,
-                        "timestamptz!"
+                        1136
                     ]
                 }
             ],

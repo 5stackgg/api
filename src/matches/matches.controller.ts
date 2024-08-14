@@ -168,6 +168,7 @@ export class MatchesController {
           this.logger.warn(
             `[${matchId}] another match is currently live, moving back to scheduled`,
           );
+          // TODO - should we make a state for waiting for server?
           await this.matchAssistant.updateMatchStatus(match.id, "Scheduled");
         }
       } else {
@@ -209,15 +210,15 @@ export class MatchesController {
   public async scheduleMatch(data: {
     user: User;
     match_id: string;
-    time: Date;
+    time?: Date;
   }) {
     const { match_id, user, time } = data;
 
     if (!(await this.matchAssistant.canSchedule(match_id, user))) {
-      throw Error("you are not a match organizer");
+      throw Error("cannot schedule match until teams are checked in.");
     }
 
-    if (!time || new Date(time) < new Date()) {
+    if (time && new Date(time) < new Date()) {
       throw Error("date must be in the future");
     }
 
@@ -228,8 +229,8 @@ export class MatchesController {
             id: match_id,
           },
           _set: {
-            status: "Scheduled",
-            scheduled_at: time,
+            status: time ? "Scheduled" : "WaitingForCheckIn",
+            ...(time ? { scheduled_at: time } : {}),
           },
         },
         id: true,
@@ -237,7 +238,11 @@ export class MatchesController {
       },
     });
 
-    if (!updatedMatch || updatedMatch.status !== "Scheduled") {
+    if (
+      !updatedMatch ||
+      (updatedMatch.status !== "WaitingForCheckIn" &&
+        updatedMatch.status !== "Scheduled")
+    ) {
       throw Error(`Unable to schedule match`);
     }
 

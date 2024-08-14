@@ -11,7 +11,7 @@ BEGIN
 		from match_options
 		where id = match.match_options_id;
 
-	IF match.status = 'Live' or match.status = 'Scheduled' THEN
+	IF match.status = 'Scheduled' THEN
        SELECT COUNT(*) INTO lineup_1_count
                FROM match_lineup_players mlp
                 where mlp.match_lineup_id = match.lineup_1_id;

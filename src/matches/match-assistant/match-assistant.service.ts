@@ -629,7 +629,14 @@ export class MatchAssistantService {
             },
             matches: {
               status: {
-                _nin: ["Scheduled", "Tie", "Forfeit", "Canceled", "Finished"],
+                _nin: [
+                  "Scheduled",
+                  "WaitingForCheckIn",
+                  "Tie",
+                  "Forfeit",
+                  "Canceled",
+                  "Finished",
+                ],
               },
             },
           },
