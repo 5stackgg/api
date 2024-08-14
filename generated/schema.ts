@@ -13918,7 +13918,7 @@ export interface mutation_rootGenqlSelection{
     /** the row to be inserted */
     object: v_pool_maps_insert_input} })
     /** scheduleMatch */
-    scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
+    scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time: Scalars['timestamptz']} })
     /** setMatchWinner */
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** startMatch */

@@ -10331,7 +10331,7 @@ type mutation_root {
   ): v_pool_maps
 
   """scheduleMatch"""
-  scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
+  scheduleMatch(match_id: uuid!, time: timestamptz!): SuccessOutput
 
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
