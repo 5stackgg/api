@@ -15,6 +15,7 @@ import { getCookieOptions } from "../utilities/getCookieOptions";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
+import Redis from "ioredis";
 
 type FiveStackWebSocketClient = WebSocket.WebSocket & {
   user: User;
@@ -28,6 +29,7 @@ type FiveStackWebSocketClient = WebSocket.WebSocket & {
   path: "/ws",
 })
 export class ServerGateway {
+  private redis: Redis;
   private matches: Record<
     string,
     Map<
@@ -43,7 +45,9 @@ export class ServerGateway {
     private readonly config: ConfigService,
     private readonly rconService: RconService,
     private readonly redisManager: RedisManagerService,
-  ) {}
+  ) {
+    this.redis = this.redisManager.getConnection();
+  }
 
   handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
@@ -60,7 +64,7 @@ export class ServerGateway {
       cookie: getCookieOptions(),
       store: new RedisStore({
         prefix: appConfig.name,
-        client: this.redisManager.getConnection(),
+        client: this.redis,
       }),
       // @ts-ignore
       // luckily in this case the middlewares do not require teh response
@@ -129,6 +133,21 @@ export class ServerGateway {
       }),
     );
 
+    client.send(
+      JSON.stringify({
+        event: "lobby",
+        data: {
+          event: "messages",
+          matchId: data.matchId,
+          messages: (
+            await this.redis.lrange(`chat:${data.matchId}`, 0, -1)
+          ).map((data) => {
+            return JSON.parse(data);
+          }),
+        },
+      }),
+    );
+
     client.on("close", () => {
       userData.sessions = userData.sessions.filter((_client) => {
         return _client !== client;
@@ -155,11 +174,29 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    const timestamp = new Date();
+
+    await this.redis.lpush(
+      `chat:${data.matchId}`,
+      JSON.stringify({
+        message: data.message,
+        timestamp,
+        from: {
+          name: client.user.name,
+          steam_id: client.user.steam_id,
+          avatar_url: client.user.avatar_url,
+          profile_url: client.user.profile_url,
+        },
+      }),
+    );
+    // TODO - dont need to set this every time
+    await this.redis.expire(`chat:${data.matchId}`, 86400);
+
     this.sendToLobby("lobby:chat", data.matchId, {
       event: "message",
       data: {
         message: data.message,
-        time: new Date().toISOString(),
+        timestamp: timestamp.toISOString(),
         from: {
           name: client.user.name,
           steam_id: client.user.steam_id,
@@ -176,8 +213,8 @@ export class ServerGateway {
     data: Record<string, any>,
     sender?: FiveStackWebSocketClient,
   ) {
-    for (const [, data] of this.matches[matchId]) {
-      for (const session of data.sessions) {
+    for (const [, userData] of this.matches[matchId]) {
+      for (const session of userData.sessions) {
         if (sender === session) {
           continue;
         }
