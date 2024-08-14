@@ -480,6 +480,19 @@ export class MatchesController {
 
   @HasuraAction()
   public async checkIntoMatch(data: { user: User; match_id: string }) {
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: data.match_id,
+        },
+      },
+      status: true,
+    });
+
+    if (matches_by_pk?.status !== "WaitingForCheckIn") {
+      throw Error("match is not accepting check in's at this time");
+    }
+
     await this.hasura.mutation({
       update_match_lineup_players: {
         __args: {
@@ -511,7 +524,7 @@ export class MatchesController {
       },
     });
 
-    const adfasdfadsf = await this.hasura.mutation({
+    await this.hasura.mutation({
       update_matches: {
         __args: {
           _set: {
@@ -544,8 +557,6 @@ export class MatchesController {
         affected_rows: true,
       },
     });
-
-    console.info(adfasdfadsf);
 
     return {
       success: false,
