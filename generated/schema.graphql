@@ -4309,6 +4309,11 @@ type match_lineups {
   coach_steam_id: bigint
   id: uuid!
 
+  """
+  A computed field, executes function "is_match_lineup_ready"
+  """
+  is_ready: Boolean
+
   """An array relationship"""
   lineup_players(
     """distinct select on columns"""
@@ -4480,6 +4485,7 @@ input match_lineups_bool_exp {
   coach: players_bool_exp
   coach_steam_id: bigint_comparison_exp
   id: uuid_comparison_exp
+  is_ready: Boolean_comparison_exp
   lineup_players: match_lineup_players_bool_exp
   lineup_players_aggregate: match_lineup_players_aggregate_bool_exp
   match_veto_picks: match_veto_picks_bool_exp
@@ -4600,6 +4606,7 @@ input match_lineups_order_by {
   coach: players_order_by
   coach_steam_id: order_by
   id: order_by
+  is_ready: order_by
   lineup_players_aggregate: match_lineup_players_aggregate_order_by
   match_veto_picks_aggregate: match_veto_picks_aggregate_order_by
   name: order_by
@@ -7530,6 +7537,11 @@ type matches {
   is_coach: Boolean
 
   """
+  A computed field, executes function "is_in_lineup"
+  """
+  is_in_lineup: Boolean
+
+  """
   A computed field, executes function "is_match_server_available"
   """
   is_match_server_available: Boolean
@@ -8092,6 +8104,7 @@ input matches_bool_exp {
   id: uuid_comparison_exp
   is_captain: Boolean_comparison_exp
   is_coach: Boolean_comparison_exp
+  is_in_lineup: Boolean_comparison_exp
   is_match_server_available: Boolean_comparison_exp
   is_organizer: Boolean_comparison_exp
   is_tournament_match: Boolean_comparison_exp
@@ -8415,6 +8428,7 @@ input matches_order_by {
   id: order_by
   is_captain: order_by
   is_coach: order_by
+  is_in_lineup: order_by
   is_match_server_available: order_by
   is_organizer: order_by
   is_tournament_match: order_by

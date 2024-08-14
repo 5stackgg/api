@@ -5664,6 +5664,9 @@ export default {
             "id": [
                 1418
             ],
+            "is_ready": [
+                0
+            ],
             "lineup_players": [
                 351,
                 {
@@ -5938,6 +5941,9 @@ export default {
             "id": [
                 1419
             ],
+            "is_ready": [
+                1
+            ],
             "lineup_players": [
                 362
             ],
@@ -6116,6 +6122,9 @@ export default {
                 658
             ],
             "id": [
+                658
+            ],
+            "is_ready": [
                 658
             ],
             "lineup_players_aggregate": [
@@ -10490,6 +10499,9 @@ export default {
             "is_coach": [
                 0
             ],
+            "is_in_lineup": [
+                0
+            ],
             "is_match_server_available": [
                 0
             ],
@@ -11237,6 +11249,9 @@ export default {
             "is_coach": [
                 1
             ],
+            "is_in_lineup": [
+                1
+            ],
             "is_match_server_available": [
                 1
             ],
@@ -11769,6 +11784,9 @@ export default {
                 658
             ],
             "is_coach": [
+                658
+            ],
+            "is_in_lineup": [
                 658
             ],
             "is_match_server_available": [

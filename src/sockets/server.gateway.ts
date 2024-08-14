@@ -95,33 +95,16 @@ export class ServerGateway {
         __args: {
           id: data.matchId,
         },
-        lineup_1: {
-          lineup_players: {
-            steam_id: true,
-          },
-        },
-        lineup_2: {
-          lineup_players: {
-            steam_id: true,
-          },
-        },
+        is_coach: true,
+        is_organizer: true,
+        is_in_lineup: true,
       },
-    });
+    }, client.user);
 
     if (!matches_by_pk) {
       return;
     }
-
-    const lineup_players = [
-      ...matches_by_pk.lineup_1.lineup_players,
-      ...matches_by_pk.lineup_2.lineup_players,
-    ];
-
-    if (
-      !lineup_players.find(({ steam_id }) => {
-        return client.user.steam_id === steam_id;
-      })
-    ) {
+    if (matches_by_pk.is_coach === false && matches_by_pk.is_in_lineup === false && matches_by_pk.is_organizer === false) {
       return;
     }
 
