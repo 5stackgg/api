@@ -11,7 +11,7 @@ export class ForfeitNonReadyTournamentMatches extends WorkerHost {
   ) {
     super();
   }
-  async process(): Promise<void> {
+  async process(): Promise<number> {
     const { matches } = await this.hasura.query({
       matches: {
         __args: {
@@ -71,6 +71,6 @@ export class ForfeitNonReadyTournamentMatches extends WorkerHost {
       }
     }
 
-    return;
+    return matches.length;
   }
 }

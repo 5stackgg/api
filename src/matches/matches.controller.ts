@@ -511,6 +511,42 @@ export class MatchesController {
       },
     });
 
+    const adfasdfadsf = await this.hasura.mutation({
+      update_matches: {
+        __args: {
+          _set: {
+            status: "Live",
+          },
+          where: {
+            _and: [
+              {
+                id: {
+                  _eq: data.match_id,
+                },
+              },
+              {
+                lineup_1: {
+                  is_ready: {
+                    _eq: true,
+                  },
+                },
+              },
+              {
+                lineup_2: {
+                  is_ready: {
+                    _eq: true,
+                  },
+                },
+              },
+            ],
+          },
+        },
+        affected_rows: true,
+      },
+    });
+
+    console.info(adfasdfadsf);
+
     return {
       success: false,
     };

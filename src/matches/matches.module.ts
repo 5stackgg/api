@@ -62,6 +62,8 @@ import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTourname
     ServerAuthService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
+    CancelNonReadyMatches,
+    ForfeitNonReadyTournamentMatches,
     CheckForScheduledMatches,
     ...Object.values(MatchEvents),
     loggerFactory(),

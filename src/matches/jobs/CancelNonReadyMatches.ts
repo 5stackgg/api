@@ -11,7 +11,7 @@ export class CancelNonReadyMatches extends WorkerHost {
   ) {
     super();
   }
-  async process(): Promise<void> {
+  async process(): Promise<number> {
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
         __args: {
@@ -46,6 +46,6 @@ export class CancelNonReadyMatches extends WorkerHost {
       this.logger.log(`canceled ${update_matches.affected_rows} matches`);
     }
 
-    return;
+    return update_matches.affected_rows;
   }
 }
