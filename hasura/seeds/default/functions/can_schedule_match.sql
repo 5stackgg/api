@@ -6,7 +6,7 @@ DECLARE
     lineup_1_ready boolean;
     lineup_2_ready boolean;
 BEGIN
-    IF (match.status != 'PickingPlayers') THEN
+    IF (match.status != 'PickingPlayers' AND match.status != 'Scheduled') THEN
       return false;
    END IF;
 
