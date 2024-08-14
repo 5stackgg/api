@@ -31,8 +31,8 @@ export default class KillEvent extends MatchEventProcessor<{
     };
 
     await this.hasura.mutation({
-      insert_player_kills_one: [
-        {
+      insert_player_kills_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             match_id: this.matchId,
@@ -58,10 +58,7 @@ export default class KillEvent extends MatchEventProcessor<{
             hitgroup: this.data.hitgroup,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

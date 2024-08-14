@@ -11,8 +11,8 @@ export default class FlashEvent extends MatchEventProcessor<{
 }> {
   public async process() {
     await this.hasura.mutation({
-      insert_player_flashes_one: [
-        {
+      insert_player_flashes_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             match_id: this.matchId,
@@ -24,10 +24,7 @@ export default class FlashEvent extends MatchEventProcessor<{
             team_flash: this.data.team_flash,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

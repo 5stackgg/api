@@ -21,8 +21,8 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
     const round = parseInt(this.data.round) + 1;
 
     const { match_map_rounds } = await this.hasura.query({
-      match_map_rounds: [
-        {
+      match_map_rounds: {
+        __args: {
           where: {
             round: {
               _gte: round,
@@ -32,21 +32,19 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
             },
           },
         },
-        {
-          id: true,
-          round: true,
-          backup_file: true,
-          lineup_1_timeouts_available: true,
-          lineup_2_timeouts_available: true,
-        },
-      ],
+        id: true,
+        round: true,
+        backup_file: true,
+        lineup_1_timeouts_available: true,
+        lineup_2_timeouts_available: true,
+      },
     });
 
     for (const match_map_round of match_map_rounds) {
       if (match_map_round.round === round) {
         await this.hasura.mutation({
-          update_match_maps_by_pk: [
-            {
+          update_match_maps_by_pk: {
+            __args: {
               pk_columns: {
                 id: this.data.match_map_id,
               },
@@ -57,10 +55,8 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
                   match_map_round.lineup_2_timeouts_available,
               },
             },
-            {
-              id: true,
-            },
-          ],
+            id: true,
+          },
         });
       }
 
@@ -71,14 +67,11 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       }
 
       await this.hasura.mutation({
-        delete_match_map_rounds_by_pk: [
-          {
+        delete_match_map_rounds_by_pk: {
+          __args: {
             id: match_map_round.id,
           },
-          {
-            id: true,
-          },
-        ],
+        },
       });
     }
 

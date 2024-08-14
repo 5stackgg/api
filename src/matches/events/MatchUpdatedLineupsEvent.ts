@@ -1,8 +1,4 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import {
-  players_constraint,
-  players_update_column,
-} from "../../../generated/zeus";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   lineups: {
@@ -23,18 +19,15 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
 
     // TODO - just dlete the ones missing , and inesrt the ones missing
     await this.hasura.mutation({
-      delete_match_lineup_players: [
-        {
+      delete_match_lineup_players: {
+        __args: {
           where: {
             match_lineup_id: {
               _in: [match.lineup_1_id, match.lineup_2_id],
             },
           },
         },
-        {
-          affected_rows: true,
-        },
-      ],
+      },
     });
 
     const players: Array<{
@@ -65,36 +58,31 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
         }
 
         await this.hasura.mutation({
-          insert_players_one: [
-            {
+          insert_players_one: {
+            __args: {
               object: {
                 name: player.name,
                 steam_id: player.steam_id,
               },
               on_conflict: {
-                constraint: players_constraint.players_steam_id_key,
-                update_columns: [players_update_column.name],
+                constraint: "players_steam_id_key",
+                update_columns: ["name"],
               },
             },
-            {
-              __typename: true,
-            },
-          ],
+          },
         });
       }
     }
 
     await this.hasura.mutation({
-      insert_match_lineup_players: [
-        {
+      insert_match_lineup_players: {
+        __args: {
           objects: players,
         },
-        {
-          returning: {
-            id: true,
-          },
+        returning: {
+          id: true,
         },
-      ],
+      },
     });
   }
 }

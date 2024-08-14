@@ -9,9 +9,11 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { HasuraQueues } from "./enums/HasuraQueues";
 import { HasuraController } from "./hasura.controller";
 import { loggerFactory } from "../utilities/LoggerFactory";
+import { CacheModule } from "../cache/cache.module";
 
 @Module({
   imports: [
+    CacheModule,
     PostgresModule,
     BullModule.registerQueue({
       name: HasuraQueues.Hasura,

@@ -22,6 +22,7 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { ExpressAdapter } from "@bull-board/express";
 import configs from "./configs";
 import { loggerFactory } from "./utilities/LoggerFactory";
+import { SocketsModule } from "./sockets/sockets.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { loggerFactory } from "./utilities/LoggerFactory";
     DiscordBotModule,
     HasuraModule,
     RconModule,
+    SocketsModule,
     TypeSenseModule,
     MatchesModule,
     TeamsModule,

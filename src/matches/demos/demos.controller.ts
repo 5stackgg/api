@@ -31,8 +31,8 @@ export class DemosController {
     const { matchId, mapId } = request.params;
 
     const { match_map_demos: demos } = await this.hasura.query({
-      match_map_demos: [
-        {
+      match_map_demos: {
+        __args: {
           where: {
             match_id: {
               _eq: matchId,
@@ -46,12 +46,10 @@ export class DemosController {
               : {}),
           },
         },
-        {
-          id: true,
-          file: true,
-          size: true,
-        },
-      ],
+        id: true,
+        file: true,
+        size: true,
+      },
     });
 
     response.writeHead(200, {
@@ -68,14 +66,11 @@ export class DemosController {
     for (const demo of demos) {
       if (!(await this.s3.has(demo.file))) {
         await this.hasura.mutation({
-          delete_match_map_demos_by_pk: [
-            {
+          delete_match_map_demos_by_pk: {
+            __args: {
               id: demo.id,
             },
-            {
-              id: true,
-            },
-          ],
+          },
         });
         continue;
       }
@@ -107,8 +102,8 @@ export class DemosController {
     const size = file.size;
 
     await this.hasura.mutation({
-      insert_match_map_demos_one: [
-        {
+      insert_match_map_demos_one: {
+        __args: {
           object: {
             size,
             file: filename,
@@ -116,10 +111,7 @@ export class DemosController {
             match_map_id: mapId,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

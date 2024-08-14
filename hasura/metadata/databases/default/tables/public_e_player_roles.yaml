@@ -1,0 +1,12 @@
+table:
+  name: e_player_roles
+  schema: public
+is_enum: true
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - value
+        - description
+      filter: {}
+    comment: ""

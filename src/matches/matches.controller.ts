@@ -1,6 +1,5 @@
 import { Controller, Get, Logger, Req } from "@nestjs/common";
 import { Request } from "express";
-import { e_match_status_enum } from "../../generated/zeus";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
@@ -14,6 +13,11 @@ import { EventPattern, Payload, Ctx, NatsContext } from "@nestjs/microservices";
 import { ModuleRef } from "@nestjs/core";
 import { MatchEvents } from "./events";
 import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
+import {
+  e_match_status_enum,
+  match_veto_picks_set_input,
+  matches_set_input,
+} from "../../generated";
 
 @Controller("matches")
 export class MatchesController {
@@ -32,94 +36,73 @@ export class MatchesController {
     const serverId = request.params.serverId;
 
     const { servers_by_pk: server } = await this.hasura.query({
-      servers_by_pk: [
-        {
+      servers_by_pk: {
+        __args: {
           id: serverId,
         },
-        {
-          api_password: true,
-          current_match_id: true,
-        },
-      ],
+        api_password: true,
+        current_match_id: true,
+      },
     });
 
     const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: server.current_match_id,
         },
-        {
+        id: true,
+        password: true,
+        lineup_1_id: true,
+        lineup_2_id: true,
+        organizer_steam_id: true,
+        current_match_map_id: true,
+        options: {
+          mr: true,
+          type: true,
+          best_of: true,
+          coaches: true,
+          overtime: true,
+          knife_round: true,
+          timeout_setting: true,
+          tech_timeout_setting: true,
+          number_of_substitutes: true,
+        },
+        match_maps: {
           id: true,
-          password: true,
-          lineup_1_id: true,
-          lineup_2_id: true,
-          organizer_steam_id: true,
-          current_match_map_id: true,
-          options: {
-            mr: true,
-            type: true,
-            best_of: true,
-            coaches: true,
-            overtime: true,
-            knife_round: true,
-            timeout_setting: true,
-            tech_timeout_setting: true,
-            number_of_substitutes: true,
-          },
-          match_maps: [
-            {},
-            {
-              id: true,
-              map: {
-                name: true,
-                workshop_map_id: true,
-              },
-              order: true,
-              status: true,
-              lineup_1_side: true,
-              lineup_2_side: true,
-              lineup_1_timeouts_available: true,
-              lineup_2_timeouts_available: true,
-            },
-          ],
-          lineup_1: {
-            id: true,
+          map: {
             name: true,
-            coach_steam_id: true,
-            lineup_players: [
-              {},
-              {
-                captain: true,
-                steam_id: true,
-                match_lineup_id: true,
-                __alias: {
-                  name: {
-                    placeholder_name: true,
-                  },
-                },
-              },
-            ],
+            workshop_map_id: true,
           },
-          lineup_2: {
-            id: true,
+          order: true,
+          status: true,
+          lineup_1_side: true,
+          lineup_2_side: true,
+          lineup_1_timeouts_available: true,
+          lineup_2_timeouts_available: true,
+        },
+        lineup_1: {
+          id: true,
+          name: true,
+          coach_steam_id: true,
+          lineup_players: {
+            captain: true,
+            steam_id: true,
+            match_lineup_id: true,
             name: true,
-            coach_steam_id: true,
-            lineup_players: [
-              {},
-              {
-                captain: true,
-                steam_id: true,
-                match_lineup_id: true,
-                __alias: {
-                  name: {
-                    placeholder_name: true,
-                  },
-                },
-              },
-            ],
           },
         },
-      ],
+        lineup_2: {
+          id: true,
+          name: true,
+          coach_steam_id: true,
+          lineup_players: {
+            captain: true,
+            steam_id: true,
+            match_lineup_id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!matches_by_pk) {
@@ -130,20 +113,20 @@ export class MatchesController {
   }
 
   @HasuraEvent()
-  public async match_events(data: HasuraEventData<"matches">) {
+  public async match_events(data: HasuraEventData<matches_set_input>) {
     const matchId = (data.new.id || data.old.id) as string;
 
-    const status: e_match_status_enum = data.new.status || data.old.status;
+    const status = data.new.status || data.old.status;
 
     /**
      * Match was canceled or finished
      */
     if (
       data.op === "DELETE" ||
-      status === e_match_status_enum.Tie ||
-      status === e_match_status_enum.Forfeit ||
-      status === e_match_status_enum.Canceled ||
-      status === e_match_status_enum.Finished
+      status === "Tie" ||
+      status === "Forfeit" ||
+      status === "Canceled" ||
+      status === "Finished"
     ) {
       await this.removeDiscordIntegration(matchId);
       await this.stopServer(matchId, status);
@@ -158,39 +141,34 @@ export class MatchesController {
     }
 
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
+        id: true,
+        status: true,
+        server: {
           id: true,
-          status: true,
-          server: {
-            id: true,
-            on_demand: true,
-          },
+          is_on_demand: true,
         },
-      ],
+      },
     });
 
     if (!match) {
       throw Error("unable to find match");
     }
 
-    if (match.server?.on_demand === false) {
+    if (match.server?.is_on_demand === false) {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
-    if (match.status === e_match_status_enum.Live) {
+    if (match.status === "Live") {
       if (match.server) {
         if (!(await this.matchAssistant.isMatchServerAvailable(matchId))) {
           this.logger.warn(
             `[${matchId}] another match is currently live, moving back to scheduled`,
           );
-          await this.matchAssistant.updateMatchStatus(
-            match.id,
-            e_match_status_enum.Scheduled,
-          );
+          await this.matchAssistant.updateMatchStatus(match.id, "Scheduled");
         }
       } else {
         /**
@@ -211,15 +189,12 @@ export class MatchesController {
 
   private async stopServer(matchId: string, status: e_match_status_enum) {
     if (
-      status !== e_match_status_enum.Tie &&
-      status !== e_match_status_enum.Forfeit &&
-      status !== e_match_status_enum.Canceled &&
-      status !== e_match_status_enum.Finished
+      status !== "Tie" &&
+      status !== "Forfeit" &&
+      status !== "Canceled" &&
+      status !== "Finished"
     ) {
-      await this.matchAssistant.updateMatchStatus(
-        matchId,
-        e_match_status_enum.Scheduled,
-      );
+      await this.matchAssistant.updateMatchStatus(matchId, "Scheduled");
     }
 
     await this.matchAssistant.stopMatch(matchId);
@@ -234,33 +209,35 @@ export class MatchesController {
   public async scheduleMatch(data: {
     user: User;
     match_id: string;
-    // TODO - handle scheduled at
-    scheduled_at: Date;
+    time: Date;
   }) {
-    const { match_id, user } = data;
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    const { match_id, user, time } = data;
+
+    if (!(await this.matchAssistant.canSchedule(match_id, user))) {
+      throw Error("you are not a match organizer");
+    }
+
+    if (!time || new Date(time) < new Date()) {
+      throw Error("date must be in the future");
+    }
 
     const { update_matches_by_pk: updatedMatch } = await this.hasura.mutation({
-      update_matches_by_pk: [
-        {
+      update_matches_by_pk: {
+        __args: {
           pk_columns: {
             id: match_id,
           },
           _set: {
-            status: e_match_status_enum.Scheduled,
+            status: "Scheduled",
+            scheduled_at: time,
           },
         },
-        {
-          id: true,
-          status: true,
-        },
-      ],
+        id: true,
+        status: true,
+      },
     });
 
-    if (
-      !updatedMatch ||
-      updatedMatch.status !== e_match_status_enum.Scheduled
-    ) {
+    if (!updatedMatch || updatedMatch.status !== "Scheduled") {
       throw Error(`Unable to schedule match`);
     }
 
@@ -277,43 +254,42 @@ export class MatchesController {
   }) {
     const { match_id, server_id, user } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (!(await this.matchAssistant.canStart(match_id, user))) {
+      throw Error(
+        "you are not a match organizer or the match is waiting for players to check in",
+      );
+    }
 
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: match_id,
         },
-        {
-          options: {
-            map_veto: true,
-            best_of: true,
-          },
-          match_maps: [
-            {},
-            {
-              id: true,
-            },
-          ],
+        options: {
+          map_veto: true,
+          best_of: true,
         },
-      ],
+        match_maps: {
+          id: true,
+        },
+      },
     });
 
     if (!match || !match.options) {
       throw Error("unable to find match");
     }
 
-    let nextPhase = e_match_status_enum.Live;
+    let nextPhase: e_match_status_enum = "Live";
     if (
       match.options.map_veto &&
       match.match_maps.length !== match.options.best_of
     ) {
-      nextPhase = e_match_status_enum.Veto;
+      nextPhase = "Veto";
     }
 
     const { update_matches_by_pk: updated_match } = await this.hasura.mutation({
-      update_matches_by_pk: [
-        {
+      update_matches_by_pk: {
+        __args: {
           pk_columns: {
             id: match_id,
           },
@@ -322,22 +298,20 @@ export class MatchesController {
             server_id: server_id || null,
           },
         },
-        {
-          id: true,
-          status: true,
-          current_match_map_id: true,
-          server: {
-            on_demand: true,
-          },
+        id: true,
+        status: true,
+        current_match_map_id: true,
+        server: {
+          is_on_demand: true,
         },
-      ],
+      },
     });
 
     if (!updated_match) {
       throw Error("unable to update match");
     }
 
-    if (nextPhase === e_match_status_enum.Veto) {
+    if (nextPhase === "Veto") {
       return {
         success: true,
       };
@@ -350,7 +324,7 @@ export class MatchesController {
       );
     }
 
-    if (updated_match.server?.on_demand === false) {
+    if (updated_match.server?.is_on_demand === false) {
       await this.matchAssistant.sendServerMatchId(match_id);
     }
 
@@ -360,38 +334,39 @@ export class MatchesController {
   }
 
   @HasuraEvent()
-  public async match_veto_pick(data: HasuraEventData<"match_veto_picks">) {
+  public async match_veto_pick(
+    data: HasuraEventData<match_veto_picks_set_input>,
+  ) {
     const matchId = (data.new.match_id || data.old.match_id) as string;
     await this.discordMatchOverview.updateMatchOverview(matchId);
   }
 
   @HasuraAction()
-  public async cancelMatch(data: {
-    user: User;
-    match_id: string;
-  }) {
+  public async cancelMatch(data: { user: User; match_id: string }) {
     const { match_id, user } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (!(await this.matchAssistant.canStart(match_id, user))) {
+      throw Error(
+        "you are not a match organizer or the match is waiting for players to check in",
+      );
+    }
 
     const { update_matches_by_pk: match } = await this.hasura.mutation({
-      update_matches_by_pk: [
-        {
+      update_matches_by_pk: {
+        __args: {
           pk_columns: {
             id: match_id,
           },
           _set: {
-            status: e_match_status_enum.Canceled,
+            status: "Canceled",
           },
         },
-        {
-          id: true,
-          status: true,
-        },
-      ],
+        id: true,
+        status: true,
+      },
     });
 
-    if (!match || match.status !== e_match_status_enum.Canceled) {
+    if (!match || match.status !== "Canceled") {
       throw Error("Unable to cancel match");
     }
 
@@ -399,7 +374,6 @@ export class MatchesController {
       success: true,
     };
   }
-
 
   @HasuraAction()
   public async setMatchWinner(data: {
@@ -409,30 +383,29 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+      throw Error("you are not a match organizer");
+    }
 
     await this.hasura.mutation({
-      update_matches_by_pk: [
-        {
+      update_matches_by_pk: {
+        __args: {
           pk_columns: {
             id: match_id,
           },
           _set: {
-            winning_lineup_id
+            winning_lineup_id,
           },
         },
-        {
-          id: true,
-          status: true,
-        },
-      ],
+        id: true,
+        status: true,
+      },
     });
 
     return {
       success: true,
     };
   }
-
 
   @HasuraAction()
   public async forfeitMatch(data: {
@@ -442,27 +415,27 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+      throw Error("you are not a match organizer");
+    }
 
     const { update_matches_by_pk: match } = await this.hasura.mutation({
-      update_matches_by_pk: [
-        {
+      update_matches_by_pk: {
+        __args: {
           pk_columns: {
             id: match_id,
           },
           _set: {
             winning_lineup_id,
-            status: e_match_status_enum.Forfeit,
+            status: "Forfeit",
           },
         },
-        {
-          id: true,
-          status: true,
-        },
-      ],
+        id: true,
+        status: true,
+      },
     });
 
-    if (!match || match.status !== e_match_status_enum.Forfeit) {
+    if (!match || match.status !== "Forfeit") {
       throw Error("Unable to cancel match");
     }
 
@@ -498,5 +471,43 @@ export class MatchesController {
     processor.setData(matchId, data);
 
     await processor.process();
+  }
+
+  @HasuraAction()
+  public async checkIntoMatch(data: { user: User; match_id: string }) {
+    await this.hasura.mutation({
+      update_match_lineup_players: {
+        __args: {
+          where: {
+            _and: [
+              {
+                steam_id: {
+                  _eq: data.user.steam_id,
+                },
+              },
+              {
+                lineup: {
+                  v_match_lineup: {
+                    match_id: {
+                      _eq: data.match_id,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+          _set: {
+            checked_in: true,
+          },
+        },
+        returning: {
+          id: true,
+        },
+      },
+    });
+
+    return {
+      success: false,
+    };
   }
 }

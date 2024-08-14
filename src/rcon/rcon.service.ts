@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Rcon as RconClient } from "rcon-client";
 import { HasuraService } from "../hasura/hasura.service";
 import { EncryptionService } from "../encryption/encryption.service";
@@ -6,7 +6,6 @@ import { EncryptionService } from "../encryption/encryption.service";
 @Injectable()
 export class RconService {
   constructor(
-    private readonly logger: Logger,
     private readonly hasuraService: HasuraService,
     private readonly encryption: EncryptionService,
   ) {}
@@ -24,16 +23,14 @@ export class RconService {
     }
 
     const { servers_by_pk: server } = await this.hasuraService.query({
-      servers_by_pk: [
-        {
+      servers_by_pk: {
+        __args: {
           id: serverId,
         },
-        {
-          host: true,
-          port: true,
-          rcon_password: true,
-        },
-      ],
+        host: true,
+        port: true,
+        rcon_password: true,
+      },
     });
 
     if (!server) {

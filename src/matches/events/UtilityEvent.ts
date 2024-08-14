@@ -1,4 +1,4 @@
-import { e_utility_types_enum } from "../../../generated/zeus";
+import { e_utility_types_enum } from "../../../generated";
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class UtilityEvent extends MatchEventProcessor<{
@@ -12,8 +12,8 @@ export default class UtilityEvent extends MatchEventProcessor<{
 }> {
   public async process() {
     await this.hasura.mutation({
-      insert_player_utility_one: [
-        {
+      insert_player_utility_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             match_id: this.matchId,
@@ -25,10 +25,8 @@ export default class UtilityEvent extends MatchEventProcessor<{
               this.data.attacker_location_coordinates,
           },
         },
-        {
-          id: true,
-        },
-      ],
+        id: true,
+      },
     });
   }
 }

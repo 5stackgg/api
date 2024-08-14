@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import Redis from "ioredis";
 import { CacheService } from "../../cache/cache.service";
-import { e_match_status_enum } from "../../../generated/zeus";
 import { HasuraService } from "../../hasura/hasura.service";
 
 type Match = {
@@ -46,25 +45,23 @@ export class ServerAuthService {
 
   private async getMatches() {
     const { matches } = await this.hasura.query({
-      matches: [
-        {
+      matches: {
+        __args: {
           where: {
             server_id: {
               _is_null: false,
             },
             status: {
-              _eq: e_match_status_enum.Live,
+              _eq: "Live",
             },
           },
         },
-        {
+        id: true,
+        server: {
           id: true,
-          server: {
-            id: true,
-            api_password: true,
-          },
+          api_password: true,
         },
-      ],
+      },
     });
 
     return matches as Array<
@@ -76,18 +73,16 @@ export class ServerAuthService {
 
   public async addMatchById(matchId: string) {
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
+        id: true,
+        server: {
           id: true,
-          server: {
-            id: true,
-            api_password: true,
-          },
+          api_password: true,
         },
-      ],
+      },
     });
 
     await this.addMatch(match);

@@ -48,10 +48,10 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
-  - name: matches
+  - name: is_ready
     definition:
       function:
-        name: get_lineup_match
+        name: is_match_lineup_ready
         schema: public
   - name: name
     definition:
@@ -66,6 +66,7 @@ select_permissions:
         - id
         - team_id
       computed_fields:
+        - is_ready
         - name
       filter: {}
       allow_aggregations: true

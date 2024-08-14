@@ -11,6 +11,12 @@ type Mutation {
 }
 
 type Mutation {
+  checkIntoMatch(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   forfeitMatch(
     match_id: uuid!
     winning_lineup_id: uuid!
@@ -24,7 +30,7 @@ type Query {
 type Mutation {
   scheduleMatch(
     match_id: uuid!
-    time: timestamptz
+    time: timestamptz!
   ): SuccessOutput
 }
 
@@ -48,6 +54,7 @@ type MeResponse {
   avatar_url: String!
   profile_url: String
   discord_id: String
+  role: String!
 }
 
 type SuccessOutput {

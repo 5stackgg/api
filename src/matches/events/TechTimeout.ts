@@ -7,8 +7,8 @@ export default class TechTimeout extends MatchEventProcessor<{
 }> {
   public async process() {
     await this.hasura.mutation({
-      update_match_maps_by_pk: [
-        {
+      update_match_maps_by_pk: {
+        __args: {
           pk_columns: {
             id: this.data.map_id,
           },
@@ -17,10 +17,7 @@ export default class TechTimeout extends MatchEventProcessor<{
             lineup_2_timeouts_available: this.data.lineup_2_timeouts_available,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

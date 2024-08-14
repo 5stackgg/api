@@ -13,8 +13,8 @@ export default class AssistEvent extends MatchEventProcessor<{
 }> {
   public async process() {
     await this.hasura.mutation({
-      insert_player_assists_one: [
-        {
+      insert_player_assists_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             match_map_id: this.data.match_map_id,
@@ -31,10 +31,7 @@ export default class AssistEvent extends MatchEventProcessor<{
             flash: this.data.flash,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

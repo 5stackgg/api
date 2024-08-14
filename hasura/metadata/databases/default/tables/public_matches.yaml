@@ -36,6 +36,13 @@ object_relationships:
           name: match_lineups
           schema: public
 array_relationships:
+  - name: demos
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_map_demos
+          schema: public
   - name: match_maps
     using:
       foreign_key_constraint_on:
@@ -92,6 +99,13 @@ array_relationships:
         table:
           name: player_utility
           schema: public
+  - name: tournament_brackets
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: tournament_brackets
+          schema: public
   - name: veto_picks
     using:
       foreign_key_constraint_on:
@@ -104,6 +118,24 @@ computed_fields:
     definition:
       function:
         name: is_match_organizer
+        schema: public
+      session_argument: hasura_session
+  - name: can_cancel
+    definition:
+      function:
+        name: can_cancel_match
+        schema: public
+      session_argument: hasura_session
+  - name: can_schedule
+    definition:
+      function:
+        name: can_schedule_match
+        schema: public
+      session_argument: hasura_session
+  - name: can_start
+    definition:
+      function:
+        name: can_start_match
         schema: public
       session_argument: hasura_session
   - name: connection_link
@@ -135,6 +167,12 @@ computed_fields:
         name: is_coach
         schema: public
       session_argument: hasura_session
+  - name: is_in_lineup
+    definition:
+      function:
+        name: is_in_lineup
+        schema: public
+      session_argument: hasura_session
   - name: is_match_server_available
     definition:
       function:
@@ -146,6 +184,11 @@ computed_fields:
         name: is_match_organizer
         schema: public
       session_argument: hasura_session
+  - name: is_tournament_match
+    definition:
+      function:
+        name: is_tournament_match
+        schema: public
   - name: max_players_per_lineup
     definition:
       function:
@@ -197,7 +240,6 @@ insert_permissions:
       columns:
         - label
         - match_options_id
-        - password
         - scheduled_at
         - server_id
     comment: ""
@@ -218,13 +260,18 @@ select_permissions:
         - winning_lineup_id
       computed_fields:
         - can_assign_map
+        - can_cancel
+        - can_schedule
+        - can_start
         - connection_link
         - connection_string
         - current_match_map_id
         - is_captain
         - is_coach
+        - is_in_lineup
         - is_match_server_available
         - is_organizer
+        - is_tournament_match
         - max_players_per_lineup
         - min_players_per_lineup
         - server_type
@@ -243,19 +290,20 @@ update_permissions:
         - organizer_steam_id
         - scheduled_at
         - server_id
+        - winning_lineup_id
       filter:
-        organizer_steam_id:
-          _eq: x-hasura-user-id
+        is_organizer:
+          _eq: true
       check:
-        organizer_steam_id:
-          _eq: x-hasura-user-id
+        is_organizer:
+          _eq: true
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        organizer_steam_id:
-          _eq: x-hasura-user-id
+        is_organizer:
+          _eq: true
     comment: ""
 event_triggers:
   - name: match_events

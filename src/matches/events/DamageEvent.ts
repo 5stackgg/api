@@ -28,8 +28,8 @@ export default class DamageEvent extends MatchEventProcessor<{
     };
 
     await this.hasura.mutation({
-      insert_player_damages_one: [
-        {
+      insert_player_damages_one: {
+        __args: {
           object: {
             time: new Date(this.data.time),
             match_id: this.matchId,
@@ -51,10 +51,7 @@ export default class DamageEvent extends MatchEventProcessor<{
             hitgroup: this.data.hitgroup,
           },
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
   }
 }

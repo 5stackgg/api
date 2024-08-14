@@ -2,7 +2,6 @@ import { Controller } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
-import { e_team_roles_enum } from "../../generated/zeus";
 
 @Controller("teams")
 export class TeamsController {
@@ -13,15 +12,13 @@ export class TeamsController {
     const { invite_id, user } = data;
 
     const { team_invites_by_pk } = await this.hasura.query({
-      team_invites_by_pk: [
-        {
+      team_invites_by_pk: {
+        __args: {
           id: invite_id,
         },
-        {
-          team_id: true,
-          steam_id: true,
-        },
-      ],
+        team_id: true,
+        steam_id: true,
+      },
     });
 
     if (!team_invites_by_pk) {
@@ -35,29 +32,23 @@ export class TeamsController {
     }
 
     await this.hasura.mutation({
-      insert_team_roster_one: [
-        {
+      insert_team_roster_one: {
+        __args: {
           object: {
-            role: e_team_roles_enum.Member,
+            role: "Member",
             team_id: team_invites_by_pk.team_id,
             player_steam_id: user.steam_id,
           },
         },
-        {
-          team_id: true,
-        },
-      ],
+      },
     });
 
     await this.hasura.mutation({
-      delete_team_invites_by_pk: [
-        {
+      delete_team_invites_by_pk: {
+        __args: {
           id: invite_id,
         },
-        {
-          id: true,
-        },
-      ],
+      },
     });
 
     return {

@@ -23,14 +23,12 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
 
     if (serverId) {
       const { servers_by_pk: server } = await this.hasura.query({
-        servers_by_pk: [
-          {
+        servers_by_pk: {
+          __args: {
             id: serverId,
           },
-          {
-            api_password: true,
-          },
-        ],
+          api_password: true,
+        },
       });
 
       if (server?.api_password !== apiPassword) {
@@ -40,18 +38,16 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
     }
 
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
-          id: true,
-          server: {
-            api_password: true,
-            current_match_id: true,
-          },
+        id: true,
+        server: {
+          api_password: true,
+          current_match_id: true,
         },
-      ],
+      },
     });
 
     if (

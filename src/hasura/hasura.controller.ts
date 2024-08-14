@@ -1,7 +1,9 @@
-import {Controller, Get, Post, Req, Res, UseGuards} from "@nestjs/common";
+import { Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
-import {Request, Response} from "express";
+import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { CacheService } from "../cache/cache.service";
+import { HasuraService } from "./hasura.service";
 
 type Handler = {
   target: unknown;
@@ -33,21 +35,22 @@ export const HasuraAction = (): MethodDecorator => {
 
 @Controller("hasura")
 export class HasuraController {
-  constructor(private readonly modulesContainer: ModulesContainer) {}
+  constructor(
+    private readonly cache: CacheService,
+    private readonly hasuraService: HasuraService,
+    private readonly modulesContainer: ModulesContainer,
+  ) {}
 
   @UseGuards(SteamGuard)
   @Get()
-  public hasura(@Req() request: Request) {
+  public async hasura(@Req() request: Request) {
     const user = request.user;
 
     if (!user) {
       return;
     }
 
-    return {
-      "x-hasura-role": "user",
-      "x-hasura-user-id": user.steam_id.toString(),
-    };
+    return this.hasuraService.getHasuraHeaders(user);
   }
 
   @Post("actions")
@@ -62,16 +65,11 @@ export class HasuraController {
 
     try {
       response.json(await resolver[action.name].bind(resolver, input)());
-    } catch(error) {
+    } catch (error) {
       return response.status(400).json({
         message: error?.message ?? error,
       });
     }
-  }
-
-  @HasuraAction()
-  public async me(@Req() request: Request) {
-    return request.user;
   }
 
   @Post("events")

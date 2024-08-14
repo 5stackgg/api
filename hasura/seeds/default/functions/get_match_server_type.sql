@@ -2,13 +2,13 @@ CREATE OR REPLACE FUNCTION public.get_match_server_type(match public.matches) RE
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
-    is_on_demand BOOL;
+    on_demand BOOL;
 BEGIN
     IF match.server_id = null THEN
         return '';
     END IF;
-	select on_demand into is_on_demand from servers where id = match.server_id;
-	IF is_on_demand = true THEN
+	select is_on_demand into on_demand from servers where id = match.server_id;
+	IF on_demand = true THEN
 	    return 'OnDemand';
 	END IF;
 	return 'Dedicated';

@@ -20,8 +20,8 @@ export default class CaptainEvent extends MatchEventProcessor<{
     }
 
     await this.hasura.mutation({
-      update_match_lineup_players: [
-        {
+      update_match_lineup_players: {
+        __args: {
           where: {
             [lineup_player.steam_id ? "steam_id" : "discord_id"]: {
               _eq: lineup_player.steam_id || lineup_player.discord_id,
@@ -31,10 +31,7 @@ export default class CaptainEvent extends MatchEventProcessor<{
             captain: this.data.claim,
           },
         },
-        {
-          __typename: true,
-        },
-      ],
+      },
     });
   }
 }

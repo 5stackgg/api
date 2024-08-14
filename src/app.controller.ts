@@ -1,9 +1,3 @@
-import { Controller, Get, Req } from "@nestjs/common";
-import { Request } from "express";
+import { Controller } from "@nestjs/common";
 @Controller()
-export class AppController {
-  @Get("me")
-  public me(@Req() request: Request) {
-    return request.user;
-  }
-}
+export class AppController {}

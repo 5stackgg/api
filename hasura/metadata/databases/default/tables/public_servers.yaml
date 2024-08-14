@@ -31,7 +31,7 @@ insert_permissions:
     permission:
       check: {}
       set:
-        on_demand: "false"
+        is_on_demand: "false"
         owner_steam_id: x-hasura-user-id
       columns:
         - enabled

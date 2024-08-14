@@ -1,11 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { ButtonActions } from "../enums/ButtonActions";
-import {
-  e_match_map_status_enum,
-  e_match_status_enum,
-  e_veto_pick_types_enum,
-} from "../../../generated/zeus";
 import { assertUnreachable } from "../../utilities/assertUnreachable";
 import { DiscordBotMessagingService } from "../discord-bot-messaging/discord-bot-messaging.service";
 import { HasuraService } from "../../hasura/hasura.service";
@@ -63,15 +58,11 @@ export class DiscordBotOverviewService {
 
     const matchControls = {
       Knife: new ButtonBuilder()
-        .setCustomId(
-          `${ButtonActions.MapStatus}:${matchId}:${e_match_map_status_enum.Knife}`,
-        )
+        .setCustomId(`${ButtonActions.MapStatus}:${matchId}:${"Knife"}`)
         .setLabel(`Knife Round`)
         .setStyle(ButtonStyle.Danger),
       CancelMatch: new ButtonBuilder()
-        .setCustomId(
-          `${ButtonActions.MatchStatus}:${matchId}:${e_match_map_status_enum.Canceled}`,
-        )
+        .setCustomId(`${ButtonActions.MatchStatus}:${matchId}:${"Canceled"}`)
         .setLabel(`Cancel Match`)
         .setStyle(ButtonStyle.Danger),
     };
@@ -84,21 +75,21 @@ export class DiscordBotOverviewService {
 
     if (currentMatchMap) {
       switch (currentMatchMap.status) {
-        case e_match_map_status_enum.Scheduled:
+        case "Scheduled":
           color = 16016479;
           break;
-        case e_match_map_status_enum.Overtime:
-        case e_match_map_status_enum.Live:
-        case e_match_map_status_enum.Knife:
+        case "Overtime":
+        case "Live":
+        case "Knife":
           color = 10674342;
           break;
-        case e_match_map_status_enum.Paused:
+        case "Paused":
           color = 16016479;
           break;
-        case e_match_map_status_enum.Canceled:
-        case e_match_map_status_enum.Finished:
+        case "Canceled":
+        case "Finished":
           break;
-        case e_match_map_status_enum.Warmup:
+        case "Warmup":
           color = 16695418;
           row.addComponents(matchControls.Knife);
           components.push(row);
@@ -148,14 +139,11 @@ export class DiscordBotOverviewService {
     if (match.server) {
       let serverAvailable = true;
 
-      if (match.status === e_match_status_enum.Scheduled) {
+      if (match.status === "Scheduled") {
         serverAvailable = false;
-      } else if (
-        match.status === e_match_status_enum.Veto ||
-        match.status === e_match_status_enum.Live
-      ) {
+      } else if (match.status === "Veto" || match.status === "Live") {
         serverAvailable = true;
-        if (match.server.on_demand) {
+        if (match.server.is_on_demand) {
           serverAvailable =
             await this.matchAssistant.isOnDemandServerRunning(matchId);
           if (!serverAvailable) {
@@ -168,7 +156,7 @@ export class DiscordBotOverviewService {
         name: " ",
         value: serverAvailable
           ? `connect ${match.server.host}:${match.server.port}; password ${match.password};`
-          : match.status === e_match_status_enum.Scheduled
+          : match.status === "Scheduled"
             ? "match is scheduled, but warmup has not started"
             : `server is being created`,
         inline: true,
@@ -240,7 +228,7 @@ export class DiscordBotOverviewService {
       components,
     };
 
-    if (match.status === e_match_status_enum.Veto) {
+    if (match.status === "Veto") {
       const lineup =
         match.veto_picking_lineup_id === lineup_1.id ? lineup_1 : lineup_2;
 
@@ -269,85 +257,71 @@ export class DiscordBotOverviewService {
 
   public async getMatchDetails(matchId: string) {
     const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: [
-        {
+      matches_by_pk: {
+        __args: {
           id: matchId,
         },
-        {
+        id: true,
+        status: true,
+        password: true,
+        lineup_1_id: true,
+        lineup_2_id: true,
+        current_match_map_id: true,
+        veto_picking_lineup_id: true,
+        options: {
+          mr: true,
+          type: true,
+          best_of: true,
+          coaches: true,
+          map_veto: true,
+          overtime: true,
+          knife_round: true,
+          timeout_setting: true,
+          tech_timeout_setting: true,
+          number_of_substitutes: true,
+        },
+        lineup_1: {
           id: true,
-          status: true,
-          password: true,
-          lineup_1_id: true,
-          lineup_2_id: true,
-          current_match_map_id: true,
-          veto_picking_lineup_id: true,
-          options: {
-            mr: true,
-            type: true,
-            best_of: true,
-            coaches: true,
-            map_veto: true,
-            overtime: true,
-            knife_round: true,
-            timeout_setting: true,
-            tech_timeout_setting: true,
-            number_of_substitutes: true,
-          },
-          lineup_1: {
-            id: true,
-            name: true,
-            lineup_players: [
-              {},
-              {
-                placeholder_name: true,
-                player: {
-                  name: true,
-                },
-              },
-            ],
-          },
-          lineup_2: {
-            id: true,
-            name: true,
-            lineup_players: [
-              {},
-              {
-                placeholder_name: true,
-                player: {
-                  name: true,
-                },
-              },
-            ],
-          },
-          veto_picks: [
-            {},
-            {
-              type: true,
-              map: {
-                name: true,
-              },
-              match_lineup_id: true,
+          name: true,
+          lineup_players: {
+            placeholder_name: true,
+            player: {
+              name: true,
             },
-          ],
-          match_maps: [
-            {},
-            {
-              id: true,
-              lineup_1_score: true,
-              lineup_2_score: true,
-              status: true,
-              map: {
-                name: true,
-              },
-            },
-          ],
-          server: {
-            on_demand: true,
-            host: true,
-            port: true,
           },
         },
-      ],
+        lineup_2: {
+          id: true,
+          name: true,
+          lineup_players: {
+            placeholder_name: true,
+            player: {
+              name: true,
+            },
+          },
+        },
+        veto_picks: {
+          type: true,
+          map: {
+            name: true,
+          },
+          match_lineup_id: true,
+        },
+        match_maps: {
+          id: true,
+          lineup_1_score: true,
+          lineup_2_score: true,
+          status: true,
+          map: {
+            name: true,
+          },
+        },
+        server: {
+          is_on_demand: true,
+          host: true,
+          port: true,
+        },
+      },
     });
 
     return match;
@@ -401,7 +375,7 @@ export class DiscordBotOverviewService {
         color: 0,
         description: "",
         // TODO - veto type when we do box series
-        title: `${votingLineUpName}: ${e_veto_pick_types_enum.Ban}`,
+        title: `${votingLineUpName}: ${"Ban"}`,
         footer: {
           text: `Poll Ends in ${await this.discordMatchBotVeto.getTimeLeft(
             matchId,

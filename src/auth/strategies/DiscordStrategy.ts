@@ -35,8 +35,8 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
     done: DoneCallback,
   ) {
     await this.hasura.mutation({
-      update_players_by_pk: [
-        {
+      update_players_by_pk: {
+        __args: {
           pk_columns: {
             steam_id: request.user.steam_id,
           },
@@ -44,14 +44,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
             discord_id: profile.id,
           },
         },
-        {
-          steam_id: true,
-          name: true,
-          profile_url: true,
-          avatar_url: true,
-          discord_id: true,
-        },
-      ],
+      },
     });
 
     request.user.discord_id = profile.id;
