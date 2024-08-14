@@ -105,8 +105,7 @@ export class ServerGateway {
     const { name, steam_id, avatar_url } = client.user;
 
     if (userData.sessions.length === 0) {
-      this.sendToLobby(`lobby`, data.matchId, {
-        event: "joined",
+      this.sendToLobby(`lobby:join`, data.matchId, {
         user: {
           name,
           steam_id,
@@ -120,9 +119,8 @@ export class ServerGateway {
 
     client.send(
       JSON.stringify({
-        event: "lobby",
+        event: "lobby:list",
         data: {
-          event: "list",
           matchId: data.matchId,
           lobby: Array.from(this.matches[data.matchId].values()).map(
             ({ user }) => {
@@ -141,11 +139,10 @@ export class ServerGateway {
 
     client.send(
       JSON.stringify({
-        event: "lobby",
+        event: "lobby:messages",
         data: {
-          event: "messages",
+          messages,
           matchId: data.matchId,
-          messages: messages,
         },
       }),
     );
@@ -157,14 +154,24 @@ export class ServerGateway {
 
       if (userData.sessions.length === 0) {
         this.matches[data.matchId].delete(client.user.steam_id);
-        this.sendToLobby("lobby", data.matchId, {
-          event: "left",
+        this.sendToLobby("lobby:left", data.matchId, {
           user: {
             steam_id: client.user.steam_id,
           },
         });
       }
     });
+  }
+
+  @SubscribeMessage("lobby:leave")
+  async leaveLobby(
+    @MessageBody()
+    data: {
+      matchId: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    console.info("LEAVE LOBBY!", data);
   }
 
   @SubscribeMessage("lobby:chat")
