@@ -16,6 +16,7 @@ import { RedisManagerService } from "../redis/redis-manager/redis-manager.servic
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import Redis from "ioredis";
+import { HasuraService } from "../hasura/hasura.service";
 
 type FiveStackWebSocketClient = WebSocket.WebSocket & {
   user: User;
@@ -44,6 +45,7 @@ export class ServerGateway {
   constructor(
     private readonly config: ConfigService,
     private readonly rconService: RconService,
+    private readonly hasuraService: HasuraService,
     private readonly redisManager: RedisManagerService,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -88,6 +90,41 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    const { matches_by_pk } = await this.hasuraService.query({
+      matches_by_pk: {
+        __args: {
+          id: data.matchId,
+        },
+        lineup_1: {
+          lineup_players: {
+            steam_id: true,
+          },
+        },
+        lineup_2: {
+          lineup_players: {
+            steam_id: true,
+          },
+        },
+      },
+    });
+
+    if (!matches_by_pk) {
+      return;
+    }
+
+    const lineup_players = [
+      ...matches_by_pk.lineup_1.lineup_players,
+      ...matches_by_pk.lineup_2.lineup_players,
+    ];
+
+    if (
+      !lineup_players.find(({ steam_id }) => {
+        return client.user.steam_id === steam_id;
+      })
+    ) {
+      return;
+    }
+
     if (!this.matches[data.matchId]) {
       this.matches[data.matchId] = new Map();
     }
@@ -164,7 +201,7 @@ export class ServerGateway {
   }
 
   private removeFromLobby(matchId: string, client: FiveStackWebSocketClient) {
-    const userData = this.matches?.[matchId].get(client.user.steam_id);
+    const userData = this.matches[matchId]?.get(client.user.steam_id);
 
     if (!userData) {
       return;
@@ -193,6 +230,11 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    // verify they are in the lobby
+    if (!this.matches[data.matchId]?.get(client.user.steam_id)) {
+      return;
+    }
+
     const timestamp = new Date();
 
     // TODO - we should fetch the user on the UI instead
