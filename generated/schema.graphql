@@ -306,23 +306,6 @@ enum cursor_ordering {
   DESC
 }
 
-scalar date
-
-"""
-Boolean expression to compare columns of type "date". All fields are combined with logical 'AND'.
-"""
-input date_comparison_exp {
-  _eq: date
-  _gt: date
-  _gte: date
-  _in: [date!]
-  _is_null: Boolean
-  _lt: date
-  _lte: date
-  _neq: date
-  _nin: [date!]
-}
-
 """
 columns and relationships of "e_map_pool_types"
 """
@@ -7456,11 +7439,6 @@ columns and relationships of "matches"
 """
 type matches {
   """
-  A computed field, executes function "is_match_organizer"
-  """
-  can_assign_map: Boolean
-
-  """
   A computed field, executes function "can_cancel_match"
   """
   can_cancel: Boolean
@@ -7876,7 +7854,7 @@ type matches {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
-  scheduled_at: date
+  scheduled_at: timestamptz
 
   """An object relationship"""
   server: servers
@@ -8096,7 +8074,6 @@ input matches_bool_exp {
   _and: [matches_bool_exp!]
   _not: matches_bool_exp
   _or: [matches_bool_exp!]
-  can_assign_map: Boolean_comparison_exp
   can_cancel: Boolean_comparison_exp
   can_schedule: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
@@ -8142,7 +8119,7 @@ input matches_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   player_utility: player_utility_bool_exp
   player_utility_aggregate: player_utility_aggregate_bool_exp
-  scheduled_at: date_comparison_exp
+  scheduled_at: timestamptz_comparison_exp
   server: servers_bool_exp
   server_id: uuid_comparison_exp
   server_type: String_comparison_exp
@@ -8218,7 +8195,7 @@ input matches_insert_input {
   player_objectives: player_objectives_arr_rel_insert_input
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   player_utility: player_utility_arr_rel_insert_input
-  scheduled_at: date
+  scheduled_at: timestamptz
   server: servers_obj_rel_insert_input
   server_id: uuid
   status: e_match_status_enum
@@ -8262,7 +8239,7 @@ type matches_max_fields {
   min_players_per_lineup: Int
   organizer_steam_id: bigint
   password: String
-  scheduled_at: date
+  scheduled_at: timestamptz
   server_id: uuid
 
   """
@@ -8343,7 +8320,7 @@ type matches_min_fields {
   min_players_per_lineup: Int
   organizer_steam_id: bigint
   password: String
-  scheduled_at: date
+  scheduled_at: timestamptz
   server_id: uuid
 
   """
@@ -8422,7 +8399,6 @@ input matches_on_conflict {
 
 """Ordering options when selecting data from "matches"."""
 input matches_order_by {
-  can_assign_map: order_by
   can_cancel: order_by
   can_schedule: order_by
   can_start: order_by
@@ -8533,7 +8509,7 @@ input matches_set_input {
   match_options_id: uuid
   organizer_steam_id: bigint
   password: String
-  scheduled_at: date
+  scheduled_at: timestamptz
   server_id: uuid
   status: e_match_status_enum
   winning_lineup_id: uuid
@@ -8623,7 +8599,7 @@ input matches_stream_cursor_value_input {
   match_options_id: uuid
   organizer_steam_id: bigint
   password: String
-  scheduled_at: date
+  scheduled_at: timestamptz
   server_id: uuid
   status: e_match_status_enum
   winning_lineup_id: uuid

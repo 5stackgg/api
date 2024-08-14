@@ -114,12 +114,6 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
-  - name: can_assign_map
-    definition:
-      function:
-        name: is_match_organizer
-        schema: public
-      session_argument: hasura_session
   - name: can_cancel
     definition:
       function:
@@ -259,7 +253,6 @@ select_permissions:
         - status
         - winning_lineup_id
       computed_fields:
-        - can_assign_map
         - can_cancel
         - can_schedule
         - can_start
