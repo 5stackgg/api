@@ -266,7 +266,7 @@ export interface e_match_status_aggregate_fields {
 /** unique or primary key constraints on table "e_match_status" */
 export type e_match_status_constraint = 'e_match_status_pkey'
 
-export type e_match_status_enum = 'Canceled' | 'Finished' | 'Forfeit' | 'Live' | 'PickingPlayers' | 'Scheduled' | 'Tie' | 'Veto'
+export type e_match_status_enum = 'Canceled' | 'Finished' | 'Forfeit' | 'Live' | 'PickingPlayers' | 'Scheduled' | 'Tie' | 'Veto' | 'WaitingForCheckIn'
 
 
 /** aggregate max on columns */
@@ -29718,7 +29718,8 @@ export const enumEMatchStatusEnum = {
    PickingPlayers: 'PickingPlayers' as const,
    Scheduled: 'Scheduled' as const,
    Tie: 'Tie' as const,
-   Veto: 'Veto' as const
+   Veto: 'Veto' as const,
+   WaitingForCheckIn: 'WaitingForCheckIn' as const
 }
 
 export const enumEMatchStatusSelectColumn = {
