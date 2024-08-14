@@ -41,10 +41,6 @@ export class HasuraController {
     private readonly modulesContainer: ModulesContainer,
   ) {}
 
-  public static PLAYER_ROLE_CACHE_KEY(steamId: bigint | string) {
-    return `user:${steamId.toString()}`;
-  }
-
   @UseGuards(SteamGuard)
   @Get()
   public async hasura(@Req() request: Request) {
@@ -54,27 +50,7 @@ export class HasuraController {
       return;
     }
 
-    const playerRole = await this.cache.remember(
-      HasuraController.PLAYER_ROLE_CACHE_KEY(user.steam_id),
-      async () => {
-        const { players_by_pk } = await this.hasuraService.query({
-          players_by_pk: {
-            __args: {
-              steam_id: user.steam_id,
-            },
-            role: true,
-          },
-        });
-
-        return players_by_pk?.role;
-      },
-      60 * 60 * 1000,
-    );
-
-    return {
-      "x-hasura-role": playerRole,
-      "x-hasura-user-id": user.steam_id.toString(),
-    };
+    return this.hasuraService.getHasuraHeaders(user);
   }
 
   @Post("actions")

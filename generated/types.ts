@@ -10416,6 +10416,12 @@ export default {
             "can_assign_map": [
                 0
             ],
+            "can_cancel": [
+                0
+            ],
+            "can_start": [
+                0
+            ],
             "connection_link": [
                 6
             ],
@@ -10478,9 +10484,6 @@ export default {
             "id": [
                 1418
             ],
-            "isTournamentMatch": [
-                0
-            ],
             "is_captain": [
                 0
             ],
@@ -10491,6 +10494,9 @@ export default {
                 0
             ],
             "is_organizer": [
+                0
+            ],
+            "is_tournament_match": [
                 0
             ],
             "label": [
@@ -11195,6 +11201,12 @@ export default {
             "can_assign_map": [
                 1
             ],
+            "can_cancel": [
+                1
+            ],
+            "can_start": [
+                1
+            ],
             "connection_link": [
                 7
             ],
@@ -11219,9 +11231,6 @@ export default {
             "id": [
                 1419
             ],
-            "isTournamentMatch": [
-                1
-            ],
             "is_captain": [
                 1
             ],
@@ -11232,6 +11241,9 @@ export default {
                 1
             ],
             "is_organizer": [
+                1
+            ],
+            "is_tournament_match": [
                 1
             ],
             "label": [
@@ -11726,6 +11738,12 @@ export default {
             "can_assign_map": [
                 658
             ],
+            "can_cancel": [
+                658
+            ],
+            "can_start": [
+                658
+            ],
             "connection_link": [
                 658
             ],
@@ -11747,9 +11765,6 @@ export default {
             "id": [
                 658
             ],
-            "isTournamentMatch": [
-                658
-            ],
             "is_captain": [
                 658
             ],
@@ -11760,6 +11775,9 @@ export default {
                 658
             ],
             "is_organizer": [
+                658
+            ],
+            "is_tournament_match": [
                 658
             ],
             "label": [

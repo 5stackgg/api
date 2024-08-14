@@ -126,6 +126,12 @@ computed_fields:
         name: can_cancel_match
         schema: public
       session_argument: hasura_session
+  - name: can_start
+    definition:
+      function:
+        name: can_start_match
+        schema: public
+      session_argument: hasura_session
   - name: connection_link
     definition:
       function:
@@ -142,11 +148,6 @@ computed_fields:
     definition:
       function:
         name: get_current_match_map
-        schema: public
-  - name: isTournamentMatch
-    definition:
-      function:
-        name: is_tournament_match
         schema: public
   - name: is_captain
     definition:
@@ -171,6 +172,11 @@ computed_fields:
         name: is_match_organizer
         schema: public
       session_argument: hasura_session
+  - name: is_tournament_match
+    definition:
+      function:
+        name: is_tournament_match
+        schema: public
   - name: max_players_per_lineup
     definition:
       function:
@@ -243,14 +249,15 @@ select_permissions:
       computed_fields:
         - can_assign_map
         - can_cancel
+        - can_start
         - connection_link
         - connection_string
         - current_match_map_id
-        - isTournamentMatch
         - is_captain
         - is_coach
         - is_match_server_available
         - is_organizer
+        - is_tournament_match
         - max_players_per_lineup
         - min_players_per_lineup
         - server_type

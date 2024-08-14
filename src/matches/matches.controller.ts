@@ -213,7 +213,10 @@ export class MatchesController {
     scheduled_at: Date;
   }) {
     const { match_id, user } = data;
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+
+    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+      throw Error("you are not a match organizer");
+    }
 
     const { update_matches_by_pk: updatedMatch } = await this.hasura.mutation({
       update_matches_by_pk: {
@@ -247,7 +250,11 @@ export class MatchesController {
   }) {
     const { match_id, server_id, user } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (!(await this.matchAssistant.canStart(match_id, user))) {
+      throw Error(
+        "you are not a match organizer or the match is waiting for players to check in",
+      );
+    }
 
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
@@ -334,7 +341,11 @@ export class MatchesController {
   public async cancelMatch(data: { user: User; match_id: string }) {
     const { match_id, user } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (!(await this.matchAssistant.canStart(match_id, user))) {
+      throw Error(
+        "you are not a match organizer or the match is waiting for players to check in",
+      );
+    }
 
     const { update_matches_by_pk: match } = await this.hasura.mutation({
       update_matches_by_pk: {
@@ -368,7 +379,9 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+      throw Error("you are not a match organizer");
+    }
 
     await this.hasura.mutation({
       update_matches_by_pk: {
@@ -398,7 +411,9 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    await this.matchAssistant.isMatchOrganizer(match_id, user);
+    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+      throw Error("you are not a match organizer");
+    }
 
     const { update_matches_by_pk: match } = await this.hasura.mutation({
       update_matches_by_pk: {

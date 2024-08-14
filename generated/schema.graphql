@@ -7454,6 +7454,16 @@ type matches {
   can_assign_map: Boolean
 
   """
+  A computed field, executes function "can_cancel_match"
+  """
+  can_cancel: Boolean
+
+  """
+  A computed field, executes function "can_start_match"
+  """
+  can_start: Boolean
+
+  """
   A computed field, executes function "get_match_connection_link"
   """
   connection_link: String
@@ -7510,11 +7520,6 @@ type matches {
   id: uuid!
 
   """
-  A computed field, executes function "is_tournament_match"
-  """
-  isTournamentMatch: Boolean
-
-  """
   A computed field, executes function "is_captain"
   """
   is_captain: Boolean
@@ -7533,6 +7538,11 @@ type matches {
   A computed field, executes function "is_match_organizer"
   """
   is_organizer: Boolean
+
+  """
+  A computed field, executes function "is_tournament_match"
+  """
+  is_tournament_match: Boolean
   label: String
 
   """An object relationship"""
@@ -8070,6 +8080,8 @@ input matches_bool_exp {
   _not: matches_bool_exp
   _or: [matches_bool_exp!]
   can_assign_map: Boolean_comparison_exp
+  can_cancel: Boolean_comparison_exp
+  can_start: Boolean_comparison_exp
   connection_link: String_comparison_exp
   connection_string: String_comparison_exp
   created_at: timestamptz_comparison_exp
@@ -8078,11 +8090,11 @@ input matches_bool_exp {
   demos_aggregate: match_map_demos_aggregate_bool_exp
   e_match_status: e_match_status_bool_exp
   id: uuid_comparison_exp
-  isTournamentMatch: Boolean_comparison_exp
   is_captain: Boolean_comparison_exp
   is_coach: Boolean_comparison_exp
   is_match_server_available: Boolean_comparison_exp
   is_organizer: Boolean_comparison_exp
+  is_tournament_match: Boolean_comparison_exp
   label: String_comparison_exp
   lineup_1: match_lineups_bool_exp
   lineup_1_id: uuid_comparison_exp
@@ -8392,6 +8404,8 @@ input matches_on_conflict {
 """Ordering options when selecting data from "matches"."""
 input matches_order_by {
   can_assign_map: order_by
+  can_cancel: order_by
+  can_start: order_by
   connection_link: order_by
   connection_string: order_by
   created_at: order_by
@@ -8399,11 +8413,11 @@ input matches_order_by {
   demos_aggregate: match_map_demos_aggregate_order_by
   e_match_status: e_match_status_order_by
   id: order_by
-  isTournamentMatch: order_by
   is_captain: order_by
   is_coach: order_by
   is_match_server_available: order_by
   is_organizer: order_by
+  is_tournament_match: order_by
   label: order_by
   lineup_1: match_lineups_order_by
   lineup_1_id: order_by

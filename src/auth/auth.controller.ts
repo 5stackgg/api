@@ -1,11 +1,12 @@
 import { Controller, Get, UseGuards, Req, Res } from "@nestjs/common";
 import { Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
-import { HasuraAction, HasuraController } from "../hasura/hasura.controller";
+import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import { CacheService } from "../cache/cache.service";
+import { HasuraService } from "../hasura/hasura.service";
 
 @Controller("auth")
 export class AuthController {
@@ -52,7 +53,7 @@ export class AuthController {
     const user = request.user;
 
     user.role = await this.cache.get(
-      HasuraController.PLAYER_ROLE_CACHE_KEY(request.user.steam_id),
+      HasuraService.PLAYER_ROLE_CACHE_KEY(request.user.steam_id),
     );
 
     return user;

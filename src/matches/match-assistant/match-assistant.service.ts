@@ -700,20 +700,35 @@ export class MatchAssistantService {
     }, []);
   }
 
-  public async isMatchOrganizer(matchId: string, user: User) {
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: matchId,
+  public async canStart(matchId: string, user: User) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: matchId,
+          },
+          can_start: true,
         },
-        id: true,
-        status: true,
-        organizer_steam_id: true,
       },
-    });
+      user,
+    );
 
-    if (match?.organizer_steam_id !== user.steam_id) {
-      throw Error("Not Authorized");
-    }
+    return matches_by_pk.can_start;
+  }
+
+  public async isOrganizer(matchId: string, user: User) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: matchId,
+          },
+          is_organizer: true,
+        },
+      },
+      user,
+    );
+
+    return matches_by_pk.is_organizer;
   }
 }
