@@ -29,6 +29,8 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
 import { Queue } from "bullmq";
 import { CheckForScheduledMatches } from "./jobs/CheckForScheduledMatches";
+import { CancelNonReadyMatches } from "./jobs/CancelNonReadyMatches";
+import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTournamentMatches";
 
 @Module({
   imports: [
@@ -69,6 +71,26 @@ export class MatchesModule implements NestModule {
   constructor(@InjectQueue(MatchQueues.ScheduledMatches) private queue: Queue) {
     void queue.add(
       CheckForScheduledMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      CancelNonReadyMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      ForfeitNonReadyTournamentMatches.name,
       {},
       {
         repeat: {

@@ -10391,11 +10391,17 @@ export default {
             "can_cancel": [
                 0
             ],
+            "can_check_in": [
+                0
+            ],
             "can_schedule": [
                 0
             ],
             "can_start": [
                 0
+            ],
+            "cancels_at": [
+                1136
             ],
             "connection_link": [
                 6
@@ -11179,11 +11185,17 @@ export default {
             "can_cancel": [
                 1
             ],
+            "can_check_in": [
+                1
+            ],
             "can_schedule": [
                 1
             ],
             "can_start": [
                 1
+            ],
+            "cancels_at": [
+                1137
             ],
             "connection_link": [
                 7
@@ -11468,6 +11480,9 @@ export default {
             ]
         },
         "matches_max_fields": {
+            "cancels_at": [
+                1136
+            ],
             "connection_link": [
                 6
             ],
@@ -11574,6 +11589,9 @@ export default {
             ]
         },
         "matches_min_fields": {
+            "cancels_at": [
+                1136
+            ],
             "connection_link": [
                 6
             ],
@@ -11719,10 +11737,16 @@ export default {
             "can_cancel": [
                 656
             ],
+            "can_check_in": [
+                656
+            ],
             "can_schedule": [
                 656
             ],
             "can_start": [
+                656
+            ],
+            "cancels_at": [
                 656
             ],
             "connection_link": [

@@ -4,7 +4,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { Logger } from "@nestjs/common";
 
 @Processor(MatchQueues.ScheduledMatches)
-export class CheckForScheduledMatches extends WorkerHost {
+export class CancelNonReadyMatches extends WorkerHost {
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -18,24 +18,24 @@ export class CheckForScheduledMatches extends WorkerHost {
           where: {
             _and: [
               {
-                scheduled_at: {
-                  _is_null: false,
-                },
-              },
-              {
-                scheduled_at: {
-                  _lte: new Date(),
-                },
-              },
-              {
                 status: {
-                  _eq: "Scheduled",
+                  _eq: "WaitingForCheckIn",
+                },
+              },
+              {
+                is_tournament_match: {
+                  _eq: false,
+                },
+              },
+              {
+                cancels_at: {
+                  _lte: new Date(),
                 },
               },
             ],
           },
           _set: {
-            status: "WaitingForCheckIn",
+            status: "Canceled",
           },
         },
         affected_rows: true,
@@ -43,7 +43,7 @@ export class CheckForScheduledMatches extends WorkerHost {
     });
 
     if (update_matches.affected_rows > 0) {
-      this.logger.log(`${update_matches.affected_rows} where started`);
+      this.logger.log(`canceled ${update_matches.affected_rows} matches`);
     }
 
     return;

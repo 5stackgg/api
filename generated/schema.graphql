@@ -7447,6 +7447,11 @@ type matches {
   can_cancel: Boolean
 
   """
+  A computed field, executes function "can_check_in"
+  """
+  can_check_in: Boolean
+
+  """
   A computed field, executes function "can_schedule_match"
   """
   can_schedule: Boolean
@@ -7455,6 +7460,11 @@ type matches {
   A computed field, executes function "can_start_match"
   """
   can_start: Boolean
+
+  """
+  A computed field, executes function "match_cancels_at"
+  """
+  cancels_at: timestamptz
 
   """
   A computed field, executes function "get_match_connection_link"
@@ -8078,8 +8088,10 @@ input matches_bool_exp {
   _not: matches_bool_exp
   _or: [matches_bool_exp!]
   can_cancel: Boolean_comparison_exp
+  can_check_in: Boolean_comparison_exp
   can_schedule: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
+  cancels_at: timestamptz_comparison_exp
   connection_link: String_comparison_exp
   connection_string: String_comparison_exp
   created_at: timestamptz_comparison_exp
@@ -8211,6 +8223,11 @@ input matches_insert_input {
 """aggregate max on columns"""
 type matches_max_fields {
   """
+  A computed field, executes function "match_cancels_at"
+  """
+  cancels_at: timestamptz
+
+  """
   A computed field, executes function "get_match_connection_link"
   """
   connection_link: String
@@ -8291,6 +8308,11 @@ input matches_max_order_by {
 
 """aggregate min on columns"""
 type matches_min_fields {
+  """
+  A computed field, executes function "match_cancels_at"
+  """
+  cancels_at: timestamptz
+
   """
   A computed field, executes function "get_match_connection_link"
   """
@@ -8403,8 +8425,10 @@ input matches_on_conflict {
 """Ordering options when selecting data from "matches"."""
 input matches_order_by {
   can_cancel: order_by
+  can_check_in: order_by
   can_schedule: order_by
   can_start: order_by
+  cancels_at: order_by
   connection_link: order_by
   connection_string: order_by
   created_at: order_by
