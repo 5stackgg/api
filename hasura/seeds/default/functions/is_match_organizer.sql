@@ -5,6 +5,10 @@ AS $$
 DECLARE
     organizer_exists boolean;
 BEGIN
+    IF hasura_session ->> 'x-hasura-role' = 'administrator' THEN
+        return true;
+    END IF;
+
     IF is_tournament_match(match) THEN
         IF hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
             return true;
