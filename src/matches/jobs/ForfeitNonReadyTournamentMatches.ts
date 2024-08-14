@@ -18,13 +18,18 @@ export class ForfeitNonReadyTournamentMatches extends WorkerHost {
           where: {
             _and: [
               {
-                cancels_at: {
-                  _lte: new Date(),
+                status: {
+                  _eq: "WaitingForCheckIn",
                 },
               },
               {
-                status: {
-                  _eq: "WaitingForCheckIn",
+                is_tournament_match: {
+                  _eq: true,
+                },
+              },
+              {
+                cancels_at: {
+                  _lte: new Date(),
                 },
               },
             ],
