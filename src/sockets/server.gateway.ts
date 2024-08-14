@@ -143,7 +143,7 @@ export class ServerGateway {
             await this.redis.lrange(`chat:${data.matchId}`, 0, -1)
           ).map((data) => {
             return JSON.parse(data);
-          }),
+          }).reverse(),
         },
       }),
     );
