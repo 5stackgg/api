@@ -18,14 +18,15 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   }
 
   public async process() {
-    const round = parseInt(this.data.round) + 1;
+    const statsRound = parseInt(this.data.round);
+    const matchRound = statsRound + 1;
 
     const { match_map_rounds } = await this.hasura.query({
       match_map_rounds: {
         __args: {
           where: {
             round: {
-              _gte: round,
+              _gte: matchRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -40,8 +41,31 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       },
     });
 
+    for(const type of [
+        'player_kills',
+        `player_assists`,
+        'player_damages',
+        'player_flashes',
+        'player_utility',
+        'player_objectives',
+        'player_unused_utility',
+    ]) {
+      await this.hasura.mutation({
+        [`delete_${type}`]: {
+          __args: {
+            where: {
+              round:  {
+                _gte: statsRound
+              }
+            }
+          },
+          __typename: true,
+        },
+      });
+    }
+
     for (const match_map_round of match_map_rounds) {
-      if (match_map_round.round === round) {
+      if (match_map_round.round === matchRound) {
         await this.hasura.mutation({
           update_match_maps_by_pk: {
             __args: {
@@ -58,6 +82,10 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
             __typename: true,
           },
         });
+      }
+
+      if(match_map_round.round < matchRound) {
+        continue;
       }
 
       try {
@@ -80,6 +108,11 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`,
     );
 
-    await this.matchAssistant.restoreMatchRound(this.matchId, round);
+    if(match_map_rounds.length === 0) {
+      this.logger.warn('unable to reset round , stats are gone.');
+      return;
+    }
+
+    await this.matchAssistant.restoreMatchRound(this.matchId, statsRound);
   }
 }

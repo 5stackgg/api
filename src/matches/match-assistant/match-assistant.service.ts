@@ -58,7 +58,7 @@ export class MatchAssistantService {
 
   public async restoreMatchRound(matchId: string, round: number) {
     try {
-      await this.command(matchId, `api_restore_round ${round - 1}`);
+      await this.command(matchId, `api_restore_round ${round}`);
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send restore round to server`,
