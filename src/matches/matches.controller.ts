@@ -209,13 +209,16 @@ export class MatchesController {
   public async scheduleMatch(data: {
     user: User;
     match_id: string;
-    // TODO - handle scheduled at
-    scheduled_at: Date;
+    time: Date;
   }) {
-    const { match_id, user } = data;
+    const { match_id, user, time } = data;
 
-    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+    if (!(await this.matchAssistant.canSchedule(match_id, user))) {
       throw Error("you are not a match organizer");
+    }
+
+    if (!time || new Date(time) < new Date()) {
+      throw Error("date must be in the future");
     }
 
     const { update_matches_by_pk: updatedMatch } = await this.hasura.mutation({

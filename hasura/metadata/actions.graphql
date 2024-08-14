@@ -30,7 +30,7 @@ type Query {
 type Mutation {
   scheduleMatch(
     match_id: uuid!
-    time: timestamptz
+    time: timestamptz!
   ): SuccessOutput
 }
 

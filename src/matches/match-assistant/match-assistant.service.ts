@@ -700,6 +700,22 @@ export class MatchAssistantService {
     }, []);
   }
 
+  public async canSchedule(matchId: string, user: User) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: matchId,
+          },
+          can_schedule: true,
+        },
+      },
+      user,
+    );
+
+    return matches_by_pk.can_schedule;
+  }
+
   public async canStart(matchId: string, user: User) {
     const { matches_by_pk } = await this.hasura.query(
       {

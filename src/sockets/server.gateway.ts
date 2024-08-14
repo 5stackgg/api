@@ -90,21 +90,28 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    const { matches_by_pk } = await this.hasuraService.query({
-      matches_by_pk: {
-        __args: {
-          id: data.matchId,
+    const { matches_by_pk } = await this.hasuraService.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: data.matchId,
+          },
+          is_coach: true,
+          is_organizer: true,
+          is_in_lineup: true,
         },
-        is_coach: true,
-        is_organizer: true,
-        is_in_lineup: true,
       },
-    }, client.user);
+      client.user,
+    );
 
     if (!matches_by_pk) {
       return;
     }
-    if (matches_by_pk.is_coach === false && matches_by_pk.is_in_lineup === false && matches_by_pk.is_organizer === false) {
+    if (
+      matches_by_pk.is_coach === false &&
+      matches_by_pk.is_in_lineup === false &&
+      matches_by_pk.is_organizer === false
+    ) {
       return;
     }
 
