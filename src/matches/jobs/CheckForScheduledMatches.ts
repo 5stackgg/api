@@ -25,6 +25,11 @@ export class CheckForScheduledMatches extends WorkerHost {
             _and: [
               {
                 scheduled_at: {
+                  _is_null: false,
+                },
+              },
+              {
+                scheduled_at: {
                   _lte: new Date()
                 },
               },
