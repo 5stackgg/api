@@ -96,7 +96,6 @@ export class MatchesController {
           name: true,
           coach_steam_id: true,
           lineup_players: {
-            ok: true,
             captain: true,
             steam_id: true,
             match_lineup_id: true,
