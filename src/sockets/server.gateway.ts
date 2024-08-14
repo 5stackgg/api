@@ -132,7 +132,7 @@ export class ServerGateway {
     const { name, steam_id, avatar_url } = client.user;
 
     if (userData.sessions.length === 0) {
-      this.sendToLobby(`lobby:join`, data.matchId, {
+      this.sendToLobby(`lobby:joined`, data.matchId, {
         user: {
           name,
           steam_id,
@@ -253,8 +253,6 @@ export class ServerGateway {
         messageField,
       ]),
     );
-
-    console.info("WEEE");
 
     this.sendToLobby("lobby:chat", data.matchId, message);
   }
