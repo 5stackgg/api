@@ -51,6 +51,7 @@ export default class DamageEvent extends MatchEventProcessor<{
             hitgroup: this.data.hitgroup,
           },
         },
+        __typename: true,
       },
     });
   }

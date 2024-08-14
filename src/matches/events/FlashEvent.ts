@@ -24,6 +24,7 @@ export default class FlashEvent extends MatchEventProcessor<{
             team_flash: this.data.team_flash,
           },
         },
+        __typename: true,
       },
     });
   }

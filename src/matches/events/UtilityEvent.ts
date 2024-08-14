@@ -25,7 +25,7 @@ export default class UtilityEvent extends MatchEventProcessor<{
               this.data.attacker_location_coordinates,
           },
         },
-        id: true,
+        __typename: true,
       },
     });
   }

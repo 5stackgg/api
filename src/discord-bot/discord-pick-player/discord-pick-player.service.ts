@@ -266,6 +266,7 @@ export class DiscordPickPlayerService {
             placeholder_name: !player ? getDiscordDisplayName(user) : undefined,
           },
         },
+        __typename: true,
       },
     });
 

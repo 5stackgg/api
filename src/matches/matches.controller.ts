@@ -518,9 +518,7 @@ export class MatchesController {
             checked_in: true,
           },
         },
-        returning: {
-          id: true,
-        },
+        affected_rows: true,
       },
     });
 

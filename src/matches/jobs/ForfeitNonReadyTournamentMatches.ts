@@ -64,6 +64,7 @@ export class ForfeitNonReadyTournamentMatches extends WorkerHost {
                 winning_lineup_id: winningLineupId,
               },
             },
+            __typename: true,
           },
         });
       } catch (error) {

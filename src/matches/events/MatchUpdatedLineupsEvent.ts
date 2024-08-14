@@ -27,6 +27,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
             },
           },
         },
+        affected_rows: true,
       },
     });
 
@@ -69,6 +70,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
                 update_columns: ["name"],
               },
             },
+            __typename: true,
           },
         });
       }
@@ -79,9 +81,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
         __args: {
           objects: players,
         },
-        returning: {
-          id: true,
-        },
+        affected_rows: true,
       },
     });
   }

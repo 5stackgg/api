@@ -44,6 +44,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
             discord_id: profile.id,
           },
         },
+        __typename: true,
       },
     });
 

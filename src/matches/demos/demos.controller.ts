@@ -70,6 +70,7 @@ export class DemosController {
             __args: {
               id: demo.id,
             },
+            __typename: true,
           },
         });
         continue;
@@ -111,6 +112,7 @@ export class DemosController {
             match_map_id: mapId,
           },
         },
+        __typename: true,
       },
     });
   }

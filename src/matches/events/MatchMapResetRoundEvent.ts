@@ -55,7 +55,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
                   match_map_round.lineup_2_timeouts_available,
               },
             },
-            id: true,
+            __typename: true,
           },
         });
       }
@@ -71,6 +71,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
           __args: {
             id: match_map_round.id,
           },
+          __typename: true,
         },
       });
     }

@@ -58,6 +58,7 @@ export default class KillEvent extends MatchEventProcessor<{
             hitgroup: this.data.hitgroup,
           },
         },
+        __typename: true,
       },
     });
   }

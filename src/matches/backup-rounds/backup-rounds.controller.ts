@@ -98,6 +98,7 @@ export class BackupRoundsController {
             backup_file: `${matchId}/${mapId}/backup-rounds/${file.originalname}`,
           },
         },
+        affected_rows: true,
       },
     });
   }

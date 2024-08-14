@@ -17,6 +17,7 @@ export default class TechTimeout extends MatchEventProcessor<{
             lineup_2_timeouts_available: this.data.lineup_2_timeouts_available,
           },
         },
+        __typename: true,
       },
     });
   }

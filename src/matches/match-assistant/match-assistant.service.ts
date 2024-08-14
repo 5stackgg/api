@@ -393,6 +393,7 @@ export class MatchAssistantService {
               server_id: serverId,
             },
           },
+          __typename: true,
         },
       });
 
@@ -549,6 +550,7 @@ export class MatchAssistantService {
           __args: {
             id: server.id,
           },
+          __typename: true,
         },
       });
     } catch (error) {

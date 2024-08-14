@@ -31,6 +31,7 @@ export default class KnifeSwitch extends MatchEventProcessor<void> {
             lineup_2_side: currentMap.lineup_1_side,
           },
         },
+        __typename: true,
       },
     });
   }

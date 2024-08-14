@@ -40,6 +40,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
           },
         },
       },
+      __typename: true,
     });
   }
 }

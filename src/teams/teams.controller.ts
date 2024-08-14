@@ -40,6 +40,7 @@ export class TeamsController {
             player_steam_id: user.steam_id,
           },
         },
+        __typename: true,
       },
     });
 
@@ -48,6 +49,7 @@ export class TeamsController {
         __args: {
           id: invite_id,
         },
+        __typename: true,
       },
     });
 
