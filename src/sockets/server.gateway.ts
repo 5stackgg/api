@@ -176,34 +176,27 @@ export class ServerGateway {
   ) {
     const timestamp = new Date();
 
+    const message  =  {
+      message: data.message,
+      timestamp: timestamp.toISOString(),
+      from: {
+        role: client.user.role,
+        name: client.user.name,
+        steam_id: client.user.steam_id,
+        avatar_url: client.user.avatar_url,
+        profile_url: client.user.profile_url,
+      },
+    }
     await this.redis.lpush(
       `chat:${data.matchId}`,
-      JSON.stringify({
-        message: data.message,
-        timestamp,
-        from: {
-          name: client.user.name,
-          steam_id: client.user.steam_id,
-          avatar_url: client.user.avatar_url,
-          profile_url: client.user.profile_url,
-        },
-      }),
+      JSON.stringify(message),
     );
     // TODO - dont need to set this every time
     await this.redis.expire(`chat:${data.matchId}`, 86400);
 
     this.sendToLobby("lobby:chat", data.matchId, {
       event: "message",
-      data: {
-        message: data.message,
-        timestamp: timestamp.toISOString(),
-        from: {
-          name: client.user.name,
-          steam_id: client.user.steam_id,
-          avatar_url: client.user.avatar_url,
-          profile_url: client.user.profile_url,
-        },
-      },
+      data: message,
     });
   }
 
