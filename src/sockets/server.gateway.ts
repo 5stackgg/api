@@ -148,18 +148,7 @@ export class ServerGateway {
     );
 
     client.on("close", () => {
-      userData.sessions = userData.sessions.filter((_client) => {
-        return _client !== client;
-      });
-
-      if (userData.sessions.length === 0) {
-        this.matches[data.matchId].delete(client.user.steam_id);
-        this.sendToLobby("lobby:left", data.matchId, {
-          user: {
-            steam_id: client.user.steam_id,
-          },
-        });
-      }
+      this.removeFromLobby(data.matchId, client);
     });
   }
 
@@ -171,7 +160,28 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    console.info("LEAVE LOBBY!", data);
+    this.removeFromLobby(data.matchId, client);
+  }
+
+  private removeFromLobby(matchId: string, client: FiveStackWebSocketClient) {
+    const userData = this.matches?.[matchId].get(client.user.steam_id);
+
+    if (!userData) {
+      return;
+    }
+
+    userData.sessions = userData.sessions.filter((_client) => {
+      return _client !== client;
+    });
+
+    if (userData.sessions.length === 0) {
+      this.matches[matchId].delete(client.user.steam_id);
+      this.sendToLobby("lobby:left", matchId, {
+        user: {
+          steam_id: client.user.steam_id,
+        },
+      });
+    }
   }
 
   @SubscribeMessage("lobby:chat")
