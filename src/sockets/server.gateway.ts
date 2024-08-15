@@ -22,6 +22,7 @@ type FiveStackWebSocketClient = WebSocket.WebSocket & {
   user: User;
 };
 
+
 /**
  * TODO - use redis to keep state,
  * right now this is not scaleable because were using a single service to track sessions
@@ -161,8 +162,7 @@ export class ServerGateway {
     const messagesObject = await this.redis.hgetall(`chat_${data.matchId}`);
 
     const messages = Object.entries(messagesObject)
-      .map(([, value]) => JSON.parse(value))
-      .reverse();
+      .map(([, value]) => JSON.parse(value));
 
     client.send(
       JSON.stringify({

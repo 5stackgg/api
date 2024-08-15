@@ -1,3 +1,5 @@
+import os from "os";
+import cluster from "cluster";
 import session from "express-session";
 import { NestFactory } from "@nestjs/core";
 import { Transport } from "@nestjs/microservices";
@@ -11,9 +13,27 @@ import { RedisManagerService } from "./redis/redis-manager/redis-manager.service
 import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "./configs/types/RedisConfig";
 import { AppConfig } from "./configs/types/AppConfig";
+import { EventEmitter } from "events";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    // TODO - handle clustering, but need to move web sockets to redis
+    // if (cluster.isPrimary) {
+    //     const numCPUs = os.cpus().length;
+    //     console.log(`Master process is running. Forking ${numCPUs} workers...`);
+    //
+    //     // Fork workers.
+    //     for (let i = 0; i < numCPUs; i++) {
+    //         cluster.fork();
+    //     }
+    //
+    //     cluster.on('exit', (worker, code, signal) => {
+    //         console.log(`Worker ${worker.process.pid} died. Forking a new one...`);
+    //         cluster.fork();
+    //     });
+    //     return;
+    // }
+
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const configService = app.get(ConfigService);
 
