@@ -30,7 +30,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    PERFORM can_pick_veto(NEW);
+    PERFORM verify_veto_pick(NEW);
     RETURN NEW;
 END;
 $$;

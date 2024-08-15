@@ -1,3 +1,13 @@
 table:
   name: match_map_demos
   schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - match_id
+        - match_map_id
+        - size
+      filter: {}
+    comment: ""
