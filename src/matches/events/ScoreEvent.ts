@@ -22,7 +22,6 @@ export default class ScoreEvent extends MatchEventProcessor<{
             lineup_1_score: this.data.lineup_1_score,
             lineup_1_money: this.data.lineup_1_money,
             lineup_1_timeouts_available: this.data.lineup_1_timeouts_available,
-
             lineup_2_score: this.data.lineup_2_score,
             lineup_2_money: this.data.lineup_2_money,
             lineup_2_timeouts_available: this.data.lineup_2_timeouts_available,
@@ -39,6 +38,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
             ],
           },
         },
+        __typename: true,
       },
     });
   }

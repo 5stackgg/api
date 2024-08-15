@@ -61,6 +61,7 @@ export class DemosController {
       zlib: { level: zlib.constants.Z_NO_COMPRESSION },
     });
 
+    // @ts-ignore
     archive.pipe(response);
 
     for (const demo of demos) {
@@ -70,6 +71,7 @@ export class DemosController {
             __args: {
               id: demo.id,
             },
+            __typename: true,
           },
         });
         continue;
@@ -111,6 +113,7 @@ export class DemosController {
             match_map_id: mapId,
           },
         },
+        __typename: true,
       },
     });
   }

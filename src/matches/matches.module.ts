@@ -16,7 +16,7 @@ import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { S3Module } from "../s3/s3.module";
 import { DiscordBotModule } from "../discord-bot/discord-bot.module";
-import { BullModule } from "@nestjs/bullmq";
+import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { MatchQueues } from "./enums/MatchQueues";
@@ -27,6 +27,10 @@ import {
 import { MatchEvents } from "./events";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
+import { Queue } from "bullmq";
+import { CheckForScheduledMatches } from "./jobs/CheckForScheduledMatches";
+import { CancelNonReadyMatches } from "./jobs/CancelNonReadyMatches";
+import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTournamentMatches";
 
 @Module({
   imports: [
@@ -43,6 +47,13 @@ import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match
       name: MatchQueues.MatchServers,
       adapter: BullMQAdapter,
     }),
+    BullModule.registerQueue({
+      name: MatchQueues.ScheduledMatches,
+    }),
+    BullBoardModule.forFeature({
+      name: MatchQueues.ScheduledMatches,
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [MatchesController, DemosController, BackupRoundsController],
   exports: [MatchAssistantService],
@@ -51,11 +62,46 @@ import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match
     ServerAuthService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
+    CancelNonReadyMatches,
+    ForfeitNonReadyTournamentMatches,
+    CheckForScheduledMatches,
     ...Object.values(MatchEvents),
     loggerFactory(),
   ],
 })
 export class MatchesModule implements NestModule {
+  constructor(@InjectQueue(MatchQueues.ScheduledMatches) private queue: Queue) {
+    void queue.add(
+      CheckForScheduledMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      CancelNonReadyMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      ForfeitNonReadyTournamentMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(MatchServerMiddlewareMiddleware).forRoutes(
       { path: "matches/current-match/:serverId", method: RequestMethod.ALL },

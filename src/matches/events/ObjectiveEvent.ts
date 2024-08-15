@@ -21,7 +21,7 @@ export default class ObjectiveEvent extends MatchEventProcessor<{
             player_steam_id: this.data.player_steam_id,
           },
         },
-        id: true,
+        __typename: true,
       },
     });
   }

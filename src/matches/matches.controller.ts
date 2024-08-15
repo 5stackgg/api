@@ -88,7 +88,7 @@ export class MatchesController {
             captain: true,
             steam_id: true,
             match_lineup_id: true,
-            name: true,
+            placeholder_name: true,
           },
         },
         lineup_2: {
@@ -99,7 +99,7 @@ export class MatchesController {
             captain: true,
             steam_id: true,
             match_lineup_id: true,
-            name: true,
+            placeholder_name: true,
           },
         },
       },
@@ -168,6 +168,7 @@ export class MatchesController {
           this.logger.warn(
             `[${matchId}] another match is currently live, moving back to scheduled`,
           );
+          // TODO - should we make a state for waiting for server?
           await this.matchAssistant.updateMatchStatus(match.id, "Scheduled");
         }
       } else {
@@ -209,15 +210,15 @@ export class MatchesController {
   public async scheduleMatch(data: {
     user: User;
     match_id: string;
-    time: Date;
+    time?: Date;
   }) {
     const { match_id, user, time } = data;
 
     if (!(await this.matchAssistant.canSchedule(match_id, user))) {
-      throw Error("you are not a match organizer");
+      throw Error("cannot schedule match until teams are checked in.");
     }
 
-    if (!time || new Date(time) < new Date()) {
+    if (time && new Date(time) < new Date()) {
       throw Error("date must be in the future");
     }
 
@@ -228,8 +229,8 @@ export class MatchesController {
             id: match_id,
           },
           _set: {
-            status: "Scheduled",
-            scheduled_at: time,
+            scheduled_at: time || new Date(),
+            status: time ? "Scheduled" : "WaitingForCheckIn",
           },
         },
         id: true,
@@ -237,7 +238,11 @@ export class MatchesController {
       },
     });
 
-    if (!updatedMatch || updatedMatch.status !== "Scheduled") {
+    if (
+      !updatedMatch ||
+      (updatedMatch.status !== "WaitingForCheckIn" &&
+        updatedMatch.status !== "Scheduled")
+    ) {
       throw Error(`Unable to schedule match`);
     }
 
@@ -345,7 +350,7 @@ export class MatchesController {
   public async cancelMatch(data: { user: User; match_id: string }) {
     const { match_id, user } = data;
 
-    if (!(await this.matchAssistant.canStart(match_id, user))) {
+    if (!(await this.matchAssistant.canCancel(match_id, user))) {
       throw Error(
         "you are not a match organizer or the match is waiting for players to check in",
       );
@@ -475,6 +480,19 @@ export class MatchesController {
 
   @HasuraAction()
   public async checkIntoMatch(data: { user: User; match_id: string }) {
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: data.match_id,
+        },
+        status: true,
+      },
+    });
+
+    if (matches_by_pk.status !== "WaitingForCheckIn") {
+      throw Error("match is not accepting check in's at this time");
+    }
+
     await this.hasura.mutation({
       update_match_lineup_players: {
         __args: {
@@ -500,9 +518,41 @@ export class MatchesController {
             checked_in: true,
           },
         },
-        returning: {
-          id: true,
+        affected_rows: true,
+      },
+    });
+
+    await this.hasura.mutation({
+      update_matches: {
+        __args: {
+          _set: {
+            status: "Live",
+          },
+          where: {
+            _and: [
+              {
+                id: {
+                  _eq: data.match_id,
+                },
+              },
+              {
+                lineup_1: {
+                  is_ready: {
+                    _eq: true,
+                  },
+                },
+              },
+              {
+                lineup_2: {
+                  is_ready: {
+                    _eq: true,
+                  },
+                },
+              },
+            ],
+          },
         },
+        affected_rows: true,
       },
     });
 

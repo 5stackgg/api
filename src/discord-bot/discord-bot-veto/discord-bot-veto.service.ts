@@ -114,6 +114,7 @@ export class DiscordBotVetoService {
             match_lineup_id: match.veto_picking_lineup_id,
           },
         },
+        __typename: true,
       },
     });
   }

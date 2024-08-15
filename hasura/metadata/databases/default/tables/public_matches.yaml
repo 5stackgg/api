@@ -120,6 +120,12 @@ computed_fields:
         name: can_cancel_match
         schema: public
       session_argument: hasura_session
+  - name: can_check_in
+    definition:
+      function:
+        name: can_check_in
+        schema: public
+      session_argument: hasura_session
   - name: can_schedule
     definition:
       function:
@@ -132,6 +138,11 @@ computed_fields:
         name: can_start_match
         schema: public
       session_argument: hasura_session
+  - name: cancels_at
+    definition:
+      function:
+        name: match_cancels_at
+        schema: public
   - name: connection_link
     definition:
       function:
@@ -254,8 +265,10 @@ select_permissions:
         - winning_lineup_id
       computed_fields:
         - can_cancel
+        - can_check_in
         - can_schedule
         - can_start
+        - cancels_at
         - connection_link
         - connection_string
         - current_match_map_id

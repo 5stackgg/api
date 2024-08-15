@@ -1,4 +1,4 @@
-FROM node:20-alpine As build
+FROM node:22-alpine As build
 
 WORKDIR /build
 
@@ -11,7 +11,7 @@ COPY . .
 
 RUN yarn build
 
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /opt/5stack
 

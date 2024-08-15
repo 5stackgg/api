@@ -31,6 +31,7 @@ export default class CaptainEvent extends MatchEventProcessor<{
             captain: this.data.claim,
           },
         },
+        affected_rows: true,
       },
     });
   }

@@ -31,6 +31,7 @@ export default class AssistEvent extends MatchEventProcessor<{
             flash: this.data.flash,
           },
         },
+        __typename: true,
       },
     });
   }

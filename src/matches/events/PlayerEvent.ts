@@ -17,6 +17,7 @@ export default class PlayerEvent extends MatchEventProcessor<{
             update_columns: ["name"],
           },
         },
+        __typename: true,
       },
     });
   }

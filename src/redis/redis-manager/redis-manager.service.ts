@@ -23,16 +23,7 @@ export class RedisManagerService {
       const currentConnection: Redis = (this.connections[connection] =
         new IORedis(this.getConfig(connection)));
 
-      for (const status of ["ready", "close", "end"]) {
-        currentConnection.on(status, () => {
-          currentConnection.emit("status", status);
-          currentConnection.emit("online", status === "ready");
-        });
-      }
-
       currentConnection.on("error", (error) => {
-        currentConnection.emit("status", "error");
-        currentConnection.emit("online", false);
         if (
           !error.message.includes("ECONNRESET") &&
           !error.message.includes("EPIPE") &&

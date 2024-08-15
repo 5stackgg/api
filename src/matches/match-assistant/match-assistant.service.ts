@@ -58,7 +58,7 @@ export class MatchAssistantService {
 
   public async restoreMatchRound(matchId: string, round: number) {
     try {
-      await this.command(matchId, `api_restore_round ${round - 1}`);
+      await this.command(matchId, `api_restore_round ${round}`);
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send restore round to server`,
@@ -393,6 +393,7 @@ export class MatchAssistantService {
               server_id: serverId,
             },
           },
+          __typename: true,
         },
       });
 
@@ -549,6 +550,7 @@ export class MatchAssistantService {
           __args: {
             id: server.id,
           },
+          __typename: true,
         },
       });
     } catch (error) {
@@ -629,7 +631,14 @@ export class MatchAssistantService {
             },
             matches: {
               status: {
-                _nin: ["Scheduled", "Tie", "Forfeit", "Canceled", "Finished"],
+                _nin: [
+                  "Scheduled",
+                  "WaitingForCheckIn",
+                  "Tie",
+                  "Forfeit",
+                  "Canceled",
+                  "Finished",
+                ],
               },
             },
           },
@@ -714,6 +723,22 @@ export class MatchAssistantService {
     );
 
     return matches_by_pk.can_schedule;
+  }
+
+  public async canCancel(matchId: string, user: User) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: matchId,
+          },
+          can_cancel: true,
+        },
+      },
+      user,
+    );
+
+    return matches_by_pk.can_cancel;
   }
 
   public async canStart(matchId: string, user: User) {
