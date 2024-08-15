@@ -8,10 +8,15 @@ DECLARE
     starting_team int;
     picks_made int;
     team int;
+    best_of int;
 BEGIN
     IF match.status != 'Veto' THEN
         RETURN NULL;
     END IF;
+
+    select mo.best_of into best_of from matches m
+        inner join match_options mo on mo.id = m.match_options_id
+        where m.id = match.id;
 
     -- Count the total number of picks made for the match
     SELECT COUNT(*) INTO total_picks
@@ -30,7 +35,8 @@ BEGIN
 
     -- Determine the team based on the number of picks made within the round
     picks_made := total_picks % 6;
-    IF picks_made < 4 THEN
+
+    IF best_of = 1 OR picks_made < 4 THEN
         IF (starting_team = 1 AND picks_made % 2 = 0) OR
            (starting_team = 2 AND picks_made % 2 <> 0) THEN
             team := 1;
