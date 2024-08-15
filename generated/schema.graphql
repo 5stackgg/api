@@ -7442,6 +7442,11 @@ columns and relationships of "matches"
 """
 type matches {
   """
+  A computed field, executes function "can_assign_server_to_match"
+  """
+  can_assign_server: Boolean
+
+  """
   A computed field, executes function "can_cancel_match"
   """
   can_cancel: Boolean
@@ -8087,6 +8092,7 @@ input matches_bool_exp {
   _and: [matches_bool_exp!]
   _not: matches_bool_exp
   _or: [matches_bool_exp!]
+  can_assign_server: Boolean_comparison_exp
   can_cancel: Boolean_comparison_exp
   can_check_in: Boolean_comparison_exp
   can_schedule: Boolean_comparison_exp
@@ -8424,6 +8430,7 @@ input matches_on_conflict {
 
 """Ordering options when selecting data from "matches"."""
 input matches_order_by {
+  can_assign_server: order_by
   can_cancel: order_by
   can_check_in: order_by
   can_schedule: order_by

@@ -10388,6 +10388,9 @@ export default {
             ]
         },
         "matches": {
+            "can_assign_server": [
+                0
+            ],
             "can_cancel": [
                 0
             ],
@@ -11182,6 +11185,9 @@ export default {
             "_or": [
                 621
             ],
+            "can_assign_server": [
+                1
+            ],
             "can_cancel": [
                 1
             ],
@@ -11734,6 +11740,9 @@ export default {
             ]
         },
         "matches_order_by": {
+            "can_assign_server": [
+                656
+            ],
             "can_cancel": [
                 656
             ],
