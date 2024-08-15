@@ -54,6 +54,12 @@ computed_fields:
         name: can_pick_veto
         schema: public
       session_argument: hasura_session
+  - name: can_update_lineup
+    definition:
+      function:
+        name: can_update_lineup
+        schema: public
+      session_argument: hasura_session
   - name: is_on_lineup
     definition:
       function:
@@ -84,6 +90,7 @@ select_permissions:
         - team_id
       computed_fields:
         - can_pick_veto
+        - can_update_lineup
         - is_on_lineup
         - is_picking_veto
         - is_ready

@@ -5618,6 +5618,12 @@ export default {
             ]
         },
         "match_lineups": {
+            "can_pick_veto": [
+                0
+            ],
+            "can_update_lineup": [
+                0
+            ],
             "captain": [
                 1418
             ],
@@ -5629,6 +5635,12 @@ export default {
             ],
             "id": [
                 1416
+            ],
+            "is_on_lineup": [
+                0
+            ],
+            "is_picking_veto": [
+                0
             ],
             "is_ready": [
                 0
@@ -5895,6 +5907,12 @@ export default {
             "_or": [
                 403
             ],
+            "can_pick_veto": [
+                1
+            ],
+            "can_update_lineup": [
+                1
+            ],
             "captain": [
                 1422
             ],
@@ -5906,6 +5924,12 @@ export default {
             ],
             "id": [
                 1417
+            ],
+            "is_on_lineup": [
+                1
+            ],
+            "is_picking_veto": [
+                1
             ],
             "is_ready": [
                 1
@@ -6078,6 +6102,12 @@ export default {
             ]
         },
         "match_lineups_order_by": {
+            "can_pick_veto": [
+                656
+            ],
+            "can_update_lineup": [
+                656
+            ],
             "captain": [
                 1429
             ],
@@ -6088,6 +6118,12 @@ export default {
                 656
             ],
             "id": [
+                656
+            ],
+            "is_on_lineup": [
+                656
+            ],
+            "is_picking_veto": [
                 656
             ],
             "is_ready": [

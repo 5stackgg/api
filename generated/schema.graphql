@@ -4287,6 +4287,16 @@ input match_lineup_players_variance_order_by {
 
 """relational table for assigning a team to a match and lineup"""
 type match_lineups {
+  """
+  A computed field, executes function "can_pick_veto"
+  """
+  can_pick_veto: Boolean
+
+  """
+  A computed field, executes function "can_update_lineup"
+  """
+  can_update_lineup: Boolean
+
   """An object relationship"""
   captain: v_match_captains
 
@@ -4294,6 +4304,16 @@ type match_lineups {
   coach: players
   coach_steam_id: bigint
   id: uuid!
+
+  """
+  A computed field, executes function "is_on_lineup"
+  """
+  is_on_lineup: Boolean
+
+  """
+  A computed field, executes function "lineup_is_picking_veto"
+  """
+  is_picking_veto: Boolean
 
   """
   A computed field, executes function "is_match_lineup_ready"
@@ -4467,10 +4487,14 @@ input match_lineups_bool_exp {
   _and: [match_lineups_bool_exp!]
   _not: match_lineups_bool_exp
   _or: [match_lineups_bool_exp!]
+  can_pick_veto: Boolean_comparison_exp
+  can_update_lineup: Boolean_comparison_exp
   captain: v_match_captains_bool_exp
   coach: players_bool_exp
   coach_steam_id: bigint_comparison_exp
   id: uuid_comparison_exp
+  is_on_lineup: Boolean_comparison_exp
+  is_picking_veto: Boolean_comparison_exp
   is_ready: Boolean_comparison_exp
   lineup_players: match_lineup_players_bool_exp
   lineup_players_aggregate: match_lineup_players_aggregate_bool_exp
@@ -4588,10 +4612,14 @@ input match_lineups_on_conflict {
 
 """Ordering options when selecting data from "match_lineups"."""
 input match_lineups_order_by {
+  can_pick_veto: order_by
+  can_update_lineup: order_by
   captain: v_match_captains_order_by
   coach: players_order_by
   coach_steam_id: order_by
   id: order_by
+  is_on_lineup: order_by
+  is_picking_veto: order_by
   is_ready: order_by
   lineup_players_aggregate: match_lineup_players_aggregate_order_by
   match_veto_picks_aggregate: match_veto_picks_aggregate_order_by

@@ -1304,12 +1304,20 @@ export interface match_lineup_players_variance_fields {
 
 /** relational table for assigning a team to a match and lineup */
 export interface match_lineups {
+    /** A computed field, executes function "can_pick_veto" */
+    can_pick_veto: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_update_lineup" */
+    can_update_lineup: (Scalars['Boolean'] | null)
     /** An object relationship */
     captain: (v_match_captains | null)
     /** An object relationship */
     coach: (players | null)
     coach_steam_id: (Scalars['bigint'] | null)
     id: Scalars['uuid']
+    /** A computed field, executes function "is_on_lineup" */
+    is_on_lineup: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "lineup_is_picking_veto" */
+    is_picking_veto: (Scalars['Boolean'] | null)
     /** A computed field, executes function "is_match_lineup_ready" */
     is_ready: (Scalars['Boolean'] | null)
     /** An array relationship */
@@ -10648,12 +10656,20 @@ export interface match_lineup_players_variance_order_by {steam_id?: (order_by | 
 
 /** relational table for assigning a team to a match and lineup */
 export interface match_lineupsGenqlSelection{
+    /** A computed field, executes function "can_pick_veto" */
+    can_pick_veto?: boolean | number
+    /** A computed field, executes function "can_update_lineup" */
+    can_update_lineup?: boolean | number
     /** An object relationship */
     captain?: v_match_captainsGenqlSelection
     /** An object relationship */
     coach?: playersGenqlSelection
     coach_steam_id?: boolean | number
     id?: boolean | number
+    /** A computed field, executes function "is_on_lineup" */
+    is_on_lineup?: boolean | number
+    /** A computed field, executes function "lineup_is_picking_veto" */
+    is_picking_veto?: boolean | number
     /** A computed field, executes function "is_match_lineup_ready" */
     is_ready?: boolean | number
     /** An array relationship */
@@ -10770,7 +10786,7 @@ export interface match_lineups_avg_order_by {coach_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_lineups". All fields are combined with a logical 'AND'. */
-export interface match_lineups_bool_exp {_and?: (match_lineups_bool_exp[] | null),_not?: (match_lineups_bool_exp | null),_or?: (match_lineups_bool_exp[] | null),captain?: (v_match_captains_bool_exp | null),coach?: (players_bool_exp | null),coach_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),is_ready?: (Boolean_comparison_exp | null),lineup_players?: (match_lineup_players_bool_exp | null),lineup_players_aggregate?: (match_lineup_players_aggregate_bool_exp | null),match_veto_picks?: (match_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),v_match_lineup?: (v_match_lineups_bool_exp | null)}
+export interface match_lineups_bool_exp {_and?: (match_lineups_bool_exp[] | null),_not?: (match_lineups_bool_exp | null),_or?: (match_lineups_bool_exp[] | null),can_pick_veto?: (Boolean_comparison_exp | null),can_update_lineup?: (Boolean_comparison_exp | null),captain?: (v_match_captains_bool_exp | null),coach?: (players_bool_exp | null),coach_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),is_on_lineup?: (Boolean_comparison_exp | null),is_picking_veto?: (Boolean_comparison_exp | null),is_ready?: (Boolean_comparison_exp | null),lineup_players?: (match_lineup_players_bool_exp | null),lineup_players_aggregate?: (match_lineup_players_aggregate_bool_exp | null),match_veto_picks?: (match_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),v_match_lineup?: (v_match_lineups_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_lineups" */
@@ -10835,7 +10851,7 @@ export interface match_lineups_on_conflict {constraint: match_lineups_constraint
 
 
 /** Ordering options when selecting data from "match_lineups". */
-export interface match_lineups_order_by {captain?: (v_match_captains_order_by | null),coach?: (players_order_by | null),coach_steam_id?: (order_by | null),id?: (order_by | null),is_ready?: (order_by | null),lineup_players_aggregate?: (match_lineup_players_aggregate_order_by | null),match_veto_picks_aggregate?: (match_veto_picks_aggregate_order_by | null),name?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),v_match_lineup?: (v_match_lineups_order_by | null)}
+export interface match_lineups_order_by {can_pick_veto?: (order_by | null),can_update_lineup?: (order_by | null),captain?: (v_match_captains_order_by | null),coach?: (players_order_by | null),coach_steam_id?: (order_by | null),id?: (order_by | null),is_on_lineup?: (order_by | null),is_picking_veto?: (order_by | null),is_ready?: (order_by | null),lineup_players_aggregate?: (match_lineup_players_aggregate_order_by | null),match_veto_picks_aggregate?: (match_veto_picks_aggregate_order_by | null),name?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),v_match_lineup?: (v_match_lineups_order_by | null)}
 
 
 /** primary key columns input for table: match_lineups */
