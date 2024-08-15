@@ -67,6 +67,10 @@ export class S3Service {
     await this.client.putObject(this.bucket, filename, stream);
   }
 
+  public async stat(filename: string) {
+    return await this.client.statObject(this.bucket, filename);
+  }
+
   public async remove(filename: string): Promise<boolean> {
     try {
       await this.client.removeObject(this.bucket, filename);

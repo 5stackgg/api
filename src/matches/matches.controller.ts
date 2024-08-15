@@ -270,6 +270,7 @@ export class MatchesController {
         __args: {
           id: match_id,
         },
+        server_id: true,
         options: {
           map_veto: true,
           best_of: true,
@@ -300,7 +301,7 @@ export class MatchesController {
           },
           _set: {
             status: nextPhase,
-            server_id: server_id || null,
+            server_id: server_id || match.server_id,
           },
         },
         id: true,

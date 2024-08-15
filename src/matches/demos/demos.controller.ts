@@ -101,7 +101,7 @@ export class DemosController {
 
     const filename = `${matchId}/${mapId}/demos/${file.originalname}`;
 
-    const size = file.size;
+    const { size } = await this.s3.stat(filename);
 
     await this.hasura.mutation({
       insert_match_map_demos_one: {
