@@ -22,7 +22,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.tbiud_match_lineup_players()
+CREATE OR REPLACE FUNCTION public.tbid_match_lineup_players()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -53,5 +53,5 @@ CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_pla
 DROP TRIGGER IF EXISTS tbu_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tbu_match_lineup_players BEFORE UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbu_match_lineup_players();
 
-DROP TRIGGER IF EXISTS tbiud_match_lineup_players ON public.match_lineup_players;
-CREATE TRIGGER tbiud_match_lineup_players BEFORE INSERT OR UPDATE OR DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbiud_match_lineup_players();
+DROP TRIGGER IF EXISTS tbid_match_lineup_players ON public.match_lineup_players;
+CREATE TRIGGER tbid_match_lineup_players BEFORE INSERT OR DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbid_match_lineup_players();
