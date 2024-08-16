@@ -26,7 +26,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.webp', null),
     ('de_biome', 'Competitive', 'false',  '3075706807', '/img/maps/screenshots/de_biome.webp', null),
     ('drawbridge', 'Competitive', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
-    ('foroglio', 'Competitive', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
+    ('de_foroglio', 'Competitive', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
 
     ('de_dust2_night', 'ScrimmageNight', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg'),
     ('de_ancient_night', 'ScrimmageNight', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient.svg'),
@@ -45,7 +45,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     --  Wingman Workshop
     ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
     ('drawbridge', 'Wingman', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
-    ('foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null)
+    ('de_foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null)
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
 
