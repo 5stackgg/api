@@ -1610,9 +1610,11 @@ export interface match_map_rounds {
     kills_aggregate: player_kills_aggregate
     lineup_1_money: Scalars['Int']
     lineup_1_score: Scalars['Int']
+    lineup_1_side: e_sides_enum
     lineup_1_timeouts_available: Scalars['Int']
     lineup_2_money: Scalars['Int']
     lineup_2_score: Scalars['Int']
+    lineup_2_side: e_sides_enum
     lineup_2_timeouts_available: Scalars['Int']
     /** An object relationship */
     match_map: match_maps
@@ -1710,7 +1712,7 @@ export interface match_map_rounds_mutation_response {
 
 
 /** select columns of table "match_map_rounds" */
-export type match_map_rounds_select_column = 'backup_file' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time'
+export type match_map_rounds_select_column = 'backup_file' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time'
 
 
 /** aggregate stddev on columns */
@@ -1766,7 +1768,7 @@ export interface match_map_rounds_sum_fields {
 
 
 /** update columns of table "match_map_rounds" */
-export type match_map_rounds_update_column = 'backup_file' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time'
+export type match_map_rounds_update_column = 'backup_file' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time'
 
 
 /** aggregate var_pop on columns */
@@ -11236,9 +11238,11 @@ export interface match_map_roundsGenqlSelection{
     where?: (player_kills_bool_exp | null)} })
     lineup_1_money?: boolean | number
     lineup_1_score?: boolean | number
+    lineup_1_side?: boolean | number
     lineup_1_timeouts_available?: boolean | number
     lineup_2_money?: boolean | number
     lineup_2_score?: boolean | number
+    lineup_2_side?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     /** An object relationship */
     match_map?: match_mapsGenqlSelection
@@ -11310,7 +11314,7 @@ export interface match_map_rounds_avg_order_by {lineup_1_money?: (order_by | nul
 
 
 /** Boolean expression to filter rows from the table "match_map_rounds". All fields are combined with a logical 'AND'. */
-export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null)}
+export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_rounds" */
@@ -11318,7 +11322,7 @@ export interface match_map_rounds_inc_input {lineup_1_money?: (Scalars['Int'] | 
 
 
 /** input type for inserting data into table "match_map_rounds" */
-export interface match_map_rounds_insert_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (player_kills_arr_rel_insert_input | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface match_map_rounds_insert_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (player_kills_arr_rel_insert_input | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -11381,7 +11385,7 @@ export interface match_map_rounds_on_conflict {constraint: match_map_rounds_cons
 
 
 /** Ordering options when selecting data from "match_map_rounds". */
-export interface match_map_rounds_order_by {backup_file?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface match_map_rounds_order_by {backup_file?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_rounds */
@@ -11389,7 +11393,7 @@ export interface match_map_rounds_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_map_rounds" */
-export interface match_map_rounds_set_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface match_map_rounds_set_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -11455,7 +11459,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_rounds_stream_cursor_value_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface match_map_rounds_stream_cursor_value_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -30110,9 +30114,11 @@ export const enumMatchMapRoundsSelectColumn = {
    id: 'id' as const,
    lineup_1_money: 'lineup_1_money' as const,
    lineup_1_score: 'lineup_1_score' as const,
+   lineup_1_side: 'lineup_1_side' as const,
    lineup_1_timeouts_available: 'lineup_1_timeouts_available' as const,
    lineup_2_money: 'lineup_2_money' as const,
    lineup_2_score: 'lineup_2_score' as const,
+   lineup_2_side: 'lineup_2_side' as const,
    lineup_2_timeouts_available: 'lineup_2_timeouts_available' as const,
    match_map_id: 'match_map_id' as const,
    round: 'round' as const,
@@ -30124,9 +30130,11 @@ export const enumMatchMapRoundsUpdateColumn = {
    id: 'id' as const,
    lineup_1_money: 'lineup_1_money' as const,
    lineup_1_score: 'lineup_1_score' as const,
+   lineup_1_side: 'lineup_1_side' as const,
    lineup_1_timeouts_available: 'lineup_1_timeouts_available' as const,
    lineup_2_money: 'lineup_2_money' as const,
    lineup_2_score: 'lineup_2_score' as const,
+   lineup_2_side: 'lineup_2_side' as const,
    lineup_2_timeouts_available: 'lineup_2_timeouts_available' as const,
    match_map_id: 'match_map_id' as const,
    round: 'round' as const,

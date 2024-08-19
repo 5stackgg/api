@@ -11,6 +11,9 @@ BEGIN
         ORDER BY mm.order ASC
         LIMIT 1;
 
-        RETURN match_map_id = match_map.id;
+        IF match_map_id = match_map.id THEN
+            return true;
+        END IF;
+        return false;
 END;
 $$;
