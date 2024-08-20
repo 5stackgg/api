@@ -21,12 +21,16 @@ select_permissions:
     permission:
       columns:
         - id
-        - match_map_id
-        - round
         - lineup_1_money
         - lineup_1_score
+        - lineup_1_side
+        - lineup_1_timeouts_available
         - lineup_2_money
         - lineup_2_score
+        - lineup_2_side
+        - lineup_2_timeouts_available
+        - match_map_id
+        - round
         - time
       filter: {}
     comment: ""

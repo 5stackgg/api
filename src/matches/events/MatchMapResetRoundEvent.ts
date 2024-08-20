@@ -19,14 +19,13 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
 
   public async process() {
     const statsRound = parseInt(this.data.round);
-    const matchRound = statsRound + 1;
 
     const { match_map_rounds } = await this.hasura.query({
       match_map_rounds: {
         __args: {
           where: {
             round: {
-              _gte: matchRound,
+              _gte: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -65,7 +64,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
     }
 
     for (const match_map_round of match_map_rounds) {
-      if (match_map_round.round === matchRound) {
+      if (match_map_round.round === statsRound) {
         await this.hasura.mutation({
           update_match_maps_by_pk: {
             __args: {
@@ -84,7 +83,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         });
       }
 
-      if (match_map_round.round < matchRound) {
+      if (match_map_round.round < statsRound) {
         continue;
       }
 

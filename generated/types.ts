@@ -6921,6 +6921,9 @@ export default {
             "lineup_1_score": [
                 3
             ],
+            "lineup_1_side": [
+                160
+            ],
             "lineup_1_timeouts_available": [
                 3
             ],
@@ -6929,6 +6932,9 @@ export default {
             ],
             "lineup_2_score": [
                 3
+            ],
+            "lineup_2_side": [
+                160
             ],
             "lineup_2_timeouts_available": [
                 3
@@ -7161,6 +7167,9 @@ export default {
             "lineup_1_score": [
                 4
             ],
+            "lineup_1_side": [
+                161
+            ],
             "lineup_1_timeouts_available": [
                 4
             ],
@@ -7169,6 +7178,9 @@ export default {
             ],
             "lineup_2_score": [
                 4
+            ],
+            "lineup_2_side": [
+                161
             ],
             "lineup_2_timeouts_available": [
                 4
@@ -7232,6 +7244,9 @@ export default {
             "lineup_1_score": [
                 3
             ],
+            "lineup_1_side": [
+                160
+            ],
             "lineup_1_timeouts_available": [
                 3
             ],
@@ -7240,6 +7255,9 @@ export default {
             ],
             "lineup_2_score": [
                 3
+            ],
+            "lineup_2_side": [
+                160
             ],
             "lineup_2_timeouts_available": [
                 3
@@ -7453,6 +7471,9 @@ export default {
             "lineup_1_score": [
                 656
             ],
+            "lineup_1_side": [
+                656
+            ],
             "lineup_1_timeouts_available": [
                 656
             ],
@@ -7460,6 +7481,9 @@ export default {
                 656
             ],
             "lineup_2_score": [
+                656
+            ],
+            "lineup_2_side": [
                 656
             ],
             "lineup_2_timeouts_available": [
@@ -7503,6 +7527,9 @@ export default {
             "lineup_1_score": [
                 3
             ],
+            "lineup_1_side": [
+                160
+            ],
             "lineup_1_timeouts_available": [
                 3
             ],
@@ -7511,6 +7538,9 @@ export default {
             ],
             "lineup_2_score": [
                 3
+            ],
+            "lineup_2_side": [
+                160
             ],
             "lineup_2_timeouts_available": [
                 3
@@ -7708,6 +7738,9 @@ export default {
             "lineup_1_score": [
                 3
             ],
+            "lineup_1_side": [
+                160
+            ],
             "lineup_1_timeouts_available": [
                 3
             ],
@@ -7716,6 +7749,9 @@ export default {
             ],
             "lineup_2_score": [
                 3
+            ],
+            "lineup_2_side": [
+                160
             ],
             "lineup_2_timeouts_available": [
                 3

@@ -1,6 +1,10 @@
 table:
   name: map_pools
   schema: public
+object_relationships:
+  - name: e_type
+    using:
+      foreign_key_constraint_on: type
 array_relationships:
   - name: maps
     using:
