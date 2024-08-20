@@ -62,6 +62,26 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - owner_steam_id
+        - short_name
+      filter: {}
+      check: null
+      set:
+        owner_steam_id: x-hasura-user-id
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - name
+        - owner_steam_id
+        - short_name
+      filter: {}
+      check: null
+    comment: ""
   - role: user
     permission:
       columns:
@@ -71,11 +91,13 @@ update_permissions:
       filter:
         owner_steam_id:
           _eq: x-hasura-user-id
-      check:
-        owner_steam_id:
-          _eq: x-hasura-user-id
+      check: {}
     comment: ""
 delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
   - role: user
     permission:
       filter:

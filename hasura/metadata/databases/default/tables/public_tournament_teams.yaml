@@ -20,6 +20,26 @@ array_relationships:
           name: tournament_team_roster
           schema: public
 insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - name
+        - owner_steam_id
+        - seed
+        - team_id
+        - tournament_id
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check: {}
+      columns:
+        - name
+        - owner_steam_id
+        - seed
+        - team_id
+        - tournament_id
+    comment: ""
   - role: user
     permission:
       check:
@@ -60,6 +80,22 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - seed
+      filter: {}
+      check: null
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - name
+        - seed
+      filter: {}
+      check: null
+    comment: ""
   - role: user
     permission:
       columns:
@@ -100,6 +136,14 @@ update_permissions:
                 _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter: {}
+    comment: ""
   - role: user
     permission:
       filter:

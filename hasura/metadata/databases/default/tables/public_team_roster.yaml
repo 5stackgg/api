@@ -17,6 +17,22 @@ select_permissions:
         - team_id
       filter: {}
     comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - role
+      filter:
+        team:
+          roster:
+            role:
+              _eq: Admin
+      check:
+        team:
+          roster:
+            role:
+              _eq: Admin
+    comment: ""
 event_triggers:
   - name: team_roster_events
     definition:
