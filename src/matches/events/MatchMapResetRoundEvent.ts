@@ -18,7 +18,6 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   }
 
   public async process() {
-    console.info("FFS", this.data)
     const statsRound = parseInt(this.data.round);
 
     const { match_map_rounds } = await this.hasura.query({
