@@ -51,3 +51,23 @@ $$;
 
 DROP TRIGGER IF EXISTS tbu_matches ON public.matches;
 CREATE TRIGGER tbu_matches BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbu_matches();
+
+CREATE OR REPLACE FUNCTION public.tad_matches() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM tournaments
+        WHERE match_options_id = OLD.match_options_id
+    )
+    THEN
+        DELETE FROM match_options
+        WHERE id = OLD.match_options_id;
+    END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tad_matches ON public.matches;
+CREATE TRIGGER tad_matches AFTER DELETE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tad_matches();
