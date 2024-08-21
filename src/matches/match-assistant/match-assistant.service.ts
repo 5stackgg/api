@@ -67,6 +67,17 @@ export class MatchAssistantService {
     }
   }
 
+  public async uploadBackupRound(matchId: string, round: number) {
+    try {
+      await this.command(matchId, `upload_backup_round ${round}`);
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] unable to send upload backup round to server`,
+        error.message,
+      );
+    }
+  }
+
   public async getMatchLineups(matchId: string) {
     const { matches_by_pk } = await this.hasura.query({
       matches_by_pk: {

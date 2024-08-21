@@ -12,6 +12,13 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_id
 array_relationships:
+  - name: demos
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: match_map_demos
+          schema: public
   - name: flashes
     using:
       foreign_key_constraint_on:

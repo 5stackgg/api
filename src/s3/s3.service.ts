@@ -1,5 +1,5 @@
 import { Client } from "minio";
-import { Readable, PassThrough } from "stream";
+import { Readable } from "stream";
 import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import { S3Config } from "../configs/types/S3Config";

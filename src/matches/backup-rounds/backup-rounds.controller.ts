@@ -2,12 +2,12 @@ import {
   Controller,
   Get,
   Req,
-  Res,
   Post,
   UseInterceptors,
   UploadedFile,
+  StreamableFile,
 } from "@nestjs/common";
-import { Request, Response } from "express";
+import { Request } from "express";
 import zlib from "zlib";
 import path from "path";
 import archiver from "archiver";
@@ -23,10 +23,7 @@ export class BackupRoundsController {
   ) {}
 
   @Get("map/:mapId")
-  public async downloadMapBackupRounds(
-    @Req() request: Request,
-    @Res() response: Response,
-  ) {
+  public async downloadMapBackupRounds(@Req() request: Request) {
     const { matchId, mapId } = request.params;
 
     const { match_map_rounds } = await this.hasura.query({
@@ -41,24 +38,34 @@ export class BackupRoundsController {
             },
           },
         },
+        id: true,
         backup_file: true,
       },
     });
 
-    response.writeHead(200, {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${matchId}-backup.zip"`,
-    });
+    if (match_map_rounds.length === 0) {
+      throw Error("missing backup rounds");
+    }
 
     const archive = archiver("zip", {
       zlib: { level: zlib.constants.Z_NO_COMPRESSION },
     });
 
-    // @ts-ignore
-    archive.pipe(response);
-
     for (const map_round of match_map_rounds) {
       if (!(await this.s3.has(map_round.backup_file))) {
+        await this.hasura.mutation({
+          update_match_map_rounds_by_pk: {
+            __args: {
+              pk_columns: {
+                id: map_round.id,
+              },
+              _set: {
+                backup_file: null,
+              },
+            },
+            __typename: true,
+          },
+        });
         continue;
       }
 
@@ -68,6 +75,11 @@ export class BackupRoundsController {
     }
 
     void archive.finalize();
+
+    return new StreamableFile(archive, {
+      type: "application/zip",
+      disposition: `attachment; filename="${matchId}-backup-rounds.zip"`,
+    });
   }
 
   @Post("map/:mapId/round/:round")
@@ -92,7 +104,7 @@ export class BackupRoundsController {
               _eq: mapId,
             },
             round: {
-              _eq: parseInt(round) + 1,
+              _eq: parseInt(round),
             },
           },
           _set: {

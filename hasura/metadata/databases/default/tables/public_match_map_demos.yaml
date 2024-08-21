@@ -1,6 +1,12 @@
 table:
   name: match_map_demos
   schema: public
+computed_fields:
+  - name: download_url
+    definition:
+      function:
+        name: demo_download_url
+        schema: public
 select_permissions:
   - role: user
     permission:
@@ -9,5 +15,7 @@ select_permissions:
         - match_id
         - match_map_id
         - size
+      computed_fields:
+        - download_url
       filter: {}
     comment: ""

@@ -1,5 +1,6 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 import { e_sides_enum } from "../../../generated";
+import { RconService } from "../../rcon/rcon.service";
 
 export default class ScoreEvent extends MatchEventProcessor<{
   time: string;
@@ -48,5 +49,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
         __typename: true,
       },
     });
+
+    await this.matchAssistant.uploadBackupRound(this.matchId, this.data.round);
   }
 }
