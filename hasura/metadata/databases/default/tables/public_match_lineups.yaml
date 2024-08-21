@@ -81,6 +81,13 @@ computed_fields:
       function:
         name: get_team_name
         schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - team_id
+    comment: ""
 select_permissions:
   - role: user
     permission:
