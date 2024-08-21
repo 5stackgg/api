@@ -1,0 +1,3 @@
+table:
+  name: functions
+  schema: migration_hashes

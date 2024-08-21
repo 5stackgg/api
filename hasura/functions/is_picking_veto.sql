@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION public.lineup_is_picking_veto(match_lineup match_lineups)
 RETURNS BOOLEAN
-LANGUAGE plpgsql
+-- its not truly stable
+LANGUAGE plpgsql stable
 AS $$
 DECLARE
     _match matches;

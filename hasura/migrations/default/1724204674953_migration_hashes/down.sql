@@ -1,0 +1,1 @@
+drop schema "migration_hashes" cascade;

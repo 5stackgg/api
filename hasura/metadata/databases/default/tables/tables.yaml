@@ -1,3 +1,4 @@
+- "!include migration_hashes_hashes.yaml"
 - "!include public__map_pool.yaml"
 - "!include public_e_map_pool_types.yaml"
 - "!include public_e_match_map_status.yaml"

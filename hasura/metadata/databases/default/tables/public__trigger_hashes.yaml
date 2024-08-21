@@ -1,0 +1,3 @@
+table:
+  name: _trigger_hashes
+  schema: public

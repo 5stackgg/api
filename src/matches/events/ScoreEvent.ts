@@ -1,5 +1,5 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import {e_sides_enum} from "../../../generated";
+import { e_sides_enum } from "../../../generated";
 
 export default class ScoreEvent extends MatchEventProcessor<{
   time: string;
@@ -40,8 +40,8 @@ export default class ScoreEvent extends MatchEventProcessor<{
               "lineup_2_score",
               "lineup_2_money",
               "lineup_2_timeouts_available",
-                "lineup_1_side",
-                "lineup_2_side"
+              "lineup_1_side",
+              "lineup_2_side",
             ],
           },
         },

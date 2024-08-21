@@ -1,5 +1,5 @@
 import { User } from "../auth/types/User";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   createClient,
@@ -11,14 +11,20 @@ import {
 } from "../../generated";
 import { HasuraConfig } from "../configs/types/HasuraConfig";
 import { CacheService } from "../cache/cache.service";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { PostgresService } from "../postgres/postgres.service";
 
 @Injectable()
 export class HasuraService {
   private config: HasuraConfig;
 
   constructor(
+    protected readonly logger: Logger,
     protected readonly cache: CacheService,
     protected readonly configService: ConfigService,
+    protected readonly postgresService: PostgresService,
   ) {
     this.config = configService.get<HasuraConfig>("hasura");
   }
@@ -87,5 +93,81 @@ export class HasuraService {
       "x-hasura-role": playerRole,
       "x-hasura-user-id": user.steam_id.toString(),
     };
+  }
+
+  public async setup() {
+    await this.apply(path.resolve("./hasura/enums"));
+    await this.apply(path.resolve("./hasura/functions"));
+    await this.apply(path.resolve("./hasura/triggers"));
+  }
+
+  public async apply(filePath: string): Promise<boolean> {
+    const filePathStats = fs.statSync(filePath);
+
+    if (filePathStats.isDirectory()) {
+      const files = fs.readdirSync(filePath);
+      for (const file of files) {
+        await this.apply(path.join(filePath, file));
+      }
+      return;
+    }
+
+    try {
+      const sql = fs.readFileSync(filePath, "utf8");
+
+      const digest = this.calcSqlDigest(sql);
+      const setting = path.basename(filePath.replace(".sql", ""));
+
+      if (digest === (await this.getSetting(setting))) {
+        return;
+      }
+
+      this.logger.log(`    applying ${path.basename(filePath)}`);
+      await this.postgresService.query(`begin;${sql};commit;`);
+
+      await this.setSetting(setting, digest);
+    } catch (error) {
+      throw new Error(
+        `failed to exec sql ${path.basename(filePath)}: ${error.message}`,
+      );
+    }
+  }
+
+  public async getSetting(name: string) {
+    try {
+      const [data] = await this.postgresService.query<
+        Array<{
+          hash: string;
+        }>
+      >("SELECT hash FROM migration_hashes.hashes WHERE name = $1", [name]);
+
+      return data.hash;
+    } catch (error) {
+      throw new Error(`unable to get setting ${name}: ${error.message}`);
+    }
+  }
+
+  public async setSetting(name: string, hash: string) {
+    try {
+      await this.postgresService.query(
+        "insert into migration_hashes.hashes (name, hash) values ($1, $2) on conflict (name) do update set hash = $2",
+        [name, hash],
+      );
+    } catch (error) {
+      throw new Error(`unable to set setting ${name}: ${error.message}`);
+    }
+  }
+
+  public calcSqlDigest(data: string | Array<string>) {
+    const hash = crypto.createHash("sha256");
+    if (!Array.isArray(data)) {
+      data = [data];
+    }
+
+    for (const datum of data) {
+      hash.update(datum);
+    }
+
+    return hash.digest("base64");
   }
 }
