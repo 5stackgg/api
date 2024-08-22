@@ -2,7 +2,7 @@ import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { HasuraService } from "../../hasura/hasura.service";
 import { Logger } from "@nestjs/common";
-import {S3Service} from "../../s3/s3.service";
+import { S3Service } from "../../s3/s3.service";
 
 @Processor(MatchQueues.ScheduledMatches)
 export class RemoveCancelledMatches extends WorkerHost {
@@ -27,11 +27,11 @@ export class RemoveCancelledMatches extends WorkerHost {
               {
                 is_tournament_match: {
                   _eq: false,
-                }
+                },
               },
               {
                 status: {
-                  _in: ['PickingPlayers', 'Canceled'],
+                  _in: ["PickingPlayers", "Canceled"],
                 },
               },
               {
@@ -39,15 +39,15 @@ export class RemoveCancelledMatches extends WorkerHost {
                   {
                     scheduled_at: {
                       _is_null: true,
-                    }
+                    },
                   },
                   {
                     cancels_at: {
-                      _lte: yesterday
-                    }
-                  }
-                ]
-              }
+                      _lte: yesterday,
+                    },
+                  },
+                ],
+              },
             ],
           },
         },
@@ -60,14 +60,14 @@ export class RemoveCancelledMatches extends WorkerHost {
           rounds: {
             id: true,
             backup_file: true,
-          }
-        }
+          },
+        },
       },
     });
 
-    for(const match of matches) {
-      for(const matchMap of match.match_maps) {
-        for(const demo of matchMap.demos) {
+    for (const match of matches) {
+      for (const matchMap of match.match_maps) {
+        for (const demo of matchMap.demos) {
           await this.s3Service.remove(demo.file);
           await this.hasura.mutation({
             delete_match_map_demos_by_pk: {
@@ -75,35 +75,35 @@ export class RemoveCancelledMatches extends WorkerHost {
                 id: demo.id,
               },
               __typename: true,
-            }
-          })
+            },
+          });
         }
 
-        for(const round of matchMap.rounds) {
+        for (const round of matchMap.rounds) {
           await this.s3Service.remove(round.backup_file);
           await this.hasura.mutation({
             update_match_map_rounds_by_pk: {
               __args: {
-                pk_columns:{
+                pk_columns: {
                   id: round.id,
                 },
                 __set: {
                   backup_file: null,
-                }
+                },
               },
               __typename: true,
-            }
-          })
+            },
+          });
         }
       }
       await this.hasura.mutation({
         delete_matches_by_pk: {
           __args: {
-            id: match.id
+            id: match.id,
           },
           __typename: true,
-        }
-      })
+        },
+      });
     }
 
     this.logger.log(`removed  ${matches.length} canceled matches`);

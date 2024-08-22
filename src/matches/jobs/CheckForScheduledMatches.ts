@@ -12,8 +12,8 @@ export class CheckForScheduledMatches extends WorkerHost {
     super();
   }
   async process(): Promise<number> {
-    const startTime = new Date();
-    startTime.setMinutes(startTime.getMinutes() - 15);
+    const fifteenMinutesAgo = new Date();
+    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
 
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
@@ -27,7 +27,7 @@ export class CheckForScheduledMatches extends WorkerHost {
               },
               {
                 scheduled_at: {
-                  _lte: startTime,
+                  _lte: fifteenMinutesAgo,
                 },
               },
               {
@@ -46,7 +46,7 @@ export class CheckForScheduledMatches extends WorkerHost {
     });
 
     if (update_matches.affected_rows > 0) {
-      this.logger.log(`${update_matches.affected_rows} where started`);
+      this.logger.log(`${update_matches.affected_rows} matches started`);
     }
 
     return update_matches.affected_rows;
