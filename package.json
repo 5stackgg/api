@@ -54,6 +54,7 @@
     "express-session": "^1.18.0",
     "ioredis": "^5.4.1",
     "minio": "^8.0.1",
+    "oauth": "^0.10.0",
     "openpgp": "^5.11.1",
     "passport": "^0.7.0",
     "passport-discord": "^0.1.4",

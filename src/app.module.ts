@@ -23,6 +23,8 @@ import { ExpressAdapter } from "@bull-board/express";
 import configs from "./configs";
 import { loggerFactory } from "./utilities/LoggerFactory";
 import { SocketsModule } from "./sockets/sockets.module";
+import { TailscaleModule } from "./tailscale/tailscale.module";
+import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { SocketsModule } from "./sockets/sockets.module";
     S3Module,
     RedisModule,
     PostgresModule,
+    TailscaleModule,
     BullModule.forRootAsync({
       imports: [RedisModule],
       inject: [RedisManagerService],
@@ -56,6 +59,7 @@ import { SocketsModule } from "./sockets/sockets.module";
       isGlobal: true,
       load: configs,
     }),
+    GameServerNodeModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

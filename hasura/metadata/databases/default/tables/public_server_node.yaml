@@ -1,0 +1,3 @@
+table:
+  name: server_node
+  schema: public

@@ -42,6 +42,10 @@ type Mutation {
 }
 
 type Mutation {
+  setupGameServer: SetupGameServeOutput
+}
+
+type Mutation {
   startMatch(
     match_id: uuid!
     server_id: uuid
@@ -59,5 +63,10 @@ type MeResponse {
 
 type SuccessOutput {
   success: Boolean!
+}
+
+type SetupGameServeOutput {
+  id: uuid!
+  script: String!
 }
 

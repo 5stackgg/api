@@ -7,6 +7,7 @@ import steam from "./steam";
 import hasura from "./hasura";
 import gameServers from "./game-servers";
 import typesense from "./typesense";
+import tailscale from "./tailscale";
 
 export default [
   app,
@@ -18,4 +19,5 @@ export default [
   s3,
   steam,
   typesense,
+  tailscale,
 ];

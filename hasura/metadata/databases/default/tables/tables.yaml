@@ -31,6 +31,7 @@
 - "!include public_player_unused_utility.yaml"
 - "!include public_player_utility.yaml"
 - "!include public_players.yaml"
+- "!include public_server_nodes.yaml"
 - "!include public_servers.yaml"
 - "!include public_team_invites.yaml"
 - "!include public_team_roster.yaml"
