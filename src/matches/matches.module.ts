@@ -31,6 +31,7 @@ import { Queue } from "bullmq";
 import { CheckForScheduledMatches } from "./jobs/CheckForScheduledMatches";
 import { CancelNonReadyMatches } from "./jobs/CancelNonReadyMatches";
 import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTournamentMatches";
+import {RemoveCancelledMatches} from "./jobs/RemoveCancelledMatches";
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTourname
     CancelNonReadyMatches,
     ForfeitNonReadyTournamentMatches,
     CheckForScheduledMatches,
+    RemoveCancelledMatches,
     ...Object.values(MatchEvents),
     loggerFactory(),
   ],
@@ -99,6 +101,16 @@ export class MatchesModule implements NestModule {
           pattern: "* * * * *",
         },
       },
+    );
+
+    void queue.add(
+        RemoveCancelledMatches.name,
+        {},
+        {
+          repeat: {
+            pattern: "* * * * *",
+          },
+        },
     );
   }
 

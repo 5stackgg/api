@@ -6965,6 +6965,7 @@ type match_options {
 
   """An object relationship"""
   tournament: tournaments
+  tv_delay: Int!
   type: e_match_types_enum!
 }
 
@@ -6998,6 +6999,7 @@ type match_options_avg_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """
@@ -7023,6 +7025,7 @@ input match_options_bool_exp {
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
+  tv_delay: Int_comparison_exp
   type: e_match_types_enum_comparison_exp
 }
 
@@ -7043,6 +7046,7 @@ input match_options_inc_input {
   best_of: Int
   mr: Int
   number_of_substitutes: Int
+  tv_delay: Int
 }
 
 """
@@ -7063,6 +7067,7 @@ input match_options_insert_input {
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
+  tv_delay: Int
   type: e_match_types_enum
 }
 
@@ -7073,6 +7078,7 @@ type match_options_max_fields {
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
+  tv_delay: Int
 }
 
 """aggregate min on columns"""
@@ -7082,6 +7088,7 @@ type match_options_min_fields {
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
+  tv_delay: Int
 }
 
 """
@@ -7131,6 +7138,7 @@ input match_options_order_by {
   tech_timeout_setting: order_by
   timeout_setting: order_by
   tournament: tournaments_order_by
+  tv_delay: order_by
   type: order_by
 }
 
@@ -7177,6 +7185,9 @@ enum match_options_select_column {
   timeout_setting
 
   """column name"""
+  tv_delay
+
+  """column name"""
   type
 }
 
@@ -7195,6 +7206,7 @@ input match_options_set_input {
   overtime: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
+  tv_delay: Int
   type: e_match_types_enum
 }
 
@@ -7203,6 +7215,7 @@ type match_options_stddev_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """aggregate stddev_pop on columns"""
@@ -7210,6 +7223,7 @@ type match_options_stddev_pop_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """aggregate stddev_samp on columns"""
@@ -7217,6 +7231,7 @@ type match_options_stddev_samp_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """
@@ -7243,6 +7258,7 @@ input match_options_stream_cursor_value_input {
   overtime: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
+  tv_delay: Int
   type: e_match_types_enum
 }
 
@@ -7251,6 +7267,7 @@ type match_options_sum_fields {
   best_of: Int
   mr: Int
   number_of_substitutes: Int
+  tv_delay: Int
 }
 
 """
@@ -7291,6 +7308,9 @@ enum match_options_update_column {
   timeout_setting
 
   """column name"""
+  tv_delay
+
+  """column name"""
   type
 }
 
@@ -7310,6 +7330,7 @@ type match_options_var_pop_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """aggregate var_samp on columns"""
@@ -7317,6 +7338,7 @@ type match_options_var_samp_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """aggregate variance on columns"""
@@ -7324,6 +7346,7 @@ type match_options_variance_fields {
   best_of: Float
   mr: Float
   number_of_substitutes: Float
+  tv_delay: Float
 }
 
 """

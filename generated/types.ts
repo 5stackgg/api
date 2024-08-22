@@ -9607,6 +9607,9 @@ export default {
             "tournament": [
                 1393
             ],
+            "tv_delay": [
+                3
+            ],
             "type": [
                 100
             ],
@@ -9682,6 +9685,9 @@ export default {
             "number_of_substitutes": [
                 2
             ],
+            "tv_delay": [
+                2
+            ],
             "__typename": [
                 6
             ]
@@ -9744,6 +9750,9 @@ export default {
             "tournament": [
                 1402
             ],
+            "tv_delay": [
+                4
+            ],
             "type": [
                 101
             ],
@@ -9760,6 +9769,9 @@ export default {
                 3
             ],
             "number_of_substitutes": [
+                3
+            ],
+            "tv_delay": [
                 3
             ],
             "__typename": [
@@ -9809,6 +9821,9 @@ export default {
             "tournament": [
                 1411
             ],
+            "tv_delay": [
+                3
+            ],
             "type": [
                 100
             ],
@@ -9832,6 +9847,9 @@ export default {
             "number_of_substitutes": [
                 3
             ],
+            "tv_delay": [
+                3
+            ],
             "__typename": [
                 6
             ]
@@ -9850,6 +9868,9 @@ export default {
                 3
             ],
             "number_of_substitutes": [
+                3
+            ],
+            "tv_delay": [
                 3
             ],
             "__typename": [
@@ -9938,6 +9959,9 @@ export default {
             "tournament": [
                 1413
             ],
+            "tv_delay": [
+                675
+            ],
             "type": [
                 675
             ],
@@ -9988,6 +10012,9 @@ export default {
             "timeout_setting": [
                 202
             ],
+            "tv_delay": [
+                3
+            ],
             "type": [
                 100
             ],
@@ -10005,6 +10032,9 @@ export default {
             "number_of_substitutes": [
                 2
             ],
+            "tv_delay": [
+                2
+            ],
             "__typename": [
                 6
             ]
@@ -10019,6 +10049,9 @@ export default {
             "number_of_substitutes": [
                 2
             ],
+            "tv_delay": [
+                2
+            ],
             "__typename": [
                 6
             ]
@@ -10031,6 +10064,9 @@ export default {
                 2
             ],
             "number_of_substitutes": [
+                2
+            ],
+            "tv_delay": [
                 2
             ],
             "__typename": [
@@ -10082,6 +10118,9 @@ export default {
             "timeout_setting": [
                 202
             ],
+            "tv_delay": [
+                3
+            ],
             "type": [
                 100
             ],
@@ -10097,6 +10136,9 @@ export default {
                 3
             ],
             "number_of_substitutes": [
+                3
+            ],
+            "tv_delay": [
                 3
             ],
             "__typename": [
@@ -10128,6 +10170,9 @@ export default {
             "number_of_substitutes": [
                 2
             ],
+            "tv_delay": [
+                2
+            ],
             "__typename": [
                 6
             ]
@@ -10142,6 +10187,9 @@ export default {
             "number_of_substitutes": [
                 2
             ],
+            "tv_delay": [
+                2
+            ],
             "__typename": [
                 6
             ]
@@ -10154,6 +10202,9 @@ export default {
                 2
             ],
             "number_of_substitutes": [
+                2
+            ],
+            "tv_delay": [
                 2
             ],
             "__typename": [
