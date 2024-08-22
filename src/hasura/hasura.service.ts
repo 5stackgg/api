@@ -141,7 +141,7 @@ export class HasuraService {
         }>
       >("SELECT hash FROM migration_hashes.hashes WHERE name = $1", [name]);
 
-      return data.hash;
+      return data?.hash;
     } catch (error) {
       throw new Error(`unable to get setting ${name}: ${error.message}`);
     }
