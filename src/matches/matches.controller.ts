@@ -62,6 +62,7 @@ export class MatchesController {
           best_of: true,
           coaches: true,
           overtime: true,
+          tv_delay: true,
           knife_round: true,
           timeout_setting: true,
           tech_timeout_setting: true,
