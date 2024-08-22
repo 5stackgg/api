@@ -12,6 +12,9 @@ export class CheckForScheduledMatches extends WorkerHost {
     super();
   }
   async process(): Promise<number> {
+    const startTime = new Date();
+    startTime.setMinutes(startTime.getMinutes() - 15);
+
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
         __args: {
@@ -24,7 +27,7 @@ export class CheckForScheduledMatches extends WorkerHost {
               },
               {
                 scheduled_at: {
-                  _lte: new Date(),
+                  _lte: startTime,
                 },
               },
               {
