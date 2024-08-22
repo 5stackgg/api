@@ -995,6 +995,8 @@ export type e_veto_pick_types_update_column = 'description' | 'value'
 
 /** columns and relationships of "map_pools" */
 export interface map_pools {
+    /** An object relationship */
+    e_type: e_map_pool_types
     enabled: Scalars['Boolean']
     id: Scalars['uuid']
     /** An array relationship */
@@ -1813,6 +1815,14 @@ export interface match_map_rounds_variance_fields {
 /** columns and relationships of "match_maps" */
 export interface match_maps {
     created_at: Scalars['timestamptz']
+    /** An array relationship */
+    demos: match_map_demos[]
+    /** An aggregate relationship */
+    demos_aggregate: match_map_demos_aggregate
+    /** A computed field, executes function "demo_download_url" */
+    demos_download_url: (Scalars['String'] | null)
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** An object relationship */
     e_match_map_status: e_match_map_status
     /** An array relationship */
@@ -1901,6 +1911,8 @@ export interface match_maps_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface match_maps_avg_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -1919,6 +1931,10 @@ export type match_maps_constraint = 'match_maps_match_id_order_key' | 'match_map
 /** aggregate max on columns */
 export interface match_maps_max_fields {
     created_at: (Scalars['timestamptz'] | null)
+    /** A computed field, executes function "demo_download_url" */
+    demos_download_url: (Scalars['String'] | null)
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     id: (Scalars['uuid'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
@@ -1936,6 +1952,10 @@ export interface match_maps_max_fields {
 /** aggregate min on columns */
 export interface match_maps_min_fields {
     created_at: (Scalars['timestamptz'] | null)
+    /** A computed field, executes function "demo_download_url" */
+    demos_download_url: (Scalars['String'] | null)
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     id: (Scalars['uuid'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
@@ -1966,6 +1986,8 @@ export type match_maps_select_column = 'created_at' | 'id' | 'lineup_1_side' | '
 
 /** aggregate stddev on columns */
 export interface match_maps_stddev_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -1979,6 +2001,8 @@ export interface match_maps_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface match_maps_stddev_pop_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -1992,6 +2016,8 @@ export interface match_maps_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface match_maps_stddev_samp_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -2005,6 +2031,8 @@ export interface match_maps_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface match_maps_sum_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Int'] | null)
@@ -2022,6 +2050,8 @@ export type match_maps_update_column = 'created_at' | 'id' | 'lineup_1_side' | '
 
 /** aggregate var_pop on columns */
 export interface match_maps_var_pop_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -2035,6 +2065,8 @@ export interface match_maps_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface match_maps_var_samp_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -2048,6 +2080,8 @@ export interface match_maps_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface match_maps_variance_fields {
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Float'] | null)
@@ -2645,6 +2679,69 @@ export interface matches_variance_fields {
 }
 
 
+/** columns and relationships of "migration_hashes.hashes" */
+export interface migration_hashes_hashes {
+    hash: Scalars['String']
+    name: Scalars['String']
+    __typename: 'migration_hashes_hashes'
+}
+
+
+/** aggregated selection of "migration_hashes.hashes" */
+export interface migration_hashes_hashes_aggregate {
+    aggregate: (migration_hashes_hashes_aggregate_fields | null)
+    nodes: migration_hashes_hashes[]
+    __typename: 'migration_hashes_hashes_aggregate'
+}
+
+
+/** aggregate fields of "migration_hashes.hashes" */
+export interface migration_hashes_hashes_aggregate_fields {
+    count: Scalars['Int']
+    max: (migration_hashes_hashes_max_fields | null)
+    min: (migration_hashes_hashes_min_fields | null)
+    __typename: 'migration_hashes_hashes_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "migration_hashes.hashes" */
+export type migration_hashes_hashes_constraint = 'functions_pkey'
+
+
+/** aggregate max on columns */
+export interface migration_hashes_hashes_max_fields {
+    hash: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    __typename: 'migration_hashes_hashes_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface migration_hashes_hashes_min_fields {
+    hash: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    __typename: 'migration_hashes_hashes_min_fields'
+}
+
+
+/** response of any mutation on the table "migration_hashes.hashes" */
+export interface migration_hashes_hashes_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: migration_hashes_hashes[]
+    __typename: 'migration_hashes_hashes_mutation_response'
+}
+
+
+/** select columns of table "migration_hashes.hashes" */
+export type migration_hashes_hashes_select_column = 'hash' | 'name'
+
+
+/** update columns of table "migration_hashes.hashes" */
+export type migration_hashes_hashes_update_column = 'hash' | 'name'
+
+
 /** mutation root */
 export interface mutation_root {
     /** accept team invite */
@@ -2749,6 +2846,10 @@ export interface mutation_root {
     delete_matches: (matches_mutation_response | null)
     /** delete single row from the table: "matches" */
     delete_matches_by_pk: (matches | null)
+    /** delete data from the table: "migration_hashes.hashes" */
+    delete_migration_hashes_hashes: (migration_hashes_hashes_mutation_response | null)
+    /** delete single row from the table: "migration_hashes.hashes" */
+    delete_migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
     /** delete data from the table: "player_assists" */
     delete_player_assists: (player_assists_mutation_response | null)
     /** delete single row from the table: "player_assists" */
@@ -2926,6 +3027,10 @@ export interface mutation_root {
     insert_matches: (matches_mutation_response | null)
     /** insert a single row into the table: "matches" */
     insert_matches_one: (matches | null)
+    /** insert data into the table: "migration_hashes.hashes" */
+    insert_migration_hashes_hashes: (migration_hashes_hashes_mutation_response | null)
+    /** insert a single row into the table: "migration_hashes.hashes" */
+    insert_migration_hashes_hashes_one: (migration_hashes_hashes | null)
     /** insert data into the table: "player_assists" */
     insert_player_assists: (player_assists_mutation_response | null)
     /** insert a single row into the table: "player_assists" */
@@ -3160,6 +3265,12 @@ export interface mutation_root {
     update_matches_by_pk: (matches | null)
     /** update multiples rows of table: "matches" */
     update_matches_many: ((matches_mutation_response | null)[] | null)
+    /** update data of the table: "migration_hashes.hashes" */
+    update_migration_hashes_hashes: (migration_hashes_hashes_mutation_response | null)
+    /** update single row of the table: "migration_hashes.hashes" */
+    update_migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
+    /** update multiples rows of table: "migration_hashes.hashes" */
+    update_migration_hashes_hashes_many: ((migration_hashes_hashes_mutation_response | null)[] | null)
     /** update data of the table: "player_assists" */
     update_player_assists: (player_assists_mutation_response | null)
     /** update single row of the table: "player_assists" */
@@ -4944,6 +5055,12 @@ export interface query_root {
     matches_by_pk: (matches | null)
     /** Gets Current User */
     me: MeResponse
+    /** fetch data from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes: migration_hashes_hashes[]
+    /** fetch aggregated fields from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes_aggregate: migration_hashes_hashes_aggregate
+    /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
+    migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
     /** An array relationship */
     player_assists: player_assists[]
     /** An aggregate relationship */
@@ -5467,6 +5584,14 @@ export interface subscription_root {
     matches_by_pk: (matches | null)
     /** fetch data from the table in a streaming manner: "matches" */
     matches_stream: matches[]
+    /** fetch data from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes: migration_hashes_hashes[]
+    /** fetch aggregated fields from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes_aggregate: migration_hashes_hashes_aggregate
+    /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
+    migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
+    /** fetch data from the table in a streaming manner: "migration_hashes.hashes" */
+    migration_hashes_hashes_stream: migration_hashes_hashes[]
     /** An array relationship */
     player_assists: player_assists[]
     /** An aggregate relationship */
@@ -8475,6 +8600,12 @@ export interface e_map_pool_types_mutation_responseGenqlSelection{
 }
 
 
+/** input type for inserting object relation for remote table "e_map_pool_types" */
+export interface e_map_pool_types_obj_rel_insert_input {data: e_map_pool_types_insert_input,
+/** upsert condition */
+on_conflict?: (e_map_pool_types_on_conflict | null)}
+
+
 /** on_conflict condition type for table "e_map_pool_types" */
 export interface e_map_pool_types_on_conflict {constraint: e_map_pool_types_constraint,update_columns?: e_map_pool_types_update_column[],where?: (e_map_pool_types_bool_exp | null)}
 
@@ -10087,6 +10218,8 @@ _has_keys_any?: (Scalars['String'][] | null),_in?: (Scalars['jsonb'][] | null),_
 
 /** columns and relationships of "map_pools" */
 export interface map_poolsGenqlSelection{
+    /** An object relationship */
+    e_type?: e_map_pool_typesGenqlSelection
     enabled?: boolean | number
     id?: boolean | number
     /** An array relationship */
@@ -10140,11 +10273,11 @@ export interface map_pools_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "map_pools". All fields are combined with a logical 'AND'. */
-export interface map_pools_bool_exp {_and?: (map_pools_bool_exp[] | null),_not?: (map_pools_bool_exp | null),_or?: (map_pools_bool_exp[] | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),maps?: (v_pool_maps_bool_exp | null),maps_aggregate?: (v_pool_maps_aggregate_bool_exp | null),seed?: (Boolean_comparison_exp | null),type?: (e_map_pool_types_enum_comparison_exp | null)}
+export interface map_pools_bool_exp {_and?: (map_pools_bool_exp[] | null),_not?: (map_pools_bool_exp | null),_or?: (map_pools_bool_exp[] | null),e_type?: (e_map_pool_types_bool_exp | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),maps?: (v_pool_maps_bool_exp | null),maps_aggregate?: (v_pool_maps_aggregate_bool_exp | null),seed?: (Boolean_comparison_exp | null),type?: (e_map_pool_types_enum_comparison_exp | null)}
 
 
 /** input type for inserting data into table "map_pools" */
-export interface map_pools_insert_input {enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),maps?: (v_pool_maps_arr_rel_insert_input | null),seed?: (Scalars['Boolean'] | null),type?: (e_map_pool_types_enum | null)}
+export interface map_pools_insert_input {e_type?: (e_map_pool_types_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),maps?: (v_pool_maps_arr_rel_insert_input | null),seed?: (Scalars['Boolean'] | null),type?: (e_map_pool_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -10185,7 +10318,7 @@ export interface map_pools_on_conflict {constraint: map_pools_constraint,update_
 
 
 /** Ordering options when selecting data from "map_pools". */
-export interface map_pools_order_by {enabled?: (order_by | null),id?: (order_by | null),maps_aggregate?: (v_pool_maps_aggregate_order_by | null),seed?: (order_by | null),type?: (order_by | null)}
+export interface map_pools_order_by {e_type?: (e_map_pool_types_order_by | null),enabled?: (order_by | null),id?: (order_by | null),maps_aggregate?: (v_pool_maps_aggregate_order_by | null),seed?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: map_pools */
@@ -11545,6 +11678,34 @@ export interface match_map_rounds_variance_order_by {lineup_1_money?: (order_by 
 /** columns and relationships of "match_maps" */
 export interface match_mapsGenqlSelection{
     created_at?: boolean | number
+    /** An array relationship */
+    demos?: (match_map_demosGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_map_demos_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_map_demos_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_map_demos_bool_exp | null)} })
+    /** An aggregate relationship */
+    demos_aggregate?: (match_map_demos_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_map_demos_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_map_demos_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_map_demos_bool_exp | null)} })
+    /** A computed field, executes function "demo_download_url" */
+    demos_download_url?: boolean | number
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** An object relationship */
     e_match_map_status?: e_match_map_statusGenqlSelection
     /** An array relationship */
@@ -11830,6 +11991,8 @@ on_conflict?: (match_maps_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface match_maps_avg_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -11847,7 +12010,7 @@ export interface match_maps_avg_order_by {lineup_1_timeouts_available?: (order_b
 
 
 /** Boolean expression to filter rows from the table "match_maps". All fields are combined with a logical 'AND'. */
-export interface match_maps_bool_exp {_and?: (match_maps_bool_exp[] | null),_not?: (match_maps_bool_exp | null),_or?: (match_maps_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),e_match_map_status?: (e_match_map_status_bool_exp | null),flashes?: (player_flashes_bool_exp | null),flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),id?: (uuid_comparison_exp | null),is_current_map?: (Boolean_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),order?: (Int_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),rounds?: (match_map_rounds_bool_exp | null),rounds_aggregate?: (match_map_rounds_aggregate_bool_exp | null),status?: (e_match_map_status_enum_comparison_exp | null),utility?: (player_utility_bool_exp | null),utility_aggregate?: (player_utility_aggregate_bool_exp | null),vetos?: (match_veto_picks_bool_exp | null),vetos_aggregate?: (match_veto_picks_aggregate_bool_exp | null)}
+export interface match_maps_bool_exp {_and?: (match_maps_bool_exp[] | null),_not?: (match_maps_bool_exp | null),_or?: (match_maps_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),demos_download_url?: (String_comparison_exp | null),demos_total_size?: (Int_comparison_exp | null),e_match_map_status?: (e_match_map_status_bool_exp | null),flashes?: (player_flashes_bool_exp | null),flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),id?: (uuid_comparison_exp | null),is_current_map?: (Boolean_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),order?: (Int_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),rounds?: (match_map_rounds_bool_exp | null),rounds_aggregate?: (match_map_rounds_aggregate_bool_exp | null),status?: (e_match_map_status_enum_comparison_exp | null),utility?: (player_utility_bool_exp | null),utility_aggregate?: (player_utility_aggregate_bool_exp | null),vetos?: (match_veto_picks_bool_exp | null),vetos_aggregate?: (match_veto_picks_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_maps" */
@@ -11855,12 +12018,16 @@ export interface match_maps_inc_input {lineup_1_timeouts_available?: (Scalars['I
 
 
 /** input type for inserting data into table "match_maps" */
-export interface match_maps_insert_input {created_at?: (Scalars['timestamptz'] | null),e_match_map_status?: (e_match_map_status_obj_rel_insert_input | null),flashes?: (player_flashes_arr_rel_insert_input | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),order?: (Scalars['Int'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),rounds?: (match_map_rounds_arr_rel_insert_input | null),status?: (e_match_map_status_enum | null),utility?: (player_utility_arr_rel_insert_input | null),vetos?: (match_veto_picks_arr_rel_insert_input | null)}
+export interface match_maps_insert_input {created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_map_status?: (e_match_map_status_obj_rel_insert_input | null),flashes?: (player_flashes_arr_rel_insert_input | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),order?: (Scalars['Int'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),rounds?: (match_map_rounds_arr_rel_insert_input | null),status?: (e_match_map_status_enum | null),utility?: (player_utility_arr_rel_insert_input | null),vetos?: (match_veto_picks_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
 export interface match_maps_max_fieldsGenqlSelection{
     created_at?: boolean | number
+    /** A computed field, executes function "demo_download_url" */
+    demos_download_url?: boolean | number
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     id?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
@@ -11883,6 +12050,10 @@ export interface match_maps_max_order_by {created_at?: (order_by | null),id?: (o
 /** aggregate min on columns */
 export interface match_maps_min_fieldsGenqlSelection{
     created_at?: boolean | number
+    /** A computed field, executes function "demo_download_url" */
+    demos_download_url?: boolean | number
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     id?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
@@ -11924,7 +12095,7 @@ export interface match_maps_on_conflict {constraint: match_maps_constraint,updat
 
 
 /** Ordering options when selecting data from "match_maps". */
-export interface match_maps_order_by {created_at?: (order_by | null),e_match_map_status?: (e_match_map_status_order_by | null),flashes_aggregate?: (player_flashes_aggregate_order_by | null),id?: (order_by | null),is_current_map?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),order?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),rounds_aggregate?: (match_map_rounds_aggregate_order_by | null),status?: (order_by | null),utility_aggregate?: (player_utility_aggregate_order_by | null),vetos_aggregate?: (match_veto_picks_aggregate_order_by | null)}
+export interface match_maps_order_by {created_at?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),demos_download_url?: (order_by | null),demos_total_size?: (order_by | null),e_match_map_status?: (e_match_map_status_order_by | null),flashes_aggregate?: (player_flashes_aggregate_order_by | null),id?: (order_by | null),is_current_map?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),order?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),rounds_aggregate?: (match_map_rounds_aggregate_order_by | null),status?: (order_by | null),utility_aggregate?: (player_utility_aggregate_order_by | null),vetos_aggregate?: (match_veto_picks_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: match_maps */
@@ -11937,6 +12108,8 @@ export interface match_maps_set_input {created_at?: (Scalars['timestamptz'] | nu
 
 /** aggregate stddev on columns */
 export interface match_maps_stddev_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -11955,6 +12128,8 @@ export interface match_maps_stddev_order_by {lineup_1_timeouts_available?: (orde
 
 /** aggregate stddev_pop on columns */
 export interface match_maps_stddev_pop_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -11973,6 +12148,8 @@ export interface match_maps_stddev_pop_order_by {lineup_1_timeouts_available?: (
 
 /** aggregate stddev_samp on columns */
 export interface match_maps_stddev_samp_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -12003,6 +12180,8 @@ export interface match_maps_stream_cursor_value_input {created_at?: (Scalars['ti
 
 /** aggregate sum on columns */
 export interface match_maps_sum_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -12029,6 +12208,8 @@ where: match_maps_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface match_maps_var_pop_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -12047,6 +12228,8 @@ export interface match_maps_var_pop_order_by {lineup_1_timeouts_available?: (ord
 
 /** aggregate var_samp on columns */
 export interface match_maps_var_samp_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -12065,6 +12248,8 @@ export interface match_maps_var_samp_order_by {lineup_1_timeouts_available?: (or
 
 /** aggregate variance on columns */
 export interface match_maps_variance_fieldsGenqlSelection{
+    /** A computed field, executes function "match_map_demo_total_size" */
+    demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -13141,6 +13326,105 @@ export interface matches_variance_fieldsGenqlSelection{
 export interface matches_variance_order_by {organizer_steam_id?: (order_by | null)}
 
 
+/** columns and relationships of "migration_hashes.hashes" */
+export interface migration_hashes_hashesGenqlSelection{
+    hash?: boolean | number
+    name?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "migration_hashes.hashes" */
+export interface migration_hashes_hashes_aggregateGenqlSelection{
+    aggregate?: migration_hashes_hashes_aggregate_fieldsGenqlSelection
+    nodes?: migration_hashes_hashesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "migration_hashes.hashes" */
+export interface migration_hashes_hashes_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (migration_hashes_hashes_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: migration_hashes_hashes_max_fieldsGenqlSelection
+    min?: migration_hashes_hashes_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "migration_hashes.hashes". All fields are combined with a logical 'AND'. */
+export interface migration_hashes_hashes_bool_exp {_and?: (migration_hashes_hashes_bool_exp[] | null),_not?: (migration_hashes_hashes_bool_exp | null),_or?: (migration_hashes_hashes_bool_exp[] | null),hash?: (String_comparison_exp | null),name?: (String_comparison_exp | null)}
+
+
+/** input type for inserting data into table "migration_hashes.hashes" */
+export interface migration_hashes_hashes_insert_input {hash?: (Scalars['String'] | null),name?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface migration_hashes_hashes_max_fieldsGenqlSelection{
+    hash?: boolean | number
+    name?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface migration_hashes_hashes_min_fieldsGenqlSelection{
+    hash?: boolean | number
+    name?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "migration_hashes.hashes" */
+export interface migration_hashes_hashes_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: migration_hashes_hashesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "migration_hashes.hashes" */
+export interface migration_hashes_hashes_on_conflict {constraint: migration_hashes_hashes_constraint,update_columns?: migration_hashes_hashes_update_column[],where?: (migration_hashes_hashes_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "migration_hashes.hashes". */
+export interface migration_hashes_hashes_order_by {hash?: (order_by | null),name?: (order_by | null)}
+
+
+/** primary key columns input for table: migration_hashes.hashes */
+export interface migration_hashes_hashes_pk_columns_input {name: Scalars['String']}
+
+
+/** input type for updating data in table "migration_hashes.hashes" */
+export interface migration_hashes_hashes_set_input {hash?: (Scalars['String'] | null),name?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "migration_hashes_hashes" */
+export interface migration_hashes_hashes_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: migration_hashes_hashes_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface migration_hashes_hashes_stream_cursor_value_input {hash?: (Scalars['String'] | null),name?: (Scalars['String'] | null)}
+
+export interface migration_hashes_hashes_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (migration_hashes_hashes_set_input | null),
+/** filter the rows which have to be updated */
+where: migration_hashes_hashes_bool_exp}
+
+
 /** mutation root */
 export interface mutation_rootGenqlSelection{
     /** accept team invite */
@@ -13293,6 +13577,12 @@ export interface mutation_rootGenqlSelection{
     where: matches_bool_exp} })
     /** delete single row from the table: "matches" */
     delete_matches_by_pk?: (matchesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "migration_hashes.hashes" */
+    delete_migration_hashes_hashes?: (migration_hashes_hashes_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: migration_hashes_hashes_bool_exp} })
+    /** delete single row from the table: "migration_hashes.hashes" */
+    delete_migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {name: Scalars['String']} })
     /** delete data from the table: "player_assists" */
     delete_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -13704,6 +13994,18 @@ export interface mutation_rootGenqlSelection{
     object: matches_insert_input, 
     /** upsert condition */
     on_conflict?: (matches_on_conflict | null)} })
+    /** insert data into the table: "migration_hashes.hashes" */
+    insert_migration_hashes_hashes?: (migration_hashes_hashes_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: migration_hashes_hashes_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (migration_hashes_hashes_on_conflict | null)} })
+    /** insert a single row into the table: "migration_hashes.hashes" */
+    insert_migration_hashes_hashes_one?: (migration_hashes_hashesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: migration_hashes_hashes_insert_input, 
+    /** upsert condition */
+    on_conflict?: (migration_hashes_hashes_on_conflict | null)} })
     /** insert data into the table: "player_assists" */
     insert_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -14318,6 +14620,20 @@ export interface mutation_rootGenqlSelection{
     update_matches_many?: (matches_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: matches_updates[]} })
+    /** update data of the table: "migration_hashes.hashes" */
+    update_migration_hashes_hashes?: (migration_hashes_hashes_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (migration_hashes_hashes_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: migration_hashes_hashes_bool_exp} })
+    /** update single row of the table: "migration_hashes.hashes" */
+    update_migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (migration_hashes_hashes_set_input | null), pk_columns: migration_hashes_hashes_pk_columns_input} })
+    /** update multiples rows of table: "migration_hashes.hashes" */
+    update_migration_hashes_hashes_many?: (migration_hashes_hashes_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: migration_hashes_hashes_updates[]} })
     /** update data of the table: "player_assists" */
     update_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -18067,6 +18383,32 @@ export interface query_rootGenqlSelection{
     matches_by_pk?: (matchesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Gets Current User */
     me?: MeResponseGenqlSelection
+    /** fetch data from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes?: (migration_hashes_hashesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (migration_hashes_hashes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (migration_hashes_hashes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (migration_hashes_hashes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes_aggregate?: (migration_hashes_hashes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (migration_hashes_hashes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (migration_hashes_hashes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (migration_hashes_hashes_bool_exp | null)} })
+    /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
+    migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {name: Scalars['String']} })
     /** An array relationship */
     player_assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -19871,6 +20213,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (matches_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (matches_bool_exp | null)} })
+    /** fetch data from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes?: (migration_hashes_hashesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (migration_hashes_hashes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (migration_hashes_hashes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (migration_hashes_hashes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "migration_hashes.hashes" */
+    migration_hashes_hashes_aggregate?: (migration_hashes_hashes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (migration_hashes_hashes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (migration_hashes_hashes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (migration_hashes_hashes_bool_exp | null)} })
+    /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
+    migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {name: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "migration_hashes.hashes" */
+    migration_hashes_hashes_stream?: (migration_hashes_hashesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (migration_hashes_hashes_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (migration_hashes_hashes_bool_exp | null)} })
     /** An array relationship */
     player_assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -26705,6 +27081,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const migration_hashes_hashes_possibleTypes: string[] = ['migration_hashes_hashes']
+    export const ismigration_hashes_hashes = (obj?: { __typename?: any } | null): obj is migration_hashes_hashes => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismigration_hashes_hashes"')
+      return migration_hashes_hashes_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const migration_hashes_hashes_aggregate_possibleTypes: string[] = ['migration_hashes_hashes_aggregate']
+    export const ismigration_hashes_hashes_aggregate = (obj?: { __typename?: any } | null): obj is migration_hashes_hashes_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismigration_hashes_hashes_aggregate"')
+      return migration_hashes_hashes_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const migration_hashes_hashes_aggregate_fields_possibleTypes: string[] = ['migration_hashes_hashes_aggregate_fields']
+    export const ismigration_hashes_hashes_aggregate_fields = (obj?: { __typename?: any } | null): obj is migration_hashes_hashes_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismigration_hashes_hashes_aggregate_fields"')
+      return migration_hashes_hashes_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const migration_hashes_hashes_max_fields_possibleTypes: string[] = ['migration_hashes_hashes_max_fields']
+    export const ismigration_hashes_hashes_max_fields = (obj?: { __typename?: any } | null): obj is migration_hashes_hashes_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismigration_hashes_hashes_max_fields"')
+      return migration_hashes_hashes_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const migration_hashes_hashes_min_fields_possibleTypes: string[] = ['migration_hashes_hashes_min_fields']
+    export const ismigration_hashes_hashes_min_fields = (obj?: { __typename?: any } | null): obj is migration_hashes_hashes_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismigration_hashes_hashes_min_fields"')
+      return migration_hashes_hashes_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const migration_hashes_hashes_mutation_response_possibleTypes: string[] = ['migration_hashes_hashes_mutation_response']
+    export const ismigration_hashes_hashes_mutation_response = (obj?: { __typename?: any } | null): obj is migration_hashes_hashes_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismigration_hashes_hashes_mutation_response"')
+      return migration_hashes_hashes_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const mutation_root_possibleTypes: string[] = ['mutation_root']
     export const ismutation_root = (obj?: { __typename?: any } | null): obj is mutation_root => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismutation_root"')
@@ -30265,6 +30689,20 @@ export const enumMatchesUpdateColumn = {
    server_id: 'server_id' as const,
    status: 'status' as const,
    winning_lineup_id: 'winning_lineup_id' as const
+}
+
+export const enumMigrationHashesHashesConstraint = {
+   functions_pkey: 'functions_pkey' as const
+}
+
+export const enumMigrationHashesHashesSelectColumn = {
+   hash: 'hash' as const,
+   name: 'name' as const
+}
+
+export const enumMigrationHashesHashesUpdateColumn = {
+   hash: 'hash' as const,
+   name: 'name' as const
 }
 
 export const enumOrderBy = {

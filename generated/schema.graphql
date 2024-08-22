@@ -412,6 +412,16 @@ type e_map_pool_types_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "e_map_pool_types"
+"""
+input e_map_pool_types_obj_rel_insert_input {
+  data: e_map_pool_types_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_map_pool_types_on_conflict
+}
+
+"""
 on_conflict condition type for table "e_map_pool_types"
 """
 input e_map_pool_types_on_conflict {
@@ -3212,6 +3222,8 @@ input jsonb_comparison_exp {
 columns and relationships of "map_pools"
 """
 type map_pools {
+  """An object relationship"""
+  e_type: e_map_pool_types!
   enabled: Boolean!
   id: uuid!
 
@@ -3278,6 +3290,7 @@ input map_pools_bool_exp {
   _and: [map_pools_bool_exp!]
   _not: map_pools_bool_exp
   _or: [map_pools_bool_exp!]
+  e_type: e_map_pool_types_bool_exp
   enabled: Boolean_comparison_exp
   id: uuid_comparison_exp
   maps: v_pool_maps_bool_exp
@@ -3300,6 +3313,7 @@ enum map_pools_constraint {
 input type for inserting data into table "map_pools"
 """
 input map_pools_insert_input {
+  e_type: e_map_pool_types_obj_rel_insert_input
   enabled: Boolean
   id: uuid
   maps: v_pool_maps_arr_rel_insert_input
@@ -3349,6 +3363,7 @@ input map_pools_on_conflict {
 
 """Ordering options when selecting data from "map_pools"."""
 input map_pools_order_by {
+  e_type: e_map_pool_types_order_by
   enabled: order_by
   id: order_by
   maps_aggregate: v_pool_maps_aggregate_order_by
@@ -5804,6 +5819,52 @@ columns and relationships of "match_maps"
 type match_maps {
   created_at: timestamptz!
 
+  """An array relationship"""
+  demos(
+    """distinct select on columns"""
+    distinct_on: [match_map_demos_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_demos_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_demos_bool_exp
+  ): [match_map_demos!]!
+
+  """An aggregate relationship"""
+  demos_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_map_demos_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_demos_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_demos_bool_exp
+  ): match_map_demos_aggregate!
+
+  """
+  A computed field, executes function "demo_download_url"
+  """
+  demos_download_url: String
+
+  """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
   """An object relationship"""
   e_match_map_status: e_match_map_status!
 
@@ -6228,6 +6289,11 @@ input match_maps_arr_rel_insert_input {
 """aggregate avg on columns"""
 type match_maps_avg_fields {
   """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
+  """
   A computed field, executes function "lineup_1_score"
   """
   lineup_1_score: Int
@@ -6258,6 +6324,10 @@ input match_maps_bool_exp {
   _not: match_maps_bool_exp
   _or: [match_maps_bool_exp!]
   created_at: timestamptz_comparison_exp
+  demos: match_map_demos_bool_exp
+  demos_aggregate: match_map_demos_aggregate_bool_exp
+  demos_download_url: String_comparison_exp
+  demos_total_size: Int_comparison_exp
   e_match_map_status: e_match_map_status_bool_exp
   flashes: player_flashes_bool_exp
   flashes_aggregate: player_flashes_aggregate_bool_exp
@@ -6322,6 +6392,7 @@ input type for inserting data into table "match_maps"
 """
 input match_maps_insert_input {
   created_at: timestamptz
+  demos: match_map_demos_arr_rel_insert_input
   e_match_map_status: e_match_map_status_obj_rel_insert_input
   flashes: player_flashes_arr_rel_insert_input
   id: uuid
@@ -6348,6 +6419,16 @@ input match_maps_insert_input {
 """aggregate max on columns"""
 type match_maps_max_fields {
   created_at: timestamptz
+
+  """
+  A computed field, executes function "demo_download_url"
+  """
+  demos_download_url: String
+
+  """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
   id: uuid
 
   """
@@ -6382,6 +6463,16 @@ input match_maps_max_order_by {
 """aggregate min on columns"""
 type match_maps_min_fields {
   created_at: timestamptz
+
+  """
+  A computed field, executes function "demo_download_url"
+  """
+  demos_download_url: String
+
+  """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
   id: uuid
 
   """
@@ -6446,6 +6537,9 @@ input match_maps_on_conflict {
 """Ordering options when selecting data from "match_maps"."""
 input match_maps_order_by {
   created_at: order_by
+  demos_aggregate: match_map_demos_aggregate_order_by
+  demos_download_url: order_by
+  demos_total_size: order_by
   e_match_map_status: e_match_map_status_order_by
   flashes_aggregate: player_flashes_aggregate_order_by
   id: order_by
@@ -6531,6 +6625,11 @@ input match_maps_set_input {
 """aggregate stddev on columns"""
 type match_maps_stddev_fields {
   """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
+  """
   A computed field, executes function "lineup_1_score"
   """
   lineup_1_score: Int
@@ -6556,6 +6655,11 @@ input match_maps_stddev_order_by {
 """aggregate stddev_pop on columns"""
 type match_maps_stddev_pop_fields {
   """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
+  """
   A computed field, executes function "lineup_1_score"
   """
   lineup_1_score: Int
@@ -6580,6 +6684,11 @@ input match_maps_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type match_maps_stddev_samp_fields {
+  """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
   """
   A computed field, executes function "lineup_1_score"
   """
@@ -6630,6 +6739,11 @@ input match_maps_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type match_maps_sum_fields {
+  """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
   """
   A computed field, executes function "lineup_1_score"
   """
@@ -6702,6 +6816,11 @@ input match_maps_updates {
 """aggregate var_pop on columns"""
 type match_maps_var_pop_fields {
   """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
+  """
   A computed field, executes function "lineup_1_score"
   """
   lineup_1_score: Int
@@ -6727,6 +6846,11 @@ input match_maps_var_pop_order_by {
 """aggregate var_samp on columns"""
 type match_maps_var_samp_fields {
   """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
+  """
   A computed field, executes function "lineup_1_score"
   """
   lineup_1_score: Int
@@ -6751,6 +6875,11 @@ input match_maps_var_samp_order_by {
 
 """aggregate variance on columns"""
 type match_maps_variance_fields {
+  """
+  A computed field, executes function "match_map_demo_total_size"
+  """
+  demos_total_size: Int
+
   """
   A computed field, executes function "lineup_1_score"
   """
@@ -8827,6 +8956,158 @@ input matches_variance_order_by {
   organizer_steam_id: order_by
 }
 
+"""
+columns and relationships of "migration_hashes.hashes"
+"""
+type migration_hashes_hashes {
+  hash: String!
+  name: String!
+}
+
+"""
+aggregated selection of "migration_hashes.hashes"
+"""
+type migration_hashes_hashes_aggregate {
+  aggregate: migration_hashes_hashes_aggregate_fields
+  nodes: [migration_hashes_hashes!]!
+}
+
+"""
+aggregate fields of "migration_hashes.hashes"
+"""
+type migration_hashes_hashes_aggregate_fields {
+  count(columns: [migration_hashes_hashes_select_column!], distinct: Boolean): Int!
+  max: migration_hashes_hashes_max_fields
+  min: migration_hashes_hashes_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "migration_hashes.hashes". All fields are combined with a logical 'AND'.
+"""
+input migration_hashes_hashes_bool_exp {
+  _and: [migration_hashes_hashes_bool_exp!]
+  _not: migration_hashes_hashes_bool_exp
+  _or: [migration_hashes_hashes_bool_exp!]
+  hash: String_comparison_exp
+  name: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "migration_hashes.hashes"
+"""
+enum migration_hashes_hashes_constraint {
+  """
+  unique or primary key constraint on columns "name"
+  """
+  functions_pkey
+}
+
+"""
+input type for inserting data into table "migration_hashes.hashes"
+"""
+input migration_hashes_hashes_insert_input {
+  hash: String
+  name: String
+}
+
+"""aggregate max on columns"""
+type migration_hashes_hashes_max_fields {
+  hash: String
+  name: String
+}
+
+"""aggregate min on columns"""
+type migration_hashes_hashes_min_fields {
+  hash: String
+  name: String
+}
+
+"""
+response of any mutation on the table "migration_hashes.hashes"
+"""
+type migration_hashes_hashes_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [migration_hashes_hashes!]!
+}
+
+"""
+on_conflict condition type for table "migration_hashes.hashes"
+"""
+input migration_hashes_hashes_on_conflict {
+  constraint: migration_hashes_hashes_constraint!
+  update_columns: [migration_hashes_hashes_update_column!]! = []
+  where: migration_hashes_hashes_bool_exp
+}
+
+"""Ordering options when selecting data from "migration_hashes.hashes"."""
+input migration_hashes_hashes_order_by {
+  hash: order_by
+  name: order_by
+}
+
+"""primary key columns input for table: migration_hashes.hashes"""
+input migration_hashes_hashes_pk_columns_input {
+  name: String!
+}
+
+"""
+select columns of table "migration_hashes.hashes"
+"""
+enum migration_hashes_hashes_select_column {
+  """column name"""
+  hash
+
+  """column name"""
+  name
+}
+
+"""
+input type for updating data in table "migration_hashes.hashes"
+"""
+input migration_hashes_hashes_set_input {
+  hash: String
+  name: String
+}
+
+"""
+Streaming cursor of the table "migration_hashes_hashes"
+"""
+input migration_hashes_hashes_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: migration_hashes_hashes_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input migration_hashes_hashes_stream_cursor_value_input {
+  hash: String
+  name: String
+}
+
+"""
+update columns of table "migration_hashes.hashes"
+"""
+enum migration_hashes_hashes_update_column {
+  """column name"""
+  hash
+
+  """column name"""
+  name
+}
+
+input migration_hashes_hashes_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: migration_hashes_hashes_set_input
+
+  """filter the rows which have to be updated"""
+  where: migration_hashes_hashes_bool_exp!
+}
+
 """mutation root"""
 type mutation_root {
   """accept team invite"""
@@ -9149,6 +9430,19 @@ type mutation_root {
   delete single row from the table: "matches"
   """
   delete_matches_by_pk(id: uuid!): matches
+
+  """
+  delete data from the table: "migration_hashes.hashes"
+  """
+  delete_migration_hashes_hashes(
+    """filter the rows which have to be deleted"""
+    where: migration_hashes_hashes_bool_exp!
+  ): migration_hashes_hashes_mutation_response
+
+  """
+  delete single row from the table: "migration_hashes.hashes"
+  """
+  delete_migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
 
   """
   delete data from the table: "player_assists"
@@ -9941,6 +10235,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: matches_on_conflict
   ): matches
+
+  """
+  insert data into the table: "migration_hashes.hashes"
+  """
+  insert_migration_hashes_hashes(
+    """the rows to be inserted"""
+    objects: [migration_hashes_hashes_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: migration_hashes_hashes_on_conflict
+  ): migration_hashes_hashes_mutation_response
+
+  """
+  insert a single row into the table: "migration_hashes.hashes"
+  """
+  insert_migration_hashes_hashes_one(
+    """the row to be inserted"""
+    object: migration_hashes_hashes_insert_input!
+
+    """upsert condition"""
+    on_conflict: migration_hashes_hashes_on_conflict
+  ): migration_hashes_hashes
 
   """
   insert data into the table: "player_assists"
@@ -11114,6 +11430,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [matches_updates!]!
   ): [matches_mutation_response]
+
+  """
+  update data of the table: "migration_hashes.hashes"
+  """
+  update_migration_hashes_hashes(
+    """sets the columns of the filtered rows to the given values"""
+    _set: migration_hashes_hashes_set_input
+
+    """filter the rows which have to be updated"""
+    where: migration_hashes_hashes_bool_exp!
+  ): migration_hashes_hashes_mutation_response
+
+  """
+  update single row of the table: "migration_hashes.hashes"
+  """
+  update_migration_hashes_hashes_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: migration_hashes_hashes_set_input
+    pk_columns: migration_hashes_hashes_pk_columns_input!
+  ): migration_hashes_hashes
+
+  """
+  update multiples rows of table: "migration_hashes.hashes"
+  """
+  update_migration_hashes_hashes_many(
+    """updates to execute, in order"""
+    updates: [migration_hashes_hashes_updates!]!
+  ): [migration_hashes_hashes_mutation_response]
 
   """
   update data of the table: "player_assists"
@@ -17960,6 +18304,51 @@ type query_root {
   """Gets Current User"""
   me: MeResponse!
 
+  """
+  fetch data from the table: "migration_hashes.hashes"
+  """
+  migration_hashes_hashes(
+    """distinct select on columns"""
+    distinct_on: [migration_hashes_hashes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [migration_hashes_hashes_order_by!]
+
+    """filter the rows returned"""
+    where: migration_hashes_hashes_bool_exp
+  ): [migration_hashes_hashes!]!
+
+  """
+  fetch aggregated fields from the table: "migration_hashes.hashes"
+  """
+  migration_hashes_hashes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [migration_hashes_hashes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [migration_hashes_hashes_order_by!]
+
+    """filter the rows returned"""
+    where: migration_hashes_hashes_bool_exp
+  ): migration_hashes_hashes_aggregate!
+
+  """
+  fetch data from the table: "migration_hashes.hashes" using primary key columns
+  """
+  migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
+
   """An array relationship"""
   player_assists(
     """distinct select on columns"""
@@ -20917,6 +21306,65 @@ type subscription_root {
     """filter the rows returned"""
     where: matches_bool_exp
   ): [matches!]!
+
+  """
+  fetch data from the table: "migration_hashes.hashes"
+  """
+  migration_hashes_hashes(
+    """distinct select on columns"""
+    distinct_on: [migration_hashes_hashes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [migration_hashes_hashes_order_by!]
+
+    """filter the rows returned"""
+    where: migration_hashes_hashes_bool_exp
+  ): [migration_hashes_hashes!]!
+
+  """
+  fetch aggregated fields from the table: "migration_hashes.hashes"
+  """
+  migration_hashes_hashes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [migration_hashes_hashes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [migration_hashes_hashes_order_by!]
+
+    """filter the rows returned"""
+    where: migration_hashes_hashes_bool_exp
+  ): migration_hashes_hashes_aggregate!
+
+  """
+  fetch data from the table: "migration_hashes.hashes" using primary key columns
+  """
+  migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
+
+  """
+  fetch data from the table in a streaming manner: "migration_hashes.hashes"
+  """
+  migration_hashes_hashes_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [migration_hashes_hashes_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: migration_hashes_hashes_bool_exp
+  ): [migration_hashes_hashes!]!
 
   """An array relationship"""
   player_assists(

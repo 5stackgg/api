@@ -86,6 +86,16 @@ array_relationships:
           name: match_veto_picks
           schema: public
 computed_fields:
+  - name: demos_download_url
+    definition:
+      function:
+        name: demo_download_url
+        schema: public
+  - name: demos_total_size
+    definition:
+      function:
+        name: match_map_demo_total_size
+        schema: public
   - name: is_current_map
     definition:
       function:
@@ -129,6 +139,8 @@ select_permissions:
         - order
         - status
       computed_fields:
+        - demos_download_url
+        - demos_total_size
         - is_current_map
         - lineup_1_score
         - lineup_2_score
