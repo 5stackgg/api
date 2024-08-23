@@ -432,6 +432,16 @@ type e_game_server_node_regions_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "e_game_server_node_regions"
+"""
+input e_game_server_node_regions_obj_rel_insert_input {
+  data: e_game_server_node_regions_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_game_server_node_regions_on_conflict
+}
+
+"""
 on_conflict condition type for table "e_game_server_node_regions"
 """
 input e_game_server_node_regions_on_conflict {
@@ -608,6 +618,16 @@ type e_game_server_node_statuses_mutation_response {
 
   """data from the rows affected by the mutation"""
   returning: [e_game_server_node_statuses!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_game_server_node_statuses"
+"""
+input e_game_server_node_statuses_obj_rel_insert_input {
+  data: e_game_server_node_statuses_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_game_server_node_statuses_on_conflict
 }
 
 """
@@ -3566,12 +3586,17 @@ input e_veto_pick_types_updates {
 columns and relationships of "game_server_nodes"
 """
 type game_server_nodes {
+  """An object relationship"""
+  e_region: e_game_server_node_regions
+
+  """An object relationship"""
+  e_status: e_game_server_node_statuses
   enabled: Boolean!
   end_port_range: Int
   id: String!
   region: e_game_server_node_regions_enum
   start_port_range: Int
-  status: e_game_server_node_statuses_enum!
+  status: e_game_server_node_statuses_enum
 }
 
 """
@@ -3612,6 +3637,8 @@ input game_server_nodes_bool_exp {
   _and: [game_server_nodes_bool_exp!]
   _not: game_server_nodes_bool_exp
   _or: [game_server_nodes_bool_exp!]
+  e_region: e_game_server_node_regions_bool_exp
+  e_status: e_game_server_node_statuses_bool_exp
   enabled: Boolean_comparison_exp
   end_port_range: Int_comparison_exp
   id: String_comparison_exp
@@ -3627,7 +3654,7 @@ enum game_server_nodes_constraint {
   """
   unique or primary key constraint on columns "id"
   """
-  server_nodes_pkey
+  game_server_nodes_pkey
 }
 
 """
@@ -3642,6 +3669,8 @@ input game_server_nodes_inc_input {
 input type for inserting data into table "game_server_nodes"
 """
 input game_server_nodes_insert_input {
+  e_region: e_game_server_node_regions_obj_rel_insert_input
+  e_status: e_game_server_node_statuses_obj_rel_insert_input
   enabled: Boolean
   end_port_range: Int
   id: String
@@ -3686,6 +3715,8 @@ input game_server_nodes_on_conflict {
 
 """Ordering options when selecting data from "game_server_nodes"."""
 input game_server_nodes_order_by {
+  e_region: e_game_server_node_regions_order_by
+  e_status: e_game_server_node_statuses_order_by
   enabled: order_by
   end_port_range: order_by
   id: order_by

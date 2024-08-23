@@ -1131,12 +1131,16 @@ export type e_veto_pick_types_update_column = 'description' | 'value'
 
 /** columns and relationships of "game_server_nodes" */
 export interface game_server_nodes {
+    /** An object relationship */
+    e_region: (e_game_server_node_regions | null)
+    /** An object relationship */
+    e_status: (e_game_server_node_statuses | null)
     enabled: Scalars['Boolean']
     end_port_range: (Scalars['Int'] | null)
     id: Scalars['String']
     region: (e_game_server_node_regions_enum | null)
     start_port_range: (Scalars['Int'] | null)
-    status: e_game_server_node_statuses_enum
+    status: (e_game_server_node_statuses_enum | null)
     __typename: 'game_server_nodes'
 }
 
@@ -1175,7 +1179,7 @@ export interface game_server_nodes_avg_fields {
 
 
 /** unique or primary key constraints on table "game_server_nodes" */
-export type game_server_nodes_constraint = 'server_nodes_pkey'
+export type game_server_nodes_constraint = 'game_server_nodes_pkey'
 
 
 /** aggregate max on columns */
@@ -8980,6 +8984,12 @@ export interface e_game_server_node_regions_mutation_responseGenqlSelection{
 }
 
 
+/** input type for inserting object relation for remote table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_obj_rel_insert_input {data: e_game_server_node_regions_insert_input,
+/** upsert condition */
+on_conflict?: (e_game_server_node_regions_on_conflict | null)}
+
+
 /** on_conflict condition type for table "e_game_server_node_regions" */
 export interface e_game_server_node_regions_on_conflict {constraint: e_game_server_node_regions_constraint,update_columns?: e_game_server_node_regions_update_column[],where?: (e_game_server_node_regions_bool_exp | null)}
 
@@ -9081,6 +9091,12 @@ export interface e_game_server_node_statuses_mutation_responseGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** input type for inserting object relation for remote table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_obj_rel_insert_input {data: e_game_server_node_statuses_insert_input,
+/** upsert condition */
+on_conflict?: (e_game_server_node_statuses_on_conflict | null)}
 
 
 /** on_conflict condition type for table "e_game_server_node_statuses" */
@@ -10788,6 +10804,10 @@ where: e_veto_pick_types_bool_exp}
 
 /** columns and relationships of "game_server_nodes" */
 export interface game_server_nodesGenqlSelection{
+    /** An object relationship */
+    e_region?: e_game_server_node_regionsGenqlSelection
+    /** An object relationship */
+    e_status?: e_game_server_node_statusesGenqlSelection
     enabled?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
@@ -10836,7 +10856,7 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),region?: (e_game_server_node_regions_enum_comparison_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),e_region?: (e_game_server_node_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),region?: (e_game_server_node_regions_enum_comparison_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "game_server_nodes" */
@@ -10844,7 +10864,7 @@ export interface game_server_nodes_inc_input {end_port_range?: (Scalars['Int'] |
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),region?: (e_game_server_node_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null)}
+export interface game_server_nodes_insert_input {e_region?: (e_game_server_node_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),region?: (e_game_server_node_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null)}
 
 
 /** aggregate max on columns */
@@ -10883,7 +10903,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),status?: (order_by | null)}
+export interface game_server_nodes_order_by {e_region?: (e_game_server_node_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),status?: (order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -31738,7 +31758,7 @@ export const enumEVetoPickTypesUpdateColumn = {
 }
 
 export const enumGameServerNodesConstraint = {
-   server_nodes_pkey: 'server_nodes_pkey' as const
+   game_server_nodes_pkey: 'game_server_nodes_pkey' as const
 }
 
 export const enumGameServerNodesSelectColumn = {

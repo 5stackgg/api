@@ -1,6 +1,13 @@
 table:
   name: game_server_nodes
   schema: public
+object_relationships:
+  - name: e_region
+    using:
+      foreign_key_constraint_on: region
+  - name: e_status
+    using:
+      foreign_key_constraint_on: status
 select_permissions:
   - role: administrator
     permission:
@@ -13,6 +20,15 @@ select_permissions:
         - id
       filter: {}
       allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - region
+        - status
+      filter:
+        enabled:
+          _eq: true
     comment: ""
 update_permissions:
   - role: administrator
