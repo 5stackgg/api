@@ -45,7 +45,7 @@ export class GameServerNodeGateway {
       {
         delay: 65 * 1000,
         attempts: 1,
-        removeOnFail: true,
+        removeOnFail: false,
         removeOnComplete: true,
         jobId: `node:${payload.node}`,
       },

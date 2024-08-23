@@ -9,20 +9,16 @@ export class CheckGameUpdate extends WorkerHost {
   }
 
   async process(): Promise<void> {
-    try {
-      const response = await fetch("https://api.steamcmd.net/v1/info/730");
-      const latestBuildTime = await this.cache.get("cs:updated-at");
+    const response = await fetch("https://api.steamcmd.net/v1/info/730");
+    const latestBuildTime = await this.cache.get("cs:updated-at");
 
-      const { data } = await response.json();
+    const { data } = await response.json();
 
-      const { timeupdated } = data["730"].depots.branches.public;
+    const { timeupdated } = data["730"].depots.branches.public;
 
-      if (!latestBuildTime || latestBuildTime > parseInt(timeupdated)) {
-        await this.cache.put("cs:updated-at", parseInt(timeupdated));
-        // TODO - do update job on all nodes a daemonset!
-      }
-    } catch (error) {
-      console.error("Error checking for new build:", error);
+    if (!latestBuildTime || latestBuildTime > parseInt(timeupdated)) {
+      await this.cache.put("cs:updated-at", parseInt(timeupdated));
+      // TODO - do update job on all nodes a daemonset!
     }
   }
 }

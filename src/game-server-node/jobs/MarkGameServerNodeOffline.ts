@@ -24,6 +24,7 @@ export class MarkGameServerNodeOffline extends WorkerHost {
             status: "Offline",
           },
         },
+        __typename: true,
       },
     });
   }
