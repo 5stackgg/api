@@ -42,20 +42,24 @@ import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
     RedisModule,
     S3Module,
     forwardRef(() => DiscordBotModule),
-    BullModule.registerQueue({
-      name: MatchQueues.MatchServers,
-    }),
-    BullBoardModule.forFeature({
-      name: MatchQueues.MatchServers,
-      adapter: BullMQAdapter,
-    }),
-    BullModule.registerQueue({
-      name: MatchQueues.ScheduledMatches,
-    }),
-    BullBoardModule.forFeature({
-      name: MatchQueues.ScheduledMatches,
-      adapter: BullMQAdapter,
-    }),
+    BullModule.registerQueue(
+      {
+        name: MatchQueues.MatchServers,
+      },
+      {
+        name: MatchQueues.ScheduledMatches,
+      },
+    ),
+    BullBoardModule.forFeature(
+      {
+        name: MatchQueues.MatchServers,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: MatchQueues.ScheduledMatches,
+        adapter: BullMQAdapter,
+      },
+    ),
   ],
   controllers: [MatchesController, DemosController, BackupRoundsController],
   exports: [MatchAssistantService],

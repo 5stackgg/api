@@ -480,7 +480,7 @@ export class MatchAssistantService {
         matchId,
       },
       {
-        delay: 10,
+        delay: 10 * 1000,
         attempts: 1,
         removeOnFail: true,
         removeOnComplete: true,

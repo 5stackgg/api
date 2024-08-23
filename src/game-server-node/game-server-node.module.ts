@@ -10,26 +10,43 @@ import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { GameServeQueues } from "./enums/GameServeQueues";
+import { GameServerQueues } from "./enums/GameServerQueues";
+import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 
 @Module({
-  providers: [GameServerNodeService, GameServerNodeGateway, CheckGameUpdate],
+  providers: [
+    GameServerNodeService,
+    GameServerNodeGateway,
+    CheckGameUpdate,
+    MarkGameServerNodeOffline,
+  ],
   imports: [
     TailscaleModule,
     HasuraModule,
     CacheModule,
-    BullModule.registerQueue({
-      name: GameServeQueues.GameUpdate,
-    }),
-    BullBoardModule.forFeature({
-      name: GameServeQueues.GameUpdate,
-      adapter: BullMQAdapter,
-    }),
+    BullModule.registerQueue(
+      {
+        name: GameServerQueues.GameUpdate,
+      },
+      {
+        name: GameServerQueues.NodeOffline,
+      },
+    ),
+    BullBoardModule.forFeature(
+      {
+        name: GameServerQueues.GameUpdate,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: GameServerQueues.NodeOffline,
+        adapter: BullMQAdapter,
+      },
+    ),
   ],
   controllers: [GameServerNodeController],
 })
 export class GameServerNodeModule {
-  constructor(@InjectQueue(GameServeQueues.GameUpdate) private queue: Queue) {
+  constructor(@InjectQueue(GameServerQueues.GameUpdate) queue: Queue) {
     void queue.add(
       CheckGameUpdate.name,
       {},

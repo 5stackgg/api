@@ -1,33 +1,11 @@
-import { Logger } from "@nestjs/common";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { GameServeQueues } from "../enums/GameServeQueues";
-import { HasuraService } from "../../hasura/hasura.service";
-import { ConfigService } from "@nestjs/config";
-import { SteamConfig } from "../../configs/types/SteamConfig";
 import { CacheService } from "../../cache/cache.service";
+import { GameServerQueues } from "../enums/GameServerQueues";
 
-interface Build {
-  buildid: number;
-  timeupdated: number;
-  timecreated: number;
-}
-
-interface SteamBuildsResponse {
-  response: {
-    builds: Build[];
-  };
-}
-
-@Processor(GameServeQueues.GameUpdate)
+@Processor(GameServerQueues.GameUpdate)
 export class CheckGameUpdate extends WorkerHost {
-  private options: SteamConfig;
-
-  constructor(
-    private readonly cache: CacheService,
-    private readonly config: ConfigService,
-  ) {
+  constructor(private readonly cache: CacheService) {
     super();
-    this.options = this.config.get("steam");
   }
 
   async process(): Promise<void> {

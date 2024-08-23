@@ -1,8 +1,12 @@
 import WebSocket from "ws";
-import { SubscribeMessage, WebSocketGateway } from "@nestjs/websockets";
-import { HasuraService } from "../hasura/hasura.service";
+import { Queue } from "bullmq";
+import { InjectQueue } from "@nestjs/bullmq";
 import { CacheService } from "../cache/cache.service";
+import { HasuraService } from "../hasura/hasura.service";
+import { GameServerQueues } from "./enums/GameServerQueues";
 import { GameServerNodeService } from "./game-server-node.service";
+import { SubscribeMessage, WebSocketGateway } from "@nestjs/websockets";
+import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 
 @WebSocketGateway(5586, {
   path: "/ws",
@@ -12,6 +16,7 @@ export class GameServerNodeGateway {
     protected readonly cache: CacheService,
     protected readonly hasura: HasuraService,
     protected readonly gameServerNodeService: GameServerNodeService,
+    @InjectQueue(GameServerQueues.NodeOffline) private queue: Queue,
   ) {}
 
   @SubscribeMessage("message")
@@ -30,6 +35,20 @@ export class GameServerNodeGateway {
       "Online",
       start_port_range && parseInt(start_port_range),
       end_port_range && parseInt(end_port_range),
+    );
+
+    await this.queue.add(
+      MarkGameServerNodeOffline.name,
+      {
+        node: payload.node,
+      },
+      {
+        delay: 65 * 1000,
+        attempts: 1,
+        removeOnFail: true,
+        removeOnComplete: true,
+        jobId: `node:${payload.node}`,
+      },
     );
   }
 }
