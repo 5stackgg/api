@@ -1,1 +1,0 @@
-CREATE TABLE "public"."server_nodes" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "start_port_range" integer NOT NULL, "end_port_range" integer NOT NULL, "region" text NOT NULL, "status" text NOT NULL, "enabled" boolean NOT NULL DEFAULT true, PRIMARY KEY ("id") );

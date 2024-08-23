@@ -29,6 +29,7 @@ export interface MeResponse {
 
 export interface SetupGameServeOutput {
     id: Scalars['uuid']
+    script: Scalars['String']
     __typename: 'SetupGameServeOutput'
 }
 
@@ -103,6 +104,136 @@ export type _map_pool_update_column = 'map_id' | 'map_pool_id'
 
 /** ordering argument of a cursor */
 export type cursor_ordering = 'ASC' | 'DESC'
+
+
+/** columns and relationships of "e_game_server_node_regions" */
+export interface e_game_server_node_regions {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_game_server_node_regions'
+}
+
+
+/** aggregated selection of "e_game_server_node_regions" */
+export interface e_game_server_node_regions_aggregate {
+    aggregate: (e_game_server_node_regions_aggregate_fields | null)
+    nodes: e_game_server_node_regions[]
+    __typename: 'e_game_server_node_regions_aggregate'
+}
+
+
+/** aggregate fields of "e_game_server_node_regions" */
+export interface e_game_server_node_regions_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_game_server_node_regions_max_fields | null)
+    min: (e_game_server_node_regions_min_fields | null)
+    __typename: 'e_game_server_node_regions_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_game_server_node_regions" */
+export type e_game_server_node_regions_constraint = 'e_game_server_node_regions_pkey'
+
+export type e_game_server_node_regions_enum = 'Africa' | 'Asia' | 'Australia' | 'Europe' | 'Lan' | 'MiddleEast' | 'SouthAmerica' | 'USCentral' | 'USEast' | 'USWest'
+
+
+/** aggregate max on columns */
+export interface e_game_server_node_regions_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_game_server_node_regions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_game_server_node_regions_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_game_server_node_regions_min_fields'
+}
+
+
+/** response of any mutation on the table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_game_server_node_regions[]
+    __typename: 'e_game_server_node_regions_mutation_response'
+}
+
+
+/** select columns of table "e_game_server_node_regions" */
+export type e_game_server_node_regions_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_game_server_node_regions" */
+export type e_game_server_node_regions_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_game_server_node_statuses'
+}
+
+
+/** aggregated selection of "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_aggregate {
+    aggregate: (e_game_server_node_statuses_aggregate_fields | null)
+    nodes: e_game_server_node_statuses[]
+    __typename: 'e_game_server_node_statuses_aggregate'
+}
+
+
+/** aggregate fields of "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_game_server_node_statuses_max_fields | null)
+    min: (e_game_server_node_statuses_min_fields | null)
+    __typename: 'e_game_server_node_statuses_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_game_server_node_statuses" */
+export type e_game_server_node_statuses_constraint = 'e_game_server_node_statuses_pkey'
+
+export type e_game_server_node_statuses_enum = 'NotAcceptingNewMatches' | 'Offline' | 'Online' | 'Setup'
+
+
+/** aggregate max on columns */
+export interface e_game_server_node_statuses_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_game_server_node_statuses_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_game_server_node_statuses_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_game_server_node_statuses_min_fields'
+}
+
+
+/** response of any mutation on the table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_game_server_node_statuses[]
+    __typename: 'e_game_server_node_statuses_mutation_response'
+}
+
+
+/** select columns of table "e_game_server_node_statuses" */
+export type e_game_server_node_statuses_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_game_server_node_statuses" */
+export type e_game_server_node_statuses_update_column = 'description' | 'value'
 
 
 /** columns and relationships of "e_map_pool_types" */
@@ -996,6 +1127,147 @@ export type e_veto_pick_types_select_column = 'description' | 'value'
 
 /** update columns of table "e_veto_pick_types" */
 export type e_veto_pick_types_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "game_server_nodes" */
+export interface game_server_nodes {
+    enabled: Scalars['Boolean']
+    end_port_range: (Scalars['Int'] | null)
+    id: Scalars['String']
+    region: (e_game_server_node_regions_enum | null)
+    start_port_range: (Scalars['Int'] | null)
+    status: e_game_server_node_statuses_enum
+    __typename: 'game_server_nodes'
+}
+
+
+/** aggregated selection of "game_server_nodes" */
+export interface game_server_nodes_aggregate {
+    aggregate: (game_server_nodes_aggregate_fields | null)
+    nodes: game_server_nodes[]
+    __typename: 'game_server_nodes_aggregate'
+}
+
+
+/** aggregate fields of "game_server_nodes" */
+export interface game_server_nodes_aggregate_fields {
+    avg: (game_server_nodes_avg_fields | null)
+    count: Scalars['Int']
+    max: (game_server_nodes_max_fields | null)
+    min: (game_server_nodes_min_fields | null)
+    stddev: (game_server_nodes_stddev_fields | null)
+    stddev_pop: (game_server_nodes_stddev_pop_fields | null)
+    stddev_samp: (game_server_nodes_stddev_samp_fields | null)
+    sum: (game_server_nodes_sum_fields | null)
+    var_pop: (game_server_nodes_var_pop_fields | null)
+    var_samp: (game_server_nodes_var_samp_fields | null)
+    variance: (game_server_nodes_variance_fields | null)
+    __typename: 'game_server_nodes_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface game_server_nodes_avg_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "game_server_nodes" */
+export type game_server_nodes_constraint = 'server_nodes_pkey'
+
+
+/** aggregate max on columns */
+export interface game_server_nodes_max_fields {
+    end_port_range: (Scalars['Int'] | null)
+    id: (Scalars['String'] | null)
+    start_port_range: (Scalars['Int'] | null)
+    __typename: 'game_server_nodes_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface game_server_nodes_min_fields {
+    end_port_range: (Scalars['Int'] | null)
+    id: (Scalars['String'] | null)
+    start_port_range: (Scalars['Int'] | null)
+    __typename: 'game_server_nodes_min_fields'
+}
+
+
+/** response of any mutation on the table "game_server_nodes" */
+export interface game_server_nodes_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: game_server_nodes[]
+    __typename: 'game_server_nodes_mutation_response'
+}
+
+
+/** select columns of table "game_server_nodes" */
+export type game_server_nodes_select_column = 'enabled' | 'end_port_range' | 'id' | 'region' | 'start_port_range' | 'status'
+
+
+/** aggregate stddev on columns */
+export interface game_server_nodes_stddev_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface game_server_nodes_stddev_pop_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface game_server_nodes_stddev_samp_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface game_server_nodes_sum_fields {
+    end_port_range: (Scalars['Int'] | null)
+    start_port_range: (Scalars['Int'] | null)
+    __typename: 'game_server_nodes_sum_fields'
+}
+
+
+/** update columns of table "game_server_nodes" */
+export type game_server_nodes_update_column = 'enabled' | 'end_port_range' | 'id' | 'region' | 'start_port_range' | 'status'
+
+
+/** aggregate var_pop on columns */
+export interface game_server_nodes_var_pop_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface game_server_nodes_var_samp_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface game_server_nodes_variance_fields {
+    end_port_range: (Scalars['Float'] | null)
+    start_port_range: (Scalars['Float'] | null)
+    __typename: 'game_server_nodes_variance_fields'
+}
 
 
 /** columns and relationships of "map_pools" */
@@ -2770,6 +3042,14 @@ export interface mutation_root {
     delete__map_pool: (_map_pool_mutation_response | null)
     /** delete single row from the table: "_map_pool" */
     delete__map_pool_by_pk: (_map_pool | null)
+    /** delete data from the table: "e_game_server_node_regions" */
+    delete_e_game_server_node_regions: (e_game_server_node_regions_mutation_response | null)
+    /** delete single row from the table: "e_game_server_node_regions" */
+    delete_e_game_server_node_regions_by_pk: (e_game_server_node_regions | null)
+    /** delete data from the table: "e_game_server_node_statuses" */
+    delete_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
+    /** delete single row from the table: "e_game_server_node_statuses" */
+    delete_e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
     /** delete data from the table: "e_map_pool_types" */
     delete_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** delete single row from the table: "e_map_pool_types" */
@@ -2822,6 +3102,10 @@ export interface mutation_root {
     delete_e_veto_pick_types: (e_veto_pick_types_mutation_response | null)
     /** delete single row from the table: "e_veto_pick_types" */
     delete_e_veto_pick_types_by_pk: (e_veto_pick_types | null)
+    /** delete data from the table: "game_server_nodes" */
+    delete_game_server_nodes: (game_server_nodes_mutation_response | null)
+    /** delete single row from the table: "game_server_nodes" */
+    delete_game_server_nodes_by_pk: (game_server_nodes | null)
     /** delete data from the table: "map_pools" */
     delete_map_pools: (map_pools_mutation_response | null)
     /** delete single row from the table: "map_pools" */
@@ -2898,10 +3182,6 @@ export interface mutation_root {
     delete_players: (players_mutation_response | null)
     /** delete single row from the table: "players" */
     delete_players_by_pk: (players | null)
-    /** delete data from the table: "server_nodes" */
-    delete_server_nodes: (server_nodes_mutation_response | null)
-    /** delete single row from the table: "server_nodes" */
-    delete_server_nodes_by_pk: (server_nodes | null)
     /** delete data from the table: "servers" */
     delete_servers: (servers_mutation_response | null)
     /** delete single row from the table: "servers" */
@@ -2955,6 +3235,14 @@ export interface mutation_root {
     insert__map_pool: (_map_pool_mutation_response | null)
     /** insert a single row into the table: "_map_pool" */
     insert__map_pool_one: (_map_pool | null)
+    /** insert data into the table: "e_game_server_node_regions" */
+    insert_e_game_server_node_regions: (e_game_server_node_regions_mutation_response | null)
+    /** insert a single row into the table: "e_game_server_node_regions" */
+    insert_e_game_server_node_regions_one: (e_game_server_node_regions | null)
+    /** insert data into the table: "e_game_server_node_statuses" */
+    insert_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
+    /** insert a single row into the table: "e_game_server_node_statuses" */
+    insert_e_game_server_node_statuses_one: (e_game_server_node_statuses | null)
     /** insert data into the table: "e_map_pool_types" */
     insert_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** insert a single row into the table: "e_map_pool_types" */
@@ -3007,6 +3295,10 @@ export interface mutation_root {
     insert_e_veto_pick_types: (e_veto_pick_types_mutation_response | null)
     /** insert a single row into the table: "e_veto_pick_types" */
     insert_e_veto_pick_types_one: (e_veto_pick_types | null)
+    /** insert data into the table: "game_server_nodes" */
+    insert_game_server_nodes: (game_server_nodes_mutation_response | null)
+    /** insert a single row into the table: "game_server_nodes" */
+    insert_game_server_nodes_one: (game_server_nodes | null)
     /** insert data into the table: "map_pools" */
     insert_map_pools: (map_pools_mutation_response | null)
     /** insert a single row into the table: "map_pools" */
@@ -3083,10 +3375,6 @@ export interface mutation_root {
     insert_players: (players_mutation_response | null)
     /** insert a single row into the table: "players" */
     insert_players_one: (players | null)
-    /** insert data into the table: "server_nodes" */
-    insert_server_nodes: (server_nodes_mutation_response | null)
-    /** insert a single row into the table: "server_nodes" */
-    insert_server_nodes_one: (server_nodes | null)
     /** insert data into the table: "servers" */
     insert_servers: (servers_mutation_response | null)
     /** insert a single row into the table: "servers" */
@@ -3152,6 +3440,18 @@ export interface mutation_root {
     update__map_pool_by_pk: (_map_pool | null)
     /** update multiples rows of table: "_map_pool" */
     update__map_pool_many: ((_map_pool_mutation_response | null)[] | null)
+    /** update data of the table: "e_game_server_node_regions" */
+    update_e_game_server_node_regions: (e_game_server_node_regions_mutation_response | null)
+    /** update single row of the table: "e_game_server_node_regions" */
+    update_e_game_server_node_regions_by_pk: (e_game_server_node_regions | null)
+    /** update multiples rows of table: "e_game_server_node_regions" */
+    update_e_game_server_node_regions_many: ((e_game_server_node_regions_mutation_response | null)[] | null)
+    /** update data of the table: "e_game_server_node_statuses" */
+    update_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
+    /** update single row of the table: "e_game_server_node_statuses" */
+    update_e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
+    /** update multiples rows of table: "e_game_server_node_statuses" */
+    update_e_game_server_node_statuses_many: ((e_game_server_node_statuses_mutation_response | null)[] | null)
     /** update data of the table: "e_map_pool_types" */
     update_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** update single row of the table: "e_map_pool_types" */
@@ -3230,6 +3530,12 @@ export interface mutation_root {
     update_e_veto_pick_types_by_pk: (e_veto_pick_types | null)
     /** update multiples rows of table: "e_veto_pick_types" */
     update_e_veto_pick_types_many: ((e_veto_pick_types_mutation_response | null)[] | null)
+    /** update data of the table: "game_server_nodes" */
+    update_game_server_nodes: (game_server_nodes_mutation_response | null)
+    /** update single row of the table: "game_server_nodes" */
+    update_game_server_nodes_by_pk: (game_server_nodes | null)
+    /** update multiples rows of table: "game_server_nodes" */
+    update_game_server_nodes_many: ((game_server_nodes_mutation_response | null)[] | null)
     /** update data of the table: "map_pools" */
     update_map_pools: (map_pools_mutation_response | null)
     /** update single row of the table: "map_pools" */
@@ -3344,12 +3650,6 @@ export interface mutation_root {
     update_players_by_pk: (players | null)
     /** update multiples rows of table: "players" */
     update_players_many: ((players_mutation_response | null)[] | null)
-    /** update data of the table: "server_nodes" */
-    update_server_nodes: (server_nodes_mutation_response | null)
-    /** update single row of the table: "server_nodes" */
-    update_server_nodes_by_pk: (server_nodes | null)
-    /** update multiples rows of table: "server_nodes" */
-    update_server_nodes_many: ((server_nodes_mutation_response | null)[] | null)
     /** update data of the table: "servers" */
     update_servers: (servers_mutation_response | null)
     /** update single row of the table: "servers" */
@@ -4946,6 +5246,18 @@ export interface query_root {
     _map_pool_aggregate: _map_pool_aggregate
     /** fetch data from the table: "_map_pool" using primary key columns */
     _map_pool_by_pk: (_map_pool | null)
+    /** fetch data from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions: e_game_server_node_regions[]
+    /** fetch aggregated fields from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions_aggregate: e_game_server_node_regions_aggregate
+    /** fetch data from the table: "e_game_server_node_regions" using primary key columns */
+    e_game_server_node_regions_by_pk: (e_game_server_node_regions | null)
+    /** fetch data from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses: e_game_server_node_statuses[]
+    /** fetch aggregated fields from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses_aggregate: e_game_server_node_statuses_aggregate
+    /** fetch data from the table: "e_game_server_node_statuses" using primary key columns */
+    e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types: e_map_pool_types[]
     /** fetch aggregated fields from the table: "e_map_pool_types" */
@@ -5024,6 +5336,12 @@ export interface query_root {
     e_veto_pick_types_aggregate: e_veto_pick_types_aggregate
     /** fetch data from the table: "e_veto_pick_types" using primary key columns */
     e_veto_pick_types_by_pk: (e_veto_pick_types | null)
+    /** fetch data from the table: "game_server_nodes" */
+    game_server_nodes: game_server_nodes[]
+    /** fetch aggregated fields from the table: "game_server_nodes" */
+    game_server_nodes_aggregate: game_server_nodes_aggregate
+    /** fetch data from the table: "game_server_nodes" using primary key columns */
+    game_server_nodes_by_pk: (game_server_nodes | null)
     /** fetch data from the table: "map_pools" */
     map_pools: map_pools[]
     /** fetch aggregated fields from the table: "map_pools" */
@@ -5140,12 +5458,6 @@ export interface query_root {
     players_aggregate: players_aggregate
     /** fetch data from the table: "players" using primary key columns */
     players_by_pk: (players | null)
-    /** fetch data from the table: "server_nodes" */
-    server_nodes: server_nodes[]
-    /** fetch aggregated fields from the table: "server_nodes" */
-    server_nodes_aggregate: server_nodes_aggregate
-    /** fetch data from the table: "server_nodes" using primary key columns */
-    server_nodes_by_pk: (server_nodes | null)
     /** fetch data from the table: "servers" */
     servers: servers[]
     /** fetch aggregated fields from the table: "servers" */
@@ -5249,151 +5561,6 @@ export interface query_root {
     /** fetch aggregated fields from the table: "v_pool_maps" */
     v_pool_maps_aggregate: v_pool_maps_aggregate
     __typename: 'query_root'
-}
-
-
-/** columns and relationships of "server_nodes" */
-export interface server_nodes {
-    enabled: Scalars['Boolean']
-    end_port_range: Scalars['Int']
-    id: Scalars['uuid']
-    region: Scalars['String']
-    start_port_range: Scalars['Int']
-    status: Scalars['String']
-    __typename: 'server_nodes'
-}
-
-
-/** aggregated selection of "server_nodes" */
-export interface server_nodes_aggregate {
-    aggregate: (server_nodes_aggregate_fields | null)
-    nodes: server_nodes[]
-    __typename: 'server_nodes_aggregate'
-}
-
-
-/** aggregate fields of "server_nodes" */
-export interface server_nodes_aggregate_fields {
-    avg: (server_nodes_avg_fields | null)
-    count: Scalars['Int']
-    max: (server_nodes_max_fields | null)
-    min: (server_nodes_min_fields | null)
-    stddev: (server_nodes_stddev_fields | null)
-    stddev_pop: (server_nodes_stddev_pop_fields | null)
-    stddev_samp: (server_nodes_stddev_samp_fields | null)
-    sum: (server_nodes_sum_fields | null)
-    var_pop: (server_nodes_var_pop_fields | null)
-    var_samp: (server_nodes_var_samp_fields | null)
-    variance: (server_nodes_variance_fields | null)
-    __typename: 'server_nodes_aggregate_fields'
-}
-
-
-/** aggregate avg on columns */
-export interface server_nodes_avg_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_avg_fields'
-}
-
-
-/** unique or primary key constraints on table "server_nodes" */
-export type server_nodes_constraint = 'server_nodes_pkey'
-
-
-/** aggregate max on columns */
-export interface server_nodes_max_fields {
-    end_port_range: (Scalars['Int'] | null)
-    id: (Scalars['uuid'] | null)
-    region: (Scalars['String'] | null)
-    start_port_range: (Scalars['Int'] | null)
-    status: (Scalars['String'] | null)
-    __typename: 'server_nodes_max_fields'
-}
-
-
-/** aggregate min on columns */
-export interface server_nodes_min_fields {
-    end_port_range: (Scalars['Int'] | null)
-    id: (Scalars['uuid'] | null)
-    region: (Scalars['String'] | null)
-    start_port_range: (Scalars['Int'] | null)
-    status: (Scalars['String'] | null)
-    __typename: 'server_nodes_min_fields'
-}
-
-
-/** response of any mutation on the table "server_nodes" */
-export interface server_nodes_mutation_response {
-    /** number of rows affected by the mutation */
-    affected_rows: Scalars['Int']
-    /** data from the rows affected by the mutation */
-    returning: server_nodes[]
-    __typename: 'server_nodes_mutation_response'
-}
-
-
-/** select columns of table "server_nodes" */
-export type server_nodes_select_column = 'enabled' | 'end_port_range' | 'id' | 'region' | 'start_port_range' | 'status'
-
-
-/** aggregate stddev on columns */
-export interface server_nodes_stddev_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_stddev_fields'
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface server_nodes_stddev_pop_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_stddev_pop_fields'
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface server_nodes_stddev_samp_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_stddev_samp_fields'
-}
-
-
-/** aggregate sum on columns */
-export interface server_nodes_sum_fields {
-    end_port_range: (Scalars['Int'] | null)
-    start_port_range: (Scalars['Int'] | null)
-    __typename: 'server_nodes_sum_fields'
-}
-
-
-/** update columns of table "server_nodes" */
-export type server_nodes_update_column = 'enabled' | 'end_port_range' | 'id' | 'region' | 'start_port_range' | 'status'
-
-
-/** aggregate var_pop on columns */
-export interface server_nodes_var_pop_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_var_pop_fields'
-}
-
-
-/** aggregate var_samp on columns */
-export interface server_nodes_var_samp_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_var_samp_fields'
-}
-
-
-/** aggregate variance on columns */
-export interface server_nodes_variance_fields {
-    end_port_range: (Scalars['Float'] | null)
-    start_port_range: (Scalars['Float'] | null)
-    __typename: 'server_nodes_variance_fields'
 }
 
 
@@ -5582,6 +5749,22 @@ export interface subscription_root {
     _map_pool_by_pk: (_map_pool | null)
     /** fetch data from the table in a streaming manner: "_map_pool" */
     _map_pool_stream: _map_pool[]
+    /** fetch data from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions: e_game_server_node_regions[]
+    /** fetch aggregated fields from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions_aggregate: e_game_server_node_regions_aggregate
+    /** fetch data from the table: "e_game_server_node_regions" using primary key columns */
+    e_game_server_node_regions_by_pk: (e_game_server_node_regions | null)
+    /** fetch data from the table in a streaming manner: "e_game_server_node_regions" */
+    e_game_server_node_regions_stream: e_game_server_node_regions[]
+    /** fetch data from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses: e_game_server_node_statuses[]
+    /** fetch aggregated fields from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses_aggregate: e_game_server_node_statuses_aggregate
+    /** fetch data from the table: "e_game_server_node_statuses" using primary key columns */
+    e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
+    /** fetch data from the table in a streaming manner: "e_game_server_node_statuses" */
+    e_game_server_node_statuses_stream: e_game_server_node_statuses[]
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types: e_map_pool_types[]
     /** fetch aggregated fields from the table: "e_map_pool_types" */
@@ -5686,6 +5869,14 @@ export interface subscription_root {
     e_veto_pick_types_by_pk: (e_veto_pick_types | null)
     /** fetch data from the table in a streaming manner: "e_veto_pick_types" */
     e_veto_pick_types_stream: e_veto_pick_types[]
+    /** fetch data from the table: "game_server_nodes" */
+    game_server_nodes: game_server_nodes[]
+    /** fetch aggregated fields from the table: "game_server_nodes" */
+    game_server_nodes_aggregate: game_server_nodes_aggregate
+    /** fetch data from the table: "game_server_nodes" using primary key columns */
+    game_server_nodes_by_pk: (game_server_nodes | null)
+    /** fetch data from the table in a streaming manner: "game_server_nodes" */
+    game_server_nodes_stream: game_server_nodes[]
     /** fetch data from the table: "map_pools" */
     map_pools: map_pools[]
     /** fetch aggregated fields from the table: "map_pools" */
@@ -5838,14 +6029,6 @@ export interface subscription_root {
     players_by_pk: (players | null)
     /** fetch data from the table in a streaming manner: "players" */
     players_stream: players[]
-    /** fetch data from the table: "server_nodes" */
-    server_nodes: server_nodes[]
-    /** fetch aggregated fields from the table: "server_nodes" */
-    server_nodes_aggregate: server_nodes_aggregate
-    /** fetch data from the table: "server_nodes" using primary key columns */
-    server_nodes_by_pk: (server_nodes | null)
-    /** fetch data from the table in a streaming manner: "server_nodes" */
-    server_nodes_stream: server_nodes[]
     /** fetch data from the table: "servers" */
     servers: servers[]
     /** fetch aggregated fields from the table: "servers" */
@@ -8585,6 +8768,7 @@ export interface MeResponseGenqlSelection{
 
 export interface SetupGameServeOutputGenqlSelection{
     id?: boolean | number
+    script?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -8725,6 +8909,212 @@ export interface bigint_comparison_exp {_eq?: (Scalars['bigint'] | null),_gt?: (
 
 /** Boolean expression to compare columns of type "bytea". All fields are combined with logical 'AND'. */
 export interface bytea_comparison_exp {_eq?: (Scalars['bytea'] | null),_gt?: (Scalars['bytea'] | null),_gte?: (Scalars['bytea'] | null),_in?: (Scalars['bytea'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['bytea'] | null),_lte?: (Scalars['bytea'] | null),_neq?: (Scalars['bytea'] | null),_nin?: (Scalars['bytea'][] | null)}
+
+
+/** columns and relationships of "e_game_server_node_regions" */
+export interface e_game_server_node_regionsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_game_server_node_regions" */
+export interface e_game_server_node_regions_aggregateGenqlSelection{
+    aggregate?: e_game_server_node_regions_aggregate_fieldsGenqlSelection
+    nodes?: e_game_server_node_regionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_game_server_node_regions" */
+export interface e_game_server_node_regions_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_game_server_node_regions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_game_server_node_regions_max_fieldsGenqlSelection
+    min?: e_game_server_node_regions_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_game_server_node_regions". All fields are combined with a logical 'AND'. */
+export interface e_game_server_node_regions_bool_exp {_and?: (e_game_server_node_regions_bool_exp[] | null),_not?: (e_game_server_node_regions_bool_exp | null),_or?: (e_game_server_node_regions_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_game_server_node_regions_enum". All fields are combined with logical 'AND'. */
+export interface e_game_server_node_regions_enum_comparison_exp {_eq?: (e_game_server_node_regions_enum | null),_in?: (e_game_server_node_regions_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_game_server_node_regions_enum | null),_nin?: (e_game_server_node_regions_enum[] | null)}
+
+
+/** input type for inserting data into table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_game_server_node_regions_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_game_server_node_regions_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_game_server_node_regionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_on_conflict {constraint: e_game_server_node_regions_constraint,update_columns?: e_game_server_node_regions_update_column[],where?: (e_game_server_node_regions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_game_server_node_regions". */
+export interface e_game_server_node_regions_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_game_server_node_regions */
+export interface e_game_server_node_regions_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_game_server_node_regions" */
+export interface e_game_server_node_regions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_game_server_node_regions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_game_server_node_regions_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_game_server_node_regions_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_game_server_node_regions_set_input | null),
+/** filter the rows which have to be updated */
+where: e_game_server_node_regions_bool_exp}
+
+
+/** columns and relationships of "e_game_server_node_statuses" */
+export interface e_game_server_node_statusesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_aggregateGenqlSelection{
+    aggregate?: e_game_server_node_statuses_aggregate_fieldsGenqlSelection
+    nodes?: e_game_server_node_statusesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_game_server_node_statuses_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_game_server_node_statuses_max_fieldsGenqlSelection
+    min?: e_game_server_node_statuses_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_game_server_node_statuses". All fields are combined with a logical 'AND'. */
+export interface e_game_server_node_statuses_bool_exp {_and?: (e_game_server_node_statuses_bool_exp[] | null),_not?: (e_game_server_node_statuses_bool_exp | null),_or?: (e_game_server_node_statuses_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_game_server_node_statuses_enum". All fields are combined with logical 'AND'. */
+export interface e_game_server_node_statuses_enum_comparison_exp {_eq?: (e_game_server_node_statuses_enum | null),_in?: (e_game_server_node_statuses_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_game_server_node_statuses_enum | null),_nin?: (e_game_server_node_statuses_enum[] | null)}
+
+
+/** input type for inserting data into table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_game_server_node_statuses_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_game_server_node_statuses_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_game_server_node_statusesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_on_conflict {constraint: e_game_server_node_statuses_constraint,update_columns?: e_game_server_node_statuses_update_column[],where?: (e_game_server_node_statuses_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_game_server_node_statuses". */
+export interface e_game_server_node_statuses_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_game_server_node_statuses */
+export interface e_game_server_node_statuses_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_game_server_node_statuses" */
+export interface e_game_server_node_statuses_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_game_server_node_statuses_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_game_server_node_statuses_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_game_server_node_statuses_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_game_server_node_statuses_set_input | null),
+/** filter the rows which have to be updated */
+where: e_game_server_node_statuses_bool_exp}
 
 
 /** columns and relationships of "e_map_pool_types" */
@@ -10394,6 +10784,197 @@ export interface e_veto_pick_types_updates {
 _set?: (e_veto_pick_types_set_input | null),
 /** filter the rows which have to be updated */
 where: e_veto_pick_types_bool_exp}
+
+
+/** columns and relationships of "game_server_nodes" */
+export interface game_server_nodesGenqlSelection{
+    enabled?: boolean | number
+    end_port_range?: boolean | number
+    id?: boolean | number
+    region?: boolean | number
+    start_port_range?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "game_server_nodes" */
+export interface game_server_nodes_aggregateGenqlSelection{
+    aggregate?: game_server_nodes_aggregate_fieldsGenqlSelection
+    nodes?: game_server_nodesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "game_server_nodes" */
+export interface game_server_nodes_aggregate_fieldsGenqlSelection{
+    avg?: game_server_nodes_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (game_server_nodes_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: game_server_nodes_max_fieldsGenqlSelection
+    min?: game_server_nodes_min_fieldsGenqlSelection
+    stddev?: game_server_nodes_stddev_fieldsGenqlSelection
+    stddev_pop?: game_server_nodes_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: game_server_nodes_stddev_samp_fieldsGenqlSelection
+    sum?: game_server_nodes_sum_fieldsGenqlSelection
+    var_pop?: game_server_nodes_var_pop_fieldsGenqlSelection
+    var_samp?: game_server_nodes_var_samp_fieldsGenqlSelection
+    variance?: game_server_nodes_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface game_server_nodes_avg_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),region?: (e_game_server_node_regions_enum_comparison_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "game_server_nodes" */
+export interface game_server_nodes_inc_input {end_port_range?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "game_server_nodes" */
+export interface game_server_nodes_insert_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),region?: (e_game_server_node_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null)}
+
+
+/** aggregate max on columns */
+export interface game_server_nodes_max_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    id?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface game_server_nodes_min_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    id?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "game_server_nodes" */
+export interface game_server_nodes_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: game_server_nodesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "game_server_nodes" */
+export interface game_server_nodes_on_conflict {constraint: game_server_nodes_constraint,update_columns?: game_server_nodes_update_column[],where?: (game_server_nodes_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "game_server_nodes". */
+export interface game_server_nodes_order_by {enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),status?: (order_by | null)}
+
+
+/** primary key columns input for table: game_server_nodes */
+export interface game_server_nodes_pk_columns_input {id: Scalars['String']}
+
+
+/** input type for updating data in table "game_server_nodes" */
+export interface game_server_nodes_set_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),region?: (e_game_server_node_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null)}
+
+
+/** aggregate stddev on columns */
+export interface game_server_nodes_stddev_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "game_server_nodes" */
+export interface game_server_nodes_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: game_server_nodes_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface game_server_nodes_stream_cursor_value_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),region?: (e_game_server_node_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null)}
+
+
+/** aggregate sum on columns */
+export interface game_server_nodes_sum_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface game_server_nodes_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (game_server_nodes_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (game_server_nodes_set_input | null),
+/** filter the rows which have to be updated */
+where: game_server_nodes_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface game_server_nodes_var_pop_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface game_server_nodes_var_samp_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface game_server_nodes_variance_fieldsGenqlSelection{
+    end_port_range?: boolean | number
+    start_port_range?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 export interface jsonb_cast_exp {String?: (String_comparison_exp | null)}
 
@@ -13646,6 +14227,18 @@ export interface mutation_rootGenqlSelection{
     where: _map_pool_bool_exp} })
     /** delete single row from the table: "_map_pool" */
     delete__map_pool_by_pk?: (_map_poolGenqlSelection & { __args: {map_id: Scalars['uuid'], map_pool_id: Scalars['uuid']} })
+    /** delete data from the table: "e_game_server_node_regions" */
+    delete_e_game_server_node_regions?: (e_game_server_node_regions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_game_server_node_regions_bool_exp} })
+    /** delete single row from the table: "e_game_server_node_regions" */
+    delete_e_game_server_node_regions_by_pk?: (e_game_server_node_regionsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_game_server_node_statuses" */
+    delete_e_game_server_node_statuses?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_game_server_node_statuses_bool_exp} })
+    /** delete single row from the table: "e_game_server_node_statuses" */
+    delete_e_game_server_node_statuses_by_pk?: (e_game_server_node_statusesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_map_pool_types" */
     delete_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -13724,6 +14317,12 @@ export interface mutation_rootGenqlSelection{
     where: e_veto_pick_types_bool_exp} })
     /** delete single row from the table: "e_veto_pick_types" */
     delete_e_veto_pick_types_by_pk?: (e_veto_pick_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "game_server_nodes" */
+    delete_game_server_nodes?: (game_server_nodes_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: game_server_nodes_bool_exp} })
+    /** delete single row from the table: "game_server_nodes" */
+    delete_game_server_nodes_by_pk?: (game_server_nodesGenqlSelection & { __args: {id: Scalars['String']} })
     /** delete data from the table: "map_pools" */
     delete_map_pools?: (map_pools_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -13838,12 +14437,6 @@ export interface mutation_rootGenqlSelection{
     where: players_bool_exp} })
     /** delete single row from the table: "players" */
     delete_players_by_pk?: (playersGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
-    /** delete data from the table: "server_nodes" */
-    delete_server_nodes?: (server_nodes_mutation_responseGenqlSelection & { __args: {
-    /** filter the rows which have to be deleted */
-    where: server_nodes_bool_exp} })
-    /** delete single row from the table: "server_nodes" */
-    delete_server_nodes_by_pk?: (server_nodesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "servers" */
     delete_servers?: (servers_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -13931,6 +14524,30 @@ export interface mutation_rootGenqlSelection{
     object: _map_pool_insert_input, 
     /** upsert condition */
     on_conflict?: (_map_pool_on_conflict | null)} })
+    /** insert data into the table: "e_game_server_node_regions" */
+    insert_e_game_server_node_regions?: (e_game_server_node_regions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_game_server_node_regions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_game_server_node_regions_on_conflict | null)} })
+    /** insert a single row into the table: "e_game_server_node_regions" */
+    insert_e_game_server_node_regions_one?: (e_game_server_node_regionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_game_server_node_regions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_game_server_node_regions_on_conflict | null)} })
+    /** insert data into the table: "e_game_server_node_statuses" */
+    insert_e_game_server_node_statuses?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_game_server_node_statuses_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_game_server_node_statuses_on_conflict | null)} })
+    /** insert a single row into the table: "e_game_server_node_statuses" */
+    insert_e_game_server_node_statuses_one?: (e_game_server_node_statusesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_game_server_node_statuses_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_game_server_node_statuses_on_conflict | null)} })
     /** insert data into the table: "e_map_pool_types" */
     insert_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -14087,6 +14704,18 @@ export interface mutation_rootGenqlSelection{
     object: e_veto_pick_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_veto_pick_types_on_conflict | null)} })
+    /** insert data into the table: "game_server_nodes" */
+    insert_game_server_nodes?: (game_server_nodes_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: game_server_nodes_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (game_server_nodes_on_conflict | null)} })
+    /** insert a single row into the table: "game_server_nodes" */
+    insert_game_server_nodes_one?: (game_server_nodesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: game_server_nodes_insert_input, 
+    /** upsert condition */
+    on_conflict?: (game_server_nodes_on_conflict | null)} })
     /** insert data into the table: "map_pools" */
     insert_map_pools?: (map_pools_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -14315,18 +14944,6 @@ export interface mutation_rootGenqlSelection{
     object: players_insert_input, 
     /** upsert condition */
     on_conflict?: (players_on_conflict | null)} })
-    /** insert data into the table: "server_nodes" */
-    insert_server_nodes?: (server_nodes_mutation_responseGenqlSelection & { __args: {
-    /** the rows to be inserted */
-    objects: server_nodes_insert_input[], 
-    /** upsert condition */
-    on_conflict?: (server_nodes_on_conflict | null)} })
-    /** insert a single row into the table: "server_nodes" */
-    insert_server_nodes_one?: (server_nodesGenqlSelection & { __args: {
-    /** the row to be inserted */
-    object: server_nodes_insert_input, 
-    /** upsert condition */
-    on_conflict?: (server_nodes_on_conflict | null)} })
     /** insert data into the table: "servers" */
     insert_servers?: (servers_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -14496,6 +15113,34 @@ export interface mutation_rootGenqlSelection{
     update__map_pool_many?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: _map_pool_updates[]} })
+    /** update data of the table: "e_game_server_node_regions" */
+    update_e_game_server_node_regions?: (e_game_server_node_regions_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_game_server_node_regions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_game_server_node_regions_bool_exp} })
+    /** update single row of the table: "e_game_server_node_regions" */
+    update_e_game_server_node_regions_by_pk?: (e_game_server_node_regionsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_game_server_node_regions_set_input | null), pk_columns: e_game_server_node_regions_pk_columns_input} })
+    /** update multiples rows of table: "e_game_server_node_regions" */
+    update_e_game_server_node_regions_many?: (e_game_server_node_regions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_game_server_node_regions_updates[]} })
+    /** update data of the table: "e_game_server_node_statuses" */
+    update_e_game_server_node_statuses?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_game_server_node_statuses_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_game_server_node_statuses_bool_exp} })
+    /** update single row of the table: "e_game_server_node_statuses" */
+    update_e_game_server_node_statuses_by_pk?: (e_game_server_node_statusesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_game_server_node_statuses_set_input | null), pk_columns: e_game_server_node_statuses_pk_columns_input} })
+    /** update multiples rows of table: "e_game_server_node_statuses" */
+    update_e_game_server_node_statuses_many?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_game_server_node_statuses_updates[]} })
     /** update data of the table: "e_map_pool_types" */
     update_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -14678,6 +15323,24 @@ export interface mutation_rootGenqlSelection{
     update_e_veto_pick_types_many?: (e_veto_pick_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_veto_pick_types_updates[]} })
+    /** update data of the table: "game_server_nodes" */
+    update_game_server_nodes?: (game_server_nodes_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (game_server_nodes_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (game_server_nodes_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: game_server_nodes_bool_exp} })
+    /** update single row of the table: "game_server_nodes" */
+    update_game_server_nodes_by_pk?: (game_server_nodesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (game_server_nodes_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (game_server_nodes_set_input | null), pk_columns: game_server_nodes_pk_columns_input} })
+    /** update multiples rows of table: "game_server_nodes" */
+    update_game_server_nodes_many?: (game_server_nodes_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: game_server_nodes_updates[]} })
     /** update data of the table: "map_pools" */
     update_map_pools?: (map_pools_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -15004,24 +15667,6 @@ export interface mutation_rootGenqlSelection{
     update_players_many?: (players_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: players_updates[]} })
-    /** update data of the table: "server_nodes" */
-    update_server_nodes?: (server_nodes_mutation_responseGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (server_nodes_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (server_nodes_set_input | null), 
-    /** filter the rows which have to be updated */
-    where: server_nodes_bool_exp} })
-    /** update single row of the table: "server_nodes" */
-    update_server_nodes_by_pk?: (server_nodesGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (server_nodes_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (server_nodes_set_input | null), pk_columns: server_nodes_pk_columns_input} })
-    /** update multiples rows of table: "server_nodes" */
-    update_server_nodes_many?: (server_nodes_mutation_responseGenqlSelection & { __args: {
-    /** updates to execute, in order */
-    updates: server_nodes_updates[]} })
     /** update data of the table: "servers" */
     update_servers?: (servers_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -18027,6 +18672,58 @@ export interface query_rootGenqlSelection{
     where?: (_map_pool_bool_exp | null)} })
     /** fetch data from the table: "_map_pool" using primary key columns */
     _map_pool_by_pk?: (_map_poolGenqlSelection & { __args: {map_id: Scalars['uuid'], map_pool_id: Scalars['uuid']} })
+    /** fetch data from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions?: (e_game_server_node_regionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_regions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions_aggregate?: (e_game_server_node_regions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_regions_bool_exp | null)} })
+    /** fetch data from the table: "e_game_server_node_regions" using primary key columns */
+    e_game_server_node_regions_by_pk?: (e_game_server_node_regionsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses?: (e_game_server_node_statusesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_statuses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses_aggregate?: (e_game_server_node_statuses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_game_server_node_statuses" using primary key columns */
+    e_game_server_node_statuses_by_pk?: (e_game_server_node_statusesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types?: (e_map_pool_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -18365,6 +19062,32 @@ export interface query_rootGenqlSelection{
     where?: (e_veto_pick_types_bool_exp | null)} })
     /** fetch data from the table: "e_veto_pick_types" using primary key columns */
     e_veto_pick_types_by_pk?: (e_veto_pick_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "game_server_nodes" */
+    game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "game_server_nodes" */
+    game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    /** fetch data from the table: "game_server_nodes" using primary key columns */
+    game_server_nodes_by_pk?: (game_server_nodesGenqlSelection & { __args: {id: Scalars['String']} })
     /** fetch data from the table: "map_pools" */
     map_pools?: (map_poolsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -18861,32 +19584,6 @@ export interface query_rootGenqlSelection{
     where?: (players_bool_exp | null)} })
     /** fetch data from the table: "players" using primary key columns */
     players_by_pk?: (playersGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
-    /** fetch data from the table: "server_nodes" */
-    server_nodes?: (server_nodesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (server_nodes_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (server_nodes_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (server_nodes_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "server_nodes" */
-    server_nodes_aggregate?: (server_nodes_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (server_nodes_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (server_nodes_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (server_nodes_bool_exp | null)} })
-    /** fetch data from the table: "server_nodes" using primary key columns */
-    server_nodes_by_pk?: (server_nodesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "servers" */
     servers?: (serversGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -19394,201 +20091,6 @@ export interface query_rootGenqlSelection{
 }
 
 
-/** columns and relationships of "server_nodes" */
-export interface server_nodesGenqlSelection{
-    enabled?: boolean | number
-    end_port_range?: boolean | number
-    id?: boolean | number
-    region?: boolean | number
-    start_port_range?: boolean | number
-    status?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregated selection of "server_nodes" */
-export interface server_nodes_aggregateGenqlSelection{
-    aggregate?: server_nodes_aggregate_fieldsGenqlSelection
-    nodes?: server_nodesGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate fields of "server_nodes" */
-export interface server_nodes_aggregate_fieldsGenqlSelection{
-    avg?: server_nodes_avg_fieldsGenqlSelection
-    count?: { __args: {columns?: (server_nodes_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
-    max?: server_nodes_max_fieldsGenqlSelection
-    min?: server_nodes_min_fieldsGenqlSelection
-    stddev?: server_nodes_stddev_fieldsGenqlSelection
-    stddev_pop?: server_nodes_stddev_pop_fieldsGenqlSelection
-    stddev_samp?: server_nodes_stddev_samp_fieldsGenqlSelection
-    sum?: server_nodes_sum_fieldsGenqlSelection
-    var_pop?: server_nodes_var_pop_fieldsGenqlSelection
-    var_samp?: server_nodes_var_samp_fieldsGenqlSelection
-    variance?: server_nodes_variance_fieldsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate avg on columns */
-export interface server_nodes_avg_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** Boolean expression to filter rows from the table "server_nodes". All fields are combined with a logical 'AND'. */
-export interface server_nodes_bool_exp {_and?: (server_nodes_bool_exp[] | null),_not?: (server_nodes_bool_exp | null),_or?: (server_nodes_bool_exp[] | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (String_comparison_exp | null)}
-
-
-/** input type for incrementing numeric columns in table "server_nodes" */
-export interface server_nodes_inc_input {end_port_range?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
-
-
-/** input type for inserting data into table "server_nodes" */
-export interface server_nodes_insert_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (Scalars['String'] | null)}
-
-
-/** aggregate max on columns */
-export interface server_nodes_max_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    id?: boolean | number
-    region?: boolean | number
-    start_port_range?: boolean | number
-    status?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate min on columns */
-export interface server_nodes_min_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    id?: boolean | number
-    region?: boolean | number
-    start_port_range?: boolean | number
-    status?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** response of any mutation on the table "server_nodes" */
-export interface server_nodes_mutation_responseGenqlSelection{
-    /** number of rows affected by the mutation */
-    affected_rows?: boolean | number
-    /** data from the rows affected by the mutation */
-    returning?: server_nodesGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** on_conflict condition type for table "server_nodes" */
-export interface server_nodes_on_conflict {constraint: server_nodes_constraint,update_columns?: server_nodes_update_column[],where?: (server_nodes_bool_exp | null)}
-
-
-/** Ordering options when selecting data from "server_nodes". */
-export interface server_nodes_order_by {enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),status?: (order_by | null)}
-
-
-/** primary key columns input for table: server_nodes */
-export interface server_nodes_pk_columns_input {id: Scalars['uuid']}
-
-
-/** input type for updating data in table "server_nodes" */
-export interface server_nodes_set_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (Scalars['String'] | null)}
-
-
-/** aggregate stddev on columns */
-export interface server_nodes_stddev_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface server_nodes_stddev_pop_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface server_nodes_stddev_samp_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** Streaming cursor of the table "server_nodes" */
-export interface server_nodes_stream_cursor_input {
-/** Stream column input with initial value */
-initial_value: server_nodes_stream_cursor_value_input,
-/** cursor ordering */
-ordering?: (cursor_ordering | null)}
-
-
-/** Initial value of the column from where the streaming should start */
-export interface server_nodes_stream_cursor_value_input {enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (Scalars['String'] | null)}
-
-
-/** aggregate sum on columns */
-export interface server_nodes_sum_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-export interface server_nodes_updates {
-/** increments the numeric columns with given value of the filtered values */
-_inc?: (server_nodes_inc_input | null),
-/** sets the columns of the filtered rows to the given values */
-_set?: (server_nodes_set_input | null),
-/** filter the rows which have to be updated */
-where: server_nodes_bool_exp}
-
-
-/** aggregate var_pop on columns */
-export interface server_nodes_var_pop_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate var_samp on columns */
-export interface server_nodes_var_samp_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate variance on columns */
-export interface server_nodes_variance_fieldsGenqlSelection{
-    end_port_range?: boolean | number
-    start_port_range?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
 /** columns and relationships of "servers" */
 export interface serversGenqlSelection{
     api_password?: boolean | number
@@ -19896,6 +20398,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (_map_pool_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (_map_pool_bool_exp | null)} })
+    /** fetch data from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions?: (e_game_server_node_regionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_regions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_game_server_node_regions" */
+    e_game_server_node_regions_aggregate?: (e_game_server_node_regions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_regions_bool_exp | null)} })
+    /** fetch data from the table: "e_game_server_node_regions" using primary key columns */
+    e_game_server_node_regions_by_pk?: (e_game_server_node_regionsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_game_server_node_regions" */
+    e_game_server_node_regions_stream?: (e_game_server_node_regionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_game_server_node_regions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_game_server_node_regions_bool_exp | null)} })
+    /** fetch data from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses?: (e_game_server_node_statusesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_statuses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_game_server_node_statuses" */
+    e_game_server_node_statuses_aggregate?: (e_game_server_node_statuses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_server_node_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_server_node_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_server_node_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_game_server_node_statuses" using primary key columns */
+    e_game_server_node_statuses_by_pk?: (e_game_server_node_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_game_server_node_statuses" */
+    e_game_server_node_statuses_stream?: (e_game_server_node_statusesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_game_server_node_statuses_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_game_server_node_statuses_bool_exp | null)} })
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types?: (e_map_pool_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -20338,6 +20908,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_veto_pick_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_veto_pick_types_bool_exp | null)} })
+    /** fetch data from the table: "game_server_nodes" */
+    game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "game_server_nodes" */
+    game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    /** fetch data from the table: "game_server_nodes" using primary key columns */
+    game_server_nodes_by_pk?: (game_server_nodesGenqlSelection & { __args: {id: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "game_server_nodes" */
+    game_server_nodes_stream?: (game_server_nodesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (game_server_nodes_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
     /** fetch data from the table: "map_pools" */
     map_pools?: (map_poolsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -20984,40 +21588,6 @@ export interface subscription_rootGenqlSelection{
     cursor: (players_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (players_bool_exp | null)} })
-    /** fetch data from the table: "server_nodes" */
-    server_nodes?: (server_nodesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (server_nodes_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (server_nodes_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (server_nodes_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "server_nodes" */
-    server_nodes_aggregate?: (server_nodes_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (server_nodes_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (server_nodes_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (server_nodes_bool_exp | null)} })
-    /** fetch data from the table: "server_nodes" using primary key columns */
-    server_nodes_by_pk?: (server_nodesGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** fetch data from the table in a streaming manner: "server_nodes" */
-    server_nodes_stream?: (server_nodesGenqlSelection & { __args: {
-    /** maximum number of rows returned in a single batch */
-    batch_size: Scalars['Int'], 
-    /** cursor to stream the results returned by the query */
-    cursor: (server_nodes_stream_cursor_input | null)[], 
-    /** filter the rows returned */
-    where?: (server_nodes_bool_exp | null)} })
     /** fetch data from the table: "servers" */
     servers?: (serversGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -26036,6 +26606,102 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_game_server_node_regions_possibleTypes: string[] = ['e_game_server_node_regions']
+    export const ise_game_server_node_regions = (obj?: { __typename?: any } | null): obj is e_game_server_node_regions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_regions"')
+      return e_game_server_node_regions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_regions_aggregate_possibleTypes: string[] = ['e_game_server_node_regions_aggregate']
+    export const ise_game_server_node_regions_aggregate = (obj?: { __typename?: any } | null): obj is e_game_server_node_regions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_regions_aggregate"')
+      return e_game_server_node_regions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_regions_aggregate_fields_possibleTypes: string[] = ['e_game_server_node_regions_aggregate_fields']
+    export const ise_game_server_node_regions_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_game_server_node_regions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_regions_aggregate_fields"')
+      return e_game_server_node_regions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_regions_max_fields_possibleTypes: string[] = ['e_game_server_node_regions_max_fields']
+    export const ise_game_server_node_regions_max_fields = (obj?: { __typename?: any } | null): obj is e_game_server_node_regions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_regions_max_fields"')
+      return e_game_server_node_regions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_regions_min_fields_possibleTypes: string[] = ['e_game_server_node_regions_min_fields']
+    export const ise_game_server_node_regions_min_fields = (obj?: { __typename?: any } | null): obj is e_game_server_node_regions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_regions_min_fields"')
+      return e_game_server_node_regions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_regions_mutation_response_possibleTypes: string[] = ['e_game_server_node_regions_mutation_response']
+    export const ise_game_server_node_regions_mutation_response = (obj?: { __typename?: any } | null): obj is e_game_server_node_regions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_regions_mutation_response"')
+      return e_game_server_node_regions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_statuses_possibleTypes: string[] = ['e_game_server_node_statuses']
+    export const ise_game_server_node_statuses = (obj?: { __typename?: any } | null): obj is e_game_server_node_statuses => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_statuses"')
+      return e_game_server_node_statuses_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_statuses_aggregate_possibleTypes: string[] = ['e_game_server_node_statuses_aggregate']
+    export const ise_game_server_node_statuses_aggregate = (obj?: { __typename?: any } | null): obj is e_game_server_node_statuses_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_statuses_aggregate"')
+      return e_game_server_node_statuses_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_statuses_aggregate_fields_possibleTypes: string[] = ['e_game_server_node_statuses_aggregate_fields']
+    export const ise_game_server_node_statuses_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_game_server_node_statuses_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_statuses_aggregate_fields"')
+      return e_game_server_node_statuses_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_statuses_max_fields_possibleTypes: string[] = ['e_game_server_node_statuses_max_fields']
+    export const ise_game_server_node_statuses_max_fields = (obj?: { __typename?: any } | null): obj is e_game_server_node_statuses_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_statuses_max_fields"')
+      return e_game_server_node_statuses_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_statuses_min_fields_possibleTypes: string[] = ['e_game_server_node_statuses_min_fields']
+    export const ise_game_server_node_statuses_min_fields = (obj?: { __typename?: any } | null): obj is e_game_server_node_statuses_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_statuses_min_fields"')
+      return e_game_server_node_statuses_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_server_node_statuses_mutation_response_possibleTypes: string[] = ['e_game_server_node_statuses_mutation_response']
+    export const ise_game_server_node_statuses_mutation_response = (obj?: { __typename?: any } | null): obj is e_game_server_node_statuses_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_server_node_statuses_mutation_response"')
+      return e_game_server_node_statuses_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_map_pool_types_possibleTypes: string[] = ['e_map_pool_types']
     export const ise_map_pool_types = (obj?: { __typename?: any } | null): obj is e_map_pool_types => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_map_pool_types"')
@@ -26656,6 +27322,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_veto_pick_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_veto_pick_types_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_veto_pick_types_mutation_response"')
       return e_veto_pick_types_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_possibleTypes: string[] = ['game_server_nodes']
+    export const isgame_server_nodes = (obj?: { __typename?: any } | null): obj is game_server_nodes => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes"')
+      return game_server_nodes_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_aggregate_possibleTypes: string[] = ['game_server_nodes_aggregate']
+    export const isgame_server_nodes_aggregate = (obj?: { __typename?: any } | null): obj is game_server_nodes_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_aggregate"')
+      return game_server_nodes_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_aggregate_fields_possibleTypes: string[] = ['game_server_nodes_aggregate_fields']
+    export const isgame_server_nodes_aggregate_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_aggregate_fields"')
+      return game_server_nodes_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_avg_fields_possibleTypes: string[] = ['game_server_nodes_avg_fields']
+    export const isgame_server_nodes_avg_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_avg_fields"')
+      return game_server_nodes_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_max_fields_possibleTypes: string[] = ['game_server_nodes_max_fields']
+    export const isgame_server_nodes_max_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_max_fields"')
+      return game_server_nodes_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_min_fields_possibleTypes: string[] = ['game_server_nodes_min_fields']
+    export const isgame_server_nodes_min_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_min_fields"')
+      return game_server_nodes_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_mutation_response_possibleTypes: string[] = ['game_server_nodes_mutation_response']
+    export const isgame_server_nodes_mutation_response = (obj?: { __typename?: any } | null): obj is game_server_nodes_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_mutation_response"')
+      return game_server_nodes_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_stddev_fields_possibleTypes: string[] = ['game_server_nodes_stddev_fields']
+    export const isgame_server_nodes_stddev_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_stddev_fields"')
+      return game_server_nodes_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_stddev_pop_fields_possibleTypes: string[] = ['game_server_nodes_stddev_pop_fields']
+    export const isgame_server_nodes_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_stddev_pop_fields"')
+      return game_server_nodes_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_stddev_samp_fields_possibleTypes: string[] = ['game_server_nodes_stddev_samp_fields']
+    export const isgame_server_nodes_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_stddev_samp_fields"')
+      return game_server_nodes_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_sum_fields_possibleTypes: string[] = ['game_server_nodes_sum_fields']
+    export const isgame_server_nodes_sum_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_sum_fields"')
+      return game_server_nodes_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_var_pop_fields_possibleTypes: string[] = ['game_server_nodes_var_pop_fields']
+    export const isgame_server_nodes_var_pop_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_var_pop_fields"')
+      return game_server_nodes_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_var_samp_fields_possibleTypes: string[] = ['game_server_nodes_var_samp_fields']
+    export const isgame_server_nodes_var_samp_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_var_samp_fields"')
+      return game_server_nodes_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const game_server_nodes_variance_fields_possibleTypes: string[] = ['game_server_nodes_variance_fields']
+    export const isgame_server_nodes_variance_fields = (obj?: { __typename?: any } | null): obj is game_server_nodes_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgame_server_nodes_variance_fields"')
+      return game_server_nodes_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -28544,118 +29322,6 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isquery_root = (obj?: { __typename?: any } | null): obj is query_root => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isquery_root"')
       return query_root_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_possibleTypes: string[] = ['server_nodes']
-    export const isserver_nodes = (obj?: { __typename?: any } | null): obj is server_nodes => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes"')
-      return server_nodes_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_aggregate_possibleTypes: string[] = ['server_nodes_aggregate']
-    export const isserver_nodes_aggregate = (obj?: { __typename?: any } | null): obj is server_nodes_aggregate => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_aggregate"')
-      return server_nodes_aggregate_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_aggregate_fields_possibleTypes: string[] = ['server_nodes_aggregate_fields']
-    export const isserver_nodes_aggregate_fields = (obj?: { __typename?: any } | null): obj is server_nodes_aggregate_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_aggregate_fields"')
-      return server_nodes_aggregate_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_avg_fields_possibleTypes: string[] = ['server_nodes_avg_fields']
-    export const isserver_nodes_avg_fields = (obj?: { __typename?: any } | null): obj is server_nodes_avg_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_avg_fields"')
-      return server_nodes_avg_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_max_fields_possibleTypes: string[] = ['server_nodes_max_fields']
-    export const isserver_nodes_max_fields = (obj?: { __typename?: any } | null): obj is server_nodes_max_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_max_fields"')
-      return server_nodes_max_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_min_fields_possibleTypes: string[] = ['server_nodes_min_fields']
-    export const isserver_nodes_min_fields = (obj?: { __typename?: any } | null): obj is server_nodes_min_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_min_fields"')
-      return server_nodes_min_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_mutation_response_possibleTypes: string[] = ['server_nodes_mutation_response']
-    export const isserver_nodes_mutation_response = (obj?: { __typename?: any } | null): obj is server_nodes_mutation_response => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_mutation_response"')
-      return server_nodes_mutation_response_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_stddev_fields_possibleTypes: string[] = ['server_nodes_stddev_fields']
-    export const isserver_nodes_stddev_fields = (obj?: { __typename?: any } | null): obj is server_nodes_stddev_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_stddev_fields"')
-      return server_nodes_stddev_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_stddev_pop_fields_possibleTypes: string[] = ['server_nodes_stddev_pop_fields']
-    export const isserver_nodes_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is server_nodes_stddev_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_stddev_pop_fields"')
-      return server_nodes_stddev_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_stddev_samp_fields_possibleTypes: string[] = ['server_nodes_stddev_samp_fields']
-    export const isserver_nodes_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is server_nodes_stddev_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_stddev_samp_fields"')
-      return server_nodes_stddev_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_sum_fields_possibleTypes: string[] = ['server_nodes_sum_fields']
-    export const isserver_nodes_sum_fields = (obj?: { __typename?: any } | null): obj is server_nodes_sum_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_sum_fields"')
-      return server_nodes_sum_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_var_pop_fields_possibleTypes: string[] = ['server_nodes_var_pop_fields']
-    export const isserver_nodes_var_pop_fields = (obj?: { __typename?: any } | null): obj is server_nodes_var_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_var_pop_fields"')
-      return server_nodes_var_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_var_samp_fields_possibleTypes: string[] = ['server_nodes_var_samp_fields']
-    export const isserver_nodes_var_samp_fields = (obj?: { __typename?: any } | null): obj is server_nodes_var_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_var_samp_fields"')
-      return server_nodes_var_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const server_nodes_variance_fields_possibleTypes: string[] = ['server_nodes_variance_fields']
-    export const isserver_nodes_variance_fields = (obj?: { __typename?: any } | null): obj is server_nodes_variance_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_nodes_variance_fields"')
-      return server_nodes_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -30742,6 +31408,54 @@ export const enumCursorOrdering = {
    DESC: 'DESC' as const
 }
 
+export const enumEGameServerNodeRegionsConstraint = {
+   e_game_server_node_regions_pkey: 'e_game_server_node_regions_pkey' as const
+}
+
+export const enumEGameServerNodeRegionsEnum = {
+   Africa: 'Africa' as const,
+   Asia: 'Asia' as const,
+   Australia: 'Australia' as const,
+   Europe: 'Europe' as const,
+   Lan: 'Lan' as const,
+   MiddleEast: 'MiddleEast' as const,
+   SouthAmerica: 'SouthAmerica' as const,
+   USCentral: 'USCentral' as const,
+   USEast: 'USEast' as const,
+   USWest: 'USWest' as const
+}
+
+export const enumEGameServerNodeRegionsSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEGameServerNodeRegionsUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEGameServerNodeStatusesConstraint = {
+   e_game_server_node_statuses_pkey: 'e_game_server_node_statuses_pkey' as const
+}
+
+export const enumEGameServerNodeStatusesEnum = {
+   NotAcceptingNewMatches: 'NotAcceptingNewMatches' as const,
+   Offline: 'Offline' as const,
+   Online: 'Online' as const,
+   Setup: 'Setup' as const
+}
+
+export const enumEGameServerNodeStatusesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEGameServerNodeStatusesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumEMapPoolTypesConstraint = {
    e_map_pool_types_pkey: 'e_map_pool_types_pkey' as const
 }
@@ -31021,6 +31735,28 @@ export const enumEVetoPickTypesSelectColumn = {
 export const enumEVetoPickTypesUpdateColumn = {
    description: 'description' as const,
    value: 'value' as const
+}
+
+export const enumGameServerNodesConstraint = {
+   server_nodes_pkey: 'server_nodes_pkey' as const
+}
+
+export const enumGameServerNodesSelectColumn = {
+   enabled: 'enabled' as const,
+   end_port_range: 'end_port_range' as const,
+   id: 'id' as const,
+   region: 'region' as const,
+   start_port_range: 'start_port_range' as const,
+   status: 'status' as const
+}
+
+export const enumGameServerNodesUpdateColumn = {
+   enabled: 'enabled' as const,
+   end_port_range: 'end_port_range' as const,
+   id: 'id' as const,
+   region: 'region' as const,
+   start_port_range: 'start_port_range' as const,
+   status: 'status' as const
 }
 
 export const enumMapPoolsConstraint = {
@@ -31627,28 +32363,6 @@ export const enumPlayersUpdateColumn = {
    profile_url: 'profile_url' as const,
    role: 'role' as const,
    steam_id: 'steam_id' as const
-}
-
-export const enumServerNodesConstraint = {
-   server_nodes_pkey: 'server_nodes_pkey' as const
-}
-
-export const enumServerNodesSelectColumn = {
-   enabled: 'enabled' as const,
-   end_port_range: 'end_port_range' as const,
-   id: 'id' as const,
-   region: 'region' as const,
-   start_port_range: 'start_port_range' as const,
-   status: 'status' as const
-}
-
-export const enumServerNodesUpdateColumn = {
-   enabled: 'enabled' as const,
-   end_port_range: 'end_port_range' as const,
-   id: 'id' as const,
-   region: 'region' as const,
-   start_port_range: 'start_port_range' as const,
-   status: 'status' as const
 }
 
 export const enumServersConstraint = {

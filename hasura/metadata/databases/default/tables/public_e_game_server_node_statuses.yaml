@@ -1,0 +1,12 @@
+table:
+  name: e_game_server_node_statuses
+  schema: public
+is_enum: true
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

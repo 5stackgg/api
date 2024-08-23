@@ -1,0 +1,27 @@
+table:
+  name: game_server_nodes
+  schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - enabled
+        - end_port_range
+        - start_port_range
+        - region
+        - status
+        - id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - enabled
+        - end_port_range
+        - region
+        - start_port_range
+      filter: {}
+      check: null
+    comment: ""
