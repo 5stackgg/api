@@ -35,7 +35,7 @@ export class GameServerNodeModule {
       {},
       {
         repeat: {
-          pattern: "* * * * *",
+          pattern: "*/6 * * * *",
         },
       },
     );
