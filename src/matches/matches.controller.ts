@@ -41,14 +41,20 @@ export class MatchesController {
           id: serverId,
         },
         api_password: true,
-        current_match_id: true,
+        current_match: {
+          id: true,
+        },
       },
     });
+
+    if (!server?.current_match?.id) {
+      throw Error("unable to find match");
+    }
 
     const { matches_by_pk } = await this.hasura.query({
       matches_by_pk: {
         __args: {
-          id: server.current_match_id,
+          id: server.current_match.id,
         },
         id: true,
         password: true,
@@ -150,7 +156,7 @@ export class MatchesController {
         status: true,
         server: {
           id: true,
-          is_on_demand: true,
+          game_server_node_id: true,
         },
       },
     });
@@ -159,7 +165,7 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (match.server?.is_on_demand === false) {
+    if (!match?.server?.game_server_node_id) {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
@@ -309,7 +315,7 @@ export class MatchesController {
         status: true,
         current_match_map_id: true,
         server: {
-          is_on_demand: true,
+          game_server_node_id: true,
         },
       },
     });
@@ -331,7 +337,7 @@ export class MatchesController {
       );
     }
 
-    if (updated_match.server?.is_on_demand === false) {
+    if (updated_match.server?.game_server_node_id === null) {
       await this.matchAssistant.sendServerMatchId(match_id);
     }
 

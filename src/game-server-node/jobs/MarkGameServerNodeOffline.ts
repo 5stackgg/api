@@ -1,9 +1,10 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { WorkerHost } from "@nestjs/bullmq";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { Job } from "bullmq";
 import { HasuraService } from "../../hasura/hasura.service";
+import { UseQueue } from "../../utilities/QueueProcessors";
 
-@Processor(GameServerQueues.NodeOffline)
+@UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkGameServerNodeOffline extends WorkerHost {
   constructor(protected readonly hasura: HasuraService) {
     super();

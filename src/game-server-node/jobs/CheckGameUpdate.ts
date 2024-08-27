@@ -1,8 +1,9 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { WorkerHost } from "@nestjs/bullmq";
 import { CacheService } from "../../cache/cache.service";
+import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 
-@Processor(GameServerQueues.GameUpdate)
+@UseQueue("GameServerNode", GameServerQueues.GameUpdate)
 export class CheckGameUpdate extends WorkerHost {
   constructor(private readonly cache: CacheService) {
     super();

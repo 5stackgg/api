@@ -10,6 +10,7 @@ import { HasuraQueues } from "./enums/HasuraQueues";
 import { HasuraController } from "./hasura.controller";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { CacheModule } from "../cache/cache.module";
+import { getQueuesProcessors } from "../utilities/QueueProcessors";
 
 @Module({
   imports: [
@@ -23,7 +24,12 @@ import { CacheModule } from "../cache/cache.module";
       adapter: BullMQAdapter,
     }),
   ],
-  providers: [HasuraService, HasuraMaintenanceJob, loggerFactory()],
+  providers: [
+    HasuraService,
+    HasuraMaintenanceJob,
+    loggerFactory(),
+    ...getQueuesProcessors("Hasura"),
+  ],
   exports: [HasuraService],
   controllers: [HasuraController],
 })

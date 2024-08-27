@@ -1,16 +1,24 @@
-CREATE OR REPLACE FUNCTION public.get_match_server_type(match public.matches) RETURNS text
-    LANGUAGE plpgsql STABLE
-    AS $$
+CREATE OR REPLACE FUNCTION public.get_match_server_type(match public.matches)
+RETURNS text
+LANGUAGE plpgsql
+STABLE
+AS $$
 DECLARE
-    on_demand BOOL;
+    node_id text;
 BEGIN
-    IF match.server_id = null THEN
-        return '';
+    IF match.server_id IS NULL THEN
+        RETURN NULL;
     END IF;
-	select is_on_demand into on_demand from servers where id = match.server_id;
-	IF on_demand = true THEN
-	    return 'OnDemand';
-	END IF;
-	return 'Dedicated';
+
+    SELECT game_server_node_id
+	    INTO node_id
+	    FROM servers
+	    WHERE id = match.server_id;
+
+    IF node_id IS NULL THEN
+        RETURN 'Dedicated';
+    ELSE
+        RETURN 'On Demand';
+    END IF;
 END
 $$;

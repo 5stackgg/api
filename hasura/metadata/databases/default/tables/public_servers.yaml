@@ -2,6 +2,18 @@ table:
   name: servers
   schema: public
 object_relationships:
+  - name: current_match
+    using:
+      manual_configuration:
+        column_mapping:
+          reserved_by_match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+  - name: game_server_node
+    using:
+      foreign_key_constraint_on: game_server_node_id
   - name: owner
     using:
       foreign_key_constraint_on: owner_steam_id
@@ -20,18 +32,11 @@ array_relationships:
         table:
           name: tournament_servers
           schema: public
-computed_fields:
-  - name: current_match_id
-    definition:
-      function:
-        name: get_server_current_match_id
-        schema: public
 insert_permissions:
   - role: user
     permission:
       check: {}
       set:
-        is_on_demand: "false"
         owner_steam_id: x-hasura-user-id
       columns:
         - enabled
@@ -42,6 +47,25 @@ insert_permissions:
         - tv_port
     comment: ""
 select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - api_password
+        - enabled
+        - host
+        - id
+        - label
+        - port
+        - reserved_by_match_id
+        - tv_port
+      filter:
+        _or:
+          - owner_steam_id:
+              _eq: X-Hasura-User-Id
+          - game_server_node_id:
+              _is_null: false
+      allow_aggregations: true
+    comment: ""
   - role: user
     permission:
       columns:

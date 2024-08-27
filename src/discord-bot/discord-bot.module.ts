@@ -15,6 +15,7 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { DiscordBotQueues } from "./enums/DiscordBotQueues";
 import { UpdateDiscordMatchVetoJob } from "./jobs/UpdateDiscordMatchVetoJob";
 import { loggerFactory } from "../utilities/LoggerFactory";
+import { getQueuesProcessors } from "../utilities/QueueProcessors";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
     DiscordBotVoiceChannelsService,
     DiscordPickPlayerService,
     UpdateDiscordMatchVetoJob,
+    ...getQueuesProcessors("DiscordBot"),
     loggerFactory(),
   ],
   exports: [

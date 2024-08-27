@@ -5,8 +5,7 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM servers s
-        INNER JOIN matches m ON m.server_id = s.id
-        WHERE s.id = match_server_id AND m.status = 'Live' and m.id != match_id
+        WHERE s.id = match_server_id AND reserved_by_match_id is not null AND match_id != reserved_by_match_id
     ) THEN
         RETURN false;
     END IF;

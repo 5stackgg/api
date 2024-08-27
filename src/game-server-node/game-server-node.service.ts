@@ -34,6 +34,7 @@ export class GameServerNodeService {
   // TODO - track offline
   public async updateStatus(
     node: string,
+    publicIP: string,
     status: e_game_server_node_statuses_enum,
     start_port_range?: number,
     end_port_range?: number,
@@ -47,6 +48,7 @@ export class GameServerNodeService {
             },
             _set: {
               status,
+              public_ip: publicIP,
             },
           },
           id: true,
@@ -76,12 +78,6 @@ export class GameServerNodeService {
     start_port_range: number,
     end_port_range: number,
   ) {
-    console.info("update ports", {
-      nodeName,
-      start_port_range,
-      end_port_range,
-    });
-
     const kc = new KubeConfig();
     kc.loadFromDefault();
 

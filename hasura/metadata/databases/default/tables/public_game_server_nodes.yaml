@@ -8,16 +8,25 @@ object_relationships:
   - name: e_status
     using:
       foreign_key_constraint_on: status
+array_relationships:
+  - name: servers
+    using:
+      foreign_key_constraint_on:
+        column: game_server_node_id
+        table:
+          name: servers
+          schema: public
 select_permissions:
   - role: administrator
     permission:
       columns:
         - enabled
         - end_port_range
-        - start_port_range
-        - region
-        - status
         - id
+        - public_ip
+        - region
+        - start_port_range
+        - status
       filter: {}
       allow_aggregations: true
     comment: ""

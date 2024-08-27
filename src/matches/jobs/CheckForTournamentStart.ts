@@ -1,9 +1,11 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { MatchQueues } from "../enums/MatchQueues";
+import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
+import { WorkerHost } from "@nestjs/bullmq";
+import { MatchQueues } from "../enums/MatchQueues";
+import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
 
-@Processor(MatchQueues.MatchServers)
+@UseQueue("Matches", MatchQueues.MatchServers)
 export class CheckForTournamentStart extends WorkerHost {
   constructor(
     private readonly logger: Logger,
@@ -11,7 +13,7 @@ export class CheckForTournamentStart extends WorkerHost {
   ) {
     super();
   }
-  async process(): Promise<number> {
+  async process(job: Job): Promise<number> {
     const fifteenMinutesAgo = new Date();
     fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
 

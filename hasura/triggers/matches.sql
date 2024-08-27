@@ -65,6 +65,9 @@ BEGIN
         DELETE FROM match_options
         WHERE id = OLD.match_options_id;
     END IF;
+
+    update servers set reserved_by_match
+
   RETURN NEW;
 END;
 $$;

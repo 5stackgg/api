@@ -24,18 +24,24 @@ export class GameServerNodeGateway {
     client: WebSocket,
     payload: {
       node: string;
+      publicIP: string;
       labels: Record<string, string>;
     },
   ): Promise<void> {
     const [start_port_range, end_port_range] = payload.labels?.[
       "5stack-ports"
     ]?.split("_") || [,];
+
     await this.gameServerNodeService.updateStatus(
       payload.node,
+      payload.publicIP,
       "Online",
       start_port_range && parseInt(start_port_range),
       end_port_range && parseInt(end_port_range),
     );
+
+    const jobId = `node:${payload.node}`;
+    await this.queue.remove(jobId);
 
     await this.queue.add(
       MarkGameServerNodeOffline.name,
@@ -47,7 +53,7 @@ export class GameServerNodeGateway {
         attempts: 1,
         removeOnFail: false,
         removeOnComplete: true,
-        jobId: `node:${payload.node}`,
+        jobId,
       },
     );
   }

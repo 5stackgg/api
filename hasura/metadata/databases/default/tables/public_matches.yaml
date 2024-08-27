@@ -210,6 +210,11 @@ computed_fields:
       function:
         name: match_min_players_per_lineup
         schema: public
+  - name: server_region
+    definition:
+      function:
+        name: get_match_server_region
+        schema: public
   - name: server_type
     definition:
       function:
@@ -287,6 +292,7 @@ select_permissions:
         - is_tournament_match
         - max_players_per_lineup
         - min_players_per_lineup
+        - server_region
         - server_type
         - tv_connection_link
         - tv_connection_string

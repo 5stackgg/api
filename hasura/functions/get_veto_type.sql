@@ -12,7 +12,7 @@ DECLARE
 BEGIN
     select map_veto, best_of into hasMapVeto, bestOf from match_options where id = match.match_options_id;
 	IF match.status != 'Veto' OR hasMapVeto = false THEN
-	 return '';
+	 return NULL;
 	END IF;
     vetoPattern = get_veto_pattern(match);
     -- Get the last pick from match_veto_picks table

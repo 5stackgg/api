@@ -1,9 +1,10 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { MatchQueues } from "../enums/MatchQueues";
-import { HasuraService } from "../../hasura/hasura.service";
 import { Logger } from "@nestjs/common";
+import { WorkerHost } from "@nestjs/bullmq";
+import { MatchQueues } from "../enums/MatchQueues";
+import { UseQueue } from "../../utilities/QueueProcessors";
+import { HasuraService } from "../../hasura/hasura.service";
 
-@Processor(MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CancelNonReadyMatches extends WorkerHost {
   constructor(
     private readonly logger: Logger,

@@ -13,31 +13,27 @@ import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { e_match_status_enum } from "../../../generated";
+import { CacheService } from "../../cache/cache.service";
+import { EncryptionService } from "../../encryption/encryption.service";
 
 @Injectable()
 export class MatchAssistantService {
   private gameServerConfig: GameServersConfig;
 
   private readonly namespace: string;
-  private readonly SERVER_PORT_START: number;
-  private readonly SERVER_PORT_END: number;
 
   constructor(
     private readonly logger: Logger,
     private readonly rcon: RconService,
+    private readonly cache: CacheService,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly serverAuth: ServerAuthService,
+    private readonly encryption: EncryptionService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
-
     this.namespace = this.gameServerConfig.namespace;
-
-    const [start, end] = this.gameServerConfig.portRange;
-
-    this.SERVER_PORT_START = parseInt(start);
-    this.SERVER_PORT_END = parseInt(end);
   }
 
   public static GetMatchServerJobId(matchId: string) {
@@ -150,8 +146,8 @@ export class MatchAssistantService {
           id: true,
           host: true,
           port: true,
-          is_on_demand: true,
           rcon_password: true,
+          game_server_node_id: true,
         },
       },
     });
@@ -215,86 +211,98 @@ export class MatchAssistantService {
 
   public async assignOnDemandServer(matchId: string): Promise<boolean> {
     this.logger.debug(`[${matchId}] assigning on demand server`);
-    await this.stopOnDemandServer(matchId);
+    return this.cache.lock("get-on-demand-server", async () => {
+      await this.stopOnDemandServer(matchId);
 
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: matchId,
-        },
-        password: true,
-      },
-    });
-
-    if (!match) {
-      throw Error("unable to find match");
-    }
-
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-
-    const serverId: string = uuidv4();
-
-    const core = kc.makeApiClient(CoreV1Api);
-    const batch = kc.makeApiClient(BatchV1Api);
-
-    const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
-
-    try {
-      this.logger.verbose(`[${matchId}] create job for on demand server`);
-
-      const { tvPort, gamePort } = await this.getServerPorts();
-
-      const { insert_servers_one: server } = await this.hasura.mutation({
-        insert_servers_one: {
+      const { matches_by_pk: match } = await this.hasura.query({
+        matches_by_pk: {
           __args: {
-            object: {
-              id: serverId,
-              is_on_demand: true,
-              port: gamePort,
-              tv_port: tvPort,
-              label: `${jobName}`,
-              host: this.gameServerConfig.serverDomain,
-              rcon_password: this.gameServerConfig.defaultRconPassword,
-            },
+            id: matchId,
           },
-          id: true,
-          api_password: true,
+          password: true,
         },
       });
 
-      await batch.createNamespacedJob(this.namespace, {
-        apiVersion: "batch/v1",
-        kind: "Job",
-        metadata: {
-          name: jobName,
-        },
-        spec: {
-          template: {
-            metadata: {
-              name: jobName,
-              labels: {
-                job: jobName,
+      if (!match) {
+        throw Error("unable to find match");
+      }
+
+      const kc = new KubeConfig();
+      kc.loadFromDefault();
+
+      const core = kc.makeApiClient(CoreV1Api);
+      const batch = kc.makeApiClient(BatchV1Api);
+
+      const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
+
+      try {
+        this.logger.verbose(`[${matchId}] create job for on demand server`);
+
+        // TODO - atomic lock
+        const { servers } = await this.hasura.query({
+          servers: {
+            __args: {
+              where: {
+                _and: [
+                  {
+                    game_server_node_id: {
+                      _is_null: false,
+                    },
+                  },
+                  {
+                    reserved_by_match_id: {
+                      _is_null: true,
+                    },
+                  },
+                ],
               },
             },
-            spec: {
-              restartPolicy: "Never",
-              containers: [
-                {
-                  name: "server",
-                  image: this.gameServerConfig.serverImage,
-                  ports: [
-                    { containerPort: gamePort, protocol: "TCP" },
-                    { containerPort: gamePort, protocol: "UDP" },
-                    { containerPort: tvPort, protocol: "TCP" },
-                    { containerPort: tvPort, protocol: "UDP" },
-                  ],
-                  env: [
-                    {
-                      name: "GAME_PARAMS",
-                      value: `-ip 0.0.0.0 -port ${gamePort} +tv_port ${tvPort} -dedicated -dev +map de_inferno -usercon +rcon_password ${
-                        this.gameServerConfig.defaultRconPassword
-                      }
+            id: true,
+            host: true,
+            port: true,
+            tv_port: true,
+            api_password: true,
+            rcon_password: true,
+          },
+        });
+
+        const server = servers.at(-1);
+
+        if (!server) {
+          // TODO
+          throw Error("no available servers");
+        }
+
+        await batch.createNamespacedJob(this.namespace, {
+          apiVersion: "batch/v1",
+          kind: "Job",
+          metadata: {
+            name: jobName,
+          },
+          spec: {
+            template: {
+              metadata: {
+                name: jobName,
+                labels: {
+                  job: jobName,
+                },
+              },
+              spec: {
+                restartPolicy: "Never",
+                containers: [
+                  {
+                    name: "server",
+                    image: this.gameServerConfig.serverImage,
+                    ports: [
+                      { containerPort: server.port, protocol: "TCP" },
+                      { containerPort: server.port, protocol: "UDP" },
+                      { containerPort: server.tv_port, protocol: "TCP" },
+                      { containerPort: server.tv_port, protocol: "UDP" },
+                    ],
+                    env: [
+                      {
+                        name: "GAME_PARAMS",
+                        value: `-ip 0.0.0.0 -port ${server.port} +tv_port ${server.tv_port} -dedicated -dev +map de_inferno -usercon +rcon_password ${await this.encryption.decrypt(server.rcon_password)}
                          +sv_password ${match.password} -authkey ${
                            this.config.get<SteamConfig>("steam").steamApiKey
                          }
@@ -302,125 +310,143 @@ export class MatchAssistantService {
                         this.config.get<SteamConfig>("steam").steamAccount
                       }
                        -maxplayers 13`,
-                    },
-                    { name: "SERVER_ID", value: server.id },
-                    { name: "SERVER_API_PASSWORD", value: server.api_password },
-                  ],
-                  volumeMounts: [
-                    {
-                      name: `steamcmd-${this.namespace}`,
-                      mountPath: "serverdata/steamcmd",
-                    },
-                    {
-                      name: `serverfiles-${this.namespace}`,
-                      mountPath: "/serverdata/serverfiles",
-                    },
-                    {
-                      name: `demos-${this.namespace}`,
-                      mountPath: "/opt/demos",
-                    },
-                  ],
-                },
-              ],
-              volumes: [
-                {
-                  name: `steamcmd-${this.namespace}`,
-                  persistentVolumeClaim: {
-                    claimName: `steamcmd-${this.namespace}-claim`,
+                      },
+                      { name: "SERVER_ID", value: server.id },
+                      {
+                        name: "SERVER_API_PASSWORD",
+                        value: server.api_password,
+                      },
+                    ],
+                    volumeMounts: [
+                      {
+                        name: `steamcmd-${this.namespace}`,
+                        mountPath: "serverdata/steamcmd",
+                      },
+                      {
+                        name: `serverfiles-${this.namespace}`,
+                        mountPath: "/serverdata/serverfiles",
+                      },
+                      {
+                        name: `demos-${this.namespace}`,
+                        mountPath: "/opt/demos",
+                      },
+                    ],
                   },
-                },
-                {
-                  name: `serverfiles-${this.namespace}`,
-                  persistentVolumeClaim: {
-                    claimName: `serverfiles-${this.namespace}-claim`,
+                ],
+                volumes: [
+                  {
+                    name: `steamcmd-${this.namespace}`,
+                    persistentVolumeClaim: {
+                      claimName: `steamcmd-${this.namespace}-claim`,
+                    },
                   },
-                },
-                {
-                  name: `demos-${this.namespace}`,
-                  persistentVolumeClaim: {
-                    claimName: `demos-${this.namespace}-claim`,
+                  {
+                    name: `serverfiles-${this.namespace}`,
+                    persistentVolumeClaim: {
+                      claimName: `serverfiles-${this.namespace}-claim`,
+                    },
                   },
-                },
-              ],
+                  {
+                    name: `demos-${this.namespace}`,
+                    persistentVolumeClaim: {
+                      claimName: `demos-${this.namespace}-claim`,
+                    },
+                  },
+                ],
+              },
+            },
+            backoffLimit: 10,
+          },
+        });
+
+        this.logger.verbose(`[${matchId}] create service for on demand server`);
+
+        await core.createNamespacedService(this.namespace, {
+          apiVersion: "v1",
+          kind: "Service",
+          metadata: {
+            name: jobName,
+          },
+          spec: {
+            type: "NodePort",
+            ports: [
+              {
+                port: server.port,
+                targetPort: server.port,
+                nodePort: server.port,
+                name: "rcon",
+                protocol: "TCP",
+              },
+              {
+                port: server.port,
+                targetPort: server.port,
+                nodePort: server.port,
+                name: "game",
+                protocol: "UDP",
+              },
+              {
+                port: server.tv_port,
+                targetPort: server.tv_port,
+                nodePort: server.tv_port,
+                name: "tv",
+                protocol: "TCP",
+              },
+              {
+                port: server.tv_port,
+                targetPort: server.tv_port,
+                nodePort: server.tv_port,
+                name: "tv-udp",
+                protocol: "UDP",
+              },
+            ],
+            selector: {
+              job: jobName,
             },
           },
-          backoffLimit: 10,
-        },
-      });
+        });
 
-      this.logger.verbose(`[${matchId}] create service for on demand server`);
-
-      await core.createNamespacedService(this.namespace, {
-        apiVersion: "v1",
-        kind: "Service",
-        metadata: {
-          name: jobName,
-        },
-        spec: {
-          type: "NodePort",
-          ports: [
-            {
-              port: gamePort,
-              targetPort: gamePort,
-              nodePort: gamePort,
-              name: "rcon",
-              protocol: "TCP",
+        await this.hasura.mutation({
+          update_matches_by_pk: {
+            __args: {
+              pk_columns: {
+                id: matchId,
+              },
+              _set: {
+                server_id: server.id,
+              },
             },
-            {
-              port: gamePort,
-              targetPort: gamePort,
-              nodePort: gamePort,
-              name: "game",
-              protocol: "UDP",
-            },
-            {
-              port: tvPort,
-              targetPort: tvPort,
-              nodePort: tvPort,
-              name: "tv",
-              protocol: "TCP",
-            },
-            {
-              port: tvPort,
-              targetPort: tvPort,
-              nodePort: tvPort,
-              name: "tv-udp",
-              protocol: "UDP",
-            },
-          ],
-          selector: {
-            job: jobName,
+            __typename: true,
           },
-        },
-      });
+        });
 
-      await this.hasura.mutation({
-        update_matches_by_pk: {
-          __args: {
-            pk_columns: {
-              id: matchId,
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: {
+                id: server.id,
+              },
+              _set: {
+                reserved_by_match_id: matchId,
+              },
             },
-            _set: {
-              server_id: serverId,
-            },
+            __typename: true,
           },
-          __typename: true,
-        },
-      });
+        });
 
-      return true;
-    } catch (error) {
-      await this.stopOnDemandServer(matchId);
+        return true;
+      } catch (error) {
+        await this.stopOnDemandServer(matchId);
 
-      this.logger.error(
-        `[${matchId}] unable to create on demand server`,
-        error?.response?.body?.message || error.response,
-      );
+        this.logger.error(
+          `[${matchId}] unable to create on demand server`,
+          error,
+        );
 
-      await this.updateMatchStatus(matchId, "Scheduled");
+        await this.updateMatchStatus(matchId, "Scheduled");
 
-      return false;
-    }
+        return false;
+      }
+    });
   }
 
   public async isOnDemandServerRunning(matchId: string) {
@@ -550,16 +576,37 @@ export class MatchAssistantService {
           }
         });
 
+      this.logger.verbose(`[${matchId}] stopped on demand server`);
+
+      await this.hasura.mutation({
+        update_matches_by_pk: {
+          __args: {
+            pk_columns: {
+              id: matchId,
+            },
+            _set: {
+              server_id: null,
+            },
+          },
+          __typename: true,
+        },
+      });
+
       const server = await this.getMatchServer(matchId);
 
-      if (!server || !server.is_on_demand) {
+      if (!server) {
         return;
       }
 
       await this.hasura.mutation({
-        delete_servers_by_pk: {
+        update_servers_by_pk: {
           __args: {
-            id: server.id,
+            pk_columns: {
+              id: server.id,
+            },
+            _set: {
+              reserved_by_match_id: null,
+            },
           },
           __typename: true,
         },
@@ -630,94 +677,6 @@ export class MatchAssistantService {
     return await rcon.send(
       Array.isArray(command) ? command.join(";") : command,
     );
-  }
-
-  private async getServerPorts() {
-    const { servers } = await this.hasura.query({
-      servers: {
-        __args: {
-          where: {
-            is_on_demand: {
-              _eq: true,
-            },
-            matches: {
-              status: {
-                _nin: [
-                  "Scheduled",
-                  "WaitingForCheckIn",
-                  "Tie",
-                  "Forfeit",
-                  "Canceled",
-                  "Finished",
-                ],
-              },
-            },
-          },
-        },
-        id: true,
-        port: true,
-        tv_port: true,
-      },
-    });
-
-    const portsTaken = servers.flatMap((server) => {
-      const ports = [server.port];
-
-      if (server.tv_port) {
-        ports.push(server.tv_port);
-      }
-
-      return ports;
-    });
-
-    const availablePorts = new Array(
-      this.SERVER_PORT_END - this.SERVER_PORT_START + 1,
-    ).fill(true);
-
-    for (const port of portsTaken) {
-      availablePorts[port + this.SERVER_PORT_START] = false;
-    }
-
-    const availableIndices = this.getAvailablePortIndices(availablePorts);
-
-    if (availableIndices.length < 2) {
-      throw new Error("not enough available ports.");
-    }
-
-    const gamePort =
-      availableIndices[Math.floor(Math.random() * availableIndices.length)];
-    availablePorts[gamePort] = false;
-
-    const availableIndicesAfterFirstSelection =
-      this.getAvailablePortIndices(availablePorts);
-
-    if (availableIndicesAfterFirstSelection.length < 1) {
-      throw new Error("not enough available ports after the first selection.");
-    }
-
-    const tvPort =
-      availableIndicesAfterFirstSelection[
-        Math.floor(Math.random() * availableIndicesAfterFirstSelection.length)
-      ];
-    availablePorts[tvPort] = false;
-
-    return {
-      tvPort: tvPort + this.SERVER_PORT_START,
-      gamePort: gamePort + this.SERVER_PORT_START,
-    };
-  }
-
-  private getAvailablePortIndices(
-    ports: Array<{
-      isAvailable: boolean;
-    }>,
-  ) {
-    return ports.reduce((acc, isAvailable, index) => {
-      if (isAvailable) {
-        acc.push(index);
-      }
-      return acc;
-    }, []);
   }
 
   public async canSchedule(matchId: string, user: User) {

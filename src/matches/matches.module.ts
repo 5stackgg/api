@@ -3,6 +3,7 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
+  Provider,
   RequestMethod,
 } from "@nestjs/common";
 import { MatchesController } from "./matches.controller";
@@ -33,6 +34,8 @@ import { CancelNonReadyMatches } from "./jobs/CancelNonReadyMatches";
 import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTournamentMatches";
 import { RemoveCancelledMatches } from "./jobs/RemoveCancelledMatches";
 import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
+import { EncryptionModule } from "../encryption/encryption.module";
+import { getQueuesProcessors } from "../utilities/QueueProcessors";
 
 @Module({
   imports: [
@@ -41,6 +44,7 @@ import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
     CacheModule,
     RedisModule,
     S3Module,
+    EncryptionModule,
     forwardRef(() => DiscordBotModule),
     BullModule.registerQueue(
       {
@@ -73,13 +77,17 @@ import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
     ForfeitNonReadyTournamentMatches,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
+    ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),
   ],
 })
 export class MatchesModule implements NestModule {
-  constructor(@InjectQueue(MatchQueues.ScheduledMatches) private queue: Queue) {
-    void queue.add(
+  constructor(
+    @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
+    @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
+  ) {
+    void scheduleMatchQueue.add(
       CheckForScheduledMatches.name,
       {},
       {
@@ -89,7 +97,7 @@ export class MatchesModule implements NestModule {
       },
     );
 
-    void queue.add(
+    void scheduleMatchQueue.add(
       CancelNonReadyMatches.name,
       {},
       {
@@ -99,17 +107,7 @@ export class MatchesModule implements NestModule {
       },
     );
 
-    void queue.add(
-      CheckForTournamentStart.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void queue.add(
+    void scheduleMatchQueue.add(
       ForfeitNonReadyTournamentMatches.name,
       {},
       {
@@ -119,8 +117,18 @@ export class MatchesModule implements NestModule {
       },
     );
 
-    void queue.add(
+    void scheduleMatchQueue.add(
       RemoveCancelledMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    void matchServersQueue.add(
+      CheckForTournamentStart.name,
       {},
       {
         repeat: {

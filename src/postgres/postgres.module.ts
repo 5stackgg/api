@@ -7,6 +7,7 @@ import { Queue } from "bullmq";
 import { PostgresQueues } from "./enums/PostgresQueues";
 import { PostgresAnalyzeJob } from "./jobs/PostgresAnalyzeJob";
 import { loggerFactory } from "../utilities/LoggerFactory";
+import { getQueuesProcessors } from "../utilities/QueueProcessors";
 
 @Module({
   imports: [
@@ -19,7 +20,12 @@ import { loggerFactory } from "../utilities/LoggerFactory";
     }),
   ],
   exports: [PostgresService],
-  providers: [PostgresService, PostgresAnalyzeJob, loggerFactory()],
+  providers: [
+    PostgresService,
+    PostgresAnalyzeJob,
+    ...getQueuesProcessors("Postgres"),
+    loggerFactory(),
+  ],
 })
 export class PostgresModule {
   constructor(@InjectQueue(PostgresQueues.Postgres) private queue: Queue) {

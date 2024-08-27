@@ -1,16 +1,16 @@
 import { Job } from "bullmq";
-import {
-  Processor,
-  WorkerHost,
-  OnQueueEvent,
-  QueueEventsListener,
-  QueueEventsHost,
-} from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
+import { UseQueue } from "../../utilities/QueueProcessors";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { DiscordBotOverviewService } from "../../discord-bot/discord-bot-overview/discord-bot-overview.service";
+import {
+  OnQueueEvent,
+  QueueEventsHost,
+  QueueEventsListener,
+  WorkerHost,
+} from "@nestjs/bullmq";
 
-@Processor(MatchQueues.MatchServers)
+@UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CheckOnDemandServerJob extends WorkerHost {
   constructor(
     private readonly matchAssistant: MatchAssistantService,
@@ -48,7 +48,7 @@ export class CheckOnDemandServerJobEvents extends QueueEventsHost {
   }
 
   @OnQueueEvent("failed")
-  public async onCompleted(job: Job) {
+  public async onFailed(error: Error, job: Job) {
     await this.matchAssistant.delayCheckOnDemandServer(job.data.matchId);
   }
 }

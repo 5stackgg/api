@@ -1,9 +1,10 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { WorkerHost } from "@nestjs/bullmq";
 import { PostgresService } from "../../postgres/postgres.service";
 import { PostgresQueues } from "../enums/PostgresQueues";
 import { Logger } from "@nestjs/common";
+import { UseQueue } from "../../utilities/QueueProcessors";
 
-@Processor(PostgresQueues.Postgres)
+@UseQueue("Postgres", PostgresQueues.Postgres)
 export class PostgresAnalyzeJob extends WorkerHost {
   constructor(
     private readonly logger: Logger,

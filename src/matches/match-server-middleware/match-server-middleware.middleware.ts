@@ -45,15 +45,17 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
         id: true,
         server: {
           api_password: true,
-          current_match_id: true,
+          current_match: {
+            id: true,
+          },
         },
       },
     });
 
     if (
-      !match?.server?.current_match_id ||
+      !match?.server?.current_match.id ||
       match?.server.api_password !== apiPassword ||
-      match?.server.current_match_id !== matchId
+      match?.server.current_match.id !== matchId
     ) {
       return response.status(401).end();
     }

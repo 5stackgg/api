@@ -1,9 +1,11 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { MatchQueues } from "../enums/MatchQueues";
-import { HasuraService } from "../../hasura/hasura.service";
+import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
+import { WorkerHost } from "@nestjs/bullmq";
+import { MatchQueues } from "../enums/MatchQueues";
+import { UseQueue } from "../../utilities/QueueProcessors";
+import { HasuraService } from "../../hasura/hasura.service";
 
-@Processor(MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CheckForScheduledMatches extends WorkerHost {
   constructor(
     private readonly logger: Logger,
@@ -11,10 +13,14 @@ export class CheckForScheduledMatches extends WorkerHost {
   ) {
     super();
   }
-  async process(): Promise<number> {
+
+  async process(
+    job: Job<{
+      matchId: string;
+    }>,
+  ): Promise<number> {
     const fifteenMinutesAgo = new Date();
     fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
-
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
         __args: {
@@ -27,7 +33,7 @@ export class CheckForScheduledMatches extends WorkerHost {
               },
               {
                 scheduled_at: {
-                  _lte: fifteenMinutesAgo,
+                  _gte: fifteenMinutesAgo,
                 },
               },
               {

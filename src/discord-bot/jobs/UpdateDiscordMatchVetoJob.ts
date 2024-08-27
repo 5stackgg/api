@@ -1,9 +1,10 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { WorkerHost } from "@nestjs/bullmq";
 import { DiscordBotQueues } from "../enums/DiscordBotQueues";
 import { DiscordBotVetoService } from "../discord-bot-veto/discord-bot-veto.service";
 import { Job } from "bullmq";
+import { UseQueue } from "../../utilities/QueueProcessors";
 
-@Processor(DiscordBotQueues.DiscordBot)
+@UseQueue("DiscordBot", DiscordBotQueues.DiscordBot)
 export class UpdateDiscordMatchVetoJob extends WorkerHost {
   constructor(private readonly vetoService: DiscordBotVetoService) {
     super();

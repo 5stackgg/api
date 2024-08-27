@@ -1,9 +1,10 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { PostgresService } from "../../postgres/postgres.service";
-import { HasuraQueues } from "../enums/HasuraQueues";
 import { Logger } from "@nestjs/common";
+import { WorkerHost } from "@nestjs/bullmq";
+import { HasuraQueues } from "../enums/HasuraQueues";
+import { UseQueue } from "../../utilities/QueueProcessors";
+import { PostgresService } from "../../postgres/postgres.service";
 
-@Processor(HasuraQueues.Hasura)
+@UseQueue("Hasura", HasuraQueues.Hasura)
 export class HasuraMaintenanceJob extends WorkerHost {
   constructor(
     private readonly logger: Logger,
