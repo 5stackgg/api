@@ -83,7 +83,7 @@ array_relationships:
           match_id: match_id
         insertion_order: null
         remote_table:
-          name: match_veto_picks
+          name: match_map_veto_picks
           schema: public
 computed_fields:
   - name: demos_download_url

@@ -15,7 +15,7 @@ import { MatchEvents } from "./events";
 import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
 import {
   e_match_status_enum,
-  match_veto_picks_set_input,
+  match_map_veto_picks_set_input,
   matches_set_input,
 } from "../../generated";
 
@@ -329,7 +329,7 @@ export class MatchesController {
 
   @HasuraEvent()
   public async match_veto_pick(
-    data: HasuraEventData<match_veto_picks_set_input>,
+    data: HasuraEventData<match_map_veto_picks_set_input>,
   ) {
     const matchId = (data.new.match_id || data.old.match_id) as string;
     await this.discordMatchOverview.updateMatchOverview(matchId);

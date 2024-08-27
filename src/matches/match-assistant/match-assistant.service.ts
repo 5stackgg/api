@@ -224,7 +224,7 @@ export class MatchAssistantService {
         },
       });
 
-      if(match.server_id) {
+      if (match.server_id) {
         await this.stopOnDemandServer(matchId, match.server_id);
       }
 
@@ -245,17 +245,23 @@ export class MatchAssistantService {
           __args: {
             where: {
               _and: [
-                ...(match.region ? [{
-                  game_server_node: {
-                    region: {
-                      _eq: match.region,
-                    },
-                  },
-                }] : [{
-                  is_dedicated: {
-                    _eq: false,
-                  },
-                }]),
+                ...(match.region
+                  ? [
+                      {
+                        game_server_node: {
+                          region: {
+                            _eq: match.region,
+                          },
+                        },
+                      },
+                    ]
+                  : [
+                      {
+                        is_dedicated: {
+                          _eq: false,
+                        },
+                      },
+                    ]),
                 {
                   reserved_by_match_id: {
                     _is_null: true,
@@ -273,7 +279,6 @@ export class MatchAssistantService {
           game_server_node_id: true,
         },
       });
-
 
       const server = servers.at(-1);
 
@@ -642,7 +647,7 @@ export class MatchAssistantService {
             },
           },
         },
-        veto_picks: {
+        map_veto_picks: {
           __args: {
             where: {
               _or: [
@@ -669,7 +674,7 @@ export class MatchAssistantService {
     }
 
     return matches_by_pk.options.map_pool.maps.filter((map) => {
-      return !matches_by_pk.veto_picks.find((veto) => {
+      return !matches_by_pk.map_veto_picks.find((veto) => {
         return veto.map_id === map.id;
       });
     });

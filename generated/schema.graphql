@@ -3414,7 +3414,7 @@ type e_veto_pick_types {
   """An array relationship"""
   match_veto_picks(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -3423,16 +3423,16 @@ type e_veto_pick_types {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
 
   """An aggregate relationship"""
   match_veto_picks_aggregate(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -3441,11 +3441,11 @@ type e_veto_pick_types {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
   value: String!
 }
 
@@ -3474,8 +3474,8 @@ input e_veto_pick_types_bool_exp {
   _not: e_veto_pick_types_bool_exp
   _or: [e_veto_pick_types_bool_exp!]
   description: String_comparison_exp
-  match_veto_picks: match_veto_picks_bool_exp
-  match_veto_picks_aggregate: match_veto_picks_aggregate_bool_exp
+  match_veto_picks: match_map_veto_picks_bool_exp
+  match_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
   value: String_comparison_exp
 }
 
@@ -3519,7 +3519,7 @@ input type for inserting data into table "e_veto_pick_types"
 """
 input e_veto_pick_types_insert_input {
   description: String
-  match_veto_picks: match_veto_picks_arr_rel_insert_input
+  match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   value: String
 }
 
@@ -3558,7 +3558,7 @@ input e_veto_pick_types_on_conflict {
 """Ordering options when selecting data from "e_veto_pick_types"."""
 input e_veto_pick_types_order_by {
   description: order_by
-  match_veto_picks_aggregate: match_veto_picks_aggregate_order_by
+  match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   value: order_by
 }
 
@@ -4448,7 +4448,7 @@ type maps {
   """An array relationship"""
   match_veto_picks(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -4457,16 +4457,16 @@ type maps {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
 
   """An aggregate relationship"""
   match_veto_picks_aggregate(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -4475,11 +4475,11 @@ type maps {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
   name: String!
   patch: String
   poster: String
@@ -4562,8 +4562,8 @@ input maps_bool_exp {
   id: uuid_comparison_exp
   match_maps: match_maps_bool_exp
   match_maps_aggregate: match_maps_aggregate_bool_exp
-  match_veto_picks: match_veto_picks_bool_exp
-  match_veto_picks_aggregate: match_veto_picks_aggregate_bool_exp
+  match_veto_picks: match_map_veto_picks_bool_exp
+  match_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
   name: String_comparison_exp
   patch: String_comparison_exp
   poster: String_comparison_exp
@@ -4594,7 +4594,7 @@ input maps_insert_input {
   e_match_type: e_match_types_obj_rel_insert_input
   id: uuid
   match_maps: match_maps_arr_rel_insert_input
-  match_veto_picks: match_veto_picks_arr_rel_insert_input
+  match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   name: String
   patch: String
   poster: String
@@ -4678,7 +4678,7 @@ input maps_order_by {
   e_match_type: e_match_types_order_by
   id: order_by
   match_maps_aggregate: match_maps_aggregate_order_by
-  match_veto_picks_aggregate: match_veto_picks_aggregate_order_by
+  match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -5255,9 +5255,14 @@ input match_lineup_players_variance_order_by {
 """relational table for assigning a team to a match and lineup"""
 type match_lineups {
   """
-  A computed field, executes function "can_pick_veto"
+  A computed field, executes function "can_pick_map_veto"
   """
-  can_pick_veto: Boolean
+  can_pick_map_veto: Boolean
+
+  """
+  A computed field, executes function "can_pick_region_veto"
+  """
+  can_pick_region_veto: Boolean
 
   """
   A computed field, executes function "can_update_lineup"
@@ -5278,9 +5283,14 @@ type match_lineups {
   is_on_lineup: Boolean
 
   """
-  A computed field, executes function "lineup_is_picking_veto"
+  A computed field, executes function "lineup_is_picking_map_veto"
   """
-  is_picking_veto: Boolean
+  is_picking_map_veto: Boolean
+
+  """
+  A computed field, executes function "lineup_is_picking_region_veto"
+  """
+  is_picking_region_veto: Boolean
 
   """
   A computed field, executes function "is_match_lineup_ready"
@@ -5326,7 +5336,7 @@ type match_lineups {
   """An array relationship"""
   match_veto_picks(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -5335,16 +5345,16 @@ type match_lineups {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
 
   """An aggregate relationship"""
   match_veto_picks_aggregate(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -5353,11 +5363,11 @@ type match_lineups {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
 
   """
   A computed field, executes function "get_team_name"
@@ -5454,19 +5464,21 @@ input match_lineups_bool_exp {
   _and: [match_lineups_bool_exp!]
   _not: match_lineups_bool_exp
   _or: [match_lineups_bool_exp!]
-  can_pick_veto: Boolean_comparison_exp
+  can_pick_map_veto: Boolean_comparison_exp
+  can_pick_region_veto: Boolean_comparison_exp
   can_update_lineup: Boolean_comparison_exp
   captain: v_match_captains_bool_exp
   coach: players_bool_exp
   coach_steam_id: bigint_comparison_exp
   id: uuid_comparison_exp
   is_on_lineup: Boolean_comparison_exp
-  is_picking_veto: Boolean_comparison_exp
+  is_picking_map_veto: Boolean_comparison_exp
+  is_picking_region_veto: Boolean_comparison_exp
   is_ready: Boolean_comparison_exp
   lineup_players: match_lineup_players_bool_exp
   lineup_players_aggregate: match_lineup_players_aggregate_bool_exp
-  match_veto_picks: match_veto_picks_bool_exp
-  match_veto_picks_aggregate: match_veto_picks_aggregate_bool_exp
+  match_veto_picks: match_map_veto_picks_bool_exp
+  match_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
   name: String_comparison_exp
   team: teams_bool_exp
   team_id: uuid_comparison_exp
@@ -5499,7 +5511,7 @@ input match_lineups_insert_input {
   coach_steam_id: bigint
   id: uuid
   lineup_players: match_lineup_players_arr_rel_insert_input
-  match_veto_picks: match_veto_picks_arr_rel_insert_input
+  match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   team: teams_obj_rel_insert_input
   team_id: uuid
   v_match_lineup: v_match_lineups_obj_rel_insert_input
@@ -5579,17 +5591,19 @@ input match_lineups_on_conflict {
 
 """Ordering options when selecting data from "match_lineups"."""
 input match_lineups_order_by {
-  can_pick_veto: order_by
+  can_pick_map_veto: order_by
+  can_pick_region_veto: order_by
   can_update_lineup: order_by
   captain: v_match_captains_order_by
   coach: players_order_by
   coach_steam_id: order_by
   id: order_by
   is_on_lineup: order_by
-  is_picking_veto: order_by
+  is_picking_map_veto: order_by
+  is_picking_region_veto: order_by
   is_ready: order_by
   lineup_players_aggregate: match_lineup_players_aggregate_order_by
-  match_veto_picks_aggregate: match_veto_picks_aggregate_order_by
+  match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
   team: teams_order_by
   team_id: order_by
@@ -6766,6 +6780,298 @@ input match_map_rounds_variance_order_by {
 }
 
 """
+columns and relationships of "match_map_veto_picks"
+"""
+type match_map_veto_picks {
+  created_at: timestamptz!
+  id: uuid!
+
+  """An object relationship"""
+  map: maps!
+  map_id: uuid!
+
+  """An object relationship"""
+  match: matches!
+  match_id: uuid!
+
+  """An object relationship"""
+  match_lineup: match_lineups!
+  match_lineup_id: uuid!
+  side: String
+  type: e_veto_pick_types_enum!
+}
+
+"""
+aggregated selection of "match_map_veto_picks"
+"""
+type match_map_veto_picks_aggregate {
+  aggregate: match_map_veto_picks_aggregate_fields
+  nodes: [match_map_veto_picks!]!
+}
+
+input match_map_veto_picks_aggregate_bool_exp {
+  count: match_map_veto_picks_aggregate_bool_exp_count
+}
+
+input match_map_veto_picks_aggregate_bool_exp_count {
+  arguments: [match_map_veto_picks_select_column!]
+  distinct: Boolean
+  filter: match_map_veto_picks_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "match_map_veto_picks"
+"""
+type match_map_veto_picks_aggregate_fields {
+  count(columns: [match_map_veto_picks_select_column!], distinct: Boolean): Int!
+  max: match_map_veto_picks_max_fields
+  min: match_map_veto_picks_min_fields
+}
+
+"""
+order by aggregate values of table "match_map_veto_picks"
+"""
+input match_map_veto_picks_aggregate_order_by {
+  count: order_by
+  max: match_map_veto_picks_max_order_by
+  min: match_map_veto_picks_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "match_map_veto_picks"
+"""
+input match_map_veto_picks_arr_rel_insert_input {
+  data: [match_map_veto_picks_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_map_veto_picks_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "match_map_veto_picks". All fields are combined with a logical 'AND'.
+"""
+input match_map_veto_picks_bool_exp {
+  _and: [match_map_veto_picks_bool_exp!]
+  _not: match_map_veto_picks_bool_exp
+  _or: [match_map_veto_picks_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  map: maps_bool_exp
+  map_id: uuid_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_lineup: match_lineups_bool_exp
+  match_lineup_id: uuid_comparison_exp
+  side: String_comparison_exp
+  type: e_veto_pick_types_enum_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "match_map_veto_picks"
+"""
+enum match_map_veto_picks_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  match_veto_picks_pkey
+}
+
+"""
+input type for inserting data into table "match_map_veto_picks"
+"""
+input match_map_veto_picks_insert_input {
+  created_at: timestamptz
+  id: uuid
+  map: maps_obj_rel_insert_input
+  map_id: uuid
+  match: matches_obj_rel_insert_input
+  match_id: uuid
+  match_lineup: match_lineups_obj_rel_insert_input
+  match_lineup_id: uuid
+  side: String
+  type: e_veto_pick_types_enum
+}
+
+"""aggregate max on columns"""
+type match_map_veto_picks_max_fields {
+  created_at: timestamptz
+  id: uuid
+  map_id: uuid
+  match_id: uuid
+  match_lineup_id: uuid
+  side: String
+}
+
+"""
+order by max() on columns of table "match_map_veto_picks"
+"""
+input match_map_veto_picks_max_order_by {
+  created_at: order_by
+  id: order_by
+  map_id: order_by
+  match_id: order_by
+  match_lineup_id: order_by
+  side: order_by
+}
+
+"""aggregate min on columns"""
+type match_map_veto_picks_min_fields {
+  created_at: timestamptz
+  id: uuid
+  map_id: uuid
+  match_id: uuid
+  match_lineup_id: uuid
+  side: String
+}
+
+"""
+order by min() on columns of table "match_map_veto_picks"
+"""
+input match_map_veto_picks_min_order_by {
+  created_at: order_by
+  id: order_by
+  map_id: order_by
+  match_id: order_by
+  match_lineup_id: order_by
+  side: order_by
+}
+
+"""
+response of any mutation on the table "match_map_veto_picks"
+"""
+type match_map_veto_picks_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [match_map_veto_picks!]!
+}
+
+"""
+on_conflict condition type for table "match_map_veto_picks"
+"""
+input match_map_veto_picks_on_conflict {
+  constraint: match_map_veto_picks_constraint!
+  update_columns: [match_map_veto_picks_update_column!]! = []
+  where: match_map_veto_picks_bool_exp
+}
+
+"""Ordering options when selecting data from "match_map_veto_picks"."""
+input match_map_veto_picks_order_by {
+  created_at: order_by
+  id: order_by
+  map: maps_order_by
+  map_id: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_lineup: match_lineups_order_by
+  match_lineup_id: order_by
+  side: order_by
+  type: order_by
+}
+
+"""primary key columns input for table: match_map_veto_picks"""
+input match_map_veto_picks_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "match_map_veto_picks"
+"""
+enum match_map_veto_picks_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  map_id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_lineup_id
+
+  """column name"""
+  side
+
+  """column name"""
+  type
+}
+
+"""
+input type for updating data in table "match_map_veto_picks"
+"""
+input match_map_veto_picks_set_input {
+  created_at: timestamptz
+  id: uuid
+  map_id: uuid
+  match_id: uuid
+  match_lineup_id: uuid
+  side: String
+  type: e_veto_pick_types_enum
+}
+
+"""
+Streaming cursor of the table "match_map_veto_picks"
+"""
+input match_map_veto_picks_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: match_map_veto_picks_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input match_map_veto_picks_stream_cursor_value_input {
+  created_at: timestamptz
+  id: uuid
+  map_id: uuid
+  match_id: uuid
+  match_lineup_id: uuid
+  side: String
+  type: e_veto_pick_types_enum
+}
+
+"""
+update columns of table "match_map_veto_picks"
+"""
+enum match_map_veto_picks_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  map_id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_lineup_id
+
+  """column name"""
+  side
+
+  """column name"""
+  type
+}
+
+input match_map_veto_picks_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: match_map_veto_picks_set_input
+
+  """filter the rows which have to be updated"""
+  where: match_map_veto_picks_bool_exp!
+}
+
+"""
 columns and relationships of "match_maps"
 """
 type match_maps {
@@ -7141,7 +7447,7 @@ type match_maps {
   """An array relationship"""
   vetos(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -7150,16 +7456,16 @@ type match_maps {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
 
   """An aggregate relationship"""
   vetos_aggregate(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_map_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -7168,11 +7474,11 @@ type match_maps {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_map_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
 }
 
 """
@@ -7311,8 +7617,8 @@ input match_maps_bool_exp {
   status: e_match_map_status_enum_comparison_exp
   utility: player_utility_bool_exp
   utility_aggregate: player_utility_aggregate_bool_exp
-  vetos: match_veto_picks_bool_exp
-  vetos_aggregate: match_veto_picks_aggregate_bool_exp
+  vetos: match_map_veto_picks_bool_exp
+  vetos_aggregate: match_map_veto_picks_aggregate_bool_exp
 }
 
 """
@@ -7365,7 +7671,7 @@ input match_maps_insert_input {
   rounds: match_map_rounds_arr_rel_insert_input
   status: e_match_map_status_enum
   utility: player_utility_arr_rel_insert_input
-  vetos: match_veto_picks_arr_rel_insert_input
+  vetos: match_map_veto_picks_arr_rel_insert_input
 }
 
 """aggregate max on columns"""
@@ -7515,7 +7821,7 @@ input match_maps_order_by {
   rounds_aggregate: match_map_rounds_aggregate_order_by
   status: order_by
   utility_aggregate: player_utility_aggregate_order_by
-  vetos_aggregate: match_veto_picks_aggregate_order_by
+  vetos_aggregate: match_map_veto_picks_aggregate_order_by
 }
 
 """primary key columns input for table: match_maps"""
@@ -7912,6 +8218,7 @@ type match_options {
   mr: Int!
   number_of_substitutes: Int!
   overtime: Boolean!
+  region_veto: Boolean!
   tech_timeout_setting: e_timeout_settings_enum!
   timeout_setting: e_timeout_settings_enum!
 
@@ -7974,6 +8281,7 @@ input match_options_bool_exp {
   mr: Int_comparison_exp
   number_of_substitutes: Int_comparison_exp
   overtime: Boolean_comparison_exp
+  region_veto: Boolean_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
@@ -8016,6 +8324,7 @@ input match_options_insert_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
@@ -8087,6 +8396,7 @@ input match_options_order_by {
   mr: order_by
   number_of_substitutes: order_by
   overtime: order_by
+  region_veto: order_by
   tech_timeout_setting: order_by
   timeout_setting: order_by
   tournament: tournaments_order_by
@@ -8131,6 +8441,9 @@ enum match_options_select_column {
   overtime
 
   """column name"""
+  region_veto
+
+  """column name"""
   tech_timeout_setting
 
   """column name"""
@@ -8156,6 +8469,7 @@ input match_options_set_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -8208,6 +8522,7 @@ input match_options_stream_cursor_value_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -8252,6 +8567,9 @@ enum match_options_update_column {
 
   """column name"""
   overtime
+
+  """column name"""
+  region_veto
 
   """column name"""
   tech_timeout_setting
@@ -8302,15 +8620,11 @@ type match_options_variance_fields {
 }
 
 """
-columns and relationships of "match_veto_picks"
+columns and relationships of "match_region_veto_picks"
 """
-type match_veto_picks {
+type match_region_veto_picks {
   created_at: timestamptz!
   id: uuid!
-
-  """An object relationship"""
-  map: maps!
-  map_id: uuid!
 
   """An object relationship"""
   match: matches!
@@ -8319,197 +8633,180 @@ type match_veto_picks {
   """An object relationship"""
   match_lineup: match_lineups!
   match_lineup_id: uuid!
-  side: String
+  region: e_game_server_node_regions_enum!
   type: e_veto_pick_types_enum!
 }
 
 """
-aggregated selection of "match_veto_picks"
+aggregated selection of "match_region_veto_picks"
 """
-type match_veto_picks_aggregate {
-  aggregate: match_veto_picks_aggregate_fields
-  nodes: [match_veto_picks!]!
+type match_region_veto_picks_aggregate {
+  aggregate: match_region_veto_picks_aggregate_fields
+  nodes: [match_region_veto_picks!]!
 }
 
-input match_veto_picks_aggregate_bool_exp {
-  count: match_veto_picks_aggregate_bool_exp_count
+input match_region_veto_picks_aggregate_bool_exp {
+  count: match_region_veto_picks_aggregate_bool_exp_count
 }
 
-input match_veto_picks_aggregate_bool_exp_count {
-  arguments: [match_veto_picks_select_column!]
+input match_region_veto_picks_aggregate_bool_exp_count {
+  arguments: [match_region_veto_picks_select_column!]
   distinct: Boolean
-  filter: match_veto_picks_bool_exp
+  filter: match_region_veto_picks_bool_exp
   predicate: Int_comparison_exp!
 }
 
 """
-aggregate fields of "match_veto_picks"
+aggregate fields of "match_region_veto_picks"
 """
-type match_veto_picks_aggregate_fields {
-  count(columns: [match_veto_picks_select_column!], distinct: Boolean): Int!
-  max: match_veto_picks_max_fields
-  min: match_veto_picks_min_fields
+type match_region_veto_picks_aggregate_fields {
+  count(columns: [match_region_veto_picks_select_column!], distinct: Boolean): Int!
+  max: match_region_veto_picks_max_fields
+  min: match_region_veto_picks_min_fields
 }
 
 """
-order by aggregate values of table "match_veto_picks"
+order by aggregate values of table "match_region_veto_picks"
 """
-input match_veto_picks_aggregate_order_by {
+input match_region_veto_picks_aggregate_order_by {
   count: order_by
-  max: match_veto_picks_max_order_by
-  min: match_veto_picks_min_order_by
+  max: match_region_veto_picks_max_order_by
+  min: match_region_veto_picks_min_order_by
 }
 
 """
-input type for inserting array relation for remote table "match_veto_picks"
+input type for inserting array relation for remote table "match_region_veto_picks"
 """
-input match_veto_picks_arr_rel_insert_input {
-  data: [match_veto_picks_insert_input!]!
+input match_region_veto_picks_arr_rel_insert_input {
+  data: [match_region_veto_picks_insert_input!]!
 
   """upsert condition"""
-  on_conflict: match_veto_picks_on_conflict
+  on_conflict: match_region_veto_picks_on_conflict
 }
 
 """
-Boolean expression to filter rows from the table "match_veto_picks". All fields are combined with a logical 'AND'.
+Boolean expression to filter rows from the table "match_region_veto_picks". All fields are combined with a logical 'AND'.
 """
-input match_veto_picks_bool_exp {
-  _and: [match_veto_picks_bool_exp!]
-  _not: match_veto_picks_bool_exp
-  _or: [match_veto_picks_bool_exp!]
+input match_region_veto_picks_bool_exp {
+  _and: [match_region_veto_picks_bool_exp!]
+  _not: match_region_veto_picks_bool_exp
+  _or: [match_region_veto_picks_bool_exp!]
   created_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
-  map: maps_bool_exp
-  map_id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_lineup: match_lineups_bool_exp
   match_lineup_id: uuid_comparison_exp
-  side: String_comparison_exp
+  region: e_game_server_node_regions_enum_comparison_exp
   type: e_veto_pick_types_enum_comparison_exp
 }
 
 """
-unique or primary key constraints on table "match_veto_picks"
+unique or primary key constraints on table "match_region_veto_picks"
 """
-enum match_veto_picks_constraint {
+enum match_region_veto_picks_constraint {
   """
   unique or primary key constraint on columns "id"
   """
-  match_veto_picks_pkey
+  match_region_veto_picks_pkey
 }
 
 """
-input type for inserting data into table "match_veto_picks"
+input type for inserting data into table "match_region_veto_picks"
 """
-input match_veto_picks_insert_input {
+input match_region_veto_picks_insert_input {
   created_at: timestamptz
   id: uuid
-  map: maps_obj_rel_insert_input
-  map_id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_lineup: match_lineups_obj_rel_insert_input
   match_lineup_id: uuid
-  side: String
+  region: e_game_server_node_regions_enum
   type: e_veto_pick_types_enum
 }
 
 """aggregate max on columns"""
-type match_veto_picks_max_fields {
+type match_region_veto_picks_max_fields {
   created_at: timestamptz
   id: uuid
-  map_id: uuid
   match_id: uuid
   match_lineup_id: uuid
-  side: String
 }
 
 """
-order by max() on columns of table "match_veto_picks"
+order by max() on columns of table "match_region_veto_picks"
 """
-input match_veto_picks_max_order_by {
+input match_region_veto_picks_max_order_by {
   created_at: order_by
   id: order_by
-  map_id: order_by
   match_id: order_by
   match_lineup_id: order_by
-  side: order_by
 }
 
 """aggregate min on columns"""
-type match_veto_picks_min_fields {
+type match_region_veto_picks_min_fields {
   created_at: timestamptz
   id: uuid
-  map_id: uuid
   match_id: uuid
   match_lineup_id: uuid
-  side: String
 }
 
 """
-order by min() on columns of table "match_veto_picks"
+order by min() on columns of table "match_region_veto_picks"
 """
-input match_veto_picks_min_order_by {
+input match_region_veto_picks_min_order_by {
   created_at: order_by
   id: order_by
-  map_id: order_by
   match_id: order_by
   match_lineup_id: order_by
-  side: order_by
 }
 
 """
-response of any mutation on the table "match_veto_picks"
+response of any mutation on the table "match_region_veto_picks"
 """
-type match_veto_picks_mutation_response {
+type match_region_veto_picks_mutation_response {
   """number of rows affected by the mutation"""
   affected_rows: Int!
 
   """data from the rows affected by the mutation"""
-  returning: [match_veto_picks!]!
+  returning: [match_region_veto_picks!]!
 }
 
 """
-on_conflict condition type for table "match_veto_picks"
+on_conflict condition type for table "match_region_veto_picks"
 """
-input match_veto_picks_on_conflict {
-  constraint: match_veto_picks_constraint!
-  update_columns: [match_veto_picks_update_column!]! = []
-  where: match_veto_picks_bool_exp
+input match_region_veto_picks_on_conflict {
+  constraint: match_region_veto_picks_constraint!
+  update_columns: [match_region_veto_picks_update_column!]! = []
+  where: match_region_veto_picks_bool_exp
 }
 
-"""Ordering options when selecting data from "match_veto_picks"."""
-input match_veto_picks_order_by {
+"""Ordering options when selecting data from "match_region_veto_picks"."""
+input match_region_veto_picks_order_by {
   created_at: order_by
   id: order_by
-  map: maps_order_by
-  map_id: order_by
   match: matches_order_by
   match_id: order_by
   match_lineup: match_lineups_order_by
   match_lineup_id: order_by
-  side: order_by
+  region: order_by
   type: order_by
 }
 
-"""primary key columns input for table: match_veto_picks"""
-input match_veto_picks_pk_columns_input {
+"""primary key columns input for table: match_region_veto_picks"""
+input match_region_veto_picks_pk_columns_input {
   id: uuid!
 }
 
 """
-select columns of table "match_veto_picks"
+select columns of table "match_region_veto_picks"
 """
-enum match_veto_picks_select_column {
+enum match_region_veto_picks_select_column {
   """column name"""
   created_at
 
   """column name"""
   id
-
-  """column name"""
-  map_id
 
   """column name"""
   match_id
@@ -8518,59 +8815,54 @@ enum match_veto_picks_select_column {
   match_lineup_id
 
   """column name"""
-  side
+  region
 
   """column name"""
   type
 }
 
 """
-input type for updating data in table "match_veto_picks"
+input type for updating data in table "match_region_veto_picks"
 """
-input match_veto_picks_set_input {
+input match_region_veto_picks_set_input {
   created_at: timestamptz
   id: uuid
-  map_id: uuid
   match_id: uuid
   match_lineup_id: uuid
-  side: String
+  region: e_game_server_node_regions_enum
   type: e_veto_pick_types_enum
 }
 
 """
-Streaming cursor of the table "match_veto_picks"
+Streaming cursor of the table "match_region_veto_picks"
 """
-input match_veto_picks_stream_cursor_input {
+input match_region_veto_picks_stream_cursor_input {
   """Stream column input with initial value"""
-  initial_value: match_veto_picks_stream_cursor_value_input!
+  initial_value: match_region_veto_picks_stream_cursor_value_input!
 
   """cursor ordering"""
   ordering: cursor_ordering
 }
 
 """Initial value of the column from where the streaming should start"""
-input match_veto_picks_stream_cursor_value_input {
+input match_region_veto_picks_stream_cursor_value_input {
   created_at: timestamptz
   id: uuid
-  map_id: uuid
   match_id: uuid
   match_lineup_id: uuid
-  side: String
+  region: e_game_server_node_regions_enum
   type: e_veto_pick_types_enum
 }
 
 """
-update columns of table "match_veto_picks"
+update columns of table "match_region_veto_picks"
 """
-enum match_veto_picks_update_column {
+enum match_region_veto_picks_update_column {
   """column name"""
   created_at
 
   """column name"""
   id
-
-  """column name"""
-  map_id
 
   """column name"""
   match_id
@@ -8579,18 +8871,18 @@ enum match_veto_picks_update_column {
   match_lineup_id
 
   """column name"""
-  side
+  region
 
   """column name"""
   type
 }
 
-input match_veto_picks_updates {
+input match_region_veto_picks_updates {
   """sets the columns of the filtered rows to the given values"""
-  _set: match_veto_picks_set_input
+  _set: match_region_veto_picks_set_input
 
   """filter the rows which have to be updated"""
-  where: match_veto_picks_bool_exp!
+  where: match_region_veto_picks_bool_exp!
 }
 
 """
@@ -8681,6 +8973,9 @@ type matches {
 
   """An object relationship"""
   e_match_status: e_match_status!
+
+  """An object relationship"""
+  e_region: e_game_server_node_regions
   id: uuid!
 
   """
@@ -8721,6 +9016,52 @@ type matches {
   """An object relationship"""
   lineup_2: match_lineups!
   lineup_2_id: uuid!
+
+  """
+  A computed field, executes function "get_map_veto_picking_lineup_id"
+  """
+  map_veto_picking_lineup_id: uuid
+
+  """An array relationship"""
+  map_veto_picks(
+    """distinct select on columns"""
+    distinct_on: [match_map_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
+
+  """An aggregate relationship"""
+  map_veto_picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_map_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
+
+  """
+  A computed field, executes function "get_map_veto_type"
+  """
+  map_veto_type: String
 
   """An array relationship"""
   match_maps(
@@ -9029,6 +9370,47 @@ type matches {
     where: player_utility_bool_exp
   ): player_utility_aggregate!
   region: e_game_server_node_regions_enum
+
+  """
+  A computed field, executes function "get_region_veto_picking_lineup_id"
+  """
+  region_veto_picking_lineup_id: uuid
+
+  """An array relationship"""
+  region_veto_picks(
+    """distinct select on columns"""
+    distinct_on: [match_region_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_region_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_region_veto_picks_bool_exp
+  ): [match_region_veto_picks!]!
+
+  """An aggregate relationship"""
+  region_veto_picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_region_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_region_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_region_veto_picks_bool_exp
+  ): match_region_veto_picks_aggregate!
   scheduled_at: timestamptz
 
   """An object relationship"""
@@ -9111,52 +9493,6 @@ type matches {
   A computed field, executes function "get_match_tv_connection_string"
   """
   tv_connection_string: String
-
-  """
-  A computed field, executes function "get_veto_picking_lineup_id"
-  """
-  veto_picking_lineup_id: uuid
-
-  """An array relationship"""
-  veto_picks(
-    """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
-
-    """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
-
-  """An aggregate relationship"""
-  veto_picks_aggregate(
-    """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
-
-    """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
-
-  """
-  A computed field, executes function "get_veto_type"
-  """
-  veto_type: String
 
   """An object relationship"""
   winner: match_lineups
@@ -9267,6 +9603,7 @@ input matches_bool_exp {
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
   e_match_status: e_match_status_bool_exp
+  e_region: e_game_server_node_regions_bool_exp
   id: uuid_comparison_exp
   is_captain: Boolean_comparison_exp
   is_coach: Boolean_comparison_exp
@@ -9279,6 +9616,10 @@ input matches_bool_exp {
   lineup_1_id: uuid_comparison_exp
   lineup_2: match_lineups_bool_exp
   lineup_2_id: uuid_comparison_exp
+  map_veto_picking_lineup_id: uuid_comparison_exp
+  map_veto_picks: match_map_veto_picks_bool_exp
+  map_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
+  map_veto_type: String_comparison_exp
   match_maps: match_maps_bool_exp
   match_maps_aggregate: match_maps_aggregate_bool_exp
   match_options_id: uuid_comparison_exp
@@ -9303,6 +9644,9 @@ input matches_bool_exp {
   player_utility: player_utility_bool_exp
   player_utility_aggregate: player_utility_aggregate_bool_exp
   region: e_game_server_node_regions_enum_comparison_exp
+  region_veto_picking_lineup_id: uuid_comparison_exp
+  region_veto_picks: match_region_veto_picks_bool_exp
+  region_veto_picks_aggregate: match_region_veto_picks_aggregate_bool_exp
   scheduled_at: timestamptz_comparison_exp
   server: servers_bool_exp
   server_id: uuid_comparison_exp
@@ -9314,10 +9658,6 @@ input matches_bool_exp {
   tournament_brackets_aggregate: tournament_brackets_aggregate_bool_exp
   tv_connection_link: String_comparison_exp
   tv_connection_string: String_comparison_exp
-  veto_picking_lineup_id: uuid_comparison_exp
-  veto_picks: match_veto_picks_bool_exp
-  veto_picks_aggregate: match_veto_picks_aggregate_bool_exp
-  veto_type: String_comparison_exp
   winner: match_lineups_bool_exp
   winning_lineup_id: uuid_comparison_exp
 }
@@ -9361,12 +9701,14 @@ input matches_insert_input {
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_status: e_match_status_obj_rel_insert_input
+  e_region: e_game_server_node_regions_obj_rel_insert_input
   id: uuid
   label: String
   lineup_1: match_lineups_obj_rel_insert_input
   lineup_1_id: uuid
   lineup_2: match_lineups_obj_rel_insert_input
   lineup_2_id: uuid
+  map_veto_picks: match_map_veto_picks_arr_rel_insert_input
   match_maps: match_maps_arr_rel_insert_input
   match_options_id: uuid
   options: match_options_obj_rel_insert_input
@@ -9381,12 +9723,12 @@ input matches_insert_input {
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   player_utility: player_utility_arr_rel_insert_input
   region: e_game_server_node_regions_enum
+  region_veto_picks: match_region_veto_picks_arr_rel_insert_input
   scheduled_at: timestamptz
   server: servers_obj_rel_insert_input
   server_id: uuid
   status: e_match_status_enum
   tournament_brackets: tournament_brackets_arr_rel_insert_input
-  veto_picks: match_veto_picks_arr_rel_insert_input
   winner: match_lineups_obj_rel_insert_input
   winning_lineup_id: uuid
 }
@@ -9417,6 +9759,16 @@ type matches_max_fields {
   label: String
   lineup_1_id: uuid
   lineup_2_id: uuid
+
+  """
+  A computed field, executes function "get_map_veto_picking_lineup_id"
+  """
+  map_veto_picking_lineup_id: uuid
+
+  """
+  A computed field, executes function "get_map_veto_type"
+  """
+  map_veto_type: String
   match_options_id: uuid
 
   """
@@ -9430,6 +9782,11 @@ type matches_max_fields {
   min_players_per_lineup: Int
   organizer_steam_id: bigint
   password: String
+
+  """
+  A computed field, executes function "get_region_veto_picking_lineup_id"
+  """
+  region_veto_picking_lineup_id: uuid
   scheduled_at: timestamptz
   server_id: uuid
 
@@ -9452,16 +9809,6 @@ type matches_max_fields {
   A computed field, executes function "get_match_tv_connection_string"
   """
   tv_connection_string: String
-
-  """
-  A computed field, executes function "get_veto_picking_lineup_id"
-  """
-  veto_picking_lineup_id: uuid
-
-  """
-  A computed field, executes function "get_veto_type"
-  """
-  veto_type: String
   winning_lineup_id: uuid
 }
 
@@ -9508,6 +9855,16 @@ type matches_min_fields {
   label: String
   lineup_1_id: uuid
   lineup_2_id: uuid
+
+  """
+  A computed field, executes function "get_map_veto_picking_lineup_id"
+  """
+  map_veto_picking_lineup_id: uuid
+
+  """
+  A computed field, executes function "get_map_veto_type"
+  """
+  map_veto_type: String
   match_options_id: uuid
 
   """
@@ -9521,6 +9878,11 @@ type matches_min_fields {
   min_players_per_lineup: Int
   organizer_steam_id: bigint
   password: String
+
+  """
+  A computed field, executes function "get_region_veto_picking_lineup_id"
+  """
+  region_veto_picking_lineup_id: uuid
   scheduled_at: timestamptz
   server_id: uuid
 
@@ -9543,16 +9905,6 @@ type matches_min_fields {
   A computed field, executes function "get_match_tv_connection_string"
   """
   tv_connection_string: String
-
-  """
-  A computed field, executes function "get_veto_picking_lineup_id"
-  """
-  veto_picking_lineup_id: uuid
-
-  """
-  A computed field, executes function "get_veto_type"
-  """
-  veto_type: String
   winning_lineup_id: uuid
 }
 
@@ -9617,6 +9969,7 @@ input matches_order_by {
   current_match_map_id: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
   e_match_status: e_match_status_order_by
+  e_region: e_game_server_node_regions_order_by
   id: order_by
   is_captain: order_by
   is_coach: order_by
@@ -9629,6 +9982,9 @@ input matches_order_by {
   lineup_1_id: order_by
   lineup_2: match_lineups_order_by
   lineup_2_id: order_by
+  map_veto_picking_lineup_id: order_by
+  map_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
+  map_veto_type: order_by
   match_maps_aggregate: match_maps_aggregate_order_by
   match_options_id: order_by
   max_players_per_lineup: order_by
@@ -9645,6 +10001,8 @@ input matches_order_by {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   player_utility_aggregate: player_utility_aggregate_order_by
   region: order_by
+  region_veto_picking_lineup_id: order_by
+  region_veto_picks_aggregate: match_region_veto_picks_aggregate_order_by
   scheduled_at: order_by
   server: servers_order_by
   server_id: order_by
@@ -9655,9 +10013,6 @@ input matches_order_by {
   tournament_brackets_aggregate: tournament_brackets_aggregate_order_by
   tv_connection_link: order_by
   tv_connection_string: order_by
-  veto_picking_lineup_id: order_by
-  veto_picks_aggregate: match_veto_picks_aggregate_order_by
-  veto_type: order_by
   winner: match_lineups_order_by
   winning_lineup_id: order_by
 }
@@ -10423,6 +10778,19 @@ type mutation_root {
   delete_match_map_rounds_by_pk(id: uuid!): match_map_rounds
 
   """
+  delete data from the table: "match_map_veto_picks"
+  """
+  delete_match_map_veto_picks(
+    """filter the rows which have to be deleted"""
+    where: match_map_veto_picks_bool_exp!
+  ): match_map_veto_picks_mutation_response
+
+  """
+  delete single row from the table: "match_map_veto_picks"
+  """
+  delete_match_map_veto_picks_by_pk(id: uuid!): match_map_veto_picks
+
+  """
   delete data from the table: "match_maps"
   """
   delete_match_maps(
@@ -10449,17 +10817,17 @@ type mutation_root {
   delete_match_options_by_pk(id: uuid!): match_options
 
   """
-  delete data from the table: "match_veto_picks"
+  delete data from the table: "match_region_veto_picks"
   """
-  delete_match_veto_picks(
+  delete_match_region_veto_picks(
     """filter the rows which have to be deleted"""
-    where: match_veto_picks_bool_exp!
-  ): match_veto_picks_mutation_response
+    where: match_region_veto_picks_bool_exp!
+  ): match_region_veto_picks_mutation_response
 
   """
-  delete single row from the table: "match_veto_picks"
+  delete single row from the table: "match_region_veto_picks"
   """
-  delete_match_veto_picks_by_pk(id: uuid!): match_veto_picks
+  delete_match_region_veto_picks_by_pk(id: uuid!): match_region_veto_picks
 
   """
   delete data from the table: "matches"
@@ -11258,6 +11626,28 @@ type mutation_root {
   ): match_map_rounds
 
   """
+  insert data into the table: "match_map_veto_picks"
+  """
+  insert_match_map_veto_picks(
+    """the rows to be inserted"""
+    objects: [match_map_veto_picks_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: match_map_veto_picks_on_conflict
+  ): match_map_veto_picks_mutation_response
+
+  """
+  insert a single row into the table: "match_map_veto_picks"
+  """
+  insert_match_map_veto_picks_one(
+    """the row to be inserted"""
+    object: match_map_veto_picks_insert_input!
+
+    """upsert condition"""
+    on_conflict: match_map_veto_picks_on_conflict
+  ): match_map_veto_picks
+
+  """
   insert data into the table: "match_maps"
   """
   insert_match_maps(
@@ -11302,26 +11692,26 @@ type mutation_root {
   ): match_options
 
   """
-  insert data into the table: "match_veto_picks"
+  insert data into the table: "match_region_veto_picks"
   """
-  insert_match_veto_picks(
+  insert_match_region_veto_picks(
     """the rows to be inserted"""
-    objects: [match_veto_picks_insert_input!]!
+    objects: [match_region_veto_picks_insert_input!]!
 
     """upsert condition"""
-    on_conflict: match_veto_picks_on_conflict
-  ): match_veto_picks_mutation_response
+    on_conflict: match_region_veto_picks_on_conflict
+  ): match_region_veto_picks_mutation_response
 
   """
-  insert a single row into the table: "match_veto_picks"
+  insert a single row into the table: "match_region_veto_picks"
   """
-  insert_match_veto_picks_one(
+  insert_match_region_veto_picks_one(
     """the row to be inserted"""
-    object: match_veto_picks_insert_input!
+    object: match_region_veto_picks_insert_input!
 
     """upsert condition"""
-    on_conflict: match_veto_picks_on_conflict
-  ): match_veto_picks
+    on_conflict: match_region_veto_picks_on_conflict
+  ): match_region_veto_picks
 
   """
   insert data into the table: "matches"
@@ -12502,6 +12892,34 @@ type mutation_root {
   ): [match_map_rounds_mutation_response]
 
   """
+  update data of the table: "match_map_veto_picks"
+  """
+  update_match_map_veto_picks(
+    """sets the columns of the filtered rows to the given values"""
+    _set: match_map_veto_picks_set_input
+
+    """filter the rows which have to be updated"""
+    where: match_map_veto_picks_bool_exp!
+  ): match_map_veto_picks_mutation_response
+
+  """
+  update single row of the table: "match_map_veto_picks"
+  """
+  update_match_map_veto_picks_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: match_map_veto_picks_set_input
+    pk_columns: match_map_veto_picks_pk_columns_input!
+  ): match_map_veto_picks
+
+  """
+  update multiples rows of table: "match_map_veto_picks"
+  """
+  update_match_map_veto_picks_many(
+    """updates to execute, in order"""
+    updates: [match_map_veto_picks_updates!]!
+  ): [match_map_veto_picks_mutation_response]
+
+  """
   update data of the table: "match_maps"
   """
   update_match_maps(
@@ -12570,32 +12988,32 @@ type mutation_root {
   ): [match_options_mutation_response]
 
   """
-  update data of the table: "match_veto_picks"
+  update data of the table: "match_region_veto_picks"
   """
-  update_match_veto_picks(
+  update_match_region_veto_picks(
     """sets the columns of the filtered rows to the given values"""
-    _set: match_veto_picks_set_input
+    _set: match_region_veto_picks_set_input
 
     """filter the rows which have to be updated"""
-    where: match_veto_picks_bool_exp!
-  ): match_veto_picks_mutation_response
+    where: match_region_veto_picks_bool_exp!
+  ): match_region_veto_picks_mutation_response
 
   """
-  update single row of the table: "match_veto_picks"
+  update single row of the table: "match_region_veto_picks"
   """
-  update_match_veto_picks_by_pk(
+  update_match_region_veto_picks_by_pk(
     """sets the columns of the filtered rows to the given values"""
-    _set: match_veto_picks_set_input
-    pk_columns: match_veto_picks_pk_columns_input!
-  ): match_veto_picks
+    _set: match_region_veto_picks_set_input
+    pk_columns: match_region_veto_picks_pk_columns_input!
+  ): match_region_veto_picks
 
   """
-  update multiples rows of table: "match_veto_picks"
+  update multiples rows of table: "match_region_veto_picks"
   """
-  update_match_veto_picks_many(
+  update_match_region_veto_picks_many(
     """updates to execute, in order"""
-    updates: [match_veto_picks_updates!]!
-  ): [match_veto_picks_mutation_response]
+    updates: [match_region_veto_picks_updates!]!
+  ): [match_region_veto_picks_mutation_response]
 
   """
   update data of the table: "matches"
@@ -19470,6 +19888,51 @@ type query_root {
   """
   match_map_rounds_by_pk(id: uuid!): match_map_rounds
 
+  """
+  fetch data from the table: "match_map_veto_picks"
+  """
+  match_map_veto_picks(
+    """distinct select on columns"""
+    distinct_on: [match_map_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
+
+  """
+  fetch aggregated fields from the table: "match_map_veto_picks"
+  """
+  match_map_veto_picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_map_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
+
+  """
+  fetch data from the table: "match_map_veto_picks" using primary key columns
+  """
+  match_map_veto_picks_by_pk(id: uuid!): match_map_veto_picks
+
   """An array relationship"""
   match_maps(
     """distinct select on columns"""
@@ -19552,10 +20015,12 @@ type query_root {
   """fetch data from the table: "match_options" using primary key columns"""
   match_options_by_pk(id: uuid!): match_options
 
-  """An array relationship"""
-  match_veto_picks(
+  """
+  fetch data from the table: "match_region_veto_picks"
+  """
+  match_region_veto_picks(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_region_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -19564,16 +20029,18 @@ type query_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_region_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_region_veto_picks_bool_exp
+  ): [match_region_veto_picks!]!
 
-  """An aggregate relationship"""
-  match_veto_picks_aggregate(
+  """
+  fetch aggregated fields from the table: "match_region_veto_picks"
+  """
+  match_region_veto_picks_aggregate(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_region_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -19582,16 +20049,16 @@ type query_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_region_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
+    where: match_region_veto_picks_bool_exp
+  ): match_region_veto_picks_aggregate!
 
   """
-  fetch data from the table: "match_veto_picks" using primary key columns
+  fetch data from the table: "match_region_veto_picks" using primary key columns
   """
-  match_veto_picks_by_pk(id: uuid!): match_veto_picks
+  match_region_veto_picks_by_pk(id: uuid!): match_region_veto_picks
 
   """An array relationship"""
   matches(
@@ -22784,6 +23251,65 @@ type subscription_root {
     where: match_map_rounds_bool_exp
   ): [match_map_rounds!]!
 
+  """
+  fetch data from the table: "match_map_veto_picks"
+  """
+  match_map_veto_picks(
+    """distinct select on columns"""
+    distinct_on: [match_map_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
+
+  """
+  fetch aggregated fields from the table: "match_map_veto_picks"
+  """
+  match_map_veto_picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_map_veto_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_map_veto_picks_order_by!]
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): match_map_veto_picks_aggregate!
+
+  """
+  fetch data from the table: "match_map_veto_picks" using primary key columns
+  """
+  match_map_veto_picks_by_pk(id: uuid!): match_map_veto_picks
+
+  """
+  fetch data from the table in a streaming manner: "match_map_veto_picks"
+  """
+  match_map_veto_picks_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [match_map_veto_picks_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: match_map_veto_picks_bool_exp
+  ): [match_map_veto_picks!]!
+
   """An array relationship"""
   match_maps(
     """distinct select on columns"""
@@ -22894,10 +23420,12 @@ type subscription_root {
     where: match_options_bool_exp
   ): [match_options!]!
 
-  """An array relationship"""
-  match_veto_picks(
+  """
+  fetch data from the table: "match_region_veto_picks"
+  """
+  match_region_veto_picks(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_region_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -22906,16 +23434,18 @@ type subscription_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_region_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_region_veto_picks_bool_exp
+  ): [match_region_veto_picks!]!
 
-  """An aggregate relationship"""
-  match_veto_picks_aggregate(
+  """
+  fetch aggregated fields from the table: "match_region_veto_picks"
+  """
+  match_region_veto_picks_aggregate(
     """distinct select on columns"""
-    distinct_on: [match_veto_picks_select_column!]
+    distinct_on: [match_region_veto_picks_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -22924,30 +23454,30 @@ type subscription_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [match_veto_picks_order_by!]
+    order_by: [match_region_veto_picks_order_by!]
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): match_veto_picks_aggregate!
+    where: match_region_veto_picks_bool_exp
+  ): match_region_veto_picks_aggregate!
 
   """
-  fetch data from the table: "match_veto_picks" using primary key columns
+  fetch data from the table: "match_region_veto_picks" using primary key columns
   """
-  match_veto_picks_by_pk(id: uuid!): match_veto_picks
+  match_region_veto_picks_by_pk(id: uuid!): match_region_veto_picks
 
   """
-  fetch data from the table in a streaming manner: "match_veto_picks"
+  fetch data from the table in a streaming manner: "match_region_veto_picks"
   """
-  match_veto_picks_stream(
+  match_region_veto_picks_stream(
     """maximum number of rows returned in a single batch"""
     batch_size: Int!
 
     """cursor to stream the results returned by the query"""
-    cursor: [match_veto_picks_stream_cursor_input]!
+    cursor: [match_region_veto_picks_stream_cursor_input]!
 
     """filter the rows returned"""
-    where: match_veto_picks_bool_exp
-  ): [match_veto_picks!]!
+    where: match_region_veto_picks_bool_exp
+  ): [match_region_veto_picks!]!
 
   """An array relationship"""
   matches(

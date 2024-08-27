@@ -5,6 +5,9 @@ object_relationships:
   - name: e_match_status
     using:
       foreign_key_constraint_on: status
+  - name: e_region
+    using:
+      foreign_key_constraint_on: region
   - name: lineup_1
     using:
       foreign_key_constraint_on: lineup_1_id
@@ -42,6 +45,13 @@ array_relationships:
         column: match_id
         table:
           name: match_map_demos
+          schema: public
+  - name: map_veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_map_veto_picks
           schema: public
   - name: match_maps
     using:
@@ -99,19 +109,19 @@ array_relationships:
         table:
           name: player_utility
           schema: public
+  - name: region_veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_region_veto_picks
+          schema: public
   - name: tournament_brackets
     using:
       foreign_key_constraint_on:
         column: match_id
         table:
           name: tournament_brackets
-          schema: public
-  - name: veto_picks
-    using:
-      foreign_key_constraint_on:
-        column: match_id
-        table:
-          name: match_veto_picks
           schema: public
 computed_fields:
   - name: can_assign_server
@@ -200,6 +210,16 @@ computed_fields:
       function:
         name: is_tournament_match
         schema: public
+  - name: map_veto_picking_lineup_id
+    definition:
+      function:
+        name: get_map_veto_picking_lineup_id
+        schema: public
+  - name: map_veto_type
+    definition:
+      function:
+        name: get_map_veto_type
+        schema: public
   - name: max_players_per_lineup
     definition:
       function:
@@ -209,6 +229,11 @@ computed_fields:
     definition:
       function:
         name: match_min_players_per_lineup
+        schema: public
+  - name: region_veto_picking_lineup_id
+    definition:
+      function:
+        name: get_region_veto_picking_lineup_id
         schema: public
   - name: server_region
     definition:
@@ -237,16 +262,6 @@ computed_fields:
         name: get_match_tv_connection_string
         schema: public
       session_argument: hasura_session
-  - name: veto_picking_lineup_id
-    definition:
-      function:
-        name: get_veto_picking_lineup_id
-        schema: public
-  - name: veto_type
-    definition:
-      function:
-        name: get_veto_type
-        schema: public
 insert_permissions:
   - role: user
     permission:
@@ -291,14 +306,15 @@ select_permissions:
         - is_match_server_available
         - is_organizer
         - is_tournament_match
+        - map_veto_picking_lineup_id
+        - map_veto_type
         - max_players_per_lineup
         - min_players_per_lineup
+        - region_veto_picking_lineup_id
         - server_region
         - server_type
         - tv_connection_link
         - tv_connection_string
-        - veto_picking_lineup_id
-        - veto_type
       filter: {}
       allow_aggregations: true
     comment: ""

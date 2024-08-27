@@ -1,10 +1,7 @@
 table:
-  name: match_map_veto_picks
+  name: match_region_veto_picks
   schema: public
 object_relationships:
-  - name: map
-    using:
-      foreign_key_constraint_on: map_id
   - name: match
     using:
       foreign_key_constraint_on: match_id
@@ -24,10 +21,9 @@ insert_permissions:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
       columns:
-        - map_id
         - match_id
         - match_lineup_id
-        - side
+        - region
         - type
     comment: ""
 select_permissions:
@@ -36,33 +32,9 @@ select_permissions:
       columns:
         - created_at
         - id
-        - map_id
         - match_id
         - match_lineup_id
-        - side
+        - region
         - type
       filter: {}
     comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        match:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
-    comment: ""
-event_triggers:
-  - name: match_veto_pick
-    definition:
-      delete:
-        columns: '*'
-      enable_manual: true
-      insert:
-        columns: '*'
-      update:
-        columns: '*'
-    retry_conf:
-      interval_sec: 10
-      num_retries: 0
-      timeout_sec: 60
-    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

@@ -39,14 +39,32 @@ export class RemoveCancelledMatches extends WorkerHost {
               {
                 _or: [
                   {
-                    scheduled_at: {
-                      _is_null: true,
-                    },
+                    _and: [
+                      {
+                        scheduled_at: {
+                          _is_null: true,
+                        },
+                      },
+                      {
+                        created_at: {
+                          _lte: yesterday,
+                        },
+                      },
+                    ],
                   },
                   {
-                    cancels_at: {
-                      _lte: yesterday,
-                    },
+                    _and: [
+                      {
+                        cancels_at: {
+                          _is_null: false,
+                        },
+                      },
+                      {
+                        cancels_at: {
+                          _lte: yesterday,
+                        },
+                      },
+                    ],
                   },
                 ],
               },
@@ -89,7 +107,7 @@ export class RemoveCancelledMatches extends WorkerHost {
                 pk_columns: {
                   id: round.id,
                 },
-                __set: {
+                _set: {
                   backup_file: null,
                 },
               },
@@ -108,7 +126,9 @@ export class RemoveCancelledMatches extends WorkerHost {
       });
     }
 
-    this.logger.log(`removed  ${matches.length} canceled matches`);
+    if (matches.length > 0) {
+      this.logger.log(`removed ${matches.length} canceled matches`);
+    }
 
     return matches.length;
   }

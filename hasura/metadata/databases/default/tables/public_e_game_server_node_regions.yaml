@@ -11,10 +11,33 @@ array_relationships:
           name: game_server_nodes
           schema: public
 select_permissions:
-  - role: user
+  - role: administrator
     permission:
       columns:
         - description
         - value
       filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter:
+        value:
+          _neq: Lan
     comment: ""
