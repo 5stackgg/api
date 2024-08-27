@@ -18,7 +18,7 @@ array_relationships:
       foreign_key_constraint_on:
         column: map_id
         table:
-          name: match_veto_picks
+          name: match_map_veto_picks
           schema: public
 select_permissions:
   - role: user

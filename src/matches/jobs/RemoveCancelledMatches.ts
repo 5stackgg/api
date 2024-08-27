@@ -44,8 +44,22 @@ export class RemoveCancelledMatches extends WorkerHost {
                     },
                   },
                   {
-                    cancels_at: {
-                      _lte: yesterday,
+                    _and: [
+                      {
+                        cancels_at: {
+                          _is_null: false,
+                        },
+                      },
+                      {
+                        cancels_at: {
+                          _gte: yesterday,
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    created_at: {
+                      _gte: yesterday,
                     },
                   },
                 ],
@@ -89,7 +103,7 @@ export class RemoveCancelledMatches extends WorkerHost {
                 pk_columns: {
                   id: round.id,
                 },
-                __set: {
+                _set: {
                   backup_file: null,
                 },
               },

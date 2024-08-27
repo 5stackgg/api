@@ -66,7 +66,7 @@ BEGIN
         WHERE id = OLD.match_options_id;
     END IF;
 
-    update servers set reserved_by_match
+    update servers set reserved_by_match_id = null where reserved_by_match_id = OLD.id;
 
   RETURN NEW;
 END;

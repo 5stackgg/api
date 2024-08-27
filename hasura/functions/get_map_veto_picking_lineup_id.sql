@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.get_veto_picking_lineup_id(match public.matches) RETURNS uuid
+CREATE OR REPLACE FUNCTION public.get_map_veto_picking_lineup_id(match public.matches) RETURNS uuid
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -20,7 +20,7 @@ BEGIN
 
     -- Count the total number of picks made for the match
     SELECT COUNT(*) INTO total_picks
-    FROM match_veto_picks mvp
+    FROM match_map_veto_picks mvp
     WHERE mvp.match_id = match.id;
 
     -- Calculate the round number

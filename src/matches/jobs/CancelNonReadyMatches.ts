@@ -32,7 +32,7 @@ export class CancelNonReadyMatches extends WorkerHost {
               },
               {
                 cancels_at: {
-                  _lte: new Date(),
+                  _gte: new Date(),
                 },
               },
             ],

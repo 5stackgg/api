@@ -104,7 +104,7 @@ export class DiscordBotVetoService {
     }
 
     await this.hasura.mutation({
-      insert_match_veto_picks_one: {
+      insert_match_map_veto_picks_one: {
         __args: {
           object: {
             match_id: matchId,

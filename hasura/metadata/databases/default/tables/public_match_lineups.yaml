@@ -45,13 +45,19 @@ array_relationships:
       foreign_key_constraint_on:
         column: match_lineup_id
         table:
-          name: match_veto_picks
+          name: match_map_veto_picks
           schema: public
 computed_fields:
-  - name: can_pick_veto
+  - name: can_pick_map_veto
     definition:
       function:
-        name: can_pick_veto
+        name: can_pick_map_veto
+        schema: public
+      session_argument: hasura_session
+  - name: can_pick_region_veto
+    definition:
+      function:
+        name: can_pick_region_veto
         schema: public
       session_argument: hasura_session
   - name: can_update_lineup
@@ -66,10 +72,15 @@ computed_fields:
         name: is_on_lineup
         schema: public
       session_argument: hasura_session
-  - name: is_picking_veto
+  - name: is_picking_map_veto
     definition:
       function:
-        name: lineup_is_picking_veto
+        name: lineup_is_picking_map_veto
+        schema: public
+  - name: is_picking_region_veto
+    definition:
+      function:
+        name: lineup_is_picking_region_veto
         schema: public
   - name: is_ready
     definition:
@@ -96,10 +107,12 @@ select_permissions:
         - id
         - team_id
       computed_fields:
-        - can_pick_veto
+        - can_pick_map_veto
+        - can_pick_region_veto
         - can_update_lineup
         - is_on_lineup
-        - is_picking_veto
+        - is_picking_map_veto
+        - is_picking_region_veto
         - is_ready
         - name
       filter: {}

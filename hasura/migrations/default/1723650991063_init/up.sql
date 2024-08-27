@@ -31,7 +31,7 @@ CREATE TABLE public.tournaments (
     match_options_id uuid NOT NULL
 );
 
-CREATE TABLE public.match_veto_picks (
+CREATE TABLE public.match_map_veto_picks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     match_id uuid NOT NULL,
     type text NOT NULL,
@@ -543,8 +543,8 @@ ALTER TABLE ONLY public.match_map_rounds
     ADD CONSTRAINT match_rounds_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.match_lineups
     ADD CONSTRAINT match_teams_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.match_veto_picks
-    ADD CONSTRAINT match_veto_picks_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.match_map_veto_picks
+    ADD CONSTRAINT match_map_veto_picks_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.matches
     ADD CONSTRAINT matches_lineup_1_id_key UNIQUE (lineup_1_id);
 ALTER TABLE ONLY public.matches
@@ -620,7 +620,7 @@ CREATE INDEX kills_player_match ON public.player_kills USING btree (attacker_ste
 CREATE INDEX objectives_player_match ON public.player_objectives USING btree (player_steam_id, match_id);
 CREATE INDEX unused_utility_player_match ON public.player_unused_utility USING btree (player_steam_id, match_id);
 CREATE INDEX utility_player_match ON public.player_utility USING btree (attacker_steam_id, match_id);
-CREATE INDEX veto_match ON public.match_veto_picks USING btree (match_id);
+CREATE INDEX veto_match ON public.match_map_veto_picks USING btree (match_id);
 
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE CASCADE;
@@ -662,14 +662,14 @@ ALTER TABLE ONLY public.match_lineup_players
     ADD CONSTRAINT match_team_members_steam_id_fkey FOREIGN KEY (steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.match_lineups
     ADD CONSTRAINT match_teams_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.match_veto_picks
-    ADD CONSTRAINT match_veto_picks_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE ONLY public.match_veto_picks
-    ADD CONSTRAINT match_veto_picks_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.match_veto_picks
-    ADD CONSTRAINT match_veto_picks_match_lineup_id_fkey FOREIGN KEY (match_lineup_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE ONLY public.match_veto_picks
-    ADD CONSTRAINT match_veto_picks_type_fkey FOREIGN KEY (type) REFERENCES public.e_veto_pick_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.match_map_veto_picks
+    ADD CONSTRAINT match_map_veto_picks_map_id_fkey FOREIGN KEY (map_id) REFERENCES public.maps(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.match_map_veto_picks
+    ADD CONSTRAINT match_map_veto_picks_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY public.match_map_veto_picks
+    ADD CONSTRAINT match_map_veto_picks_match_lineup_id_fkey FOREIGN KEY (match_lineup_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE ONLY public.match_map_veto_picks
+    ADD CONSTRAINT match_map_veto_picks_type_fkey FOREIGN KEY (type) REFERENCES public.e_veto_pick_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.matches
     ADD CONSTRAINT matches_lineup_1_id_fkey FOREIGN KEY (lineup_1_id) REFERENCES public.match_lineups(id) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.matches
