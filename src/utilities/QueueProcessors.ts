@@ -59,7 +59,7 @@ export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
           try {
             await targetInstance.process(job);
           } catch (error) {
-            this.logger.warn("unable to process job", error);
+            this.logger.error(`[${job.name}}] job failed`, error);
             throw error;
           }
         }
