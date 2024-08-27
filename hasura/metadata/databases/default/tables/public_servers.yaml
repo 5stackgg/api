@@ -32,6 +32,12 @@ array_relationships:
         table:
           name: tournament_servers
           schema: public
+computed_fields:
+  - name: is_dedicated
+    definition:
+      function:
+        name: is_dedicated_server
+        schema: public
 insert_permissions:
   - role: user
     permission:
@@ -58,6 +64,8 @@ select_permissions:
         - port
         - reserved_by_match_id
         - tv_port
+      computed_fields:
+        - is_dedicated
       filter:
         _or:
           - owner_steam_id:
@@ -76,6 +84,8 @@ select_permissions:
         - label
         - port
         - tv_port
+      computed_fields:
+        - is_dedicated
       filter:
         owner_steam_id:
           _eq: X-Hasura-User-Id

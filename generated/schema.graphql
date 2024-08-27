@@ -8836,6 +8836,7 @@ type matches {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
+  region: e_game_server_node_regions_enum
   scheduled_at: timestamptz
 
   """An object relationship"""
@@ -9109,6 +9110,7 @@ input matches_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   player_utility: player_utility_bool_exp
   player_utility_aggregate: player_utility_aggregate_bool_exp
+  region: e_game_server_node_regions_enum_comparison_exp
   scheduled_at: timestamptz_comparison_exp
   server: servers_bool_exp
   server_id: uuid_comparison_exp
@@ -9186,6 +9188,7 @@ input matches_insert_input {
   player_objectives: player_objectives_arr_rel_insert_input
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   player_utility: player_utility_arr_rel_insert_input
+  region: e_game_server_node_regions_enum
   scheduled_at: timestamptz
   server: servers_obj_rel_insert_input
   server_id: uuid
@@ -9449,6 +9452,7 @@ input matches_order_by {
   player_objectives_aggregate: player_objectives_aggregate_order_by
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   player_utility_aggregate: player_utility_aggregate_order_by
+  region: order_by
   scheduled_at: order_by
   server: servers_order_by
   server_id: order_by
@@ -9500,6 +9504,9 @@ enum matches_select_column {
   password
 
   """column name"""
+  region
+
+  """column name"""
   scheduled_at
 
   """column name"""
@@ -9524,6 +9531,7 @@ input matches_set_input {
   match_options_id: uuid
   organizer_steam_id: bigint
   password: String
+  region: e_game_server_node_regions_enum
   scheduled_at: timestamptz
   server_id: uuid
   status: e_match_status_enum
@@ -9614,6 +9622,7 @@ input matches_stream_cursor_value_input {
   match_options_id: uuid
   organizer_steam_id: bigint
   password: String
+  region: e_game_server_node_regions_enum
   scheduled_at: timestamptz
   server_id: uuid
   status: e_match_status_enum
@@ -9668,6 +9677,9 @@ enum matches_update_column {
 
   """column name"""
   password
+
+  """column name"""
+  region
 
   """column name"""
   scheduled_at
@@ -20633,6 +20645,11 @@ type servers {
   game_server_node_id: String
   host: String!
   id: uuid!
+
+  """
+  A computed field, executes function "is_dedicated_server"
+  """
+  is_dedicated: String
   label: String!
 
   """An array relationship"""
@@ -20825,6 +20842,7 @@ input servers_bool_exp {
   game_server_node_id: String_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
+  is_dedicated: String_comparison_exp
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
@@ -20846,6 +20864,11 @@ enum servers_constraint {
   unique or primary key constraint on columns "id"
   """
   servers_pkey
+
+  """
+  unique or primary key constraint on columns "reserved_by_match_id"
+  """
+  servers_reserved_by_match_id_key
 }
 
 """
@@ -20885,6 +20908,11 @@ type servers_max_fields {
   game_server_node_id: String
   host: String
   id: uuid
+
+  """
+  A computed field, executes function "is_dedicated_server"
+  """
+  is_dedicated: String
   label: String
   owner_steam_id: bigint
   port: Int
@@ -20913,6 +20941,11 @@ type servers_min_fields {
   game_server_node_id: String
   host: String
   id: uuid
+
+  """
+  A computed field, executes function "is_dedicated_server"
+  """
+  is_dedicated: String
   label: String
   owner_steam_id: bigint
   port: Int
@@ -20974,6 +21007,7 @@ input servers_order_by {
   game_server_node_id: order_by
   host: order_by
   id: order_by
+  is_dedicated: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
   owner: players_order_by

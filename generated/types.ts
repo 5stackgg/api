@@ -12135,6 +12135,9 @@ export default {
                     ]
                 }
             ],
+            "region": [
+                38
+            ],
             "scheduled_at": [
                 1246
             ],
@@ -12593,6 +12596,9 @@ export default {
             "player_utility_aggregate": [
                 1009
             ],
+            "region": [
+                39
+            ],
             "scheduled_at": [
                 1247
             ],
@@ -12723,6 +12729,9 @@ export default {
             ],
             "player_utility": [
                 1013
+            ],
+            "region": [
+                38
             ],
             "scheduled_at": [
                 1246
@@ -13130,6 +13139,9 @@ export default {
             "player_utility_aggregate": [
                 1012
             ],
+            "region": [
+                748
+            ],
             "scheduled_at": [
                 748
             ],
@@ -13212,6 +13224,9 @@ export default {
             ],
             "password": [
                 7
+            ],
+            "region": [
+                38
             ],
             "scheduled_at": [
                 1246
@@ -13330,6 +13345,9 @@ export default {
             ],
             "password": [
                 7
+            ],
+            "region": [
+                38
             ],
             "scheduled_at": [
                 1246
@@ -21712,6 +21730,9 @@ export default {
             "id": [
                 1526
             ],
+            "is_dedicated": [
+                7
+            ],
             "label": [
                 7
             ],
@@ -22056,6 +22077,9 @@ export default {
             "id": [
                 1527
             ],
+            "is_dedicated": [
+                8
+            ],
             "label": [
                 8
             ],
@@ -22174,6 +22198,9 @@ export default {
             "id": [
                 1526
             ],
+            "is_dedicated": [
+                7
+            ],
             "label": [
                 7
             ],
@@ -22237,6 +22264,9 @@ export default {
             ],
             "id": [
                 1526
+            ],
+            "is_dedicated": [
+                7
             ],
             "label": [
                 7
@@ -22345,6 +22375,9 @@ export default {
                 748
             ],
             "id": [
+                748
+            ],
+            "is_dedicated": [
                 748
             ],
             "label": [

@@ -307,6 +307,7 @@ update_permissions:
       columns:
         - label
         - organizer_steam_id
+        - region
         - scheduled_at
         - server_id
         - winning_lineup_id
