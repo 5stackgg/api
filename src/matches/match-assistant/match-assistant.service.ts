@@ -146,6 +146,7 @@ export class MatchAssistantService {
           id: true,
           host: true,
           port: true,
+          is_dedicated: true,
           rcon_password: true,
           game_server_node_id: true,
         },
@@ -212,16 +213,20 @@ export class MatchAssistantService {
   public async assignOnDemandServer(matchId: string): Promise<boolean> {
     this.logger.debug(`[${matchId}] assigning on demand server`);
     return this.cache.lock("get-on-demand-server", async () => {
-      await this.stopOnDemandServer(matchId);
-
       const { matches_by_pk: match } = await this.hasura.query({
         matches_by_pk: {
           __args: {
             id: matchId,
           },
+          region: true,
           password: true,
+          server_id: true,
         },
       });
+
+      if(match.server_id) {
+        await this.stopOnDemandServer(matchId, match.server_id);
+      }
 
       if (!match) {
         throw Error("unable to find match");
@@ -235,39 +240,45 @@ export class MatchAssistantService {
 
       const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
+      const { servers } = await this.hasura.query({
+        servers: {
+          __args: {
+            where: {
+              _and: [
+                ...(match.region ? [{
+                  game_server_node: {
+                    region: {
+                      _eq: match.region,
+                    },
+                  },
+                }] : [{
+                  is_dedicated: {
+                    _eq: false,
+                  },
+                }]),
+                {
+                  reserved_by_match_id: {
+                    _is_null: true,
+                  },
+                },
+              ],
+            },
+          },
+          id: true,
+          host: true,
+          port: true,
+          tv_port: true,
+          api_password: true,
+          rcon_password: true,
+          game_server_node_id: true,
+        },
+      });
+
+
+      const server = servers.at(-1);
+
       try {
         this.logger.verbose(`[${matchId}] create job for on demand server`);
-
-        // TODO - atomic lock
-        const { servers } = await this.hasura.query({
-          servers: {
-            __args: {
-              where: {
-                _and: [
-                  {
-                    game_server_node_id: {
-                      _is_null: false,
-                    },
-                  },
-                  {
-                    reserved_by_match_id: {
-                      _is_null: true,
-                    },
-                  },
-                ],
-              },
-            },
-            id: true,
-            host: true,
-            port: true,
-            tv_port: true,
-            api_password: true,
-            rcon_password: true,
-            game_server_node_id: true,
-          },
-        });
-
-        const server = servers.at(-1);
 
         if (!server) {
           // TODO
@@ -453,7 +464,7 @@ export class MatchAssistantService {
 
         return true;
       } catch (error) {
-        await this.stopOnDemandServer(matchId);
+        await this.stopOnDemandServer(matchId, server.id);
 
         this.logger.error(
           `[${matchId}] unable to create on demand server`,
@@ -541,10 +552,10 @@ export class MatchAssistantService {
     }
 
     await this.serverAuth.removeServer(server.id);
-    await this.stopOnDemandServer(matchId);
+    await this.stopOnDemandServer(matchId, server.id);
   }
 
-  public async stopOnDemandServer(matchId: string) {
+  public async stopOnDemandServer(matchId: string, serverId: string) {
     this.logger.debug(`[${matchId}] stopping match server`);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
@@ -597,26 +608,10 @@ export class MatchAssistantService {
       this.logger.verbose(`[${matchId}] stopped on demand server`);
 
       await this.hasura.mutation({
-        update_matches_by_pk: {
+        update_servers_by_pk: {
           __args: {
             pk_columns: {
-              id: matchId,
-            },
-            _set: {
-              server_id: null,
-            },
-          },
-          __typename: true,
-        },
-      });
-
-      await this.hasura.mutation({
-        update_servers: {
-          __args: {
-            where: {
-              reserved_by_match_id: {
-                _eq: matchId,
-              },
+              id: serverId,
             },
             _set: {
               reserved_by_match_id: null,

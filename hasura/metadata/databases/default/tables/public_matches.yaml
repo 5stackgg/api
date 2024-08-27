@@ -270,6 +270,7 @@ select_permissions:
         - lineup_2_id
         - match_options_id
         - organizer_steam_id
+        - region
         - scheduled_at
         - server_id
         - status

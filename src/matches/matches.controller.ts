@@ -136,15 +136,15 @@ export class MatchesController {
       status === "Finished"
     ) {
       await this.removeDiscordIntegration(matchId);
-      await this.stopServer(matchId, status);
+      await this.matchAssistant.stopMatch(matchId);
       return;
     }
 
     /**
      * Server was removed from match
      */
-    if (data.old.server_id && data.new.server_id === null) {
-      await this.stopServer(matchId, status);
+    if (data.old.server_id && data.old.server_id != data.new.server_id) {
+      await this.matchAssistant.stopOnDemandServer(matchId, data.old.server_id);
     }
 
     const { matches_by_pk: match } = await this.hasura.query({
@@ -165,10 +165,6 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (!match?.server?.game_server_node_id) {
-      await this.matchAssistant.stopOnDemandServer(matchId);
-    }
-
     if (match.status === "Live") {
       if (match.server) {
         if (!(await this.matchAssistant.isMatchServerAvailable(matchId))) {
@@ -186,26 +182,11 @@ export class MatchesController {
       }
     }
 
-    const matchServer = await this.matchAssistant.getMatchServer(matchId);
-
-    if (matchServer) {
+    if (match.server?.id) {
       await this.matchAssistant.sendServerMatchId(matchId);
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);
-  }
-
-  private async stopServer(matchId: string, status: e_match_status_enum) {
-    if (
-      status !== "Tie" &&
-      status !== "Forfeit" &&
-      status !== "Canceled" &&
-      status !== "Finished"
-    ) {
-      await this.matchAssistant.updateMatchStatus(matchId, "Scheduled");
-    }
-
-    await this.matchAssistant.stopMatch(matchId);
   }
 
   private async removeDiscordIntegration(matchId: string) {

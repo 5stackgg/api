@@ -110,6 +110,10 @@ export type cursor_ordering = 'ASC' | 'DESC'
 /** columns and relationships of "e_game_server_node_regions" */
 export interface e_game_server_node_regions {
     description: Scalars['String']
+    /** An array relationship */
+    game_server_nodes: game_server_nodes[]
+    /** An aggregate relationship */
+    game_server_nodes_aggregate: game_server_nodes_aggregate
     value: Scalars['String']
     __typename: 'e_game_server_node_regions'
 }
@@ -1218,6 +1222,14 @@ export interface game_server_nodes_mutation_response {
 
 /** select columns of table "game_server_nodes" */
 export type game_server_nodes_select_column = 'enabled' | 'end_port_range' | 'id' | 'public_ip' | 'region' | 'start_port_range' | 'status'
+
+
+/** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled'
+
+
+/** select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_server_nodes" */
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled'
 
 
 /** aggregate stddev on columns */
@@ -5353,9 +5365,9 @@ export interface query_root {
     e_veto_pick_types_aggregate: e_veto_pick_types_aggregate
     /** fetch data from the table: "e_veto_pick_types" using primary key columns */
     e_veto_pick_types_by_pk: (e_veto_pick_types | null)
-    /** fetch data from the table: "game_server_nodes" */
+    /** An array relationship */
     game_server_nodes: game_server_nodes[]
-    /** fetch aggregated fields from the table: "game_server_nodes" */
+    /** An aggregate relationship */
     game_server_nodes_aggregate: game_server_nodes_aggregate
     /** fetch data from the table: "game_server_nodes" using primary key columns */
     game_server_nodes_by_pk: (game_server_nodes | null)
@@ -5593,7 +5605,7 @@ export interface servers {
     host: Scalars['String']
     id: Scalars['uuid']
     /** A computed field, executes function "is_dedicated_server" */
-    is_dedicated: (Scalars['String'] | null)
+    is_dedicated: (Scalars['Boolean'] | null)
     label: Scalars['String']
     /** An array relationship */
     matches: matches[]
@@ -5658,8 +5670,6 @@ export interface servers_max_fields {
     game_server_node_id: (Scalars['String'] | null)
     host: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
-    /** A computed field, executes function "is_dedicated_server" */
-    is_dedicated: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
     port: (Scalars['Int'] | null)
@@ -5675,8 +5685,6 @@ export interface servers_min_fields {
     game_server_node_id: (Scalars['String'] | null)
     host: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
-    /** A computed field, executes function "is_dedicated_server" */
-    is_dedicated: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
     port: (Scalars['Int'] | null)
@@ -5903,9 +5911,9 @@ export interface subscription_root {
     e_veto_pick_types_by_pk: (e_veto_pick_types | null)
     /** fetch data from the table in a streaming manner: "e_veto_pick_types" */
     e_veto_pick_types_stream: e_veto_pick_types[]
-    /** fetch data from the table: "game_server_nodes" */
+    /** An array relationship */
     game_server_nodes: game_server_nodes[]
-    /** fetch aggregated fields from the table: "game_server_nodes" */
+    /** An aggregate relationship */
     game_server_nodes_aggregate: game_server_nodes_aggregate
     /** fetch data from the table: "game_server_nodes" using primary key columns */
     game_server_nodes_by_pk: (game_server_nodes | null)
@@ -8948,6 +8956,30 @@ export interface bytea_comparison_exp {_eq?: (Scalars['bytea'] | null),_gt?: (Sc
 /** columns and relationships of "e_game_server_node_regions" */
 export interface e_game_server_node_regionsGenqlSelection{
     description?: boolean | number
+    /** An array relationship */
+    game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    /** An aggregate relationship */
+    game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
     value?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -8974,7 +9006,7 @@ export interface e_game_server_node_regions_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "e_game_server_node_regions". All fields are combined with a logical 'AND'. */
-export interface e_game_server_node_regions_bool_exp {_and?: (e_game_server_node_regions_bool_exp[] | null),_not?: (e_game_server_node_regions_bool_exp | null),_or?: (e_game_server_node_regions_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+export interface e_game_server_node_regions_bool_exp {_and?: (e_game_server_node_regions_bool_exp[] | null),_not?: (e_game_server_node_regions_bool_exp | null),_or?: (e_game_server_node_regions_bool_exp[] | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
 
 
 /** Boolean expression to compare columns of type "e_game_server_node_regions_enum". All fields are combined with logical 'AND'. */
@@ -8982,7 +9014,7 @@ export interface e_game_server_node_regions_enum_comparison_exp {_eq?: (e_game_s
 
 
 /** input type for inserting data into table "e_game_server_node_regions" */
-export interface e_game_server_node_regions_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+export interface e_game_server_node_regions_insert_input {description?: (Scalars['String'] | null),game_server_nodes?: (game_server_nodes_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -9025,7 +9057,7 @@ export interface e_game_server_node_regions_on_conflict {constraint: e_game_serv
 
 
 /** Ordering options when selecting data from "e_game_server_node_regions". */
-export interface e_game_server_node_regions_order_by {description?: (order_by | null),value?: (order_by | null)}
+export interface e_game_server_node_regions_order_by {description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),value?: (order_by | null)}
 
 
 /** primary key columns input for table: e_game_server_node_regions */
@@ -10882,6 +10914,14 @@ export interface game_server_nodes_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface game_server_nodes_aggregate_bool_exp {bool_and?: (game_server_nodes_aggregate_bool_exp_bool_and | null),bool_or?: (game_server_nodes_aggregate_bool_exp_bool_or | null),count?: (game_server_nodes_aggregate_bool_exp_count | null)}
+
+export interface game_server_nodes_aggregate_bool_exp_bool_and {arguments: game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (game_server_nodes_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface game_server_nodes_aggregate_bool_exp_bool_or {arguments: game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (game_server_nodes_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface game_server_nodes_aggregate_bool_exp_count {arguments?: (game_server_nodes_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (game_server_nodes_bool_exp | null),predicate: Int_comparison_exp}
+
 
 /** aggregate fields of "game_server_nodes" */
 export interface game_server_nodes_aggregate_fieldsGenqlSelection{
@@ -10901,6 +10941,16 @@ export interface game_server_nodes_aggregate_fieldsGenqlSelection{
 }
 
 
+/** order by aggregate values of table "game_server_nodes" */
+export interface game_server_nodes_aggregate_order_by {avg?: (game_server_nodes_avg_order_by | null),count?: (order_by | null),max?: (game_server_nodes_max_order_by | null),min?: (game_server_nodes_min_order_by | null),stddev?: (game_server_nodes_stddev_order_by | null),stddev_pop?: (game_server_nodes_stddev_pop_order_by | null),stddev_samp?: (game_server_nodes_stddev_samp_order_by | null),sum?: (game_server_nodes_sum_order_by | null),var_pop?: (game_server_nodes_var_pop_order_by | null),var_samp?: (game_server_nodes_var_samp_order_by | null),variance?: (game_server_nodes_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "game_server_nodes" */
+export interface game_server_nodes_arr_rel_insert_input {data: game_server_nodes_insert_input[],
+/** upsert condition */
+on_conflict?: (game_server_nodes_on_conflict | null)}
+
+
 /** aggregate avg on columns */
 export interface game_server_nodes_avg_fieldsGenqlSelection{
     end_port_range?: boolean | number
@@ -10908,6 +10958,10 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by avg() on columns of table "game_server_nodes" */
+export interface game_server_nodes_avg_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
@@ -10932,6 +10986,10 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
 }
 
 
+/** order by max() on columns of table "game_server_nodes" */
+export interface game_server_nodes_max_order_by {end_port_range?: (order_by | null),id?: (order_by | null),start_port_range?: (order_by | null)}
+
+
 /** aggregate min on columns */
 export interface game_server_nodes_min_fieldsGenqlSelection{
     end_port_range?: boolean | number
@@ -10940,6 +10998,10 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by min() on columns of table "game_server_nodes" */
+export interface game_server_nodes_min_order_by {end_port_range?: (order_by | null),id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_nodes" */
@@ -10984,6 +11046,10 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
 }
 
 
+/** order by stddev() on columns of table "game_server_nodes" */
+export interface game_server_nodes_stddev_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
+
+
 /** aggregate stddev_pop on columns */
 export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
     end_port_range?: boolean | number
@@ -10993,6 +11059,10 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
 }
 
 
+/** order by stddev_pop() on columns of table "game_server_nodes" */
+export interface game_server_nodes_stddev_pop_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
+
+
 /** aggregate stddev_samp on columns */
 export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
     end_port_range?: boolean | number
@@ -11000,6 +11070,10 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by stddev_samp() on columns of table "game_server_nodes" */
+export interface game_server_nodes_stddev_samp_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Streaming cursor of the table "game_server_nodes" */
@@ -11022,6 +11096,10 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
     __scalar?: boolean | number
 }
 
+
+/** order by sum() on columns of table "game_server_nodes" */
+export interface game_server_nodes_sum_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
+
 export interface game_server_nodes_updates {
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (game_server_nodes_inc_input | null),
@@ -11040,6 +11118,10 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
 }
 
 
+/** order by var_pop() on columns of table "game_server_nodes" */
+export interface game_server_nodes_var_pop_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
+
+
 /** aggregate var_samp on columns */
 export interface game_server_nodes_var_samp_fieldsGenqlSelection{
     end_port_range?: boolean | number
@@ -11049,6 +11131,10 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
 }
 
 
+/** order by var_samp() on columns of table "game_server_nodes" */
+export interface game_server_nodes_var_samp_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
+
+
 /** aggregate variance on columns */
 export interface game_server_nodes_variance_fieldsGenqlSelection{
     end_port_range?: boolean | number
@@ -11056,6 +11142,10 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by variance() on columns of table "game_server_nodes" */
+export interface game_server_nodes_variance_order_by {end_port_range?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Boolean expression to compare columns of type "inet". All fields are combined with logical 'AND'. */
@@ -19154,7 +19244,7 @@ export interface query_rootGenqlSelection{
     where?: (e_veto_pick_types_bool_exp | null)} })
     /** fetch data from the table: "e_veto_pick_types" using primary key columns */
     e_veto_pick_types_by_pk?: (e_veto_pick_typesGenqlSelection & { __args: {value: Scalars['String']} })
-    /** fetch data from the table: "game_server_nodes" */
+    /** An array relationship */
     game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (game_server_nodes_select_column[] | null), 
@@ -19166,7 +19256,7 @@ export interface query_rootGenqlSelection{
     order_by?: (game_server_nodes_order_by[] | null), 
     /** filter the rows returned */
     where?: (game_server_nodes_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "game_server_nodes" */
+    /** An aggregate relationship */
     game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (game_server_nodes_select_column[] | null), 
@@ -20317,7 +20407,7 @@ export interface servers_avg_order_by {owner_steam_id?: (order_by | null),port?:
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (String_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tournament_servers?: (tournament_servers_bool_exp | null),tournament_servers_aggregate?: (tournament_servers_aggregate_bool_exp | null),tv_port?: (Int_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tournament_servers?: (tournament_servers_bool_exp | null),tournament_servers_aggregate?: (tournament_servers_aggregate_bool_exp | null),tv_port?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
@@ -20334,8 +20424,6 @@ export interface servers_max_fieldsGenqlSelection{
     game_server_node_id?: boolean | number
     host?: boolean | number
     id?: boolean | number
-    /** A computed field, executes function "is_dedicated_server" */
-    is_dedicated?: boolean | number
     label?: boolean | number
     owner_steam_id?: boolean | number
     port?: boolean | number
@@ -20356,8 +20444,6 @@ export interface servers_min_fieldsGenqlSelection{
     game_server_node_id?: boolean | number
     host?: boolean | number
     id?: boolean | number
-    /** A computed field, executes function "is_dedicated_server" */
-    is_dedicated?: boolean | number
     label?: boolean | number
     owner_steam_id?: boolean | number
     port?: boolean | number
@@ -21067,7 +21153,7 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_veto_pick_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_veto_pick_types_bool_exp | null)} })
-    /** fetch data from the table: "game_server_nodes" */
+    /** An array relationship */
     game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (game_server_nodes_select_column[] | null), 
@@ -21079,7 +21165,7 @@ export interface subscription_rootGenqlSelection{
     order_by?: (game_server_nodes_order_by[] | null), 
     /** filter the rows returned */
     where?: (game_server_nodes_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "game_server_nodes" */
+    /** An aggregate relationship */
     game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (game_server_nodes_select_column[] | null), 
@@ -31908,6 +31994,14 @@ export const enumGameServerNodesSelectColumn = {
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
    status: 'status' as const
+}
+
+export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolAndArgumentsColumns = {
+   enabled: 'enabled' as const
+}
+
+export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolOrArgumentsColumns = {
+   enabled: 'enabled' as const
 }
 
 export const enumGameServerNodesUpdateColumn = {

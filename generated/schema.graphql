@@ -316,6 +316,42 @@ columns and relationships of "e_game_server_node_regions"
 """
 type e_game_server_node_regions {
   description: String!
+
+  """An array relationship"""
+  game_server_nodes(
+    """distinct select on columns"""
+    distinct_on: [game_server_nodes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_nodes_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_nodes_bool_exp
+  ): [game_server_nodes!]!
+
+  """An aggregate relationship"""
+  game_server_nodes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_server_nodes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_nodes_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_nodes_bool_exp
+  ): game_server_nodes_aggregate!
   value: String!
 }
 
@@ -344,6 +380,8 @@ input e_game_server_node_regions_bool_exp {
   _not: e_game_server_node_regions_bool_exp
   _or: [e_game_server_node_regions_bool_exp!]
   description: String_comparison_exp
+  game_server_nodes: game_server_nodes_bool_exp
+  game_server_nodes_aggregate: game_server_nodes_aggregate_bool_exp
   value: String_comparison_exp
 }
 
@@ -405,6 +443,7 @@ input type for inserting data into table "e_game_server_node_regions"
 """
 input e_game_server_node_regions_insert_input {
   description: String
+  game_server_nodes: game_server_nodes_arr_rel_insert_input
   value: String
 }
 
@@ -455,6 +494,7 @@ Ordering options when selecting data from "e_game_server_node_regions".
 """
 input e_game_server_node_regions_order_by {
   description: order_by
+  game_server_nodes_aggregate: game_server_nodes_aggregate_order_by
   value: order_by
 }
 
@@ -3644,6 +3684,33 @@ type game_server_nodes_aggregate {
   nodes: [game_server_nodes!]!
 }
 
+input game_server_nodes_aggregate_bool_exp {
+  bool_and: game_server_nodes_aggregate_bool_exp_bool_and
+  bool_or: game_server_nodes_aggregate_bool_exp_bool_or
+  count: game_server_nodes_aggregate_bool_exp_count
+}
+
+input game_server_nodes_aggregate_bool_exp_bool_and {
+  arguments: game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: game_server_nodes_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_server_nodes_aggregate_bool_exp_bool_or {
+  arguments: game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: game_server_nodes_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_server_nodes_aggregate_bool_exp_count {
+  arguments: [game_server_nodes_select_column!]
+  distinct: Boolean
+  filter: game_server_nodes_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "game_server_nodes"
 """
@@ -3661,10 +3728,45 @@ type game_server_nodes_aggregate_fields {
   variance: game_server_nodes_variance_fields
 }
 
+"""
+order by aggregate values of table "game_server_nodes"
+"""
+input game_server_nodes_aggregate_order_by {
+  avg: game_server_nodes_avg_order_by
+  count: order_by
+  max: game_server_nodes_max_order_by
+  min: game_server_nodes_min_order_by
+  stddev: game_server_nodes_stddev_order_by
+  stddev_pop: game_server_nodes_stddev_pop_order_by
+  stddev_samp: game_server_nodes_stddev_samp_order_by
+  sum: game_server_nodes_sum_order_by
+  var_pop: game_server_nodes_var_pop_order_by
+  var_samp: game_server_nodes_var_samp_order_by
+  variance: game_server_nodes_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "game_server_nodes"
+"""
+input game_server_nodes_arr_rel_insert_input {
+  data: [game_server_nodes_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: game_server_nodes_on_conflict
+}
+
 """aggregate avg on columns"""
 type game_server_nodes_avg_fields {
   end_port_range: Float
   start_port_range: Float
+}
+
+"""
+order by avg() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_avg_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
 }
 
 """
@@ -3728,11 +3830,29 @@ type game_server_nodes_max_fields {
   start_port_range: Int
 }
 
+"""
+order by max() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_max_order_by {
+  end_port_range: order_by
+  id: order_by
+  start_port_range: order_by
+}
+
 """aggregate min on columns"""
 type game_server_nodes_min_fields {
   end_port_range: Int
   id: String
   start_port_range: Int
+}
+
+"""
+order by min() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_min_order_by {
+  end_port_range: order_by
+  id: order_by
+  start_port_range: order_by
 }
 
 """
@@ -3811,6 +3931,22 @@ enum game_server_nodes_select_column {
 }
 
 """
+select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes"
+"""
+enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  enabled
+}
+
+"""
+select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_server_nodes"
+"""
+enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  enabled
+}
+
+"""
 input type for updating data in table "game_server_nodes"
 """
 input game_server_nodes_set_input {
@@ -3829,16 +3965,40 @@ type game_server_nodes_stddev_fields {
   start_port_range: Float
 }
 
+"""
+order by stddev() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_stddev_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type game_server_nodes_stddev_pop_fields {
   end_port_range: Float
   start_port_range: Float
 }
 
+"""
+order by stddev_pop() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_stddev_pop_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type game_server_nodes_stddev_samp_fields {
   end_port_range: Float
   start_port_range: Float
+}
+
+"""
+order by stddev_samp() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_stddev_samp_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
 }
 
 """
@@ -3867,6 +4027,14 @@ input game_server_nodes_stream_cursor_value_input {
 type game_server_nodes_sum_fields {
   end_port_range: Int
   start_port_range: Int
+}
+
+"""
+order by sum() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_sum_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
 }
 
 """
@@ -3912,16 +4080,40 @@ type game_server_nodes_var_pop_fields {
   start_port_range: Float
 }
 
+"""
+order by var_pop() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_var_pop_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
+}
+
 """aggregate var_samp on columns"""
 type game_server_nodes_var_samp_fields {
   end_port_range: Float
   start_port_range: Float
 }
 
+"""
+order by var_samp() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_var_samp_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
+}
+
 """aggregate variance on columns"""
 type game_server_nodes_variance_fields {
   end_port_range: Float
   start_port_range: Float
+}
+
+"""
+order by variance() on columns of table "game_server_nodes"
+"""
+input game_server_nodes_variance_order_by {
+  end_port_range: order_by
+  start_port_range: order_by
 }
 
 scalar inet
@@ -18983,9 +19175,7 @@ type query_root {
   """
   e_veto_pick_types_by_pk(value: String!): e_veto_pick_types
 
-  """
-  fetch data from the table: "game_server_nodes"
-  """
+  """An array relationship"""
   game_server_nodes(
     """distinct select on columns"""
     distinct_on: [game_server_nodes_select_column!]
@@ -19003,9 +19193,7 @@ type query_root {
     where: game_server_nodes_bool_exp
   ): [game_server_nodes!]!
 
-  """
-  fetch aggregated fields from the table: "game_server_nodes"
-  """
+  """An aggregate relationship"""
   game_server_nodes_aggregate(
     """distinct select on columns"""
     distinct_on: [game_server_nodes_select_column!]
@@ -20649,7 +20837,7 @@ type servers {
   """
   A computed field, executes function "is_dedicated_server"
   """
-  is_dedicated: String
+  is_dedicated: Boolean
   label: String!
 
   """An array relationship"""
@@ -20842,7 +21030,7 @@ input servers_bool_exp {
   game_server_node_id: String_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
-  is_dedicated: String_comparison_exp
+  is_dedicated: Boolean_comparison_exp
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
@@ -20908,11 +21096,6 @@ type servers_max_fields {
   game_server_node_id: String
   host: String
   id: uuid
-
-  """
-  A computed field, executes function "is_dedicated_server"
-  """
-  is_dedicated: String
   label: String
   owner_steam_id: bigint
   port: Int
@@ -20941,11 +21124,6 @@ type servers_min_fields {
   game_server_node_id: String
   host: String
   id: uuid
-
-  """
-  A computed field, executes function "is_dedicated_server"
-  """
-  is_dedicated: String
   label: String
   owner_steam_id: bigint
   port: Int
@@ -22213,9 +22391,7 @@ type subscription_root {
     where: e_veto_pick_types_bool_exp
   ): [e_veto_pick_types!]!
 
-  """
-  fetch data from the table: "game_server_nodes"
-  """
+  """An array relationship"""
   game_server_nodes(
     """distinct select on columns"""
     distinct_on: [game_server_nodes_select_column!]
@@ -22233,9 +22409,7 @@ type subscription_root {
     where: game_server_nodes_bool_exp
   ): [game_server_nodes!]!
 
-  """
-  fetch aggregated fields from the table: "game_server_nodes"
-  """
+  """An aggregate relationship"""
   game_server_nodes_aggregate(
     """distinct select on columns"""
     distinct_on: [game_server_nodes_select_column!]
