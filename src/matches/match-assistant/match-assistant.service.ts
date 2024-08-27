@@ -647,7 +647,7 @@ export class MatchAssistantService {
             },
           },
         },
-        veto_picks: {
+        map_veto_picks: {
           __args: {
             where: {
               _or: [
@@ -674,7 +674,7 @@ export class MatchAssistantService {
     }
 
     return matches_by_pk.options.map_pool.maps.filter((map) => {
-      return !matches_by_pk.veto_picks.find((veto) => {
+      return !matches_by_pk.map_veto_picks.find((veto) => {
         return veto.map_id === map.id;
       });
     });

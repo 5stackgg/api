@@ -300,7 +300,7 @@ export class DiscordBotOverviewService {
             },
           },
         },
-        veto_picks: {
+        map_veto_picks: {
           type: true,
           map: {
             name: true,
