@@ -141,19 +141,13 @@ export class MatchAssistantService {
         __args: {
           id: matchId,
         },
-        id: true,
         server: {
           id: true,
-          host: true,
-          port: true,
-          is_dedicated: true,
-          rcon_password: true,
-          game_server_node_id: true,
         },
       },
     });
 
-    return matches_by_pk?.server || undefined;
+    return matches_by_pk.server;
   }
 
   public async isDedicatedServerAvailable(matchId: string): Promise<boolean> {
@@ -497,6 +491,12 @@ export class MatchAssistantService {
   }
 
   public async isOnDemandServerRunning(matchId: string) {
+    const server = await this.getMatchServer(matchId);
+
+    if (!server) {
+      return;
+    }
+
     try {
       const kc = new KubeConfig();
       kc.loadFromDefault();
@@ -562,19 +562,9 @@ export class MatchAssistantService {
     );
   }
 
-  public async stopMatch(matchId: string) {
-    const server = await this.getMatchServer(matchId);
-
-    if (!server) {
-      return;
-    }
-
-    await this.serverAuth.removeServer(server.id);
-    await this.stopOnDemandServer(matchId, server.id);
-  }
-
   public async stopOnDemandServer(matchId: string, serverId: string) {
     this.logger.debug(`[${matchId}] stopping match server`);
+    await this.serverAuth.removeServer(serverId);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 

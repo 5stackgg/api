@@ -25,12 +25,6 @@ export class CheckOnDemandServerJob extends WorkerHost {
   ): Promise<void> {
     const { matchId } = job.data;
 
-    const server = await this.matchAssistant.getMatchServer(matchId);
-
-    if (!server) {
-      return;
-    }
-
     if (!(await this.matchAssistant.isOnDemandServerRunning(matchId))) {
       throw Error("on demand server is not running");
     }

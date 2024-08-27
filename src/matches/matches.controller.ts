@@ -137,7 +137,10 @@ export class MatchesController {
       status === "Finished"
     ) {
       await this.removeDiscordIntegration(matchId);
-      await this.matchAssistant.stopMatch(matchId);
+      await this.matchAssistant.stopOnDemandServer(
+        matchId,
+        data.new.server_id || data.old.server_id,
+      );
       return;
     }
 
@@ -346,24 +349,9 @@ export class MatchesController {
       );
     }
 
-    const { update_matches_by_pk: match } = await this.hasura.mutation({
-      update_matches_by_pk: {
-        __args: {
-          pk_columns: {
-            id: match_id,
-          },
-          _set: {
-            status: "Canceled",
-          },
-        },
-        id: true,
-        status: true,
-      },
-    });
+    const server = await this.matchAssistant.getMatchServer(match_id);
 
-    if (!match || match.status !== "Canceled") {
-      throw Error("Unable to cancel match");
-    }
+    await this.matchAssistant.stopOnDemandServer(match_id, server.id);
 
     return {
       success: true,
