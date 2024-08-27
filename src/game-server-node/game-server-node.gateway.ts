@@ -28,10 +28,6 @@ export class GameServerNodeGateway {
       labels: Record<string, string>;
     },
   ): Promise<void> {
-    const [start_port_range, end_port_range] = payload.labels?.[
-      "5stack-ports"
-    ]?.split("_") || [,];
-
     if (!payload.labels["5stack-id"]) {
       await this.gameServerNodeService.updateIdLabel(payload.node);
     }
