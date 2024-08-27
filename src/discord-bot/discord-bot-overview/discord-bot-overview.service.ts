@@ -172,12 +172,12 @@ export class DiscordBotOverviewService {
     }
     embeds.push(details);
 
-    if (match.veto_picks.length > 0) {
+    if (match.map_veto_picks.length > 0) {
       embeds.push({
         fields: [
           {
             name: `__Veto Picks__`,
-            value: match.veto_picks
+            value: match.map_veto_picks
               .map((pick) => {
                 const lineup =
                   pick.match_lineup_id === lineup_1.id ? lineup_1 : lineup_2;
