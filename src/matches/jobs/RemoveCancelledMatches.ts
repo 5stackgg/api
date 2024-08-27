@@ -39,9 +39,18 @@ export class RemoveCancelledMatches extends WorkerHost {
               {
                 _or: [
                   {
-                    scheduled_at: {
-                      _is_null: true,
-                    },
+                    _and: [
+                      {
+                        scheduled_at: {
+                          _is_null: true,
+                        },
+                      },
+                      {
+                        created_at: {
+                          _lte: yesterday,
+                        },
+                      },
+                    ],
                   },
                   {
                     _and: [
@@ -52,15 +61,10 @@ export class RemoveCancelledMatches extends WorkerHost {
                       },
                       {
                         cancels_at: {
-                          _gte: yesterday,
+                          _lte: yesterday,
                         },
                       },
                     ],
-                  },
-                  {
-                    created_at: {
-                      _gte: yesterday,
-                    },
                   },
                 ],
               },
@@ -122,7 +126,9 @@ export class RemoveCancelledMatches extends WorkerHost {
       });
     }
 
-    this.logger.log(`removed  ${matches.length} canceled matches`);
+    if (matches.length > 0) {
+      this.logger.log(`removed ${matches.length} canceled matches`);
+    }
 
     return matches.length;
   }

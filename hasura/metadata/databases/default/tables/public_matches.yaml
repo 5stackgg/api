@@ -5,6 +5,9 @@ object_relationships:
   - name: e_match_status
     using:
       foreign_key_constraint_on: status
+  - name: e_region
+    using:
+      foreign_key_constraint_on: region
   - name: lineup_1
     using:
       foreign_key_constraint_on: lineup_1_id
@@ -42,6 +45,13 @@ array_relationships:
         column: match_id
         table:
           name: match_map_demos
+          schema: public
+  - name: map_veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_map_veto_picks
           schema: public
   - name: match_maps
     using:
@@ -99,19 +109,19 @@ array_relationships:
         table:
           name: player_utility
           schema: public
+  - name: region_veto_picks
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_region_veto_picks
+          schema: public
   - name: tournament_brackets
     using:
       foreign_key_constraint_on:
         column: match_id
         table:
           name: tournament_brackets
-          schema: public
-  - name: veto_picks
-    using:
-      foreign_key_constraint_on:
-        column: match_id
-        table:
-          name: match_map_veto_picks
           schema: public
 computed_fields:
   - name: can_assign_server

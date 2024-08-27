@@ -13,8 +13,6 @@ export class CancelNonReadyMatches extends WorkerHost {
     super();
   }
   async process(): Promise<number> {
-    this.logger.log(`CancelNonReadyMatches`);
-
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
         __args: {
@@ -32,7 +30,7 @@ export class CancelNonReadyMatches extends WorkerHost {
               },
               {
                 cancels_at: {
-                  _gte: new Date(),
+                  _lte: new Date(),
                 },
               },
             ],

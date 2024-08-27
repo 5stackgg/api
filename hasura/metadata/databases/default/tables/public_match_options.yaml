@@ -39,6 +39,7 @@ insert_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - region_veto
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -57,6 +58,7 @@ select_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - region_veto
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -75,6 +77,7 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - region_veto
         - tech_timeout_setting
         - timeout_setting
         - tv_delay

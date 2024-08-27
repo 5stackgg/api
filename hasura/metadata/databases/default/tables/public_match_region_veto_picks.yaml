@@ -30,10 +30,11 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - region
-        - type
         - created_at
         - id
         - match_id
+        - match_lineup_id
+        - region
+        - type
       filter: {}
     comment: ""

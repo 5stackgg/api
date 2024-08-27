@@ -35,4 +35,4 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS tbiu_match_map_veto_picks ON public.match_map_veto_picks;
-CREATE TRIGGER tbiu_match_map_veto_picks BEFORE UPDATE ON public.match_map_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbiu_match_map_veto_picks();
+CREATE TRIGGER tbiu_match_map_veto_picks BEFORE INSERT OR UPDATE ON public.match_map_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbiu_match_map_veto_picks();

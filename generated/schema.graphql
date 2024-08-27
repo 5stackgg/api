@@ -8218,6 +8218,7 @@ type match_options {
   mr: Int!
   number_of_substitutes: Int!
   overtime: Boolean!
+  region_veto: Boolean!
   tech_timeout_setting: e_timeout_settings_enum!
   timeout_setting: e_timeout_settings_enum!
 
@@ -8280,6 +8281,7 @@ input match_options_bool_exp {
   mr: Int_comparison_exp
   number_of_substitutes: Int_comparison_exp
   overtime: Boolean_comparison_exp
+  region_veto: Boolean_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
@@ -8322,6 +8324,7 @@ input match_options_insert_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
@@ -8393,6 +8396,7 @@ input match_options_order_by {
   mr: order_by
   number_of_substitutes: order_by
   overtime: order_by
+  region_veto: order_by
   tech_timeout_setting: order_by
   timeout_setting: order_by
   tournament: tournaments_order_by
@@ -8437,6 +8441,9 @@ enum match_options_select_column {
   overtime
 
   """column name"""
+  region_veto
+
+  """column name"""
   tech_timeout_setting
 
   """column name"""
@@ -8462,6 +8469,7 @@ input match_options_set_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -8514,6 +8522,7 @@ input match_options_stream_cursor_value_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -8558,6 +8567,9 @@ enum match_options_update_column {
 
   """column name"""
   overtime
+
+  """column name"""
+  region_veto
 
   """column name"""
   tech_timeout_setting
@@ -8865,7 +8877,7 @@ type matches {
   """
   A computed field, executes function "get_match_connection_string"
   """
-  connection_string: Boolean
+  connection_string: String
   created_at: timestamptz!
 
   """
@@ -9496,7 +9508,7 @@ input matches_bool_exp {
   can_start: Boolean_comparison_exp
   cancels_at: timestamptz_comparison_exp
   connection_link: String_comparison_exp
-  connection_string: Boolean_comparison_exp
+  connection_string: String_comparison_exp
   created_at: timestamptz_comparison_exp
   current_match_map_id: uuid_comparison_exp
   demos: match_map_demos_bool_exp
@@ -9638,6 +9650,11 @@ type matches_max_fields {
   A computed field, executes function "get_match_connection_link"
   """
   connection_link: String
+
+  """
+  A computed field, executes function "get_match_connection_string"
+  """
+  connection_string: String
   created_at: timestamptz
 
   """
@@ -9729,6 +9746,11 @@ type matches_min_fields {
   A computed field, executes function "get_match_connection_link"
   """
   connection_link: String
+
+  """
+  A computed field, executes function "get_match_connection_string"
+  """
+  connection_string: String
   created_at: timestamptz
 
   """

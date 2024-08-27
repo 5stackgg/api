@@ -31,7 +31,7 @@ export class ForfeitNonReadyTournamentMatches extends WorkerHost {
               },
               {
                 cancels_at: {
-                  _gte: new Date(),
+                  _lte: new Date(),
                 },
               },
             ],

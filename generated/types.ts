@@ -11346,6 +11346,9 @@ export default {
             "overtime": [
                 0
             ],
+            "region_veto": [
+                0
+            ],
             "tech_timeout_setting": [
                 245
             ],
@@ -11489,6 +11492,9 @@ export default {
             "overtime": [
                 1
             ],
+            "region_veto": [
+                1
+            ],
             "tech_timeout_setting": [
                 246
             ],
@@ -11558,6 +11564,9 @@ export default {
                 3
             ],
             "overtime": [
+                0
+            ],
+            "region_veto": [
                 0
             ],
             "tech_timeout_setting": [
@@ -11698,6 +11707,9 @@ export default {
             "overtime": [
                 784
             ],
+            "region_veto": [
+                784
+            ],
             "tech_timeout_setting": [
                 784
             ],
@@ -11752,6 +11764,9 @@ export default {
                 3
             ],
             "overtime": [
+                0
+            ],
+            "region_veto": [
                 0
             ],
             "tech_timeout_setting": [
@@ -11858,6 +11873,9 @@ export default {
                 3
             ],
             "overtime": [
+                0
+            ],
+            "region_veto": [
                 0
             ],
             "tech_timeout_setting": [
@@ -12279,7 +12297,7 @@ export default {
                 7
             ],
             "connection_string": [
-                0
+                7
             ],
             "created_at": [
                 1282
@@ -13085,7 +13103,7 @@ export default {
                 8
             ],
             "connection_string": [
-                1
+                8
             ],
             "created_at": [
                 1283
@@ -13382,6 +13400,9 @@ export default {
             "connection_link": [
                 7
             ],
+            "connection_string": [
+                7
+            ],
             "created_at": [
                 1282
             ],
@@ -13492,6 +13513,9 @@ export default {
                 1282
             ],
             "connection_link": [
+                7
+            ],
+            "connection_string": [
                 7
             ],
             "created_at": [

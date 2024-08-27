@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION public.tbi_match() RETURNS TRIGGER
 DECLARE
     _lineup_1_id UUID;
     _lineup_2_id UUID;
+    available_regions text[];
 BEGIN
     IF NEW.lineup_1_id IS NULL THEN
         INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
@@ -13,6 +14,14 @@ BEGIN
     IF NEW.lineup_2_id IS NULL THEN
        INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
        NEW.lineup_2_id = _lineup_2_id;
+    END IF;
+
+    select array_agg(gsr.value) INTO available_regions from e_game_server_node_regions gsr
+        INNER JOIN game_server_nodes gsn on gsn.region = gsr.value
+        where gsn.region != 'Lan';
+
+    IF array_length(available_regions, 1) = 1 THEN
+        NEW.region = available_regions[1];
     END IF;
 
 	RETURN NEW;
