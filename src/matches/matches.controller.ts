@@ -17,6 +17,7 @@ import {
   e_match_status_enum,
   match_map_veto_picks_set_input,
   matches_set_input,
+  servers_set_input,
 } from "../../generated";
 
 @Controller("matches")
@@ -167,7 +168,7 @@ export class MatchesController {
 
     if (match.status === "Live") {
       if (match.server) {
-        if (!(await this.matchAssistant.isMatchServerAvailable(matchId))) {
+        if (!(await this.matchAssistant.isDedicatedServerAvailable(matchId))) {
           this.logger.warn(
             `[${matchId}] another match is currently live, moving back to scheduled`,
           );
@@ -548,5 +549,78 @@ export class MatchesController {
     return {
       success: false,
     };
+  }
+
+  @HasuraEvent()
+  public async server_availability(
+    data: HasuraEventData<
+      Pick<
+        servers_set_input,
+        "id" | "reserved_by_match_id" | "game_server_node_id"
+      >
+    >,
+  ) {
+    if (data.new.reserved_by_match_id !== null) {
+      return;
+    }
+
+    const { servers_by_pk } = await this.hasura.query({
+      servers_by_pk: {
+        __args: {
+          id: data.new.id,
+        },
+        reserved_by_match_id: true,
+        game_server_node: {
+          region: true,
+        },
+      },
+    });
+
+    if (servers_by_pk.reserved_by_match_id) {
+      return;
+    }
+
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: {
+              _eq: "WaitingForCheckIn",
+            },
+            _or: [
+              {
+                region: {
+                  _is_null: true,
+                },
+              },
+              {
+                region: {
+                  _eq: servers_by_pk.game_server_node.region,
+                },
+              },
+            ],
+          },
+          limit: 1,
+          order_by: [
+            {
+              created_at: "asc",
+            },
+          ],
+        },
+        id: true,
+      },
+    });
+
+    const match = matches.at(0);
+
+    if (!match) {
+      return;
+    }
+
+    if (!(await this.matchAssistant.assignOnDemandServer(match.id))) {
+      return;
+    }
+
+    await this.discordMatchOverview.updateMatchOverview(match.id);
   }
 }

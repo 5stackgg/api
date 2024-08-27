@@ -156,7 +156,7 @@ export class MatchAssistantService {
     return matches_by_pk?.server || undefined;
   }
 
-  public async isMatchServerAvailable(matchId: string): Promise<boolean> {
+  public async isDedicatedServerAvailable(matchId: string): Promise<boolean> {
     const server = await this.getMatchServer(matchId);
 
     if (!server) {
@@ -212,24 +212,25 @@ export class MatchAssistantService {
 
   public async assignOnDemandServer(matchId: string): Promise<boolean> {
     this.logger.debug(`[${matchId}] assigning on demand server`);
-    return this.cache.lock("get-on-demand-server", async () => {
-      const { matches_by_pk: match } = await this.hasura.query({
-        matches_by_pk: {
-          __args: {
-            id: matchId,
-          },
-          region: true,
-          password: true,
-          server_id: true,
-        },
-      });
 
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        region: true,
+        password: true,
+        server_id: true,
+      },
+    });
+
+    if (!match) {
+      throw Error("unable to find match");
+    }
+
+    return this.cache.lock(`get-on-demand-server:${match.region}`, async () => {
       if (match.server_id) {
         await this.stopOnDemandServer(matchId, match.server_id);
-      }
-
-      if (!match) {
-        throw Error("unable to find match");
       }
 
       const kc = new KubeConfig();
@@ -282,13 +283,25 @@ export class MatchAssistantService {
 
       const server = servers.at(-1);
 
+      if (!server) {
+        await this.hasura.mutation({
+          update_matches_by_pk: {
+            __args: {
+              pk_columns: {
+                id: matchId,
+              },
+              _set: {
+                status: "WaitingForServer",
+              },
+            },
+            id: true,
+          },
+        });
+        return;
+      }
+
       try {
         this.logger.verbose(`[${matchId}] create job for on demand server`);
-
-        if (!server) {
-          // TODO
-          throw Error("no available servers");
-        }
 
         await batch.createNamespacedJob(this.namespace, {
           apiVersion: "batch/v1",

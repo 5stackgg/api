@@ -1285,8 +1285,11 @@ enum e_match_status_enum {
   """Veto"""
   Veto
 
-  """Waiting For Players to Check In"""
+  """Waiting for Players to Check In"""
   WaitingForCheckIn
+
+  """Waiting for a Server to Become Available."""
+  WaitingForServer
 }
 
 """

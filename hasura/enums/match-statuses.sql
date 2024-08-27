@@ -3,8 +3,9 @@ SET check_function_bodies = false;
 insert into e_match_status ("value", "description") values
     ('PickingPlayers', 'Picking Players'),
     ('Scheduled', 'Scheduled'),
-    ('WaitingForCheckIn', 'Waiting For Players to Check In'),
+    ('WaitingForCheckIn', 'Waiting for Players to Check In'),
     ('Veto', 'Veto'),
+    ('WaitingForServer', 'Waiting for a Server to Become Available.'),
     ('Live', 'Live'),
     ('Finished', 'Finished'),
     ('Canceled', 'Canceled'),

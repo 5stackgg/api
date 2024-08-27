@@ -6,7 +6,7 @@ DECLARE
     map_veto boolean;
     match_map_count int;
 BEGIN
-    IF (match.status != 'Live' AND match.status != 'Veto') OR match.server_id IS NULL THEN
+    IF (match.status != 'Live' AND match.status != 'Veto' AND match.status != 'WaitingForServer' ) OR match.server_id IS NULL THEN
         RETURN;
     END IF;
 
