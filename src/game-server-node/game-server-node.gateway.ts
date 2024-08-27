@@ -32,12 +32,14 @@ export class GameServerNodeGateway {
       "5stack-ports"
     ]?.split("_") || [,];
 
+    if (!payload.labels["5stack-id"]) {
+      await this.gameServerNodeService.updateIdLabel(payload.node);
+    }
+
     await this.gameServerNodeService.updateStatus(
       payload.node,
       payload.publicIP,
       "Online",
-      start_port_range && parseInt(start_port_range),
-      end_port_range && parseInt(end_port_range),
     );
 
     const jobId = `node:${payload.node}`;

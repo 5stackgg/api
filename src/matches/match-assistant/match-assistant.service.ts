@@ -263,6 +263,7 @@ export class MatchAssistantService {
             tv_port: true,
             api_password: true,
             rcon_password: true,
+            game_server_node_id: true,
           },
         });
 
@@ -289,6 +290,23 @@ export class MatchAssistantService {
               },
               spec: {
                 restartPolicy: "Never",
+                affinity: {
+                  nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                      nodeSelectorTerms: [
+                        {
+                          matchExpressions: [
+                            {
+                              key: "5stack-id",
+                              operator: "In",
+                              values: [server.game_server_node_id],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
                 containers: [
                   {
                     name: "server",
@@ -592,17 +610,13 @@ export class MatchAssistantService {
         },
       });
 
-      const server = await this.getMatchServer(matchId);
-
-      if (!server) {
-        return;
-      }
-
       await this.hasura.mutation({
-        update_servers_by_pk: {
+        update_servers: {
           __args: {
-            pk_columns: {
-              id: server.id,
+            where: {
+              reserved_by_match_id: {
+                _eq: matchId,
+              },
             },
             _set: {
               reserved_by_match_id: null,

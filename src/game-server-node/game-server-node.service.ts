@@ -36,8 +36,6 @@ export class GameServerNodeService {
     node: string,
     publicIP: string,
     status: e_game_server_node_statuses_enum,
-    start_port_range?: number,
-    end_port_range?: number,
   ) {
     const { update_game_server_nodes_by_pk: gameServerNode } =
       await this.hasura.mutation({
@@ -60,24 +58,9 @@ export class GameServerNodeService {
     if (!gameServerNode) {
       return await this.create(node, status);
     }
-
-    if (
-      gameServerNode.start_port_range !== start_port_range ||
-      gameServerNode.end_port_range !== end_port_range
-    ) {
-      await this.updatePorts(
-        node,
-        gameServerNode.start_port_range,
-        gameServerNode.end_port_range,
-      );
-    }
   }
 
-  public async updatePorts(
-    nodeName: string,
-    start_port_range: number,
-    end_port_range: number,
-  ) {
+  public async updateIdLabel(nodeId: string) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
@@ -85,10 +68,10 @@ export class GameServerNodeService {
 
     try {
       // Fetch the current node
-      const { body: node } = await core.readNode(nodeName);
+      const { body: node } = await core.readNode(nodeId);
 
       await core.patchNode(
-        nodeName,
+        nodeId,
         [
           {
             op: "replace",
@@ -96,8 +79,7 @@ export class GameServerNodeService {
             value: {
               ...node.metadata.labels,
               ...{
-                "5stack-ports": `${start_port_range}_${end_port_range}`,
-                // '5stack-services': ,
+                "5stack-id": `${nodeId}`,
               },
             },
           },
