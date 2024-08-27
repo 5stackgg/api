@@ -36,11 +36,11 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // if (process.env.RUN_MIGRATIONS) {
-  const hasura = app.get(HasuraService);
-  await hasura.setup();
-  // process.exit(0);
-  // }
+  if (process.env.RUN_MIGRATIONS) {
+    const hasura = app.get(HasuraService);
+    await hasura.setup();
+    process.exit(0);
+  }
 
   const configService = app.get(ConfigService);
 
