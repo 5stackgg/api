@@ -141,6 +141,21 @@ export class MatchesController {
         matchId,
         data.new.server_id || data.old.server_id,
       );
+
+      await this.hasura.mutation({
+        update_matches_by_pk: {
+          __args: {
+            pk_columns: {
+              id: data.new.id || data.old.id,
+            },
+            _set: {
+              server_id: null,
+            },
+          },
+          __typename: true,
+        },
+      });
+
       return;
     }
 
@@ -169,7 +184,7 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (match.status === "Live") {
+    if (match.status === "Live" && data.old.status !== "WaitingForServer") {
       if (match.server) {
         if (!(await this.matchAssistant.isDedicatedServerAvailable(matchId))) {
           this.logger.warn(
@@ -349,9 +364,19 @@ export class MatchesController {
       );
     }
 
-    const server = await this.matchAssistant.getMatchServer(match_id);
-
-    await this.matchAssistant.stopOnDemandServer(match_id, server.id);
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: {
+            id: match_id,
+          },
+          _set: {
+            status: "Canceled",
+          },
+        },
+        __typename: true,
+      },
+    });
 
     return {
       success: true,
@@ -573,7 +598,7 @@ export class MatchesController {
         __args: {
           where: {
             status: {
-              _eq: "WaitingForCheckIn",
+              _eq: "WaitingForServer",
             },
             _or: [
               {
@@ -609,6 +634,18 @@ export class MatchesController {
       return;
     }
 
-    await this.discordMatchOverview.updateMatchOverview(match.id);
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: {
+            id: match.id,
+          },
+          _set: {
+            status: "Live",
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 }

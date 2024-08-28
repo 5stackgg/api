@@ -191,7 +191,13 @@ event_triggers:
       insert:
         columns: '*'
       update:
-        columns: '*'
+        columns:
+          - steam_id
+          - name
+          - profile_url
+          - avatar_url
+          - discord_id
+          - role
     retry_conf:
       interval_sec: 10
       num_retries: 6

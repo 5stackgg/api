@@ -123,9 +123,7 @@ event_triggers:
         columns: '*'
       update:
         columns:
-          - id
           - reserved_by_match_id
-          - game_server_node_id
     retry_conf:
       interval_sec: 10
       num_retries: 0
