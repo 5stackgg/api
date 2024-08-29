@@ -4,7 +4,16 @@ CREATE OR REPLACE FUNCTION public.can_join_tournament(tournament public.tourname
 DECLARE
     on_roster boolean;
 BEGIN
-	IF tournament.status != 'Scheduled' THEN
+    IF hasura_session ->> 'x-hasura-role' = 'administrator' THEN
+        return true;
+    END IF;
+
+    IF hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
+        return true;
+    END IF;
+
+
+	IF tournament.status != 'RegistrationOpen' THEN
 		return false;
 	END IF;
     SELECT EXISTS (

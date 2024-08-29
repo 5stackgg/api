@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 insert into e_game_server_node_statuses ("value", "description") values
     ('Setup', 'Waiting to Setup'),
     ('Online', 'Online'),

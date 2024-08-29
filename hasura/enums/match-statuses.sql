@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 insert into e_match_status ("value", "description") values
     ('PickingPlayers', 'Picking Players'),
     ('Scheduled', 'Scheduled'),

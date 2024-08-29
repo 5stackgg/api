@@ -17,7 +17,7 @@ BEGIN
         inner join match_options mo on mo.id = t.match_options_id
         WHERE t.id = roster.tournament_id;
 
-    min_players := get_match_type_min_players(match_type);
+    min_players := get_match_type_min_players(tournament_type);
 
     IF roster_count < min_players THEN
     	UPDATE tournament_teams

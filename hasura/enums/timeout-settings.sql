@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 insert into e_timeout_settings ("value", "description") values
     ('CoachAndPlayers', 'Coach And Players'),
     ('Coach', 'Coach Only'),

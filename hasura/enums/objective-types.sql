@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 insert into e_objective_types ("value", "description") values
     ('Planted', 'Planted'),
     ('Defused', 'Defused'),

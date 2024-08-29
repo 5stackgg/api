@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 INSERT INTO e_game_server_node_regions ("value", "description") VALUES
     ('USEast', 'US - East'),
     ('USCentral', 'US - Central'),

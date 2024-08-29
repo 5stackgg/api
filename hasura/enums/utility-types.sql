@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 insert into e_utility_types ("value", "description") values
     ('Decoy', 'Decoy'),
     ('HighExplosive', 'HighExplosive'),

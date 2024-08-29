@@ -1,5 +1,3 @@
-SET check_function_bodies = false;
-
 insert into e_team_roles ("value", "description") values
     ('Pending', 'Invite Pending'),
     ('Member', 'Basic Membership'),
