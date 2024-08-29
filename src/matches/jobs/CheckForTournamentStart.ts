@@ -14,15 +14,15 @@ export class CheckForTournamentStart extends WorkerHost {
     super();
   }
   async process(job: Job): Promise<number> {
-    const fifteenMinutesAgo = new Date();
-    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+    const fifteenMinutesAhead = new Date();
+    fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
 
     const { update_tournaments } = await this.hasura.mutation({
       update_tournaments: {
         __args: {
           where: {
             start: {
-              _gte: fifteenMinutesAgo,
+              _lte: fifteenMinutesAhead,
             },
           },
           _set: {

@@ -19,8 +19,8 @@ export class CheckForScheduledMatches extends WorkerHost {
       matchId: string;
     }>,
   ): Promise<number> {
-    const fifteenMinutesAgo = new Date();
-    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+    const fifteenMinutesAhead = new Date();
+    fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
         __args: {
@@ -33,7 +33,7 @@ export class CheckForScheduledMatches extends WorkerHost {
               },
               {
                 scheduled_at: {
-                  _gte: fifteenMinutesAgo,
+                  _lte: fifteenMinutesAhead,
                 },
               },
               {

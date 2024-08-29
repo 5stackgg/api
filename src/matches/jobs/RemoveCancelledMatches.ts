@@ -61,7 +61,7 @@ export class RemoveCancelledMatches extends WorkerHost {
                       },
                       {
                         cancels_at: {
-                          _lte: yesterday,
+                          _gte: yesterday
                         },
                       },
                     ],
