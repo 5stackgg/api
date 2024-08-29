@@ -16,6 +16,17 @@ array_relationships:
         table:
           name: servers
           schema: public
+computed_fields:
+  - name: available_server_count
+    definition:
+      function:
+        name: available_node_server_count
+        schema: public
+  - name: total_server_count
+    definition:
+      function:
+        name: total_node_server_count
+        schema: public
 select_permissions:
   - role: administrator
     permission:
@@ -27,6 +38,9 @@ select_permissions:
         - region
         - start_port_range
         - status
+      computed_fields:
+        - available_server_count
+        - total_server_count
       filter: {}
       allow_aggregations: true
     comment: ""

@@ -10,33 +10,26 @@ array_relationships:
         table:
           name: game_server_nodes
           schema: public
+computed_fields:
+  - name: available_server_count
+    definition:
+      function:
+        name: available_region_server_count
+        schema: public
+  - name: total_server_count
+    definition:
+      function:
+        name: total_region_server_count
+        schema: public
 select_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - description
-        - value
-      filter: {}
-    comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - description
-        - value
-      filter: {}
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - description
-        - value
-      filter: {}
-    comment: ""
   - role: user
     permission:
       columns:
         - description
         - value
+      computed_fields:
+        - available_server_count
+        - total_server_count
       filter:
         value:
           _neq: Lan

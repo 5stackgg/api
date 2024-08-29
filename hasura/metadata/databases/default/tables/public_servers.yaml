@@ -53,27 +53,6 @@ insert_permissions:
         - tv_port
     comment: ""
 select_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - api_password
-        - enabled
-        - host
-        - id
-        - label
-        - port
-        - reserved_by_match_id
-        - tv_port
-      computed_fields:
-        - is_dedicated
-      filter:
-        _or:
-          - owner_steam_id:
-              _eq: X-Hasura-User-Id
-          - game_server_node_id:
-              _is_null: false
-      allow_aggregations: true
-    comment: ""
   - role: user
     permission:
       columns:

@@ -1,8 +1,8 @@
 - role_name: administrator
   role_set:
-    - tournament_organizer
     - match_organizer
     - user
+    - tournament_organizer
 - role_name: match_organizer
   role_set:
     - user
