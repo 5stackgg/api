@@ -24,5 +24,5 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/5stack-api:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/5stack-api:latest
+            ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/api:latest
