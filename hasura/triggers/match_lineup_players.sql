@@ -1,9 +1,17 @@
 CREATE OR REPLACE FUNCTION public.tbi_match_lineup_players() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    lineup_count INT;
 BEGIN
-    PERFORM check_match_lineup_players_count(NEW);
+    select check_match_lineup_players_count(NEW) into lineup_count;
+
+    IF lineup_count = 0 THEN
+        NEW.captain = true;
+    END IF;
+
     PERFORM check_match_lineup_players(NEW);
+
 	RETURN NEW;
 END;
 $$;

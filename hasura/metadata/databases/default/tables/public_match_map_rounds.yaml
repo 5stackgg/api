@@ -32,5 +32,6 @@ select_permissions:
         - match_map_id
         - round
         - time
+        - winning_side
       filter: {}
     comment: ""

@@ -52,6 +52,14 @@ BEGIN
       RAISE EXCEPTION 'Cannot cancel a match that is already finished' USING ERRCODE = '22000';
     END IF;
 
+    IF NEW.status = 'Live' THEN
+        NEW.started_at = NOW();
+    END IF;
+
+    IF NEW.status = 'Finished' THEN
+        NEW.finished_at = NOW();
+    END IF;
+
     PERFORM check_match_status(NEW);
     PERFORM check_match_player_count(NEW);
 	RETURN NEW;

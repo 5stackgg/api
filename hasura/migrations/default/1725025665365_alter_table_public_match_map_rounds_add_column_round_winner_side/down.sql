@@ -1,0 +1,1 @@
+alter table "public"."match_map_rounds" drop column "winning_side";

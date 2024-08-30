@@ -279,6 +279,7 @@ select_permissions:
     permission:
       columns:
         - created_at
+        - ended_at
         - id
         - label
         - lineup_1_id
@@ -288,6 +289,7 @@ select_permissions:
         - region
         - scheduled_at
         - server_id
+        - started_at
         - status
         - winning_lineup_id
       computed_fields:
