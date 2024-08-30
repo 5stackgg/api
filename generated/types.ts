@@ -29488,14 +29488,14 @@ export default {
             "can_open_registration": [
                 0
             ],
-            "can_schedule": [
-                0
-            ],
             "description": [
                 7
             ],
             "e_tournament_status": [
                 289
+            ],
+            "has_min_teams": [
+                0
             ],
             "id": [
                 1576
@@ -29918,14 +29918,14 @@ export default {
             "can_open_registration": [
                 1
             ],
-            "can_schedule": [
-                1
-            ],
             "description": [
                 8
             ],
             "e_tournament_status": [
                 292
+            ],
+            "has_min_teams": [
+                1
             ],
             "id": [
                 1577
@@ -30188,14 +30188,14 @@ export default {
             "can_open_registration": [
                 798
             ],
-            "can_schedule": [
-                798
-            ],
             "description": [
                 798
             ],
             "e_tournament_status": [
                 302
+            ],
+            "has_min_teams": [
+                798
             ],
             "id": [
                 798

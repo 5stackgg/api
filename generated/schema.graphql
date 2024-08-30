@@ -3201,9 +3201,6 @@ enum e_tournament_status_enum {
   """Registration Open"""
   RegistrationOpen
 
-  """Scheduled"""
-  Scheduled
-
   """Setup"""
   Setup
 }
@@ -29262,15 +29259,15 @@ type tournaments {
   A computed field, executes function "can_open_tournament_registration"
   """
   can_open_registration: Boolean
-
-  """
-  A computed field, executes function "can_schedule_tournament"
-  """
-  can_schedule: Boolean
   description: String
 
   """An object relationship"""
   e_tournament_status: e_tournament_status!
+
+  """
+  A computed field, executes function "tournament_has_min_teams"
+  """
+  has_min_teams: Boolean
   id: uuid!
 
   """
@@ -29554,9 +29551,9 @@ input tournaments_bool_exp {
   can_close_registration: Boolean_comparison_exp
   can_join: Boolean_comparison_exp
   can_open_registration: Boolean_comparison_exp
-  can_schedule: Boolean_comparison_exp
   description: String_comparison_exp
   e_tournament_status: e_tournament_status_bool_exp
+  has_min_teams: Boolean_comparison_exp
   id: uuid_comparison_exp
   is_organizer: Boolean_comparison_exp
   match_options_id: uuid_comparison_exp
@@ -29701,9 +29698,9 @@ input tournaments_order_by {
   can_close_registration: order_by
   can_join: order_by
   can_open_registration: order_by
-  can_schedule: order_by
   description: order_by
   e_tournament_status: e_tournament_status_order_by
+  has_min_teams: order_by
   id: order_by
   is_organizer: order_by
   match_options_id: order_by
