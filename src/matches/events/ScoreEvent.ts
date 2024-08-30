@@ -1,6 +1,5 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 import { e_sides_enum } from "../../../generated";
-import { RconService } from "../../rcon/rcon.service";
 
 export default class ScoreEvent extends MatchEventProcessor<{
   time: string;
@@ -14,6 +13,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
   lineup_2_timeouts_available: number;
   lineup_1_side: e_sides_enum;
   lineup_2_side: e_sides_enum;
+  winning_side: e_sides_enum;
 }> {
   public async process() {
     await this.hasura.mutation({
@@ -31,6 +31,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
             lineup_2_timeouts_available: this.data.lineup_2_timeouts_available,
             lineup_1_side: this.data.lineup_1_side,
             lineup_2_side: this.data.lineup_2_side,
+            winning_side: this.data.winning_side,
           },
           on_conflict: {
             constraint: "match_rounds_match_id_round_key",
@@ -43,6 +44,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
               "lineup_2_timeouts_available",
               "lineup_1_side",
               "lineup_2_side",
+              "winning_side",
             ],
           },
         },

@@ -190,9 +190,26 @@ export class MatchesController {
           this.logger.warn(
             `[${matchId}] another match is currently live, moving back to scheduled`,
           );
-          // TODO - should we make a state for waiting for server?
-          await this.matchAssistant.updateMatchStatus(match.id, "Scheduled");
+          await this.matchAssistant.updateMatchStatus(
+            match.id,
+            "WaitingForServer",
+          );
+          return;
         }
+
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: {
+                id: match.server.id,
+              },
+              _set: {
+                reserved_by_match_id: matchId,
+              },
+            },
+            __typename: true,
+          },
+        });
       } else {
         /**
          * if we don't have a server id it means we need to assign it one
