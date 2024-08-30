@@ -7764,8 +7764,16 @@ export interface tournament_teams_variance_fields {
 export interface tournaments {
     /** An object relationship */
     admin: players
+    /** A computed field, executes function "can_cancel_tournament" */
+    can_cancel: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_close_tournament_registration" */
+    can_close_registration: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_join_tournament" */
-    can_join_tournament: (Scalars['Boolean'] | null)
+    can_join: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_open_tournament_registration" */
+    can_open_registration: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_schedule_tournament" */
+    can_schedule: (Scalars['Boolean'] | null)
     description: (Scalars['String'] | null)
     /** An object relationship */
     e_tournament_status: e_tournament_status
@@ -25556,8 +25564,16 @@ export interface tournament_teams_variance_order_by {owner_steam_id?: (order_by 
 export interface tournamentsGenqlSelection{
     /** An object relationship */
     admin?: playersGenqlSelection
+    /** A computed field, executes function "can_cancel_tournament" */
+    can_cancel?: boolean | number
+    /** A computed field, executes function "can_close_tournament_registration" */
+    can_close_registration?: boolean | number
     /** A computed field, executes function "can_join_tournament" */
-    can_join_tournament?: boolean | number
+    can_join?: boolean | number
+    /** A computed field, executes function "can_open_tournament_registration" */
+    can_open_registration?: boolean | number
+    /** A computed field, executes function "can_schedule_tournament" */
+    can_schedule?: boolean | number
     description?: boolean | number
     /** An object relationship */
     e_tournament_status?: e_tournament_statusGenqlSelection
@@ -25750,7 +25766,7 @@ export interface tournaments_avg_order_by {organizer_steam_id?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_join_tournament?: (Boolean_comparison_exp | null),description?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),servers?: (tournament_servers_bool_exp | null),servers_aggregate?: (tournament_servers_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),description?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),servers?: (tournament_servers_bool_exp | null),servers_aggregate?: (tournament_servers_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -25817,7 +25833,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),can_join_tournament?: (order_by | null),description?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),servers_aggregate?: (tournament_servers_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_schedule?: (order_by | null),description?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),servers_aggregate?: (tournament_servers_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */

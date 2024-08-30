@@ -233,6 +233,9 @@ export class MatchesController {
     await this.discordBotVoiceChannels.removeTeamChannels(matchId);
   }
 
+  /**
+   * TODO - does not need to be an action
+   */
   @HasuraAction()
   public async scheduleMatch(data: {
     user: User;
@@ -278,6 +281,9 @@ export class MatchesController {
     };
   }
 
+  /**
+   * TODO - does not need to be a action
+   */
   @HasuraAction()
   public async startMatch(data: {
     match_id: string;
@@ -374,6 +380,9 @@ export class MatchesController {
     await this.discordMatchOverview.updateMatchOverview(matchId);
   }
 
+  /**
+   * TODO - does not need to be a action
+   */
   @HasuraAction()
   public async cancelMatch(data: { user: User; match_id: string }) {
     const { match_id, user } = data;
@@ -403,6 +412,9 @@ export class MatchesController {
     };
   }
 
+  /**
+   * TODO - does not need to be a action
+   */
   @HasuraAction()
   public async setMatchWinner(data: {
     user: User;
@@ -435,6 +447,9 @@ export class MatchesController {
     };
   }
 
+  /**
+   * TODO - does not need to be a action
+   */
   @HasuraAction()
   public async forfeitMatch(data: {
     user: User;
@@ -501,6 +516,9 @@ export class MatchesController {
     await processor.process();
   }
 
+  /**
+   * TODO - does not need to be a action
+   */
   @HasuraAction()
   public async checkIntoMatch(data: { user: User; match_id: string }) {
     const { matches_by_pk } = await this.hasura.query({

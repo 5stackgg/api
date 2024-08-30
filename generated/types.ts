@@ -29476,7 +29476,19 @@ export default {
             "admin": [
                 1098
             ],
-            "can_join_tournament": [
+            "can_cancel": [
+                0
+            ],
+            "can_close_registration": [
+                0
+            ],
+            "can_join": [
+                0
+            ],
+            "can_open_registration": [
+                0
+            ],
+            "can_schedule": [
                 0
             ],
             "description": [
@@ -29894,7 +29906,19 @@ export default {
             "admin": [
                 1102
             ],
-            "can_join_tournament": [
+            "can_cancel": [
+                1
+            ],
+            "can_close_registration": [
+                1
+            ],
+            "can_join": [
+                1
+            ],
+            "can_open_registration": [
+                1
+            ],
+            "can_schedule": [
                 1
             ],
             "description": [
@@ -30152,7 +30176,19 @@ export default {
             "admin": [
                 1111
             ],
-            "can_join_tournament": [
+            "can_cancel": [
+                798
+            ],
+            "can_close_registration": [
+                798
+            ],
+            "can_join": [
+                798
+            ],
+            "can_open_registration": [
+                798
+            ],
+            "can_schedule": [
                 798
             ],
             "description": [

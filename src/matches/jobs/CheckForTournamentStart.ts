@@ -21,7 +21,7 @@ export class CheckForTournamentStart extends WorkerHost {
       update_tournaments: {
         __args: {
           where: {
-            _and : [
+            _and: [
               {
                 start: {
                   _lte: fifteenMinutesAhead,
@@ -29,10 +29,10 @@ export class CheckForTournamentStart extends WorkerHost {
               },
               {
                 status: {
-                  _eq: "Scheduled"
+                  _in: ["RegistrationOpen", "RegistrationClosed"],
                 },
-              }
-            ]
+              },
+            ],
           },
           _set: {
             status: "Live",

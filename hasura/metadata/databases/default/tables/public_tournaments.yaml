@@ -48,12 +48,35 @@ array_relationships:
           name: tournament_teams
           schema: public
 computed_fields:
-  - name: can_join_tournament
+  - name: can_cancel
+    definition:
+      function:
+        name: can_cancel_tournament
+        schema: public
+      session_argument: hasura_session
+  - name: can_close_registration
+    definition:
+      function:
+        name: can_close_tournament_registration
+        schema: public
+      session_argument: hasura_session
+  - name: can_join
     definition:
       function:
         name: can_join_tournament
         schema: public
       session_argument: hasura_session
+  - name: can_open_registration
+    definition:
+      function:
+        name: can_open_tournament_registration
+        schema: public
+      session_argument: hasura_session
+  - name: has_min_teams
+    definition:
+      function:
+        name: tournament_has_min_teams
+        schema: public
   - name: is_organizer
     definition:
       function:
@@ -84,7 +107,11 @@ select_permissions:
         - start
         - status
       computed_fields:
-        - can_join_tournament
+        - can_cancel
+        - can_close_registration
+        - can_join
+        - can_open_registration
+        - has_min_teams
         - is_organizer
       filter:
         _or:

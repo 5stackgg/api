@@ -29244,9 +29244,29 @@ type tournaments {
   admin: players!
 
   """
+  A computed field, executes function "can_cancel_tournament"
+  """
+  can_cancel: Boolean
+
+  """
+  A computed field, executes function "can_close_tournament_registration"
+  """
+  can_close_registration: Boolean
+
+  """
   A computed field, executes function "can_join_tournament"
   """
-  can_join_tournament: Boolean
+  can_join: Boolean
+
+  """
+  A computed field, executes function "can_open_tournament_registration"
+  """
+  can_open_registration: Boolean
+
+  """
+  A computed field, executes function "can_schedule_tournament"
+  """
+  can_schedule: Boolean
   description: String
 
   """An object relationship"""
@@ -29530,7 +29550,11 @@ input tournaments_bool_exp {
   _not: tournaments_bool_exp
   _or: [tournaments_bool_exp!]
   admin: players_bool_exp
-  can_join_tournament: Boolean_comparison_exp
+  can_cancel: Boolean_comparison_exp
+  can_close_registration: Boolean_comparison_exp
+  can_join: Boolean_comparison_exp
+  can_open_registration: Boolean_comparison_exp
+  can_schedule: Boolean_comparison_exp
   description: String_comparison_exp
   e_tournament_status: e_tournament_status_bool_exp
   id: uuid_comparison_exp
@@ -29673,7 +29697,11 @@ input tournaments_on_conflict {
 """Ordering options when selecting data from "tournaments"."""
 input tournaments_order_by {
   admin: players_order_by
-  can_join_tournament: order_by
+  can_cancel: order_by
+  can_close_registration: order_by
+  can_join: order_by
+  can_open_registration: order_by
+  can_schedule: order_by
   description: order_by
   e_tournament_status: e_tournament_status_order_by
   id: order_by
