@@ -1059,7 +1059,7 @@ export interface e_tournament_status_aggregate_fields {
 /** unique or primary key constraints on table "e_tournament_status" */
 export type e_tournament_status_constraint = 'e_tournament_status_pkey'
 
-export type e_tournament_status_enum = 'Cancelled' | 'CancelledMinTeams' | 'Finished' | 'Live' | 'Planned' | 'RegistrationClosed' | 'RegistrationOpen' | 'Scheduled' | 'Setup'
+export type e_tournament_status_enum = 'Cancelled' | 'CancelledMinTeams' | 'Finished' | 'Live' | 'RegistrationClosed' | 'RegistrationOpen' | 'Scheduled' | 'Setup'
 
 
 /** aggregate max on columns */
@@ -32758,7 +32758,6 @@ export const enumETournamentStatusEnum = {
    CancelledMinTeams: 'CancelledMinTeams' as const,
    Finished: 'Finished' as const,
    Live: 'Live' as const,
-   Planned: 'Planned' as const,
    RegistrationClosed: 'RegistrationClosed' as const,
    RegistrationOpen: 'RegistrationOpen' as const,
    Scheduled: 'Scheduled' as const,

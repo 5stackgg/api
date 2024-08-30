@@ -142,7 +142,7 @@ export class MatchesController {
       if (!serverId) {
         return;
       }
-      
+
       await this.matchAssistant.stopOnDemandServer(matchId, serverId);
 
       await this.hasura.mutation({

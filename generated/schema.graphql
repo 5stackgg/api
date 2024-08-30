@@ -3195,9 +3195,6 @@ enum e_tournament_status_enum {
   """Live"""
   Live
 
-  """Planned"""
-  Planned
-
   """Registration Closed"""
   RegistrationClosed
 
