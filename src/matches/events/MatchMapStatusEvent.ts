@@ -14,6 +14,8 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
       },
     });
 
+    console.info("this.data", this.data);
+
     const { update_match_maps_by_pk } = await this.hasura.mutation({
       update_match_maps_by_pk: {
         __args: {

@@ -32,7 +32,7 @@ BEGIN
     END IF;
 
     IF NEW.status = 'Finished' THEN
-        NEW.finished_at = NOW();
+        NEW.ended_at = NOW();
     END IF;
 
 	RETURN NEW;

@@ -137,10 +137,13 @@ export class MatchesController {
       status === "Finished"
     ) {
       await this.removeDiscordIntegration(matchId);
-      await this.matchAssistant.stopOnDemandServer(
-        matchId,
-        data.new.server_id || data.old.server_id,
-      );
+      const serverId = data.new.server_id || data.old.server_id;
+
+      if (!serverId) {
+        return;
+      }
+      
+      await this.matchAssistant.stopOnDemandServer(matchId, serverId);
 
       await this.hasura.mutation({
         update_matches_by_pk: {
