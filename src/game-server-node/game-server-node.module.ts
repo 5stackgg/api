@@ -15,6 +15,7 @@ import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
+import { MarkGameServerOffline } from "./jobs/MarkGameServerOffline";
 
 @Module({
   providers: [
@@ -22,6 +23,7 @@ import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middlew
     GameServerNodeGateway,
     CheckGameUpdate,
     MarkGameServerNodeOffline,
+    MarkGameServerOffline,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],
@@ -64,11 +66,9 @@ export class GameServerNodeModule {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(MatchServerMiddlewareMiddleware)
-      .forRoutes({
-        path: "game-server-node/ping/:serverId",
-        method: RequestMethod.GET,
-      });
+    consumer.apply(MatchServerMiddlewareMiddleware).forRoutes({
+      path: "game-server-node/ping/:serverId",
+      method: RequestMethod.GET,
+    });
   }
 }

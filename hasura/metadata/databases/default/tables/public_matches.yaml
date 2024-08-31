@@ -205,6 +205,11 @@ computed_fields:
         name: is_match_organizer
         schema: public
       session_argument: hasura_session
+  - name: is_server_online
+    definition:
+      function:
+        name: is_server_online
+        schema: public
   - name: is_tournament_match
     definition:
       function:
@@ -307,6 +312,7 @@ select_permissions:
         - is_in_lineup
         - is_match_server_available
         - is_organizer
+        - is_server_online
         - is_tournament_match
         - map_veto_picking_lineup_id
         - map_veto_type
