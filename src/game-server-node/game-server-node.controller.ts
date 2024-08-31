@@ -1,12 +1,15 @@
 import { User } from "../auth/types/User";
-import { Controller } from "@nestjs/common";
+import { Controller, Get, Req } from "@nestjs/common";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
 import { TailscaleService } from "../tailscale/tailscale.service";
+import { Request } from "express";
+import { HasuraService } from "../hasura/hasura.service";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
   constructor(
+    protected readonly hasura: HasuraService,
     protected readonly tailscale: TailscaleService,
     protected readonly gameServerNodeService: GameServerNodeService,
   ) {}
@@ -25,5 +28,22 @@ export class GameServerNodeController {
       id: gameServer.id,
       script,
     };
+  }
+
+  @Get("/ping/:serverId")
+  public async ping(@Req() request: Request) {
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: {
+            id: request.params.serverId,
+          },
+          _set: {
+            connected: true,
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 }

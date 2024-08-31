@@ -36,7 +36,7 @@ import { RemoveCancelledMatches } from "./jobs/RemoveCancelledMatches";
 import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
-import {CancelInvalidTournaments} from "./jobs/CancelInvalidTournaments";
+import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 
 @Module({
   imports: [
@@ -140,13 +140,13 @@ export class MatchesModule implements NestModule {
     );
 
     void matchServersQueue.add(
-        CancelInvalidTournaments.name,
-        {},
-        {
-          repeat: {
-            pattern: "* * * * *",
-          },
+      CancelInvalidTournaments.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
         },
+      },
     );
   }
 

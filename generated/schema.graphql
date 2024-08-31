@@ -21640,6 +21640,7 @@ columns and relationships of "servers"
 """
 type servers {
   api_password: uuid!
+  connected: Boolean!
 
   """An object relationship"""
   current_match: matches
@@ -21841,6 +21842,7 @@ input servers_bool_exp {
   _not: servers_bool_exp
   _or: [servers_bool_exp!]
   api_password: uuid_comparison_exp
+  connected: Boolean_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
   game_server_node: game_server_nodes_bool_exp
@@ -21890,6 +21892,7 @@ input type for inserting data into table "servers"
 """
 input servers_insert_input {
   api_password: uuid
+  connected: Boolean
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
   game_server_node: game_server_nodes_obj_rel_insert_input
@@ -21996,6 +21999,7 @@ input servers_on_conflict {
 """Ordering options when selecting data from "servers"."""
 input servers_order_by {
   api_password: order_by
+  connected: order_by
   current_match: matches_order_by
   enabled: order_by
   game_server_node: game_server_nodes_order_by
@@ -22025,6 +22029,9 @@ select columns of table "servers"
 enum servers_select_column {
   """column name"""
   api_password
+
+  """column name"""
+  connected
 
   """column name"""
   enabled
@@ -22062,6 +22069,9 @@ select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table 
 """
 enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
+  connected
+
+  """column name"""
   enabled
 }
 
@@ -22069,6 +22079,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
 select "servers_aggregate_bool_exp_bool_or_arguments_columns" columns of table "servers"
 """
 enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  connected
+
   """column name"""
   enabled
 }
@@ -22078,6 +22091,7 @@ input type for updating data in table "servers"
 """
 input servers_set_input {
   api_password: uuid
+  connected: Boolean
   enabled: Boolean
   game_server_node_id: String
   host: String
@@ -22152,6 +22166,7 @@ input servers_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input servers_stream_cursor_value_input {
   api_password: uuid
+  connected: Boolean
   enabled: Boolean
   game_server_node_id: String
   host: String
@@ -22186,6 +22201,9 @@ update columns of table "servers"
 enum servers_update_column {
   """column name"""
   api_password
+
+  """column name"""
+  connected
 
   """column name"""
   enabled

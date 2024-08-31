@@ -1,3 +1,4 @@
+import { validate } from "uuid";
 import { Req, Res, Injectable, NestMiddleware } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { HasuraService } from "../../hasura/hasura.service";
@@ -22,6 +23,9 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
       .trim();
 
     if (serverId) {
+      if (!validate(serverId)) {
+        return response.status(401).end();
+      }
       const { servers_by_pk: server } = await this.hasura.query({
         servers_by_pk: {
           __args: {
@@ -35,6 +39,10 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
         return response.status(401).end();
       }
       return next();
+    }
+
+    if (!validate(matchId)) {
+      return response.status(401).end();
     }
 
     const { matches_by_pk: match } = await this.hasura.query({

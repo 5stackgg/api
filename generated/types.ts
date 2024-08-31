@@ -22890,6 +22890,9 @@ export default {
             "api_password": [
                 1576
             ],
+            "connected": [
+                0
+            ],
             "current_match": [
                 736
             ],
@@ -23237,6 +23240,9 @@ export default {
             "api_password": [
                 1577
             ],
+            "connected": [
+                1
+            ],
             "current_match": [
                 745
             ],
@@ -23313,6 +23319,9 @@ export default {
         "servers_insert_input": {
             "api_password": [
                 1576
+            ],
+            "connected": [
+                0
             ],
             "current_match": [
                 754
@@ -23531,6 +23540,9 @@ export default {
             "api_password": [
                 798
             ],
+            "connected": [
+                798
+            ],
             "current_match": [
                 756
             ],
@@ -23597,6 +23609,9 @@ export default {
         "servers_set_input": {
             "api_password": [
                 1576
+            ],
+            "connected": [
+                0
             ],
             "enabled": [
                 0
@@ -23730,6 +23745,9 @@ export default {
         "servers_stream_cursor_value_input": {
             "api_password": [
                 1576
+            ],
+            "connected": [
+                0
             ],
             "enabled": [
                 0

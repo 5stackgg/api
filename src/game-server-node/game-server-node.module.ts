@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, RequestMethod } from "@nestjs/common";
 import { GameServerNodeService } from "./game-server-node.service";
 import { GameServerNodeController } from "./game-server-node.controller";
 import { TailscaleModule } from "../tailscale/tailscale.module";
@@ -14,6 +14,7 @@ import { GameServerQueues } from "./enums/GameServerQueues";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
+import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
 
 @Module({
   providers: [
@@ -60,5 +61,14 @@ export class GameServerNodeModule {
         },
       },
     );
+  }
+
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(MatchServerMiddlewareMiddleware)
+      .forRoutes({
+        path: "game-server-node/ping/:serverId",
+        method: RequestMethod.GET,
+      });
   }
 }

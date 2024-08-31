@@ -57,6 +57,7 @@ select_permissions:
     permission:
       columns:
         - api_password
+        - connected
         - enabled
         - host
         - id

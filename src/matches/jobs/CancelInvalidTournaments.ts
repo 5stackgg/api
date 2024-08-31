@@ -21,7 +21,7 @@ export class CancelInvalidTournaments extends WorkerHost {
             _and: [
               {
                 status: {
-                  _eq: "RegistrationOpen"
+                  _eq: "RegistrationOpen",
                 },
               },
               {
@@ -41,12 +41,10 @@ export class CancelInvalidTournaments extends WorkerHost {
       },
     });
 
-
     if (update_tournaments.affected_rows > 0) {
       this.logger.log(`${update_tournaments.affected_rows} matches started`);
     }
 
     return update_tournaments.affected_rows;
-
   }
 }
