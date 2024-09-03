@@ -7,8 +7,7 @@ BEGIN
     SELECT COUNT(*)
         INTO server_count
         FROM servers s
-        WHERE s.game_server_node_id in(select id from game_server_nodes gsn where gsn.region = e_game_server_node_region.region);
-
+        WHERE s.game_server_node_id in(select id from game_server_nodes gsn where gsn.region = e_game_server_node_region.value);
     RETURN server_count;
 END;
 $$;

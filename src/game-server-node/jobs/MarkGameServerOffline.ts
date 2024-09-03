@@ -15,7 +15,6 @@ export class MarkGameServerOffline extends WorkerHost {
       serverId: string;
     }>,
   ): Promise<void> {
-    console.info("OFFLINE", job.data.serverId);
     await this.hasura.mutation({
       update_servers_by_pk: {
         __args: {

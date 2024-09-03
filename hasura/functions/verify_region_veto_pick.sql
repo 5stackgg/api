@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.verify_map_veto_pick(match_region_veto_pick match_region_veto_picks) RETURNS VOID
+CREATE OR REPLACE FUNCTION public.verify_region_veto_pick(match_region_veto_pick match_region_veto_picks) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -17,7 +17,5 @@ BEGIN
     IF match_region_veto_pick.match_lineup_id != lineup_id THEN
         RAISE EXCEPTION 'Expected other lineup for %, %', pickType, lineup_id USING ERRCODE = '22000';
     END IF;
-
-
 END;
 $$;

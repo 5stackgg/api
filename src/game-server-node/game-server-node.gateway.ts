@@ -28,7 +28,7 @@ export class GameServerNodeGateway {
       labels: Record<string, string>;
     },
   ): Promise<void> {
-    if (!payload.labels["5stack-id"]) {
+    if (!payload.labels?.["5stack-id"]) {
       await this.gameServerNodeService.updateIdLabel(payload.node);
     }
 

@@ -25,8 +25,7 @@ export class GameServerNodeController {
 
     const script = `
       curl -fsSL https://tailscale.com/install.sh | sh
-      tailscale up --authkey=${await this.tailscale.getAuthKey()}
-      curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServer.id}
+      curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServer.id} --vpn-auth="name=tailscale,joinKey=${await this.tailscale.getAuthKey()}"
     `;
 
     return {
