@@ -13,12 +13,15 @@ import UtilityEvent from "./UtilityEvent";
 import FlashEvent from "./FlashEvent";
 import ObjectiveEvent from "./ObjectiveEvent";
 import UnusedUtility from "./UnusedUtility";
+import ChatMessageEvent from "./ChatMessageEvent";
 
 export const MatchEvents = {
   mapStatus: MatchMapStatusEvent,
   restoreRound: MatchMapResetRoundEvent,
 
   updateLineups: MatchUpdatedLineupsEvent,
+
+  chat: ChatMessageEvent,
 
   /**
    * Player

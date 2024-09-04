@@ -117,6 +117,8 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
+    await this.matchAssistant.addServerAuth(matches_by_pk.id);
+
     return JSON.parse(safeJsonStringify(matches_by_pk));
   }
 

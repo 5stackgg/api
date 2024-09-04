@@ -17,7 +17,6 @@ export class CheckGameUpdate extends WorkerHost {
 
     const { timeupdated } = data["730"].depots.branches.public;
 
-    console.info(data);
     if (!latestBuildTime || latestBuildTime > parseInt(timeupdated)) {
       await this.cache.put("cs:updated-at", parseInt(timeupdated));
       // TODO - do update job on all nodes a daemonset!

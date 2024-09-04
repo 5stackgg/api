@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
 import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
@@ -40,9 +39,13 @@ export class MatchAssistantService {
     return `cs-match-${matchId}`;
   }
 
+  public async addServerAuth(matchId: string) {
+    await this.serverAuth.addMatchById(matchId);
+  }
+
   public async sendServerMatchId(matchId: string) {
     try {
-      await this.serverAuth.addMatchById(matchId);
+      await this.addServerAuth(matchId);
       await this.command(matchId, `get_match`);
     } catch (error) {
       this.logger.warn(

@@ -3,7 +3,6 @@ import {
   MiddlewareConsumer,
   Module,
   NestModule,
-  Provider,
   RequestMethod,
 } from "@nestjs/common";
 import { MatchesController } from "./matches.controller";
@@ -37,6 +36,7 @@ import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
+import { SocketsModule } from "../sockets/sockets.module";
 
 @Module({
   imports: [
@@ -46,6 +46,7 @@ import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
     RedisModule,
     S3Module,
     EncryptionModule,
+    SocketsModule,
     forwardRef(() => DiscordBotModule),
     BullModule.registerQueue(
       {

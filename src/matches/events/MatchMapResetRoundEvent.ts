@@ -3,6 +3,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { S3Service } from "../../s3/s3.service";
 import { Logger } from "@nestjs/common";
+import { MatchSocketsService } from "../../sockets/match-sockets.service";
 
 export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   round: string;
@@ -12,9 +13,10 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
     logger: Logger,
     hasura: HasuraService,
     matchAssistant: MatchAssistantService,
+    matchSockets: MatchSocketsService,
     private readonly s3: S3Service,
   ) {
-    super(logger, hasura, matchAssistant);
+    super(logger, hasura, matchAssistant, matchSockets);
   }
 
   public async process() {
