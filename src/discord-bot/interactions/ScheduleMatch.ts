@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import {
   ComponentType,
   CategoryChannel,
@@ -91,10 +90,16 @@ export default class ScheduleMatch extends DiscordInteraction {
       usersInChannel,
     );
 
-    const match = await this.createMatch(
-      options,
+    const match = await this.matchAssistant.createMatchBasedOnType(
       matchType,
       mapPoolType,
+      {
+        mr: options.mr,
+        best_of: options.best_of,
+        knife: options.knife,
+        map: options.map,
+        overtime: options.overtime,
+      },
       serverId,
     );
     const matchId = match.id;
@@ -167,66 +172,6 @@ export default class ScheduleMatch extends DiscordInteraction {
     return options;
   }
 
-  private async createMatch(
-    options: DiscordMatchOptions,
-    matchType: e_match_types_enum,
-    mapPoolType: e_map_pool_types_enum,
-    serverId?: string,
-  ) {
-    const { map_pools } = await this.hasura.query({
-      map_pools: {
-        __args: {
-          where: {
-            type: {
-              _eq: mapPoolType,
-            },
-          },
-        },
-        id: true,
-      },
-    });
-
-    const { id: map_pool_id } = map_pools.at(0);
-
-    const { insert_matches_one } = await this.hasura.mutation({
-      insert_matches_one: {
-        __args: {
-          object: {
-            map: options.map,
-            password: uuidv4(),
-            server_id: serverId,
-            options: {
-              data: {
-                map_pool_id,
-                map_veto: true,
-                mr: options.mr,
-                type: matchType,
-                best_of: options.best_of,
-                overtime: options.overtime,
-                knife_round: options.knife,
-              },
-            },
-            lineups: {
-              data: [
-                { lineup_players: { data: [] } },
-                { lineup_players: { data: [] } },
-              ],
-            },
-          },
-        },
-        id: true,
-        lineup_1_id: true,
-        lineup_2_id: true,
-        lineups: {
-          id: true,
-          name: true,
-        },
-      },
-    });
-
-    return insert_matches_one;
-  }
-
   private async createMatchesCategory(
     interaction: ChatInputCommandInteraction,
   ) {
@@ -253,7 +198,9 @@ export default class ScheduleMatch extends DiscordInteraction {
   private async createVoiceChannelsForMatch(
     originalChannelId: string,
     interaction: ChatInputCommandInteraction,
-    match: UnwrapPromise<ReturnType<typeof this.createMatch>>,
+    match: UnwrapPromise<
+      ReturnType<typeof this.matchAssistant.createMatchBasedOnType>
+    >,
   ) {
     const matchId = match.id;
     const categoryChannel = await this.createMatchesCategory(interaction);

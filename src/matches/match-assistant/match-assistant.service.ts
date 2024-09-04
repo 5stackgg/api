@@ -11,7 +11,13 @@ import { MatchJobs } from "../enums/MatchJobs";
 import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
-import { e_match_status_enum } from "../../../generated";
+import {
+  e_game_server_node_regions,
+  e_game_server_node_regions_enum,
+  e_map_pool_types_enum,
+  e_match_status_enum,
+  e_match_types_enum,
+} from "../../../generated";
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
 
@@ -761,5 +767,77 @@ export class MatchAssistantService {
     );
 
     return matches_by_pk.is_organizer;
+  }
+
+  public async createMatchBasedOnType(
+    matchType: e_match_types_enum,
+    mapPoolType: e_map_pool_types_enum,
+    options: {
+      mr: number;
+      best_of: number;
+      knife: boolean;
+      map?: string;
+      overtime: boolean;
+      region?: e_game_server_node_regions_enum;
+    },
+    serverId?: string,
+  ) {
+    const { map_pools } = await this.hasura.query({
+      map_pools: {
+        __args: {
+          where: {
+            type: {
+              _eq: mapPoolType,
+            },
+          },
+        },
+        id: true,
+      },
+    });
+
+    const { id: map_pool_id } = map_pools.at(0);
+
+    const { insert_matches_one } = await this.hasura.mutation({
+      insert_matches_one: {
+        __args: {
+          object: {
+            map: options.map,
+            server_id: serverId,
+            region: options.region,
+            options: {
+              data: {
+                map_pool_id,
+                map_veto: true,
+                mr: options.mr,
+                type: matchType,
+                best_of: options.best_of,
+                overtime: options.overtime,
+                knife_round: options.knife,
+                region_veto: options.region ? false : true,
+              },
+            },
+          },
+        },
+        id: true,
+        lineup_1_id: true,
+        lineup_2_id: true,
+      },
+    });
+
+    return insert_matches_one;
+  }
+
+  public async cancelMatchMaking(confirmationId: string) {
+    await this.queue.add(
+      "CancelMatchMaking",
+      {
+        confirmationId,
+      },
+      {
+        removeOnFail: true,
+        removeOnComplete: true,
+        delay: 30,
+      },
+    );
   }
 }

@@ -629,7 +629,7 @@ export class MatchesController {
       },
     });
 
-    if (servers_by_pk.reserved_by_match_id) {
+    if (servers_by_pk.reserved_by_match_id || !servers_by_pk.game_server_node) {
       return;
     }
 

@@ -5,13 +5,26 @@ import {
   WebSocketGateway,
 } from "@nestjs/websockets";
 import WebSocket from "ws";
+import { v4 as uuidv4 } from "uuid";
 import { Request } from "express";
 import { User } from "../auth/types/User";
 import { RconService } from "../rcon/rcon.service";
-import { MatchSocketsService } from "./match-sockets.service";
+import { MatchLobbyService } from "./match-lobby.service";
+import session from "express-session";
+import { getCookieOptions } from "../utilities/getCookieOptions";
+import RedisStore from "connect-redis";
+import passport from "passport";
+import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { AppConfig } from "src/configs/types/AppConfig";
+import { Redis } from "ioredis";
+import { ConfigService } from "@nestjs/config";
+import { e_game_server_node_regions_enum, e_match_types_enum } from "generated";
+import { MatchMakingService } from "./match-making.servcie";
 
 export type FiveStackWebSocketClient = WebSocket.WebSocket & {
+  id: string;
   user: User;
+  node: string;
 };
 
 /**
@@ -22,16 +35,129 @@ export type FiveStackWebSocketClient = WebSocket.WebSocket & {
   path: "/ws",
 })
 export class ServerGateway {
+  private redis: Redis;
+  private appConfig: AppConfig;
+  private nodeId: string = process.env.NODE_ID || "1";
+  private clients: Map<string, FiveStackWebSocketClient> = new Map();
+
   constructor(
+    private readonly config: ConfigService,
     private readonly rconService: RconService,
-    private readonly matchSockets: MatchSocketsService,
-  ) {}
+    private readonly matchLobby: MatchLobbyService,
+    private readonly matchMaking: MatchMakingService,
+    private readonly redisManager: RedisManagerService,
+  ) {
+    this.redis = this.redisManager.getConnection();
+    this.appConfig = this.config.get<AppConfig>("app");
+
+    const sub = this.redisManager.getConnection("sub");
+
+    sub.subscribe("broadcast-message");
+    sub.subscribe("send-message-to-steam-id");
+    sub.on("message", (channel, message) => {
+      const { steamId, event, data } = JSON.parse(message) as {
+        steamId: string;
+        event: string;
+        data: unknown;
+      };
+
+      switch (channel) {
+        case "broadcast-message":
+          this.broadcastMessage(event, data);
+          break;
+        case "send-message-to-steam-id":
+          this.sendMessageToClient(steamId, event, data);
+          break;
+      }
+    });
+  }
 
   async handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
     request: Request,
   ) {
-    this.matchSockets.setupSocket(client, request);
+    await this.setupSocket(client, request);
+  }
+
+  public async setupSocket(client: FiveStackWebSocketClient, request: Request) {
+    session({
+      rolling: true,
+      resave: false,
+      name: this.appConfig.name,
+      saveUninitialized: false,
+      secret: this.appConfig.encSecret,
+      cookie: getCookieOptions(),
+      store: new RedisStore({
+        prefix: this.appConfig.name,
+        client: this.redis,
+      }),
+      // @ts-ignore
+      // luckily in this case the middlewares do not require the response
+      // this is a hack to get the session loaded in a websocket
+    })(request, {}, () => {
+      passport.session()(request, {}, () => {
+        if (!request.user) {
+          client.close();
+          return;
+        }
+        client.id = uuidv4();
+        client.user = request.user;
+        client.node = this.nodeId;
+        this.redis.sadd(
+          `user:${client.user.steam_id}:clients`,
+          `${client.id}:${client.node}`,
+        );
+
+        this.clients.set(client.id, client);
+
+        client.on("close", () => {
+          this.redis.srem(
+            `user:${client.user.steam_id}:clients`,
+            `${client.id}:${client.node}`,
+          );
+          this.clients.delete(client.id);
+        });
+      });
+    });
+  }
+
+  @SubscribeMessage("match-making:join")
+  async joinMatchMaking(
+    @MessageBody()
+    data: {
+      type: e_match_types_enum;
+      region: e_game_server_node_regions_enum;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await this.matchMaking.joinMatchMaking(client.user, data.type, data.region);
+
+    await this.redis.publish(
+      `send-message-to-steam-id`,
+      JSON.stringify({
+        steamId: client.user.steam_id,
+        event: "match-making:joined",
+        data: {
+          type: data.type,
+          region: data.region,
+          totalInQueue: await this.matchMaking.getQueueLength(
+            data.type,
+            data.region,
+          ),
+        },
+      }),
+    );
+  }
+
+  @SubscribeMessage("match-making:confirm")
+  async confirmMatchMaking(
+    @MessageBody()
+    data: {
+      matchId: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await this.matchMaking.confirmMatch(client.user, data.matchId);
   }
 
   @SubscribeMessage("lobby:join")
@@ -42,7 +168,7 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    await this.matchSockets.joinLobby(client, data.matchId);
+    await this.matchLobby.joinMatchLobby(client, data.matchId);
   }
 
   @SubscribeMessage("lobby:leave")
@@ -53,7 +179,7 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    this.matchSockets.removeFromLobby(data.matchId, client);
+    this.matchLobby.removeFromLobby(data.matchId, client);
   }
 
   @SubscribeMessage("lobby:chat")
@@ -65,12 +191,12 @@ export class ServerGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    await this.matchSockets.sendMessageToChat(
+    await this.matchLobby.sendMessageToChat(
       client.user,
       data.matchId,
       data.message,
     );
-    await this.matchSockets.sendChatToServer(
+    await this.matchLobby.sendChatToServer(
       data.matchId,
       `${client.user.role ? `[${client.user.role}] ` : ""}${client.user.name}: ${data.message}`.replaceAll(
         `"`,
@@ -100,5 +226,45 @@ export class ServerGateway {
         },
       }),
     );
+  }
+
+  public async broadcastMessage(event: string, data: unknown) {
+    for (const client of Array.from(this.clients.values())) {
+      client.send(
+        JSON.stringify({
+          event,
+          data,
+        }),
+      );
+    }
+  }
+
+  public async sendMessageToClient(
+    steamId: string,
+    event: string,
+    data: unknown,
+  ) {
+    const clients = await this.redis.smembers(`user:${steamId}:clients`);
+    for (const client of clients) {
+      const [id, node] = client.split(":");
+
+      if (node !== this.nodeId) {
+        continue;
+      }
+
+      const _client = this.clients.get(id);
+
+      if (!_client) {
+        await this.redis.srem(`user:${steamId}:clients`, client);
+        continue;
+      }
+
+      _client.send(
+        JSON.stringify({
+          event,
+          data,
+        }),
+      );
+    }
   }
 }

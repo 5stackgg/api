@@ -19,7 +19,7 @@ export default class ChatMessageEvent extends MatchEventProcessor<{
       },
     });
 
-    await this.matchSockets.sendMessageToChat(
+    await this.matchLobby.sendMessageToChat(
       players_by_pk,
       this.matchId,
       this.data.message,
