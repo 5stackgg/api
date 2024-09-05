@@ -95,7 +95,7 @@ export class ServerGateway {
       // luckily in this case the middlewares do not require the response
       // this is a hack to get the session loaded in a websocket
     })(request, {}, () => {
-      passport.session()(request, {}, () => {
+      passport.session()(request, {}, async () => {
         if (!request.user) {
           client.close();
           return;
@@ -103,15 +103,19 @@ export class ServerGateway {
         client.id = uuidv4();
         client.user = request.user;
         client.node = this.nodeId;
-        this.redis.sadd(
+
+        await this.redis.sadd(
           `user:${client.user.steam_id}:clients`,
           `${client.id}:${client.node}`,
         );
 
         this.clients.set(client.id, client);
 
-        client.on("close", () => {
-          this.redis.srem(
+        await this.matchMaking.sendRegionStats(client.user);
+        await this.matchMaking.sendJoinedQueuedsToUser(client.user);
+
+        client.on("close", async () => {
+          await this.redis.srem(
             `user:${client.user.steam_id}:clients`,
             `${client.id}:${client.node}`,
           );
@@ -131,22 +135,6 @@ export class ServerGateway {
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
     await this.matchMaking.joinMatchMaking(client.user, data.type, data.region);
-
-    await this.redis.publish(
-      `send-message-to-steam-id`,
-      JSON.stringify({
-        steamId: client.user.steam_id,
-        event: "match-making:joined",
-        data: {
-          type: data.type,
-          region: data.region,
-          totalInQueue: await this.matchMaking.getQueueLength(
-            data.type,
-            data.region,
-          ),
-        },
-      }),
-    );
   }
 
   @SubscribeMessage("match-making:confirm")

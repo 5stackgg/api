@@ -5,12 +5,14 @@ import { RedisManagerService } from "../redis/redis-manager/redis-manager.servic
 import { e_game_server_node_regions_enum, e_match_types_enum } from "generated";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import { v4 as uuidv4 } from "uuid";
+import { HasuraService } from "src/hasura/hasura.service";
 
 @Injectable()
 export class MatchMakingService {
   private redis: Redis;
 
   constructor(
+    private readonly hasura: HasuraService,
     private readonly redisManager: RedisManagerService,
     private readonly matchAssistant: MatchAssistantService,
   ) {
@@ -21,11 +23,15 @@ export class MatchMakingService {
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
-    return `match-making:${region}:${type}`;
+    return `match-making:v8:${region}:${type}`;
   }
 
   protected static MATCH_MAKING_CONFIRMATION_KEY(matchId: string) {
-    return `match-making:${matchId}`;
+    return `match-making:v8:${matchId}`;
+  }
+
+  protected static MATCH_MAKING_USER_QUEUE_KEY(steamId: string) {
+    return `match-making:v8:user:${steamId}`;
   }
 
   public async getQueueLength(
@@ -40,11 +46,95 @@ export class MatchMakingService {
     return this.redis.zcard(matchMakingQueueKey);
   }
 
+  public async sendRegionStats(user?: User) {
+    const regions = await this.hasura.query({
+      e_game_server_node_regions: {
+        __args: {
+          where: {
+            game_server_nodes: {
+              enabled: {
+                _eq: true,
+              },
+            },
+            game_server_nodes_aggregate: {
+              count: {
+                predicate: {
+                  _gt: 0,
+                },
+              },
+            },
+          },
+        },
+        value: true,
+      },
+    });
+
+    const regionStats: Partial<
+      Record<
+        e_game_server_node_regions_enum,
+        Partial<Record<e_match_types_enum, number>>
+      >
+    > = {};
+
+    for (const region of regions.e_game_server_node_regions) {
+      regionStats[region.value as e_game_server_node_regions_enum] = {
+        Wingman: await this.getQueueLength(
+          "Wingman",
+          region.value as e_game_server_node_regions_enum,
+        ),
+        Competitive: await this.getQueueLength(
+          "Competitive",
+          region.value as e_game_server_node_regions_enum,
+        ),
+      };
+    }
+
+    if (user) {
+      await this.redis.publish(
+        `send-message-to-steam-id`,
+        JSON.stringify({
+          steamId: user.steam_id,
+          event: "match-making:region-stats",
+          data: regionStats,
+        }),
+      );
+
+      return;
+    }
+
+    await this.redis.publish(
+      `broadcast-message`,
+      JSON.stringify({
+        event: "match-making:region-stats",
+        data: regionStats,
+      }),
+    );
+  }
+
+  public async sendJoinedQueuedsToUser(user: User) {
+    const queues = await this.redis.smembers(
+      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
+    );
+
+    await this.redis.publish(
+      `send-message-to-steam-id`,
+      JSON.stringify({
+        steamId: user.steam_id,
+        event: "match-making:joined",
+        data: queues.map((queue) => JSON.parse(queue)),
+      }),
+    );
+  }
+
   public async joinMatchMaking(
     user: User,
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
+    if (!type || !region) {
+      return;
+    }
+
     const matchMakingQueueKey = MatchMakingService.MATCH_MAKING_QUEUE_KEY(
       type,
       region,
@@ -59,7 +149,14 @@ export class MatchMakingService {
       return { success: false, message: "Already in queue" };
     }
 
-    await this.redis.zadd(matchMakingQueueKey, 0, user.steam_id);
+    await this.redis.zadd(matchMakingQueueKey, 0, user.steam_id),
+      await this.redis.sadd(
+        MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
+        JSON.stringify({ type, region, key: matchMakingQueueKey }),
+      );
+
+    await this.sendJoinedQueuedsToUser(user);
+    await this.sendRegionStats();
 
     this.matchmake(type, region);
   }
