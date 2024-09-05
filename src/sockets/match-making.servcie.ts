@@ -1,4 +1,3 @@
-import { Injectable } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
@@ -6,8 +5,17 @@ import { e_game_server_node_regions_enum, e_match_types_enum } from "generated";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import { v4 as uuidv4 } from "uuid";
 import { HasuraService } from "src/hasura/hasura.service";
+import {
+  ConnectedSocket,
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+} from "@nestjs/websockets";
+import { FiveStackWebSocketClient } from "./server.gateway";
 
-@Injectable()
+@WebSocketGateway({
+  path: "/ws",
+})
 export class MatchMakingService {
   private redis: Redis;
 
@@ -23,15 +31,38 @@ export class MatchMakingService {
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
-    return `match-making:v8:${region}:${type}`;
+    return `match-making:v10:${region}:${type}`;
   }
 
   protected static MATCH_MAKING_CONFIRMATION_KEY(matchId: string) {
-    return `match-making:v8:${matchId}`;
+    return `match-making:v10:${matchId}`;
   }
 
   protected static MATCH_MAKING_USER_QUEUE_KEY(steamId: string) {
-    return `match-making:v8:user:${steamId}`;
+    return `match-making:v10:user:${steamId}`;
+  }
+
+  @SubscribeMessage("match-making:join")
+  async joinMatchMaking(
+    @MessageBody()
+    data: {
+      type: e_match_types_enum;
+      region: e_game_server_node_regions_enum;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await this.joinQueue(client.user, data.type, data.region);
+  }
+
+  @SubscribeMessage("match-making:confirm")
+  async confirmMatchMaking(
+    @MessageBody()
+    data: {
+      matchId: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    await this.confirmMatch(client.user, data.matchId);
   }
 
   public async getQueueLength(
@@ -126,7 +157,7 @@ export class MatchMakingService {
     );
   }
 
-  public async joinMatchMaking(
+  public async joinQueue(
     user: User,
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,

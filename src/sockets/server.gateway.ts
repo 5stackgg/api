@@ -18,7 +18,6 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { e_game_server_node_regions_enum, e_match_types_enum } from "generated";
 import { MatchMakingService } from "./match-making.servcie";
 
 export type FiveStackWebSocketClient = WebSocket.WebSocket & {
@@ -27,10 +26,6 @@ export type FiveStackWebSocketClient = WebSocket.WebSocket & {
   node: string;
 };
 
-/**
- * TODO - use redis to keep state,
- * right now this is not scaleable because were using a single service to track sessions
- */
 @WebSocketGateway({
   path: "/ws",
 })
@@ -123,29 +118,6 @@ export class ServerGateway {
         });
       });
     });
-  }
-
-  @SubscribeMessage("match-making:join")
-  async joinMatchMaking(
-    @MessageBody()
-    data: {
-      type: e_match_types_enum;
-      region: e_game_server_node_regions_enum;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    await this.matchMaking.joinMatchMaking(client.user, data.type, data.region);
-  }
-
-  @SubscribeMessage("match-making:confirm")
-  async confirmMatchMaking(
-    @MessageBody()
-    data: {
-      matchId: string;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    await this.matchMaking.confirmMatch(client.user, data.matchId);
   }
 
   @SubscribeMessage("lobby:join")
