@@ -100,16 +100,29 @@ export class MatchMakingService {
   }
 
   private async getUserQueueDetails(steamId: string) {
-    const details = await this.redis.hget(
+    const data = await this.redis.hget(
       MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
       "details",
     );
 
-    if (!details) {
+    if (!data) {
       return;
     }
 
-    return JSON.parse(details);
+    const details = JSON.parse(data);
+
+    details.regionPositions = {};
+
+    for (const region of details.regions) {
+      const position = await this.redis.zrank(
+        MatchMakingService.MATCH_MAKING_QUEUE_KEY(details.type, region),
+        steamId,
+      );
+
+      details.regionPositions[region] = position + 1;
+    }
+
+    return details;
   }
 
   private async removeUserFromQueue(steamId: string) {
@@ -382,8 +395,6 @@ export class MatchMakingService {
         players: players.length,
       };
     }
-
-    console.info("confirmationDetails", confirmationDetails);
 
     await this.redis.publish(
       `send-message-to-steam-id`,

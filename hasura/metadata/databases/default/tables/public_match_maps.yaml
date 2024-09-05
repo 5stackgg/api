@@ -117,6 +117,42 @@ computed_fields:
         name: get_match_map_winning_lineup_id
         schema: public
 insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - match_id
+        - order
+    comment: ""
+  - role: match_organizer
+    permission:
+      check:
+        match:
+          is_tournament_match:
+            _eq: false
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - match_id
+        - order
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        match:
+          is_tournament_match:
+            _eq: true
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - match_id
+        - order
+    comment: ""
   - role: user
     permission:
       check:
@@ -155,6 +191,48 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - order
+      filter: {}
+      check: null
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - order
+      filter:
+        match:
+          is_tournament_match:
+            _eq: false
+      check:
+        match:
+          is_tournament_match:
+            _eq: false
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - lineup_1_side
+        - lineup_2_side
+        - map_id
+        - order
+      filter:
+        match:
+          is_tournament_match:
+            _eq: true
+      check:
+        match:
+          is_tournament_match:
+            _eq: true
+    comment: ""
   - role: user
     permission:
       columns:
@@ -172,6 +250,24 @@ update_permissions:
             _eq: x-hasura-user-id
     comment: ""
 delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter:
+        match:
+          is_tournament_match:
+            _eq: false
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter:
+        match:
+          is_tournament_match:
+            _eq: true
+    comment: ""
   - role: user
     permission:
       filter:

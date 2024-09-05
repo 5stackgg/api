@@ -12,6 +12,42 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_lineup_id
 insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - map_id
+        - match_id
+        - match_lineup_id
+        - side
+        - type
+    comment: ""
+  - role: match_organizer
+    permission:
+      check:
+        match:
+          is_tournament_match:
+            _eq: false
+      columns:
+        - map_id
+        - match_id
+        - match_lineup_id
+        - side
+        - type
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        match:
+          is_tournament_match:
+            _eq: true
+      columns:
+        - map_id
+        - match_id
+        - match_lineup_id
+        - side
+        - type
+    comment: ""
   - role: user
     permission:
       check:
@@ -44,6 +80,24 @@ select_permissions:
       filter: {}
     comment: ""
 delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter:
+        match:
+          is_tournament_match:
+            _eq: false
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter:
+        match:
+          is_tournament_match:
+            _eq: true
+    comment: ""
   - role: user
     permission:
       filter:

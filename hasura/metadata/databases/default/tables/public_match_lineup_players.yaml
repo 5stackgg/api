@@ -9,6 +9,27 @@ object_relationships:
     using:
       foreign_key_constraint_on: steam_id
 insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - captain
+        - match_lineup_id
+        - steam_id
+    comment: ""
+  - role: match_organizer
+    permission:
+      check:
+        lineup:
+          v_match_lineup:
+            match:
+              is_tournament_match:
+                _eq: false
+      columns:
+        - captain
+        - match_lineup_id
+        - steam_id
+    comment: ""
   - role: user
     permission:
       check:
@@ -37,6 +58,30 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - captain
+      filter: {}
+      check: null
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - captain
+      filter:
+        lineup:
+          v_match_lineup:
+            match:
+              is_tournament_match:
+                _eq: false
+      check:
+        lineup:
+          v_match_lineup:
+            match:
+              is_tournament_match:
+                _eq: false
+    comment: ""
   - role: user
     permission:
       columns:
@@ -55,6 +100,19 @@ update_permissions:
                 _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter:
+        lineup:
+          v_match_lineup:
+            match:
+              is_tournament_match:
+                _eq: false
+    comment: ""
   - role: user
     permission:
       filter:

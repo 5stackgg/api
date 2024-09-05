@@ -66,6 +66,75 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - best_of
+        - coaches
+        - knife_round
+        - map_pool_id
+        - map_veto
+        - mr
+        - number_of_substitutes
+        - overtime
+        - region_veto
+        - tech_timeout_setting
+        - timeout_setting
+        - tv_delay
+        - type
+      filter: {}
+      check: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - best_of
+        - coaches
+        - knife_round
+        - map_pool_id
+        - map_veto
+        - mr
+        - number_of_substitutes
+        - overtime
+        - region_veto
+        - tech_timeout_setting
+        - timeout_setting
+        - tv_delay
+        - type
+      filter:
+        matches:
+          is_tournament_match:
+            _eq: false
+      check:
+        matches:
+          is_tournament_match:
+            _eq: false
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - best_of
+        - coaches
+        - knife_round
+        - map_pool_id
+        - map_veto
+        - mr
+        - number_of_substitutes
+        - overtime
+        - region_veto
+        - tech_timeout_setting
+        - timeout_setting
+        - tv_delay
+        - type
+      filter:
+        matches:
+          is_tournament_match:
+            _eq: true
+      check:
+        matches:
+          is_tournament_match:
+            _eq: true
+    comment: ""
   - role: user
     permission:
       columns:
