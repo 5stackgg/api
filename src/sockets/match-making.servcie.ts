@@ -152,8 +152,7 @@ export class MatchMakingService {
       this.sendJoinedQueuedsToUser(steamId);
     }
 
-    // TODO -  + 1 for testing
-    if (confirmed != players.length + 1) {
+    if (confirmed != players.length) {
       return;
     }
 
@@ -480,15 +479,13 @@ export class MatchMakingService {
 
     const totalPlayersInQueue = await this.getQueueLength(type, region);
 
-    console.info("TOTLAL IN QUEUE", totalPlayersInQueue);
-
     if (totalPlayersInQueue === 0) {
       return;
     }
 
-    // if (totalPlayersInQueue < requiredPlayers) {
-    //   return;
-    // }
+    if (totalPlayersInQueue < requiredPlayers) {
+      return;
+    }
 
     const confirmationId = uuidv4();
 
