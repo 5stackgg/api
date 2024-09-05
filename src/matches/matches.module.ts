@@ -37,6 +37,7 @@ import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
+import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { SocketsModule } from "../sockets/sockets.module";
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     CancelInvalidTournaments,
+    CancelMatchMaking,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),

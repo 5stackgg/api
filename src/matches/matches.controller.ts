@@ -19,6 +19,7 @@ import {
   matches_set_input,
   servers_set_input,
 } from "../../generated";
+import { MatchMakingService } from "src/sockets/match-making.servcie";
 
 @Controller("matches")
 export class MatchesController {
@@ -26,6 +27,7 @@ export class MatchesController {
     private readonly logger: Logger,
     private readonly moduleRef: ModuleRef,
     private readonly hasura: HasuraService,
+    private readonly matchMaking: MatchMakingService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,
@@ -139,6 +141,8 @@ export class MatchesController {
       status === "Finished"
     ) {
       await this.removeDiscordIntegration(matchId);
+      await this.matchMaking.cancelMatchMakingByMatchId(matchId);
+
       const serverId = data.new.server_id || data.old.server_id;
 
       if (!serverId) {

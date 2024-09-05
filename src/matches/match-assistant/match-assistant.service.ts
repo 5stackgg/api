@@ -12,7 +12,6 @@ import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import {
-  e_game_server_node_regions,
   e_game_server_node_regions_enum,
   e_map_pool_types_enum,
   e_match_status_enum,
@@ -827,17 +826,20 @@ export class MatchAssistantService {
     return insert_matches_one;
   }
 
-  public async cancelMatchMaking(confirmationId: string) {
+  public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
     await this.queue.add(
       "CancelMatchMaking",
       {
         confirmationId,
       },
       {
-        removeOnFail: true,
-        removeOnComplete: true,
-        delay: 30,
+        delay: 5 * 1000,
+        jobId: `match-making:cancel:${confirmationId}`,
       },
     );
+  }
+
+  public async removeCancelMatchMakingDueToReadyCheck(confirmationId: string) {
+    await this.queue.remove(`match-making:cancel:${confirmationId}`);
   }
 }
