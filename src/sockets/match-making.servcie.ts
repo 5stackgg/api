@@ -31,15 +31,15 @@ export class MatchMakingService {
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
-    return `match-making:v12:${region}:${type}`;
+    return `match-making:v14:${region}:${type}`;
   }
 
   protected static MATCH_MAKING_CONFIRMATION_KEY(matchId: string) {
-    return `match-making:v12:${matchId}`;
+    return `match-making:v14:${matchId}`;
   }
 
   protected static MATCH_MAKING_USER_QUEUE_KEY(steamId: string) {
-    return `match-making:v12:user:${steamId}`;
+    return `match-making:v14:user:${steamId}`;
   }
 
   @SubscribeMessage("match-making:join")
@@ -72,13 +72,36 @@ export class MatchMakingService {
       return { success: false, message: "Already in queue" };
     }
 
-    await this.redis.zadd(matchMakingQueueKey, 0, user.steam_id),
-      await this.redis.sadd(
-        MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
-        JSON.stringify({ type, region }),
-      );
+    const currentTimestamp = Date.now();
 
-    await this.sendJoinedQueuedsToUser(user);
+    await this.redis.zadd(matchMakingQueueKey, currentTimestamp, user.steam_id);
+
+    const userQueueKey = MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(
+      user.steam_id,
+    );
+    const existingQueues = JSON.parse(
+      (await this.redis.hget(userQueueKey, "data")) || "[]",
+    );
+    const newQueue = { type, region, joinedAt: new Date().toISOString() };
+
+    const queueIndex = existingQueues.findIndex(
+      (queue: {
+        type: e_match_types_enum;
+        region: e_game_server_node_regions_enum;
+      }) => {
+        return queue.type === type && queue.region === region;
+      },
+    );
+
+    if (queueIndex === -1) {
+      existingQueues.push(newQueue);
+    } else {
+      existingQueues[queueIndex] = newQueue;
+    }
+
+    await this.redis.hset(userQueueKey, "data", JSON.stringify(existingQueues));
+
+    await this.sendJoinedQueuedsToUser(user.steam_id);
     await this.sendRegionStats();
 
     this.matchmake(type, region);
@@ -182,14 +205,36 @@ export class MatchMakingService {
       MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
       0,
       user.steam_id,
-    ),
-      await this.redis.srem(
-        MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
-        JSON.stringify({ type, region }),
-      );
+    );
+
+    const userQueueKey = MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(
+      user.steam_id,
+    );
+
+    const existingQueues = JSON.parse(
+      (await this.redis.hget(userQueueKey, "data")) || "[]",
+    );
+
+    const queueIndex = existingQueues.findIndex(
+      (queue: {
+        type: e_match_types_enum;
+        region: e_game_server_node_regions_enum;
+      }) => {
+        return queue.type === type && queue.region === region;
+      },
+    );
+
+    if (queueIndex === -1) {
+      return;
+    }
+
+    existingQueues.splice(queueIndex, 1);
+
+    await this.redis.hset(userQueueKey, "data", JSON.stringify(existingQueues));
 
     await this.sendRegionStats();
-    await this.sendJoinedQueuedsToUser(user);
+    await this.sendJoinedQueuedsToUser(user.steam_id);
+    await this.sendJoinedQueuesToAllUsers(type, region);
   }
 
   public async getQueueLength(
@@ -266,44 +311,60 @@ export class MatchMakingService {
     );
   }
 
-  public async sendJoinedQueuedsToUser(user: User) {
-    const queues = await this.redis.smembers(
-      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
+  public async sendJoinedQueuedsToUser(steamId: string) {
+    const queues = await this.redis.hgetall(
+      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
     );
 
     await this.redis.publish(
       `send-message-to-steam-id`,
       JSON.stringify({
-        steamId: user.steam_id,
+        steamId: steamId,
         event: "match-making:joined",
         data: await Promise.all(
-          queues.map(async (queue) => {
-            const queueData = JSON.parse(queue);
+          (queues.data ? JSON.parse(queues.data) : []).map(
+            async (queue: {
+              joinedAt: string;
+              type: e_match_types_enum;
+              region: e_game_server_node_regions_enum;
+            }) => {
+              const queueLength = await this.getQueueLength(
+                queue.type,
+                queue.region,
+              );
 
-            const queueLength = await this.getQueueLength(
-              queueData.type,
-              queueData.region,
-            );
-
-            const userRank = await this.redis.zrank(
-              MatchMakingService.MATCH_MAKING_QUEUE_KEY(
-                queueData.type,
-                queueData.region,
-              ),
-              user.steam_id,
-            );
-
-            const currentPosition =
-              userRank !== null ? queueLength - userRank : queueLength;
-
-            return {
-              ...queueData,
-              currentPosition,
-            };
-          }),
+              return {
+                ...queue,
+                currentPosition:
+                  1 +
+                  (await this.redis.zrank(
+                    MatchMakingService.MATCH_MAKING_QUEUE_KEY(
+                      queue.type,
+                      queue.region,
+                    ),
+                    steamId,
+                  )),
+              };
+            },
+          ),
         ),
       }),
     );
+  }
+
+  public async sendJoinedQueuesToAllUsers(
+    type: e_match_types_enum,
+    region: e_game_server_node_regions_enum,
+  ) {
+    const steamIds = await this.redis.zrange(
+      MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+      0,
+      -1,
+    );
+
+    for (const steamId of steamIds) {
+      await this.sendJoinedQueuedsToUser(steamId);
+    }
   }
 
   public async cancelMatchMaking(confirmationId: string) {
@@ -326,16 +387,22 @@ export class MatchMakingService {
       region,
     );
 
-    const playersData = JSON.parse(
+    const players = JSON.parse(
       (await this.redis.hget(
         MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
         "players",
       )) || "[]",
     );
 
-    for (const { steamId, priority } of playersData) {
-      await this.redis.zadd(matchMakingQueueKey, priority, steamId);
+    // TODO - get zscore = joinedAt
+
+    for (const player of players) {
+      console.info("PLAYER", player);
     }
+    // // TODO - since priority is the date, we need to handle it differently
+    // for (const { steamId, priority } of players) {
+    //   await this.redis.zadd(matchMakingQueueKey, priority, steamId);
+    // }
 
     this.matchmake(type, region);
   }
@@ -373,11 +440,10 @@ export class MatchMakingService {
       return;
     }
 
-    const potentialPlayers = await this.redis.zrange(
+    const steamIds = await this.redis.zrange(
       matchMakingQueueKey,
       0,
       requiredPlayers - 1,
-      "WITHSCORES",
     );
 
     await this.redis.zremrangebyrank(
@@ -388,54 +454,33 @@ export class MatchMakingService {
 
     const confirmationId = uuidv4();
 
-    const players = JSON.stringify(
-      potentialPlayers
-        .filter((_, index) => index % 2 === 0)
-        .map((steamId) => {
-          return {
-            steamId,
-            priority: this.redis.zscore(matchMakingQueueKey, steamId),
-          };
-        }),
-    );
-
     await this.redis.hset(
       MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       {
         region,
         type,
-        players,
+        steamIds,
       },
     );
 
-    for (let i = 0; i < potentialPlayers.length; i += 2) {
-      const steamId = potentialPlayers[i];
-      await this.askForConfirmation(steamId, confirmationId, type, region);
+    for (const steamId of steamIds) {
+      await this.redis.publish(
+        `send-message-to-steam-id`,
+        JSON.stringify({
+          steamId,
+          event: "match-making:confirmation",
+          data: {
+            type,
+            region,
+            confirmationId,
+            totalConfirmed: 0,
+          },
+        }),
+      );
     }
 
     await this.matchmake(type, region, false);
 
     this.matchAssistant.cancelMatchMaking(confirmationId);
-  }
-
-  private async askForConfirmation(
-    steamId: string,
-    confirmationId: string,
-    type: e_match_types_enum,
-    region: e_game_server_node_regions_enum,
-  ) {
-    await this.redis.publish(
-      `send-message-to-steam-id`,
-      JSON.stringify({
-        steamId,
-        event: "match-making:confirmation",
-        data: {
-          type,
-          region,
-          confirmationId,
-          totalConfirmed: 0,
-        },
-      }),
-    );
   }
 }

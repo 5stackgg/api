@@ -100,14 +100,14 @@ export class ServerGateway {
         client.node = this.nodeId;
 
         await this.redis.sadd(
-          `user:${client.user.steam_id}:clients`,
+          `ws-clients:${client.user.steam_id}:clients`,
           `${client.id}:${client.node}`,
         );
 
         this.clients.set(client.id, client);
 
         await this.matchMaking.sendRegionStats(client.user);
-        await this.matchMaking.sendJoinedQueuedsToUser(client.user);
+        await this.matchMaking.sendJoinedQueuedsToUser(client.user.steam_id);
 
         client.on("close", async () => {
           await this.redis.srem(
@@ -204,7 +204,7 @@ export class ServerGateway {
     event: string,
     data: unknown,
   ) {
-    const clients = await this.redis.smembers(`user:${steamId}:clients`);
+    const clients = await this.redis.smembers(`ws-clients:${steamId}:clients`);
     for (const client of clients) {
       const [id, node] = client.split(":");
 
