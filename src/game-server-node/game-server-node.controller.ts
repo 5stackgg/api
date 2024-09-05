@@ -51,6 +51,9 @@ export class GameServerNodeController {
       },
     });
 
+
+    await this.queue.remove(`server-offline:${serverId}`);
+
     await this.queue.add(
       MarkGameServerOffline.name,
       {
