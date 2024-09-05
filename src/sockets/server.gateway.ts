@@ -107,7 +107,7 @@ export class ServerGateway {
         this.clients.set(client.id, client);
 
         await this.matchMaking.sendRegionStats(client.user);
-        await this.matchMaking.sendJoinedQueuedsToUser(client.user.steam_id);
+        await this.matchMaking.sendQueueDetailsToUser(client.user.steam_id);
 
         client.on("close", async () => {
           await this.redis.srem(

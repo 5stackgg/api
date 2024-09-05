@@ -33,86 +33,132 @@ export class MatchMakingService {
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
-    return `match-making:v22:${region}:${type}`;
+    return `match-making:v28:${region}:${type}`;
   }
 
   protected static MATCH_MAKING_CONFIRMATION_KEY(confirmationId: string) {
-    return `match-making:v22:${confirmationId}`;
+    return `match-making:v28:${confirmationId}`;
   }
 
   protected static MATCH_MAKING_USER_QUEUE_KEY(steamId: string) {
-    return `match-making:v22:user:${steamId}`;
+    return `match-making:v28:user:${steamId}`;
   }
 
-  @SubscribeMessage("match-making:join")
+  @SubscribeMessage("match-making:join-queue")
   async joinQueue(
     @MessageBody()
     data: {
       type: e_match_types_enum;
-      region: e_game_server_node_regions_enum;
+      regions: Array<e_game_server_node_regions_enum>;
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    const user = client.user;
-    const { type, region } = data;
+    const { type, regions } = data;
 
-    if (!type || !region) {
+    if (!type || !regions || regions.length === 0) {
       return;
     }
 
-    const matchMakingQueueKey = MatchMakingService.MATCH_MAKING_QUEUE_KEY(
-      type,
-      region,
-    );
+    const user = client.user;
 
-    const existingUserInQueue = await this.redis.zscore(
-      matchMakingQueueKey,
-      user.steam_id,
-    );
+    const existingUserInQueue = await this.getUserQueueDetails(user.steam_id);
 
-    if (existingUserInQueue !== null) {
-      return { success: false, message: "Already in queue" };
+    if (existingUserInQueue) {
+      this.logger.warn(`user ${user.steam_id} already in queue`);
+      return;
     }
 
-    const currentTimestamp = Date.now();
+    const joinedAt = new Date();
 
-    await this.redis.zadd(matchMakingQueueKey, currentTimestamp, user.steam_id);
-
-    const userQueueKey = MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(
-      user.steam_id,
-    );
-
-    const existingQueues = JSON.parse(
-      (await this.redis.hget(userQueueKey, "details")) || "[]",
-    );
-
-    const newQueue = { type, region, joinedAt: new Date().toISOString() };
-
-    const queueIndex = existingQueues.findIndex(
-      (queue: {
-        type: e_match_types_enum;
-        region: e_game_server_node_regions_enum;
-      }) => {
-        return queue.type === type && queue.region === region;
-      },
-    );
-
-    if (queueIndex === -1) {
-      existingQueues.push(newQueue);
-    } else {
-      existingQueues[queueIndex] = newQueue;
-    }
-
+    /**
+     * setup the user queue details
+     */
     await this.redis.hset(
-      userQueueKey,
+      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
       "details",
-      JSON.stringify(existingQueues),
+      JSON.stringify({ type, regions, joinedAt: joinedAt.toISOString() }),
     );
 
-    await this.sendJoinedQueuedsToUser(user.steam_id);
+    /**
+     * for each region add player into the queue
+     */
+    for (const region of regions) {
+      // TODO - and speicic maps or map pool id
+      await this.redis.zadd(
+        MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+        joinedAt.getTime(),
+        user.steam_id,
+      );
+    }
+
+    await this.sendQueueDetailsToUser(user.steam_id);
     await this.sendRegionStats();
 
-    this.matchmake(type, region);
+    for (const region of regions) {
+      this.matchmake(type, region);
+    }
+  }
+
+  private async getUserQueueDetails(steamId: string) {
+    const details = await this.redis.hget(
+      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+      "details",
+    );
+
+    if (!details) {
+      return;
+    }
+
+    return JSON.parse(details);
+  }
+
+  private async removeUserFromQueue(steamId: string) {
+    await this.removeUserFromRegions(steamId);
+
+    /**
+     * remove the user queue details
+     */
+    await this.redis.del(
+      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+    );
+  }
+
+  private async removeUserFromRegions(steamId: string) {
+    const userQueueDetails = await this.getUserQueueDetails(steamId);
+
+    if (!userQueueDetails) {
+      return;
+    }
+
+    const type = userQueueDetails.type;
+
+    /**
+     * remove player from each region they queued for
+     */
+    for (const region of userQueueDetails.regions) {
+      await this.redis.zrem(
+        MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+        steamId,
+      );
+    }
+  }
+
+  @SubscribeMessage("match-making:leave")
+  async leaveQueue(@ConnectedSocket() client: FiveStackWebSocketClient) {
+    const user = client.user;
+
+    const userQueueDetails = await this.getUserQueueDetails(user.steam_id);
+
+    const type = userQueueDetails.type;
+
+    await this.removeUserFromQueue(user.steam_id);
+
+    await this.sendRegionStats();
+    await this.sendQueueDetailsToUser(user.steam_id);
+
+    for (const region of userQueueDetails.regions) {
+      await this.sendQueueDetailsToAllUsers(type, region);
+    }
   }
 
   @SubscribeMessage("match-making:confirm")
@@ -126,6 +172,9 @@ export class MatchMakingService {
     const user = client.user;
     const { confirmationId } = data;
 
+    /**
+     * if the user has already confirmed, do nothing
+     */
     if (
       await this.redis.hget(
         MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
@@ -135,12 +184,18 @@ export class MatchMakingService {
       return;
     }
 
+    /**
+     * increment the number of players that have confirmed
+     */
     await this.redis.hincrby(
       MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       "confirmed",
       1,
     );
 
+    /**
+     * set the user as confirmed
+     */
     await this.redis.hset(
       MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       `${user.steam_id}`,
@@ -151,7 +206,7 @@ export class MatchMakingService {
       await this.getMatchConfirmationDetails(confirmationId);
 
     for (const steamId of players) {
-      this.sendJoinedQueuedsToUser(steamId);
+      this.sendQueueDetailsToUser(steamId);
     }
 
     if (confirmed != players.length) {
@@ -168,15 +223,16 @@ export class MatchMakingService {
       "Competitive",
       {
         mr: 12,
-        region: region as e_game_server_node_regions_enum,
         best_of: 1,
         knife: true,
         overtime: true,
+        region: region as e_game_server_node_regions_enum,
       },
     );
 
     const lineup1PlayersToInsert =
       type === "Wingman" ? players.slice(0, 2) : players.slice(0, 5);
+
     await this.hasura.mutation({
       insert_match_lineup_players: {
         __args: {
@@ -191,20 +247,27 @@ export class MatchMakingService {
 
     const lineup2PlayersToInsert =
       type === "Wingman" ? players.slice(2) : players.slice(5);
+
     await this.hasura.mutation({
       insert_match_lineup_players: {
         __args: {
           objects: lineup2PlayersToInsert.map((steamId: string) => ({
             steam_id: steamId,
-            match_lineup_id: match.lineup_1_id,
+            match_lineup_id: match.lineup_2_id,
           })),
         },
         __typename: true,
       },
     });
 
+    /**
+     * after the match is finished we need to remove people form the queue so they can queue again
+     */
     await this.redis.set(`matches:confirmation:${match.id}`, confirmationId);
 
+    /**
+     * add match id to the confirmation details
+     */
     await this.redis.hset(
       MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       "matchId",
@@ -212,31 +275,10 @@ export class MatchMakingService {
     );
 
     for (const steamId of players) {
-      this.sendJoinedQueuedsToUser(steamId);
+      this.sendQueueDetailsToUser(steamId);
     }
 
     await this.matchAssistant.updateMatchStatus(match.id, "Veto");
-  }
-
-  @SubscribeMessage("match-making:leave")
-  async leaveQueue(
-    @MessageBody()
-    data: {
-      type: e_match_types_enum;
-      region: e_game_server_node_regions_enum;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    const user = client.user;
-    const { type, region } = data;
-
-    await this.redis.del(
-      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
-    );
-
-    await this.sendRegionStats();
-    await this.sendJoinedQueuedsToUser(user.steam_id);
-    await this.sendJoinedQueuesToAllUsers(type, region);
   }
 
   public async getQueueLength(
@@ -313,15 +355,21 @@ export class MatchMakingService {
     );
   }
 
-  public async sendJoinedQueuedsToUser(steamId: string) {
-    const { details, confirmationId } = await this.redis.hgetall(
+  public async sendQueueDetailsToUser(steamId: string) {
+    let confirmationDetails;
+    const confirmationId = await this.redis.hget(
       MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+      "confirmationId",
     );
 
-    let confirmationDetails;
     if (confirmationId) {
       const { matchId, confirmed, type, region, players, expiresAt } =
         await this.getMatchConfirmationDetails(confirmationId);
+
+      const isReady = await this.redis.hget(
+        MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+        steamId,
+      );
 
       confirmationDetails = {
         type,
@@ -330,13 +378,12 @@ export class MatchMakingService {
         expiresAt,
         confirmed,
         confirmationId,
+        isReady: !!isReady,
         players: players.length,
-        isReady: await this.redis.hget(
-          MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
-          `${steamId}`,
-        ),
       };
     }
+
+    console.info("confirmationDetails", confirmationDetails);
 
     await this.redis.publish(
       `send-message-to-steam-id`,
@@ -344,35 +391,14 @@ export class MatchMakingService {
         steamId: steamId,
         event: "match-making:details",
         data: {
+          details: await this.getUserQueueDetails(steamId),
           confirmation: confirmationId && confirmationDetails,
-          details: await Promise.all(
-            (details ? JSON.parse(details) : []).map(
-              async (queue: {
-                joinedAt: string;
-                type: e_match_types_enum;
-                region: e_game_server_node_regions_enum;
-              }) => {
-                return {
-                  ...queue,
-                  currentPosition:
-                    1 +
-                    (await this.redis.zrank(
-                      MatchMakingService.MATCH_MAKING_QUEUE_KEY(
-                        queue.type,
-                        queue.region,
-                      ),
-                      steamId,
-                    )),
-                };
-              },
-            ),
-          ),
         },
       }),
     );
   }
 
-  public async sendJoinedQueuesToAllUsers(
+  public async sendQueueDetailsToAllUsers(
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
@@ -383,7 +409,7 @@ export class MatchMakingService {
     );
 
     for (const steamId of steamIds) {
-      await this.sendJoinedQueuedsToUser(steamId);
+      await this.sendQueueDetailsToUser(steamId);
     }
   }
 
@@ -412,30 +438,36 @@ export class MatchMakingService {
         );
 
         if (wasReady) {
+          /**
+           * if they wre ready, we want to requeue them into the queue
+           */
           await this.redis.hdel(
             MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
             "confirmationId",
           );
 
-          // TODO - get the time they initially queu
+          const { regions, joinedAt } = await this.getUserQueueDetails(steamId);
+          for (const region of regions) {
+            await this.redis.zadd(
+              MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+              new Date(joinedAt).getTime(),
+              steamId,
+            );
+          }
 
-          await this.redis.zadd(
-            MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
-            new Date().getTime(),
-            steamId,
-          );
-          this.sendJoinedQueuedsToUser(steamId);
+          this.sendQueueDetailsToUser(steamId);
           continue;
         }
       }
 
-      await this.redis.del(
-        MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
-      );
+      await this.removeUserFromQueue(steamId);
 
-      this.sendJoinedQueuedsToUser(steamId);
+      this.sendQueueDetailsToUser(steamId);
     }
 
+    /**
+     * remove the confirmation details
+     */
     await this.redis.del(
       MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
     );
@@ -454,11 +486,6 @@ export class MatchMakingService {
     region: e_game_server_node_regions_enum,
     lock = true,
   ) {
-    const matchMakingQueueKey = MatchMakingService.MATCH_MAKING_QUEUE_KEY(
-      type,
-      region,
-    );
-
     if (lock) {
       const lockKey = `matchmaking-lock:${type}:${region}`;
       const acquireLock = !!(await this.redis.set(lockKey, 1, "NX"));
@@ -490,17 +517,17 @@ export class MatchMakingService {
 
     const confirmationId = uuidv4();
 
-    const steamIds = await this.redis.zrange(
-      matchMakingQueueKey,
-      0,
-      requiredPlayers - 1,
+    const matchMakingQueueKey = MatchMakingService.MATCH_MAKING_QUEUE_KEY(
+      type,
+      region,
     );
 
-    await this.redis.zremrangebyrank(
+    const result = await this.redis.zpopmin(
       matchMakingQueueKey,
-      0,
-      requiredPlayers - 1,
+      requiredPlayers,
     );
+
+    const steamIds = result.filter((_, index) => index % 2 === 0);
 
     const expiresAt = new Date();
 
@@ -516,6 +543,9 @@ export class MatchMakingService {
       },
     );
 
+    /**
+     * assign the confirmation id to the players
+     */
     for (const steamId of steamIds) {
       await this.redis.hset(
         MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
@@ -523,9 +553,12 @@ export class MatchMakingService {
         confirmationId,
       );
 
-      this.sendJoinedQueuedsToUser(steamId);
+      this.sendQueueDetailsToUser(steamId);
     }
 
+    /**
+     * if the total number of players in the queue is still greater than the required number of players,
+     */
     await this.matchmake(type, region, false);
 
     this.matchAssistant.cancelMatchMakingDueToReadyCheck(confirmationId);

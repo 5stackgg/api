@@ -833,7 +833,7 @@ export class MatchAssistantService {
         confirmationId,
       },
       {
-        delay: 5 * 1000,
+        delay: 30 * 1000,
         jobId: `match-making:cancel:${confirmationId}`,
       },
     );
