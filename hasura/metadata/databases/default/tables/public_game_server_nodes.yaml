@@ -44,15 +44,6 @@ select_permissions:
       filter: {}
       allow_aggregations: true
     comment: ""
-  - role: user
-    permission:
-      columns:
-        - region
-        - status
-      filter:
-        enabled:
-          _eq: true
-    comment: ""
 update_permissions:
   - role: administrator
     permission:
