@@ -12,6 +12,7 @@ import {
   WebSocketGateway,
 } from "@nestjs/websockets";
 import { FiveStackWebSocketClient } from "./server.gateway";
+import { Logger } from "@nestjs/common";
 
 @WebSocketGateway({
   path: "/ws",
@@ -20,6 +21,7 @@ export class MatchMakingService {
   private redis: Redis;
 
   constructor(
+    private readonly logger: Logger,
     private readonly hasura: HasuraService,
     private readonly redisManager: RedisManagerService,
     private readonly matchAssistant: MatchAssistantService,
@@ -399,7 +401,6 @@ export class MatchMakingService {
     confirmationId: string,
     readyCheckFailed: boolean = false,
   ) {
-    console.info("CANCEL MATCH MAKING", confirmationId, readyCheckFailed);
     const { players, type, region } =
       await this.getMatchConfirmationDetails(confirmationId);
 
@@ -463,7 +464,7 @@ export class MatchMakingService {
       const acquireLock = !!(await this.redis.set(lockKey, 1, "NX"));
 
       if (!acquireLock) {
-        console.warn("unable to acquire lock");
+        this.logger.warn("unable to acquire lock");
         return;
       }
 
