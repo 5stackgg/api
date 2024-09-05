@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
 import {
   ActionRowBuilder,
@@ -25,6 +25,7 @@ export class DiscordPickPlayerService {
     private readonly logger: Logger,
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
+    @Inject(forwardRef(() => DiscordBotService))
     private readonly bot: DiscordBotService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,

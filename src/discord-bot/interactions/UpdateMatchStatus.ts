@@ -1,8 +1,8 @@
 import { ButtonInteraction } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
-import { BotButtonInteraction } from "../discord-bot.service";
 import { ButtonActions } from "../enums/ButtonActions";
 import { e_match_status_enum } from "../../../generated";
+import { BotButtonInteraction } from "./interactions";
 
 @BotButtonInteraction(ButtonActions.MatchStatus)
 export default class UpdateMatchStatus extends DiscordInteraction {

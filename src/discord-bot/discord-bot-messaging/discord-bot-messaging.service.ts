@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "../../cache/cache.service";
 import { DiscordBotService } from "../discord-bot.service";
 import {
@@ -14,6 +14,7 @@ export class DiscordBotMessagingService {
   constructor(
     private readonly logger: Logger,
     private readonly cache: CacheService,
+    @Inject(forwardRef(() => DiscordBotService))
     private readonly bot: DiscordBotService,
   ) {}
 

@@ -7,7 +7,7 @@ import { DiscordPickPlayerService } from "../../discord-pick-player/discord-pick
 import { DiscordBotOverviewService } from "../../discord-bot-overview/discord-bot-overview.service";
 import { DiscordBotVetoService } from "../../discord-bot-veto/discord-bot-veto.service";
 import { HasuraService } from "../../../hasura/hasura.service";
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
@@ -16,6 +16,7 @@ export default abstract class DiscordInteraction {
     protected readonly logger: Logger,
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
+    @Inject(forwardRef(() => DiscordBotService))
     protected readonly bot: DiscordBotService,
     protected readonly matchAssistant: MatchAssistantService,
     protected readonly discordBotVeto: DiscordBotVetoService,

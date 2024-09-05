@@ -12,12 +12,12 @@ import {
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
-import { BotChatCommand } from "../discord-bot.service";
 import { ExpectedPlayers } from "../enums/ExpectedPlayers";
 import { DiscordMatchOptions } from "../types/DiscordMatchOptions";
 import { getRandomNumber } from "../utilities/getRandomNumber";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { e_map_pool_types_enum, e_match_types_enum } from "../../../generated";
+import { BotChatCommand } from "./interactions";
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 

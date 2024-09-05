@@ -7,9 +7,15 @@ import UpdateMapStatus from "./UpdateMapStatus";
 import VetoPick from "./VetoPick";
 import UpdateMatchStatus from "./UpdateMatchStatus";
 import { loggerFactory } from "../../utilities/LoggerFactory";
+import { CacheModule } from "src/cache/cache.module";
 
 @Module({
-  imports: [forwardRef(() => DiscordBotModule), HasuraModule, MatchesModule],
+  imports: [
+    forwardRef(() => DiscordBotModule),
+    HasuraModule,
+    MatchesModule,
+    CacheModule,
+  ],
   exports: [ScheduleMatch, UpdateMapStatus, UpdateMatchStatus, VetoPick],
   providers: [
     ScheduleMatch,

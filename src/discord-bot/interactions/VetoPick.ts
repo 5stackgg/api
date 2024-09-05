@@ -1,7 +1,7 @@
 import { ButtonInteraction } from "discord.js";
-import { BotButtonInteraction } from "../discord-bot.service";
 import { ButtonActions } from "../enums/ButtonActions";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
+import { BotButtonInteraction } from "./interactions";
 
 @BotButtonInteraction(ButtonActions.VetoPick)
 export default class VetoPick extends DiscordInteraction {

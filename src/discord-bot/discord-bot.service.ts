@@ -1,4 +1,4 @@
-import { LazyModuleLoader } from "@nestjs/core";
+import { ModuleRef } from "@nestjs/core";
 import { Logger, Injectable } from "@nestjs/common";
 import {
   ButtonInteraction,
@@ -10,34 +10,13 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { ChatCommands } from "./enums/ChatCommands";
-import { ButtonActions } from "./enums/ButtonActions";
 import { HasuraService } from "../hasura/hasura.service";
-import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 import { ConfigService } from "@nestjs/config";
 import { DiscordConfig } from "../configs/types/DiscordConfig";
 import { e_map_pool_types_enum } from "../../generated";
+import { interactions } from "./interactions/interactions";
+import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 
-const _interactions: {
-  chat: Partial<Record<ChatCommands, DiscordInteraction>>;
-  buttons: Partial<Record<ButtonActions, DiscordInteraction>>;
-} = {
-  chat: {},
-  buttons: {},
-};
-
-export function BotButtonInteraction(action: ButtonActions): ClassDecorator {
-  return function (target) {
-    _interactions.buttons[action] = target as unknown as DiscordInteraction;
-  };
-}
-
-export function BotChatCommand(action: ChatCommands): ClassDecorator {
-  return function (target) {
-    _interactions.chat[action] = target as unknown as DiscordInteraction;
-  };
-}
-
-// TODO - this service loads twice because of the lazy loading
 let client: Client;
 
 @Injectable()
@@ -49,7 +28,7 @@ export class DiscordBotService {
     readonly config: ConfigService,
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
-    private readonly lazyModuleLoader: LazyModuleLoader,
+    private readonly moduleRef: ModuleRef,
   ) {
     this.client = client;
     this.discordConfig = config.get<DiscordConfig>("discord");
@@ -60,13 +39,6 @@ export class DiscordBotService {
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
     });
 
-    const { DiscordBotInteractionModule } = await import(
-      "./interactions/discord-bot-interaction.module"
-    );
-    const moduleRef = await this.lazyModuleLoader.load(
-      () => DiscordBotInteractionModule,
-    );
-
     this.client
       .on("ready", () => {
         this.logger.log(`logged in as ${this.client.user.tag}!`);
@@ -74,11 +46,11 @@ export class DiscordBotService {
       .on("interactionCreate", async (interaction) => {
         if (interaction.isChatInputCommand()) {
           const DiscordInteraction =
-            _interactions.chat[
-              interaction.commandName as keyof typeof _interactions.chat
+            interactions.chat[
+              interaction.commandName as keyof typeof interactions.chat
             ];
 
-          return await moduleRef
+          return await this.moduleRef
             .get<
               symbol,
               DiscordInteraction
@@ -89,9 +61,9 @@ export class DiscordBotService {
         if (interaction.isButton()) {
           const [type] = (interaction as ButtonInteraction).customId.split(":");
           const DiscordInteraction =
-            _interactions.buttons[type as keyof typeof _interactions.buttons];
+            interactions.buttons[type as keyof typeof interactions.buttons];
 
-          return await moduleRef
+          return await this.moduleRef
             .get<
               symbol,
               DiscordInteraction

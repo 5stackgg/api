@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { ChannelType, GuildChannel, VoiceChannel } from "discord.js";
 import { CacheService } from "../../cache/cache.service";
 import { CacheTag } from "../../cache/CacheTag";
@@ -10,6 +10,7 @@ export class DiscordBotVoiceChannelsService {
   constructor(
     private readonly logger: Logger,
     private readonly cache: CacheService,
+    @Inject(forwardRef(() => DiscordBotService))
     private readonly bot: DiscordBotService,
   ) {}
 

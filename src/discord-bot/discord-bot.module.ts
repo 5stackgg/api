@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { DiscordBotService } from "./discord-bot.service";
 import { DiscordBotController } from "./discord-bot.controller";
 import { DiscordBotMessagingService } from "./discord-bot-messaging/discord-bot-messaging.service";
@@ -16,12 +16,14 @@ import { DiscordBotQueues } from "./enums/DiscordBotQueues";
 import { UpdateDiscordMatchVetoJob } from "./jobs/UpdateDiscordMatchVetoJob";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import { DiscordBotInteractionModule } from "./interactions/discord-bot-interaction.module";
 
 @Module({
   imports: [
     CacheModule,
     HasuraModule,
     MatchesModule,
+    forwardRef(() => DiscordBotInteractionModule),
     BullModule.registerQueue({
       name: DiscordBotQueues.DiscordBot,
     }),
