@@ -54,8 +54,7 @@ type MeResponse {
 }
 
 type SetupGameServeOutput {
-  id: uuid!
-  script: String!
+  link: String!
 }
 
 """
@@ -3828,6 +3827,7 @@ type game_server_nodes {
   ): servers_aggregate!
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  token: String
 
   """
   A computed field, executes function "total_node_server_count"
@@ -3956,6 +3956,7 @@ input game_server_nodes_bool_exp {
   servers_aggregate: servers_aggregate_bool_exp
   start_port_range: Int_comparison_exp
   status: e_game_server_node_statuses_enum_comparison_exp
+  token: String_comparison_exp
   total_server_count: Int_comparison_exp
 }
 
@@ -3991,6 +3992,7 @@ input game_server_nodes_insert_input {
   servers: servers_arr_rel_insert_input
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  token: String
 }
 
 """aggregate max on columns"""
@@ -4002,6 +4004,7 @@ type game_server_nodes_max_fields {
   end_port_range: Int
   id: String
   start_port_range: Int
+  token: String
 
   """
   A computed field, executes function "total_node_server_count"
@@ -4016,6 +4019,7 @@ input game_server_nodes_max_order_by {
   end_port_range: order_by
   id: order_by
   start_port_range: order_by
+  token: order_by
 }
 
 """aggregate min on columns"""
@@ -4027,6 +4031,7 @@ type game_server_nodes_min_fields {
   end_port_range: Int
   id: String
   start_port_range: Int
+  token: String
 
   """
   A computed field, executes function "total_node_server_count"
@@ -4041,6 +4046,7 @@ input game_server_nodes_min_order_by {
   end_port_range: order_by
   id: order_by
   start_port_range: order_by
+  token: order_by
 }
 
 """
@@ -4086,6 +4092,7 @@ input game_server_nodes_order_by {
   servers_aggregate: servers_aggregate_order_by
   start_port_range: order_by
   status: order_by
+  token: order_by
   total_server_count: order_by
 }
 
@@ -4118,6 +4125,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   status
+
+  """column name"""
+  token
 }
 
 """
@@ -4147,6 +4157,7 @@ input game_server_nodes_set_input {
   region: e_game_server_node_regions_enum
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  token: String
 }
 
 """aggregate stddev on columns"""
@@ -4238,6 +4249,7 @@ input game_server_nodes_stream_cursor_value_input {
   region: e_game_server_node_regions_enum
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  token: String
 }
 
 """aggregate sum on columns"""
@@ -4287,6 +4299,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   status
+
+  """column name"""
+  token
 }
 
 input game_server_nodes_updates {
@@ -9323,6 +9338,11 @@ type matches {
   is_organizer: Boolean
 
   """
+  A computed field, executes function "is_server_online"
+  """
+  is_server_online: Boolean
+
+  """
   A computed field, executes function "is_tournament_match"
   """
   is_tournament_match: Boolean
@@ -9931,6 +9951,7 @@ input matches_bool_exp {
   is_in_lineup: Boolean_comparison_exp
   is_match_server_available: Boolean_comparison_exp
   is_organizer: Boolean_comparison_exp
+  is_server_online: Boolean_comparison_exp
   is_tournament_match: Boolean_comparison_exp
   label: String_comparison_exp
   lineup_1: match_lineups_bool_exp
@@ -10309,6 +10330,7 @@ input matches_order_by {
   is_in_lineup: order_by
   is_match_server_available: order_by
   is_organizer: order_by
+  is_server_online: order_by
   is_tournament_match: order_by
   label: order_by
   lineup_1: match_lineups_order_by

@@ -52,6 +52,17 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  updateCs(
+    gameServerNodeId: uuid
+  ): SuccessOutput
+}
+
+input SampleInput {
+  username: String!
+  password: String!
+}
+
 type MeResponse {
   name: String!
   steam_id: String!
@@ -66,7 +77,10 @@ type SuccessOutput {
 }
 
 type SetupGameServeOutput {
-  id: uuid!
-  script: String!
+  link: String!
+}
+
+type SampleOutput {
+  accessToken: String!
 }
 

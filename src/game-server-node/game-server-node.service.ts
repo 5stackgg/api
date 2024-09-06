@@ -12,6 +12,7 @@ export class GameServerNodeService {
   ) {}
 
   public async create(
+    token?: string,
     node?: string,
     status: e_game_server_node_statuses_enum = "Setup",
   ) {
@@ -20,11 +21,13 @@ export class GameServerNodeService {
         __args: {
           object: {
             id: node,
+            token,
+            status,
             region: "Lan",
-            status: status,
           },
         },
         id: true,
+        token: true,
       },
     });
 
@@ -56,7 +59,7 @@ export class GameServerNodeService {
       });
 
     if (!gameServerNode) {
-      return await this.create(node, status);
+      return await this.create(undefined, node, status);
     }
   }
 

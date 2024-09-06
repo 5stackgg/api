@@ -293,10 +293,7 @@ export default {
             ]
         },
         "SetupGameServeOutput": {
-            "id": [
-                1576
-            ],
-            "script": [
+            "link": [
                 7
             ],
             "__typename": [
@@ -4827,6 +4824,9 @@ export default {
             "status": [
                 67
             ],
+            "token": [
+                7
+            ],
             "total_server_count": [
                 3
             ],
@@ -5080,6 +5080,9 @@ export default {
             "status": [
                 68
             ],
+            "token": [
+                8
+            ],
             "total_server_count": [
                 4
             ],
@@ -5130,6 +5133,9 @@ export default {
             "status": [
                 67
             ],
+            "token": [
+                7
+            ],
             "__typename": [
                 7
             ]
@@ -5147,6 +5153,9 @@ export default {
             "start_port_range": [
                 3
             ],
+            "token": [
+                7
+            ],
             "total_server_count": [
                 3
             ],
@@ -5162,6 +5171,9 @@ export default {
                 798
             ],
             "start_port_range": [
+                798
+            ],
+            "token": [
                 798
             ],
             "__typename": [
@@ -5181,6 +5193,9 @@ export default {
             "start_port_range": [
                 3
             ],
+            "token": [
+                7
+            ],
             "total_server_count": [
                 3
             ],
@@ -5196,6 +5211,9 @@ export default {
                 798
             ],
             "start_port_range": [
+                798
+            ],
+            "token": [
                 798
             ],
             "__typename": [
@@ -5272,6 +5290,9 @@ export default {
             "status": [
                 798
             ],
+            "token": [
+                798
+            ],
             "total_server_count": [
                 798
             ],
@@ -5311,6 +5332,9 @@ export default {
             ],
             "status": [
                 67
+            ],
+            "token": [
+                7
             ],
             "__typename": [
                 7
@@ -5432,6 +5456,9 @@ export default {
             ],
             "status": [
                 67
+            ],
+            "token": [
+                7
             ],
             "__typename": [
                 7
@@ -12785,6 +12812,9 @@ export default {
             "is_organizer": [
                 0
             ],
+            "is_server_online": [
+                0
+            ],
             "is_tournament_match": [
                 0
             ],
@@ -13606,6 +13636,9 @@ export default {
             "is_organizer": [
                 1
             ],
+            "is_server_online": [
+                1
+            ],
             "is_tournament_match": [
                 1
             ],
@@ -14231,6 +14264,9 @@ export default {
                 798
             ],
             "is_organizer": [
+                798
+            ],
+            "is_server_online": [
                 798
             ],
             "is_tournament_match": [

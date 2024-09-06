@@ -2,10 +2,14 @@ import { WorkerHost } from "@nestjs/bullmq";
 import { CacheService } from "../../cache/cache.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
+import { Logger } from "@nestjs/common";
 
 @UseQueue("GameServerNode", GameServerQueues.GameUpdate)
 export class CheckGameUpdate extends WorkerHost {
-  constructor(private readonly cache: CacheService) {
+  constructor(
+    protected readonly cache: CacheService,
+    protected readonly logger: Logger,
+  ) {
     super();
   }
 
@@ -15,10 +19,18 @@ export class CheckGameUpdate extends WorkerHost {
 
     const { data } = await response.json();
 
-    const { timeupdated } = data["730"].depots.branches.public;
+    const publicBuild = data["730"].depots?.branches?.public;
 
-    if (!latestBuildTime || latestBuildTime > parseInt(timeupdated)) {
-      await this.cache.put("cs:updated-at", parseInt(timeupdated));
+    if (!publicBuild) {
+      this.logger.error("No timeupdated found for CS2", data);
+      return;
+    }
+
+    if (
+      !latestBuildTime ||
+      latestBuildTime > parseInt(publicBuild.timeupdated)
+    ) {
+      await this.cache.put("cs:updated-at", parseInt(publicBuild.timeupdated));
       // TODO - do update job on all nodes a daemonset!
     }
   }

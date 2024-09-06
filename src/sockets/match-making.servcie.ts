@@ -395,7 +395,7 @@ export class MatchMakingService {
         players: players.length,
       };
     }
-    
+
     await this.redis.publish(
       `send-message-to-steam-id`,
       JSON.stringify({
