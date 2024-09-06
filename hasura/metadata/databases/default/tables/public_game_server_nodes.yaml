@@ -55,3 +55,8 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

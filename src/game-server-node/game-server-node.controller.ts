@@ -49,7 +49,6 @@ export class GameServerNodeController {
         },
       });
 
-
       if (!game_server_nodes_by_pk) {
         throw new Error("Game server not found");
       }
@@ -132,7 +131,8 @@ export class GameServerNodeController {
                   env: [
                     {
                       name: "USERNAME",
-                      value: this.config.get<SteamConfig>("steam").serverAccount,
+                      value:
+                        this.config.get<SteamConfig>("steam").serverAccount,
                     },
                     {
                       name: "PASSWRD",
