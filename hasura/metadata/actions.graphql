@@ -24,6 +24,12 @@ type Mutation {
 }
 
 type Query {
+  getCsVersion(
+    gameServerNodeId: uuid
+  ): String!
+}
+
+type Query {
   me: MeResponse!
 }
 

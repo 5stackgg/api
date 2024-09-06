@@ -31,6 +31,7 @@ select_permissions:
   - role: administrator
     permission:
       columns:
+        - build_id
         - enabled
         - end_port_range
         - id

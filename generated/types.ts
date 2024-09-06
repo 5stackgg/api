@@ -4753,6 +4753,9 @@ export default {
             "available_server_count": [
                 3
             ],
+            "build_id": [
+                3
+            ],
             "e_region": [
                 33
             ],
@@ -5010,6 +5013,9 @@ export default {
             "available_server_count": [
                 3
             ],
+            "build_id": [
+                2
+            ],
             "end_port_range": [
                 2
             ],
@@ -5024,6 +5030,9 @@ export default {
             ]
         },
         "game_server_nodes_avg_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5045,6 +5054,9 @@ export default {
                 361
             ],
             "available_server_count": [
+                4
+            ],
+            "build_id": [
                 4
             ],
             "e_region": [
@@ -5092,6 +5104,9 @@ export default {
         },
         "game_server_nodes_constraint": {},
         "game_server_nodes_inc_input": {
+            "build_id": [
+                3
+            ],
             "end_port_range": [
                 3
             ],
@@ -5103,6 +5118,9 @@ export default {
             ]
         },
         "game_server_nodes_insert_input": {
+            "build_id": [
+                3
+            ],
             "e_region": [
                 45
             ],
@@ -5144,6 +5162,9 @@ export default {
             "available_server_count": [
                 3
             ],
+            "build_id": [
+                3
+            ],
             "end_port_range": [
                 3
             ],
@@ -5164,6 +5185,9 @@ export default {
             ]
         },
         "game_server_nodes_max_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5182,6 +5206,9 @@ export default {
         },
         "game_server_nodes_min_fields": {
             "available_server_count": [
+                3
+            ],
+            "build_id": [
                 3
             ],
             "end_port_range": [
@@ -5204,6 +5231,9 @@ export default {
             ]
         },
         "game_server_nodes_min_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5260,6 +5290,9 @@ export default {
             "available_server_count": [
                 798
             ],
+            "build_id": [
+                798
+            ],
             "e_region": [
                 47
             ],
@@ -5312,6 +5345,9 @@ export default {
         "game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns": {},
         "game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns": {},
         "game_server_nodes_set_input": {
+            "build_id": [
+                3
+            ],
             "enabled": [
                 0
             ],
@@ -5344,6 +5380,9 @@ export default {
             "available_server_count": [
                 3
             ],
+            "build_id": [
+                2
+            ],
             "end_port_range": [
                 2
             ],
@@ -5358,6 +5397,9 @@ export default {
             ]
         },
         "game_server_nodes_stddev_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5371,6 +5413,9 @@ export default {
         "game_server_nodes_stddev_pop_fields": {
             "available_server_count": [
                 3
+            ],
+            "build_id": [
+                2
             ],
             "end_port_range": [
                 2
@@ -5386,6 +5431,9 @@ export default {
             ]
         },
         "game_server_nodes_stddev_pop_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5399,6 +5447,9 @@ export default {
         "game_server_nodes_stddev_samp_fields": {
             "available_server_count": [
                 3
+            ],
+            "build_id": [
+                2
             ],
             "end_port_range": [
                 2
@@ -5414,6 +5465,9 @@ export default {
             ]
         },
         "game_server_nodes_stddev_samp_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5436,6 +5490,9 @@ export default {
             ]
         },
         "game_server_nodes_stream_cursor_value_input": {
+            "build_id": [
+                3
+            ],
             "enabled": [
                 0
             ],
@@ -5468,6 +5525,9 @@ export default {
             "available_server_count": [
                 3
             ],
+            "build_id": [
+                3
+            ],
             "end_port_range": [
                 3
             ],
@@ -5482,6 +5542,9 @@ export default {
             ]
         },
         "game_server_nodes_sum_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5511,6 +5574,9 @@ export default {
             "available_server_count": [
                 3
             ],
+            "build_id": [
+                2
+            ],
             "end_port_range": [
                 2
             ],
@@ -5525,6 +5591,9 @@ export default {
             ]
         },
         "game_server_nodes_var_pop_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5538,6 +5607,9 @@ export default {
         "game_server_nodes_var_samp_fields": {
             "available_server_count": [
                 3
+            ],
+            "build_id": [
+                2
             ],
             "end_port_range": [
                 2
@@ -5553,6 +5625,9 @@ export default {
             ]
         },
         "game_server_nodes_var_samp_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -5566,6 +5641,9 @@ export default {
         "game_server_nodes_variance_fields": {
             "available_server_count": [
                 3
+            ],
+            "build_id": [
+                2
             ],
             "end_port_range": [
                 2
@@ -5581,6 +5659,9 @@ export default {
             ]
         },
         "game_server_nodes_variance_order_by": {
+            "build_id": [
+                798
+            ],
             "end_port_range": [
                 798
             ],
@@ -34829,6 +34910,14 @@ export default {
                     ]
                 }
             ],
+            "getCsVersion": [
+                7,
+                {
+                    "gameServerNodeId": [
+                        1576
+                    ]
+                }
+            ],
             "map_pools": [
                 401,
                 {
@@ -39058,6 +39147,14 @@ export default {
                         "uuid!"
                     ],
                     "server_id": [
+                        1576
+                    ]
+                }
+            ],
+            "updateCs": [
+                9,
+                {
+                    "gameServerNodeId": [
                         1576
                     ]
                 }
