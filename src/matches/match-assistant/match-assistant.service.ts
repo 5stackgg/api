@@ -41,7 +41,7 @@ export class MatchAssistantService {
   }
 
   public static GetMatchServerJobId(matchId: string) {
-    return `cs-match-${matchId}`;
+    return `m-${matchId}`;
   }
 
   public async addServerAuth(matchId: string) {
@@ -305,6 +305,8 @@ export class MatchAssistantService {
       try {
         this.logger.verbose(`[${matchId}] create job for on demand server`);
 
+        const gameServerNodeId = server.game_server_node_id;
+
         await batch.createNamespacedJob(this.namespace, {
           apiVersion: "batch/v1",
           kind: "Job",
@@ -321,23 +323,7 @@ export class MatchAssistantService {
               },
               spec: {
                 restartPolicy: "Never",
-                affinity: {
-                  nodeAffinity: {
-                    requiredDuringSchedulingIgnoredDuringExecution: {
-                      nodeSelectorTerms: [
-                        {
-                          matchExpressions: [
-                            {
-                              key: "5stack-id",
-                              operator: "In",
-                              values: [server.game_server_node_id],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  },
-                },
+                nodeName: gameServerNodeId,
                 containers: [
                   {
                     name: "server",
@@ -368,15 +354,15 @@ export class MatchAssistantService {
                     ],
                     volumeMounts: [
                       {
-                        name: `steamcmd-${this.namespace}`,
-                        mountPath: "serverdata/steamcmd",
+                        name: `steamcmd-${gameServerNodeId}`,
+                        mountPath: "/serverdata/steamcmd",
                       },
                       {
-                        name: `serverfiles-${this.namespace}`,
+                        name: `serverfiles-${gameServerNodeId}`,
                         mountPath: "/serverdata/serverfiles",
                       },
                       {
-                        name: `demos-${this.namespace}`,
+                        name: `demos-${gameServerNodeId}`,
                         mountPath: "/opt/demos",
                       },
                     ],
@@ -384,21 +370,21 @@ export class MatchAssistantService {
                 ],
                 volumes: [
                   {
-                    name: `steamcmd-${this.namespace}`,
+                    name: `steamcmd-${gameServerNodeId}`,
                     persistentVolumeClaim: {
-                      claimName: `steamcmd-${this.namespace}-claim`,
+                      claimName: `steamcmd-${gameServerNodeId}-claim`,
                     },
                   },
                   {
-                    name: `serverfiles-${this.namespace}`,
+                    name: `serverfiles-${gameServerNodeId}`,
                     persistentVolumeClaim: {
-                      claimName: `serverfiles-${this.namespace}-claim`,
+                      claimName: `serverfiles-${gameServerNodeId}-claim`,
                     },
                   },
                   {
-                    name: `demos-${this.namespace}`,
+                    name: `demos-${gameServerNodeId}`,
                     persistentVolumeClaim: {
-                      claimName: `demos-${this.namespace}-claim`,
+                      claimName: `demos-${gameServerNodeId}-claim`,
                     },
                   },
                 ],
@@ -488,7 +474,7 @@ export class MatchAssistantService {
 
         this.logger.error(
           `[${matchId}] unable to create on demand server`,
-          error,
+          error?.response?.body?.message || error,
         );
 
         await this.updateMatchStatus(matchId, "Scheduled");

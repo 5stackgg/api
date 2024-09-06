@@ -106,23 +106,7 @@ export class GameServerNodeController {
               },
             },
             spec: {
-              affinity: {
-                nodeAffinity: {
-                  requiredDuringSchedulingIgnoredDuringExecution: {
-                    nodeSelectorTerms: [
-                      {
-                        matchExpressions: [
-                          {
-                            key: "5stack-id",
-                            operator: "In",
-                            values: [gameServerNodeId],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                },
-              },
+              nodeName: gameServerNodeId,
               restartPolicy: "Never",
               containers: [
                 {
