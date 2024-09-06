@@ -36,24 +36,26 @@ export class GameServerNodeController {
   }
 
   @HasuraAction()
-  public async updateCs(data: { gameServerId: string }) {
-    if (data.gameServerId) {
-      const gameServerId = data.gameServerId;
+  public async updateCs(data: { gameServerNodeId: string }) {
+    if (data.gameServerNodeId) {
+      const gameServerNodeId = data.gameServerNodeId;
 
       const { game_server_nodes_by_pk } = await this.hasura.query({
         game_server_nodes_by_pk: {
           __args: {
-            id: gameServerId,
+            id: gameServerNodeId,
           },
-          token: true,
+          id: true,
         },
       });
 
-      if (!game_server_nodes_by_pk || game_server_nodes_by_pk.token === null) {
+
+      if (!game_server_nodes_by_pk) {
         throw new Error("Game server not found");
       }
 
-      await this.updateCsServer(data.gameServerId);
+      await this.updateCsServer(data.gameServerNodeId);
+
       return {
         success: true,
       };
@@ -81,98 +83,123 @@ export class GameServerNodeController {
     };
   }
 
-  private async updateCsServer(nodeId: string) {
-    this.logger.log(`Updating CS2 on node ${nodeId}`);
+  private async updateCsServer(gameServerNodeId: string) {
+    this.logger.log(`Updating CS2 on node ${gameServerNodeId}`);
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
 
     const batchV1Api = kc.makeApiClient(BatchV1Api);
 
-    await batchV1Api.createNamespacedJob(this.namespace, {
-      apiVersion: "batch/v1",
-      kind: "Job",
-      metadata: {
-        name: `update-cs-server-${nodeId}`,
-      },
-      spec: {
-        template: {
-          metadata: {
-            labels: {
-              app: "update-cs-server",
+    try {
+      await batchV1Api.createNamespacedJob(this.namespace, {
+        apiVersion: "batch/v1",
+        kind: "Job",
+        metadata: {
+          name: `update-cs-server-${gameServerNodeId}`,
+        },
+        spec: {
+          template: {
+            metadata: {
+              labels: {
+                app: "update-cs-server",
+              },
+            },
+            spec: {
+              affinity: {
+                nodeAffinity: {
+                  requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [
+                      {
+                        matchExpressions: [
+                          {
+                            key: "5stack-id",
+                            operator: "In",
+                            values: [gameServerNodeId],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+              restartPolicy: "Never",
+              containers: [
+                {
+                  name: "update-cs-server",
+                  image: "ghcr.io/5stackgg/game-server:latest",
+                  command: ["/opt/scripts/update.sh"],
+                  env: [
+                    {
+                      name: "USERNAME",
+                      value: this.config.get<SteamConfig>("steam").serverAccount,
+                    },
+                    {
+                      name: "PASSWRD",
+                      value:
+                        this.config.get<SteamConfig>("steam")
+                          .serverAccountPassword,
+                    },
+                  ],
+                  volumeMounts: [
+                    {
+                      name: `steamcmd-${gameServerNodeId}`,
+                      mountPath: "/serverdata/steamcmd",
+                    },
+                    {
+                      name: `serverfiles-${gameServerNodeId}`,
+                      mountPath: "/serverdata/serverfiles",
+                    },
+                    {
+                      name: `demos-${gameServerNodeId}`,
+                      mountPath: "/opt/demos",
+                    },
+                  ],
+                },
+              ],
+              volumes: [
+                {
+                  name: `steamcmd-${gameServerNodeId}`,
+                  persistentVolumeClaim: {
+                    claimName: `steamcmd-${gameServerNodeId}-claim`,
+                  },
+                },
+                {
+                  name: `serverfiles-${gameServerNodeId}`,
+                  persistentVolumeClaim: {
+                    claimName: `serverfiles-${gameServerNodeId}-claim`,
+                  },
+                },
+                {
+                  name: `demos-${gameServerNodeId}`,
+                  persistentVolumeClaim: {
+                    claimName: `demos-${gameServerNodeId}-claim`,
+                  },
+                },
+              ],
             },
           },
-          spec: {
-            restartPolicy: "Never",
-            containers: [
-              {
-                name: "update-cs-server",
-                image: "ghcr.io/5stackgg/game-server:latest",
-                command: ["/opt/scripts/update.sh"],
-                env: [
-                  {
-                    name: "USERNAME",
-                    value: this.config.get<SteamConfig>("steam").serverAccount,
-                  },
-                  {
-                    name: "PASSWRD",
-                    value:
-                      this.config.get<SteamConfig>("steam")
-                        .serverAccountPassword,
-                  },
-                ],
-                volumeMounts: [
-                  {
-                    name: "steamcmd-5stack",
-                    mountPath: "/serverdata/steamcmd",
-                  },
-                  {
-                    name: "serverfiles-5stack",
-                    mountPath: "/serverdata/serverfiles",
-                  },
-                  {
-                    name: "demos-5stack",
-                    mountPath: "/opt/demos",
-                  },
-                ],
-              },
-            ],
-            volumes: [
-              {
-                name: `steamcmd-${nodeId}`,
-                persistentVolumeClaim: {
-                  claimName: `steamcmd-${nodeId}-claim`,
-                },
-              },
-              {
-                name: `serverfiles-${nodeId}`,
-                persistentVolumeClaim: {
-                  claimName: `serverfiles-${nodeId}-claim`,
-                },
-              },
-              {
-                name: `demos-${nodeId}`,
-                persistentVolumeClaim: {
-                  claimName: `demos-${nodeId}-claim`,
-                },
-              },
-            ],
-          },
+          backoffLimit: 1,
+          ttlSecondsAfterFinished: 30,
         },
-        backoffLimit: 1,
-        ttlSecondsAfterFinished: 30,
-      },
-    });
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error creating job for ${gameServerNodeId}`,
+        error?.response?.body?.message || error,
+      );
+      throw error;
+    }
   }
 
-  @Get("/script/:gameServerId.sh")
+  @Get("/script/:gameServerNodeId.sh")
   public async script(@Req() request: Request, @Res() response: Response) {
-    const gameServerId = request.params.gameServerId;
+    const gameServerNodeId = request.params.gameServerNodeId;
 
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: {
-          id: gameServerId,
+          id: gameServerNodeId,
         },
         token: true,
       },
@@ -185,7 +212,7 @@ export class GameServerNodeController {
     response.setHeader("Content-Type", "text/plain");
     response.setHeader(
       "Content-Disposition",
-      `attachment; filename="${gameServerId}.sh"`,
+      `attachment; filename="${gameServerNodeId}.sh"`,
     );
     // Set the content length to avoid download issues
     const scriptContent = `
@@ -198,7 +225,7 @@ export class GameServerNodeController {
         curl -fsSL https://tailscale.com/install.sh | sh
 
         echo "Installing k3s";
-        curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}";
+        curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerNodeId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}";
 
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
@@ -211,7 +238,7 @@ export class GameServerNodeController {
   }
 
   private async createVolume(
-    nodeId: string,
+    gameServerNodeId: string,
     path: string,
     name: string,
     size: string,
@@ -226,7 +253,7 @@ export class GameServerNodeController {
         apiVersion: "v1",
         kind: "PersistentVolume",
         metadata: {
-          name: `${name}-${nodeId}`,
+          name: `${name}-${gameServerNodeId}`,
         },
         spec: {
           capacity: {
@@ -246,7 +273,7 @@ export class GameServerNodeController {
                     {
                       key: "5stack-id",
                       operator: "In",
-                      values: [nodeId],
+                      values: [gameServerNodeId],
                     },
                   ],
                 },
@@ -257,7 +284,7 @@ export class GameServerNodeController {
       });
     } catch (error) {
       this.logger.error(
-        `Error creating volume ${name}-${nodeId}`,
+        `Error creating volume ${name}-${gameServerNodeId}`,
         error?.response?.body?.message || error,
       );
       throw error;
@@ -268,11 +295,11 @@ export class GameServerNodeController {
         apiVersion: "v1",
         kind: "PersistentVolumeClaim",
         metadata: {
-          name: `${name}-${nodeId}-claim`,
+          name: `${name}-${gameServerNodeId}-claim`,
           namespace: this.namespace,
         },
         spec: {
-          volumeName: `${name}-${nodeId}`,
+          volumeName: `${name}-${gameServerNodeId}`,
           storageClassName: "local-storage",
           accessModes: ["ReadWriteOnce"],
           resources: {
@@ -284,7 +311,7 @@ export class GameServerNodeController {
       });
     } catch (error) {
       this.logger.error(
-        `Error creating volume claim ${name}-${nodeId}`,
+        `Error creating volume claim ${name}-${gameServerNodeId}`,
         error?.response?.body?.message || error,
       );
       throw error;
@@ -297,29 +324,29 @@ export class GameServerNodeController {
       await this.tailscale.getAuthKey(),
     );
 
-    const gameServerId = gameServer.id;
+    const gameServerNodeId = gameServer.id;
 
     await this.createVolume(
-      gameServerId,
+      gameServerNodeId,
       `/opt/5stack/demos`,
-      `demos-${gameServerId}`,
+      `demos`,
       "25Gi",
     );
     await this.createVolume(
-      gameServerId,
+      gameServerNodeId,
       `/opt/5stack/steamcmd`,
-      `steamcmd-${gameServerId}`,
+      `steamcmd`,
       "1Gi",
     );
     await this.createVolume(
-      gameServerId,
+      gameServerNodeId,
       `/opt/5stack/serverfiles`,
-      `serverfiles-${gameServerId}`,
+      `serverfiles`,
       "75Gi",
     );
 
     return {
-      link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServerId}.sh?token=${gameServer.token} | bash`,
+      link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServerNodeId}.sh?token=${gameServer.token} | bash`,
     };
   }
 

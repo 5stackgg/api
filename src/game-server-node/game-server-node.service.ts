@@ -34,7 +34,6 @@ export class GameServerNodeService {
     return insert_game_server_nodes_one;
   }
 
-  // TODO - track offline
   public async updateStatus(
     node: string,
     publicIP: string,
