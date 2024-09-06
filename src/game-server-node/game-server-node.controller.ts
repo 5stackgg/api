@@ -1,9 +1,8 @@
 import { User } from "../auth/types/User";
-import { Controller, Get, Logger, Req } from "@nestjs/common";
+import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
 import { TailscaleService } from "../tailscale/tailscale.service";
-import { Request } from "express";
 import { HasuraService } from "../hasura/hasura.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
@@ -14,6 +13,7 @@ import { GameServersConfig } from "../configs/types/GameServersConfig";
 import { AppConfig } from "../configs/types/AppConfig";
 import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import { SteamConfig } from "src/configs/types/SteamConfig";
+import { Request, Response } from "express";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -165,8 +165,8 @@ export class GameServerNodeController {
     });
   }
 
-  @Get("/script/:gameServerId")
-  public async script(@Req() request: Request) {
+  @Get("/script/:gameServerId.sh")
+  public async script(@Req() request: Request, @Res() response: Response) {
     const gameServerId = request.params.gameServerId;
 
     const { game_server_nodes_by_pk } = await this.hasura.query({
@@ -182,39 +182,32 @@ export class GameServerNodeController {
       throw new Error("Game server not found");
     }
 
-    await this.createVolume(
-      gameServerId,
-      `/opt/5stack/demos`,
-      `demos-${gameServerId}`,
-      "25Gi",
+    response.setHeader("Content-Type", "text/plain");
+    response.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${gameServerId}.sh"`,
     );
-    await this.createVolume(
-      gameServerId,
-      `/opt/5stack/steamcmd`,
-      `steamcmd-${gameServerId}`,
-      "1Gi",
-    );
-    await this.createVolume(
-      gameServerId,
-      `/opt/5stack/serverfiles`,
-      `serverfiles-${gameServerId}`,
-      "75Gi",
-    );
+    // Set the content length to avoid download issues
+    const scriptContent = `
+        sudo -i
+        
+        sudo bash << EOF
 
-    return {
-      script: `
-      echo "Connecting to secure network";
-    
-      curl -fsSL https://tailscale.com/install.sh | sh
+        echo "Connecting to secure network";
+      
+        curl -fsSL https://tailscale.com/install.sh | sh
 
-      echo "Installing k3s";
-      curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}";
+        echo "Installing k3s";
+        curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}";
 
-      mkdir -p /opt/5stack/demos
-      mkdir -p /opt/5stack/steamcmd
-      mkdir -p /opt/5stack/serverfiles
-    `,
-    };
+        mkdir -p /opt/5stack/demos
+        mkdir -p /opt/5stack/steamcmd
+        mkdir -p /opt/5stack/serverfiles
+    `;
+
+    response.setHeader("Content-Length", Buffer.byteLength(scriptContent));
+    response.write(scriptContent);
+    response.end();
   }
 
   private async createVolume(
@@ -270,24 +263,32 @@ export class GameServerNodeController {
       throw error;
     }
 
-    await k8sApi.createNamespacedPersistentVolumeClaim(this.namespace, {
-      apiVersion: "v1",
-      kind: "PersistentVolumeClaim",
-      metadata: {
-        name: `${name}-${nodeId}-claim`,
-        namespace: this.namespace,
-      },
-      spec: {
-        volumeName: `${name}-${nodeId}`,
-        storageClassName: "local-storage",
-        accessModes: ["ReadWriteOnce"],
-        resources: {
-          requests: {
-            storage: size,
+    try {
+      await k8sApi.createNamespacedPersistentVolumeClaim(this.namespace, {
+        apiVersion: "v1",
+        kind: "PersistentVolumeClaim",
+        metadata: {
+          name: `${name}-${nodeId}-claim`,
+          namespace: this.namespace,
+        },
+        spec: {
+          volumeName: `${name}-${nodeId}`,
+          storageClassName: "local-storage",
+          accessModes: ["ReadWriteOnce"],
+          resources: {
+            requests: {
+              storage: size,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error creating volume claim ${name}-${nodeId}`,
+        error?.response?.body?.message || error,
+      );
+      throw error;
+    }
   }
 
   @HasuraAction()
@@ -296,8 +297,29 @@ export class GameServerNodeController {
       await this.tailscale.getAuthKey(),
     );
 
+    const gameServerId = gameServer.id;
+
+    await this.createVolume(
+      gameServerId,
+      `/opt/5stack/demos`,
+      `demos-${gameServerId}`,
+      "25Gi",
+    );
+    await this.createVolume(
+      gameServerId,
+      `/opt/5stack/steamcmd`,
+      `steamcmd-${gameServerId}`,
+      "1Gi",
+    );
+    await this.createVolume(
+      gameServerId,
+      `/opt/5stack/serverfiles`,
+      `serverfiles-${gameServerId}`,
+      "75Gi",
+    );
+
     return {
-      link: `${this.appConfig.apiDomain}/game-server-node/script/${gameServer.id}?token=${gameServer.token}`,
+      link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServerId}.sh?token=${gameServer.token} | bash`,
     };
   }
 

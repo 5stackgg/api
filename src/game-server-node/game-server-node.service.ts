@@ -53,6 +53,7 @@ export class GameServerNodeService {
             },
           },
           id: true,
+          token: true,
           end_port_range: true,
           start_port_range: true,
         },
@@ -61,6 +62,24 @@ export class GameServerNodeService {
     if (!gameServerNode) {
       return await this.create(undefined, node, status);
     }
+
+    if (gameServerNode.token) {
+      return gameServerNode;
+    }
+
+    await this.hasura.mutation({
+      update_game_server_nodes_by_pk: {
+        __args: {
+          pk_columns: {
+            id: node,
+          },
+          _set: {
+            token: null,
+          },
+        },
+        id: true,
+      },
+    });
   }
 
   public async updateIdLabel(nodeId: string) {
