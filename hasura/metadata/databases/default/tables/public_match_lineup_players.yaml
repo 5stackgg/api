@@ -30,6 +30,11 @@ insert_permissions:
         - match_lineup_id
         - steam_id
     comment: ""
+  - role: tournament_organizer
+    permission:
+      check: {}
+      columns: []
+    comment: ""
   - role: user
     permission:
       check:
@@ -82,6 +87,12 @@ update_permissions:
               is_tournament_match:
                 _eq: false
     comment: ""
+  - role: tournament_organizer
+    permission:
+      columns: []
+      filter: {}
+      check: {}
+    comment: ""
   - role: user
     permission:
       columns:
@@ -112,6 +123,11 @@ delete_permissions:
             match:
               is_tournament_match:
                 _eq: false
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter: {}
+      backend_only: true
     comment: ""
   - role: user
     permission:

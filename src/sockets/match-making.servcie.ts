@@ -33,15 +33,15 @@ export class MatchMakingService {
     type: e_match_types_enum,
     region: e_game_server_node_regions_enum,
   ) {
-    return `match-making:v28:${region}:${type}`;
+    return `match-making:v29:${region}:${type}`;
   }
 
   protected static MATCH_MAKING_CONFIRMATION_KEY(confirmationId: string) {
-    return `match-making:v28:${confirmationId}`;
+    return `match-making:v29:${confirmationId}`;
   }
 
   protected static MATCH_MAKING_USER_QUEUE_KEY(steamId: string) {
-    return `match-making:v28:user:${steamId}`;
+    return `match-making:v29:user:${steamId}`;
   }
 
   @SubscribeMessage("match-making:join-queue")
@@ -395,7 +395,7 @@ export class MatchMakingService {
         players: players.length,
       };
     }
-
+    
     await this.redis.publish(
       `send-message-to-steam-id`,
       JSON.stringify({
