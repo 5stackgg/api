@@ -43,6 +43,8 @@ export class CheckOnDemandServerJobEvents extends QueueEventsHost {
 
   @OnQueueEvent("failed")
   public async onFailed(error: Error, job: Job) {
-    await this.matchAssistant.delayCheckOnDemandServer(job.data.matchId);
+    if (job.name === CheckOnDemandServerJob.name) {
+      await this.matchAssistant.delayCheckOnDemandServer(job.data.matchId);
+    }
   }
 }
