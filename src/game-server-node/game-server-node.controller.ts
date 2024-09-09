@@ -113,19 +113,6 @@ export class GameServerNodeController {
                   name: "update-cs-server",
                   image: "ghcr.io/5stackgg/game-server:latest",
                   command: ["/opt/scripts/update.sh"],
-                  env: [
-                    {
-                      name: "USERNAME",
-                      value:
-                        this.config.get<SteamConfig>("steam").serverAccount,
-                    },
-                    {
-                      name: "PASSWRD",
-                      value:
-                        this.config.get<SteamConfig>("steam")
-                          .serverAccountPassword,
-                    },
-                  ],
                   volumeMounts: [
                     {
                       name: `steamcmd-${gameServerNodeId}`,

@@ -337,14 +337,7 @@ export class MatchAssistantService {
                     env: [
                       {
                         name: "GAME_PARAMS",
-                        value: `-ip 0.0.0.0 -port ${server.port} +tv_port ${server.tv_port} -dedicated -dev +map de_inferno -usercon +rcon_password ${await this.encryption.decrypt(server.rcon_password)}
-                         +sv_password ${match.password} -authkey ${
-                           this.config.get<SteamConfig>("steam").steamApiKey
-                         }
-                      +sv_setsteamaccount ${
-                        this.config.get<SteamConfig>("steam").steamAccount
-                      }
-                       -maxplayers 13`,
+                        value: `-ip 0.0.0.0 -port ${server.port} +tv_port ${server.tv_port} -dedicated -dev +map de_inferno -usercon +rcon_password ${await this.encryption.decrypt(server.rcon_password)} +sv_password ${match.password} -maxplayers 13`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
