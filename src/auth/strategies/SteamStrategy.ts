@@ -41,7 +41,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
     readonly config: ConfigService,
     private readonly hasura: HasuraService,
   ) {
-    const webDomain = `https://${config.get<AppConfig>("app").webDomain}`;
+    const webDomain = config.get<AppConfig>("app").webDomain;
 
     super({
       passReqToCallback: true,
