@@ -17,5 +17,6 @@ WORKDIR /opt/5stack
 
 COPY --from=build /build/node_modules ./node_modules
 COPY --from=build /build/dist ./dist
+COPY --from=build /hasura ./hasura
 
 CMD [ "node", "dist/src/main.js" ]
