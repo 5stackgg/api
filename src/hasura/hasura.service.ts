@@ -96,7 +96,7 @@ export class HasuraService {
   }
 
   public async setup() {
-    await this.postgresService.query('create schema hdb_catalog');
+    await this.postgresService.query('create schema if not exists hdb_catalog');
     await this.postgresService.query(
       "create table if not exists hdb_catalog.schema_migrations (version bigint not null, dirty boolean not null)",
     );
