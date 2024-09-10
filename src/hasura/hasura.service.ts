@@ -100,7 +100,7 @@ export class HasuraService {
       "create table if not exists hdb_catalog.schema_migrations (version bigint not null, dirty boolean not null)",
     );
 
-    await this.applyMigrations("./hasura/migrations/default");
+    await this.applyMigrations(path.resolve("./hasura/migrations"));
 
     await this.apply(path.resolve("./hasura/enums"));
     await this.apply(path.resolve("./hasura/functions"));
