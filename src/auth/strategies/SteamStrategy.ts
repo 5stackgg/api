@@ -7,6 +7,8 @@ import { DoneCallback } from "passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
 import { SteamConfig } from "../../configs/types/SteamConfig";
+import { CacheService } from "../../cache/cache.service";
+import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
   provider: "steam";
@@ -39,6 +41,7 @@ interface SteamProfile {
 export class SteamStrategy extends PassportStrategy(Strategy) {
   constructor(
     readonly config: ConfigService,
+    private readonly cache: CacheService,
     private readonly hasura: HasuraService,
   ) {
     const webDomain = config.get<AppConfig>("app").webDomain;
@@ -59,15 +62,32 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
   ): Promise<void> {
     const { steamid, personaname, profileurl, avatarfull } = profile._json;
 
+    let role: e_player_roles_enum = "user";
+    if (!(await this.cache.has("admin-check"))) {
+      const { players } = await this.hasura.query({
+        players: {
+          __args: {
+            limit: 1,
+          },
+          __typename: true,
+        },
+      });
+
+      if (players.length === 0) {
+        role = "administrator";
+      }
+      await this.cache.put("admin-check", true);
+    }
+
     const { insert_players_one } = await this.hasura.mutation({
       insert_players_one: {
         __args: {
           object: {
+            role,
             steam_id: steamid,
             name: personaname,
             profile_url: profileurl,
             avatar_url: avatarfull,
-            role: "user",
           },
           on_conflict: {
             constraint: "players_steam_id_key",
