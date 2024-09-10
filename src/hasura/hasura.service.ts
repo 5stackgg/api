@@ -111,6 +111,10 @@ export class HasuraService {
     let completed = 0;
     const applied = await this.getAppliedVersions();
     const available = await this.getAvailableVersions(path);
+    console.info("AVAILABLE", {
+      applied,
+      available
+    })
     if (available.size > 0) {
       this.logger.log("Migrations: Running");
       for (const [version, sql] of available) {
