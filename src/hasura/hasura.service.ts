@@ -170,16 +170,14 @@ export class HasuraService {
 
   private async getAppliedVersions() {
     const versions = new Set<bigint>();
-    try {
-      const appliedVerions = await this.postgresService.query<
-        Array<{
-          version: bigint;
-        }>
-      >("select version from hdb_catalog.schema_migrations order by version");
-      for (const appliedVerion of appliedVerions) {
-        versions.add(appliedVerion.version);
-      }
-    } catch {}
+    const appliedVerions = await this.postgresService.query<
+      Array<{
+        version: bigint;
+      }>
+    >("select version from hdb_catalog.schema_migrations order by version");
+    for (const appliedVerion of appliedVerions) {
+      versions.add(appliedVerion.version);
+    }
     return versions;
   }
 
