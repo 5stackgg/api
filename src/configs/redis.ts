@@ -7,19 +7,19 @@ export default (): {
     connections: {
       default: {
         db: 1,
-        host: process.env.APP_REDIS_HOST || "redis",
-        port: process.env.APP_REDIS_PORT
-          ? parseInt(process.env.APP_REDIS_PORT)
+        host: process.env.REDIS_HOST || "redis",
+        port: process.env.REDIS_SERVICE_PORT
+          ? parseInt(process.env.REDIS_SERVICE_PORT)
           : undefined,
-        password: process.env.APP_REDIS_PASSWORD,
+        password: process.env.REDIS_PASSWORD,
       },
       sub: {
         db: 1,
-        host: process.env.APP_REDIS_HOST || "redis",
-        port: process.env.APP_REDIS_PORT
-          ? parseInt(process.env.APP_REDIS_PORT)
+        host: process.env.REDIS_HOST || "redis",
+        port: process.env.REDIS_SERVICE_PORT
+          ? parseInt(process.env.REDIS_SERVICE_PORT)
           : undefined,
-        password: process.env.APP_REDIS_PASSWORD,
+        password: process.env.REDIS_PASSWORD,
       },
     },
   },
