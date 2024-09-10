@@ -96,9 +96,91 @@ export class HasuraService {
   }
 
   public async setup() {
+    await this.postgresService.query(
+      "create table if not exists hdb_catalog.schema_migrations (version bigint not null, dirty boolean not null)",
+    );
+
+    await this.applyMigrations("./hasura/migrations/default");
+
     await this.apply(path.resolve("./hasura/enums"));
     await this.apply(path.resolve("./hasura/functions"));
     await this.apply(path.resolve("./hasura/triggers"));
+  }
+
+  private async applyMigrations(path: string): Promise<number> {
+    let completed = 0;
+    const applied = await this.getAppliedVersions();
+    const available = await this.getAvailableVersions(path);
+    if (available.size > 0) {
+      console.info("Migrations: Running");
+      for (const [version, sql] of available) {
+        if (!applied.has(version)) {
+          console.info("    applying", version.toString());
+          let patchedSQL = sql;
+          const disableTransactions = sql.startsWith(`-- @disable-transaction`);
+          const updateSchemaMigrations = `insert into hdb_catalog.schema_migrations (version, dirty) values (${version}, false)`;
+          if (!disableTransactions) {
+            patchedSQL = `begin;${patchedSQL};${updateSchemaMigrations};commit;`;
+          }
+
+          try {
+            await this.postgresService.query(patchedSQL);
+            if (disableTransactions) {
+              await this.postgresService.query(updateSchemaMigrations);
+            }
+            completed++;
+          } catch (error) {
+            throw new Error(
+              `failed to apply migration ${version}: ${error.message}`,
+            );
+          }
+        }
+      }
+      console.info(`Migrations: ${completed} Completed`);
+    }
+
+    return completed;
+  }
+
+  private async getAvailableVersions(path: string) {
+    const map = new Map<bigint, string>();
+    const dirs = fs.readdirSync(path);
+    for (const dir of dirs) {
+      const version = BigInt(dir.split("_").shift());
+      if (version) {
+        const file = `${path}/${dir}/up.sql`;
+        const sql = fs.readFileSync(file, "utf8");
+        if (map.get(version)) {
+          throw Error(`duplicate version: ${version}`);
+        }
+        map.set(version, sql);
+      }
+    }
+    return new Map(
+      [...map.entries()].sort(([versionA], [versionB]) => {
+        if (versionA > versionB) {
+          return 1;
+        } else if (versionA < versionB) {
+          return -1;
+        }
+        return 0;
+      }),
+    );
+  }
+
+  private async getAppliedVersions() {
+    const versions = new Set<bigint>();
+    try {
+      const appliedVerions = await this.postgresService.query<
+        Array<{
+          version: bigint;
+        }>
+      >("select version from hdb_catalog.schema_migrations order by version");
+      for (const appliedVerion of appliedVerions) {
+        versions.add(appliedVerion.version);
+      }
+    } catch {}
+    return versions;
   }
 
   public async apply(filePath: string): Promise<boolean> {
