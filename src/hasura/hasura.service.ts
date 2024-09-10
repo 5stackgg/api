@@ -97,10 +97,10 @@ export class HasuraService {
 
   public async setup() {
     await this.postgresService.query(
-      "create table if not exists hdb_catalog.schema_migrations (version bigint not null, dirty boolean not null)",
+      "create table if not exists hdb_catalog.schema_migratioyarn (version bigint not null, dirty boolean not null)",
     );
 
-    await this.applyMigrations(path.resolve("./hasura/migrations"));
+    await this.applyMigrations(path.resolve("./hasura/migrations/default"));
 
     await this.apply(path.resolve("./hasura/enums"));
     await this.apply(path.resolve("./hasura/functions"));
@@ -111,10 +111,7 @@ export class HasuraService {
     let completed = 0;
     const applied = await this.getAppliedVersions();
     const available = await this.getAvailableVersions(path);
-    console.info("AVAILABLE", {
-      applied,
-      available
-    })
+
     if (available.size > 0) {
       this.logger.log("Migrations: Running");
       for (const [version, sql] of available) {
@@ -147,10 +144,10 @@ export class HasuraService {
   }
 
   private async getAvailableVersions(path: string) {
-    const map = new Map<bigint, string>();
+    const map = new Map<string, string>();
     const dirs = fs.readdirSync(path);
     for (const dir of dirs) {
-      const version = BigInt(dir.split("_").shift());
+      const version = dir.split("_").shift();
       if (version) {
         const file = `${path}/${dir}/up.sql`;
         const sql = fs.readFileSync(file, "utf8");
@@ -173,10 +170,10 @@ export class HasuraService {
   }
 
   private async getAppliedVersions() {
-    const versions = new Set<bigint>();
+    const versions = new Set<string>();
     const appliedVerions = await this.postgresService.query<
       Array<{
-        version: bigint;
+        version: string;
       }>
     >("select version from hdb_catalog.schema_migrations order by version");
     for (const appliedVerion of appliedVerions) {
