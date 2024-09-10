@@ -22,7 +22,7 @@ alter table "public"."servers" add column "game_server_node_id" text
 
 alter table "public"."servers"
   add constraint "servers_game_server_node_fkey"
-  foreign key ("game_server_node")
+  foreign key ("game_server_node_id")
   references "public"."game_server_nodes"
   ("id") on update cascade on delete restrict;
 
