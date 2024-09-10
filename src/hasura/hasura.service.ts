@@ -112,10 +112,10 @@ export class HasuraService {
     const applied = await this.getAppliedVersions();
     const available = await this.getAvailableVersions(path);
     if (available.size > 0) {
-      console.info("Migrations: Running");
+      this.logger.log("Migrations: Running");
       for (const [version, sql] of available) {
         if (!applied.has(version)) {
-          console.info("    applying", version.toString());
+          this.logger.log("    applying", version.toString());
           let patchedSQL = sql;
           const disableTransactions = sql.startsWith(`-- @disable-transaction`);
           const updateSchemaMigrations = `insert into hdb_catalog.schema_migrations (version, dirty) values (${version}, false)`;
@@ -136,7 +136,7 @@ export class HasuraService {
           }
         }
       }
-      console.info(`Migrations: ${completed} Completed`);
+      this.logger.log(`Migrations: ${completed} Completed`);
     }
 
     return completed;
