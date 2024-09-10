@@ -15,7 +15,5 @@ alter table "public"."match_region_veto_picks"
   references "public"."match_lineups"
   ("id") on update cascade on delete restrict;
 
-alter table "public"."match_veto_picks" rename to "match_map_veto_picks";
-
 alter table "public"."match_options" add column "region_veto" boolean
  not null default 'true';
