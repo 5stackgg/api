@@ -13,21 +13,6 @@ export class PostgresService {
     this.pool = new Pool(this.config.connections.default);
   }
 
-  public async connect() {
-    try {
-      const client = await this.getClient();
-      await client.connect();
-      await client.end();
-    } catch (error) {
-      throw error;
-    }
-    return true;
-  }
-
-  private async getClient(connection = "default") {
-    return new Client(this.config.connections[connection]);
-  }
-
   public getPoolStats() {
     const { totalCount, idleCount, waitingCount } = this.pool;
     return { totalCount, idleCount, waitingCount };

@@ -8,10 +8,12 @@ DECLARE
     tv_port int;
 BEGIN
     IF TG_OP = 'UPDATE' AND (
-        NEW.enabled = false OR
-        (OLD.public_ip = NEW.public_ip AND
-         OLD.start_port_range = NEW.start_port_range AND
-         OLD.end_port_range = NEW.end_port_range)
+        NEW.enabled = true AND
+        (
+            OLD.public_ip = NEW.public_ip AND
+            OLD.start_port_range = NEW.start_port_range AND
+            OLD.end_port_range = NEW.end_port_range
+        )
     ) THEN
         RETURN NEW;
     END IF;
@@ -28,16 +30,20 @@ BEGIN
         RETURN OLD;
     END IF;
 
-    game_port = NEW.start_port_range - 1;
-    tv_port = game_port + 1;
+    IF NEW.enabled = false OR NEW.start_port_range IS NULL OR NEW.end_port_range IS NULL OR NEW.public_ip IS NULL THEN
+        RETURN NEW;
+    END IF;
+      
 
-    WHILE tv_port < NEW.end_port_range LOOP
-        game_port = game_port + 1;
-        tv_port = game_port + 1;
+    game_port = NEW.start_port_range;
+
+    WHILE game_port < NEW.end_port_range LOOP
         serverCount = serverCount + 1;
 
         INSERT INTO servers (host, label, rcon_password, port, tv_port, api_password, game_server_node_id)
-        VALUES (host(NEW.public_ip), CONCAT('on-demand-', serverCount), gen_random_uuid()::text::bytea, game_port, tv_port, gen_random_uuid(), NEW.id);
+        VALUES (host(NEW.public_ip), CONCAT('on-demand-', serverCount), gen_random_uuid()::text::bytea, game_port, game_port + 1, gen_random_uuid(), NEW.id);
+
+        game_port = game_port + 2;
     END LOOP;
 
     RETURN NEW;

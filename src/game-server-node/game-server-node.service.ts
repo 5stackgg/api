@@ -53,8 +53,6 @@ export class GameServerNodeService {
           },
           id: true,
           token: true,
-          end_port_range: true,
-          start_port_range: true,
         },
       });
 
@@ -62,7 +60,7 @@ export class GameServerNodeService {
       return await this.create(undefined, node, status);
     }
 
-    if (gameServerNode.token) {
+    if (!gameServerNode.token) {
       return gameServerNode;
     }
 

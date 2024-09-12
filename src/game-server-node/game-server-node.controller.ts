@@ -190,8 +190,6 @@ export class GameServerNodeController {
     const scriptContent = `
         sudo -i
         
-        sudo bash << EOF
-
         echo "Connecting to secure network";
       
         curl -fsSL https://tailscale.com/install.sh | sh

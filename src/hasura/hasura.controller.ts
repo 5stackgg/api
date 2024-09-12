@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Logger, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
 import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
@@ -36,7 +36,7 @@ export const HasuraAction = (): MethodDecorator => {
 @Controller("hasura")
 export class HasuraController {
   constructor(
-    private readonly cache: CacheService,
+    private readonly logger: Logger,
     private readonly hasuraService: HasuraService,
     private readonly modulesContainer: ModulesContainer,
   ) {}
@@ -64,8 +64,9 @@ export class HasuraController {
     input.user = request.user;
 
     try {
-      response.json(await resolver[action.name].bind(resolver, input)());
+      return response.json(await resolver[action.name].bind(resolver, input)());
     } catch (error) {
+      this.logger.error(`unable to complete action ${action.name}`, error);
       return response.status(400).json({
         message: error?.message ?? error,
       });
@@ -78,11 +79,15 @@ export class HasuraController {
 
     const resolver = this.getResolver(_events[trigger.name]);
 
-    return await resolver[trigger.name].bind(resolver, {
-      op: event.op,
-      old: event.data.old || {},
-      new: event.data.new || {},
-    })();
+    try {
+      return await resolver[trigger.name].bind(resolver, {
+        op: event.op,
+        old: event.data.old || {},
+        new: event.data.new || {},
+      })();
+    } catch (error) {
+      this.logger.error(`unable to complete event ${trigger.name}`, error);
+    }
   }
 
   private getResolver(handler: Handler): HandleResolver {
