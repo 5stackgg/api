@@ -959,12 +959,6 @@ enum e_map_pool_types_enum {
   """Custom match"""
   Custom
 
-  """5 vs 5 match using all available map pools"""
-  Scrimmage
-
-  """5 vs 5 match using the night map pool"""
-  ScrimmageNight
-
   """2 vs 2 match"""
   Wingman
 }
@@ -1667,12 +1661,6 @@ enum e_match_types_constraint {
 enum e_match_types_enum {
   """5 vs 5 match using active map pool"""
   Competitive
-
-  """5 vs 5 match using all available map pools"""
-  Scrimmage
-
-  """5 vs 5 match using the night map pool"""
-  ScrimmageNight
 
   """2 vs 2 match"""
   Wingman

@@ -22,7 +22,6 @@ import { BotChatCommand } from "./interactions";
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 @BotChatCommand(ChatCommands.ScheduleComp)
-@BotChatCommand(ChatCommands.ScheduleScrimmage)
 @BotChatCommand(ChatCommands.ScheduleWingMan)
 export default class ScheduleMatch extends DiscordInteraction {
   public async handler(interaction: ChatInputCommandInteraction) {
@@ -33,10 +32,6 @@ export default class ScheduleMatch extends DiscordInteraction {
       case ChatCommands.ScheduleComp:
         matchType = "Competitive";
         mapPoolType = "Competitive";
-        break;
-      case ChatCommands.ScheduleScrimmage:
-        matchType = "Scrimmage";
-        mapPoolType = "Scrimmage";
         break;
       case ChatCommands.ScheduleWingMan:
         matchType = "Wingman";

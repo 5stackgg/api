@@ -91,11 +91,6 @@ export class DiscordBotService {
           ),
           await this.addBaseOptions(
             new SlashCommandBuilder()
-              .setName(ChatCommands.ScheduleScrimmage)
-              .setDescription("Creates a Scrimmage"),
-          ),
-          await this.addBaseOptions(
-            new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleWingMan)
               .setDescription("Creates a Wingman Match"),
           ),
