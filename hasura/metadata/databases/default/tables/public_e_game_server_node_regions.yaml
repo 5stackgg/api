@@ -16,6 +16,11 @@ computed_fields:
       function:
         name: available_region_server_count
         schema: public
+  - name: status
+    definition:
+      function:
+        name: region_status
+        schema: public
   - name: total_server_count
     definition:
       function:
@@ -29,6 +34,7 @@ select_permissions:
         - value
       computed_fields:
         - available_server_count
+        - status
         - total_server_count
       filter:
         value:
