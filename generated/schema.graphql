@@ -357,6 +357,11 @@ type e_game_server_node_regions {
   ): game_server_nodes_aggregate!
 
   """
+  A computed field, executes function "region_status"
+  """
+  status: String
+
+  """
   A computed field, executes function "total_region_server_count"
   """
   total_server_count: Int
@@ -412,6 +417,7 @@ input e_game_server_node_regions_bool_exp {
   description: String_comparison_exp
   game_server_nodes: game_server_nodes_bool_exp
   game_server_nodes_aggregate: game_server_nodes_aggregate_bool_exp
+  status: String_comparison_exp
   total_server_count: Int_comparison_exp
   value: String_comparison_exp
 }
@@ -487,6 +493,11 @@ type e_game_server_node_regions_max_fields {
   description: String
 
   """
+  A computed field, executes function "region_status"
+  """
+  status: String
+
+  """
   A computed field, executes function "total_region_server_count"
   """
   total_server_count: Int
@@ -500,6 +511,11 @@ type e_game_server_node_regions_min_fields {
   """
   available_server_count: Int
   description: String
+
+  """
+  A computed field, executes function "region_status"
+  """
+  status: String
 
   """
   A computed field, executes function "total_region_server_count"
@@ -545,6 +561,7 @@ input e_game_server_node_regions_order_by {
   available_server_count: order_by
   description: order_by
   game_server_nodes_aggregate: game_server_nodes_aggregate_order_by
+  status: order_by
   total_server_count: order_by
   value: order_by
 }
@@ -7191,7 +7208,7 @@ enum match_map_veto_picks_constraint {
   """
   unique or primary key constraint on columns "id"
   """
-  match_veto_picks_pkey
+  match_map_veto_picks_pkey
 }
 
 """
@@ -10763,7 +10780,7 @@ enum migration_hashes_hashes_constraint {
   """
   unique or primary key constraint on columns "name"
   """
-  functions_pkey
+  hashes_pkey
 }
 
 """

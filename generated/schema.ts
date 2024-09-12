@@ -115,6 +115,8 @@ export interface e_game_server_node_regions {
     game_server_nodes: game_server_nodes[]
     /** An aggregate relationship */
     game_server_nodes_aggregate: game_server_nodes_aggregate
+    /** A computed field, executes function "region_status" */
+    status: (Scalars['String'] | null)
     /** A computed field, executes function "total_region_server_count" */
     total_server_count: (Scalars['Int'] | null)
     value: Scalars['String']
@@ -168,6 +170,8 @@ export interface e_game_server_node_regions_max_fields {
     /** A computed field, executes function "available_region_server_count" */
     available_server_count: (Scalars['Int'] | null)
     description: (Scalars['String'] | null)
+    /** A computed field, executes function "region_status" */
+    status: (Scalars['String'] | null)
     /** A computed field, executes function "total_region_server_count" */
     total_server_count: (Scalars['Int'] | null)
     value: (Scalars['String'] | null)
@@ -180,6 +184,8 @@ export interface e_game_server_node_regions_min_fields {
     /** A computed field, executes function "available_region_server_count" */
     available_server_count: (Scalars['Int'] | null)
     description: (Scalars['String'] | null)
+    /** A computed field, executes function "region_status" */
+    status: (Scalars['String'] | null)
     /** A computed field, executes function "total_region_server_count" */
     total_server_count: (Scalars['Int'] | null)
     value: (Scalars['String'] | null)
@@ -2312,7 +2318,7 @@ export interface match_map_veto_picks_aggregate_fields {
 
 
 /** unique or primary key constraints on table "match_map_veto_picks" */
-export type match_map_veto_picks_constraint = 'match_veto_picks_pkey'
+export type match_map_veto_picks_constraint = 'match_map_veto_picks_pkey'
 
 
 /** aggregate max on columns */
@@ -3294,7 +3300,7 @@ export interface migration_hashes_hashes_aggregate_fields {
 
 
 /** unique or primary key constraints on table "migration_hashes.hashes" */
-export type migration_hashes_hashes_constraint = 'functions_pkey'
+export type migration_hashes_hashes_constraint = 'hashes_pkey'
 
 
 /** aggregate max on columns */
@@ -9292,6 +9298,8 @@ export interface e_game_server_node_regionsGenqlSelection{
     order_by?: (game_server_nodes_order_by[] | null), 
     /** filter the rows returned */
     where?: (game_server_nodes_bool_exp | null)} })
+    /** A computed field, executes function "region_status" */
+    status?: boolean | number
     /** A computed field, executes function "total_region_server_count" */
     total_server_count?: boolean | number
     value?: boolean | number
@@ -9339,7 +9347,7 @@ export interface e_game_server_node_regions_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "e_game_server_node_regions". All fields are combined with a logical 'AND'. */
-export interface e_game_server_node_regions_bool_exp {_and?: (e_game_server_node_regions_bool_exp[] | null),_not?: (e_game_server_node_regions_bool_exp | null),_or?: (e_game_server_node_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
+export interface e_game_server_node_regions_bool_exp {_and?: (e_game_server_node_regions_bool_exp[] | null),_not?: (e_game_server_node_regions_bool_exp | null),_or?: (e_game_server_node_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),status?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
 
 
 /** Boolean expression to compare columns of type "e_game_server_node_regions_enum". All fields are combined with logical 'AND'. */
@@ -9355,6 +9363,8 @@ export interface e_game_server_node_regions_max_fieldsGenqlSelection{
     /** A computed field, executes function "available_region_server_count" */
     available_server_count?: boolean | number
     description?: boolean | number
+    /** A computed field, executes function "region_status" */
+    status?: boolean | number
     /** A computed field, executes function "total_region_server_count" */
     total_server_count?: boolean | number
     value?: boolean | number
@@ -9368,6 +9378,8 @@ export interface e_game_server_node_regions_min_fieldsGenqlSelection{
     /** A computed field, executes function "available_region_server_count" */
     available_server_count?: boolean | number
     description?: boolean | number
+    /** A computed field, executes function "region_status" */
+    status?: boolean | number
     /** A computed field, executes function "total_region_server_count" */
     total_server_count?: boolean | number
     value?: boolean | number
@@ -9398,7 +9410,7 @@ export interface e_game_server_node_regions_on_conflict {constraint: e_game_serv
 
 
 /** Ordering options when selecting data from "e_game_server_node_regions". */
-export interface e_game_server_node_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
+export interface e_game_server_node_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),status?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
 
 
 /** primary key columns input for table: e_game_server_node_regions */
@@ -33068,7 +33080,7 @@ export const enumMatchMapRoundsUpdateColumn = {
 }
 
 export const enumMatchMapVetoPicksConstraint = {
-   match_veto_picks_pkey: 'match_veto_picks_pkey' as const
+   match_map_veto_picks_pkey: 'match_map_veto_picks_pkey' as const
 }
 
 export const enumMatchMapVetoPicksSelectColumn = {
@@ -33230,7 +33242,7 @@ export const enumMatchesUpdateColumn = {
 }
 
 export const enumMigrationHashesHashesConstraint = {
-   functions_pkey: 'functions_pkey' as const
+   hashes_pkey: 'hashes_pkey' as const
 }
 
 export const enumMigrationHashesHashesSelectColumn = {

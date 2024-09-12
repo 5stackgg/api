@@ -681,6 +681,9 @@ export default {
                     ]
                 }
             ],
+            "status": [
+                7
+            ],
             "total_server_count": [
                 3
             ],
@@ -782,6 +785,9 @@ export default {
             "game_server_nodes_aggregate": [
                 352
             ],
+            "status": [
+                8
+            ],
             "total_server_count": [
                 4
             ],
@@ -835,6 +841,9 @@ export default {
             "description": [
                 7
             ],
+            "status": [
+                7
+            ],
             "total_server_count": [
                 3
             ],
@@ -850,6 +859,9 @@ export default {
                 3
             ],
             "description": [
+                7
+            ],
+            "status": [
                 7
             ],
             "total_server_count": [
@@ -907,6 +919,9 @@ export default {
             ],
             "game_server_nodes_aggregate": [
                 357
+            ],
+            "status": [
+                798
             ],
             "total_server_count": [
                 798
