@@ -26,19 +26,19 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
 
 
     -- Night Maps
-    ('de_dust2_night', 'Competitive', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg'),
-    ('de_ancient_night', 'Competitive', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient.svg'),
-    ('de_overpass_night', 'Competitive', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', '/img/maps/icons/de_overpass.svg'),
-    ('de_nuke_night', 'Competitive', 'false', '3253703883', '/img/maps/screenshots/de_nuke_night.webp', '/img/maps/icons/de_nuke.svg'),
-    ('de_inferno_night', 'Competitive', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', '/img/maps/icons/de_inferno.svg'),
+    ('de_dust2_night', 'Competitive', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', null),
+    ('de_ancient_night', 'Competitive', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.webp', null),
+    ('de_overpass_night', 'Competitive', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', null),
+    ('de_nuke_night', 'Competitive', 'false', '3253703883', '/img/maps/screenshots/de_nuke_night.webp', null),
+    ('de_inferno_night', 'Competitive', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null),
 
     -- Valve Wingman
-    ('de_inferno', 'Wingman', 'false',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
-    ('de_nuke', 'Wingman', 'false',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
-    ('de_overpass', 'Wingman', 'false',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
-    ('de_vertigo', 'Wingman', 'false',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
-    ('de_assembly', 'Wingman', 'false',  null, '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
-    ('de_memento', 'Wingman', 'false',  null, '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
+    ('de_inferno', 'Wingman', 'true',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
+    ('de_nuke', 'Wingman', 'true',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
+    ('de_overpass', 'Wingman', 'true',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
+    ('de_vertigo', 'Wingman', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
+    ('de_assembly', 'Wingman', 'true',  null, '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
+    ('de_memento', 'Wingman', 'true',  null, '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
 
     --  Workshop Wingman
     ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
