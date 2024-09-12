@@ -3,12 +3,14 @@ import { CacheService } from "../../cache/cache.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { Logger } from "@nestjs/common";
+import { GameServerNodeService } from "../game-server-node.service";
 
 @UseQueue("GameServerNode", GameServerQueues.GameUpdate)
 export class CheckGameUpdate extends WorkerHost {
   constructor(
     protected readonly cache: CacheService,
     protected readonly logger: Logger,
+    protected readonly gameServerNodeService: GameServerNodeService
   ) {
     super();
   }
@@ -31,7 +33,8 @@ export class CheckGameUpdate extends WorkerHost {
       latestBuildTime > parseInt(publicBuild.timeupdated)
     ) {
       await this.cache.put("cs:updated-at", parseInt(publicBuild.timeupdated));
-      // TODO - do update job on all nodes a daemonset!
+
+      await this.gameServerNodeService.updateCs();
     }
   }
 }

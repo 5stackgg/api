@@ -12,7 +12,6 @@ import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../configs/types/GameServersConfig";
 import { AppConfig } from "../configs/types/AppConfig";
 import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
-import { SteamConfig } from "src/configs/types/SteamConfig";
 import { Request, Response } from "express";
 import vdf from "vdf-parser";
 
@@ -38,131 +37,13 @@ export class GameServerNodeController {
 
   @HasuraAction()
   public async updateCs(data: { gameServerNodeId: string }) {
-    if (data.gameServerNodeId) {
-      const gameServerNodeId = data.gameServerNodeId;
-
-      const { game_server_nodes_by_pk } = await this.hasura.query({
-        game_server_nodes_by_pk: {
-          __args: {
-            id: gameServerNodeId,
-          },
-          id: true,
-        },
-      });
-
-      if (!game_server_nodes_by_pk) {
-        throw new Error("Game server not found");
-      }
-
-      await this.updateCsServer(data.gameServerNodeId);
-
-      return {
-        success: true,
-      };
-    }
-
-    const { game_server_nodes } = await this.hasura.query({
-      game_server_nodes: {
-        __args: {
-          where: {
-            enabled: {
-              _eq: true,
-            },
-          },
-        },
-        id: true,
-      },
-    });
-
-    for (const node of game_server_nodes) {
-      await this.updateCsServer(node.id);
-    }
-
+    await this.gameServerNodeService.updateCs(data.gameServerNodeId);
+    
     return {
       success: true,
     };
   }
 
-  private async updateCsServer(gameServerNodeId: string) {
-    this.logger.log(`Updating CS2 on node ${gameServerNodeId}`);
-
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-
-    const batchV1Api = kc.makeApiClient(BatchV1Api);
-
-    try {
-      await batchV1Api.createNamespacedJob(this.namespace, {
-        apiVersion: "batch/v1",
-        kind: "Job",
-        metadata: {
-          name: `update-cs-server-${gameServerNodeId}`,
-        },
-        spec: {
-          template: {
-            metadata: {
-              labels: {
-                app: "update-cs-server",
-              },
-            },
-            spec: {
-              nodeName: gameServerNodeId,
-              restartPolicy: "Never",
-              containers: [
-                {
-                  name: "update-cs-server",
-                  image: "ghcr.io/5stackgg/game-server:latest",
-                  command: ["/opt/scripts/update.sh"],
-                  volumeMounts: [
-                    {
-                      name: `steamcmd-${gameServerNodeId}`,
-                      mountPath: "/serverdata/steamcmd",
-                    },
-                    {
-                      name: `serverfiles-${gameServerNodeId}`,
-                      mountPath: "/serverdata/serverfiles",
-                    },
-                    {
-                      name: `demos-${gameServerNodeId}`,
-                      mountPath: "/opt/demos",
-                    },
-                  ],
-                },
-              ],
-              volumes: [
-                {
-                  name: `steamcmd-${gameServerNodeId}`,
-                  persistentVolumeClaim: {
-                    claimName: `steamcmd-${gameServerNodeId}-claim`,
-                  },
-                },
-                {
-                  name: `serverfiles-${gameServerNodeId}`,
-                  persistentVolumeClaim: {
-                    claimName: `serverfiles-${gameServerNodeId}-claim`,
-                  },
-                },
-                {
-                  name: `demos-${gameServerNodeId}`,
-                  persistentVolumeClaim: {
-                    claimName: `demos-${gameServerNodeId}-claim`,
-                  },
-                },
-              ],
-            },
-          },
-          backoffLimit: 1,
-          ttlSecondsAfterFinished: 30,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error creating job for ${gameServerNodeId}`,
-        error?.response?.body?.message || error,
-      );
-      throw error;
-    }
-  }
 
   @Get("/script/:gameServerNodeId.sh")
   public async script(@Req() request: Request, @Res() response: Response) {
