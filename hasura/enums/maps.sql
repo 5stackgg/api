@@ -1,12 +1,10 @@
 insert into e_match_types ("value", "description") values
     ('Competitive', '5 vs 5 match using active map pool'),
-    ('Scrimmage', '5 vs 5 match using all available map pools'),
-    ('ScrimmageNight', '5 vs 5 match using the night map pool'),
     ('Wingman', '2 vs 2 match')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
 insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "patch") values
-    --  Competitive
+    --  Valve Competitive
     ('de_ancient', 'Competitive', 'true',  null, '/img/maps/screenshots/de_ancient.webp', '/img/maps/icons/de_ancient.svg'),
     ('de_anubis', 'Competitive', 'true',  null, '/img/maps/screenshots/de_anubis.webp', '/img/maps/icons/de_anubis.svg'),
     ('de_inferno', 'Competitive', 'true',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
@@ -18,7 +16,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_thera', 'Competitive', 'false',  null, '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg'),
     ('de_mills', 'Competitive', 'false',  null, '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg'),
 
-    -- Competitive Workshop
+    -- Workshop Competitive
     ('de_cache', 'Competitive', 'false',  '3070596702', '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg'),
     ('de_train', 'Competitive', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null),
     ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.webp', null),
@@ -26,13 +24,15 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('drawbridge', 'Competitive', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
     ('de_foroglio', 'Competitive', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
 
-    ('de_dust2_night', 'ScrimmageNight', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg'),
-    ('de_ancient_night', 'ScrimmageNight', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient.svg'),
-    ('de_overpass_night', 'ScrimmageNight', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', '/img/maps/icons/de_overpass.svg'),
-    ('de_nuke_night', 'ScrimmageNight', 'false', '3253703883', '/img/maps/screenshots/de_nuke_night.webp', '/img/maps/icons/de_nuke.svg'),
-    ('de_inferno_night', 'ScrimmageNight', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', '/img/maps/icons/de_inferno.svg'),
 
-    --  Wingman
+    -- Night Maps
+    ('de_dust2_night', 'Competitive', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg'),
+    ('de_ancient_night', 'Competitive', 'false', '3299281893', '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient.svg'),
+    ('de_overpass_night', 'Competitive', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', '/img/maps/icons/de_overpass.svg'),
+    ('de_nuke_night', 'Competitive', 'false', '3253703883', '/img/maps/screenshots/de_nuke_night.webp', '/img/maps/icons/de_nuke.svg'),
+    ('de_inferno_night', 'Competitive', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', '/img/maps/icons/de_inferno.svg'),
+
+    -- Valve Wingman
     ('de_inferno', 'Wingman', 'false',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
     ('de_nuke', 'Wingman', 'false',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
     ('de_overpass', 'Wingman', 'false',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
@@ -40,7 +40,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_assembly', 'Wingman', 'false',  null, '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
     ('de_memento', 'Wingman', 'false',  null, '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
 
-    --  Wingman Workshop
+    --  Workshop Wingman
     ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
     ('drawbridge', 'Wingman', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
     ('de_foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null)
@@ -59,8 +59,6 @@ WITH new_rows AS (
   SELECT *
   FROM (VALUES
       ('Competitive', true, true),
-      ('Scrimmage', true, true),
-      ('ScrimmageNight', true, true),
       ('Wingman', true, true)
   ) AS data(type, enabled, seed)
 )
@@ -77,7 +75,7 @@ WHERE NOT EXISTS (
 WITH pool_ids AS (
     SELECT id, type
     FROM map_pools
-    WHERE type IN ('Competitive', 'Wingman', 'Scrimmage', 'ScrimmageNight')
+    WHERE type IN ('Competitive', 'Wingman')
     ORDER BY type
 ),
 inserted_maps AS (
@@ -86,9 +84,7 @@ inserted_maps AS (
     FROM maps m
     JOIN pool_ids p ON (
         (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
-        (p.type = 'Wingman' AND m.type = 'Wingman') OR
-        (p.type = 'Scrimmage' AND m.type = 'Competitive') OR
-        (p.type = 'ScrimmageNight' AND m.type = 'ScrimmageNight')
+        (p.type = 'Wingman' AND m.type = 'Wingman')
     )
     ON CONFLICT DO NOTHING
     RETURNING *
