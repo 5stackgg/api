@@ -32,7 +32,6 @@ export class GameServerNodeGateway {
     if (!payload.labels?.["5stack-id"]) {
       await this.gameServerNodeService.updateIdLabel(payload.node);
     }
-    console.info();
 
     await this.gameServerNodeService.updateStatus(
       payload.node,
