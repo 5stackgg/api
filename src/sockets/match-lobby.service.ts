@@ -227,6 +227,7 @@ export class MatchLobbyService {
           __args: {
             id: matchId,
           },
+          status: true,
           server: {
             id: true,
           },
@@ -235,6 +236,10 @@ export class MatchLobbyService {
 
       const server = matches_by_pk.server;
       if (!server) {
+        return;
+      }
+
+      if(matches_by_pk.status !== 'Live') {
         return;
       }
 

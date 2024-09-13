@@ -24,7 +24,6 @@ export class CheckGameUpdate extends WorkerHost {
     const publicBuild = data["730"].depots?.branches?.public;
 
     if (!publicBuild) {
-      this.logger.error("No timeupdated found for CS2", data);
       return;
     }
 
