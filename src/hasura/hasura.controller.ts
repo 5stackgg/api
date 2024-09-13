@@ -1,4 +1,12 @@
-import { Controller, Get, Logger, Post, Req, Res, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
 import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";

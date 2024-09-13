@@ -2,7 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
-import { KubeConfig, CoreV1Api, PatchUtils, BatchV1Api } from "@kubernetes/client-node";
+import {
+  KubeConfig,
+  CoreV1Api,
+  PatchUtils,
+  BatchV1Api,
+} from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
 
@@ -20,7 +25,6 @@ export class GameServerNodeService {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
 
     this.namespace = this.gameServerConfig.namespace;
-    
   }
 
   public async create(
@@ -51,7 +55,31 @@ export class GameServerNodeService {
     publicIP: string,
     status: e_game_server_node_statuses_enum,
   ) {
-    const { update_game_server_nodes_by_pk: gameServerNode } =
+    const { game_server_nodes_by_pk } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: {
+          id: node,
+        },
+        token: true,
+        status: true,
+        public_ip: true,
+      },
+    });
+
+    if (!game_server_nodes_by_pk) {
+      await this.create(undefined, node, status);
+      return;
+    }
+
+    if (!game_server_nodes_by_pk.token) {
+      return;
+    }
+
+    if (
+      game_server_nodes_by_pk.public_ip !== publicIP ||
+      game_server_nodes_by_pk.status !== status ||
+      game_server_nodes_by_pk.token
+    ) {
       await this.hasura.mutation({
         update_game_server_nodes_by_pk: {
           __args: {
@@ -61,34 +89,13 @@ export class GameServerNodeService {
             _set: {
               status,
               public_ip: publicIP,
+              ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
           },
-          id: true,
           token: true,
         },
       });
-
-    if (!gameServerNode) {
-      return await this.create(undefined, node, status);
     }
-
-    if (!gameServerNode.token) {
-      return gameServerNode;
-    }
-
-    await this.hasura.mutation({
-      update_game_server_nodes_by_pk: {
-        __args: {
-          pk_columns: {
-            id: node,
-          },
-          _set: {
-            token: null,
-          },
-        },
-        id: true,
-      },
-    });
   }
 
   public async updateIdLabel(nodeId: string) {
@@ -127,7 +134,6 @@ export class GameServerNodeService {
     }
   }
 
-
   public async updateCs(gameServerNodeId?: string) {
     if (gameServerNodeId) {
       const { game_server_nodes_by_pk } = await this.hasura.query({
@@ -163,10 +169,8 @@ export class GameServerNodeService {
     for (const node of game_server_nodes) {
       await this.updateCsServer(node.id);
     }
-
-
   }
-  
+
   private async updateCsServer(gameServerNodeId: string) {
     this.logger.log(`Updating CS2 on node ${gameServerNodeId}`);
 

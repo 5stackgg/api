@@ -38,12 +38,11 @@ export class GameServerNodeController {
   @HasuraAction()
   public async updateCs(data: { gameServerNodeId: string }) {
     await this.gameServerNodeService.updateCs(data.gameServerNodeId);
-    
+
     return {
       success: true,
     };
   }
-
 
   @Get("/script/:gameServerNodeId.sh")
   public async script(@Req() request: Request, @Res() response: Response) {

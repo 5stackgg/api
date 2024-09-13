@@ -10,7 +10,7 @@ export class CheckGameUpdate extends WorkerHost {
   constructor(
     protected readonly cache: CacheService,
     protected readonly logger: Logger,
-    protected readonly gameServerNodeService: GameServerNodeService
+    protected readonly gameServerNodeService: GameServerNodeService,
   ) {
     super();
   }
