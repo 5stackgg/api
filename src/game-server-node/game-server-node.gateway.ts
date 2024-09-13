@@ -25,16 +25,19 @@ export class GameServerNodeGateway {
     payload: {
       node: string;
       publicIP: string;
+      csBuild: number;
       labels: Record<string, string>;
     },
   ): Promise<void> {
     if (!payload.labels?.["5stack-id"]) {
       await this.gameServerNodeService.updateIdLabel(payload.node);
     }
+    console.info();
 
     await this.gameServerNodeService.updateStatus(
       payload.node,
       payload.publicIP,
+      payload.csBuild,
       "Online",
     );
 

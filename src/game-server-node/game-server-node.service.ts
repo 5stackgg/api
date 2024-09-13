@@ -53,6 +53,7 @@ export class GameServerNodeService {
   public async updateStatus(
     node: string,
     publicIP: string,
+    csBulid: number,
     status: e_game_server_node_statuses_enum,
   ) {
     const { game_server_nodes_by_pk } = await this.hasura.query({
@@ -62,6 +63,7 @@ export class GameServerNodeService {
         },
         token: true,
         status: true,
+        build_id: true,
         public_ip: true,
       },
     });
@@ -74,6 +76,7 @@ export class GameServerNodeService {
     if (
       game_server_nodes_by_pk.public_ip !== publicIP ||
       game_server_nodes_by_pk.status !== status ||
+      game_server_nodes_by_pk.build_id !== csBulid ||
       game_server_nodes_by_pk.token
     ) {
       await this.hasura.mutation({
@@ -85,6 +88,7 @@ export class GameServerNodeService {
             _set: {
               status,
               public_ip: publicIP,
+              ...(csBulid ? { build_id: csBulid } : {}),
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
           },
