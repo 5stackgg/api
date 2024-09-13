@@ -71,10 +71,6 @@ export class GameServerNodeService {
       return;
     }
 
-    if (!game_server_nodes_by_pk.token) {
-      return;
-    }
-
     if (
       game_server_nodes_by_pk.public_ip !== publicIP ||
       game_server_nodes_by_pk.status !== status ||
