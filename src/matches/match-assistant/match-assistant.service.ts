@@ -335,10 +335,17 @@ export class MatchAssistantService {
                       { containerPort: server.tv_port, protocol: "UDP" },
                     ],
                     env: [
+                      { name: "SERVER_PORT", value: server.port.toString() },
+                      { name: "TV_PORT", value: server.tv_port.toString() },
                       {
-                        name: "GAME_PARAMS",
-                        value: `-ip 0.0.0.0 -port ${server.port} +tv_port ${server.tv_port} -dedicated -dev +map de_inferno -usercon +rcon_password ${await this.encryption.decrypt(server.rcon_password)} +sv_password ${match.password} -maxplayers 13`,
+                        name: "RCON_PASSWORD",
+                        value: await this.encryption.decrypt(
+                          server.rcon_password,
+                        ),
                       },
+                      { name: "SERVER_PASSWORD", value: match.password },
+                      { name: "EXTRA_GAME_PARAMS", value: "-maxplayers 13" },
+
                       { name: "SERVER_ID", value: server.id },
                       {
                         name: "SERVER_API_PASSWORD",
