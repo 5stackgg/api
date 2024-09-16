@@ -1,0 +1,1 @@
+alter table "public"."match_options" drop column "pause_setting";

@@ -16,6 +16,7 @@ import {
   e_map_pool_types_enum,
   e_match_status_enum,
   e_match_types_enum,
+  e_timeout_settings,
 } from "../../../generated";
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
@@ -763,6 +764,7 @@ export class MatchAssistantService {
       knife: boolean;
       map?: string;
       overtime: boolean;
+      pause_setting: e_timeout_settings;
       region?: e_game_server_node_regions_enum;
     },
     serverId?: string,

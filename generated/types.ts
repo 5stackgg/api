@@ -12500,6 +12500,9 @@ export default {
             "overtime": [
                 0
             ],
+            "pause_setting": [
+                314
+            ],
             "region_veto": [
                 0
             ],
@@ -12646,6 +12649,9 @@ export default {
             "overtime": [
                 1
             ],
+            "pause_setting": [
+                315
+            ],
             "region_veto": [
                 1
             ],
@@ -12719,6 +12725,9 @@ export default {
             ],
             "overtime": [
                 0
+            ],
+            "pause_setting": [
+                314
             ],
             "region_veto": [
                 0
@@ -12861,6 +12870,9 @@ export default {
             "overtime": [
                 904
             ],
+            "pause_setting": [
+                904
+            ],
             "region_veto": [
                 904
             ],
@@ -12919,6 +12931,9 @@ export default {
             ],
             "overtime": [
                 0
+            ],
+            "pause_setting": [
+                314
             ],
             "region_veto": [
                 0
@@ -13028,6 +13043,9 @@ export default {
             ],
             "overtime": [
                 0
+            ],
+            "pause_setting": [
+                314
             ],
             "region_veto": [
                 0
@@ -23132,6 +23150,9 @@ export default {
                     ]
                 }
             ],
+            "is_in_another_match": [
+                0
+            ],
             "kills": [
                 1036,
                 {
@@ -24041,6 +24062,9 @@ export default {
             "invited_players_aggregate": [
                 1298
             ],
+            "is_in_another_match": [
+                1
+            ],
             "kills": [
                 1047
             ],
@@ -24408,6 +24432,9 @@ export default {
             ],
             "invited_players_aggregate": [
                 1301
+            ],
+            "is_in_another_match": [
+                904
             ],
             "kills_aggregate": [
                 1043
