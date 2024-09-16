@@ -14,6 +14,7 @@ import FlashEvent from "./FlashEvent";
 import ObjectiveEvent from "./ObjectiveEvent";
 import UnusedUtility from "./UnusedUtility";
 import ChatMessageEvent from "./ChatMessageEvent";
+import MatchSurrendered from "./MatchSurrendered";
 
 export const MatchEvents = {
   mapStatus: MatchMapStatusEvent,
@@ -29,8 +30,10 @@ export const MatchEvents = {
   player: PlayerEvent,
   captain: CaptainEvent,
 
+  /** Match Events */
   switch: KnifeSwitch,
   score: ScoreEvent,
+  surrender: MatchSurrendered,
 
   /**
    * Timeouts

@@ -44,7 +44,7 @@ export class BackupRoundsController {
     });
 
     if (match_map_rounds.length === 0) {
-      throw Error("missing backup rounds");
+      return false;
     }
 
     const archive = archiver("zip", {

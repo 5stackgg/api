@@ -150,15 +150,15 @@ export class MatchLobbyService {
     const messageField = `${player.steam_id}:${Date.now().toString()}`;
     await this.redis.hset(messageKey, messageField, JSON.stringify(message));
 
-    await this.redis.sendCommand(
-      new Redis.Command("HEXPIRE", [
-        messageKey,
-        60 * 60,
-        "FIELDS",
-        1,
-        messageField,
-      ]),
-    );
+    // await this.redis.sendCommand(
+    //   new Redis.Command("HEXPIRE", [
+    //     messageKey,
+    //     60 * 60,
+    //     "FIELDS",
+    //     1,
+    //     messageField,
+    //   ]),
+    // );
 
     this.to(matchId, "lobby:chat", message);
   }
