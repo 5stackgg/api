@@ -1,0 +1,150 @@
+table:
+  name: notifications
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - steam_id
+        - is_read
+        - entity_id
+        - message
+        - role
+        - title
+        - type
+        - deleted_at
+        - id
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _is_null: false
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - steam_id
+        - is_read
+        - entity_id
+        - message
+        - role
+        - title
+        - type
+        - deleted_at
+        - id
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _eq: match_organizer
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - steam_id
+        - is_read
+        - entity_id
+        - message
+        - role
+        - title
+        - type
+        - deleted_at
+        - id
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _in:
+                - match_organizer
+                - tournament_organizer
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - is_read
+        - entity_id
+        - message
+        - role
+        - title
+        - type
+        - deleted_at
+        - id
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - deleted_at
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _is_null: false
+      check:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _is_null: false
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - deleted_at
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _eq: match_organizer
+      check:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _eq: match_organizer
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - deleted_at
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _in:
+                - match_organizer
+                - tournament_organizer
+      check:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - role:
+              _in:
+                - match_organizer
+                - tournament_organizer
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - deleted_at
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

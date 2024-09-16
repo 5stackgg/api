@@ -20,19 +20,28 @@ import {
   servers_set_input,
 } from "../../generated";
 import { MatchMakingService } from "src/sockets/match-making.servcie";
+import { ConfigService } from "@nestjs/config";
+import { AppConfig } from "src/configs/types/AppConfig";
+import fetch from "node-fetch";
+import TurndownService from "turndown";
 
 @Controller("matches")
 export class MatchesController {
+  private readonly appConfig: AppConfig;
+
   constructor(
     private readonly logger: Logger,
     private readonly moduleRef: ModuleRef,
     private readonly hasura: HasuraService,
+    private readonly configService: ConfigService,
     private readonly matchMaking: MatchMakingService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,
     private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
-  ) {}
+  ) {
+    this.appConfig = this.configService.get<AppConfig>("app");
+  }
 
   @Get("current-match/:serverId")
   public async getMatchDetails(@Req() request: Request) {
@@ -519,6 +528,70 @@ export class MatchesController {
     processor.setData(matchId, data);
 
     await processor.process();
+  }
+
+  @HasuraAction()
+  public async callForOrganizer(data: { user: User; matchId: string }) {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: data.matchId,
+        },
+        requested_organizer: true,
+      },
+    });
+
+    if (match.requested_organizer) {
+      return {
+        success: true,
+      };
+    }
+
+    const { settings_by_pk: discord_support_webhook } = await this.hasura.query(
+      {
+        settings_by_pk: {
+          __args: {
+            name: "discord_support_webhook",
+          },
+          value: true,
+        },
+      },
+    );
+
+    const message = `Organaizer need for match <a href="${this.appConfig.webDomain}/matches/${data.matchId}">${data.matchId}</a>`;
+    await this.hasura.mutation({
+      insert_notifications_one: {
+        __args: {
+          object: {
+            message,
+            title: "Match Assistanced Required",
+            role: "match_organizer",
+            type: "MatchSupport",
+            entity_id: data.matchId,
+          },
+        },
+        id: true,
+      },
+    });
+
+    if (discord_support_webhook) {
+      console.info("sending discord notification");
+      // TODO - call the webhook from   discord_support_webhook , and post the message iformation  using node-fetch
+      await fetch(discord_support_webhook.value, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: new TurndownService().turndown(message),
+          username: "5stack Support",
+        }),
+      });
+    }
+
+    return {
+      success: true,
+    };
   }
 
   /**

@@ -13,7 +13,6 @@ export type Scalars = {
     inet: any,
     jsonb: any,
     numeric: any,
-    timestamp: any,
     timestamptz: any,
     uuid: any,
 }
@@ -644,7 +643,7 @@ export interface e_match_status_aggregate_fields {
 /** unique or primary key constraints on table "e_match_status" */
 export type e_match_status_constraint = 'e_match_status_pkey'
 
-export type e_match_status_enum = 'Canceled' | 'Finished' | 'Forfeit' | 'Live' | 'PickingPlayers' | 'Scheduled' | 'Tie' | 'Veto' | 'WaitingForCheckIn' | 'WaitingForServer'
+export type e_match_status_enum = 'Canceled' | 'Finished' | 'Forfeit' | 'Live' | 'PickingPlayers' | 'Scheduled' | 'Surrendered' | 'Tie' | 'Veto' | 'WaitingForCheckIn' | 'WaitingForServer'
 
 
 /** aggregate max on columns */
@@ -748,6 +747,71 @@ export type e_match_types_select_column = 'description' | 'value'
 
 /** update columns of table "e_match_types" */
 export type e_match_types_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_notification_types" */
+export interface e_notification_types {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_notification_types'
+}
+
+
+/** aggregated selection of "e_notification_types" */
+export interface e_notification_types_aggregate {
+    aggregate: (e_notification_types_aggregate_fields | null)
+    nodes: e_notification_types[]
+    __typename: 'e_notification_types_aggregate'
+}
+
+
+/** aggregate fields of "e_notification_types" */
+export interface e_notification_types_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_notification_types_max_fields | null)
+    min: (e_notification_types_min_fields | null)
+    __typename: 'e_notification_types_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_notification_types" */
+export type e_notification_types_constraint = 'e_notification_types_pkey'
+
+export type e_notification_types_enum = 'MatchSupport'
+
+
+/** aggregate max on columns */
+export interface e_notification_types_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_notification_types_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_notification_types_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_notification_types_min_fields'
+}
+
+
+/** response of any mutation on the table "e_notification_types" */
+export interface e_notification_types_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_notification_types[]
+    __typename: 'e_notification_types_mutation_response'
+}
+
+
+/** select columns of table "e_notification_types" */
+export type e_notification_types_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_notification_types" */
+export type e_notification_types_update_column = 'description' | 'value'
 
 
 /** columns and relationships of "e_objective_types" */
@@ -3153,6 +3217,8 @@ export interface matches {
     region_veto_picks: match_region_veto_picks[]
     /** An aggregate relationship */
     region_veto_picks_aggregate: match_region_veto_picks_aggregate
+    /** A computed field, executes function "match_requested_organizer" */
+    requested_organizer: (Scalars['Boolean'] | null)
     scheduled_at: (Scalars['timestamptz'] | null)
     /** An object relationship */
     server: (servers | null)
@@ -3470,6 +3536,8 @@ export type migration_hashes_hashes_update_column = 'hash' | 'name'
 export interface mutation_root {
     /** accept team invite */
     acceptTeamInvite: (SuccessOutput | null)
+    /** callForOrganizer */
+    callForOrganizer: (SuccessOutput | null)
     /** cancelMatch */
     cancelMatch: (SuccessOutput | null)
     /** checkIntoMatch */
@@ -3506,6 +3574,10 @@ export interface mutation_root {
     delete_e_match_types: (e_match_types_mutation_response | null)
     /** delete single row from the table: "e_match_types" */
     delete_e_match_types_by_pk: (e_match_types | null)
+    /** delete data from the table: "e_notification_types" */
+    delete_e_notification_types: (e_notification_types_mutation_response | null)
+    /** delete single row from the table: "e_notification_types" */
+    delete_e_notification_types_by_pk: (e_notification_types | null)
     /** delete data from the table: "e_objective_types" */
     delete_e_objective_types: (e_objective_types_mutation_response | null)
     /** delete single row from the table: "e_objective_types" */
@@ -3594,6 +3666,10 @@ export interface mutation_root {
     delete_migration_hashes_hashes: (migration_hashes_hashes_mutation_response | null)
     /** delete single row from the table: "migration_hashes.hashes" */
     delete_migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
+    /** delete data from the table: "notifications" */
+    delete_notifications: (notifications_mutation_response | null)
+    /** delete single row from the table: "notifications" */
+    delete_notifications_by_pk: (notifications | null)
     /** delete data from the table: "player_assists" */
     delete_player_assists: (player_assists_mutation_response | null)
     /** delete single row from the table: "player_assists" */
@@ -3711,6 +3787,10 @@ export interface mutation_root {
     insert_e_match_types: (e_match_types_mutation_response | null)
     /** insert a single row into the table: "e_match_types" */
     insert_e_match_types_one: (e_match_types | null)
+    /** insert data into the table: "e_notification_types" */
+    insert_e_notification_types: (e_notification_types_mutation_response | null)
+    /** insert a single row into the table: "e_notification_types" */
+    insert_e_notification_types_one: (e_notification_types | null)
     /** insert data into the table: "e_objective_types" */
     insert_e_objective_types: (e_objective_types_mutation_response | null)
     /** insert a single row into the table: "e_objective_types" */
@@ -3799,6 +3879,10 @@ export interface mutation_root {
     insert_migration_hashes_hashes: (migration_hashes_hashes_mutation_response | null)
     /** insert a single row into the table: "migration_hashes.hashes" */
     insert_migration_hashes_hashes_one: (migration_hashes_hashes | null)
+    /** insert data into the table: "notifications" */
+    insert_notifications: (notifications_mutation_response | null)
+    /** insert a single row into the table: "notifications" */
+    insert_notifications_one: (notifications | null)
     /** insert data into the table: "player_assists" */
     insert_player_assists: (player_assists_mutation_response | null)
     /** insert a single row into the table: "player_assists" */
@@ -3943,6 +4027,12 @@ export interface mutation_root {
     update_e_match_types_by_pk: (e_match_types | null)
     /** update multiples rows of table: "e_match_types" */
     update_e_match_types_many: ((e_match_types_mutation_response | null)[] | null)
+    /** update data of the table: "e_notification_types" */
+    update_e_notification_types: (e_notification_types_mutation_response | null)
+    /** update single row of the table: "e_notification_types" */
+    update_e_notification_types_by_pk: (e_notification_types | null)
+    /** update multiples rows of table: "e_notification_types" */
+    update_e_notification_types_many: ((e_notification_types_mutation_response | null)[] | null)
     /** update data of the table: "e_objective_types" */
     update_e_objective_types: (e_objective_types_mutation_response | null)
     /** update single row of the table: "e_objective_types" */
@@ -4075,6 +4165,12 @@ export interface mutation_root {
     update_migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
     /** update multiples rows of table: "migration_hashes.hashes" */
     update_migration_hashes_hashes_many: ((migration_hashes_hashes_mutation_response | null)[] | null)
+    /** update data of the table: "notifications" */
+    update_notifications: (notifications_mutation_response | null)
+    /** update single row of the table: "notifications" */
+    update_notifications_by_pk: (notifications | null)
+    /** update multiples rows of table: "notifications" */
+    update_notifications_many: ((notifications_mutation_response | null)[] | null)
     /** update data of the table: "player_assists" */
     update_player_assists: (player_assists_mutation_response | null)
     /** update single row of the table: "player_assists" */
@@ -4200,6 +4296,158 @@ export interface mutation_root {
     /** update multiples rows of table: "v_match_captains" */
     update_v_match_captains_many: ((v_match_captains_mutation_response | null)[] | null)
     __typename: 'mutation_root'
+}
+
+
+/** columns and relationships of "notifications" */
+export interface notifications {
+    deleted_at: (Scalars['timestamptz'] | null)
+    entity_id: Scalars['String']
+    id: Scalars['uuid']
+    is_read: Scalars['Boolean']
+    message: Scalars['String']
+    /** An object relationship */
+    player: (players | null)
+    role: e_player_roles_enum
+    steam_id: (Scalars['bigint'] | null)
+    title: Scalars['String']
+    type: e_notification_types_enum
+    __typename: 'notifications'
+}
+
+
+/** aggregated selection of "notifications" */
+export interface notifications_aggregate {
+    aggregate: (notifications_aggregate_fields | null)
+    nodes: notifications[]
+    __typename: 'notifications_aggregate'
+}
+
+
+/** aggregate fields of "notifications" */
+export interface notifications_aggregate_fields {
+    avg: (notifications_avg_fields | null)
+    count: Scalars['Int']
+    max: (notifications_max_fields | null)
+    min: (notifications_min_fields | null)
+    stddev: (notifications_stddev_fields | null)
+    stddev_pop: (notifications_stddev_pop_fields | null)
+    stddev_samp: (notifications_stddev_samp_fields | null)
+    sum: (notifications_sum_fields | null)
+    var_pop: (notifications_var_pop_fields | null)
+    var_samp: (notifications_var_samp_fields | null)
+    variance: (notifications_variance_fields | null)
+    __typename: 'notifications_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface notifications_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "notifications" */
+export type notifications_constraint = 'notifications_pkey'
+
+
+/** aggregate max on columns */
+export interface notifications_max_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
+    entity_id: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    title: (Scalars['String'] | null)
+    __typename: 'notifications_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface notifications_min_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
+    entity_id: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    title: (Scalars['String'] | null)
+    __typename: 'notifications_min_fields'
+}
+
+
+/** response of any mutation on the table "notifications" */
+export interface notifications_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: notifications[]
+    __typename: 'notifications_mutation_response'
+}
+
+
+/** select columns of table "notifications" */
+export type notifications_select_column = 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+
+
+/** select "notifications_aggregate_bool_exp_bool_and_arguments_columns" columns of table "notifications" */
+export type notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns = 'is_read'
+
+
+/** select "notifications_aggregate_bool_exp_bool_or_arguments_columns" columns of table "notifications" */
+export type notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns = 'is_read'
+
+
+/** aggregate stddev on columns */
+export interface notifications_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface notifications_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface notifications_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface notifications_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'notifications_sum_fields'
+}
+
+
+/** update columns of table "notifications" */
+export type notifications_update_column = 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+
+
+/** aggregate var_pop on columns */
+export interface notifications_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface notifications_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface notifications_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'notifications_variance_fields'
 }
 
 
@@ -5490,6 +5738,10 @@ export interface player_utility_variance_fields {
 /** columns and relationships of "players" */
 export interface players {
     /** An array relationship */
+    abandoned_matches: abandoned_matches[]
+    /** An aggregate relationship */
+    abandoned_matches_aggregate: abandoned_matches_aggregate
+    /** An array relationship */
     assists: player_assists[]
     /** An aggregate relationship */
     assists_aggregate: player_assists_aggregate
@@ -5536,12 +5788,16 @@ export interface players {
     /** A computed field, executes function "get_player_matches" */
     matches: (matches[] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
-    matchmaking_cooldown: (Scalars['timestamp'] | null)
+    matchmaking_cooldown: (Scalars['timestamptz'] | null)
     /** An array relationship */
     multi_kills: v_player_multi_kills[]
     /** An aggregate relationship */
     multi_kills_aggregate: v_player_multi_kills_aggregate
     name: Scalars['String']
+    /** An array relationship */
+    notifications: notifications[]
+    /** An aggregate relationship */
+    notifications_aggregate: notifications_aggregate
     /** An array relationship */
     objectives: player_objectives[]
     /** An aggregate relationship */
@@ -5564,6 +5820,10 @@ export interface players {
     player_unused_utilities_aggregate: player_unused_utility_aggregate
     profile_url: (Scalars['String'] | null)
     role: e_player_roles_enum
+    /** An array relationship */
+    servers: servers[]
+    /** An aggregate relationship */
+    servers_aggregate: servers_aggregate
     steam_id: Scalars['bigint']
     /** An array relationship */
     team_invites: team_invites[]
@@ -5638,7 +5898,7 @@ export interface players_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     discord_id: (Scalars['String'] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
-    matchmaking_cooldown: (Scalars['timestamp'] | null)
+    matchmaking_cooldown: (Scalars['timestamptz'] | null)
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
@@ -5653,7 +5913,7 @@ export interface players_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     discord_id: (Scalars['String'] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
-    matchmaking_cooldown: (Scalars['timestamp'] | null)
+    matchmaking_cooldown: (Scalars['timestamptz'] | null)
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
@@ -5734,9 +5994,9 @@ export interface query_root {
     _map_pool_aggregate: _map_pool_aggregate
     /** fetch data from the table: "_map_pool" using primary key columns */
     _map_pool_by_pk: (_map_pool | null)
-    /** fetch data from the table: "abandoned_matches" */
+    /** An array relationship */
     abandoned_matches: abandoned_matches[]
-    /** fetch aggregated fields from the table: "abandoned_matches" */
+    /** An aggregate relationship */
     abandoned_matches_aggregate: abandoned_matches_aggregate
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk: (abandoned_matches | null)
@@ -5776,6 +6036,12 @@ export interface query_root {
     e_match_types_aggregate: e_match_types_aggregate
     /** fetch data from the table: "e_match_types" using primary key columns */
     e_match_types_by_pk: (e_match_types | null)
+    /** fetch data from the table: "e_notification_types" */
+    e_notification_types: e_notification_types[]
+    /** fetch aggregated fields from the table: "e_notification_types" */
+    e_notification_types_aggregate: e_notification_types_aggregate
+    /** fetch data from the table: "e_notification_types" using primary key columns */
+    e_notification_types_by_pk: (e_notification_types | null)
     /** fetch data from the table: "e_objective_types" */
     e_objective_types: e_objective_types[]
     /** fetch aggregated fields from the table: "e_objective_types" */
@@ -5910,6 +6176,12 @@ export interface query_root {
     migration_hashes_hashes_aggregate: migration_hashes_hashes_aggregate
     /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
     migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
+    /** An array relationship */
+    notifications: notifications[]
+    /** An aggregate relationship */
+    notifications_aggregate: notifications_aggregate
+    /** fetch data from the table: "notifications" using primary key columns */
+    notifications_by_pk: (notifications | null)
     /** An array relationship */
     player_assists: player_assists[]
     /** An aggregate relationship */
@@ -6332,9 +6604,9 @@ export interface subscription_root {
     _map_pool_by_pk: (_map_pool | null)
     /** fetch data from the table in a streaming manner: "_map_pool" */
     _map_pool_stream: _map_pool[]
-    /** fetch data from the table: "abandoned_matches" */
+    /** An array relationship */
     abandoned_matches: abandoned_matches[]
-    /** fetch aggregated fields from the table: "abandoned_matches" */
+    /** An aggregate relationship */
     abandoned_matches_aggregate: abandoned_matches_aggregate
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk: (abandoned_matches | null)
@@ -6388,6 +6660,14 @@ export interface subscription_root {
     e_match_types_by_pk: (e_match_types | null)
     /** fetch data from the table in a streaming manner: "e_match_types" */
     e_match_types_stream: e_match_types[]
+    /** fetch data from the table: "e_notification_types" */
+    e_notification_types: e_notification_types[]
+    /** fetch aggregated fields from the table: "e_notification_types" */
+    e_notification_types_aggregate: e_notification_types_aggregate
+    /** fetch data from the table: "e_notification_types" using primary key columns */
+    e_notification_types_by_pk: (e_notification_types | null)
+    /** fetch data from the table in a streaming manner: "e_notification_types" */
+    e_notification_types_stream: e_notification_types[]
     /** fetch data from the table: "e_objective_types" */
     e_objective_types: e_objective_types[]
     /** fetch aggregated fields from the table: "e_objective_types" */
@@ -6564,6 +6844,14 @@ export interface subscription_root {
     migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
     /** fetch data from the table in a streaming manner: "migration_hashes.hashes" */
     migration_hashes_hashes_stream: migration_hashes_hashes[]
+    /** An array relationship */
+    notifications: notifications[]
+    /** An aggregate relationship */
+    notifications_aggregate: notifications_aggregate
+    /** fetch data from the table: "notifications" using primary key columns */
+    notifications_by_pk: (notifications | null)
+    /** fetch data from the table in a streaming manner: "notifications" */
+    notifications_stream: notifications[]
     /** An array relationship */
     player_assists: player_assists[]
     /** An aggregate relationship */
@@ -9536,6 +9824,10 @@ export interface abandoned_matches_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface abandoned_matches_aggregate_bool_exp {count?: (abandoned_matches_aggregate_bool_exp_count | null)}
+
+export interface abandoned_matches_aggregate_bool_exp_count {arguments?: (abandoned_matches_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (abandoned_matches_bool_exp | null),predicate: Int_comparison_exp}
+
 
 /** aggregate fields of "abandoned_matches" */
 export interface abandoned_matches_aggregate_fieldsGenqlSelection{
@@ -9555,12 +9847,26 @@ export interface abandoned_matches_aggregate_fieldsGenqlSelection{
 }
 
 
+/** order by aggregate values of table "abandoned_matches" */
+export interface abandoned_matches_aggregate_order_by {avg?: (abandoned_matches_avg_order_by | null),count?: (order_by | null),max?: (abandoned_matches_max_order_by | null),min?: (abandoned_matches_min_order_by | null),stddev?: (abandoned_matches_stddev_order_by | null),stddev_pop?: (abandoned_matches_stddev_pop_order_by | null),stddev_samp?: (abandoned_matches_stddev_samp_order_by | null),sum?: (abandoned_matches_sum_order_by | null),var_pop?: (abandoned_matches_var_pop_order_by | null),var_samp?: (abandoned_matches_var_samp_order_by | null),variance?: (abandoned_matches_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "abandoned_matches" */
+export interface abandoned_matches_arr_rel_insert_input {data: abandoned_matches_insert_input[],
+/** upsert condition */
+on_conflict?: (abandoned_matches_on_conflict | null)}
+
+
 /** aggregate avg on columns */
 export interface abandoned_matches_avg_fieldsGenqlSelection{
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by avg() on columns of table "abandoned_matches" */
+export interface abandoned_matches_avg_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "abandoned_matches". All fields are combined with a logical 'AND'. */
@@ -9585,6 +9891,10 @@ export interface abandoned_matches_max_fieldsGenqlSelection{
 }
 
 
+/** order by max() on columns of table "abandoned_matches" */
+export interface abandoned_matches_max_order_by {abandoned_at?: (order_by | null),id?: (order_by | null),steam_id?: (order_by | null)}
+
+
 /** aggregate min on columns */
 export interface abandoned_matches_min_fieldsGenqlSelection{
     abandoned_at?: boolean | number
@@ -9593,6 +9903,10 @@ export interface abandoned_matches_min_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by min() on columns of table "abandoned_matches" */
+export interface abandoned_matches_min_order_by {abandoned_at?: (order_by | null),id?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "abandoned_matches" */
@@ -9630,6 +9944,10 @@ export interface abandoned_matches_stddev_fieldsGenqlSelection{
 }
 
 
+/** order by stddev() on columns of table "abandoned_matches" */
+export interface abandoned_matches_stddev_order_by {steam_id?: (order_by | null)}
+
+
 /** aggregate stddev_pop on columns */
 export interface abandoned_matches_stddev_pop_fieldsGenqlSelection{
     steam_id?: boolean | number
@@ -9638,12 +9956,20 @@ export interface abandoned_matches_stddev_pop_fieldsGenqlSelection{
 }
 
 
+/** order by stddev_pop() on columns of table "abandoned_matches" */
+export interface abandoned_matches_stddev_pop_order_by {steam_id?: (order_by | null)}
+
+
 /** aggregate stddev_samp on columns */
 export interface abandoned_matches_stddev_samp_fieldsGenqlSelection{
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by stddev_samp() on columns of table "abandoned_matches" */
+export interface abandoned_matches_stddev_samp_order_by {steam_id?: (order_by | null)}
 
 
 /** Streaming cursor of the table "abandoned_matches" */
@@ -9665,6 +9991,10 @@ export interface abandoned_matches_sum_fieldsGenqlSelection{
     __scalar?: boolean | number
 }
 
+
+/** order by sum() on columns of table "abandoned_matches" */
+export interface abandoned_matches_sum_order_by {steam_id?: (order_by | null)}
+
 export interface abandoned_matches_updates {
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (abandoned_matches_inc_input | null),
@@ -9682,6 +10012,10 @@ export interface abandoned_matches_var_pop_fieldsGenqlSelection{
 }
 
 
+/** order by var_pop() on columns of table "abandoned_matches" */
+export interface abandoned_matches_var_pop_order_by {steam_id?: (order_by | null)}
+
+
 /** aggregate var_samp on columns */
 export interface abandoned_matches_var_samp_fieldsGenqlSelection{
     steam_id?: boolean | number
@@ -9690,12 +10024,20 @@ export interface abandoned_matches_var_samp_fieldsGenqlSelection{
 }
 
 
+/** order by var_samp() on columns of table "abandoned_matches" */
+export interface abandoned_matches_var_samp_order_by {steam_id?: (order_by | null)}
+
+
 /** aggregate variance on columns */
 export interface abandoned_matches_variance_fieldsGenqlSelection{
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by variance() on columns of table "abandoned_matches" */
+export interface abandoned_matches_variance_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to compare columns of type "bigint". All fields are combined with logical 'AND'. */
@@ -10568,6 +10910,109 @@ export interface e_match_types_updates {
 _set?: (e_match_types_set_input | null),
 /** filter the rows which have to be updated */
 where: e_match_types_bool_exp}
+
+
+/** columns and relationships of "e_notification_types" */
+export interface e_notification_typesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_notification_types" */
+export interface e_notification_types_aggregateGenqlSelection{
+    aggregate?: e_notification_types_aggregate_fieldsGenqlSelection
+    nodes?: e_notification_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_notification_types" */
+export interface e_notification_types_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_notification_types_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_notification_types_max_fieldsGenqlSelection
+    min?: e_notification_types_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_notification_types". All fields are combined with a logical 'AND'. */
+export interface e_notification_types_bool_exp {_and?: (e_notification_types_bool_exp[] | null),_not?: (e_notification_types_bool_exp | null),_or?: (e_notification_types_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_notification_types_enum". All fields are combined with logical 'AND'. */
+export interface e_notification_types_enum_comparison_exp {_eq?: (e_notification_types_enum | null),_in?: (e_notification_types_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_notification_types_enum | null),_nin?: (e_notification_types_enum[] | null)}
+
+
+/** input type for inserting data into table "e_notification_types" */
+export interface e_notification_types_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_notification_types_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_notification_types_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_notification_types" */
+export interface e_notification_types_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_notification_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_notification_types" */
+export interface e_notification_types_on_conflict {constraint: e_notification_types_constraint,update_columns?: e_notification_types_update_column[],where?: (e_notification_types_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_notification_types". */
+export interface e_notification_types_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_notification_types */
+export interface e_notification_types_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_notification_types" */
+export interface e_notification_types_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_notification_types" */
+export interface e_notification_types_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_notification_types_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_notification_types_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_notification_types_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_notification_types_set_input | null),
+/** filter the rows which have to be updated */
+where: e_notification_types_bool_exp}
 
 
 /** columns and relationships of "e_objective_types" */
@@ -15021,6 +15466,8 @@ export interface matchesGenqlSelection{
     order_by?: (match_region_veto_picks_order_by[] | null), 
     /** filter the rows returned */
     where?: (match_region_veto_picks_bool_exp | null)} })
+    /** A computed field, executes function "match_requested_organizer" */
+    requested_organizer?: boolean | number
     scheduled_at?: boolean | number
     /** An object relationship */
     server?: serversGenqlSelection
@@ -15137,7 +15584,7 @@ export interface matches_avg_order_by {organizer_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "matches". All fields are combined with a logical 'AND'. */
-export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (e_game_server_node_regions_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (e_game_server_node_regions_enum_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_id?: (uuid_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_link?: (String_comparison_exp | null),tv_connection_string?: (String_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
+export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (e_game_server_node_regions_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (e_game_server_node_regions_enum_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_id?: (uuid_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_link?: (String_comparison_exp | null),tv_connection_string?: (String_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "matches" */
@@ -15268,7 +15715,7 @@ export interface matches_on_conflict {constraint: matches_constraint,update_colu
 
 
 /** Ordering options when selecting data from "matches". */
-export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),cancels_at?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (e_game_server_node_regions_order_by | null),ended_at?: (order_by | null),id?: (order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_id?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_link?: (order_by | null),tv_connection_string?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
+export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),cancels_at?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (e_game_server_node_regions_order_by | null),ended_at?: (order_by | null),id?: (order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_id?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_link?: (order_by | null),tv_connection_string?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** primary key columns input for table: matches */
@@ -15514,6 +15961,8 @@ where: migration_hashes_hashes_bool_exp}
 export interface mutation_rootGenqlSelection{
     /** accept team invite */
     acceptTeamInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid']} })
+    /** callForOrganizer */
+    callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {matchId: Scalars['String']} })
     /** cancelMatch */
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** checkIntoMatch */
@@ -15566,6 +16015,12 @@ export interface mutation_rootGenqlSelection{
     where: e_match_types_bool_exp} })
     /** delete single row from the table: "e_match_types" */
     delete_e_match_types_by_pk?: (e_match_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_notification_types" */
+    delete_e_notification_types?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_notification_types_bool_exp} })
+    /** delete single row from the table: "e_notification_types" */
+    delete_e_notification_types_by_pk?: (e_notification_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_objective_types" */
     delete_e_objective_types?: (e_objective_types_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -15698,6 +16153,12 @@ export interface mutation_rootGenqlSelection{
     where: migration_hashes_hashes_bool_exp} })
     /** delete single row from the table: "migration_hashes.hashes" */
     delete_migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {name: Scalars['String']} })
+    /** delete data from the table: "notifications" */
+    delete_notifications?: (notifications_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: notifications_bool_exp} })
+    /** delete single row from the table: "notifications" */
+    delete_notifications_by_pk?: (notificationsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "player_assists" */
     delete_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -15923,6 +16384,18 @@ export interface mutation_rootGenqlSelection{
     object: e_match_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_match_types_on_conflict | null)} })
+    /** insert data into the table: "e_notification_types" */
+    insert_e_notification_types?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_notification_types_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_notification_types_on_conflict | null)} })
+    /** insert a single row into the table: "e_notification_types" */
+    insert_e_notification_types_one?: (e_notification_typesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_notification_types_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_notification_types_on_conflict | null)} })
     /** insert data into the table: "e_objective_types" */
     insert_e_objective_types?: (e_objective_types_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -16187,6 +16660,18 @@ export interface mutation_rootGenqlSelection{
     object: migration_hashes_hashes_insert_input, 
     /** upsert condition */
     on_conflict?: (migration_hashes_hashes_on_conflict | null)} })
+    /** insert data into the table: "notifications" */
+    insert_notifications?: (notifications_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: notifications_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (notifications_on_conflict | null)} })
+    /** insert a single row into the table: "notifications" */
+    insert_notifications_one?: (notificationsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: notifications_insert_input, 
+    /** upsert condition */
+    on_conflict?: (notifications_on_conflict | null)} })
     /** insert data into the table: "player_assists" */
     insert_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -16567,6 +17052,20 @@ export interface mutation_rootGenqlSelection{
     update_e_match_types_many?: (e_match_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_match_types_updates[]} })
+    /** update data of the table: "e_notification_types" */
+    update_e_notification_types?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_notification_types_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_notification_types_bool_exp} })
+    /** update single row of the table: "e_notification_types" */
+    update_e_notification_types_by_pk?: (e_notification_typesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_notification_types_set_input | null), pk_columns: e_notification_types_pk_columns_input} })
+    /** update multiples rows of table: "e_notification_types" */
+    update_e_notification_types_many?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_notification_types_updates[]} })
     /** update data of the table: "e_objective_types" */
     update_e_objective_types?: (e_objective_types_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -16907,6 +17406,24 @@ export interface mutation_rootGenqlSelection{
     update_migration_hashes_hashes_many?: (migration_hashes_hashes_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: migration_hashes_hashes_updates[]} })
+    /** update data of the table: "notifications" */
+    update_notifications?: (notifications_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (notifications_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (notifications_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: notifications_bool_exp} })
+    /** update single row of the table: "notifications" */
+    update_notifications_by_pk?: (notificationsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (notifications_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (notifications_set_input | null), pk_columns: notifications_pk_columns_input} })
+    /** update multiples rows of table: "notifications" */
+    update_notifications_many?: (notifications_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: notifications_updates[]} })
     /** update data of the table: "player_assists" */
     update_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -17294,6 +17811,258 @@ export interface mutation_rootGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "notifications" */
+export interface notificationsGenqlSelection{
+    deleted_at?: boolean | number
+    entity_id?: boolean | number
+    id?: boolean | number
+    is_read?: boolean | number
+    message?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    role?: boolean | number
+    steam_id?: boolean | number
+    title?: boolean | number
+    type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "notifications" */
+export interface notifications_aggregateGenqlSelection{
+    aggregate?: notifications_aggregate_fieldsGenqlSelection
+    nodes?: notificationsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface notifications_aggregate_bool_exp {bool_and?: (notifications_aggregate_bool_exp_bool_and | null),bool_or?: (notifications_aggregate_bool_exp_bool_or | null),count?: (notifications_aggregate_bool_exp_count | null)}
+
+export interface notifications_aggregate_bool_exp_bool_and {arguments: notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (notifications_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface notifications_aggregate_bool_exp_bool_or {arguments: notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (notifications_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface notifications_aggregate_bool_exp_count {arguments?: (notifications_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (notifications_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "notifications" */
+export interface notifications_aggregate_fieldsGenqlSelection{
+    avg?: notifications_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (notifications_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: notifications_max_fieldsGenqlSelection
+    min?: notifications_min_fieldsGenqlSelection
+    stddev?: notifications_stddev_fieldsGenqlSelection
+    stddev_pop?: notifications_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: notifications_stddev_samp_fieldsGenqlSelection
+    sum?: notifications_sum_fieldsGenqlSelection
+    var_pop?: notifications_var_pop_fieldsGenqlSelection
+    var_samp?: notifications_var_samp_fieldsGenqlSelection
+    variance?: notifications_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "notifications" */
+export interface notifications_aggregate_order_by {avg?: (notifications_avg_order_by | null),count?: (order_by | null),max?: (notifications_max_order_by | null),min?: (notifications_min_order_by | null),stddev?: (notifications_stddev_order_by | null),stddev_pop?: (notifications_stddev_pop_order_by | null),stddev_samp?: (notifications_stddev_samp_order_by | null),sum?: (notifications_sum_order_by | null),var_pop?: (notifications_var_pop_order_by | null),var_samp?: (notifications_var_samp_order_by | null),variance?: (notifications_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "notifications" */
+export interface notifications_arr_rel_insert_input {data: notifications_insert_input[],
+/** upsert condition */
+on_conflict?: (notifications_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface notifications_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "notifications" */
+export interface notifications_avg_order_by {steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "notifications". All fields are combined with a logical 'AND'. */
+export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "notifications" */
+export interface notifications_inc_input {steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "notifications" */
+export interface notifications_insert_input {deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+
+
+/** aggregate max on columns */
+export interface notifications_max_fieldsGenqlSelection{
+    deleted_at?: boolean | number
+    entity_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    steam_id?: boolean | number
+    title?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "notifications" */
+export interface notifications_max_order_by {deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface notifications_min_fieldsGenqlSelection{
+    deleted_at?: boolean | number
+    entity_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    steam_id?: boolean | number
+    title?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "notifications" */
+export interface notifications_min_order_by {deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null)}
+
+
+/** response of any mutation on the table "notifications" */
+export interface notifications_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: notificationsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "notifications" */
+export interface notifications_on_conflict {constraint: notifications_constraint,update_columns?: notifications_update_column[],where?: (notifications_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "notifications". */
+export interface notifications_order_by {deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
+
+
+/** primary key columns input for table: notifications */
+export interface notifications_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "notifications" */
+export interface notifications_set_input {deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+
+
+/** aggregate stddev on columns */
+export interface notifications_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "notifications" */
+export interface notifications_stddev_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface notifications_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "notifications" */
+export interface notifications_stddev_pop_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface notifications_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "notifications" */
+export interface notifications_stddev_samp_order_by {steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "notifications" */
+export interface notifications_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: notifications_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface notifications_stream_cursor_value_input {deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+
+
+/** aggregate sum on columns */
+export interface notifications_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "notifications" */
+export interface notifications_sum_order_by {steam_id?: (order_by | null)}
+
+export interface notifications_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (notifications_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (notifications_set_input | null),
+/** filter the rows which have to be updated */
+where: notifications_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface notifications_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "notifications" */
+export interface notifications_var_pop_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface notifications_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "notifications" */
+export interface notifications_var_samp_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface notifications_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "notifications" */
+export interface notifications_variance_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to compare columns of type "numeric". All fields are combined with logical 'AND'. */
@@ -19299,6 +20068,30 @@ export interface player_utility_variance_order_by {attacker_steam_id?: (order_by
 /** columns and relationships of "players" */
 export interface playersGenqlSelection{
     /** An array relationship */
+    abandoned_matches?: (abandoned_matchesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (abandoned_matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (abandoned_matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (abandoned_matches_bool_exp | null)} })
+    /** An aggregate relationship */
+    abandoned_matches_aggregate?: (abandoned_matches_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (abandoned_matches_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (abandoned_matches_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (abandoned_matches_bool_exp | null)} })
+    /** An array relationship */
     assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (player_assists_select_column[] | null), 
@@ -19582,6 +20375,30 @@ export interface playersGenqlSelection{
     where?: (v_player_multi_kills_bool_exp | null)} })
     name?: boolean | number
     /** An array relationship */
+    notifications?: (notificationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (notifications_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (notifications_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
+    /** An aggregate relationship */
+    notifications_aggregate?: (notifications_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (notifications_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (notifications_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
+    /** An array relationship */
     objectives?: (player_objectivesGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (player_objectives_select_column[] | null), 
@@ -19703,6 +20520,30 @@ export interface playersGenqlSelection{
     where?: (player_unused_utility_bool_exp | null)} })
     profile_url?: boolean | number
     role?: boolean | number
+    /** An array relationship */
+    servers?: (serversGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (servers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (servers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (servers_bool_exp | null)} })
+    /** An aggregate relationship */
+    servers_aggregate?: (servers_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (servers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (servers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (servers_bool_exp | null)} })
     steam_id?: boolean | number
     /** An array relationship */
     team_invites?: (team_invitesGenqlSelection & { __args?: {
@@ -19901,7 +20742,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamp_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -19909,7 +20750,7 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),servers?: (servers_arr_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -19966,7 +20807,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -20079,7 +20920,7 @@ export interface query_rootGenqlSelection{
     where?: (_map_pool_bool_exp | null)} })
     /** fetch data from the table: "_map_pool" using primary key columns */
     _map_pool_by_pk?: (_map_poolGenqlSelection & { __args: {map_id: Scalars['uuid'], map_pool_id: Scalars['uuid']} })
-    /** fetch data from the table: "abandoned_matches" */
+    /** An array relationship */
     abandoned_matches?: (abandoned_matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (abandoned_matches_select_column[] | null), 
@@ -20091,7 +20932,7 @@ export interface query_rootGenqlSelection{
     order_by?: (abandoned_matches_order_by[] | null), 
     /** filter the rows returned */
     where?: (abandoned_matches_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "abandoned_matches" */
+    /** An aggregate relationship */
     abandoned_matches_aggregate?: (abandoned_matches_aggregateGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (abandoned_matches_select_column[] | null), 
@@ -20261,6 +21102,32 @@ export interface query_rootGenqlSelection{
     where?: (e_match_types_bool_exp | null)} })
     /** fetch data from the table: "e_match_types" using primary key columns */
     e_match_types_by_pk?: (e_match_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_notification_types" */
+    e_notification_types?: (e_notification_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_notification_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_notification_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_notification_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_notification_types" */
+    e_notification_types_aggregate?: (e_notification_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_notification_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_notification_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_notification_types_bool_exp | null)} })
+    /** fetch data from the table: "e_notification_types" using primary key columns */
+    e_notification_types_by_pk?: (e_notification_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_objective_types" */
     e_objective_types?: (e_objective_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -20835,6 +21702,32 @@ export interface query_rootGenqlSelection{
     where?: (migration_hashes_hashes_bool_exp | null)} })
     /** fetch data from the table: "migration_hashes.hashes" using primary key columns */
     migration_hashes_hashes_by_pk?: (migration_hashes_hashesGenqlSelection & { __args: {name: Scalars['String']} })
+    /** An array relationship */
+    notifications?: (notificationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (notifications_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (notifications_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
+    /** An aggregate relationship */
+    notifications_aggregate?: (notifications_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (notifications_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (notifications_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
+    /** fetch data from the table: "notifications" using primary key columns */
+    notifications_by_pk?: (notificationsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** An array relationship */
     player_assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -22046,7 +22939,7 @@ export interface subscription_rootGenqlSelection{
     cursor: (_map_pool_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (_map_pool_bool_exp | null)} })
-    /** fetch data from the table: "abandoned_matches" */
+    /** An array relationship */
     abandoned_matches?: (abandoned_matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (abandoned_matches_select_column[] | null), 
@@ -22058,7 +22951,7 @@ export interface subscription_rootGenqlSelection{
     order_by?: (abandoned_matches_order_by[] | null), 
     /** filter the rows returned */
     where?: (abandoned_matches_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "abandoned_matches" */
+    /** An aggregate relationship */
     abandoned_matches_aggregate?: (abandoned_matches_aggregateGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (abandoned_matches_select_column[] | null), 
@@ -22284,6 +23177,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_match_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_match_types_bool_exp | null)} })
+    /** fetch data from the table: "e_notification_types" */
+    e_notification_types?: (e_notification_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_notification_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_notification_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_notification_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_notification_types" */
+    e_notification_types_aggregate?: (e_notification_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_notification_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_notification_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_notification_types_bool_exp | null)} })
+    /** fetch data from the table: "e_notification_types" using primary key columns */
+    e_notification_types_by_pk?: (e_notification_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_notification_types" */
+    e_notification_types_stream?: (e_notification_typesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_notification_types_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_notification_types_bool_exp | null)} })
     /** fetch data from the table: "e_objective_types" */
     e_objective_types?: (e_objective_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -23032,6 +23959,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (migration_hashes_hashes_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (migration_hashes_hashes_bool_exp | null)} })
+    /** An array relationship */
+    notifications?: (notificationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (notifications_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (notifications_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
+    /** An aggregate relationship */
+    notifications_aggregate?: (notifications_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (notifications_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (notifications_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
+    /** fetch data from the table: "notifications" using primary key columns */
+    notifications_by_pk?: (notificationsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "notifications" */
+    notifications_stream?: (notificationsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (notifications_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (notifications_bool_exp | null)} })
     /** An array relationship */
     player_assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -24846,10 +25807,6 @@ export interface teams_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "teams" */
 export interface teams_variance_order_by {owner_steam_id?: (order_by | null)}
-
-
-/** Boolean expression to compare columns of type "timestamp". All fields are combined with logical 'AND'. */
-export interface timestamp_comparison_exp {_eq?: (Scalars['timestamp'] | null),_gt?: (Scalars['timestamp'] | null),_gte?: (Scalars['timestamp'] | null),_in?: (Scalars['timestamp'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['timestamp'] | null),_lte?: (Scalars['timestamp'] | null),_neq?: (Scalars['timestamp'] | null),_nin?: (Scalars['timestamp'][] | null)}
 
 
 /** Boolean expression to compare columns of type "timestamptz". All fields are combined with logical 'AND'. */
@@ -28832,6 +29789,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_notification_types_possibleTypes: string[] = ['e_notification_types']
+    export const ise_notification_types = (obj?: { __typename?: any } | null): obj is e_notification_types => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_notification_types"')
+      return e_notification_types_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_notification_types_aggregate_possibleTypes: string[] = ['e_notification_types_aggregate']
+    export const ise_notification_types_aggregate = (obj?: { __typename?: any } | null): obj is e_notification_types_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_notification_types_aggregate"')
+      return e_notification_types_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_notification_types_aggregate_fields_possibleTypes: string[] = ['e_notification_types_aggregate_fields']
+    export const ise_notification_types_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_notification_types_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_notification_types_aggregate_fields"')
+      return e_notification_types_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_notification_types_max_fields_possibleTypes: string[] = ['e_notification_types_max_fields']
+    export const ise_notification_types_max_fields = (obj?: { __typename?: any } | null): obj is e_notification_types_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_notification_types_max_fields"')
+      return e_notification_types_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_notification_types_min_fields_possibleTypes: string[] = ['e_notification_types_min_fields']
+    export const ise_notification_types_min_fields = (obj?: { __typename?: any } | null): obj is e_notification_types_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_notification_types_min_fields"')
+      return e_notification_types_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_notification_types_mutation_response_possibleTypes: string[] = ['e_notification_types_mutation_response']
+    export const ise_notification_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_notification_types_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_notification_types_mutation_response"')
+      return e_notification_types_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_objective_types_possibleTypes: string[] = ['e_objective_types']
     export const ise_objective_types = (obj?: { __typename?: any } | null): obj is e_objective_types => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_objective_types"')
@@ -30404,6 +31409,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ismutation_root = (obj?: { __typename?: any } | null): obj is mutation_root => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismutation_root"')
       return mutation_root_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_possibleTypes: string[] = ['notifications']
+    export const isnotifications = (obj?: { __typename?: any } | null): obj is notifications => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications"')
+      return notifications_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_aggregate_possibleTypes: string[] = ['notifications_aggregate']
+    export const isnotifications_aggregate = (obj?: { __typename?: any } | null): obj is notifications_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_aggregate"')
+      return notifications_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_aggregate_fields_possibleTypes: string[] = ['notifications_aggregate_fields']
+    export const isnotifications_aggregate_fields = (obj?: { __typename?: any } | null): obj is notifications_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_aggregate_fields"')
+      return notifications_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_avg_fields_possibleTypes: string[] = ['notifications_avg_fields']
+    export const isnotifications_avg_fields = (obj?: { __typename?: any } | null): obj is notifications_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_avg_fields"')
+      return notifications_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_max_fields_possibleTypes: string[] = ['notifications_max_fields']
+    export const isnotifications_max_fields = (obj?: { __typename?: any } | null): obj is notifications_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_max_fields"')
+      return notifications_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_min_fields_possibleTypes: string[] = ['notifications_min_fields']
+    export const isnotifications_min_fields = (obj?: { __typename?: any } | null): obj is notifications_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_min_fields"')
+      return notifications_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_mutation_response_possibleTypes: string[] = ['notifications_mutation_response']
+    export const isnotifications_mutation_response = (obj?: { __typename?: any } | null): obj is notifications_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_mutation_response"')
+      return notifications_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_stddev_fields_possibleTypes: string[] = ['notifications_stddev_fields']
+    export const isnotifications_stddev_fields = (obj?: { __typename?: any } | null): obj is notifications_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_stddev_fields"')
+      return notifications_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_stddev_pop_fields_possibleTypes: string[] = ['notifications_stddev_pop_fields']
+    export const isnotifications_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is notifications_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_stddev_pop_fields"')
+      return notifications_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_stddev_samp_fields_possibleTypes: string[] = ['notifications_stddev_samp_fields']
+    export const isnotifications_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is notifications_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_stddev_samp_fields"')
+      return notifications_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_sum_fields_possibleTypes: string[] = ['notifications_sum_fields']
+    export const isnotifications_sum_fields = (obj?: { __typename?: any } | null): obj is notifications_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_sum_fields"')
+      return notifications_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_var_pop_fields_possibleTypes: string[] = ['notifications_var_pop_fields']
+    export const isnotifications_var_pop_fields = (obj?: { __typename?: any } | null): obj is notifications_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_var_pop_fields"')
+      return notifications_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_var_samp_fields_possibleTypes: string[] = ['notifications_var_samp_fields']
+    export const isnotifications_var_samp_fields = (obj?: { __typename?: any } | null): obj is notifications_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_var_samp_fields"')
+      return notifications_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const notifications_variance_fields_possibleTypes: string[] = ['notifications_variance_fields']
+    export const isnotifications_variance_fields = (obj?: { __typename?: any } | null): obj is notifications_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnotifications_variance_fields"')
+      return notifications_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -33562,6 +34679,7 @@ export const enumEMatchStatusEnum = {
    Live: 'Live' as const,
    PickingPlayers: 'PickingPlayers' as const,
    Scheduled: 'Scheduled' as const,
+   Surrendered: 'Surrendered' as const,
    Tie: 'Tie' as const,
    Veto: 'Veto' as const,
    WaitingForCheckIn: 'WaitingForCheckIn' as const,
@@ -33593,6 +34711,24 @@ export const enumEMatchTypesSelectColumn = {
 }
 
 export const enumEMatchTypesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENotificationTypesConstraint = {
+   e_notification_types_pkey: 'e_notification_types_pkey' as const
+}
+
+export const enumENotificationTypesEnum = {
+   MatchSupport: 'MatchSupport' as const
+}
+
+export const enumENotificationTypesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENotificationTypesUpdateColumn = {
    description: 'description' as const,
    value: 'value' as const
 }
@@ -34160,6 +35296,42 @@ export const enumMigrationHashesHashesSelectColumn = {
 export const enumMigrationHashesHashesUpdateColumn = {
    hash: 'hash' as const,
    name: 'name' as const
+}
+
+export const enumNotificationsConstraint = {
+   notifications_pkey: 'notifications_pkey' as const
+}
+
+export const enumNotificationsSelectColumn = {
+   deleted_at: 'deleted_at' as const,
+   entity_id: 'entity_id' as const,
+   id: 'id' as const,
+   is_read: 'is_read' as const,
+   message: 'message' as const,
+   role: 'role' as const,
+   steam_id: 'steam_id' as const,
+   title: 'title' as const,
+   type: 'type' as const
+}
+
+export const enumNotificationsSelectColumnNotificationsAggregateBoolExpBoolAndArgumentsColumns = {
+   is_read: 'is_read' as const
+}
+
+export const enumNotificationsSelectColumnNotificationsAggregateBoolExpBoolOrArgumentsColumns = {
+   is_read: 'is_read' as const
+}
+
+export const enumNotificationsUpdateColumn = {
+   deleted_at: 'deleted_at' as const,
+   entity_id: 'entity_id' as const,
+   id: 'id' as const,
+   is_read: 'is_read' as const,
+   message: 'message' as const,
+   role: 'role' as const,
+   steam_id: 'steam_id' as const,
+   title: 'title' as const,
+   type: 'type' as const
 }
 
 export const enumOrderBy = {

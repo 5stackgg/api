@@ -63,6 +63,7 @@
     "rcon-client": "^4.2.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "turndown": "^7.2.0",
     "typesense": "^1.8.2",
     "ws": "^8.16.0"
   },
@@ -84,6 +85,7 @@
     "@types/passport-steam": "^1.0.5",
     "@types/pg": "^8.11.5",
     "@types/supertest": "^6.0.2",
+    "@types/turndown": "^5.0.5",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",

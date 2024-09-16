@@ -235,6 +235,12 @@ computed_fields:
       function:
         name: get_region_veto_picking_lineup_id
         schema: public
+  - name: requested_organizer
+    definition:
+      function:
+        name: match_requested_organizer
+        schema: public
+      session_argument: hasura_session
   - name: server_region
     definition:
       function:
@@ -314,6 +320,7 @@ select_permissions:
         - max_players_per_lineup
         - min_players_per_lineup
         - region_veto_picking_lineup_id
+        - requested_organizer
         - server_region
         - server_type
         - tv_connection_link

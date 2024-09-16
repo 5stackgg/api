@@ -285,6 +285,17 @@ type abandoned_matches_aggregate {
   nodes: [abandoned_matches!]!
 }
 
+input abandoned_matches_aggregate_bool_exp {
+  count: abandoned_matches_aggregate_bool_exp_count
+}
+
+input abandoned_matches_aggregate_bool_exp_count {
+  arguments: [abandoned_matches_select_column!]
+  distinct: Boolean
+  filter: abandoned_matches_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "abandoned_matches"
 """
@@ -302,9 +313,43 @@ type abandoned_matches_aggregate_fields {
   variance: abandoned_matches_variance_fields
 }
 
+"""
+order by aggregate values of table "abandoned_matches"
+"""
+input abandoned_matches_aggregate_order_by {
+  avg: abandoned_matches_avg_order_by
+  count: order_by
+  max: abandoned_matches_max_order_by
+  min: abandoned_matches_min_order_by
+  stddev: abandoned_matches_stddev_order_by
+  stddev_pop: abandoned_matches_stddev_pop_order_by
+  stddev_samp: abandoned_matches_stddev_samp_order_by
+  sum: abandoned_matches_sum_order_by
+  var_pop: abandoned_matches_var_pop_order_by
+  var_samp: abandoned_matches_var_samp_order_by
+  variance: abandoned_matches_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "abandoned_matches"
+"""
+input abandoned_matches_arr_rel_insert_input {
+  data: [abandoned_matches_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: abandoned_matches_on_conflict
+}
+
 """aggregate avg on columns"""
 type abandoned_matches_avg_fields {
   steam_id: Float
+}
+
+"""
+order by avg() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_avg_order_by {
+  steam_id: order_by
 }
 
 """
@@ -352,11 +397,29 @@ type abandoned_matches_max_fields {
   steam_id: bigint
 }
 
+"""
+order by max() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_max_order_by {
+  abandoned_at: order_by
+  id: order_by
+  steam_id: order_by
+}
+
 """aggregate min on columns"""
 type abandoned_matches_min_fields {
   abandoned_at: timestamptz
   id: uuid
   steam_id: bigint
+}
+
+"""
+order by min() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_min_order_by {
+  abandoned_at: order_by
+  id: order_by
+  steam_id: order_by
 }
 
 """
@@ -419,14 +482,35 @@ type abandoned_matches_stddev_fields {
   steam_id: Float
 }
 
+"""
+order by stddev() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_stddev_order_by {
+  steam_id: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type abandoned_matches_stddev_pop_fields {
   steam_id: Float
 }
 
+"""
+order by stddev_pop() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_stddev_pop_order_by {
+  steam_id: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type abandoned_matches_stddev_samp_fields {
   steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_stddev_samp_order_by {
+  steam_id: order_by
 }
 
 """
@@ -450,6 +534,13 @@ input abandoned_matches_stream_cursor_value_input {
 """aggregate sum on columns"""
 type abandoned_matches_sum_fields {
   steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_sum_order_by {
+  steam_id: order_by
 }
 
 """
@@ -482,14 +573,35 @@ type abandoned_matches_var_pop_fields {
   steam_id: Float
 }
 
+"""
+order by var_pop() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_var_pop_order_by {
+  steam_id: order_by
+}
+
 """aggregate var_samp on columns"""
 type abandoned_matches_var_samp_fields {
   steam_id: Float
 }
 
+"""
+order by var_samp() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_var_samp_order_by {
+  steam_id: order_by
+}
+
 """aggregate variance on columns"""
 type abandoned_matches_variance_fields {
   steam_id: Float
+}
+
+"""
+order by variance() on columns of table "abandoned_matches"
+"""
+input abandoned_matches_variance_order_by {
+  steam_id: order_by
 }
 
 scalar bigint
@@ -1657,6 +1769,9 @@ enum e_match_status_enum {
   """Scheduled"""
   Scheduled
 
+  """Surrendered"""
+  Surrendered
+
   """Tie"""
   Tie
 
@@ -2018,6 +2133,174 @@ input e_match_types_updates {
 
   """filter the rows which have to be updated"""
   where: e_match_types_bool_exp!
+}
+
+"""
+columns and relationships of "e_notification_types"
+"""
+type e_notification_types {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_notification_types"
+"""
+type e_notification_types_aggregate {
+  aggregate: e_notification_types_aggregate_fields
+  nodes: [e_notification_types!]!
+}
+
+"""
+aggregate fields of "e_notification_types"
+"""
+type e_notification_types_aggregate_fields {
+  count(columns: [e_notification_types_select_column!], distinct: Boolean): Int!
+  max: e_notification_types_max_fields
+  min: e_notification_types_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_notification_types". All fields are combined with a logical 'AND'.
+"""
+input e_notification_types_bool_exp {
+  _and: [e_notification_types_bool_exp!]
+  _not: e_notification_types_bool_exp
+  _or: [e_notification_types_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_notification_types"
+"""
+enum e_notification_types_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_notification_types_pkey
+}
+
+enum e_notification_types_enum {
+  """MatchSupport"""
+  MatchSupport
+}
+
+"""
+Boolean expression to compare columns of type "e_notification_types_enum". All fields are combined with logical 'AND'.
+"""
+input e_notification_types_enum_comparison_exp {
+  _eq: e_notification_types_enum
+  _in: [e_notification_types_enum!]
+  _is_null: Boolean
+  _neq: e_notification_types_enum
+  _nin: [e_notification_types_enum!]
+}
+
+"""
+input type for inserting data into table "e_notification_types"
+"""
+input e_notification_types_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_notification_types_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_notification_types_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_notification_types"
+"""
+type e_notification_types_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_notification_types!]!
+}
+
+"""
+on_conflict condition type for table "e_notification_types"
+"""
+input e_notification_types_on_conflict {
+  constraint: e_notification_types_constraint!
+  update_columns: [e_notification_types_update_column!]! = []
+  where: e_notification_types_bool_exp
+}
+
+"""Ordering options when selecting data from "e_notification_types"."""
+input e_notification_types_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_notification_types"""
+input e_notification_types_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_notification_types"
+"""
+enum e_notification_types_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_notification_types"
+"""
+input e_notification_types_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_notification_types"
+"""
+input e_notification_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_notification_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_notification_types_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_notification_types"
+"""
+enum e_notification_types_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_notification_types_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_notification_types_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_notification_types_bool_exp!
 }
 
 """
@@ -10009,6 +10292,11 @@ type matches {
     """filter the rows returned"""
     where: match_region_veto_picks_bool_exp
   ): match_region_veto_picks_aggregate!
+
+  """
+  A computed field, executes function "match_requested_organizer"
+  """
+  requested_organizer: Boolean
   scheduled_at: timestamptz
 
   """An object relationship"""
@@ -10248,6 +10536,7 @@ input matches_bool_exp {
   region_veto_picking_lineup_id: uuid_comparison_exp
   region_veto_picks: match_region_veto_picks_bool_exp
   region_veto_picks_aggregate: match_region_veto_picks_aggregate_bool_exp
+  requested_organizer: Boolean_comparison_exp
   scheduled_at: timestamptz_comparison_exp
   server: servers_bool_exp
   server_id: uuid_comparison_exp
@@ -10614,6 +10903,7 @@ input matches_order_by {
   region: order_by
   region_veto_picking_lineup_id: order_by
   region_veto_picks_aggregate: match_region_veto_picks_aggregate_order_by
+  requested_organizer: order_by
   scheduled_at: order_by
   server: servers_order_by
   server_id: order_by
@@ -11108,6 +11398,9 @@ type mutation_root {
   """accept team invite"""
   acceptTeamInvite(invite_id: uuid!): SuccessOutput
 
+  """callForOrganizer"""
+  callForOrganizer(matchId: String!): SuccessOutput
+
   """cancelMatch"""
   cancelMatch(match_id: uuid!): SuccessOutput
 
@@ -11217,6 +11510,19 @@ type mutation_root {
   delete single row from the table: "e_match_types"
   """
   delete_e_match_types_by_pk(value: String!): e_match_types
+
+  """
+  delete data from the table: "e_notification_types"
+  """
+  delete_e_notification_types(
+    """filter the rows which have to be deleted"""
+    where: e_notification_types_bool_exp!
+  ): e_notification_types_mutation_response
+
+  """
+  delete single row from the table: "e_notification_types"
+  """
+  delete_e_notification_types_by_pk(value: String!): e_notification_types
 
   """
   delete data from the table: "e_objective_types"
@@ -11503,6 +11809,19 @@ type mutation_root {
   delete single row from the table: "migration_hashes.hashes"
   """
   delete_migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
+
+  """
+  delete data from the table: "notifications"
+  """
+  delete_notifications(
+    """filter the rows which have to be deleted"""
+    where: notifications_bool_exp!
+  ): notifications_mutation_response
+
+  """
+  delete single row from the table: "notifications"
+  """
+  delete_notifications_by_pk(id: uuid!): notifications
 
   """
   delete data from the table: "player_assists"
@@ -11956,6 +12275,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_match_types_on_conflict
   ): e_match_types
+
+  """
+  insert data into the table: "e_notification_types"
+  """
+  insert_e_notification_types(
+    """the rows to be inserted"""
+    objects: [e_notification_types_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_notification_types_on_conflict
+  ): e_notification_types_mutation_response
+
+  """
+  insert a single row into the table: "e_notification_types"
+  """
+  insert_e_notification_types_one(
+    """the row to be inserted"""
+    object: e_notification_types_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_notification_types_on_conflict
+  ): e_notification_types
 
   """
   insert data into the table: "e_objective_types"
@@ -12440,6 +12781,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: migration_hashes_hashes_on_conflict
   ): migration_hashes_hashes
+
+  """
+  insert data into the table: "notifications"
+  """
+  insert_notifications(
+    """the rows to be inserted"""
+    objects: [notifications_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: notifications_on_conflict
+  ): notifications_mutation_response
+
+  """
+  insert a single row into the table: "notifications"
+  """
+  insert_notifications_one(
+    """the row to be inserted"""
+    object: notifications_insert_input!
+
+    """upsert condition"""
+    on_conflict: notifications_on_conflict
+  ): notifications
 
   """
   insert data into the table: "player_assists"
@@ -13155,6 +13518,34 @@ type mutation_root {
   ): [e_match_types_mutation_response]
 
   """
+  update data of the table: "e_notification_types"
+  """
+  update_e_notification_types(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_notification_types_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_notification_types_bool_exp!
+  ): e_notification_types_mutation_response
+
+  """
+  update single row of the table: "e_notification_types"
+  """
+  update_e_notification_types_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_notification_types_set_input
+    pk_columns: e_notification_types_pk_columns_input!
+  ): e_notification_types
+
+  """
+  update multiples rows of table: "e_notification_types"
+  """
+  update_e_notification_types_many(
+    """updates to execute, in order"""
+    updates: [e_notification_types_updates!]!
+  ): [e_notification_types_mutation_response]
+
+  """
   update data of the table: "e_objective_types"
   """
   update_e_objective_types(
@@ -13817,6 +14208,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [migration_hashes_hashes_updates!]!
   ): [migration_hashes_hashes_mutation_response]
+
+  """
+  update data of the table: "notifications"
+  """
+  update_notifications(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: notifications_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: notifications_set_input
+
+    """filter the rows which have to be updated"""
+    where: notifications_bool_exp!
+  ): notifications_mutation_response
+
+  """
+  update single row of the table: "notifications"
+  """
+  update_notifications_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: notifications_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: notifications_set_input
+    pk_columns: notifications_pk_columns_input!
+  ): notifications
+
+  """
+  update multiples rows of table: "notifications"
+  """
+  update_notifications_many(
+    """updates to execute, in order"""
+    updates: [notifications_updates!]!
+  ): [notifications_mutation_response]
 
   """
   update data of the table: "player_assists"
@@ -14549,6 +14974,464 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_match_captains_updates!]!
   ): [v_match_captains_mutation_response]
+}
+
+"""
+columns and relationships of "notifications"
+"""
+type notifications {
+  deleted_at: timestamptz
+  entity_id: String!
+  id: uuid!
+  is_read: Boolean!
+  message: String!
+
+  """An object relationship"""
+  player: players
+  role: e_player_roles_enum!
+  steam_id: bigint
+  title: String!
+  type: e_notification_types_enum!
+}
+
+"""
+aggregated selection of "notifications"
+"""
+type notifications_aggregate {
+  aggregate: notifications_aggregate_fields
+  nodes: [notifications!]!
+}
+
+input notifications_aggregate_bool_exp {
+  bool_and: notifications_aggregate_bool_exp_bool_and
+  bool_or: notifications_aggregate_bool_exp_bool_or
+  count: notifications_aggregate_bool_exp_count
+}
+
+input notifications_aggregate_bool_exp_bool_and {
+  arguments: notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: notifications_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input notifications_aggregate_bool_exp_bool_or {
+  arguments: notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: notifications_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input notifications_aggregate_bool_exp_count {
+  arguments: [notifications_select_column!]
+  distinct: Boolean
+  filter: notifications_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "notifications"
+"""
+type notifications_aggregate_fields {
+  avg: notifications_avg_fields
+  count(columns: [notifications_select_column!], distinct: Boolean): Int!
+  max: notifications_max_fields
+  min: notifications_min_fields
+  stddev: notifications_stddev_fields
+  stddev_pop: notifications_stddev_pop_fields
+  stddev_samp: notifications_stddev_samp_fields
+  sum: notifications_sum_fields
+  var_pop: notifications_var_pop_fields
+  var_samp: notifications_var_samp_fields
+  variance: notifications_variance_fields
+}
+
+"""
+order by aggregate values of table "notifications"
+"""
+input notifications_aggregate_order_by {
+  avg: notifications_avg_order_by
+  count: order_by
+  max: notifications_max_order_by
+  min: notifications_min_order_by
+  stddev: notifications_stddev_order_by
+  stddev_pop: notifications_stddev_pop_order_by
+  stddev_samp: notifications_stddev_samp_order_by
+  sum: notifications_sum_order_by
+  var_pop: notifications_var_pop_order_by
+  var_samp: notifications_var_samp_order_by
+  variance: notifications_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "notifications"
+"""
+input notifications_arr_rel_insert_input {
+  data: [notifications_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: notifications_on_conflict
+}
+
+"""aggregate avg on columns"""
+type notifications_avg_fields {
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "notifications"
+"""
+input notifications_avg_order_by {
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "notifications". All fields are combined with a logical 'AND'.
+"""
+input notifications_bool_exp {
+  _and: [notifications_bool_exp!]
+  _not: notifications_bool_exp
+  _or: [notifications_bool_exp!]
+  deleted_at: timestamptz_comparison_exp
+  entity_id: String_comparison_exp
+  id: uuid_comparison_exp
+  is_read: Boolean_comparison_exp
+  message: String_comparison_exp
+  player: players_bool_exp
+  role: e_player_roles_enum_comparison_exp
+  steam_id: bigint_comparison_exp
+  title: String_comparison_exp
+  type: e_notification_types_enum_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "notifications"
+"""
+enum notifications_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  notifications_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "notifications"
+"""
+input notifications_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "notifications"
+"""
+input notifications_insert_input {
+  deleted_at: timestamptz
+  entity_id: String
+  id: uuid
+  is_read: Boolean
+  message: String
+  player: players_obj_rel_insert_input
+  role: e_player_roles_enum
+  steam_id: bigint
+  title: String
+  type: e_notification_types_enum
+}
+
+"""aggregate max on columns"""
+type notifications_max_fields {
+  deleted_at: timestamptz
+  entity_id: String
+  id: uuid
+  message: String
+  steam_id: bigint
+  title: String
+}
+
+"""
+order by max() on columns of table "notifications"
+"""
+input notifications_max_order_by {
+  deleted_at: order_by
+  entity_id: order_by
+  id: order_by
+  message: order_by
+  steam_id: order_by
+  title: order_by
+}
+
+"""aggregate min on columns"""
+type notifications_min_fields {
+  deleted_at: timestamptz
+  entity_id: String
+  id: uuid
+  message: String
+  steam_id: bigint
+  title: String
+}
+
+"""
+order by min() on columns of table "notifications"
+"""
+input notifications_min_order_by {
+  deleted_at: order_by
+  entity_id: order_by
+  id: order_by
+  message: order_by
+  steam_id: order_by
+  title: order_by
+}
+
+"""
+response of any mutation on the table "notifications"
+"""
+type notifications_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [notifications!]!
+}
+
+"""
+on_conflict condition type for table "notifications"
+"""
+input notifications_on_conflict {
+  constraint: notifications_constraint!
+  update_columns: [notifications_update_column!]! = []
+  where: notifications_bool_exp
+}
+
+"""Ordering options when selecting data from "notifications"."""
+input notifications_order_by {
+  deleted_at: order_by
+  entity_id: order_by
+  id: order_by
+  is_read: order_by
+  message: order_by
+  player: players_order_by
+  role: order_by
+  steam_id: order_by
+  title: order_by
+  type: order_by
+}
+
+"""primary key columns input for table: notifications"""
+input notifications_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "notifications"
+"""
+enum notifications_select_column {
+  """column name"""
+  deleted_at
+
+  """column name"""
+  entity_id
+
+  """column name"""
+  id
+
+  """column name"""
+  is_read
+
+  """column name"""
+  message
+
+  """column name"""
+  role
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  title
+
+  """column name"""
+  type
+}
+
+"""
+select "notifications_aggregate_bool_exp_bool_and_arguments_columns" columns of table "notifications"
+"""
+enum notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  is_read
+}
+
+"""
+select "notifications_aggregate_bool_exp_bool_or_arguments_columns" columns of table "notifications"
+"""
+enum notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  is_read
+}
+
+"""
+input type for updating data in table "notifications"
+"""
+input notifications_set_input {
+  deleted_at: timestamptz
+  entity_id: String
+  id: uuid
+  is_read: Boolean
+  message: String
+  role: e_player_roles_enum
+  steam_id: bigint
+  title: String
+  type: e_notification_types_enum
+}
+
+"""aggregate stddev on columns"""
+type notifications_stddev_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "notifications"
+"""
+input notifications_stddev_order_by {
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type notifications_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "notifications"
+"""
+input notifications_stddev_pop_order_by {
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type notifications_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "notifications"
+"""
+input notifications_stddev_samp_order_by {
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "notifications"
+"""
+input notifications_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: notifications_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input notifications_stream_cursor_value_input {
+  deleted_at: timestamptz
+  entity_id: String
+  id: uuid
+  is_read: Boolean
+  message: String
+  role: e_player_roles_enum
+  steam_id: bigint
+  title: String
+  type: e_notification_types_enum
+}
+
+"""aggregate sum on columns"""
+type notifications_sum_fields {
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "notifications"
+"""
+input notifications_sum_order_by {
+  steam_id: order_by
+}
+
+"""
+update columns of table "notifications"
+"""
+enum notifications_update_column {
+  """column name"""
+  deleted_at
+
+  """column name"""
+  entity_id
+
+  """column name"""
+  id
+
+  """column name"""
+  is_read
+
+  """column name"""
+  message
+
+  """column name"""
+  role
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  title
+
+  """column name"""
+  type
+}
+
+input notifications_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: notifications_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: notifications_set_input
+
+  """filter the rows which have to be updated"""
+  where: notifications_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type notifications_var_pop_fields {
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "notifications"
+"""
+input notifications_var_pop_order_by {
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type notifications_var_samp_fields {
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "notifications"
+"""
+input notifications_var_samp_order_by {
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type notifications_variance_fields {
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "notifications"
+"""
+input notifications_variance_order_by {
+  steam_id: order_by
 }
 
 scalar numeric
@@ -18439,6 +19322,42 @@ columns and relationships of "players"
 """
 type players {
   """An array relationship"""
+  abandoned_matches(
+    """distinct select on columns"""
+    distinct_on: [abandoned_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [abandoned_matches_order_by!]
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): [abandoned_matches!]!
+
+  """An aggregate relationship"""
+  abandoned_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [abandoned_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [abandoned_matches_order_by!]
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): abandoned_matches_aggregate!
+
+  """An array relationship"""
   assists(
     """distinct select on columns"""
     distinct_on: [player_assists_select_column!]
@@ -18825,7 +19744,7 @@ type players {
   """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
-  matchmaking_cooldown: timestamp
+  matchmaking_cooldown: timestamptz
 
   """An array relationship"""
   multi_kills(
@@ -18863,6 +19782,42 @@ type players {
     where: v_player_multi_kills_bool_exp
   ): v_player_multi_kills_aggregate!
   name: String!
+
+  """An array relationship"""
+  notifications(
+    """distinct select on columns"""
+    distinct_on: [notifications_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notifications_order_by!]
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): [notifications!]!
+
+  """An aggregate relationship"""
+  notifications_aggregate(
+    """distinct select on columns"""
+    distinct_on: [notifications_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notifications_order_by!]
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): notifications_aggregate!
 
   """An array relationship"""
   objectives(
@@ -19045,6 +20000,42 @@ type players {
   ): player_unused_utility_aggregate!
   profile_url: String
   role: e_player_roles_enum!
+
+  """An array relationship"""
+  servers(
+    """distinct select on columns"""
+    distinct_on: [servers_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [servers_order_by!]
+
+    """filter the rows returned"""
+    where: servers_bool_exp
+  ): [servers!]!
+
+  """An aggregate relationship"""
+  servers_aggregate(
+    """distinct select on columns"""
+    distinct_on: [servers_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [servers_order_by!]
+
+    """filter the rows returned"""
+    where: servers_bool_exp
+  ): servers_aggregate!
   steam_id: bigint!
 
   """An array relationship"""
@@ -19321,6 +20312,8 @@ input players_bool_exp {
   _and: [players_bool_exp!]
   _not: players_bool_exp
   _or: [players_bool_exp!]
+  abandoned_matches: abandoned_matches_bool_exp
+  abandoned_matches_aggregate: abandoned_matches_aggregate_bool_exp
   assists: player_assists_bool_exp
   assists_aggregate: player_assists_aggregate_bool_exp
   assited_by_players: player_assists_bool_exp
@@ -19346,10 +20339,12 @@ input players_bool_exp {
   match_lineups: match_lineups_bool_exp
   match_lineups_aggregate: match_lineups_aggregate_bool_exp
   matches: matches_bool_exp
-  matchmaking_cooldown: timestamp_comparison_exp
+  matchmaking_cooldown: timestamptz_comparison_exp
   multi_kills: v_player_multi_kills_bool_exp
   multi_kills_aggregate: v_player_multi_kills_aggregate_bool_exp
   name: String_comparison_exp
+  notifications: notifications_bool_exp
+  notifications_aggregate: notifications_aggregate_bool_exp
   objectives: player_objectives_bool_exp
   objectives_aggregate: player_objectives_aggregate_bool_exp
   opening_duels: v_player_opening_duels_bool_exp
@@ -19362,6 +20357,8 @@ input players_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   profile_url: String_comparison_exp
   role: e_player_roles_enum_comparison_exp
+  servers: servers_bool_exp
+  servers_aggregate: servers_aggregate_bool_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -19409,6 +20406,7 @@ input players_inc_input {
 input type for inserting data into table "players"
 """
 input players_insert_input {
+  abandoned_matches: abandoned_matches_arr_rel_insert_input
   assists: player_assists_arr_rel_insert_input
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
@@ -19425,6 +20423,7 @@ input players_insert_input {
   match_lineups: match_lineups_arr_rel_insert_input
   multi_kills: v_player_multi_kills_arr_rel_insert_input
   name: String
+  notifications: notifications_arr_rel_insert_input
   objectives: player_objectives_arr_rel_insert_input
   opening_duels: v_player_opening_duels_arr_rel_insert_input
   owned_teams: teams_arr_rel_insert_input
@@ -19432,6 +20431,7 @@ input players_insert_input {
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   profile_url: String
   role: e_player_roles_enum
+  servers: servers_arr_rel_insert_input
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -19451,7 +20451,7 @@ type players_max_fields {
   """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
-  matchmaking_cooldown: timestamp
+  matchmaking_cooldown: timestamptz
   name: String
   profile_url: String
   steam_id: bigint
@@ -19467,7 +20467,7 @@ type players_min_fields {
   """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
-  matchmaking_cooldown: timestamp
+  matchmaking_cooldown: timestamptz
   name: String
   profile_url: String
   steam_id: bigint
@@ -19505,6 +20505,7 @@ input players_on_conflict {
 
 """Ordering options when selecting data from "players"."""
 input players_order_by {
+  abandoned_matches_aggregate: abandoned_matches_aggregate_order_by
   assists_aggregate: player_assists_aggregate_order_by
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
@@ -19523,6 +20524,7 @@ input players_order_by {
   matchmaking_cooldown: order_by
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
   name: order_by
+  notifications_aggregate: notifications_aggregate_order_by
   objectives_aggregate: player_objectives_aggregate_order_by
   opening_duels_aggregate: v_player_opening_duels_aggregate_order_by
   owned_teams_aggregate: teams_aggregate_order_by
@@ -19530,6 +20532,7 @@ input players_order_by {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   profile_url: order_by
   role: order_by
+  servers_aggregate: servers_aggregate_order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
   team_members_aggregate: team_roster_aggregate_order_by
@@ -19730,9 +20733,7 @@ type query_root {
   """fetch data from the table: "_map_pool" using primary key columns"""
   _map_pool_by_pk(map_id: uuid!, map_pool_id: uuid!): _map_pool
 
-  """
-  fetch data from the table: "abandoned_matches"
-  """
+  """An array relationship"""
   abandoned_matches(
     """distinct select on columns"""
     distinct_on: [abandoned_matches_select_column!]
@@ -19750,9 +20751,7 @@ type query_root {
     where: abandoned_matches_bool_exp
   ): [abandoned_matches!]!
 
-  """
-  fetch aggregated fields from the table: "abandoned_matches"
-  """
+  """An aggregate relationship"""
   abandoned_matches_aggregate(
     """distinct select on columns"""
     distinct_on: [abandoned_matches_select_column!]
@@ -20040,6 +21039,51 @@ type query_root {
 
   """fetch data from the table: "e_match_types" using primary key columns"""
   e_match_types_by_pk(value: String!): e_match_types
+
+  """
+  fetch data from the table: "e_notification_types"
+  """
+  e_notification_types(
+    """distinct select on columns"""
+    distinct_on: [e_notification_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_notification_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_notification_types_bool_exp
+  ): [e_notification_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_notification_types"
+  """
+  e_notification_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_notification_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_notification_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_notification_types_bool_exp
+  ): e_notification_types_aggregate!
+
+  """
+  fetch data from the table: "e_notification_types" using primary key columns
+  """
+  e_notification_types_by_pk(value: String!): e_notification_types
 
   """
   fetch data from the table: "e_objective_types"
@@ -20991,6 +22035,45 @@ type query_root {
   fetch data from the table: "migration_hashes.hashes" using primary key columns
   """
   migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
+
+  """An array relationship"""
+  notifications(
+    """distinct select on columns"""
+    distinct_on: [notifications_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notifications_order_by!]
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): [notifications!]!
+
+  """An aggregate relationship"""
+  notifications_aggregate(
+    """distinct select on columns"""
+    distinct_on: [notifications_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notifications_order_by!]
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): notifications_aggregate!
+
+  """fetch data from the table: "notifications" using primary key columns"""
+  notifications_by_pk(id: uuid!): notifications
 
   """An array relationship"""
   player_assists(
@@ -23043,9 +24126,7 @@ type subscription_root {
     where: _map_pool_bool_exp
   ): [_map_pool!]!
 
-  """
-  fetch data from the table: "abandoned_matches"
-  """
+  """An array relationship"""
   abandoned_matches(
     """distinct select on columns"""
     distinct_on: [abandoned_matches_select_column!]
@@ -23063,9 +24144,7 @@ type subscription_root {
     where: abandoned_matches_bool_exp
   ): [abandoned_matches!]!
 
-  """
-  fetch aggregated fields from the table: "abandoned_matches"
-  """
+  """An aggregate relationship"""
   abandoned_matches_aggregate(
     """distinct select on columns"""
     distinct_on: [abandoned_matches_select_column!]
@@ -23451,6 +24530,65 @@ type subscription_root {
     """filter the rows returned"""
     where: e_match_types_bool_exp
   ): [e_match_types!]!
+
+  """
+  fetch data from the table: "e_notification_types"
+  """
+  e_notification_types(
+    """distinct select on columns"""
+    distinct_on: [e_notification_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_notification_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_notification_types_bool_exp
+  ): [e_notification_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_notification_types"
+  """
+  e_notification_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_notification_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_notification_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_notification_types_bool_exp
+  ): e_notification_types_aggregate!
+
+  """
+  fetch data from the table: "e_notification_types" using primary key columns
+  """
+  e_notification_types_by_pk(value: String!): e_notification_types
+
+  """
+  fetch data from the table in a streaming manner: "e_notification_types"
+  """
+  e_notification_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_notification_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_notification_types_bool_exp
+  ): [e_notification_types!]!
 
   """
   fetch data from the table: "e_objective_types"
@@ -24707,6 +25845,59 @@ type subscription_root {
     """filter the rows returned"""
     where: migration_hashes_hashes_bool_exp
   ): [migration_hashes_hashes!]!
+
+  """An array relationship"""
+  notifications(
+    """distinct select on columns"""
+    distinct_on: [notifications_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notifications_order_by!]
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): [notifications!]!
+
+  """An aggregate relationship"""
+  notifications_aggregate(
+    """distinct select on columns"""
+    distinct_on: [notifications_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notifications_order_by!]
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): notifications_aggregate!
+
+  """fetch data from the table: "notifications" using primary key columns"""
+  notifications_by_pk(id: uuid!): notifications
+
+  """
+  fetch data from the table in a streaming manner: "notifications"
+  """
+  notifications_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [notifications_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: notifications_bool_exp
+  ): [notifications!]!
 
   """An array relationship"""
   player_assists(
@@ -27600,23 +28791,6 @@ order by variance() on columns of table "teams"
 """
 input teams_variance_order_by {
   owner_steam_id: order_by
-}
-
-scalar timestamp
-
-"""
-Boolean expression to compare columns of type "timestamp". All fields are combined with logical 'AND'.
-"""
-input timestamp_comparison_exp {
-  _eq: timestamp
-  _gt: timestamp
-  _gte: timestamp
-  _in: [timestamp!]
-  _is_null: Boolean
-  _lt: timestamp
-  _lte: timestamp
-  _neq: timestamp
-  _nin: [timestamp!]
 }
 
 scalar timestamptz

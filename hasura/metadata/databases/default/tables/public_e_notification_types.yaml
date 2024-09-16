@@ -1,0 +1,4 @@
+table:
+  name: e_notification_types
+  schema: public
+is_enum: true

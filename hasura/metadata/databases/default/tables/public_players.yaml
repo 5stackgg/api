@@ -2,6 +2,13 @@ table:
   name: players
   schema: public
 array_relationships:
+  - name: abandoned_matches
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: abandoned_matches
+          schema: public
   - name: assists
     using:
       foreign_key_constraint_on:
@@ -81,6 +88,13 @@ array_relationships:
         remote_table:
           name: v_player_multi_kills
           schema: public
+  - name: notifications
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: notifications
+          schema: public
   - name: objectives
     using:
       foreign_key_constraint_on:
@@ -117,6 +131,13 @@ array_relationships:
         column: player_steam_id
         table:
           name: player_unused_utility
+          schema: public
+  - name: servers
+    using:
+      foreign_key_constraint_on:
+        column: owner_steam_id
+        table:
+          name: servers
           schema: public
   - name: team_invites
     using:

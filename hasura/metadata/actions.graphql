@@ -5,6 +5,12 @@ type Mutation {
 }
 
 type Mutation {
+  callForOrganizer(
+    matchId: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   cancelMatch(
     match_id: uuid!
   ): SuccessOutput

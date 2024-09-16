@@ -225,9 +225,6 @@ CREATE TABLE public.events (
     start date NOT NULL,
     "end" date NOT NULL
 );
-CREATE TABLE public.lineup_2_count (
-    count bigint
-);
 CREATE TABLE public.map_pools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     type text NOT NULL,
