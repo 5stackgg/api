@@ -2,9 +2,10 @@ CREATE OR REPLACE FUNCTION get_player_matchmaking_cooldown(player public.players
 RETURNS TIMESTAMP WITH TIME ZONE AS $$
 DECLARE
     abandoned_count INTEGER;
-    last_abandoned_time TIMESTAMP;
+    last_abandoned_time TIMESTAMP WITH TIME ZONE;
     minutes_since_last_abandoned INTEGER;
     cooldown_duration INTEGER;
+    cooldown_time TIMESTAMP WITH TIME ZONE;
     cooldown_durations INTEGER[] := ARRAY[10, 60, 120, 240, 480, 960, 1920];
 BEGIN
 
@@ -24,7 +25,11 @@ BEGIN
         ORDER BY abandoned_at DESC
         LIMIT 1;
 
-        return (last_abandoned_time + (cooldown_durations[LEAST(abandoned_count, array_length(cooldown_durations, 1))] * INTERVAL '1 minute'))::timestamptz;
+        cooldown_time := last_abandoned_time + (cooldown_durations[LEAST(abandoned_count, array_length(cooldown_durations, 1))] * INTERVAL '1 minute');
+
+        IF cooldown_time > NOW() THEN
+            RETURN cooldown_time;
+        END IF; 
     END IF;
 
     RETURN NULL;
