@@ -1518,9 +1518,6 @@ enum e_match_map_status_enum {
   """Finished"""
   Finished
 
-  """Forfeit"""
-  Forfeit
-
   """Knife"""
   Knife
 
@@ -1535,9 +1532,6 @@ enum e_match_map_status_enum {
 
   """Scheduled"""
   Scheduled
-
-  """Surrendered"""
-  Surrendered
 
   """Warmup"""
   Warmup

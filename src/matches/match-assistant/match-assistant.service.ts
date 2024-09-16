@@ -10,13 +10,12 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { MatchJobs } from "../enums/MatchJobs";
 import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
-import { SteamConfig } from "../../configs/types/SteamConfig";
 import {
   e_game_server_node_regions_enum,
   e_map_pool_types_enum,
   e_match_status_enum,
   e_match_types_enum,
-  e_timeout_settings,
+  e_timeout_settings_enum,
 } from "../../../generated";
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
@@ -764,7 +763,7 @@ export class MatchAssistantService {
       knife: boolean;
       map?: string;
       overtime: boolean;
-      pause_setting: e_timeout_settings;
+      pause_setting?: e_timeout_settings_enum;
       region?: e_game_server_node_regions_enum;
     },
     serverId?: string,
@@ -801,6 +800,9 @@ export class MatchAssistantService {
                 overtime: options.overtime,
                 knife_round: options.knife,
                 region_veto: options.region ? false : true,
+                ...(options.pause_setting && {
+                  pause_setting: options.pause_setting,
+                }),
               },
             },
           },
