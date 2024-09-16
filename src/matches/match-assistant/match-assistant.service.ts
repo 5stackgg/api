@@ -763,7 +763,7 @@ export class MatchAssistantService {
       knife: boolean;
       map?: string;
       overtime: boolean;
-      pause_setting?: e_timeout_settings_enum;
+      timeout_setting?: e_timeout_settings_enum;
       region?: e_game_server_node_regions_enum;
     },
     serverId?: string,
@@ -800,8 +800,8 @@ export class MatchAssistantService {
                 overtime: options.overtime,
                 knife_round: options.knife,
                 region_veto: options.region ? false : true,
-                ...(options.pause_setting && {
-                  pause_setting: options.pause_setting,
+                ...(options.timeout_setting && {
+                  timeout_setting: options.timeout_setting,
                 }),
               },
             },

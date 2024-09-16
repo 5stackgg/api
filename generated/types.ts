@@ -12500,9 +12500,6 @@ export default {
             "overtime": [
                 0
             ],
-            "pause_setting": [
-                314
-            ],
             "region_veto": [
                 0
             ],
@@ -12649,9 +12646,6 @@ export default {
             "overtime": [
                 1
             ],
-            "pause_setting": [
-                315
-            ],
             "region_veto": [
                 1
             ],
@@ -12725,9 +12719,6 @@ export default {
             ],
             "overtime": [
                 0
-            ],
-            "pause_setting": [
-                314
             ],
             "region_veto": [
                 0
@@ -12870,9 +12861,6 @@ export default {
             "overtime": [
                 904
             ],
-            "pause_setting": [
-                904
-            ],
             "region_veto": [
                 904
             ],
@@ -12931,9 +12919,6 @@ export default {
             ],
             "overtime": [
                 0
-            ],
-            "pause_setting": [
-                314
             ],
             "region_veto": [
                 0
@@ -13043,9 +13028,6 @@ export default {
             ],
             "overtime": [
                 0
-            ],
-            "pause_setting": [
-                314
             ],
             "region_veto": [
                 0

@@ -39,7 +39,6 @@ insert_permissions:
         - mr
         - number_of_substitutes
         - overtime
-        - pause_setting
         - region_veto
         - tech_timeout_setting
         - timeout_setting
@@ -59,7 +58,6 @@ select_permissions:
         - mr
         - number_of_substitutes
         - overtime
-        - pause_setting
         - region_veto
         - tech_timeout_setting
         - timeout_setting
@@ -79,7 +77,6 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
-        - pause_setting
         - region_veto
         - tech_timeout_setting
         - timeout_setting
@@ -124,7 +121,6 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
-        - pause_setting
         - region_veto
         - tech_timeout_setting
         - timeout_setting
@@ -150,7 +146,6 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
-        - pause_setting
         - region_veto
         - tech_timeout_setting
         - timeout_setting

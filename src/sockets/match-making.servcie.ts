@@ -252,7 +252,7 @@ export class MatchMakingService {
         best_of: 1,
         knife: true,
         overtime: true,
-        pause_setting: "Admin",
+        timeout_setting: "Admin",
         region: region as e_game_server_node_regions_enum,
       },
     );

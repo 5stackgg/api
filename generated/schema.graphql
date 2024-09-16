@@ -9097,7 +9097,6 @@ type match_options {
   mr: Int!
   number_of_substitutes: Int!
   overtime: Boolean!
-  pause_setting: e_timeout_settings_enum!
   region_veto: Boolean!
   tech_timeout_setting: e_timeout_settings_enum!
   timeout_setting: e_timeout_settings_enum!
@@ -9161,7 +9160,6 @@ input match_options_bool_exp {
   mr: Int_comparison_exp
   number_of_substitutes: Int_comparison_exp
   overtime: Boolean_comparison_exp
-  pause_setting: e_timeout_settings_enum_comparison_exp
   region_veto: Boolean_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
@@ -9205,7 +9203,6 @@ input match_options_insert_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
-  pause_setting: e_timeout_settings_enum
   region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
@@ -9278,7 +9275,6 @@ input match_options_order_by {
   mr: order_by
   number_of_substitutes: order_by
   overtime: order_by
-  pause_setting: order_by
   region_veto: order_by
   tech_timeout_setting: order_by
   timeout_setting: order_by
@@ -9324,9 +9320,6 @@ enum match_options_select_column {
   overtime
 
   """column name"""
-  pause_setting
-
-  """column name"""
   region_veto
 
   """column name"""
@@ -9355,7 +9348,6 @@ input match_options_set_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
-  pause_setting: e_timeout_settings_enum
   region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
@@ -9409,7 +9401,6 @@ input match_options_stream_cursor_value_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
-  pause_setting: e_timeout_settings_enum
   region_veto: Boolean
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
@@ -9455,9 +9446,6 @@ enum match_options_update_column {
 
   """column name"""
   overtime
-
-  """column name"""
-  pause_setting
 
   """column name"""
   region_veto

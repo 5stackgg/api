@@ -2871,7 +2871,6 @@ export interface match_options {
     mr: Scalars['Int']
     number_of_substitutes: Scalars['Int']
     overtime: Scalars['Boolean']
-    pause_setting: e_timeout_settings_enum
     region_veto: Scalars['Boolean']
     tech_timeout_setting: e_timeout_settings_enum
     timeout_setting: e_timeout_settings_enum
@@ -2957,7 +2956,7 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'pause_setting' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -3001,7 +3000,7 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'pause_setting' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -14789,7 +14788,6 @@ export interface match_optionsGenqlSelection{
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     overtime?: boolean | number
-    pause_setting?: boolean | number
     region_veto?: boolean | number
     tech_timeout_setting?: boolean | number
     timeout_setting?: boolean | number
@@ -14841,7 +14839,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),pause_setting?: (e_timeout_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -14849,7 +14847,7 @@ export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?:
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),pause_setting?: (e_timeout_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -14900,7 +14898,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),knife_round?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),pause_setting?: (order_by | null),region_veto?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
+export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),knife_round?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),region_veto?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -14908,7 +14906,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),pause_setting?: (e_timeout_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -14953,7 +14951,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),pause_setting?: (e_timeout_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -35199,7 +35197,6 @@ export const enumMatchOptionsSelectColumn = {
    mr: 'mr' as const,
    number_of_substitutes: 'number_of_substitutes' as const,
    overtime: 'overtime' as const,
-   pause_setting: 'pause_setting' as const,
    region_veto: 'region_veto' as const,
    tech_timeout_setting: 'tech_timeout_setting' as const,
    timeout_setting: 'timeout_setting' as const,
@@ -35217,7 +35214,6 @@ export const enumMatchOptionsUpdateColumn = {
    mr: 'mr' as const,
    number_of_substitutes: 'number_of_substitutes' as const,
    overtime: 'overtime' as const,
-   pause_setting: 'pause_setting' as const,
    region_veto: 'region_veto' as const,
    tech_timeout_setting: 'tech_timeout_setting' as const,
    timeout_setting: 'timeout_setting' as const,
