@@ -29,8 +29,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
 import { Queue } from "bullmq";
 import { CheckForScheduledMatches } from "./jobs/CheckForScheduledMatches";
-import { CancelNonReadyMatches } from "./jobs/CancelNonReadyMatches";
-import { ForfeitNonReadyTournamentMatches } from "./jobs/ForfeitNonReadyTournamentMatches";
+import { CancelExpiredMatches } from "./jobs/CancelExpiredMatches";
 import { RemoveCancelledMatches } from "./jobs/RemoveCancelledMatches";
 import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
 import { EncryptionModule } from "../encryption/encryption.module";
@@ -75,9 +74,8 @@ import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
     ServerAuthService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
-    CancelNonReadyMatches,
+    CancelExpiredMatches,
     CheckForTournamentStart,
-    ForfeitNonReadyTournamentMatches,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     CancelInvalidTournaments,
@@ -103,17 +101,7 @@ export class MatchesModule implements NestModule {
     );
 
     void scheduleMatchQueue.add(
-      CancelNonReadyMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
-        },
-      },
-    );
-
-    void scheduleMatchQueue.add(
-      ForfeitNonReadyTournamentMatches.name,
+      CancelExpiredMatches.name,
       {},
       {
         repeat: {

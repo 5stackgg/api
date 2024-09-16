@@ -1,2 +1,2 @@
-alter table "public"."game_server_nodes" add column "build_id" integer
+alter table "public"."game_server_nodes" add column if not exists "build_id" integer
  null;

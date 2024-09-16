@@ -24,6 +24,9 @@ BEGIN
         NEW.region = available_regions[1];
     END IF;
 
+
+    -- todo - update cancels at if were in a state where it makes sense
+
 	RETURN NEW;
 END;
 $$;
@@ -52,12 +55,37 @@ BEGIN
       RAISE EXCEPTION 'Cannot cancel a match that is already finished' USING ERRCODE = '22000';
     END IF;
 
-    IF NEW.status = 'Live' THEN
-        NEW.started_at = NOW();
+    IF NEW.scheduled_at IS NOT NULL AND NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at THEN
+        NEW.cancels_at = NEW.scheduled_at + INTERVAL '15 minutes';
+        NEW.ended_at = null;
     END IF;
 
-    IF NEW.status = 'Finished' THEN
+    IF 
+        (NEW.status = 'Veto' AND OLD.status != 'Veto') 
+        OR (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn') THEN
+        NEW.cancels_at = NOW() + INTERVAL '15 minutes';
+        NEW.ended_at = null;
+    END IF;
+
+    IF NEW.status = 'WaitingForServer' AND OLD.status != 'WaitingForServer' THEN
+        NEW.cancels_at = null;
+        NEW.ended_at = null;
+    END IF;
+
+    IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
+        NEW.started_at = NOW();
+        NEW.cancels_at = null;
+        NEW.ended_at = null;
+    END IF;
+
+    IF 
+        (NEW.status = 'Finished' AND OLD.status != 'Finished')
+        OR (NEW.status = 'Canceled' AND OLD.status != 'Canceled')
+        OR (NEW.status = 'Forfeit' AND OLD.status != 'Forfeit')
+        OR (NEW.status = 'Tie' AND OLD.status != 'Tie')
+    THEN
         NEW.ended_at = NOW();
+        NEW.cancels_at = null;
     END IF;
 
     PERFORM check_match_status(NEW);

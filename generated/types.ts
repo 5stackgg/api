@@ -10146,6 +10146,9 @@ export default {
             ]
         },
         "match_maps": {
+            "cancels_at": [
+                1314
+            ],
             "created_at": [
                 1314
             ],
@@ -10832,6 +10835,9 @@ export default {
             "_or": [
                 651
             ],
+            "cancels_at": [
+                1315
+            ],
             "created_at": [
                 1315
             ],
@@ -10975,6 +10981,9 @@ export default {
             ]
         },
         "match_maps_insert_input": {
+            "cancels_at": [
+                1314
+            ],
             "created_at": [
                 1314
             ],
@@ -11055,6 +11064,9 @@ export default {
             ]
         },
         "match_maps_max_fields": {
+            "cancels_at": [
+                1314
+            ],
             "created_at": [
                 1314
             ],
@@ -11102,6 +11114,9 @@ export default {
             ]
         },
         "match_maps_max_order_by": {
+            "cancels_at": [
+                798
+            ],
             "created_at": [
                 798
             ],
@@ -11134,6 +11149,9 @@ export default {
             ]
         },
         "match_maps_min_fields": {
+            "cancels_at": [
+                1314
+            ],
             "created_at": [
                 1314
             ],
@@ -11181,6 +11199,9 @@ export default {
             ]
         },
         "match_maps_min_order_by": {
+            "cancels_at": [
+                798
+            ],
             "created_at": [
                 798
             ],
@@ -11249,6 +11270,9 @@ export default {
             ]
         },
         "match_maps_order_by": {
+            "cancels_at": [
+                798
+            ],
             "created_at": [
                 798
             ],
@@ -11356,6 +11380,9 @@ export default {
         },
         "match_maps_select_column": {},
         "match_maps_set_input": {
+            "cancels_at": [
+                1314
+            ],
             "created_at": [
                 1314
             ],
@@ -11519,6 +11546,9 @@ export default {
             ]
         },
         "match_maps_stream_cursor_value_input": {
+            "cancels_at": [
+                1314
+            ],
             "created_at": [
                 1314
             ],

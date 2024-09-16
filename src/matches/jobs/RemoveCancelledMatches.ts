@@ -32,11 +32,6 @@ export class RemoveCancelledMatches extends WorkerHost {
                 },
               },
               {
-                status: {
-                  _in: ["PickingPlayers", "Canceled"],
-                },
-              },
-              {
                 _or: [
                   {
                     _and: [
@@ -61,7 +56,7 @@ export class RemoveCancelledMatches extends WorkerHost {
                       },
                       {
                         cancels_at: {
-                          _gte: yesterday,
+                          _lte: yesterday,
                         },
                       },
                     ],
@@ -72,6 +67,7 @@ export class RemoveCancelledMatches extends WorkerHost {
           },
         },
         id: true,
+        server_id: true,
         match_maps: {
           demos: {
             id: true,
@@ -116,6 +112,23 @@ export class RemoveCancelledMatches extends WorkerHost {
           });
         }
       }
+
+      if (match.server_id) {
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: {
+                id: match.server_id,
+              },
+              _set: {
+                reserved_by_match_id: null,
+              },
+            },
+            __typename: true,
+          },
+        });
+      }
+
       await this.hasura.mutation({
         delete_matches_by_pk: {
           __args: {

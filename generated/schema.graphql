@@ -7398,6 +7398,7 @@ input match_map_veto_picks_updates {
 columns and relationships of "match_maps"
 """
 type match_maps {
+  cancels_at: timestamptz
   created_at: timestamptz!
 
   """An array relationship"""
@@ -7911,6 +7912,7 @@ input match_maps_bool_exp {
   _and: [match_maps_bool_exp!]
   _not: match_maps_bool_exp
   _or: [match_maps_bool_exp!]
+  cancels_at: timestamptz_comparison_exp
   created_at: timestamptz_comparison_exp
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
@@ -7982,6 +7984,7 @@ input match_maps_inc_input {
 input type for inserting data into table "match_maps"
 """
 input match_maps_insert_input {
+  cancels_at: timestamptz
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_map_status: e_match_map_status_obj_rel_insert_input
@@ -8011,6 +8014,7 @@ input match_maps_insert_input {
 
 """aggregate max on columns"""
 type match_maps_max_fields {
+  cancels_at: timestamptz
   created_at: timestamptz
 
   """
@@ -8051,6 +8055,7 @@ type match_maps_max_fields {
 order by max() on columns of table "match_maps"
 """
 input match_maps_max_order_by {
+  cancels_at: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
@@ -8064,6 +8069,7 @@ input match_maps_max_order_by {
 
 """aggregate min on columns"""
 type match_maps_min_fields {
+  cancels_at: timestamptz
   created_at: timestamptz
 
   """
@@ -8104,6 +8110,7 @@ type match_maps_min_fields {
 order by min() on columns of table "match_maps"
 """
 input match_maps_min_order_by {
+  cancels_at: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
@@ -8147,6 +8154,7 @@ input match_maps_on_conflict {
 
 """Ordering options when selecting data from "match_maps"."""
 input match_maps_order_by {
+  cancels_at: order_by
   created_at: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
   demos_download_url: order_by
@@ -8190,6 +8198,9 @@ select columns of table "match_maps"
 """
 enum match_maps_select_column {
   """column name"""
+  cancels_at
+
+  """column name"""
   created_at
 
   """column name"""
@@ -8230,6 +8241,7 @@ enum match_maps_select_column {
 input type for updating data in table "match_maps"
 """
 input match_maps_set_input {
+  cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
@@ -8347,6 +8359,7 @@ input match_maps_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_maps_stream_cursor_value_input {
+  cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
@@ -8395,6 +8408,9 @@ input match_maps_sum_order_by {
 update columns of table "match_maps"
 """
 enum match_maps_update_column {
+  """column name"""
+  cancels_at
+
   """column name"""
   created_at
 
