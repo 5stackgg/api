@@ -15,6 +15,7 @@ import ObjectiveEvent from "./ObjectiveEvent";
 import UnusedUtility from "./UnusedUtility";
 import ChatMessageEvent from "./ChatMessageEvent";
 import MatchSurrendered from "./MatchSurrendered";
+import MatchAbandoned from "./MatchAbandoned";
 
 export const MatchEvents = {
   mapStatus: MatchMapStatusEvent,
@@ -29,6 +30,7 @@ export const MatchEvents = {
    */
   player: PlayerEvent,
   captain: CaptainEvent,
+  abandoned: MatchAbandoned,
 
   /** Match Events */
   switch: KnifeSwitch,

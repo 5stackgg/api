@@ -105,7 +105,7 @@ export class ServerGateway {
         await this.redis.sadd(clientKey, clientValue);
 
         this.clients.set(client.id, client);
-        
+
         await this.sendPeopleOnline();
         await this.matchMaking.sendRegionStats(client.user);
         await this.matchMaking.sendQueueDetailsToUser(client.user.steam_id);
@@ -115,7 +115,7 @@ export class ServerGateway {
 
           const clients = await this.redis.smembers(clientKey);
 
-          if(clients.length === 0) {
+          if (clients.length === 0) {
             await this.redis.del(`user:${client.user.steam_id}`);
           }
 
@@ -236,6 +236,9 @@ export class ServerGateway {
   }
 
   private async sendPeopleOnline() {
-    this.broadcastMessage(`players-online`, (await this.redis.keys("user:*")).length);
+    this.broadcastMessage(
+      `players-online`,
+      (await this.redis.keys("user:*")).length,
+    );
   }
 }
