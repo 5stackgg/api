@@ -24,9 +24,6 @@ BEGIN
         NEW.region = available_regions[1];
     END IF;
 
-
-    -- todo - update cancels at if were in a state where it makes sense
-
 	RETURN NEW;
 END;
 $$;
@@ -61,7 +58,13 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        NEW.cancels_at = NOW() + INTERVAL '15 minutes';
+        IF NEW.scheduled_at THEN
+            -- we already give them 15 minutes to check in before the match starts
+            NEW.cancels_at = NEW.scheduled_at + INTERVAL '5 minutes';
+        ELSE
+            NEW.cancels_at = NOW() + INTERVAL '15 minutes';
+        END IF;
+        
         NEW.ended_at = null;
     END IF;
 
