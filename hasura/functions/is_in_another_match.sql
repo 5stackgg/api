@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.is_in_another_match(player public.players, hasura_session json)
+CREATE OR REPLACE FUNCTION public.is_in_another_match(player public.players)
  RETURNS boolean
  LANGUAGE plpgsql
  STABLE
