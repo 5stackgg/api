@@ -230,7 +230,7 @@ export class DiscordBotOverviewService {
 
     if (match.status === "Veto") {
       const lineup =
-        match.veto_picking_lineup_id === lineup_1.id ? lineup_1 : lineup_2;
+        match.map_veto_picking_lineup_id === lineup_1.id ? lineup_1 : lineup_2;
 
       const vetoEmbed = await this.generateVetoEmbed(matchId, lineup.name);
       if (vetoEmbed) {
@@ -267,7 +267,7 @@ export class DiscordBotOverviewService {
         lineup_1_id: true,
         lineup_2_id: true,
         current_match_map_id: true,
-        veto_picking_lineup_id: true,
+        map_veto_picking_lineup_id: true,
         options: {
           mr: true,
           type: true,

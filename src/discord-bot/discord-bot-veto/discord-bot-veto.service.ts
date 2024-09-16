@@ -95,7 +95,7 @@ export class DiscordBotVetoService {
         __args: {
           id: matchId,
         },
-        veto_picking_lineup_id: true,
+        map_veto_picking_lineup_id: true,
       },
     });
 
@@ -111,7 +111,7 @@ export class DiscordBotVetoService {
             // TODO - veto type when we do best of X series
             type: "Ban",
             map_id: pickedMap.id,
-            match_lineup_id: match.veto_picking_lineup_id,
+            match_lineup_id: match.map_veto_picking_lineup_id,
           },
         },
         __typename: true,

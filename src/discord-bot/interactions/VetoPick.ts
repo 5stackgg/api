@@ -13,7 +13,7 @@ export default class VetoPick extends DiscordInteraction {
     const match = await this.matchAssistant.getMatchLineups(matchId);
 
     const lineup =
-      match.veto_picking_lineup_id === match.lineup_1.id
+      match.map_veto_picking_lineup_id === match.lineup_1.id
         ? match.lineup_1
         : match.lineup_2;
 

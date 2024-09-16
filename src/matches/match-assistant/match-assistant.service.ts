@@ -88,7 +88,7 @@ export class MatchAssistantService {
         __args: {
           id: matchId,
         },
-        veto_picking_lineup_id: true,
+        map_veto_picking_lineup_id: true,
         options: {
           type: true,
         },
