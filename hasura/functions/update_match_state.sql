@@ -27,9 +27,11 @@ BEGIN
         INTO current_match_status
         FROM matches
         WHERE id = _match_map.match_id;
-        IF current_match_status = 'Forfeit' THEN
+
+        IF current_match_status = 'Forfeit' OR current_match_status = 'Surrendered' THEN    
             RETURN;
         END IF;
+        
         -- Loop through match maps and calculate wins
         FOR match_map IN
             SELECT *

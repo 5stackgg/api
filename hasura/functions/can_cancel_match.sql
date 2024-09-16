@@ -8,7 +8,8 @@ BEGIN
         match.status != 'Finished' AND
         match.status != 'Tie' AND
         match.status != 'Canceled' AND
-        match.status != 'Forfeit'
+        match.status != 'Forfeit' AND
+        match.status != 'Surrendered'
     ) THEN
         RETURN true;
     END IF;
