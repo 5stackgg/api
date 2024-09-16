@@ -575,8 +575,6 @@ export class MatchesController {
     });
 
     if (discord_support_webhook) {
-      console.info("sending discord notification");
-      // TODO - call the webhook from   discord_support_webhook , and post the message iformation  using node-fetch
       await fetch(discord_support_webhook.value, {
         method: "POST",
         headers: {
