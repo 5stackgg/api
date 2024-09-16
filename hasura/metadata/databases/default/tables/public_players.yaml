@@ -206,6 +206,7 @@ select_permissions:
         - country
         - name
         - profile_url
+        - role
         - steam_id
       computed_fields:
         - matchmaking_cooldown

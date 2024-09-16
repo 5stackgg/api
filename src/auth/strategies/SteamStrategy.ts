@@ -100,7 +100,6 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
         profile_url: true,
         avatar_url: true,
         discord_id: true,
-        flag: true,
       },
     });
 
