@@ -60,10 +60,14 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
-    IF 
-        (NEW.status = 'Veto' AND OLD.status != 'Veto') 
-        OR (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn') THEN
+    IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
         NEW.cancels_at = NOW() + INTERVAL '15 minutes';
+        NEW.ended_at = null;
+    END IF;
+
+
+     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
+        NEW.cancels_at = NOW() + INTERVAL '5 minutes';
         NEW.ended_at = null;
     END IF;
 
