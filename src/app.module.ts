@@ -75,6 +75,5 @@ export class AppModule {
   private async setup() {
     await this.typesense.setup();
     await this.discordBot.setupBot();
-    await this.discordBot.login();
   }
 }

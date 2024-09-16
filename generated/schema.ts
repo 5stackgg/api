@@ -19,6 +19,7 @@ export type Scalars = {
 
 export interface MeResponse {
     avatar_url: Scalars['String']
+    country: (Scalars['String'] | null)
     discord_id: (Scalars['String'] | null)
     name: Scalars['String']
     player: (players | null)
@@ -3497,6 +3498,10 @@ export interface mutation_root {
     delete_servers: (servers_mutation_response | null)
     /** delete single row from the table: "servers" */
     delete_servers_by_pk: (servers | null)
+    /** delete data from the table: "settings" */
+    delete_settings: (settings_mutation_response | null)
+    /** delete single row from the table: "settings" */
+    delete_settings_by_pk: (settings | null)
     /** delete data from the table: "team_invites" */
     delete_team_invites: (team_invites_mutation_response | null)
     /** delete single row from the table: "team_invites" */
@@ -3694,6 +3699,10 @@ export interface mutation_root {
     insert_servers: (servers_mutation_response | null)
     /** insert a single row into the table: "servers" */
     insert_servers_one: (servers | null)
+    /** insert data into the table: "settings" */
+    insert_settings: (settings_mutation_response | null)
+    /** insert a single row into the table: "settings" */
+    insert_settings_one: (settings | null)
     /** insert data into the table: "team_invites" */
     insert_team_invites: (team_invites_mutation_response | null)
     /** insert a single row into the table: "team_invites" */
@@ -3978,6 +3987,12 @@ export interface mutation_root {
     update_servers_by_pk: (servers | null)
     /** update multiples rows of table: "servers" */
     update_servers_many: ((servers_mutation_response | null)[] | null)
+    /** update data of the table: "settings" */
+    update_settings: (settings_mutation_response | null)
+    /** update single row of the table: "settings" */
+    update_settings_by_pk: (settings | null)
+    /** update multiples rows of table: "settings" */
+    update_settings_many: ((settings_mutation_response | null)[] | null)
     /** update data of the table: "team_invites" */
     update_team_invites: (team_invites_mutation_response | null)
     /** update single row of the table: "team_invites" */
@@ -5341,6 +5356,7 @@ export interface players {
     /** An aggregate relationship */
     assited_by_players_aggregate: player_assists_aggregate
     avatar_url: (Scalars['String'] | null)
+    country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** An array relationship */
     damage_dealt: player_damages[]
@@ -5474,6 +5490,7 @@ export type players_constraint = 'players_discord_id_key' | 'players_pkey' | 'pl
 /** aggregate max on columns */
 export interface players_max_fields {
     avatar_url: (Scalars['String'] | null)
+    country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     discord_id: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
@@ -5486,6 +5503,7 @@ export interface players_max_fields {
 /** aggregate min on columns */
 export interface players_min_fields {
     avatar_url: (Scalars['String'] | null)
+    country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     discord_id: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
@@ -5506,7 +5524,7 @@ export interface players_mutation_response {
 
 
 /** select columns of table "players" */
-export type players_select_column = 'avatar_url' | 'created_at' | 'discord_id' | 'name' | 'profile_url' | 'role' | 'steam_id'
+export type players_select_column = 'avatar_url' | 'country' | 'created_at' | 'discord_id' | 'name' | 'profile_url' | 'role' | 'steam_id'
 
 
 /** aggregate stddev on columns */
@@ -5538,7 +5556,7 @@ export interface players_sum_fields {
 
 
 /** update columns of table "players" */
-export type players_update_column = 'avatar_url' | 'created_at' | 'discord_id' | 'name' | 'profile_url' | 'role' | 'steam_id'
+export type players_update_column = 'avatar_url' | 'country' | 'created_at' | 'discord_id' | 'name' | 'profile_url' | 'role' | 'steam_id'
 
 
 /** aggregate var_pop on columns */
@@ -5664,7 +5682,6 @@ export interface query_root {
     game_server_nodes_aggregate: game_server_nodes_aggregate
     /** fetch data from the table: "game_server_nodes" using primary key columns */
     game_server_nodes_by_pk: (game_server_nodes | null)
-    getCsVersion: Scalars['String']
     /** fetch data from the table: "map_pools" */
     map_pools: map_pools[]
     /** fetch aggregated fields from the table: "map_pools" */
@@ -5793,6 +5810,12 @@ export interface query_root {
     servers_aggregate: servers_aggregate
     /** fetch data from the table: "servers" using primary key columns */
     servers_by_pk: (servers | null)
+    /** fetch data from the table: "settings" */
+    settings: settings[]
+    /** fetch aggregated fields from the table: "settings" */
+    settings_aggregate: settings_aggregate
+    /** fetch data from the table: "settings" using primary key columns */
+    settings_by_pk: (settings | null)
     /** An array relationship */
     team_invites: team_invites[]
     /** An aggregate relationship */
@@ -6082,6 +6105,69 @@ export interface servers_variance_fields {
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_variance_fields'
 }
+
+
+/** columns and relationships of "settings" */
+export interface settings {
+    name: Scalars['String']
+    value: Scalars['String']
+    __typename: 'settings'
+}
+
+
+/** aggregated selection of "settings" */
+export interface settings_aggregate {
+    aggregate: (settings_aggregate_fields | null)
+    nodes: settings[]
+    __typename: 'settings_aggregate'
+}
+
+
+/** aggregate fields of "settings" */
+export interface settings_aggregate_fields {
+    count: Scalars['Int']
+    max: (settings_max_fields | null)
+    min: (settings_min_fields | null)
+    __typename: 'settings_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "settings" */
+export type settings_constraint = 'settings_pkey'
+
+
+/** aggregate max on columns */
+export interface settings_max_fields {
+    name: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'settings_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface settings_min_fields {
+    name: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'settings_min_fields'
+}
+
+
+/** response of any mutation on the table "settings" */
+export interface settings_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: settings[]
+    __typename: 'settings_mutation_response'
+}
+
+
+/** select columns of table "settings" */
+export type settings_select_column = 'name' | 'value'
+
+
+/** update columns of table "settings" */
+export type settings_update_column = 'name' | 'value'
 
 export interface subscription_root {
     /** fetch data from the table: "_map_pool" */
@@ -6388,6 +6474,14 @@ export interface subscription_root {
     servers_by_pk: (servers | null)
     /** fetch data from the table in a streaming manner: "servers" */
     servers_stream: servers[]
+    /** fetch data from the table: "settings" */
+    settings: settings[]
+    /** fetch aggregated fields from the table: "settings" */
+    settings_aggregate: settings_aggregate
+    /** fetch data from the table: "settings" using primary key columns */
+    settings_by_pk: (settings | null)
+    /** fetch data from the table in a streaming manner: "settings" */
+    settings_stream: settings[]
     /** An array relationship */
     team_invites: team_invites[]
     /** An aggregate relationship */
@@ -9115,6 +9209,7 @@ export interface Int_comparison_exp {_eq?: (Scalars['Int'] | null),_gt?: (Scalar
 
 export interface MeResponseGenqlSelection{
     avatar_url?: boolean | number
+    country?: boolean | number
     discord_id?: boolean | number
     name?: boolean | number
     player?: playersGenqlSelection
@@ -15312,6 +15407,12 @@ export interface mutation_rootGenqlSelection{
     where: servers_bool_exp} })
     /** delete single row from the table: "servers" */
     delete_servers_by_pk?: (serversGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "settings" */
+    delete_settings?: (settings_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: settings_bool_exp} })
+    /** delete single row from the table: "settings" */
+    delete_settings_by_pk?: (settingsGenqlSelection & { __args: {name: Scalars['String']} })
     /** delete data from the table: "team_invites" */
     delete_team_invites?: (team_invites_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -15837,6 +15938,18 @@ export interface mutation_rootGenqlSelection{
     object: servers_insert_input, 
     /** upsert condition */
     on_conflict?: (servers_on_conflict | null)} })
+    /** insert data into the table: "settings" */
+    insert_settings?: (settings_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: settings_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (settings_on_conflict | null)} })
+    /** insert a single row into the table: "settings" */
+    insert_settings_one?: (settingsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: settings_insert_input, 
+    /** upsert condition */
+    on_conflict?: (settings_on_conflict | null)} })
     /** insert data into the table: "team_invites" */
     insert_team_invites?: (team_invites_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -16581,6 +16694,20 @@ export interface mutation_rootGenqlSelection{
     update_servers_many?: (servers_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: servers_updates[]} })
+    /** update data of the table: "settings" */
+    update_settings?: (settings_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (settings_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: settings_bool_exp} })
+    /** update single row of the table: "settings" */
+    update_settings_by_pk?: (settingsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (settings_set_input | null), pk_columns: settings_pk_columns_input} })
+    /** update multiples rows of table: "settings" */
+    update_settings_many?: (settings_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: settings_updates[]} })
     /** update data of the table: "team_invites" */
     update_team_invites?: (team_invites_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -18845,6 +18972,7 @@ export interface playersGenqlSelection{
     /** filter the rows returned */
     where?: (player_assists_bool_exp | null)} })
     avatar_url?: boolean | number
+    country?: boolean | number
     created_at?: boolean | number
     /** An array relationship */
     damage_dealt?: (player_damagesGenqlSelection & { __args?: {
@@ -19396,7 +19524,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -19404,12 +19532,13 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
 export interface players_max_fieldsGenqlSelection{
     avatar_url?: boolean | number
+    country?: boolean | number
     created_at?: boolean | number
     discord_id?: boolean | number
     name?: boolean | number
@@ -19423,6 +19552,7 @@ export interface players_max_fieldsGenqlSelection{
 /** aggregate min on columns */
 export interface players_min_fieldsGenqlSelection{
     avatar_url?: boolean | number
+    country?: boolean | number
     created_at?: boolean | number
     discord_id?: boolean | number
     name?: boolean | number
@@ -19455,7 +19585,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
+export interface players_order_by {assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -19463,7 +19593,7 @@ export interface players_pk_columns_input {steam_id: Scalars['bigint']}
 
 
 /** input type for updating data in table "players" */
-export interface players_set_input {avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_set_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -19499,7 +19629,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface players_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -19984,7 +20114,6 @@ export interface query_rootGenqlSelection{
     where?: (game_server_nodes_bool_exp | null)} })
     /** fetch data from the table: "game_server_nodes" using primary key columns */
     game_server_nodes_by_pk?: (game_server_nodesGenqlSelection & { __args: {id: Scalars['String']} })
-    getCsVersion?: { __args: {gameServerNodeId?: (Scalars['uuid'] | null)} } | boolean | number
     /** fetch data from the table: "map_pools" */
     map_pools?: (map_poolsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -20533,6 +20662,32 @@ export interface query_rootGenqlSelection{
     where?: (servers_bool_exp | null)} })
     /** fetch data from the table: "servers" using primary key columns */
     servers_by_pk?: (serversGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "settings" */
+    settings?: (settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "settings" */
+    settings_aggregate?: (settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (settings_bool_exp | null)} })
+    /** fetch data from the table: "settings" using primary key columns */
+    settings_by_pk?: (settingsGenqlSelection & { __args: {name: Scalars['String']} })
     /** An array relationship */
     team_invites?: (team_invitesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -21349,6 +21504,105 @@ export interface servers_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "servers" */
 export interface servers_variance_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+
+
+/** columns and relationships of "settings" */
+export interface settingsGenqlSelection{
+    name?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "settings" */
+export interface settings_aggregateGenqlSelection{
+    aggregate?: settings_aggregate_fieldsGenqlSelection
+    nodes?: settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "settings" */
+export interface settings_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (settings_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: settings_max_fieldsGenqlSelection
+    min?: settings_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "settings". All fields are combined with a logical 'AND'. */
+export interface settings_bool_exp {_and?: (settings_bool_exp[] | null),_not?: (settings_bool_exp | null),_or?: (settings_bool_exp[] | null),name?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** input type for inserting data into table "settings" */
+export interface settings_insert_input {name?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface settings_max_fieldsGenqlSelection{
+    name?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface settings_min_fieldsGenqlSelection{
+    name?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "settings" */
+export interface settings_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "settings" */
+export interface settings_on_conflict {constraint: settings_constraint,update_columns?: settings_update_column[],where?: (settings_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "settings". */
+export interface settings_order_by {name?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: settings */
+export interface settings_pk_columns_input {name: Scalars['String']}
+
+
+/** input type for updating data in table "settings" */
+export interface settings_set_input {name?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "settings" */
+export interface settings_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: settings_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface settings_stream_cursor_value_input {name?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface settings_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (settings_set_input | null),
+/** filter the rows which have to be updated */
+where: settings_bool_exp}
 
 export interface subscription_rootGenqlSelection{
     /** fetch data from the table: "_map_pool" */
@@ -22643,6 +22897,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (servers_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (servers_bool_exp | null)} })
+    /** fetch data from the table: "settings" */
+    settings?: (settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "settings" */
+    settings_aggregate?: (settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (settings_bool_exp | null)} })
+    /** fetch data from the table: "settings" using primary key columns */
+    settings_by_pk?: (settingsGenqlSelection & { __args: {name: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "settings" */
+    settings_stream?: (settingsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (settings_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (settings_bool_exp | null)} })
     /** An array relationship */
     team_invites?: (team_invitesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -30579,6 +30867,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const settings_possibleTypes: string[] = ['settings']
+    export const issettings = (obj?: { __typename?: any } | null): obj is settings => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issettings"')
+      return settings_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const settings_aggregate_possibleTypes: string[] = ['settings_aggregate']
+    export const issettings_aggregate = (obj?: { __typename?: any } | null): obj is settings_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issettings_aggregate"')
+      return settings_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const settings_aggregate_fields_possibleTypes: string[] = ['settings_aggregate_fields']
+    export const issettings_aggregate_fields = (obj?: { __typename?: any } | null): obj is settings_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issettings_aggregate_fields"')
+      return settings_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const settings_max_fields_possibleTypes: string[] = ['settings_max_fields']
+    export const issettings_max_fields = (obj?: { __typename?: any } | null): obj is settings_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issettings_max_fields"')
+      return settings_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const settings_min_fields_possibleTypes: string[] = ['settings_min_fields']
+    export const issettings_min_fields = (obj?: { __typename?: any } | null): obj is settings_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issettings_min_fields"')
+      return settings_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const settings_mutation_response_possibleTypes: string[] = ['settings_mutation_response']
+    export const issettings_mutation_response = (obj?: { __typename?: any } | null): obj is settings_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issettings_mutation_response"')
+      return settings_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const subscription_root_possibleTypes: string[] = ['subscription_root']
     export const issubscription_root = (obj?: { __typename?: any } | null): obj is subscription_root => {
       if (!obj?.__typename) throw new Error('__typename is missing in "issubscription_root"')
@@ -33536,6 +33872,7 @@ export const enumPlayersConstraint = {
 
 export const enumPlayersSelectColumn = {
    avatar_url: 'avatar_url' as const,
+   country: 'country' as const,
    created_at: 'created_at' as const,
    discord_id: 'discord_id' as const,
    name: 'name' as const,
@@ -33546,6 +33883,7 @@ export const enumPlayersSelectColumn = {
 
 export const enumPlayersUpdateColumn = {
    avatar_url: 'avatar_url' as const,
+   country: 'country' as const,
    created_at: 'created_at' as const,
    discord_id: 'discord_id' as const,
    name: 'name' as const,
@@ -33597,6 +33935,20 @@ export const enumServersUpdateColumn = {
    rcon_password: 'rcon_password' as const,
    reserved_by_match_id: 'reserved_by_match_id' as const,
    tv_port: 'tv_port' as const
+}
+
+export const enumSettingsConstraint = {
+   settings_pkey: 'settings_pkey' as const
+}
+
+export const enumSettingsSelectColumn = {
+   name: 'name' as const,
+   value: 'value' as const
+}
+
+export const enumSettingsUpdateColumn = {
+   name: 'name' as const,
+   value: 'value' as const
 }
 
 export const enumTeamInvitesConstraint = {

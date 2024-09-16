@@ -45,6 +45,7 @@ input Int_comparison_exp {
 
 type MeResponse {
   avatar_url: String!
+  country: String
   discord_id: String
   name: String!
   player: players
@@ -11383,6 +11384,19 @@ type mutation_root {
   delete_servers_by_pk(id: uuid!): servers
 
   """
+  delete data from the table: "settings"
+  """
+  delete_settings(
+    """filter the rows which have to be deleted"""
+    where: settings_bool_exp!
+  ): settings_mutation_response
+
+  """
+  delete single row from the table: "settings"
+  """
+  delete_settings_by_pk(name: String!): settings
+
+  """
   delete data from the table: "team_invites"
   """
   delete_team_invites(
@@ -12364,6 +12378,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: servers_on_conflict
   ): servers
+
+  """
+  insert data into the table: "settings"
+  """
+  insert_settings(
+    """the rows to be inserted"""
+    objects: [settings_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: settings_on_conflict
+  ): settings_mutation_response
+
+  """
+  insert a single row into the table: "settings"
+  """
+  insert_settings_one(
+    """the row to be inserted"""
+    object: settings_insert_input!
+
+    """upsert condition"""
+    on_conflict: settings_on_conflict
+  ): settings
 
   """
   insert data into the table: "team_invites"
@@ -13793,6 +13829,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [servers_updates!]!
   ): [servers_mutation_response]
+
+  """
+  update data of the table: "settings"
+  """
+  update_settings(
+    """sets the columns of the filtered rows to the given values"""
+    _set: settings_set_input
+
+    """filter the rows which have to be updated"""
+    where: settings_bool_exp!
+  ): settings_mutation_response
+
+  """
+  update single row of the table: "settings"
+  """
+  update_settings_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: settings_set_input
+    pk_columns: settings_pk_columns_input!
+  ): settings
+
+  """
+  update multiples rows of table: "settings"
+  """
+  update_settings_many(
+    """updates to execute, in order"""
+    updates: [settings_updates!]!
+  ): [settings_mutation_response]
 
   """
   update data of the table: "team_invites"
@@ -18152,6 +18216,7 @@ type players {
     where: player_assists_bool_exp
   ): player_assists_aggregate!
   avatar_url: String
+  country: String
   created_at: timestamptz
 
   """An array relationship"""
@@ -18962,6 +19027,7 @@ input players_bool_exp {
   assited_by_players: player_assists_bool_exp
   assited_by_players_aggregate: player_assists_aggregate_bool_exp
   avatar_url: String_comparison_exp
+  country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   damage_dealt: player_damages_bool_exp
   damage_dealt_aggregate: player_damages_aggregate_bool_exp
@@ -19046,6 +19112,7 @@ input players_insert_input {
   assists: player_assists_arr_rel_insert_input
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
+  country: String
   created_at: timestamptz
   damage_dealt: player_damages_arr_rel_insert_input
   damage_taken: player_damages_arr_rel_insert_input
@@ -19077,6 +19144,7 @@ input players_insert_input {
 """aggregate max on columns"""
 type players_max_fields {
   avatar_url: String
+  country: String
   created_at: timestamptz
   discord_id: String
   name: String
@@ -19087,6 +19155,7 @@ type players_max_fields {
 """aggregate min on columns"""
 type players_min_fields {
   avatar_url: String
+  country: String
   created_at: timestamptz
   discord_id: String
   name: String
@@ -19129,6 +19198,7 @@ input players_order_by {
   assists_aggregate: player_assists_aggregate_order_by
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
+  country: order_by
   created_at: order_by
   damage_dealt_aggregate: player_damages_aggregate_order_by
   damage_taken_aggregate: player_damages_aggregate_order_by
@@ -19172,6 +19242,9 @@ enum players_select_column {
   avatar_url
 
   """column name"""
+  country
+
+  """column name"""
   created_at
 
   """column name"""
@@ -19195,6 +19268,7 @@ input type for updating data in table "players"
 """
 input players_set_input {
   avatar_url: String
+  country: String
   created_at: timestamptz
   discord_id: String
   name: String
@@ -19232,6 +19306,7 @@ input players_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input players_stream_cursor_value_input {
   avatar_url: String
+  country: String
   created_at: timestamptz
   discord_id: String
   name: String
@@ -19251,6 +19326,9 @@ update columns of table "players"
 enum players_update_column {
   """column name"""
   avatar_url
+
+  """column name"""
+  country
 
   """column name"""
   created_at
@@ -20044,7 +20122,6 @@ type query_root {
   fetch data from the table: "game_server_nodes" using primary key columns
   """
   game_server_nodes_by_pk(id: String!): game_server_nodes
-  getCsVersion(gameServerNodeId: uuid): String!
 
   """
   fetch data from the table: "map_pools"
@@ -20921,6 +20998,49 @@ type query_root {
 
   """fetch data from the table: "servers" using primary key columns"""
   servers_by_pk(id: uuid!): servers
+
+  """
+  fetch data from the table: "settings"
+  """
+  settings(
+    """distinct select on columns"""
+    distinct_on: [settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [settings_order_by!]
+
+    """filter the rows returned"""
+    where: settings_bool_exp
+  ): [settings!]!
+
+  """
+  fetch aggregated fields from the table: "settings"
+  """
+  settings_aggregate(
+    """distinct select on columns"""
+    distinct_on: [settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [settings_order_by!]
+
+    """filter the rows returned"""
+    where: settings_bool_exp
+  ): settings_aggregate!
+
+  """fetch data from the table: "settings" using primary key columns"""
+  settings_by_pk(name: String!): settings
 
   """An array relationship"""
   team_invites(
@@ -22355,6 +22475,158 @@ input servers_variance_order_by {
   owner_steam_id: order_by
   port: order_by
   tv_port: order_by
+}
+
+"""
+columns and relationships of "settings"
+"""
+type settings {
+  name: String!
+  value: String!
+}
+
+"""
+aggregated selection of "settings"
+"""
+type settings_aggregate {
+  aggregate: settings_aggregate_fields
+  nodes: [settings!]!
+}
+
+"""
+aggregate fields of "settings"
+"""
+type settings_aggregate_fields {
+  count(columns: [settings_select_column!], distinct: Boolean): Int!
+  max: settings_max_fields
+  min: settings_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "settings". All fields are combined with a logical 'AND'.
+"""
+input settings_bool_exp {
+  _and: [settings_bool_exp!]
+  _not: settings_bool_exp
+  _or: [settings_bool_exp!]
+  name: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "settings"
+"""
+enum settings_constraint {
+  """
+  unique or primary key constraint on columns "name"
+  """
+  settings_pkey
+}
+
+"""
+input type for inserting data into table "settings"
+"""
+input settings_insert_input {
+  name: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type settings_max_fields {
+  name: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type settings_min_fields {
+  name: String
+  value: String
+}
+
+"""
+response of any mutation on the table "settings"
+"""
+type settings_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [settings!]!
+}
+
+"""
+on_conflict condition type for table "settings"
+"""
+input settings_on_conflict {
+  constraint: settings_constraint!
+  update_columns: [settings_update_column!]! = []
+  where: settings_bool_exp
+}
+
+"""Ordering options when selecting data from "settings"."""
+input settings_order_by {
+  name: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: settings"""
+input settings_pk_columns_input {
+  name: String!
+}
+
+"""
+select columns of table "settings"
+"""
+enum settings_select_column {
+  """column name"""
+  name
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "settings"
+"""
+input settings_set_input {
+  name: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "settings"
+"""
+input settings_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: settings_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input settings_stream_cursor_value_input {
+  name: String
+  value: String
+}
+
+"""
+update columns of table "settings"
+"""
+enum settings_update_column {
+  """column name"""
+  name
+
+  """column name"""
+  value
+}
+
+input settings_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: settings_set_input
+
+  """filter the rows which have to be updated"""
+  where: settings_bool_exp!
 }
 
 type subscription_root {
@@ -24509,6 +24781,63 @@ type subscription_root {
     """filter the rows returned"""
     where: servers_bool_exp
   ): [servers!]!
+
+  """
+  fetch data from the table: "settings"
+  """
+  settings(
+    """distinct select on columns"""
+    distinct_on: [settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [settings_order_by!]
+
+    """filter the rows returned"""
+    where: settings_bool_exp
+  ): [settings!]!
+
+  """
+  fetch aggregated fields from the table: "settings"
+  """
+  settings_aggregate(
+    """distinct select on columns"""
+    distinct_on: [settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [settings_order_by!]
+
+    """filter the rows returned"""
+    where: settings_bool_exp
+  ): settings_aggregate!
+
+  """fetch data from the table: "settings" using primary key columns"""
+  settings_by_pk(name: String!): settings
+
+  """
+  fetch data from the table in a streaming manner: "settings"
+  """
+  settings_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [settings_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: settings_bool_exp
+  ): [settings!]!
 
   """An array relationship"""
   team_invites(

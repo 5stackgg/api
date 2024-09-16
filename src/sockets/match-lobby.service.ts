@@ -239,7 +239,7 @@ export class MatchLobbyService {
         return;
       }
 
-      if(matches_by_pk.status !== 'Live') {
+      if (matches_by_pk.status !== "Live") {
         return;
       }
 

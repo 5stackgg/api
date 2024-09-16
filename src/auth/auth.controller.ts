@@ -5,6 +5,7 @@ import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
+import { MeResponse } from "generated";
 
 @Controller("auth")
 export class AuthController {

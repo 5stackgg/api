@@ -79,6 +79,11 @@ export class DiscordBotService {
   }
 
   public async setupBot() {
+    if (!this.discordConfig.token) {
+      this.logger.warn("discord bot not configured");
+      return;
+    }
+
     const rest = new REST({ version: "10" }).setToken(this.discordConfig.token);
 
     try {
@@ -96,6 +101,8 @@ export class DiscordBotService {
           ),
         ],
       });
+
+      await this.login();
 
       this.logger.debug("successfully reloaded application (/) interactions.");
     } catch (error) {

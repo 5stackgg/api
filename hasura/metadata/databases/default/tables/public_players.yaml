@@ -176,11 +176,26 @@ select_permissions:
     permission:
       columns:
         - avatar_url
+        - country
         - name
         - profile_url
         - steam_id
       filter: {}
       allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - name
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
     comment: ""
 event_triggers:
   - name: player_events
@@ -198,6 +213,7 @@ event_triggers:
           - avatar_url
           - discord_id
           - role
+          - country
     retry_conf:
       interval_sec: 10
       num_retries: 6

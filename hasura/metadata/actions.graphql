@@ -65,6 +65,7 @@ input SampleInput {
 
 type MeResponse {
   name: String!
+  country: String
   steam_id: String!
   avatar_url: String!
   profile_url: String
