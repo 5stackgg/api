@@ -532,16 +532,20 @@ export class MatchesController {
 
   @HasuraAction()
   public async callForOrganizer(data: { user: User; matchId: string }) {
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: data.matchId,
+    const { matches_by_pk: match } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: data.matchId,
+          },
+          is_in_lineup: true,
+          requested_organizer: true,
         },
-        requested_organizer: true,
       },
-    });
+      data.user,
+    );
 
-    if (match.requested_organizer) {
+    if (!match || match.requested_organizer) {
       return {
         success: true,
       };
