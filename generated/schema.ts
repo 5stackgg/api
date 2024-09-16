@@ -4301,6 +4301,7 @@ export interface mutation_root {
 
 /** columns and relationships of "notifications" */
 export interface notifications {
+    created_at: Scalars['timestamptz']
     deleted_at: (Scalars['timestamptz'] | null)
     entity_id: Scalars['String']
     id: Scalars['uuid']
@@ -4354,6 +4355,7 @@ export type notifications_constraint = 'notifications_pkey'
 
 /** aggregate max on columns */
 export interface notifications_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
     deleted_at: (Scalars['timestamptz'] | null)
     entity_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
@@ -4366,6 +4368,7 @@ export interface notifications_max_fields {
 
 /** aggregate min on columns */
 export interface notifications_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
     deleted_at: (Scalars['timestamptz'] | null)
     entity_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
@@ -4387,7 +4390,7 @@ export interface notifications_mutation_response {
 
 
 /** select columns of table "notifications" */
-export type notifications_select_column = 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+export type notifications_select_column = 'created_at' | 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
 
 
 /** select "notifications_aggregate_bool_exp_bool_and_arguments_columns" columns of table "notifications" */
@@ -4427,7 +4430,7 @@ export interface notifications_sum_fields {
 
 
 /** update columns of table "notifications" */
-export type notifications_update_column = 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+export type notifications_update_column = 'created_at' | 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -17817,6 +17820,7 @@ export interface mutation_rootGenqlSelection{
 
 /** columns and relationships of "notifications" */
 export interface notificationsGenqlSelection{
+    created_at?: boolean | number
     deleted_at?: boolean | number
     entity_id?: boolean | number
     id?: boolean | number
@@ -17891,7 +17895,7 @@ export interface notifications_avg_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "notifications". All fields are combined with a logical 'AND'. */
-export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
+export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "notifications" */
@@ -17899,11 +17903,12 @@ export interface notifications_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "notifications" */
-export interface notifications_insert_input {deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_insert_input {created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate max on columns */
 export interface notifications_max_fieldsGenqlSelection{
+    created_at?: boolean | number
     deleted_at?: boolean | number
     entity_id?: boolean | number
     id?: boolean | number
@@ -17916,11 +17921,12 @@ export interface notifications_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "notifications" */
-export interface notifications_max_order_by {deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null)}
+export interface notifications_max_order_by {created_at?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface notifications_min_fieldsGenqlSelection{
+    created_at?: boolean | number
     deleted_at?: boolean | number
     entity_id?: boolean | number
     id?: boolean | number
@@ -17933,7 +17939,7 @@ export interface notifications_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "notifications" */
-export interface notifications_min_order_by {deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null)}
+export interface notifications_min_order_by {created_at?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null)}
 
 
 /** response of any mutation on the table "notifications" */
@@ -17952,7 +17958,7 @@ export interface notifications_on_conflict {constraint: notifications_constraint
 
 
 /** Ordering options when selecting data from "notifications". */
-export interface notifications_order_by {deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
+export interface notifications_order_by {created_at?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: notifications */
@@ -17960,7 +17966,7 @@ export interface notifications_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "notifications" */
-export interface notifications_set_input {deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_set_input {created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -18008,7 +18014,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface notifications_stream_cursor_value_input {deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -35307,6 +35313,7 @@ export const enumNotificationsConstraint = {
 }
 
 export const enumNotificationsSelectColumn = {
+   created_at: 'created_at' as const,
    deleted_at: 'deleted_at' as const,
    entity_id: 'entity_id' as const,
    id: 'id' as const,
@@ -35327,6 +35334,7 @@ export const enumNotificationsSelectColumnNotificationsAggregateBoolExpBoolOrArg
 }
 
 export const enumNotificationsUpdateColumn = {
+   created_at: 'created_at' as const,
    deleted_at: 'deleted_at' as const,
    entity_id: 'entity_id' as const,
    id: 'id' as const,

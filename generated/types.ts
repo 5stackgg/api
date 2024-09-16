@@ -15698,6 +15698,9 @@ export default {
             ]
         },
         "notifications": {
+            "created_at": [
+                1420
+            ],
             "deleted_at": [
                 1420
             ],
@@ -15930,6 +15933,9 @@ export default {
             "_or": [
                 868
             ],
+            "created_at": [
+                1421
+            ],
             "deleted_at": [
                 1421
             ],
@@ -15974,6 +15980,9 @@ export default {
             ]
         },
         "notifications_insert_input": {
+            "created_at": [
+                1420
+            ],
             "deleted_at": [
                 1420
             ],
@@ -16009,6 +16018,9 @@ export default {
             ]
         },
         "notifications_max_fields": {
+            "created_at": [
+                1420
+            ],
             "deleted_at": [
                 1420
             ],
@@ -16032,6 +16044,9 @@ export default {
             ]
         },
         "notifications_max_order_by": {
+            "created_at": [
+                904
+            ],
             "deleted_at": [
                 904
             ],
@@ -16055,6 +16070,9 @@ export default {
             ]
         },
         "notifications_min_fields": {
+            "created_at": [
+                1420
+            ],
             "deleted_at": [
                 1420
             ],
@@ -16078,6 +16096,9 @@ export default {
             ]
         },
         "notifications_min_order_by": {
+            "created_at": [
+                904
+            ],
             "deleted_at": [
                 904
             ],
@@ -16126,6 +16147,9 @@ export default {
             ]
         },
         "notifications_order_by": {
+            "created_at": [
+                904
+            ],
             "deleted_at": [
                 904
             ],
@@ -16172,6 +16196,9 @@ export default {
         "notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns": {},
         "notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns": {},
         "notifications_set_input": {
+            "created_at": [
+                1420
+            ],
             "deleted_at": [
                 1420
             ],
@@ -16263,6 +16290,9 @@ export default {
             ]
         },
         "notifications_stream_cursor_value_input": {
+            "created_at": [
+                1420
+            ],
             "deleted_at": [
                 1420
             ],

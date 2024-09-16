@@ -9,15 +9,16 @@ select_permissions:
   - role: administrator
     permission:
       columns:
-        - steam_id
-        - is_read
+        - created_at
+        - deleted_at
         - entity_id
+        - id
+        - is_read
         - message
         - role
+        - steam_id
         - title
         - type
-        - deleted_at
-        - id
       filter:
         _or:
           - steam_id:
@@ -28,15 +29,16 @@ select_permissions:
   - role: match_organizer
     permission:
       columns:
-        - steam_id
-        - is_read
+        - created_at
+        - deleted_at
         - entity_id
+        - id
+        - is_read
         - message
         - role
+        - steam_id
         - title
         - type
-        - deleted_at
-        - id
       filter:
         _or:
           - steam_id:
@@ -47,15 +49,16 @@ select_permissions:
   - role: tournament_organizer
     permission:
       columns:
-        - steam_id
-        - is_read
+        - created_at
+        - deleted_at
         - entity_id
+        - id
+        - is_read
         - message
         - role
+        - steam_id
         - title
         - type
-        - deleted_at
-        - id
       filter:
         _or:
           - steam_id:
@@ -68,15 +71,16 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - steam_id
-        - is_read
+        - created_at
+        - deleted_at
         - entity_id
+        - id
+        - is_read
         - message
         - role
+        - steam_id
         - title
         - type
-        - deleted_at
-        - id
       filter:
         steam_id:
           _eq: X-Hasura-User-Id
@@ -86,6 +90,7 @@ update_permissions:
     permission:
       columns:
         - deleted_at
+        - is_read
       filter:
         _or:
           - steam_id:
@@ -103,6 +108,7 @@ update_permissions:
     permission:
       columns:
         - deleted_at
+        - is_read
       filter:
         _or:
           - steam_id:
@@ -120,6 +126,7 @@ update_permissions:
     permission:
       columns:
         - deleted_at
+        - is_read
       filter:
         _or:
           - steam_id:
@@ -141,6 +148,7 @@ update_permissions:
     permission:
       columns:
         - deleted_at
+        - is_read
       filter:
         steam_id:
           _eq: X-Hasura-User-Id

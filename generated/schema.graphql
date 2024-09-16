@@ -14980,6 +14980,7 @@ type mutation_root {
 columns and relationships of "notifications"
 """
 type notifications {
+  created_at: timestamptz!
   deleted_at: timestamptz
   entity_id: String!
   id: uuid!
@@ -15092,6 +15093,7 @@ input notifications_bool_exp {
   _and: [notifications_bool_exp!]
   _not: notifications_bool_exp
   _or: [notifications_bool_exp!]
+  created_at: timestamptz_comparison_exp
   deleted_at: timestamptz_comparison_exp
   entity_id: String_comparison_exp
   id: uuid_comparison_exp
@@ -15125,6 +15127,7 @@ input notifications_inc_input {
 input type for inserting data into table "notifications"
 """
 input notifications_insert_input {
+  created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -15139,6 +15142,7 @@ input notifications_insert_input {
 
 """aggregate max on columns"""
 type notifications_max_fields {
+  created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -15151,6 +15155,7 @@ type notifications_max_fields {
 order by max() on columns of table "notifications"
 """
 input notifications_max_order_by {
+  created_at: order_by
   deleted_at: order_by
   entity_id: order_by
   id: order_by
@@ -15161,6 +15166,7 @@ input notifications_max_order_by {
 
 """aggregate min on columns"""
 type notifications_min_fields {
+  created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -15173,6 +15179,7 @@ type notifications_min_fields {
 order by min() on columns of table "notifications"
 """
 input notifications_min_order_by {
+  created_at: order_by
   deleted_at: order_by
   entity_id: order_by
   id: order_by
@@ -15203,6 +15210,7 @@ input notifications_on_conflict {
 
 """Ordering options when selecting data from "notifications"."""
 input notifications_order_by {
+  created_at: order_by
   deleted_at: order_by
   entity_id: order_by
   id: order_by
@@ -15224,6 +15232,9 @@ input notifications_pk_columns_input {
 select columns of table "notifications"
 """
 enum notifications_select_column {
+  """column name"""
+  created_at
+
   """column name"""
   deleted_at
 
@@ -15272,6 +15283,7 @@ enum notifications_select_column_notifications_aggregate_bool_exp_bool_or_argume
 input type for updating data in table "notifications"
 """
 input notifications_set_input {
+  created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -15332,6 +15344,7 @@ input notifications_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input notifications_stream_cursor_value_input {
+  created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -15359,6 +15372,9 @@ input notifications_sum_order_by {
 update columns of table "notifications"
 """
 enum notifications_update_column {
+  """column name"""
+  created_at
+
   """column name"""
   deleted_at
 
