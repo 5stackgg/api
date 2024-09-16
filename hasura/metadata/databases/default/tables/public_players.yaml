@@ -182,6 +182,11 @@ array_relationships:
           name: player_utility
           schema: public
 computed_fields:
+  - name: is_in_another_match
+    definition:
+      function:
+        name: is_in_another_match
+        schema: public
   - name: matches
     definition:
       function:
@@ -209,6 +214,7 @@ select_permissions:
         - role
         - steam_id
       computed_fields:
+        - is_in_another_match
         - matchmaking_cooldown
       filter: {}
       allow_aggregations: true
