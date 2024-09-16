@@ -68,7 +68,18 @@ export class MatchMakingService {
       return;
     }
 
-    // TODO - chec user abaondoned timed
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: {
+          steam_id: user.steam_id,
+        },
+        matchmaking_cooldown: true,
+      },
+    });
+
+    if (players_by_pk.matchmaking_cooldown) {
+      return;
+    }
 
     const joinedAt = new Date();
 
