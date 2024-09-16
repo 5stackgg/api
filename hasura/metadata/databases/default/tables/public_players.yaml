@@ -166,6 +166,12 @@ computed_fields:
       function:
         name: get_player_matches
         schema: public
+  - name: matchmaking_cooldown
+    definition:
+      function:
+        name: get_player_matchmaking_cooldown
+        schema: public
+      session_argument: hasura_session
   - name: teams
     definition:
       function:
@@ -180,6 +186,8 @@ select_permissions:
         - name
         - profile_url
         - steam_id
+      computed_fields:
+        - matchmaking_cooldown
       filter: {}
       allow_aggregations: true
     comment: ""

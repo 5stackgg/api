@@ -37,6 +37,7 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
+import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     CancelInvalidTournaments,
+    CleanAbandonedMatches,
     CancelMatchMaking,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
@@ -126,6 +128,16 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "* * * * *",
+        },
+      },
+    );
+
+    void matchServersQueue.add(
+      CleanAbandonedMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 0 * * *",
         },
       },
     );

@@ -1,0 +1,18 @@
+table:
+  name: abandoned_matches
+  schema: public
+select_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - steam_id
+        - abandoned_at
+        - id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: match_organizer
+    permission:
+      filter: {}
+    comment: ""

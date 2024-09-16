@@ -268,6 +268,230 @@ input _map_pool_updates {
   where: _map_pool_bool_exp!
 }
 
+"""
+columns and relationships of "abandoned_matches"
+"""
+type abandoned_matches {
+  abandoned_at: timestamptz!
+  id: uuid!
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "abandoned_matches"
+"""
+type abandoned_matches_aggregate {
+  aggregate: abandoned_matches_aggregate_fields
+  nodes: [abandoned_matches!]!
+}
+
+"""
+aggregate fields of "abandoned_matches"
+"""
+type abandoned_matches_aggregate_fields {
+  avg: abandoned_matches_avg_fields
+  count(columns: [abandoned_matches_select_column!], distinct: Boolean): Int!
+  max: abandoned_matches_max_fields
+  min: abandoned_matches_min_fields
+  stddev: abandoned_matches_stddev_fields
+  stddev_pop: abandoned_matches_stddev_pop_fields
+  stddev_samp: abandoned_matches_stddev_samp_fields
+  sum: abandoned_matches_sum_fields
+  var_pop: abandoned_matches_var_pop_fields
+  var_samp: abandoned_matches_var_samp_fields
+  variance: abandoned_matches_variance_fields
+}
+
+"""aggregate avg on columns"""
+type abandoned_matches_avg_fields {
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "abandoned_matches". All fields are combined with a logical 'AND'.
+"""
+input abandoned_matches_bool_exp {
+  _and: [abandoned_matches_bool_exp!]
+  _not: abandoned_matches_bool_exp
+  _or: [abandoned_matches_bool_exp!]
+  abandoned_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "abandoned_matches"
+"""
+enum abandoned_matches_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  abandoned_matches_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "abandoned_matches"
+"""
+input abandoned_matches_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "abandoned_matches"
+"""
+input abandoned_matches_insert_input {
+  abandoned_at: timestamptz
+  id: uuid
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type abandoned_matches_max_fields {
+  abandoned_at: timestamptz
+  id: uuid
+  steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type abandoned_matches_min_fields {
+  abandoned_at: timestamptz
+  id: uuid
+  steam_id: bigint
+}
+
+"""
+response of any mutation on the table "abandoned_matches"
+"""
+type abandoned_matches_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [abandoned_matches!]!
+}
+
+"""
+on_conflict condition type for table "abandoned_matches"
+"""
+input abandoned_matches_on_conflict {
+  constraint: abandoned_matches_constraint!
+  update_columns: [abandoned_matches_update_column!]! = []
+  where: abandoned_matches_bool_exp
+}
+
+"""Ordering options when selecting data from "abandoned_matches"."""
+input abandoned_matches_order_by {
+  abandoned_at: order_by
+  id: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: abandoned_matches"""
+input abandoned_matches_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "abandoned_matches"
+"""
+enum abandoned_matches_select_column {
+  """column name"""
+  abandoned_at
+
+  """column name"""
+  id
+
+  """column name"""
+  steam_id
+}
+
+"""
+input type for updating data in table "abandoned_matches"
+"""
+input abandoned_matches_set_input {
+  abandoned_at: timestamptz
+  id: uuid
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type abandoned_matches_stddev_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type abandoned_matches_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type abandoned_matches_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "abandoned_matches"
+"""
+input abandoned_matches_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: abandoned_matches_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input abandoned_matches_stream_cursor_value_input {
+  abandoned_at: timestamptz
+  id: uuid
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type abandoned_matches_sum_fields {
+  steam_id: bigint
+}
+
+"""
+update columns of table "abandoned_matches"
+"""
+enum abandoned_matches_update_column {
+  """column name"""
+  abandoned_at
+
+  """column name"""
+  id
+
+  """column name"""
+  steam_id
+}
+
+input abandoned_matches_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: abandoned_matches_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: abandoned_matches_set_input
+
+  """filter the rows which have to be updated"""
+  where: abandoned_matches_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type abandoned_matches_var_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type abandoned_matches_var_samp_fields {
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type abandoned_matches_variance_fields {
+  steam_id: Float
+}
+
 scalar bigint
 
 """
@@ -7398,7 +7622,6 @@ input match_map_veto_picks_updates {
 columns and relationships of "match_maps"
 """
 type match_maps {
-  cancels_at: timestamptz
   created_at: timestamptz!
 
   """An array relationship"""
@@ -7912,7 +8135,6 @@ input match_maps_bool_exp {
   _and: [match_maps_bool_exp!]
   _not: match_maps_bool_exp
   _or: [match_maps_bool_exp!]
-  cancels_at: timestamptz_comparison_exp
   created_at: timestamptz_comparison_exp
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
@@ -7984,7 +8206,6 @@ input match_maps_inc_input {
 input type for inserting data into table "match_maps"
 """
 input match_maps_insert_input {
-  cancels_at: timestamptz
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_map_status: e_match_map_status_obj_rel_insert_input
@@ -8014,7 +8235,6 @@ input match_maps_insert_input {
 
 """aggregate max on columns"""
 type match_maps_max_fields {
-  cancels_at: timestamptz
   created_at: timestamptz
 
   """
@@ -8055,7 +8275,6 @@ type match_maps_max_fields {
 order by max() on columns of table "match_maps"
 """
 input match_maps_max_order_by {
-  cancels_at: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
@@ -8069,7 +8288,6 @@ input match_maps_max_order_by {
 
 """aggregate min on columns"""
 type match_maps_min_fields {
-  cancels_at: timestamptz
   created_at: timestamptz
 
   """
@@ -8110,7 +8328,6 @@ type match_maps_min_fields {
 order by min() on columns of table "match_maps"
 """
 input match_maps_min_order_by {
-  cancels_at: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
@@ -8154,7 +8371,6 @@ input match_maps_on_conflict {
 
 """Ordering options when selecting data from "match_maps"."""
 input match_maps_order_by {
-  cancels_at: order_by
   created_at: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
   demos_download_url: order_by
@@ -8198,9 +8414,6 @@ select columns of table "match_maps"
 """
 enum match_maps_select_column {
   """column name"""
-  cancels_at
-
-  """column name"""
   created_at
 
   """column name"""
@@ -8241,7 +8454,6 @@ enum match_maps_select_column {
 input type for updating data in table "match_maps"
 """
 input match_maps_set_input {
-  cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
@@ -8359,7 +8571,6 @@ input match_maps_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_maps_stream_cursor_value_input {
-  cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
@@ -8408,9 +8619,6 @@ input match_maps_sum_order_by {
 update columns of table "match_maps"
 """
 enum match_maps_update_column {
-  """column name"""
-  cancels_at
-
   """column name"""
   created_at
 
@@ -9301,10 +9509,6 @@ type matches {
   A computed field, executes function "can_start_match"
   """
   can_start: Boolean
-
-  """
-  A computed field, executes function "match_cancels_at"
-  """
   cancels_at: timestamptz
 
   """
@@ -10096,6 +10300,7 @@ input matches_inc_input {
 input type for inserting data into table "matches"
 """
 input matches_insert_input {
+  cancels_at: timestamptz
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_status: e_match_status_obj_rel_insert_input
@@ -10135,9 +10340,6 @@ input matches_insert_input {
 
 """aggregate max on columns"""
 type matches_max_fields {
-  """
-  A computed field, executes function "match_cancels_at"
-  """
   cancels_at: timestamptz
 
   """
@@ -10218,6 +10420,7 @@ type matches_max_fields {
 order by max() on columns of table "matches"
 """
 input matches_max_order_by {
+  cancels_at: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
@@ -10235,9 +10438,6 @@ input matches_max_order_by {
 
 """aggregate min on columns"""
 type matches_min_fields {
-  """
-  A computed field, executes function "match_cancels_at"
-  """
   cancels_at: timestamptz
 
   """
@@ -10318,6 +10518,7 @@ type matches_min_fields {
 order by min() on columns of table "matches"
 """
 input matches_min_order_by {
+  cancels_at: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
@@ -10438,6 +10639,9 @@ select columns of table "matches"
 """
 enum matches_select_column {
   """column name"""
+  cancels_at
+
+  """column name"""
   created_at
 
   """column name"""
@@ -10487,6 +10691,7 @@ enum matches_select_column {
 input type for updating data in table "matches"
 """
 input matches_set_input {
+  cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
@@ -10580,6 +10785,7 @@ input matches_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input matches_stream_cursor_value_input {
+  cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
@@ -10622,6 +10828,9 @@ input matches_sum_order_by {
 update columns of table "matches"
 """
 enum matches_update_column {
+  """column name"""
+  cancels_at
+
   """column name"""
   created_at
 
@@ -10917,6 +11126,19 @@ type mutation_root {
   delete single row from the table: "_map_pool"
   """
   delete__map_pool_by_pk(map_id: uuid!, map_pool_id: uuid!): _map_pool
+
+  """
+  delete data from the table: "abandoned_matches"
+  """
+  delete_abandoned_matches(
+    """filter the rows which have to be deleted"""
+    where: abandoned_matches_bool_exp!
+  ): abandoned_matches_mutation_response
+
+  """
+  delete single row from the table: "abandoned_matches"
+  """
+  delete_abandoned_matches_by_pk(id: uuid!): abandoned_matches
 
   """
   delete data from the table: "e_game_server_node_regions"
@@ -11580,6 +11802,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: _map_pool_on_conflict
   ): _map_pool
+
+  """
+  insert data into the table: "abandoned_matches"
+  """
+  insert_abandoned_matches(
+    """the rows to be inserted"""
+    objects: [abandoned_matches_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: abandoned_matches_on_conflict
+  ): abandoned_matches_mutation_response
+
+  """
+  insert a single row into the table: "abandoned_matches"
+  """
+  insert_abandoned_matches_one(
+    """the row to be inserted"""
+    object: abandoned_matches_insert_input!
+
+    """upsert condition"""
+    on_conflict: abandoned_matches_on_conflict
+  ): abandoned_matches
 
   """
   insert data into the table: "e_game_server_node_regions"
@@ -12707,6 +12951,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [_map_pool_updates!]!
   ): [_map_pool_mutation_response]
+
+  """
+  update data of the table: "abandoned_matches"
+  """
+  update_abandoned_matches(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: abandoned_matches_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: abandoned_matches_set_input
+
+    """filter the rows which have to be updated"""
+    where: abandoned_matches_bool_exp!
+  ): abandoned_matches_mutation_response
+
+  """
+  update single row of the table: "abandoned_matches"
+  """
+  update_abandoned_matches_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: abandoned_matches_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: abandoned_matches_set_input
+    pk_columns: abandoned_matches_pk_columns_input!
+  ): abandoned_matches
+
+  """
+  update multiples rows of table: "abandoned_matches"
+  """
+  update_abandoned_matches_many(
+    """updates to execute, in order"""
+    updates: [abandoned_matches_updates!]!
+  ): [abandoned_matches_mutation_response]
 
   """
   update data of the table: "e_game_server_node_regions"
@@ -18544,6 +18822,11 @@ type players {
     where: matches_bool_exp
   ): [matches!]
 
+  """
+  A computed field, executes function "get_player_matchmaking_cooldown"
+  """
+  matchmaking_cooldown: timestamp
+
   """An array relationship"""
   multi_kills(
     """distinct select on columns"""
@@ -19063,6 +19346,7 @@ input players_bool_exp {
   match_lineups: match_lineups_bool_exp
   match_lineups_aggregate: match_lineups_aggregate_bool_exp
   matches: matches_bool_exp
+  matchmaking_cooldown: timestamp_comparison_exp
   multi_kills: v_player_multi_kills_bool_exp
   multi_kills_aggregate: v_player_multi_kills_aggregate_bool_exp
   name: String_comparison_exp
@@ -19163,6 +19447,11 @@ type players_max_fields {
   country: String
   created_at: timestamptz
   discord_id: String
+
+  """
+  A computed field, executes function "get_player_matchmaking_cooldown"
+  """
+  matchmaking_cooldown: timestamp
   name: String
   profile_url: String
   steam_id: bigint
@@ -19174,6 +19463,11 @@ type players_min_fields {
   country: String
   created_at: timestamptz
   discord_id: String
+
+  """
+  A computed field, executes function "get_player_matchmaking_cooldown"
+  """
+  matchmaking_cooldown: timestamp
   name: String
   profile_url: String
   steam_id: bigint
@@ -19226,6 +19520,7 @@ input players_order_by {
   kills_aggregate: player_kills_aggregate_order_by
   match_lineups_aggregate: match_lineups_aggregate_order_by
   matches_aggregate: matches_aggregate_order_by
+  matchmaking_cooldown: order_by
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
   name: order_by
   objectives_aggregate: player_objectives_aggregate_order_by
@@ -19434,6 +19729,51 @@ type query_root {
 
   """fetch data from the table: "_map_pool" using primary key columns"""
   _map_pool_by_pk(map_id: uuid!, map_pool_id: uuid!): _map_pool
+
+  """
+  fetch data from the table: "abandoned_matches"
+  """
+  abandoned_matches(
+    """distinct select on columns"""
+    distinct_on: [abandoned_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [abandoned_matches_order_by!]
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): [abandoned_matches!]!
+
+  """
+  fetch aggregated fields from the table: "abandoned_matches"
+  """
+  abandoned_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [abandoned_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [abandoned_matches_order_by!]
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): abandoned_matches_aggregate!
+
+  """
+  fetch data from the table: "abandoned_matches" using primary key columns
+  """
+  abandoned_matches_by_pk(id: uuid!): abandoned_matches
 
   """
   fetch data from the table: "e_game_server_node_regions"
@@ -22702,6 +23042,65 @@ type subscription_root {
     """filter the rows returned"""
     where: _map_pool_bool_exp
   ): [_map_pool!]!
+
+  """
+  fetch data from the table: "abandoned_matches"
+  """
+  abandoned_matches(
+    """distinct select on columns"""
+    distinct_on: [abandoned_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [abandoned_matches_order_by!]
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): [abandoned_matches!]!
+
+  """
+  fetch aggregated fields from the table: "abandoned_matches"
+  """
+  abandoned_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [abandoned_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [abandoned_matches_order_by!]
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): abandoned_matches_aggregate!
+
+  """
+  fetch data from the table: "abandoned_matches" using primary key columns
+  """
+  abandoned_matches_by_pk(id: uuid!): abandoned_matches
+
+  """
+  fetch data from the table in a streaming manner: "abandoned_matches"
+  """
+  abandoned_matches_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [abandoned_matches_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: abandoned_matches_bool_exp
+  ): [abandoned_matches!]!
 
   """
   fetch data from the table: "e_game_server_node_regions"
@@ -27201,6 +27600,23 @@ order by variance() on columns of table "teams"
 """
 input teams_variance_order_by {
   owner_steam_id: order_by
+}
+
+scalar timestamp
+
+"""
+Boolean expression to compare columns of type "timestamp". All fields are combined with logical 'AND'.
+"""
+input timestamp_comparison_exp {
+  _eq: timestamp
+  _gt: timestamp
+  _gte: timestamp
+  _in: [timestamp!]
+  _is_null: Boolean
+  _lt: timestamp
+  _lte: timestamp
+  _neq: timestamp
+  _nin: [timestamp!]
 }
 
 scalar timestamptz

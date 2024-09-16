@@ -68,6 +68,8 @@ export class MatchMakingService {
       return;
     }
 
+    // TODO - chec user abaondoned timed
+
     const joinedAt = new Date();
 
     /**
