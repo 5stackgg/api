@@ -99,22 +99,29 @@ export class ServerGateway {
         client.user = request.user;
         client.node = this.nodeId;
 
-        await this.redis.sadd(
-          `ws-clients:${client.user.steam_id}:clients`,
-          `${client.id}:${client.node}`,
-        );
+        const clientKey = `ws-clients:v2:${client.user.steam_id}:clients`;
+        const clientValue = `${client.id}:${client.node}`;
+
+        await this.redis.sadd(clientKey, clientValue);
 
         this.clients.set(client.id, client);
-
+        
+        await this.sendPeopleOnline();
         await this.matchMaking.sendRegionStats(client.user);
         await this.matchMaking.sendQueueDetailsToUser(client.user.steam_id);
 
         client.on("close", async () => {
-          await this.redis.srem(
-            `user:${client.user.steam_id}:clients`,
-            `${client.id}:${client.node}`,
-          );
+          await this.redis.srem(clientKey, clientValue);
+
+          const clients = await this.redis.smembers(clientKey);
+
+          if(clients.length === 0) {
+            await this.redis.del(`user:${client.user.steam_id}`);
+          }
+
           this.clients.delete(client.id);
+
+          await this.sendPeopleOnline();
         });
       });
     });
@@ -226,5 +233,9 @@ export class ServerGateway {
         }),
       );
     }
+  }
+
+  private async sendPeopleOnline() {
+    this.broadcastMessage(`players-online`, (await this.redis.keys("user:*")).length);
   }
 }
