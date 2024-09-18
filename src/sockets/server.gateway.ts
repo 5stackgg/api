@@ -74,6 +74,10 @@ export class ServerGateway {
     await this.setupSocket(client, request);
   }
 
+  public static GET_CLIENT_CLIENT_KEY(steamId: string) {
+    return `ws-clients:${steamId}:clients`;
+  }
+
   public async setupSocket(client: FiveStackWebSocketClient, request: Request) {
     session({
       rolling: true,
@@ -99,7 +103,9 @@ export class ServerGateway {
         client.user = request.user;
         client.node = this.nodeId;
 
-        const clientKey = `ws-clients:v2:${client.user.steam_id}:clients`;
+        const clientKey = ServerGateway.GET_CLIENT_CLIENT_KEY(
+          client.user.steam_id,
+        );
         const clientValue = `${client.id}:${client.node}`;
 
         await this.redis.sadd(clientKey, clientValue);
@@ -211,7 +217,9 @@ export class ServerGateway {
     event: string,
     data: unknown,
   ) {
-    const clients = await this.redis.smembers(`ws-clients:${steamId}:clients`);
+    const clients = await this.redis.smembers(
+      ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
+    );
     for (const client of clients) {
       const [id, node] = client.split(":");
 
