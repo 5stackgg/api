@@ -274,6 +274,7 @@ export class MatchesController {
             id: match_id,
           },
           _set: {
+            ...(time && { scheduled_at: time }),
             status: time ? "Scheduled" : "WaitingForCheckIn",
           },
         },
