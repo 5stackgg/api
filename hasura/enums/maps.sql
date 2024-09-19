@@ -86,7 +86,7 @@ inserted_maps AS (
     FROM maps m
     JOIN pool_ids p ON (
         (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
-        (p.type = 'Wingman' AND m.type = 'Wingman')
+        (p.type = 'Wingman' AND m.type = 'Wingman' AND m.active_pool = 'true')
     )
     ON CONFLICT DO NOTHING
     RETURNING *
