@@ -10,6 +10,12 @@ BEGIN
       return false;
    END IF;
 
+
+    IF NOT check_match_has_min_players(match) THEN
+        RETURN false;
+    END IF;
+
+
     IF is_match_organizer(match, hasura_session) THEN
         RETURN true;
     END IF;

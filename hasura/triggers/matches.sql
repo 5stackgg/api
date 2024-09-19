@@ -52,8 +52,8 @@ BEGIN
       RAISE EXCEPTION 'Cannot cancel a match that is already finished' USING ERRCODE = '22000';
     END IF;
 
-    IF NEW.scheduled_at IS NOT NULL AND NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at THEN
-        NEW.cancels_at = NEW.scheduled_at + INTERVAL '15 minutes';
+    IF NEW.scheduled_at IS NOT NULL AND NEW.status = 'Scheduled' THEN
+        NEW.cancels_at = null;
         NEW.ended_at = null;
     END IF;
 
