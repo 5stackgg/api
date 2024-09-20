@@ -22,7 +22,7 @@ BEGIN
     LIMIT 1;
     -- If captain's name or placeholder_name is found, return it
     IF team_name IS NOT NULL THEN
-        RETURN concat('Team ', team_name);
+        RETURN concat(team_name, '''s Team');
     END IF;
     -- If no captain, detect if it's a lineup 1 or 2 and display it as Team 1 or Team 2
     IF match_lineup.id = lineup_1_id THEN
