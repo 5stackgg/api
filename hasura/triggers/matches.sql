@@ -58,7 +58,7 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        IF NEW.scheduled_at THEN
+        IF NEW.scheduled_at IS NOT NULL THEN
             -- we already give them 15 minutes to check in before the match starts
             NEW.cancels_at = NEW.scheduled_at + INTERVAL '5 minutes';
         ELSE
