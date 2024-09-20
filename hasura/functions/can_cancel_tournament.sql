@@ -10,6 +10,11 @@ BEGIN
         return false;
     END IF;
 
+    IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
+        RETURN true;
+    END IF;
+
+
     IF hasura_session ->> 'x-hasura-role' = 'administrator' THEN
         RETURN true;
     END IF;

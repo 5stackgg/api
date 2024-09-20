@@ -5,6 +5,10 @@ AS $$
 DECLARE
     organizer_exists boolean;
 BEGIN
+    IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
+        RETURN true;
+    END IF;
+
     IF hasura_session ->> 'x-hasura-role' = 'administrator' THEN
         return true;
     END IF;

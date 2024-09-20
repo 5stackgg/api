@@ -21,6 +21,10 @@ BEGIN
     IF NOT has_stages THEN
         RETURN false;
     END IF;
+    
+    IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
+        RETURN true;
+    END IF;
 
     IF hasura_session ->> 'x-hasura-role' = 'administrator' THEN
         RETURN true;
