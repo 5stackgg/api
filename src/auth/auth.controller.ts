@@ -13,8 +13,8 @@ export class AuthController {
 
   @UseGuards(SteamGuard)
   @Get("steam")
-  public async steamLogin() {
-    return;
+  public async steamLogin(@Req() request: Request, @Res() res: Response) {
+    return res.redirect(request.session.redirect || "/");
   }
 
   @UseGuards(SteamGuard)
@@ -25,14 +25,14 @@ export class AuthController {
 
   @UseGuards(DiscordGuard)
   @Get("discord")
-  public async linkDiscord() {
-    return;
+  public async linkDiscord(@Req() request: Request, @Res() res: Response) {
+    return res.redirect(request.session.redirect || "/");
   }
 
   @UseGuards(DiscordGuard)
   @Get("discord/callback")
   public linkDiscordCallback(@Req() request: Request, @Res() res: Response) {
-    return res.redirect("/");
+    return res.redirect(request.session.redirect || "/");
   }
 
   @HasuraAction()
