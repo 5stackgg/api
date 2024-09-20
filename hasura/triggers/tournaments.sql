@@ -33,6 +33,10 @@ CREATE OR REPLACE FUNCTION public.tbu_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    IF current_setting('hasura.user', true)::json IS NULL OR current_setting('hasura.user', true)::json::text = '{}'::text THEN
+        RETURN NEW;
+    END IF;
+
     IF NEW.status IS DISTINCT FROM OLD.status THEN
         CASE NEW.status
             WHEN 'Cancelled' THEN
