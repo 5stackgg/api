@@ -24,6 +24,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('drawbridge', 'Competitive', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
     ('de_all_in_one', 'Competitive', 'false',  '3114174859', '/img/maps/screenshots/de_all_in_one.webp', null),
     ('de_basalt', 'Competitive', 'false',  '3329258290', '/img/maps/screenshots/de_basalt.webp', null),
+    ('de_edin', 'Competitive', 'false',  '3328169568', '/img/maps/screenshots/de_edin.webp', null),
 
     -- Night Maps
     ('de_dust2_night', 'Competitive', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', null),
