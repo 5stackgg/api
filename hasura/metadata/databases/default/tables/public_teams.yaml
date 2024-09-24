@@ -35,6 +35,12 @@ array_relationships:
           name: tournament_teams
           schema: public
 computed_fields:
+  - name: can_invite
+    definition:
+      function:
+        name: can_invite_to_team
+        schema: public
+      session_argument: hasura_session
   - name: matches
     definition:
       function:
@@ -58,6 +64,8 @@ select_permissions:
         - name
         - owner_steam_id
         - short_name
+      computed_fields:
+        - can_invite
       filter: {}
       allow_aggregations: true
     comment: ""

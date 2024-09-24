@@ -28265,6 +28265,10 @@ input team_roster_variance_order_by {
 columns and relationships of "teams"
 """
 type teams {
+  """
+  A computed field, executes function "can_invite_to_team"
+  """
+  can_invite: Boolean
   id: uuid!
 
   """An array relationship"""
@@ -28520,6 +28524,7 @@ input teams_bool_exp {
   _and: [teams_bool_exp!]
   _not: teams_bool_exp
   _or: [teams_bool_exp!]
+  can_invite: Boolean_comparison_exp
   id: uuid_comparison_exp
   invites: team_invites_bool_exp
   invites_aggregate: team_invites_aggregate_bool_exp
@@ -28641,6 +28646,7 @@ input teams_on_conflict {
 
 """Ordering options when selecting data from "teams"."""
 input teams_order_by {
+  can_invite: order_by
   id: order_by
   invites_aggregate: team_invites_aggregate_order_by
   match_lineups_aggregate: match_lineups_aggregate_order_by

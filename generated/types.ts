@@ -27002,6 +27002,9 @@ export default {
             ]
         },
         "teams": {
+            "can_invite": [
+                0
+            ],
             "id": [
                 1700
             ],
@@ -27377,6 +27380,9 @@ export default {
             "_or": [
                 1387
             ],
+            "can_invite": [
+                1
+            ],
             "id": [
                 1701
             ],
@@ -27569,6 +27575,9 @@ export default {
             ]
         },
         "teams_order_by": {
+            "can_invite": [
+                904
+            ],
             "id": [
                 904
             ],
