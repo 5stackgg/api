@@ -19445,6 +19445,42 @@ type players {
     where: player_assists_bool_exp
   ): player_assists_aggregate!
   avatar_url: String
+
+  """An array relationship"""
+  coach_lineups(
+    """distinct select on columns"""
+    distinct_on: [match_lineups_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_lineups_order_by!]
+
+    """filter the rows returned"""
+    where: match_lineups_bool_exp
+  ): [match_lineups!]!
+
+  """An aggregate relationship"""
+  coach_lineups_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_lineups_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_lineups_order_by!]
+
+    """filter the rows returned"""
+    where: match_lineups_bool_exp
+  ): match_lineups_aggregate!
   country: String
   created_at: timestamptz
 
@@ -19705,42 +19741,6 @@ type players {
     """filter the rows returned"""
     where: player_kills_bool_exp
   ): player_kills_aggregate!
-
-  """An array relationship"""
-  match_lineups(
-    """distinct select on columns"""
-    distinct_on: [match_lineups_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_lineups_order_by!]
-
-    """filter the rows returned"""
-    where: match_lineups_bool_exp
-  ): [match_lineups!]!
-
-  """An aggregate relationship"""
-  match_lineups_aggregate(
-    """distinct select on columns"""
-    distinct_on: [match_lineups_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_lineups_order_by!]
-
-    """filter the rows returned"""
-    where: match_lineups_bool_exp
-  ): match_lineups_aggregate!
 
   """
   A computed field, executes function "get_player_matches"
@@ -20340,6 +20340,8 @@ input players_bool_exp {
   assited_by_players: player_assists_bool_exp
   assited_by_players_aggregate: player_assists_aggregate_bool_exp
   avatar_url: String_comparison_exp
+  coach_lineups: match_lineups_bool_exp
+  coach_lineups_aggregate: match_lineups_aggregate_bool_exp
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   damage_dealt: player_damages_bool_exp
@@ -20358,8 +20360,6 @@ input players_bool_exp {
   is_in_another_match: Boolean_comparison_exp
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
-  match_lineups: match_lineups_bool_exp
-  match_lineups_aggregate: match_lineups_aggregate_bool_exp
   matches: matches_bool_exp
   matchmaking_cooldown: timestamptz_comparison_exp
   multi_kills: v_player_multi_kills_bool_exp
@@ -20432,6 +20432,7 @@ input players_insert_input {
   assists: player_assists_arr_rel_insert_input
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
+  coach_lineups: match_lineups_arr_rel_insert_input
   country: String
   created_at: timestamptz
   damage_dealt: player_damages_arr_rel_insert_input
@@ -20442,7 +20443,6 @@ input players_insert_input {
   flashed_players: player_flashes_arr_rel_insert_input
   invited_players: team_invites_arr_rel_insert_input
   kills: player_kills_arr_rel_insert_input
-  match_lineups: match_lineups_arr_rel_insert_input
   multi_kills: v_player_multi_kills_arr_rel_insert_input
   name: String
   notifications: notifications_arr_rel_insert_input
@@ -20531,6 +20531,7 @@ input players_order_by {
   assists_aggregate: player_assists_aggregate_order_by
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
+  coach_lineups_aggregate: match_lineups_aggregate_order_by
   country: order_by
   created_at: order_by
   damage_dealt_aggregate: player_damages_aggregate_order_by
@@ -20542,7 +20543,6 @@ input players_order_by {
   invited_players_aggregate: team_invites_aggregate_order_by
   is_in_another_match: order_by
   kills_aggregate: player_kills_aggregate_order_by
-  match_lineups_aggregate: match_lineups_aggregate_order_by
   matches_aggregate: matches_aggregate_order_by
   matchmaking_cooldown: order_by
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
@@ -31313,6 +31313,16 @@ type tournaments {
   """
   is_organizer: Boolean
   match_options_id: uuid!
+
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   name: String!
 
   """An object relationship"""
@@ -31567,6 +31577,15 @@ input tournaments_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type tournaments_avg_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 
@@ -31595,6 +31614,8 @@ input tournaments_bool_exp {
   id: uuid_comparison_exp
   is_organizer: Boolean_comparison_exp
   match_options_id: uuid_comparison_exp
+  max_players_per_lineup: Int_comparison_exp
+  min_players_per_lineup: Int_comparison_exp
   name: String_comparison_exp
   options: match_options_bool_exp
   organizer_steam_id: bigint_comparison_exp
@@ -31660,6 +31681,16 @@ type tournaments_max_fields {
   description: String
   id: uuid
   match_options_id: uuid
+
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   name: String
   organizer_steam_id: bigint
   start: timestamptz
@@ -31682,6 +31713,16 @@ type tournaments_min_fields {
   description: String
   id: uuid
   match_options_id: uuid
+
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   name: String
   organizer_steam_id: bigint
   start: timestamptz
@@ -31742,6 +31783,8 @@ input tournaments_order_by {
   id: order_by
   is_organizer: order_by
   match_options_id: order_by
+  max_players_per_lineup: order_by
+  min_players_per_lineup: order_by
   name: order_by
   options: match_options_order_by
   organizer_steam_id: order_by
@@ -31800,6 +31843,15 @@ input tournaments_set_input {
 
 """aggregate stddev on columns"""
 type tournaments_stddev_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 
@@ -31812,6 +31864,15 @@ input tournaments_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type tournaments_stddev_pop_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 
@@ -31824,6 +31885,15 @@ input tournaments_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type tournaments_stddev_samp_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 
@@ -31858,6 +31928,15 @@ input tournaments_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type tournaments_sum_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: bigint
 }
 
@@ -31907,6 +31986,15 @@ input tournaments_updates {
 
 """aggregate var_pop on columns"""
 type tournaments_var_pop_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 
@@ -31919,6 +32007,15 @@ input tournaments_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type tournaments_var_samp_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 
@@ -31931,6 +32028,15 @@ input tournaments_var_samp_order_by {
 
 """aggregate variance on columns"""
 type tournaments_variance_fields {
+  """
+  A computed field, executes function "tournament_max_players_per_lineup"
+  """
+  max_players_per_lineup: Int
+
+  """
+  A computed field, executes function "tournament_min_players_per_lineup"
+  """
+  min_players_per_lineup: Int
   organizer_steam_id: Float
 }
 

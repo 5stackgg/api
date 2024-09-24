@@ -5753,6 +5753,10 @@ export interface players {
     /** An aggregate relationship */
     assited_by_players_aggregate: player_assists_aggregate
     avatar_url: (Scalars['String'] | null)
+    /** An array relationship */
+    coach_lineups: match_lineups[]
+    /** An aggregate relationship */
+    coach_lineups_aggregate: match_lineups_aggregate
     country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** An array relationship */
@@ -5786,10 +5790,6 @@ export interface players {
     kills: player_kills[]
     /** An aggregate relationship */
     kills_aggregate: player_kills_aggregate
-    /** An array relationship */
-    match_lineups: match_lineups[]
-    /** An aggregate relationship */
-    match_lineups_aggregate: match_lineups_aggregate
     /** A computed field, executes function "get_player_matches" */
     matches: (matches[] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
@@ -8354,6 +8354,10 @@ export interface tournaments {
     /** A computed field, executes function "is_tournament_organizer" */
     is_organizer: (Scalars['Boolean'] | null)
     match_options_id: Scalars['uuid']
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     name: Scalars['String']
     /** An object relationship */
     options: match_options
@@ -8411,6 +8415,10 @@ export interface tournaments_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface tournaments_avg_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_avg_fields'
 }
@@ -8425,6 +8433,10 @@ export interface tournaments_max_fields {
     description: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_options_id: (Scalars['uuid'] | null)
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     name: (Scalars['String'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     start: (Scalars['timestamptz'] | null)
@@ -8437,6 +8449,10 @@ export interface tournaments_min_fields {
     description: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_options_id: (Scalars['uuid'] | null)
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     name: (Scalars['String'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     start: (Scalars['timestamptz'] | null)
@@ -8460,6 +8476,10 @@ export type tournaments_select_column = 'description' | 'id' | 'match_options_id
 
 /** aggregate stddev on columns */
 export interface tournaments_stddev_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_stddev_fields'
 }
@@ -8467,6 +8487,10 @@ export interface tournaments_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface tournaments_stddev_pop_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_stddev_pop_fields'
 }
@@ -8474,6 +8498,10 @@ export interface tournaments_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface tournaments_stddev_samp_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_stddev_samp_fields'
 }
@@ -8481,6 +8509,10 @@ export interface tournaments_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface tournaments_sum_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     __typename: 'tournaments_sum_fields'
 }
@@ -8492,6 +8524,10 @@ export type tournaments_update_column = 'description' | 'id' | 'match_options_id
 
 /** aggregate var_pop on columns */
 export interface tournaments_var_pop_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_var_pop_fields'
 }
@@ -8499,6 +8535,10 @@ export interface tournaments_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface tournaments_var_samp_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_var_samp_fields'
 }
@@ -8506,6 +8546,10 @@ export interface tournaments_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface tournaments_variance_fields {
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup: (Scalars['Int'] | null)
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_variance_fields'
 }
@@ -20148,6 +20192,30 @@ export interface playersGenqlSelection{
     /** filter the rows returned */
     where?: (player_assists_bool_exp | null)} })
     avatar_url?: boolean | number
+    /** An array relationship */
+    coach_lineups?: (match_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    coach_lineups_aggregate?: (match_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_lineups_bool_exp | null)} })
     country?: boolean | number
     created_at?: boolean | number
     /** An array relationship */
@@ -20321,30 +20389,6 @@ export interface playersGenqlSelection{
     order_by?: (player_kills_order_by[] | null), 
     /** filter the rows returned */
     where?: (player_kills_bool_exp | null)} })
-    /** An array relationship */
-    match_lineups?: (match_lineupsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_lineups_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_lineups_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_lineups_bool_exp | null)} })
-    /** An aggregate relationship */
-    match_lineups_aggregate?: (match_lineups_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_lineups_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_lineups_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_lineups_bool_exp | null)} })
     /** A computed field, executes function "get_player_matches" */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -20752,7 +20796,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -20760,7 +20804,7 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),servers?: (servers_arr_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),servers?: (servers_arr_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -20817,7 +20861,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -27329,6 +27373,10 @@ export interface tournamentsGenqlSelection{
     /** A computed field, executes function "is_tournament_organizer" */
     is_organizer?: boolean | number
     match_options_id?: boolean | number
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     name?: boolean | number
     /** An object relationship */
     options?: match_optionsGenqlSelection
@@ -27503,6 +27551,10 @@ on_conflict?: (tournaments_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface tournaments_avg_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27514,7 +27566,7 @@ export interface tournaments_avg_order_by {organizer_steam_id?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),description?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),servers?: (tournament_servers_bool_exp | null),servers_aggregate?: (tournament_servers_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),description?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),servers?: (tournament_servers_bool_exp | null),servers_aggregate?: (tournament_servers_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -27530,6 +27582,10 @@ export interface tournaments_max_fieldsGenqlSelection{
     description?: boolean | number
     id?: boolean | number
     match_options_id?: boolean | number
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     name?: boolean | number
     organizer_steam_id?: boolean | number
     start?: boolean | number
@@ -27547,6 +27603,10 @@ export interface tournaments_min_fieldsGenqlSelection{
     description?: boolean | number
     id?: boolean | number
     match_options_id?: boolean | number
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     name?: boolean | number
     organizer_steam_id?: boolean | number
     start?: boolean | number
@@ -27581,7 +27641,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),description?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),servers_aggregate?: (tournament_servers_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),description?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),servers_aggregate?: (tournament_servers_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -27594,6 +27654,10 @@ export interface tournaments_set_input {description?: (Scalars['String'] | null)
 
 /** aggregate stddev on columns */
 export interface tournaments_stddev_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27606,6 +27670,10 @@ export interface tournaments_stddev_order_by {organizer_steam_id?: (order_by | n
 
 /** aggregate stddev_pop on columns */
 export interface tournaments_stddev_pop_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27618,6 +27686,10 @@ export interface tournaments_stddev_pop_order_by {organizer_steam_id?: (order_by
 
 /** aggregate stddev_samp on columns */
 export interface tournaments_stddev_samp_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27642,6 +27714,10 @@ export interface tournaments_stream_cursor_value_input {description?: (Scalars['
 
 /** aggregate sum on columns */
 export interface tournaments_sum_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27662,6 +27738,10 @@ where: tournaments_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface tournaments_var_pop_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27674,6 +27754,10 @@ export interface tournaments_var_pop_order_by {organizer_steam_id?: (order_by | 
 
 /** aggregate var_samp on columns */
 export interface tournaments_var_samp_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -27686,6 +27770,10 @@ export interface tournaments_var_samp_order_by {organizer_steam_id?: (order_by |
 
 /** aggregate variance on columns */
 export interface tournaments_variance_fieldsGenqlSelection{
+    /** A computed field, executes function "tournament_max_players_per_lineup" */
+    max_players_per_lineup?: boolean | number
+    /** A computed field, executes function "tournament_min_players_per_lineup" */
+    min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number

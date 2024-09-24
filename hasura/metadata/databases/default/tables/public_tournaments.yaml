@@ -83,6 +83,16 @@ computed_fields:
         name: is_tournament_organizer
         schema: public
       session_argument: hasura_session
+  - name: max_players_per_lineup
+    definition:
+      function:
+        name: tournament_max_players_per_lineup
+        schema: public
+  - name: min_players_per_lineup
+    definition:
+      function:
+        name: tournament_min_players_per_lineup
+        schema: public
 insert_permissions:
   - role: user
     permission:
@@ -113,6 +123,8 @@ select_permissions:
         - can_open_registration
         - has_min_teams
         - is_organizer
+        - max_players_per_lineup
+        - min_players_per_lineup
       filter:
         _or:
           - organizer_steam_id:

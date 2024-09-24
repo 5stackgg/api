@@ -22889,6 +22889,50 @@ export default {
             "avatar_url": [
                 7
             ],
+            "coach_lineups": [
+                555,
+                {
+                    "distinct_on": [
+                        577,
+                        "[match_lineups_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        575,
+                        "[match_lineups_order_by!]"
+                    ],
+                    "where": [
+                        564
+                    ]
+                }
+            ],
+            "coach_lineups_aggregate": [
+                556,
+                {
+                    "distinct_on": [
+                        577,
+                        "[match_lineups_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        575,
+                        "[match_lineups_order_by!]"
+                    ],
+                    "where": [
+                        564
+                    ]
+                }
+            ],
             "country": [
                 7
             ],
@@ -23206,50 +23250,6 @@ export default {
                     ],
                     "where": [
                         1047
-                    ]
-                }
-            ],
-            "match_lineups": [
-                555,
-                {
-                    "distinct_on": [
-                        577,
-                        "[match_lineups_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        575,
-                        "[match_lineups_order_by!]"
-                    ],
-                    "where": [
-                        564
-                    ]
-                }
-            ],
-            "match_lineups_aggregate": [
-                556,
-                {
-                    "distinct_on": [
-                        577,
-                        "[match_lineups_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        575,
-                        "[match_lineups_order_by!]"
-                    ],
-                    "where": [
-                        564
                     ]
                 }
             ],
@@ -24029,6 +24029,12 @@ export default {
             "avatar_url": [
                 8
             ],
+            "coach_lineups": [
+                564
+            ],
+            "coach_lineups_aggregate": [
+                557
+            ],
             "country": [
                 8
             ],
@@ -24082,12 +24088,6 @@ export default {
             ],
             "kills_aggregate": [
                 1038
-            ],
-            "match_lineups": [
-                564
-            ],
-            "match_lineups_aggregate": [
-                557
             ],
             "matches": [
                 806
@@ -24220,6 +24220,9 @@ export default {
             "avatar_url": [
                 7
             ],
+            "coach_lineups": [
+                561
+            ],
             "country": [
                 7
             ],
@@ -24249,9 +24252,6 @@ export default {
             ],
             "kills": [
                 1044
-            ],
-            "match_lineups": [
-                561
             ],
             "multi_kills": [
                 1824
@@ -24418,6 +24418,9 @@ export default {
             "avatar_url": [
                 904
             ],
+            "coach_lineups_aggregate": [
+                560
+            ],
             "country": [
                 904
             ],
@@ -24450,9 +24453,6 @@ export default {
             ],
             "kills_aggregate": [
                 1043
-            ],
-            "match_lineups_aggregate": [
-                560
             ],
             "matches_aggregate": [
                 802
@@ -31497,6 +31497,12 @@ export default {
             "match_options_id": [
                 1700
             ],
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "name": [
                 7
             ],
@@ -31869,6 +31875,12 @@ export default {
             ]
         },
         "tournaments_avg_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],
@@ -31926,6 +31938,12 @@ export default {
             ],
             "match_options_id": [
                 1701
+            ],
+            "max_players_per_lineup": [
+                4
+            ],
+            "min_players_per_lineup": [
+                4
             ],
             "name": [
                 8
@@ -32045,6 +32063,12 @@ export default {
             "match_options_id": [
                 1700
             ],
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "name": [
                 7
             ],
@@ -32090,6 +32114,12 @@ export default {
             ],
             "match_options_id": [
                 1700
+            ],
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
             ],
             "name": [
                 7
@@ -32197,6 +32227,12 @@ export default {
             "match_options_id": [
                 904
             ],
+            "max_players_per_lineup": [
+                904
+            ],
+            "min_players_per_lineup": [
+                904
+            ],
             "name": [
                 904
             ],
@@ -32267,6 +32303,12 @@ export default {
             ]
         },
         "tournaments_stddev_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],
@@ -32283,6 +32325,12 @@ export default {
             ]
         },
         "tournaments_stddev_pop_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],
@@ -32299,6 +32347,12 @@ export default {
             ]
         },
         "tournaments_stddev_samp_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],
@@ -32352,6 +32406,12 @@ export default {
             ]
         },
         "tournaments_sum_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 69
             ],
@@ -32383,6 +32443,12 @@ export default {
             ]
         },
         "tournaments_var_pop_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],
@@ -32399,6 +32465,12 @@ export default {
             ]
         },
         "tournaments_var_samp_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],
@@ -32415,6 +32487,12 @@ export default {
             ]
         },
         "tournaments_variance_fields": {
+            "max_players_per_lineup": [
+                3
+            ],
+            "min_players_per_lineup": [
+                3
+            ],
             "organizer_steam_id": [
                 2
             ],

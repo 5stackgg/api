@@ -25,8 +25,9 @@ BEGIN
 		    WHERE id = roster.tournament_team_id;
         RETURN;
     END IF;
+
     UPDATE tournament_teams
-    SET eligible_at = NOW()
-    WHERE id = roster.tournament_team_id;
+        SET eligible_at = NOW()
+        WHERE id = roster.tournament_team_id;
 END;
 $$;
