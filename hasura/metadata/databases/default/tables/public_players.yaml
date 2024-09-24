@@ -23,6 +23,13 @@ array_relationships:
         table:
           name: player_assists
           schema: public
+  - name: coach_lineups
+    using:
+      foreign_key_constraint_on:
+        column: coach_steam_id
+        table:
+          name: match_lineups
+          schema: public
   - name: damage_dealt
     using:
       foreign_key_constraint_on:
@@ -71,13 +78,6 @@ array_relationships:
         column: attacker_steam_id
         table:
           name: player_kills
-          schema: public
-  - name: match_lineups
-    using:
-      foreign_key_constraint_on:
-        column: coach_steam_id
-        table:
-          name: match_lineups
           schema: public
   - name: multi_kills
     using:

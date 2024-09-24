@@ -7,8 +7,7 @@ BEGIN
         SELECT m.*
         FROM players p
         INNER JOIN match_lineup_players mlp ON mlp.steam_id = p.steam_id
-        INNER JOIN v_match_lineups ml ON ml.id = mlp.match_lineup_id
-        INNER JOIN matches m ON m.id = ml.match_id
+        INNER JOIN matches m ON m.lineup_1_id = mlp.match_lineup_id or m.lineup_2_id = mlp.match_lineup_id
         WHERE p.steam_id = player.steam_id;
 END;
 $$;
