@@ -35,6 +35,12 @@ array_relationships:
           name: tournament_teams
           schema: public
 computed_fields:
+  - name: can_change_role
+    definition:
+      function:
+        name: can_change_team_role
+        schema: public
+      session_argument: hasura_session
   - name: can_invite
     definition:
       function:
@@ -65,6 +71,7 @@ select_permissions:
         - owner_steam_id
         - short_name
       computed_fields:
+        - can_change_role
         - can_invite
       filter: {}
       allow_aggregations: true

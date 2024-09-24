@@ -27002,6 +27002,9 @@ export default {
             ]
         },
         "teams": {
+            "can_change_role": [
+                0
+            ],
             "can_invite": [
                 0
             ],
@@ -27380,6 +27383,9 @@ export default {
             "_or": [
                 1387
             ],
+            "can_change_role": [
+                1
+            ],
             "can_invite": [
                 1
             ],
@@ -27575,6 +27581,9 @@ export default {
             ]
         },
         "teams_order_by": {
+            "can_change_role": [
+                904
+            ],
             "can_invite": [
                 904
             ],
@@ -40135,6 +40144,15 @@ export default {
                     "where": [
                         1893,
                         "v_pool_maps_bool_exp!"
+                    ]
+                }
+            ],
+            "denyTeamInvite": [
+                9,
+                {
+                    "invite_id": [
+                        1700,
+                        "uuid!"
                     ]
                 }
             ],

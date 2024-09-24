@@ -3754,6 +3754,7 @@ export interface mutation_root {
     delete_v_match_captains: (v_match_captains_mutation_response | null)
     /** delete data from the table: "v_pool_maps" */
     delete_v_pool_maps: (v_pool_maps_mutation_response | null)
+    denyTeamInvite: (SuccessOutput | null)
     forfeitMatch: (SuccessOutput | null)
     /** insert data into the table: "_map_pool" */
     insert__map_pool: (_map_pool_mutation_response | null)
@@ -7359,6 +7360,8 @@ export interface team_roster_variance_fields {
 
 /** columns and relationships of "teams" */
 export interface teams {
+    /** A computed field, executes function "can_change_team_role" */
+    can_change_role: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_invite_to_team" */
     can_invite: (Scalars['Boolean'] | null)
     id: Scalars['uuid']
@@ -16338,6 +16341,7 @@ export interface mutation_rootGenqlSelection{
     delete_v_pool_maps?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
     where: v_pool_maps_bool_exp} })
+    denyTeamInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid']} })
     forfeitMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** insert data into the table: "_map_pool" */
     insert__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
@@ -25514,6 +25518,8 @@ export interface team_roster_variance_order_by {player_steam_id?: (order_by | nu
 
 /** columns and relationships of "teams" */
 export interface teamsGenqlSelection{
+    /** A computed field, executes function "can_change_team_role" */
+    can_change_role?: boolean | number
     /** A computed field, executes function "can_invite_to_team" */
     can_invite?: boolean | number
     id?: boolean | number
@@ -25689,7 +25695,7 @@ export interface teams_avg_order_by {owner_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "teams". All fields are combined with a logical 'AND'. */
-export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),can_invite?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "teams" */
@@ -25752,7 +25758,7 @@ export interface teams_on_conflict {constraint: teams_constraint,update_columns?
 
 
 /** Ordering options when selecting data from "teams". */
-export interface teams_order_by {can_invite?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface teams_order_by {can_change_role?: (order_by | null),can_invite?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: teams */

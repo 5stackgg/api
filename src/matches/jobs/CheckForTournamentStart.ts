@@ -17,42 +17,41 @@ export class CheckForTournamentStart extends WorkerHost {
     const fifteenMinutesAhead = new Date();
     fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
 
-   try {
-    const { update_tournaments } = await this.hasura.mutation({
-      update_tournaments: {
-        __args: {
-          where: {
-            _and: [
-              {
-                start: {
-                  _lte: fifteenMinutesAhead,
+    try {
+      const { update_tournaments } = await this.hasura.mutation({
+        update_tournaments: {
+          __args: {
+            where: {
+              _and: [
+                {
+                  start: {
+                    _lte: fifteenMinutesAhead,
+                  },
                 },
-              },
-              {
-                status: {
-                  _in: ["RegistrationOpen", "RegistrationClosed"],
+                {
+                  status: {
+                    _in: ["RegistrationOpen", "RegistrationClosed"],
+                  },
                 },
-              },
-            ],
+              ],
+            },
+            _set: {
+              status: "Live",
+            },
           },
-          _set: {
-            status: "Live",
-          },
+          affected_rows: true,
         },
-        affected_rows: true,
-      },
-    });
+      });
 
-    if (update_tournaments.affected_rows > 0) {
-      this.logger.log(
-        `${update_tournaments.affected_rows} tournaments started`,
-      );
+      if (update_tournaments.affected_rows > 0) {
+        this.logger.log(
+          `${update_tournaments.affected_rows} tournaments started`,
+        );
+      }
+
+      return update_tournaments.affected_rows;
+    } catch (error) {
+      console.info(`cannto update`, JSON.stringify(error));
     }
-
-    return update_tournaments.affected_rows;
-   } catch(error) {
-    console.info(`cannto update`, JSON.stringify(error));
-   }
-  
   }
 }

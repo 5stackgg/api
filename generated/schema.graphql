@@ -12098,6 +12098,7 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: v_pool_maps_bool_exp!
   ): v_pool_maps_mutation_response
+  denyTeamInvite(invite_id: uuid!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
 
   """
@@ -28266,6 +28267,11 @@ columns and relationships of "teams"
 """
 type teams {
   """
+  A computed field, executes function "can_change_team_role"
+  """
+  can_change_role: Boolean
+
+  """
   A computed field, executes function "can_invite_to_team"
   """
   can_invite: Boolean
@@ -28524,6 +28530,7 @@ input teams_bool_exp {
   _and: [teams_bool_exp!]
   _not: teams_bool_exp
   _or: [teams_bool_exp!]
+  can_change_role: Boolean_comparison_exp
   can_invite: Boolean_comparison_exp
   id: uuid_comparison_exp
   invites: team_invites_bool_exp
@@ -28646,6 +28653,7 @@ input teams_on_conflict {
 
 """Ordering options when selecting data from "teams"."""
 input teams_order_by {
+  can_change_role: order_by
   can_invite: order_by
   id: order_by
   invites_aggregate: team_invites_aggregate_order_by
