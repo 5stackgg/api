@@ -33,6 +33,15 @@ update_permissions:
             role:
               _eq: Admin
     comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        team:
+          roster:
+            role:
+              _eq: Admin
+    comment: ""
 event_triggers:
   - name: team_roster_events
     definition:
