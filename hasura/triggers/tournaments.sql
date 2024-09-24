@@ -36,15 +36,15 @@ BEGIN
     IF NEW.status IS DISTINCT FROM OLD.status THEN
         CASE NEW.status
             WHEN 'Cancelled' THEN
-                IF NOT can_cancel_tournament(NEW, current_setting('hasura.user', true)::json) THEN
+                IF NOT can_cancel_tournament(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot cancel tournament';
                 END IF;
             WHEN 'RegistrationOpen' THEN
-                IF NOT can_open_tournament_registration(NEW, current_setting('hasura.user', true)::json) THEN
+                IF NOT can_open_tournament_registration(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot open tournament registration';
                 END IF;
             WHEN 'RegistrationClose' THEN
-                IF NOT can_close_tournament_registration(NEW, current_setting('hasura.user', true)::json) THEN
+                IF NOT can_close_tournament_registration(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot close tournament registration';
                 END IF;
             ELSE

@@ -9,7 +9,7 @@ DECLARE
     has_stages boolean;
 BEGIN
     IF tournament.status != 'Setup' AND tournament.status != 'RegistrationClosed' AND tournament.status != 'Cancelled' AND tournament.status != 'CancelledMinTeams' THEN
-        RAISE EXCEPTION 'Tournament is not in the proper state. (%)', tournament.status USING ERRCODE = '22000';
+        return false;
     END IF;
 
     SELECT EXISTS (
@@ -19,7 +19,7 @@ BEGIN
     ) INTO has_stages;
 
     IF NOT has_stages THEN
-        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Tournament does not have any stages.';
+        RETURN false;
     END IF;
     
     IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
