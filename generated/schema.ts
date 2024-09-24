@@ -1057,7 +1057,7 @@ export interface e_team_roles_aggregate_fields {
 /** unique or primary key constraints on table "e_team_roles" */
 export type e_team_roles_constraint = 'e_team_roles_pkey'
 
-export type e_team_roles_enum = 'Admin' | 'Invite' | 'Member' | 'Pending'
+export type e_team_roles_enum = 'Admin' | 'Invite' | 'Member'
 
 
 /** aggregate max on columns */
@@ -34910,8 +34910,7 @@ export const enumETeamRolesConstraint = {
 export const enumETeamRolesEnum = {
    Admin: 'Admin' as const,
    Invite: 'Invite' as const,
-   Member: 'Member' as const,
-   Pending: 'Pending' as const
+   Member: 'Member' as const
 }
 
 export const enumETeamRolesSelectColumn = {

@@ -1,5 +1,4 @@
 insert into e_team_roles ("value", "description") values
-    ('Pending', 'Invite Pending'),
     ('Member', 'Basic Membership'),
     ('Invite', 'Ability Invite / Add Players'),
     ('Admin', 'Administrator')

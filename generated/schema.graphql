@@ -3082,9 +3082,6 @@ enum e_team_roles_enum {
 
   """Basic Membership"""
   Member
-
-  """Invite Pending"""
-  Pending
 }
 
 """
