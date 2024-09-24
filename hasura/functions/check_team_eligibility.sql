@@ -5,24 +5,27 @@ DECLARE
     roster_count INT;
     tournament_type TEXT;
     min_players INT;
+    max_players INT;
+    tournament public.tournaments;
 BEGIN
-    SELECT COUNT(ttr.*) INTO roster_count
-        FROM tournament_teams tt
-        INNER JOIN tournament_team_roster ttr ON ttr.tournament_team_id = tt.id
-        WHERE tt.id = roster.tournament_team_id
-        GROUP BY tt.tournament_id
-        LIMIT 1;
+    SELECT COUNT(*) INTO roster_count
+        FROM tournament_team_roster ttr
+        WHERE ttr.tournament_team_id = roster.tournament_team_id;
 
-    SELECT mo.type INTO tournament_type FROM tournaments t
-        inner join match_options mo on mo.id = t.match_options_id
-        WHERE t.id = roster.tournament_id;
+    SELECT * INTO tournament FROM tournaments WHERE id = roster.tournament_id LIMIT 1;
 
-    min_players := get_match_type_min_players(tournament_type);
+    max_players := tournament_max_players_per_lineup(tournament);
+
+    IF roster_count > max_players THEN
+         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Roster has too many players';
+    END IF;
+
+    min_players := tournament_min_players_per_lineup(tournament);
 
     IF roster_count < min_players THEN
-    	UPDATE tournament_teams
-		    SET eligible_at = null
-		    WHERE id = roster.tournament_team_id;
+        UPDATE tournament_teams
+            SET eligible_at = NULL
+            WHERE id = roster.tournament_team_id;
         RETURN;
     END IF;
 

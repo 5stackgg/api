@@ -46,7 +46,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.tournamen_min_players_per_lineup(tournament tournaments)
+CREATE OR REPLACE FUNCTION public.tournament_min_players_per_lineup(tournament tournaments)
  RETURNS integer
  LANGUAGE plpgsql
  STABLE

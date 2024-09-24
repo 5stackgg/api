@@ -2,8 +2,13 @@ CREATE OR REPLACE FUNCTION public.taiud_tournament_team_roster() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM check_team_eligibility(NEW);
-	RETURN NEW;
+    IF TG_OP = 'DELETE' THEN
+        PERFORM check_team_eligibility(OLD);
+    ELSE
+        PERFORM check_team_eligibility(NEW);
+    END IF;
+    
+    RETURN NEW;
 END;
 $$;
 
