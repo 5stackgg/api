@@ -47,6 +47,10 @@ BEGIN
                 IF NOT can_close_tournament_registration(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot close tournament registration';
                 END IF;
+            WHEN 'Live' THEN
+                IF NOT tournament_has_min_teams(NEW) THEN 
+                    NEW.status = 'CancelledMinTeams';
+                END IF;
             ELSE
                 -- No action needed for other status changes
         END CASE;
