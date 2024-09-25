@@ -17,6 +17,11 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
+
+    IF NEW.region = 'Lan' THEN 
+        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot ban LAN region.';
+    END IF;
+
     PERFORM verify_region_veto_pick(NEW);
     RETURN NEW;
 END;

@@ -5,7 +5,7 @@ DECLARE
 region_count int;
 BEGIN
     select count(*) INTO region_count from e_game_server_node_regions gsr
-        INNER JOIN game_server_nodes gsn on gsn.region = gsr.value
+        INNER JOIN game_server_nodes gsn on gsn.region = gsr.value and gsn.enabled = true 
         where gsn.region != 'Lan';
 
     IF region_count = 1 THEN

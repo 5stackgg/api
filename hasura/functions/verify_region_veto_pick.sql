@@ -4,7 +4,6 @@ CREATE OR REPLACE FUNCTION public.verify_region_veto_pick(match_region_veto_pick
 DECLARE
     lineup_id uuid;
     _match matches;
-    use_active_pool BOOLEAN;
 BEGIN
     select * into _match from matches where id = match_region_veto_pick.match_id;
 
