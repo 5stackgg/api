@@ -322,18 +322,22 @@ export class MatchMakingService {
       e_game_server_node_regions: {
         __args: {
           where: {
-            game_server_nodes: {
-              enabled: {
-                _eq: true,
-              },
-            },
-            game_server_nodes_aggregate: {
-              count: {
-                predicate: {
-                  _gt: 0,
+           _and: [
+            {
+              game_server_nodes: {
+                enabled: {
+                  _eq: true,
                 },
               },
-            },
+              game_server_nodes_aggregate: {
+                count: {
+                  predicate: {
+                    _gt: 0,
+                  },
+                },
+              },
+            }
+           ]
           },
         },
         value: true,
