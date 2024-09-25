@@ -94,9 +94,105 @@ computed_fields:
         name: tournament_min_players_per_lineup
         schema: public
 insert_permissions:
-  - role: user
+  - role: administrator
     permission:
       check: {}
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - match_options_id
+        - name
+        - start
+    comment: ""
+  - role: match_organizer
+    permission:
+      check:
+        _or:
+          - _not:
+              _exists:
+                _table:
+                  name: settings
+                  schema: public
+                _where:
+                  name:
+                    _eq: public.create_tournaments_role
+          - _exists:
+              _table:
+                name: settings
+                schema: public
+              _where:
+                _and:
+                  - name:
+                      _eq: public.create_tournaments_role
+                  - value:
+                      _in:
+                        - user
+                        - match_organizer
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - match_options_id
+        - name
+        - start
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        _or:
+          - _not:
+              _exists:
+                _table:
+                  name: settings
+                  schema: public
+                _where:
+                  name:
+                    _eq: public.create_tournaments_role
+          - _exists:
+              _table:
+                name: settings
+                schema: public
+              _where:
+                _and:
+                  - name:
+                      _eq: public.create_tournaments_role
+                  - value:
+                      _in:
+                        - user
+                        - match_organizer
+                        - tournament_organizer
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - match_options_id
+        - name
+        - start
+    comment: ""
+  - role: user
+    permission:
+      check:
+        _or:
+          - _not:
+              _exists:
+                _table:
+                  name: settings
+                  schema: public
+                _where:
+                  name:
+                    _eq: public.create_tournaments_role
+          - _exists:
+              _table:
+                name: settings
+                schema: public
+              _where:
+                _and:
+                  - name:
+                      _eq: public.create_tournaments_role
+                  - value:
+                      _in:
+                        - user
       set:
         organizer_steam_id: x-hasura-user-id
       columns:

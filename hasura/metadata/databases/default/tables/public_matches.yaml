@@ -272,6 +272,8 @@ insert_permissions:
   - role: administrator
     permission:
       check: {}
+      set:
+        organizer_steam_id: x-hasura-user-id
       columns:
         - label
         - match_options_id
