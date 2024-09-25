@@ -14,7 +14,7 @@ BEGIN
 
   IF array_length(available_regions, 1) = 1 THEN
     SELECT * INTO _match FROM matches WHERE id = match_region_veto_pick.match_id LIMIT 1;
-    SELECT * INTO lineup_id FROM get_map_veto_picking_lineup_id(_match);
+    SELECT * INTO lineup_id FROM get_region_veto_picking_lineup_id(_match);
 
     INSERT INTO match_region_veto_picks (match_id, type, match_lineup_id, region)
         VALUES (match_region_veto_pick.match_id, 'Decider', lineup_id, available_regions[1]);

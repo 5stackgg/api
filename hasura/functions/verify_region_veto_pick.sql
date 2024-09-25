@@ -2,10 +2,8 @@ CREATE OR REPLACE FUNCTION public.verify_region_veto_pick(match_region_veto_pick
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    pickType VARCHAR(255);
     lineup_id uuid;
     _match matches;
-    map_pool uuid[];
     use_active_pool BOOLEAN;
 BEGIN
     select * into _match from matches where id = match_region_veto_pick.match_id;
@@ -15,7 +13,7 @@ BEGIN
 
     -- Check if the lineup_id matches the lineup_id provided in the match_region_veto_pick veto
     IF match_region_veto_pick.match_lineup_id != lineup_id THEN
-        RAISE EXCEPTION 'Expected other lineup for %, %', pickType, lineup_id USING ERRCODE = '22000';
+        RAISE EXCEPTION 'Expected other lineup for %', lineup_id USING ERRCODE = '22000';
     END IF;
 END;
 $$;
