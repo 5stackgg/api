@@ -27,6 +27,39 @@ computed_fields:
         name: total_region_server_count
         schema: public
 select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - description
+        - value
+      computed_fields:
+        - available_server_count
+        - status
+        - total_server_count
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - description
+        - value
+      computed_fields:
+        - available_server_count
+        - status
+        - total_server_count
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - description
+        - value
+      computed_fields:
+        - available_server_count
+        - status
+        - total_server_count
+      filter: {}
+    comment: ""
   - role: user
     permission:
       columns:
