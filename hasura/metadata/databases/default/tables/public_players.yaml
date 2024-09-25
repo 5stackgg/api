@@ -220,6 +220,18 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - discord_id
+        - name
+        - profile_url
+        - role
+      filter: {}
+      check: null
+    comment: ""
   - role: user
     permission:
       columns:
@@ -232,6 +244,11 @@ update_permissions:
       check:
         steam_id:
           _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
     comment: ""
 event_triggers:
   - name: player_events
