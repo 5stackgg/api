@@ -17,7 +17,7 @@ BEGIN
     END IF;
 
     select array_agg(gsr.value) INTO available_regions from e_game_server_node_regions gsr
-        INNER JOIN game_server_nodes gsn on gsn.region = gsr.value
+        INNER JOIN game_server_nodes gsn on gsn.region = gsr.value and gsn.enabled = true
         where gsn.region != 'Lan';
 
     IF array_length(available_regions, 1) = 1 THEN
