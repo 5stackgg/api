@@ -2,6 +2,7 @@ CREATE OR REPLACE FUNCTION public.tbi_match() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
+    lan_match BOOLEAN;
     _lineup_1_id UUID;
     _lineup_2_id UUID;
     available_regions text[];
@@ -23,6 +24,14 @@ BEGIN
     IF array_length(available_regions, 1) = 1 THEN
         NEW.region = available_regions[1];
     END IF;
+
+
+    SELECT lan INTO lan_match FROM match_options WHERE id = NEW.match_options_id;
+
+    IF lan_match = true THEN
+        NEW.region = 'Lan';
+    END IF;
+    
 
 	RETURN NEW;
 END;
