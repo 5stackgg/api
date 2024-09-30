@@ -40,6 +40,34 @@ $$;
 DROP TRIGGER IF EXISTS tbi_match ON public.matches;
 CREATE TRIGGER tbi_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbi_match();
 
+CREATE OR REPLACE FUNCTION public.tai_match() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _map_pool_id UUID;
+    _best_of int;
+    available_regions text[];
+    map_pool_count int;
+BEGIN
+    SELECT map_pool_id, best_of INTO _map_pool_id, _best_of FROM match_options WHERE id = NEW.match_options_id;
+
+    SELECT COUNT(*) INTO map_pool_count FROM _map_pool WHERE map_pool_id = _map_pool_id;
+
+    IF _best_of > map_pool_count THEN
+        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Not enough maps in the pool for the best of ' || _best_of;
+    END IF;
+
+    IF map_pool_count = 1 THEN 
+        INSERT INTO match_maps (match_id, map_id, "order", lineup_1_side, lineup_2_side)
+            VALUES (NEW.id, (SELECT map_id FROM _map_pool WHERE map_pool_id = _map_pool_id LIMIT 1), 1, 'CT', 'TERRORIST');
+    END IF;
+
+END;
+$$;
+
+
+DROP TRIGGER IF EXISTS tai_match ON public.matches;
+CREATE TRIGGER tbi_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tai_match();
 
 CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
