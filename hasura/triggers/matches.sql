@@ -67,7 +67,7 @@ $$;
 
 
 DROP TRIGGER IF EXISTS tai_match ON public.matches;
-CREATE TRIGGER tbi_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tai_match();
+CREATE TRIGGER tai_match BEFORE INSERT ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tai_match();
 
 CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
