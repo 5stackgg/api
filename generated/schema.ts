@@ -477,6 +477,71 @@ export type e_game_server_node_statuses_select_column = 'description' | 'value'
 export type e_game_server_node_statuses_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_lobby_access" */
+export interface e_lobby_access {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_lobby_access'
+}
+
+
+/** aggregated selection of "e_lobby_access" */
+export interface e_lobby_access_aggregate {
+    aggregate: (e_lobby_access_aggregate_fields | null)
+    nodes: e_lobby_access[]
+    __typename: 'e_lobby_access_aggregate'
+}
+
+
+/** aggregate fields of "e_lobby_access" */
+export interface e_lobby_access_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_lobby_access_max_fields | null)
+    min: (e_lobby_access_min_fields | null)
+    __typename: 'e_lobby_access_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_lobby_access" */
+export type e_lobby_access_constraint = 'e_lobby_access_pkey'
+
+export type e_lobby_access_enum = 'Invite' | 'Open' | 'Private'
+
+
+/** aggregate max on columns */
+export interface e_lobby_access_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_lobby_access_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_lobby_access_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_lobby_access_min_fields'
+}
+
+
+/** response of any mutation on the table "e_lobby_access" */
+export interface e_lobby_access_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_lobby_access[]
+    __typename: 'e_lobby_access_mutation_response'
+}
+
+
+/** select columns of table "e_lobby_access" */
+export type e_lobby_access_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_lobby_access" */
+export type e_lobby_access_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_map_pool_types" */
 export interface e_map_pool_types {
     description: (Scalars['String'] | null)
@@ -2860,6 +2925,8 @@ export interface match_options {
     has_active_matches: (Scalars['Boolean'] | null)
     id: Scalars['uuid']
     knife_round: Scalars['Boolean']
+    lan: Scalars['Boolean']
+    lobby_access: (e_lobby_access_enum | null)
     /** An object relationship */
     map_pool: map_pools
     map_pool_id: Scalars['uuid']
@@ -2956,7 +3023,7 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'lan' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -3000,7 +3067,7 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'knife_round' | 'lan' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'region_veto' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -3558,6 +3625,10 @@ export interface mutation_root {
     delete_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
     /** delete single row from the table: "e_game_server_node_statuses" */
     delete_e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
+    /** delete data from the table: "e_lobby_access" */
+    delete_e_lobby_access: (e_lobby_access_mutation_response | null)
+    /** delete single row from the table: "e_lobby_access" */
+    delete_e_lobby_access_by_pk: (e_lobby_access | null)
     /** delete data from the table: "e_map_pool_types" */
     delete_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** delete single row from the table: "e_map_pool_types" */
@@ -3772,6 +3843,10 @@ export interface mutation_root {
     insert_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
     /** insert a single row into the table: "e_game_server_node_statuses" */
     insert_e_game_server_node_statuses_one: (e_game_server_node_statuses | null)
+    /** insert data into the table: "e_lobby_access" */
+    insert_e_lobby_access: (e_lobby_access_mutation_response | null)
+    /** insert a single row into the table: "e_lobby_access" */
+    insert_e_lobby_access_one: (e_lobby_access | null)
     /** insert data into the table: "e_map_pool_types" */
     insert_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** insert a single row into the table: "e_map_pool_types" */
@@ -4004,6 +4079,12 @@ export interface mutation_root {
     update_e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
     /** update multiples rows of table: "e_game_server_node_statuses" */
     update_e_game_server_node_statuses_many: ((e_game_server_node_statuses_mutation_response | null)[] | null)
+    /** update data of the table: "e_lobby_access" */
+    update_e_lobby_access: (e_lobby_access_mutation_response | null)
+    /** update single row of the table: "e_lobby_access" */
+    update_e_lobby_access_by_pk: (e_lobby_access | null)
+    /** update multiples rows of table: "e_lobby_access" */
+    update_e_lobby_access_many: ((e_lobby_access_mutation_response | null)[] | null)
     /** update data of the table: "e_map_pool_types" */
     update_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** update single row of the table: "e_map_pool_types" */
@@ -6018,6 +6099,12 @@ export interface query_root {
     e_game_server_node_statuses_aggregate: e_game_server_node_statuses_aggregate
     /** fetch data from the table: "e_game_server_node_statuses" using primary key columns */
     e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
+    /** fetch data from the table: "e_lobby_access" */
+    e_lobby_access: e_lobby_access[]
+    /** fetch aggregated fields from the table: "e_lobby_access" */
+    e_lobby_access_aggregate: e_lobby_access_aggregate
+    /** fetch data from the table: "e_lobby_access" using primary key columns */
+    e_lobby_access_by_pk: (e_lobby_access | null)
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types: e_map_pool_types[]
     /** fetch aggregated fields from the table: "e_map_pool_types" */
@@ -6634,6 +6721,14 @@ export interface subscription_root {
     e_game_server_node_statuses_by_pk: (e_game_server_node_statuses | null)
     /** fetch data from the table in a streaming manner: "e_game_server_node_statuses" */
     e_game_server_node_statuses_stream: e_game_server_node_statuses[]
+    /** fetch data from the table: "e_lobby_access" */
+    e_lobby_access: e_lobby_access[]
+    /** fetch aggregated fields from the table: "e_lobby_access" */
+    e_lobby_access_aggregate: e_lobby_access_aggregate
+    /** fetch data from the table: "e_lobby_access" using primary key columns */
+    e_lobby_access_by_pk: (e_lobby_access | null)
+    /** fetch data from the table in a streaming manner: "e_lobby_access" */
+    e_lobby_access_stream: e_lobby_access[]
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types: e_map_pool_types[]
     /** fetch aggregated fields from the table: "e_map_pool_types" */
@@ -10456,6 +10551,109 @@ export interface e_game_server_node_statuses_updates {
 _set?: (e_game_server_node_statuses_set_input | null),
 /** filter the rows which have to be updated */
 where: e_game_server_node_statuses_bool_exp}
+
+
+/** columns and relationships of "e_lobby_access" */
+export interface e_lobby_accessGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_lobby_access" */
+export interface e_lobby_access_aggregateGenqlSelection{
+    aggregate?: e_lobby_access_aggregate_fieldsGenqlSelection
+    nodes?: e_lobby_accessGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_lobby_access" */
+export interface e_lobby_access_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_lobby_access_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_lobby_access_max_fieldsGenqlSelection
+    min?: e_lobby_access_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_lobby_access". All fields are combined with a logical 'AND'. */
+export interface e_lobby_access_bool_exp {_and?: (e_lobby_access_bool_exp[] | null),_not?: (e_lobby_access_bool_exp | null),_or?: (e_lobby_access_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_lobby_access_enum". All fields are combined with logical 'AND'. */
+export interface e_lobby_access_enum_comparison_exp {_eq?: (e_lobby_access_enum | null),_in?: (e_lobby_access_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_lobby_access_enum | null),_nin?: (e_lobby_access_enum[] | null)}
+
+
+/** input type for inserting data into table "e_lobby_access" */
+export interface e_lobby_access_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_lobby_access_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_lobby_access_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_lobby_access" */
+export interface e_lobby_access_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_lobby_accessGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_lobby_access" */
+export interface e_lobby_access_on_conflict {constraint: e_lobby_access_constraint,update_columns?: e_lobby_access_update_column[],where?: (e_lobby_access_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_lobby_access". */
+export interface e_lobby_access_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_lobby_access */
+export interface e_lobby_access_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_lobby_access" */
+export interface e_lobby_access_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_lobby_access" */
+export interface e_lobby_access_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_lobby_access_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_lobby_access_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_lobby_access_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_lobby_access_set_input | null),
+/** filter the rows which have to be updated */
+where: e_lobby_access_bool_exp}
 
 
 /** columns and relationships of "e_map_pool_types" */
@@ -14809,6 +15007,8 @@ export interface match_optionsGenqlSelection{
     has_active_matches?: boolean | number
     id?: boolean | number
     knife_round?: boolean | number
+    lan?: boolean | number
+    lobby_access?: boolean | number
     /** An object relationship */
     map_pool?: map_poolsGenqlSelection
     map_pool_id?: boolean | number
@@ -14891,7 +15091,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lan?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -14899,7 +15099,7 @@ export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?:
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),lan?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -14950,7 +15150,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),knife_round?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),region_veto?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
+export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),knife_round?: (order_by | null),lan?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),region_veto?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -14958,7 +15158,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),lan?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -15003,7 +15203,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),knife_round?: (Scalars['Boolean'] | null),lan?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -16045,6 +16245,12 @@ export interface mutation_rootGenqlSelection{
     where: e_game_server_node_statuses_bool_exp} })
     /** delete single row from the table: "e_game_server_node_statuses" */
     delete_e_game_server_node_statuses_by_pk?: (e_game_server_node_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_lobby_access" */
+    delete_e_lobby_access?: (e_lobby_access_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_lobby_access_bool_exp} })
+    /** delete single row from the table: "e_lobby_access" */
+    delete_e_lobby_access_by_pk?: (e_lobby_accessGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_map_pool_types" */
     delete_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -16391,6 +16597,18 @@ export interface mutation_rootGenqlSelection{
     object: e_game_server_node_statuses_insert_input, 
     /** upsert condition */
     on_conflict?: (e_game_server_node_statuses_on_conflict | null)} })
+    /** insert data into the table: "e_lobby_access" */
+    insert_e_lobby_access?: (e_lobby_access_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_lobby_access_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_lobby_access_on_conflict | null)} })
+    /** insert a single row into the table: "e_lobby_access" */
+    insert_e_lobby_access_one?: (e_lobby_accessGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_lobby_access_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_lobby_access_on_conflict | null)} })
     /** insert data into the table: "e_map_pool_types" */
     insert_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -17051,6 +17269,20 @@ export interface mutation_rootGenqlSelection{
     update_e_game_server_node_statuses_many?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_game_server_node_statuses_updates[]} })
+    /** update data of the table: "e_lobby_access" */
+    update_e_lobby_access?: (e_lobby_access_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_lobby_access_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_lobby_access_bool_exp} })
+    /** update single row of the table: "e_lobby_access" */
+    update_e_lobby_access_by_pk?: (e_lobby_accessGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_lobby_access_set_input | null), pk_columns: e_lobby_access_pk_columns_input} })
+    /** update multiples rows of table: "e_lobby_access" */
+    update_e_lobby_access_many?: (e_lobby_access_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_lobby_access_updates[]} })
     /** update data of the table: "e_map_pool_types" */
     update_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -21058,6 +21290,32 @@ export interface query_rootGenqlSelection{
     where?: (e_game_server_node_statuses_bool_exp | null)} })
     /** fetch data from the table: "e_game_server_node_statuses" using primary key columns */
     e_game_server_node_statuses_by_pk?: (e_game_server_node_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_lobby_access" */
+    e_lobby_access?: (e_lobby_accessGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_access_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_lobby_access" */
+    e_lobby_access_aggregate?: (e_lobby_access_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_access_bool_exp | null)} })
+    /** fetch data from the table: "e_lobby_access" using primary key columns */
+    e_lobby_access_by_pk?: (e_lobby_accessGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types?: (e_map_pool_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -23101,6 +23359,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_game_server_node_statuses_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_game_server_node_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_lobby_access" */
+    e_lobby_access?: (e_lobby_accessGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_access_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_lobby_access" */
+    e_lobby_access_aggregate?: (e_lobby_access_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_access_bool_exp | null)} })
+    /** fetch data from the table: "e_lobby_access" using primary key columns */
+    e_lobby_access_by_pk?: (e_lobby_accessGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_lobby_access" */
+    e_lobby_access_stream?: (e_lobby_accessGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_lobby_access_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_lobby_access_bool_exp | null)} })
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types?: (e_map_pool_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -29705,6 +29997,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_lobby_access_possibleTypes: string[] = ['e_lobby_access']
+    export const ise_lobby_access = (obj?: { __typename?: any } | null): obj is e_lobby_access => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_access"')
+      return e_lobby_access_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_access_aggregate_possibleTypes: string[] = ['e_lobby_access_aggregate']
+    export const ise_lobby_access_aggregate = (obj?: { __typename?: any } | null): obj is e_lobby_access_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_access_aggregate"')
+      return e_lobby_access_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_access_aggregate_fields_possibleTypes: string[] = ['e_lobby_access_aggregate_fields']
+    export const ise_lobby_access_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_lobby_access_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_access_aggregate_fields"')
+      return e_lobby_access_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_access_max_fields_possibleTypes: string[] = ['e_lobby_access_max_fields']
+    export const ise_lobby_access_max_fields = (obj?: { __typename?: any } | null): obj is e_lobby_access_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_access_max_fields"')
+      return e_lobby_access_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_access_min_fields_possibleTypes: string[] = ['e_lobby_access_min_fields']
+    export const ise_lobby_access_min_fields = (obj?: { __typename?: any } | null): obj is e_lobby_access_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_access_min_fields"')
+      return e_lobby_access_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_access_mutation_response_possibleTypes: string[] = ['e_lobby_access_mutation_response']
+    export const ise_lobby_access_mutation_response = (obj?: { __typename?: any } | null): obj is e_lobby_access_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_access_mutation_response"')
+      return e_lobby_access_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_map_pool_types_possibleTypes: string[] = ['e_map_pool_types']
     export const ise_map_pool_types = (obj?: { __typename?: any } | null): obj is e_map_pool_types => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_map_pool_types"')
@@ -34731,6 +35071,26 @@ export const enumEGameServerNodeStatusesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumELobbyAccessConstraint = {
+   e_lobby_access_pkey: 'e_lobby_access_pkey' as const
+}
+
+export const enumELobbyAccessEnum = {
+   Invite: 'Invite' as const,
+   Open: 'Open' as const,
+   Private: 'Private' as const
+}
+
+export const enumELobbyAccessSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumELobbyAccessUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumEMapPoolTypesConstraint = {
    e_map_pool_types_pkey: 'e_map_pool_types_pkey' as const
 }
@@ -35295,6 +35655,8 @@ export const enumMatchOptionsSelectColumn = {
    coaches: 'coaches' as const,
    id: 'id' as const,
    knife_round: 'knife_round' as const,
+   lan: 'lan' as const,
+   lobby_access: 'lobby_access' as const,
    map_pool_id: 'map_pool_id' as const,
    map_veto: 'map_veto' as const,
    mr: 'mr' as const,
@@ -35312,6 +35674,8 @@ export const enumMatchOptionsUpdateColumn = {
    coaches: 'coaches' as const,
    id: 'id' as const,
    knife_round: 'knife_round' as const,
+   lan: 'lan' as const,
+   lobby_access: 'lobby_access' as const,
    map_pool_id: 'map_pool_id' as const,
    map_veto: 'map_veto' as const,
    mr: 'mr' as const,

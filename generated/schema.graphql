@@ -1244,6 +1244,180 @@ input e_game_server_node_statuses_updates {
 }
 
 """
+columns and relationships of "e_lobby_access"
+"""
+type e_lobby_access {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_lobby_access"
+"""
+type e_lobby_access_aggregate {
+  aggregate: e_lobby_access_aggregate_fields
+  nodes: [e_lobby_access!]!
+}
+
+"""
+aggregate fields of "e_lobby_access"
+"""
+type e_lobby_access_aggregate_fields {
+  count(columns: [e_lobby_access_select_column!], distinct: Boolean): Int!
+  max: e_lobby_access_max_fields
+  min: e_lobby_access_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_lobby_access". All fields are combined with a logical 'AND'.
+"""
+input e_lobby_access_bool_exp {
+  _and: [e_lobby_access_bool_exp!]
+  _not: e_lobby_access_bool_exp
+  _or: [e_lobby_access_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_lobby_access"
+"""
+enum e_lobby_access_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_lobby_access_pkey
+}
+
+enum e_lobby_access_enum {
+  """Invite Only"""
+  Invite
+
+  """Open"""
+  Open
+
+  """Private"""
+  Private
+}
+
+"""
+Boolean expression to compare columns of type "e_lobby_access_enum". All fields are combined with logical 'AND'.
+"""
+input e_lobby_access_enum_comparison_exp {
+  _eq: e_lobby_access_enum
+  _in: [e_lobby_access_enum!]
+  _is_null: Boolean
+  _neq: e_lobby_access_enum
+  _nin: [e_lobby_access_enum!]
+}
+
+"""
+input type for inserting data into table "e_lobby_access"
+"""
+input e_lobby_access_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_lobby_access_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_lobby_access_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_lobby_access"
+"""
+type e_lobby_access_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_lobby_access!]!
+}
+
+"""
+on_conflict condition type for table "e_lobby_access"
+"""
+input e_lobby_access_on_conflict {
+  constraint: e_lobby_access_constraint!
+  update_columns: [e_lobby_access_update_column!]! = []
+  where: e_lobby_access_bool_exp
+}
+
+"""Ordering options when selecting data from "e_lobby_access"."""
+input e_lobby_access_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_lobby_access"""
+input e_lobby_access_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_lobby_access"
+"""
+enum e_lobby_access_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_lobby_access"
+"""
+input e_lobby_access_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_lobby_access"
+"""
+input e_lobby_access_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_lobby_access_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_lobby_access_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_lobby_access"
+"""
+enum e_lobby_access_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_lobby_access_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_lobby_access_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_lobby_access_bool_exp!
+}
+
+"""
 columns and relationships of "e_map_pool_types"
 """
 type e_map_pool_types {
@@ -9050,6 +9224,8 @@ type match_options {
   has_active_matches: Boolean
   id: uuid!
   knife_round: Boolean!
+  lan: Boolean!
+  lobby_access: e_lobby_access_enum
 
   """An object relationship"""
   map_pool: map_pools!
@@ -9149,6 +9325,8 @@ input match_options_bool_exp {
   has_active_matches: Boolean_comparison_exp
   id: uuid_comparison_exp
   knife_round: Boolean_comparison_exp
+  lan: Boolean_comparison_exp
+  lobby_access: e_lobby_access_enum_comparison_exp
   map_pool: map_pools_bool_exp
   map_pool_id: uuid_comparison_exp
   map_veto: Boolean_comparison_exp
@@ -9193,6 +9371,8 @@ input match_options_insert_input {
   coaches: Boolean
   id: uuid
   knife_round: Boolean
+  lan: Boolean
+  lobby_access: e_lobby_access_enum
   map_pool: map_pools_obj_rel_insert_input
   map_pool_id: uuid
   map_veto: Boolean
@@ -9265,6 +9445,8 @@ input match_options_order_by {
   has_active_matches: order_by
   id: order_by
   knife_round: order_by
+  lan: order_by
+  lobby_access: order_by
   map_pool: map_pools_order_by
   map_pool_id: order_by
   map_veto: order_by
@@ -9300,6 +9482,12 @@ enum match_options_select_column {
 
   """column name"""
   knife_round
+
+  """column name"""
+  lan
+
+  """column name"""
+  lobby_access
 
   """column name"""
   map_pool_id
@@ -9340,6 +9528,8 @@ input match_options_set_input {
   coaches: Boolean
   id: uuid
   knife_round: Boolean
+  lan: Boolean
+  lobby_access: e_lobby_access_enum
   map_pool_id: uuid
   map_veto: Boolean
   mr: Int
@@ -9393,6 +9583,8 @@ input match_options_stream_cursor_value_input {
   coaches: Boolean
   id: uuid
   knife_round: Boolean
+  lan: Boolean
+  lobby_access: e_lobby_access_enum
   map_pool_id: uuid
   map_veto: Boolean
   mr: Int
@@ -9428,6 +9620,12 @@ enum match_options_update_column {
 
   """column name"""
   knife_round
+
+  """column name"""
+  lan
+
+  """column name"""
+  lobby_access
 
   """column name"""
   map_pool_id
@@ -11457,6 +11655,19 @@ type mutation_root {
   delete_e_game_server_node_statuses_by_pk(value: String!): e_game_server_node_statuses
 
   """
+  delete data from the table: "e_lobby_access"
+  """
+  delete_e_lobby_access(
+    """filter the rows which have to be deleted"""
+    where: e_lobby_access_bool_exp!
+  ): e_lobby_access_mutation_response
+
+  """
+  delete single row from the table: "e_lobby_access"
+  """
+  delete_e_lobby_access_by_pk(value: String!): e_lobby_access
+
+  """
   delete data from the table: "e_map_pool_types"
   """
   delete_e_map_pool_types(
@@ -12185,6 +12396,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_game_server_node_statuses_on_conflict
   ): e_game_server_node_statuses
+
+  """
+  insert data into the table: "e_lobby_access"
+  """
+  insert_e_lobby_access(
+    """the rows to be inserted"""
+    objects: [e_lobby_access_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_lobby_access_on_conflict
+  ): e_lobby_access_mutation_response
+
+  """
+  insert a single row into the table: "e_lobby_access"
+  """
+  insert_e_lobby_access_one(
+    """the row to be inserted"""
+    object: e_lobby_access_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_lobby_access_on_conflict
+  ): e_lobby_access
 
   """
   insert data into the table: "e_map_pool_types"
@@ -13402,6 +13635,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_game_server_node_statuses_updates!]!
   ): [e_game_server_node_statuses_mutation_response]
+
+  """
+  update data of the table: "e_lobby_access"
+  """
+  update_e_lobby_access(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_lobby_access_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_lobby_access_bool_exp!
+  ): e_lobby_access_mutation_response
+
+  """
+  update single row of the table: "e_lobby_access"
+  """
+  update_e_lobby_access_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_lobby_access_set_input
+    pk_columns: e_lobby_access_pk_columns_input!
+  ): e_lobby_access
+
+  """
+  update multiples rows of table: "e_lobby_access"
+  """
+  update_e_lobby_access_many(
+    """updates to execute, in order"""
+    updates: [e_lobby_access_updates!]!
+  ): [e_lobby_access_mutation_response]
 
   """
   update data of the table: "e_map_pool_types"
@@ -20886,6 +21147,49 @@ type query_root {
   e_game_server_node_statuses_by_pk(value: String!): e_game_server_node_statuses
 
   """
+  fetch data from the table: "e_lobby_access"
+  """
+  e_lobby_access(
+    """distinct select on columns"""
+    distinct_on: [e_lobby_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_lobby_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_lobby_access_bool_exp
+  ): [e_lobby_access!]!
+
+  """
+  fetch aggregated fields from the table: "e_lobby_access"
+  """
+  e_lobby_access_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_lobby_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_lobby_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_lobby_access_bool_exp
+  ): e_lobby_access_aggregate!
+
+  """fetch data from the table: "e_lobby_access" using primary key columns"""
+  e_lobby_access_by_pk(value: String!): e_lobby_access
+
+  """
   fetch data from the table: "e_map_pool_types"
   """
   e_map_pool_types(
@@ -24319,6 +24623,63 @@ type subscription_root {
     """filter the rows returned"""
     where: e_game_server_node_statuses_bool_exp
   ): [e_game_server_node_statuses!]!
+
+  """
+  fetch data from the table: "e_lobby_access"
+  """
+  e_lobby_access(
+    """distinct select on columns"""
+    distinct_on: [e_lobby_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_lobby_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_lobby_access_bool_exp
+  ): [e_lobby_access!]!
+
+  """
+  fetch aggregated fields from the table: "e_lobby_access"
+  """
+  e_lobby_access_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_lobby_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_lobby_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_lobby_access_bool_exp
+  ): e_lobby_access_aggregate!
+
+  """fetch data from the table: "e_lobby_access" using primary key columns"""
+  e_lobby_access_by_pk(value: String!): e_lobby_access
+
+  """
+  fetch data from the table in a streaming manner: "e_lobby_access"
+  """
+  e_lobby_access_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_lobby_access_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_lobby_access_bool_exp
+  ): [e_lobby_access!]!
 
   """
   fetch data from the table: "e_map_pool_types"
