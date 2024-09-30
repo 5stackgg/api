@@ -12649,6 +12649,9 @@ export default {
             "id": [
                 1720
             ],
+            "invite_code": [
+                7
+            ],
             "knife_round": [
                 0
             ],
@@ -12839,6 +12842,9 @@ export default {
             "id": [
                 1721
             ],
+            "invite_code": [
+                8
+            ],
             "knife_round": [
                 1
             ],
@@ -12922,6 +12928,9 @@ export default {
             "id": [
                 1720
             ],
+            "invite_code": [
+                7
+            ],
             "knife_round": [
                 0
             ],
@@ -12981,6 +12990,9 @@ export default {
             "id": [
                 1720
             ],
+            "invite_code": [
+                7
+            ],
             "map_pool_id": [
                 1720
             ],
@@ -13003,6 +13015,9 @@ export default {
             ],
             "id": [
                 1720
+            ],
+            "invite_code": [
+                7
             ],
             "map_pool_id": [
                 1720
@@ -13067,6 +13082,9 @@ export default {
                 924
             ],
             "id": [
+                924
+            ],
+            "invite_code": [
                 924
             ],
             "knife_round": [
@@ -13139,6 +13157,9 @@ export default {
             ],
             "id": [
                 1720
+            ],
+            "invite_code": [
+                7
             ],
             "knife_round": [
                 0
@@ -13254,6 +13275,9 @@ export default {
             ],
             "id": [
                 1720
+            ],
+            "invite_code": [
+                7
             ],
             "knife_round": [
                 0
@@ -13848,6 +13872,9 @@ export default {
             ],
             "id": [
                 1720
+            ],
+            "invite_code": [
+                7
             ],
             "is_captain": [
                 0
@@ -14676,6 +14703,9 @@ export default {
             "id": [
                 1721
             ],
+            "invite_code": [
+                8
+            ],
             "is_captain": [
                 1
             ],
@@ -14998,6 +15028,9 @@ export default {
             "id": [
                 1720
             ],
+            "invite_code": [
+                7
+            ],
             "label": [
                 7
             ],
@@ -15127,6 +15160,9 @@ export default {
             ],
             "id": [
                 1720
+            ],
+            "invite_code": [
+                7
             ],
             "label": [
                 7
@@ -15316,6 +15352,9 @@ export default {
                 924
             ],
             "id": [
+                924
+            ],
+            "invite_code": [
                 924
             ],
             "is_captain": [
@@ -41795,6 +41834,22 @@ export default {
                     "object": [
                         1914,
                         "v_pool_maps_insert_input!"
+                    ]
+                }
+            ],
+            "joinLineup": [
+                9,
+                {
+                    "code": [
+                        7
+                    ],
+                    "lineup_id": [
+                        7,
+                        "String!"
+                    ],
+                    "match_id": [
+                        7,
+                        "String!"
                     ]
                 }
             ],

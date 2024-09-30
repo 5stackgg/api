@@ -171,6 +171,12 @@ computed_fields:
       function:
         name: get_current_match_map
         schema: public
+  - name: invite_code
+    definition:
+      function:
+        name: match_invite_code
+        schema: public
+      session_argument: hasura_session
   - name: is_captain
     definition:
       function:
@@ -403,6 +409,7 @@ select_permissions:
         - connection_link
         - connection_string
         - current_match_map_id
+        - invite_code
         - is_captain
         - is_coach
         - is_in_lineup

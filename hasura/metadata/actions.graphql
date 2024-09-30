@@ -35,6 +35,14 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  joinLineup(
+    match_id: String!
+    lineup_id: String!
+    code: String
+  ): SuccessOutput
+}
+
 type Query {
   me: MeResponse!
 }

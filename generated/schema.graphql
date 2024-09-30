@@ -9223,6 +9223,7 @@ type match_options {
   """
   has_active_matches: Boolean
   id: uuid!
+  invite_code: String
   knife_round: Boolean!
   lan: Boolean!
   lobby_access: e_lobby_access_enum
@@ -9324,6 +9325,7 @@ input match_options_bool_exp {
   coaches: Boolean_comparison_exp
   has_active_matches: Boolean_comparison_exp
   id: uuid_comparison_exp
+  invite_code: String_comparison_exp
   knife_round: Boolean_comparison_exp
   lan: Boolean_comparison_exp
   lobby_access: e_lobby_access_enum_comparison_exp
@@ -9370,6 +9372,7 @@ input match_options_insert_input {
   best_of: Int
   coaches: Boolean
   id: uuid
+  invite_code: String
   knife_round: Boolean
   lan: Boolean
   lobby_access: e_lobby_access_enum
@@ -9392,6 +9395,7 @@ input match_options_insert_input {
 type match_options_max_fields {
   best_of: Int
   id: uuid
+  invite_code: String
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
@@ -9402,6 +9406,7 @@ type match_options_max_fields {
 type match_options_min_fields {
   best_of: Int
   id: uuid
+  invite_code: String
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
@@ -9444,6 +9449,7 @@ input match_options_order_by {
   coaches: order_by
   has_active_matches: order_by
   id: order_by
+  invite_code: order_by
   knife_round: order_by
   lan: order_by
   lobby_access: order_by
@@ -9479,6 +9485,9 @@ enum match_options_select_column {
 
   """column name"""
   id
+
+  """column name"""
+  invite_code
 
   """column name"""
   knife_round
@@ -9527,6 +9536,7 @@ input match_options_set_input {
   best_of: Int
   coaches: Boolean
   id: uuid
+  invite_code: String
   knife_round: Boolean
   lan: Boolean
   lobby_access: e_lobby_access_enum
@@ -9582,6 +9592,7 @@ input match_options_stream_cursor_value_input {
   best_of: Int
   coaches: Boolean
   id: uuid
+  invite_code: String
   knife_round: Boolean
   lan: Boolean
   lobby_access: e_lobby_access_enum
@@ -9617,6 +9628,9 @@ enum match_options_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  invite_code
 
   """column name"""
   knife_round
@@ -10048,6 +10062,11 @@ type matches {
   e_region: e_game_server_node_regions
   ended_at: timestamptz
   id: uuid!
+
+  """
+  A computed field, executes function "match_invite_code"
+  """
+  invite_code: String
 
   """
   A computed field, executes function "is_captain"
@@ -10688,6 +10707,7 @@ input matches_bool_exp {
   e_region: e_game_server_node_regions_bool_exp
   ended_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
+  invite_code: String_comparison_exp
   is_captain: Boolean_comparison_exp
   is_coach: Boolean_comparison_exp
   is_in_lineup: Boolean_comparison_exp
@@ -10843,6 +10863,11 @@ type matches_max_fields {
   current_match_map_id: uuid
   ended_at: timestamptz
   id: uuid
+
+  """
+  A computed field, executes function "match_invite_code"
+  """
+  invite_code: String
   label: String
   lineup_1_id: uuid
   lineup_2_id: uuid
@@ -10941,6 +10966,11 @@ type matches_min_fields {
   current_match_map_id: uuid
   ended_at: timestamptz
   id: uuid
+
+  """
+  A computed field, executes function "match_invite_code"
+  """
+  invite_code: String
   label: String
   lineup_1_id: uuid
   lineup_2_id: uuid
@@ -11065,6 +11095,7 @@ input matches_order_by {
   e_region: e_game_server_node_regions_order_by
   ended_at: order_by
   id: order_by
+  invite_code: order_by
   is_captain: order_by
   is_coach: order_by
   is_in_lineup: order_by
@@ -13506,6 +13537,7 @@ type mutation_root {
     """the row to be inserted"""
     object: v_pool_maps_insert_input!
   ): v_pool_maps
+  joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput

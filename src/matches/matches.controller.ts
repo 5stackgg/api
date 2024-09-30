@@ -767,4 +767,50 @@ export class MatchesController {
       },
     });
   }
+
+  @HasuraAction()
+  public async joinLineup(data: {
+    user: User;
+    match_id: string;
+    lineup_id: string;
+    code: string;
+  }) {
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: data.match_id,
+        },
+        options: {
+          lobby_access: true,
+          invite_code: true,
+        },
+      },
+    });
+
+    if (matches_by_pk.options.lobby_access === "Private") {
+      throw Error("Cannot Join a Private Lobby");
+    }
+
+    if (matches_by_pk.options.lobby_access === "Invite") {
+      if (data.code !== matches_by_pk.options.invite_code) {
+        throw Error("Invalid Code for Match");
+      }
+    }
+
+    const { insert_match_lineup_players_one } = await this.hasura.mutation({
+      insert_match_lineup_players_one: {
+        __args: {
+          object: {
+            steam_id: data.user.steam_id,
+            match_lineup_id: data.lineup_id,
+          },
+        },
+        id: true,
+      },
+    });
+
+    return {
+      success: !!insert_match_lineup_players_one.id,
+    };
+  }
 }
