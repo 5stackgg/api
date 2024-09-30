@@ -24,6 +24,11 @@ BEGIN
         END IF;
     END IF;
 
+
+    IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
+        RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
+    END IF;
+
 	RETURN NEW;
 END;
 $$;
@@ -39,6 +44,11 @@ CREATE OR REPLACE FUNCTION public.tau_match_options() RETURNS TRIGGER
 BEGIN
     IF NEW.lan THEN
         UPDATE matches SET region = 'Lan' WHERE match_options_id = NEW.id;
+    END IF;
+
+
+    IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
+        RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
     END IF;
 
     RETURN NEW;

@@ -44,6 +44,7 @@ CREATE OR REPLACE FUNCTION public.tai_match() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
+    _map_id UUID;
     _map_pool_id UUID;
     _best_of int;
     available_regions text[];
@@ -53,15 +54,22 @@ BEGIN
 
     SELECT COUNT(*) INTO map_pool_count FROM _map_pool WHERE map_pool_id = _map_pool_id;
 
+    IF map_pool_count = 0 THEN
+        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Match requires at least one map selected';
+    END IF;
+
     IF _best_of > map_pool_count THEN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Not enough maps in the pool for the best of ' || _best_of;
     END IF;
 
+    SELECT map_id INTO _map_id FROM _map_pool WHERE map_pool_id = _map_pool_id LIMIT 1;
+
     IF map_pool_count = 1 THEN 
         INSERT INTO match_maps (match_id, map_id, "order", lineup_1_side, lineup_2_side)
-            VALUES (NEW.id, (SELECT map_id FROM _map_pool WHERE map_pool_id = _map_pool_id LIMIT 1), 1, 'CT', 'TERRORIST');
+            VALUES (NEW.id, _map_id, 1, 'CT', 'TERRORIST');
     END IF;
 
+    RETURN NEW;
 END;
 $$;
 
