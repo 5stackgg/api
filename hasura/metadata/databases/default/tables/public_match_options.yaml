@@ -35,6 +35,7 @@ insert_permissions:
         - coaches
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -54,6 +55,7 @@ insert_permissions:
         - coaches
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -73,6 +75,7 @@ insert_permissions:
         - coaches
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -91,6 +94,7 @@ insert_permissions:
         - best_of
         - coaches
         - knife_round
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -111,6 +115,7 @@ select_permissions:
         - id
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -131,6 +136,7 @@ update_permissions:
         - coaches
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -151,6 +157,7 @@ update_permissions:
         - coaches
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -177,6 +184,7 @@ update_permissions:
         - coaches
         - knife_round
         - lan
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -202,6 +210,7 @@ update_permissions:
         - best_of
         - coaches
         - knife_round
+        - lobby_access
         - map_pool_id
         - map_veto
         - mr

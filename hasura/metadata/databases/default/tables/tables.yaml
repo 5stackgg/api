@@ -3,6 +3,7 @@
 - "!include public_abandoned_matches.yaml"
 - "!include public_e_game_server_node_regions.yaml"
 - "!include public_e_game_server_node_statuses.yaml"
+- "!include public_e_lobby_access.yaml"
 - "!include public_e_map_pool_types.yaml"
 - "!include public_e_match_map_status.yaml"
 - "!include public_e_match_status.yaml"
