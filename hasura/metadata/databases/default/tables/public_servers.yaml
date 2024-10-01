@@ -54,6 +54,7 @@ select_permissions:
         - id
         - label
         - port
+        - region
         - tv_port
       computed_fields:
         - is_dedicated

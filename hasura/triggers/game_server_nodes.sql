@@ -40,8 +40,8 @@ BEGIN
     WHILE game_port < NEW.end_port_range LOOP
         serverCount = serverCount + 1;
 
-        INSERT INTO servers (host, label, rcon_password, port, tv_port, api_password, game_server_node_id)
-        VALUES (host(NEW.public_ip), CONCAT('on-demand-', serverCount), gen_random_uuid()::text::bytea, game_port, game_port + 1, gen_random_uuid(), NEW.id);
+        INSERT INTO servers (host, label, rcon_password, port, tv_port, api_password, game_server_node_id, region)
+        VALUES (host(NEW.public_ip), CONCAT('on-demand-', serverCount), gen_random_uuid()::text::bytea, game_port, game_port + 1, gen_random_uuid(), NEW.id, NEW.region);
 
         game_port = game_port + 2;
     END LOOP;
