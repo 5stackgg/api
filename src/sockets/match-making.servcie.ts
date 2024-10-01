@@ -327,6 +327,9 @@ export class MatchMakingService {
                 total_server_count: {
                   _gt: 0,
                 },
+                value: {
+                  _neq: "Lan"
+                }
               },
             ],
           },
