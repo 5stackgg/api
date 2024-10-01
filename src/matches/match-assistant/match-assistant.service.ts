@@ -212,7 +212,75 @@ export class MatchAssistantService {
     });
   }
 
-  public async assignOnDemandServer(matchId: string): Promise<boolean> {
+  public async assignServer(matchId: string): Promise<boolean> {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        id: true,
+        region: true,
+        options: {
+          prefer_dedicated_server: true,
+        },
+      },
+    });
+
+    if (
+      match.options.prefer_dedicated_server &&
+      (await this.assignDedicatedServer(match.id, match.region))
+    ) {
+      return true;
+    }
+
+    return await this.assignOnDemandServer(matchId);
+  }
+
+  private async assignDedicatedServer(
+    matchId: string,
+    region: string,
+  ): Promise<boolean> {
+    const { servers } = await this.hasura.query({
+      servers: {
+        __args: {
+          limit: 1,
+          where: {
+            reserved_by_match_id: {
+              _is_null: true,
+            },
+            region: {
+              _eq: region,
+            },
+          },
+        },
+        id: true,
+      },
+    });
+
+    const server = servers.at(0);
+
+    if (server) {
+      return false;
+    }
+
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: {
+            id: server.id,
+          },
+          _set: {
+            reserved_by_match_id: matchId,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    return true;
+  }
+
+  private async assignOnDemandServer(matchId: string): Promise<boolean> {
     this.logger.debug(`[${matchId}] assigning on demand server`);
 
     const { matches_by_pk: match } = await this.hasura.query({

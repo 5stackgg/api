@@ -191,8 +191,12 @@ export class MatchesController {
         },
         id: true,
         status: true,
+        options: {
+          prefer_dedicated_server: true,
+        },
         server: {
           id: true,
+          is_dedicated: true,
           game_server_node_id: true,
         },
       },
@@ -204,7 +208,10 @@ export class MatchesController {
 
     if (match.status === "Live" && data.old.status !== "WaitingForServer") {
       if (match.server) {
-        if (!(await this.matchAssistant.isDedicatedServerAvailable(matchId))) {
+        if (
+          match.server.is_dedicated &&
+          !(await this.matchAssistant.isDedicatedServerAvailable(matchId))
+        ) {
           this.logger.warn(
             `[${matchId}] another match is currently live, moving back to scheduled`,
           );
@@ -232,7 +239,7 @@ export class MatchesController {
         /**
          * if we don't have a server id it means we need to assign it one
          */
-        await this.matchAssistant.assignOnDemandServer(matchId);
+        await this.matchAssistant.assignServer(matchId);
       }
     }
 
@@ -749,7 +756,7 @@ export class MatchesController {
       return;
     }
 
-    if (!(await this.matchAssistant.assignOnDemandServer(match.id))) {
+    if (!(await this.matchAssistant.assignServer(match.id))) {
       return;
     }
 
