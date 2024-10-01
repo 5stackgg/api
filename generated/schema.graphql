@@ -61,6 +61,26 @@ type SetupGameServeOutput {
 """
 Boolean expression to compare columns of type "String". All fields are combined with logical 'AND'.
 """
+input String_array_comparison_exp {
+  """is the array contained in the given array value"""
+  _contained_in: [String!]
+
+  """does the array contain the given value"""
+  _contains: [String!]
+  _eq: [String!]
+  _gt: [String!]
+  _gte: [String!]
+  _in: [[String!]!]
+  _is_null: Boolean
+  _lt: [String!]
+  _lte: [String!]
+  _neq: [String!]
+  _nin: [[String!]!]
+}
+
+"""
+Boolean expression to compare columns of type "String". All fields are combined with logical 'AND'.
+"""
 input String_comparison_exp {
   _eq: String
   _gt: String
@@ -5116,23 +5136,6 @@ input inet_comparison_exp {
   _nin: [inet!]
 }
 
-scalar json
-
-"""
-Boolean expression to compare columns of type "json". All fields are combined with logical 'AND'.
-"""
-input json_comparison_exp {
-  _eq: json
-  _gt: json
-  _gte: json
-  _in: [json!]
-  _is_null: Boolean
-  _lt: json
-  _lte: json
-  _neq: json
-  _nin: [json!]
-}
-
 scalar jsonb
 
 input jsonb_cast_exp {
@@ -9287,10 +9290,7 @@ type match_options {
   overtime: Boolean!
   prefer_dedicated_server: Boolean!
   region_veto: Boolean!
-  regions(
-    """JSON select path"""
-    path: String
-  ): json
+  regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum!
   timeout_setting: e_timeout_settings_enum!
 
@@ -9357,7 +9357,7 @@ input match_options_bool_exp {
   overtime: Boolean_comparison_exp
   prefer_dedicated_server: Boolean_comparison_exp
   region_veto: Boolean_comparison_exp
-  regions: json_comparison_exp
+  regions: String_array_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
@@ -9404,7 +9404,7 @@ input match_options_insert_input {
   overtime: Boolean
   prefer_dedicated_server: Boolean
   region_veto: Boolean
-  regions: json
+  regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
@@ -9420,6 +9420,7 @@ type match_options_max_fields {
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
+  regions: [String!]
   tv_delay: Int
 }
 
@@ -9431,6 +9432,7 @@ type match_options_min_fields {
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
+  regions: [String!]
   tv_delay: Int
 }
 
@@ -9571,7 +9573,7 @@ input match_options_set_input {
   overtime: Boolean
   prefer_dedicated_server: Boolean
   region_veto: Boolean
-  regions: json
+  regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -9628,7 +9630,7 @@ input match_options_stream_cursor_value_input {
   overtime: Boolean
   prefer_dedicated_server: Boolean
   region_veto: Boolean
-  regions: json
+  regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int

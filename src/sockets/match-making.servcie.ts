@@ -328,8 +328,8 @@ export class MatchMakingService {
                   _gt: 0,
                 },
                 value: {
-                  _neq: "Lan"
-                }
+                  _neq: "Lan",
+                },
               },
             ],
           },

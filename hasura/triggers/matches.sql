@@ -25,14 +25,6 @@ BEGIN
         NEW.region = available_regions[1];
     END IF;
 
-
-    SELECT lan INTO lan_match FROM match_options WHERE id = NEW.match_options_id;
-
-    IF lan_match = true THEN
-        NEW.region = 'Lan';
-    END IF;
-    
-
 	RETURN NEW;
 END;
 $$;

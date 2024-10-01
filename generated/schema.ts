@@ -11,7 +11,6 @@ export type Scalars = {
     bigint: any,
     bytea: any,
     inet: any,
-    json: any,
     jsonb: any,
     numeric: any,
     timestamptz: any,
@@ -2941,7 +2940,7 @@ export interface match_options {
     overtime: Scalars['Boolean']
     prefer_dedicated_server: Scalars['Boolean']
     region_veto: Scalars['Boolean']
-    regions: (Scalars['json'] | null)
+    regions: (Scalars['String'][] | null)
     tech_timeout_setting: e_timeout_settings_enum
     timeout_setting: e_timeout_settings_enum
     /** An object relationship */
@@ -2999,6 +2998,7 @@ export interface match_options_max_fields {
     map_pool_id: (Scalars['uuid'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
+    regions: (Scalars['String'][] | null)
     tv_delay: (Scalars['Int'] | null)
     __typename: 'match_options_max_fields'
 }
@@ -3012,6 +3012,7 @@ export interface match_options_min_fields {
     map_pool_id: (Scalars['uuid'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
+    regions: (Scalars['String'][] | null)
     tv_delay: (Scalars['Int'] | null)
     __typename: 'match_options_min_fields'
 }
@@ -9722,6 +9723,14 @@ export interface SetupGameServeOutputGenqlSelection{
 
 
 /** Boolean expression to compare columns of type "String". All fields are combined with logical 'AND'. */
+export interface String_array_comparison_exp {
+/** is the array contained in the given array value */
+_contained_in?: (Scalars['String'][] | null),
+/** does the array contain the given value */
+_contains?: (Scalars['String'][] | null),_eq?: (Scalars['String'][] | null),_gt?: (Scalars['String'][] | null),_gte?: (Scalars['String'][] | null),_in?: (Scalars['String'][][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['String'][] | null),_lte?: (Scalars['String'][] | null),_neq?: (Scalars['String'][] | null),_nin?: (Scalars['String'][][] | null)}
+
+
+/** Boolean expression to compare columns of type "String". All fields are combined with logical 'AND'. */
 export interface String_comparison_exp {_eq?: (Scalars['String'] | null),_gt?: (Scalars['String'] | null),_gte?: (Scalars['String'] | null),
 /** does the column match the given case-insensitive pattern */
 _ilike?: (Scalars['String'] | null),_in?: (Scalars['String'][] | null),
@@ -12668,10 +12677,6 @@ export interface game_server_nodes_variance_order_by {build_id?: (order_by | nul
 /** Boolean expression to compare columns of type "inet". All fields are combined with logical 'AND'. */
 export interface inet_comparison_exp {_eq?: (Scalars['inet'] | null),_gt?: (Scalars['inet'] | null),_gte?: (Scalars['inet'] | null),_in?: (Scalars['inet'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['inet'] | null),_lte?: (Scalars['inet'] | null),_neq?: (Scalars['inet'] | null),_nin?: (Scalars['inet'][] | null)}
 
-
-/** Boolean expression to compare columns of type "json". All fields are combined with logical 'AND'. */
-export interface json_comparison_exp {_eq?: (Scalars['json'] | null),_gt?: (Scalars['json'] | null),_gte?: (Scalars['json'] | null),_in?: (Scalars['json'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['json'] | null),_lte?: (Scalars['json'] | null),_neq?: (Scalars['json'] | null),_nin?: (Scalars['json'][] | null)}
-
 export interface jsonb_cast_exp {String?: (String_comparison_exp | null)}
 
 
@@ -14941,9 +14946,7 @@ export interface match_optionsGenqlSelection{
     overtime?: boolean | number
     prefer_dedicated_server?: boolean | number
     region_veto?: boolean | number
-    regions?: { __args: {
-    /** JSON select path */
-    path?: (Scalars['String'] | null)} } | boolean | number
+    regions?: boolean | number
     tech_timeout_setting?: boolean | number
     timeout_setting?: boolean | number
     /** An object relationship */
@@ -14994,7 +14997,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (json_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -15002,7 +15005,7 @@ export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?:
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['json'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -15013,6 +15016,7 @@ export interface match_options_max_fieldsGenqlSelection{
     map_pool_id?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    regions?: boolean | number
     tv_delay?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -15027,6 +15031,7 @@ export interface match_options_min_fieldsGenqlSelection{
     map_pool_id?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    regions?: boolean | number
     tv_delay?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -15063,7 +15068,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['json'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -15108,7 +15113,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['json'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */

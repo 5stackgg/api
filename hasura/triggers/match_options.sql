@@ -25,6 +25,13 @@ BEGIN
         NEW.region_veto = false;
     END IF;
 
+
+    IF 'Lan' = ANY(NEW.regions) THEN
+        IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' THEN
+            RAISE EXCEPTION 'Cannot assign the Lan region' USING ERRCODE = '22000';
+        END IF;
+    END IF;
+
     IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
         RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
     END IF;
