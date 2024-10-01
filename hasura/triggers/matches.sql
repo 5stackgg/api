@@ -5,6 +5,7 @@ DECLARE
     lan_match BOOLEAN;
     _lineup_1_id UUID;
     _lineup_2_id UUID;
+    _regions text[];
     available_regions text[];
 BEGIN
     IF NEW.lineup_1_id IS NULL THEN
@@ -17,9 +18,19 @@ BEGIN
        NEW.lineup_2_id = _lineup_2_id;
     END IF;
 
-    select array_agg(sr.value) INTO available_regions from e_server_regions sr
-        INNER JOIN game_server_nodes gsn on gsn.region = sr.value and gsn.enabled = true
-        where gsn.region != 'Lan';
+    SELECT regions INTO _regions FROM match_options WHERE id = NEW.match_options_id;
+
+    IF array_length(_regions, 1) != 0 THEN
+        SELECT array_agg(sr.value) INTO available_regions 
+        FROM e_server_regions sr
+        WHERE sr.value = ANY(_regions)
+        AND available_region_server_count(sr) > 0;
+    ELSE
+        SELECT array_agg(sr.value) INTO available_regions 
+        FROM e_server_regions sr
+        WHERE available_region_server_count(sr) > 0
+        AND sr.value != 'Lan';
+    END IF;
 
     IF array_length(available_regions, 1) = 1 THEN
         NEW.region = available_regions[1];
