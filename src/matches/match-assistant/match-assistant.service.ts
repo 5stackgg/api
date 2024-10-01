@@ -11,7 +11,7 @@ import { MatchJobs } from "../enums/MatchJobs";
 import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import {
-  e_game_server_node_regions_enum,
+  e_server_regions_enum,
   e_map_pool_types_enum,
   e_match_status_enum,
   e_match_types_enum,
@@ -764,7 +764,7 @@ export class MatchAssistantService {
       map?: string;
       overtime: boolean;
       timeout_setting?: e_timeout_settings_enum;
-      region?: e_game_server_node_regions_enum;
+      region?: e_server_regions_enum;
     },
   ) {
     const { map_pools } = await this.hasura.query({

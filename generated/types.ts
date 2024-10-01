@@ -13,46 +13,46 @@ export default {
         69,
         71,
         73,
+        78,
         79,
-        80,
-        90,
-        98,
-        107,
-        108,
-        118,
-        122,
-        128,
-        129,
-        138,
-        142,
-        148,
-        149,
-        159,
-        163,
-        169,
-        170,
-        180,
-        184,
-        190,
-        191,
-        201,
-        205,
-        211,
-        212,
-        222,
-        226,
-        232,
+        89,
+        93,
+        99,
+        100,
+        109,
+        113,
+        119,
+        120,
+        130,
+        134,
+        140,
+        141,
+        151,
+        155,
+        161,
+        162,
+        172,
+        176,
+        182,
+        183,
+        193,
+        197,
+        203,
+        204,
+        213,
+        217,
+        223,
+        224,
         233,
-        242,
-        246,
-        252,
+        237,
+        243,
+        244,
         253,
-        262,
-        266,
-        272,
-        273,
-        282,
-        286,
+        257,
+        264,
+        265,
+        275,
+        283,
         292,
         293,
         302,
@@ -1128,7 +1128,2176 @@ export default {
             ]
         },
         "cursor_ordering": {},
-        "e_game_server_node_regions": {
+        "e_game_server_node_statuses": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_aggregate": {
+            "aggregate": [
+                76
+            ],
+            "nodes": [
+                74
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        89,
+                        "[e_game_server_node_statuses_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                82
+            ],
+            "min": [
+                83
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_bool_exp": {
+            "_and": [
+                77
+            ],
+            "_not": [
+                77
+            ],
+            "_or": [
+                77
+            ],
+            "description": [
+                8
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_constraint": {},
+        "e_game_server_node_statuses_enum": {},
+        "e_game_server_node_statuses_enum_comparison_exp": {
+            "_eq": [
+                79
+            ],
+            "_in": [
+                79
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                79
+            ],
+            "_nin": [
+                79
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_insert_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                74
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_obj_rel_insert_input": {
+            "data": [
+                81
+            ],
+            "on_conflict": [
+                86
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_on_conflict": {
+            "constraint": [
+                78
+            ],
+            "update_columns": [
+                93
+            ],
+            "where": [
+                77
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_order_by": {
+            "description": [
+                926
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_select_column": {},
+        "e_game_server_node_statuses_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_stream_cursor_input": {
+            "initial_value": [
+                92
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_game_server_node_statuses_update_column": {},
+        "e_game_server_node_statuses_updates": {
+            "_set": [
+                90
+            ],
+            "where": [
+                77
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_aggregate": {
+            "aggregate": [
+                97
+            ],
+            "nodes": [
+                95
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        109,
+                        "[e_lobby_access_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                103
+            ],
+            "min": [
+                104
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_bool_exp": {
+            "_and": [
+                98
+            ],
+            "_not": [
+                98
+            ],
+            "_or": [
+                98
+            ],
+            "description": [
+                8
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_constraint": {},
+        "e_lobby_access_enum": {},
+        "e_lobby_access_enum_comparison_exp": {
+            "_eq": [
+                100
+            ],
+            "_in": [
+                100
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                100
+            ],
+            "_nin": [
+                100
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_insert_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                95
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_on_conflict": {
+            "constraint": [
+                99
+            ],
+            "update_columns": [
+                113
+            ],
+            "where": [
+                98
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_order_by": {
+            "description": [
+                926
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_select_column": {},
+        "e_lobby_access_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_stream_cursor_input": {
+            "initial_value": [
+                112
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_lobby_access_update_column": {},
+        "e_lobby_access_updates": {
+            "_set": [
+                110
+            ],
+            "where": [
+                98
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_aggregate": {
+            "aggregate": [
+                117
+            ],
+            "nodes": [
+                115
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        130,
+                        "[e_map_pool_types_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                123
+            ],
+            "min": [
+                124
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_bool_exp": {
+            "_and": [
+                118
+            ],
+            "_not": [
+                118
+            ],
+            "_or": [
+                118
+            ],
+            "description": [
+                8
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_constraint": {},
+        "e_map_pool_types_enum": {},
+        "e_map_pool_types_enum_comparison_exp": {
+            "_eq": [
+                120
+            ],
+            "_in": [
+                120
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                120
+            ],
+            "_nin": [
+                120
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_insert_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                115
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_obj_rel_insert_input": {
+            "data": [
+                122
+            ],
+            "on_conflict": [
+                127
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_on_conflict": {
+            "constraint": [
+                119
+            ],
+            "update_columns": [
+                134
+            ],
+            "where": [
+                118
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_order_by": {
+            "description": [
+                926
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_select_column": {},
+        "e_map_pool_types_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_stream_cursor_input": {
+            "initial_value": [
+                133
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_map_pool_types_update_column": {},
+        "e_map_pool_types_updates": {
+            "_set": [
+                131
+            ],
+            "where": [
+                118
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status": {
+            "description": [
+                7
+            ],
+            "match_maps": [
+                725,
+                {
+                    "distinct_on": [
+                        747,
+                        "[match_maps_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        745,
+                        "[match_maps_order_by!]"
+                    ],
+                    "where": [
+                        734
+                    ]
+                }
+            ],
+            "match_maps_aggregate": [
+                726,
+                {
+                    "distinct_on": [
+                        747,
+                        "[match_maps_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        745,
+                        "[match_maps_order_by!]"
+                    ],
+                    "where": [
+                        734
+                    ]
+                }
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_aggregate": {
+            "aggregate": [
+                138
+            ],
+            "nodes": [
+                136
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        151,
+                        "[e_match_map_status_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                144
+            ],
+            "min": [
+                145
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_bool_exp": {
+            "_and": [
+                139
+            ],
+            "_not": [
+                139
+            ],
+            "_or": [
+                139
+            ],
+            "description": [
+                8
+            ],
+            "match_maps": [
+                734
+            ],
+            "match_maps_aggregate": [
+                727
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_constraint": {},
+        "e_match_map_status_enum": {},
+        "e_match_map_status_enum_comparison_exp": {
+            "_eq": [
+                141
+            ],
+            "_in": [
+                141
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                141
+            ],
+            "_nin": [
+                141
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_insert_input": {
+            "description": [
+                7
+            ],
+            "match_maps": [
+                731
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                136
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_obj_rel_insert_input": {
+            "data": [
+                143
+            ],
+            "on_conflict": [
+                148
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_on_conflict": {
+            "constraint": [
+                140
+            ],
+            "update_columns": [
+                155
+            ],
+            "where": [
+                139
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_order_by": {
+            "description": [
+                926
+            ],
+            "match_maps_aggregate": [
+                730
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_select_column": {},
+        "e_match_map_status_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_stream_cursor_input": {
+            "initial_value": [
+                154
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_map_status_update_column": {},
+        "e_match_map_status_updates": {
+            "_set": [
+                152
+            ],
+            "where": [
+                139
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status": {
+            "description": [
+                7
+            ],
+            "matches": [
+                819,
+                {
+                    "distinct_on": [
+                        841,
+                        "[matches_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        839,
+                        "[matches_order_by!]"
+                    ],
+                    "where": [
+                        828
+                    ]
+                }
+            ],
+            "matches_aggregate": [
+                820,
+                {
+                    "distinct_on": [
+                        841,
+                        "[matches_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        839,
+                        "[matches_order_by!]"
+                    ],
+                    "where": [
+                        828
+                    ]
+                }
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_aggregate": {
+            "aggregate": [
+                159
+            ],
+            "nodes": [
+                157
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        172,
+                        "[e_match_status_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                165
+            ],
+            "min": [
+                166
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_bool_exp": {
+            "_and": [
+                160
+            ],
+            "_not": [
+                160
+            ],
+            "_or": [
+                160
+            ],
+            "description": [
+                8
+            ],
+            "matches": [
+                828
+            ],
+            "matches_aggregate": [
+                821
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_constraint": {},
+        "e_match_status_enum": {},
+        "e_match_status_enum_comparison_exp": {
+            "_eq": [
+                162
+            ],
+            "_in": [
+                162
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                162
+            ],
+            "_nin": [
+                162
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_insert_input": {
+            "description": [
+                7
+            ],
+            "matches": [
+                825
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                157
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_obj_rel_insert_input": {
+            "data": [
+                164
+            ],
+            "on_conflict": [
+                169
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_on_conflict": {
+            "constraint": [
+                161
+            ],
+            "update_columns": [
+                176
+            ],
+            "where": [
+                160
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_order_by": {
+            "description": [
+                926
+            ],
+            "matches_aggregate": [
+                824
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_select_column": {},
+        "e_match_status_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_stream_cursor_input": {
+            "initial_value": [
+                175
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_status_update_column": {},
+        "e_match_status_updates": {
+            "_set": [
+                173
+            ],
+            "where": [
+                160
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types": {
+            "description": [
+                7
+            ],
+            "maps": [
+                503,
+                {
+                    "distinct_on": [
+                        524,
+                        "[maps_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        522,
+                        "[maps_order_by!]"
+                    ],
+                    "where": [
+                        512
+                    ]
+                }
+            ],
+            "maps_aggregate": [
+                504,
+                {
+                    "distinct_on": [
+                        524,
+                        "[maps_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        522,
+                        "[maps_order_by!]"
+                    ],
+                    "where": [
+                        512
+                    ]
+                }
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_aggregate": {
+            "aggregate": [
+                180
+            ],
+            "nodes": [
+                178
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        193,
+                        "[e_match_types_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                186
+            ],
+            "min": [
+                187
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_bool_exp": {
+            "_and": [
+                181
+            ],
+            "_not": [
+                181
+            ],
+            "_or": [
+                181
+            ],
+            "description": [
+                8
+            ],
+            "maps": [
+                512
+            ],
+            "maps_aggregate": [
+                505
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_constraint": {},
+        "e_match_types_enum": {},
+        "e_match_types_enum_comparison_exp": {
+            "_eq": [
+                183
+            ],
+            "_in": [
+                183
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                183
+            ],
+            "_nin": [
+                183
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_insert_input": {
+            "description": [
+                7
+            ],
+            "maps": [
+                511
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                178
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_obj_rel_insert_input": {
+            "data": [
+                185
+            ],
+            "on_conflict": [
+                190
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_on_conflict": {
+            "constraint": [
+                182
+            ],
+            "update_columns": [
+                197
+            ],
+            "where": [
+                181
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_order_by": {
+            "description": [
+                926
+            ],
+            "maps_aggregate": [
+                510
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_select_column": {},
+        "e_match_types_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_stream_cursor_input": {
+            "initial_value": [
+                196
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_match_types_update_column": {},
+        "e_match_types_updates": {
+            "_set": [
+                194
+            ],
+            "where": [
+                181
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_aggregate": {
+            "aggregate": [
+                201
+            ],
+            "nodes": [
+                199
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        213,
+                        "[e_notification_types_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                207
+            ],
+            "min": [
+                208
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_bool_exp": {
+            "_and": [
+                202
+            ],
+            "_not": [
+                202
+            ],
+            "_or": [
+                202
+            ],
+            "description": [
+                8
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_constraint": {},
+        "e_notification_types_enum": {},
+        "e_notification_types_enum_comparison_exp": {
+            "_eq": [
+                204
+            ],
+            "_in": [
+                204
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                204
+            ],
+            "_nin": [
+                204
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_insert_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                199
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_on_conflict": {
+            "constraint": [
+                203
+            ],
+            "update_columns": [
+                217
+            ],
+            "where": [
+                202
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_order_by": {
+            "description": [
+                926
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_select_column": {},
+        "e_notification_types_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_stream_cursor_input": {
+            "initial_value": [
+                216
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_notification_types_update_column": {},
+        "e_notification_types_updates": {
+            "_set": [
+                214
+            ],
+            "where": [
+                202
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types": {
+            "description": [
+                7
+            ],
+            "player_objectives": [
+                1103,
+                {
+                    "distinct_on": [
+                        1124,
+                        "[player_objectives_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        1122,
+                        "[player_objectives_order_by!]"
+                    ],
+                    "where": [
+                        1112
+                    ]
+                }
+            ],
+            "player_objectives_aggregate": [
+                1104,
+                {
+                    "distinct_on": [
+                        1124,
+                        "[player_objectives_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        1122,
+                        "[player_objectives_order_by!]"
+                    ],
+                    "where": [
+                        1112
+                    ]
+                }
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_aggregate": {
+            "aggregate": [
+                221
+            ],
+            "nodes": [
+                219
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        233,
+                        "[e_objective_types_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                227
+            ],
+            "min": [
+                228
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_bool_exp": {
+            "_and": [
+                222
+            ],
+            "_not": [
+                222
+            ],
+            "_or": [
+                222
+            ],
+            "description": [
+                8
+            ],
+            "player_objectives": [
+                1112
+            ],
+            "player_objectives_aggregate": [
+                1105
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_constraint": {},
+        "e_objective_types_enum": {},
+        "e_objective_types_enum_comparison_exp": {
+            "_eq": [
+                224
+            ],
+            "_in": [
+                224
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                224
+            ],
+            "_nin": [
+                224
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_insert_input": {
+            "description": [
+                7
+            ],
+            "player_objectives": [
+                1109
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                219
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_on_conflict": {
+            "constraint": [
+                223
+            ],
+            "update_columns": [
+                237
+            ],
+            "where": [
+                222
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_order_by": {
+            "description": [
+                926
+            ],
+            "player_objectives_aggregate": [
+                1108
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_select_column": {},
+        "e_objective_types_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_stream_cursor_input": {
+            "initial_value": [
+                236
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_objective_types_update_column": {},
+        "e_objective_types_updates": {
+            "_set": [
+                234
+            ],
+            "where": [
+                222
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_aggregate": {
+            "aggregate": [
+                241
+            ],
+            "nodes": [
+                239
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_aggregate_fields": {
+            "count": [
+                3,
+                {
+                    "columns": [
+                        253,
+                        "[e_player_roles_select_column!]"
+                    ],
+                    "distinct": [
+                        0
+                    ]
+                }
+            ],
+            "max": [
+                247
+            ],
+            "min": [
+                248
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_bool_exp": {
+            "_and": [
+                242
+            ],
+            "_not": [
+                242
+            ],
+            "_or": [
+                242
+            ],
+            "description": [
+                8
+            ],
+            "value": [
+                8
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_constraint": {},
+        "e_player_roles_enum": {},
+        "e_player_roles_enum_comparison_exp": {
+            "_eq": [
+                244
+            ],
+            "_in": [
+                244
+            ],
+            "_is_null": [
+                0
+            ],
+            "_neq": [
+                244
+            ],
+            "_nin": [
+                244
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_insert_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_max_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_min_fields": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_mutation_response": {
+            "affected_rows": [
+                3
+            ],
+            "returning": [
+                239
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_on_conflict": {
+            "constraint": [
+                243
+            ],
+            "update_columns": [
+                257
+            ],
+            "where": [
+                242
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_order_by": {
+            "description": [
+                926
+            ],
+            "value": [
+                926
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_pk_columns_input": {
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_select_column": {},
+        "e_player_roles_set_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_stream_cursor_input": {
+            "initial_value": [
+                256
+            ],
+            "ordering": [
+                73
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_stream_cursor_value_input": {
+            "description": [
+                7
+            ],
+            "value": [
+                7
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_player_roles_update_column": {},
+        "e_player_roles_updates": {
+            "_set": [
+                254
+            ],
+            "where": [
+                242
+            ],
+            "__typename": [
+                7
+            ]
+        },
+        "e_server_regions": {
             "available_server_count": [
                 3
             ],
@@ -1192,27 +3361,27 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_aggregate": {
+        "e_server_regions_aggregate": {
             "aggregate": [
-                76
+                261
             ],
             "nodes": [
-                74
+                259
             ],
             "__typename": [
                 7
             ]
         },
-        "e_game_server_node_regions_aggregate_fields": {
+        "e_server_regions_aggregate_fields": {
             "avg": [
-                77
+                262
             ],
             "count": [
                 3,
                 {
                     "columns": [
-                        90,
-                        "[e_game_server_node_regions_select_column!]"
+                        275,
+                        "[e_server_regions_select_column!]"
                     ],
                     "distinct": [
                         0
@@ -1220,37 +3389,37 @@ export default {
                 }
             ],
             "max": [
-                83
+                268
             ],
             "min": [
-                84
+                269
             ],
             "stddev": [
-                92
+                277
             ],
             "stddev_pop": [
-                93
+                278
             ],
             "stddev_samp": [
-                94
+                279
             ],
             "sum": [
-                97
+                282
             ],
             "var_pop": [
-                100
+                285
             ],
             "var_samp": [
-                101
+                286
             ],
             "variance": [
-                102
+                287
             ],
             "__typename": [
                 7
             ]
         },
-        "e_game_server_node_regions_avg_fields": {
+        "e_server_regions_avg_fields": {
             "available_server_count": [
                 3
             ],
@@ -1261,15 +3430,15 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_bool_exp": {
+        "e_server_regions_bool_exp": {
             "_and": [
-                78
+                263
             ],
             "_not": [
-                78
+                263
             ],
             "_or": [
-                78
+                263
             ],
             "available_server_count": [
                 4
@@ -1296,29 +3465,29 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_constraint": {},
-        "e_game_server_node_regions_enum": {},
-        "e_game_server_node_regions_enum_comparison_exp": {
+        "e_server_regions_constraint": {},
+        "e_server_regions_enum": {},
+        "e_server_regions_enum_comparison_exp": {
             "_eq": [
-                80
+                265
             ],
             "_in": [
-                80
+                265
             ],
             "_is_null": [
                 0
             ],
             "_neq": [
-                80
+                265
             ],
             "_nin": [
-                80
+                265
             ],
             "__typename": [
                 7
             ]
         },
-        "e_game_server_node_regions_insert_input": {
+        "e_server_regions_insert_input": {
             "description": [
                 7
             ],
@@ -1332,7 +3501,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_max_fields": {
+        "e_server_regions_max_fields": {
             "available_server_count": [
                 3
             ],
@@ -1352,7 +3521,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_min_fields": {
+        "e_server_regions_min_fields": {
             "available_server_count": [
                 3
             ],
@@ -1372,43 +3541,43 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_mutation_response": {
+        "e_server_regions_mutation_response": {
             "affected_rows": [
                 3
             ],
             "returning": [
-                74
+                259
             ],
             "__typename": [
                 7
             ]
         },
-        "e_game_server_node_regions_obj_rel_insert_input": {
+        "e_server_regions_obj_rel_insert_input": {
             "data": [
-                82
+                267
             ],
             "on_conflict": [
-                87
+                272
             ],
             "__typename": [
                 7
             ]
         },
-        "e_game_server_node_regions_on_conflict": {
+        "e_server_regions_on_conflict": {
             "constraint": [
-                79
+                264
             ],
             "update_columns": [
-                98
+                283
             ],
             "where": [
-                78
+                263
             ],
             "__typename": [
                 7
             ]
         },
-        "e_game_server_node_regions_order_by": {
+        "e_server_regions_order_by": {
             "available_server_count": [
                 926
             ],
@@ -1431,7 +3600,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_pk_columns_input": {
+        "e_server_regions_pk_columns_input": {
             "value": [
                 7
             ],
@@ -1439,8 +3608,8 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_select_column": {},
-        "e_game_server_node_regions_set_input": {
+        "e_server_regions_select_column": {},
+        "e_server_regions_set_input": {
             "description": [
                 7
             ],
@@ -1451,7 +3620,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_stddev_fields": {
+        "e_server_regions_stddev_fields": {
             "available_server_count": [
                 3
             ],
@@ -1462,7 +3631,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_stddev_pop_fields": {
+        "e_server_regions_stddev_pop_fields": {
             "available_server_count": [
                 3
             ],
@@ -1473,7 +3642,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_stddev_samp_fields": {
+        "e_server_regions_stddev_samp_fields": {
             "available_server_count": [
                 3
             ],
@@ -1484,9 +3653,9 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_stream_cursor_input": {
+        "e_server_regions_stream_cursor_input": {
             "initial_value": [
-                96
+                281
             ],
             "ordering": [
                 73
@@ -1495,7 +3664,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_stream_cursor_value_input": {
+        "e_server_regions_stream_cursor_value_input": {
             "description": [
                 7
             ],
@@ -1506,7 +3675,7 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_sum_fields": {
+        "e_server_regions_sum_fields": {
             "available_server_count": [
                 3
             ],
@@ -1517,2215 +3686,46 @@ export default {
                 7
             ]
         },
-        "e_game_server_node_regions_update_column": {},
-        "e_game_server_node_regions_updates": {
+        "e_server_regions_update_column": {},
+        "e_server_regions_updates": {
             "_set": [
-                91
-            ],
-            "where": [
-                78
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_regions_var_pop_fields": {
-            "available_server_count": [
-                3
-            ],
-            "total_server_count": [
-                3
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_regions_var_samp_fields": {
-            "available_server_count": [
-                3
-            ],
-            "total_server_count": [
-                3
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_regions_variance_fields": {
-            "available_server_count": [
-                3
-            ],
-            "total_server_count": [
-                3
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_aggregate": {
-            "aggregate": [
-                105
-            ],
-            "nodes": [
-                103
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        118,
-                        "[e_game_server_node_statuses_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                111
-            ],
-            "min": [
-                112
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_bool_exp": {
-            "_and": [
-                106
-            ],
-            "_not": [
-                106
-            ],
-            "_or": [
-                106
-            ],
-            "description": [
-                8
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_constraint": {},
-        "e_game_server_node_statuses_enum": {},
-        "e_game_server_node_statuses_enum_comparison_exp": {
-            "_eq": [
-                108
-            ],
-            "_in": [
-                108
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                108
-            ],
-            "_nin": [
-                108
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_insert_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                103
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_obj_rel_insert_input": {
-            "data": [
-                110
-            ],
-            "on_conflict": [
-                115
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_on_conflict": {
-            "constraint": [
-                107
-            ],
-            "update_columns": [
-                122
-            ],
-            "where": [
-                106
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_order_by": {
-            "description": [
-                926
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_select_column": {},
-        "e_game_server_node_statuses_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_stream_cursor_input": {
-            "initial_value": [
-                121
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_game_server_node_statuses_update_column": {},
-        "e_game_server_node_statuses_updates": {
-            "_set": [
-                119
-            ],
-            "where": [
-                106
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_aggregate": {
-            "aggregate": [
-                126
-            ],
-            "nodes": [
-                124
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        138,
-                        "[e_lobby_access_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                132
-            ],
-            "min": [
-                133
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_bool_exp": {
-            "_and": [
-                127
-            ],
-            "_not": [
-                127
-            ],
-            "_or": [
-                127
-            ],
-            "description": [
-                8
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_constraint": {},
-        "e_lobby_access_enum": {},
-        "e_lobby_access_enum_comparison_exp": {
-            "_eq": [
-                129
-            ],
-            "_in": [
-                129
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                129
-            ],
-            "_nin": [
-                129
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_insert_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                124
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_on_conflict": {
-            "constraint": [
-                128
-            ],
-            "update_columns": [
-                142
-            ],
-            "where": [
-                127
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_order_by": {
-            "description": [
-                926
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_select_column": {},
-        "e_lobby_access_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_stream_cursor_input": {
-            "initial_value": [
-                141
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_lobby_access_update_column": {},
-        "e_lobby_access_updates": {
-            "_set": [
-                139
-            ],
-            "where": [
-                127
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_aggregate": {
-            "aggregate": [
-                146
-            ],
-            "nodes": [
-                144
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        159,
-                        "[e_map_pool_types_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                152
-            ],
-            "min": [
-                153
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_bool_exp": {
-            "_and": [
-                147
-            ],
-            "_not": [
-                147
-            ],
-            "_or": [
-                147
-            ],
-            "description": [
-                8
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_constraint": {},
-        "e_map_pool_types_enum": {},
-        "e_map_pool_types_enum_comparison_exp": {
-            "_eq": [
-                149
-            ],
-            "_in": [
-                149
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                149
-            ],
-            "_nin": [
-                149
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_insert_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                144
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_obj_rel_insert_input": {
-            "data": [
-                151
-            ],
-            "on_conflict": [
-                156
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_on_conflict": {
-            "constraint": [
-                148
-            ],
-            "update_columns": [
-                163
-            ],
-            "where": [
-                147
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_order_by": {
-            "description": [
-                926
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_select_column": {},
-        "e_map_pool_types_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_stream_cursor_input": {
-            "initial_value": [
-                162
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_map_pool_types_update_column": {},
-        "e_map_pool_types_updates": {
-            "_set": [
-                160
-            ],
-            "where": [
-                147
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status": {
-            "description": [
-                7
-            ],
-            "match_maps": [
-                725,
-                {
-                    "distinct_on": [
-                        747,
-                        "[match_maps_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        745,
-                        "[match_maps_order_by!]"
-                    ],
-                    "where": [
-                        734
-                    ]
-                }
-            ],
-            "match_maps_aggregate": [
-                726,
-                {
-                    "distinct_on": [
-                        747,
-                        "[match_maps_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        745,
-                        "[match_maps_order_by!]"
-                    ],
-                    "where": [
-                        734
-                    ]
-                }
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_aggregate": {
-            "aggregate": [
-                167
-            ],
-            "nodes": [
-                165
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        180,
-                        "[e_match_map_status_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                173
-            ],
-            "min": [
-                174
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_bool_exp": {
-            "_and": [
-                168
-            ],
-            "_not": [
-                168
-            ],
-            "_or": [
-                168
-            ],
-            "description": [
-                8
-            ],
-            "match_maps": [
-                734
-            ],
-            "match_maps_aggregate": [
-                727
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_constraint": {},
-        "e_match_map_status_enum": {},
-        "e_match_map_status_enum_comparison_exp": {
-            "_eq": [
-                170
-            ],
-            "_in": [
-                170
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                170
-            ],
-            "_nin": [
-                170
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_insert_input": {
-            "description": [
-                7
-            ],
-            "match_maps": [
-                731
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                165
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_obj_rel_insert_input": {
-            "data": [
-                172
-            ],
-            "on_conflict": [
-                177
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_on_conflict": {
-            "constraint": [
-                169
-            ],
-            "update_columns": [
-                184
-            ],
-            "where": [
-                168
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_order_by": {
-            "description": [
-                926
-            ],
-            "match_maps_aggregate": [
-                730
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_select_column": {},
-        "e_match_map_status_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_stream_cursor_input": {
-            "initial_value": [
-                183
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_map_status_update_column": {},
-        "e_match_map_status_updates": {
-            "_set": [
-                181
-            ],
-            "where": [
-                168
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status": {
-            "description": [
-                7
-            ],
-            "matches": [
-                819,
-                {
-                    "distinct_on": [
-                        841,
-                        "[matches_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        839,
-                        "[matches_order_by!]"
-                    ],
-                    "where": [
-                        828
-                    ]
-                }
-            ],
-            "matches_aggregate": [
-                820,
-                {
-                    "distinct_on": [
-                        841,
-                        "[matches_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        839,
-                        "[matches_order_by!]"
-                    ],
-                    "where": [
-                        828
-                    ]
-                }
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_aggregate": {
-            "aggregate": [
-                188
-            ],
-            "nodes": [
-                186
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        201,
-                        "[e_match_status_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                194
-            ],
-            "min": [
-                195
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_bool_exp": {
-            "_and": [
-                189
-            ],
-            "_not": [
-                189
-            ],
-            "_or": [
-                189
-            ],
-            "description": [
-                8
-            ],
-            "matches": [
-                828
-            ],
-            "matches_aggregate": [
-                821
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_constraint": {},
-        "e_match_status_enum": {},
-        "e_match_status_enum_comparison_exp": {
-            "_eq": [
-                191
-            ],
-            "_in": [
-                191
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                191
-            ],
-            "_nin": [
-                191
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_insert_input": {
-            "description": [
-                7
-            ],
-            "matches": [
-                825
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                186
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_obj_rel_insert_input": {
-            "data": [
-                193
-            ],
-            "on_conflict": [
-                198
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_on_conflict": {
-            "constraint": [
-                190
-            ],
-            "update_columns": [
-                205
-            ],
-            "where": [
-                189
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_order_by": {
-            "description": [
-                926
-            ],
-            "matches_aggregate": [
-                824
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_select_column": {},
-        "e_match_status_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_stream_cursor_input": {
-            "initial_value": [
-                204
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_status_update_column": {},
-        "e_match_status_updates": {
-            "_set": [
-                202
-            ],
-            "where": [
-                189
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types": {
-            "description": [
-                7
-            ],
-            "maps": [
-                503,
-                {
-                    "distinct_on": [
-                        524,
-                        "[maps_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        522,
-                        "[maps_order_by!]"
-                    ],
-                    "where": [
-                        512
-                    ]
-                }
-            ],
-            "maps_aggregate": [
-                504,
-                {
-                    "distinct_on": [
-                        524,
-                        "[maps_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        522,
-                        "[maps_order_by!]"
-                    ],
-                    "where": [
-                        512
-                    ]
-                }
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_aggregate": {
-            "aggregate": [
-                209
-            ],
-            "nodes": [
-                207
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        222,
-                        "[e_match_types_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                215
-            ],
-            "min": [
-                216
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_bool_exp": {
-            "_and": [
-                210
-            ],
-            "_not": [
-                210
-            ],
-            "_or": [
-                210
-            ],
-            "description": [
-                8
-            ],
-            "maps": [
-                512
-            ],
-            "maps_aggregate": [
-                505
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_constraint": {},
-        "e_match_types_enum": {},
-        "e_match_types_enum_comparison_exp": {
-            "_eq": [
-                212
-            ],
-            "_in": [
-                212
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                212
-            ],
-            "_nin": [
-                212
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_insert_input": {
-            "description": [
-                7
-            ],
-            "maps": [
-                511
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                207
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_obj_rel_insert_input": {
-            "data": [
-                214
-            ],
-            "on_conflict": [
-                219
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_on_conflict": {
-            "constraint": [
-                211
-            ],
-            "update_columns": [
-                226
-            ],
-            "where": [
-                210
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_order_by": {
-            "description": [
-                926
-            ],
-            "maps_aggregate": [
-                510
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_select_column": {},
-        "e_match_types_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_stream_cursor_input": {
-            "initial_value": [
-                225
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_match_types_update_column": {},
-        "e_match_types_updates": {
-            "_set": [
-                223
-            ],
-            "where": [
-                210
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_aggregate": {
-            "aggregate": [
-                230
-            ],
-            "nodes": [
-                228
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        242,
-                        "[e_notification_types_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                236
-            ],
-            "min": [
-                237
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_bool_exp": {
-            "_and": [
-                231
-            ],
-            "_not": [
-                231
-            ],
-            "_or": [
-                231
-            ],
-            "description": [
-                8
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_constraint": {},
-        "e_notification_types_enum": {},
-        "e_notification_types_enum_comparison_exp": {
-            "_eq": [
-                233
-            ],
-            "_in": [
-                233
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                233
-            ],
-            "_nin": [
-                233
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_insert_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                228
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_on_conflict": {
-            "constraint": [
-                232
-            ],
-            "update_columns": [
-                246
-            ],
-            "where": [
-                231
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_order_by": {
-            "description": [
-                926
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_select_column": {},
-        "e_notification_types_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_stream_cursor_input": {
-            "initial_value": [
-                245
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_notification_types_update_column": {},
-        "e_notification_types_updates": {
-            "_set": [
-                243
-            ],
-            "where": [
-                231
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types": {
-            "description": [
-                7
-            ],
-            "player_objectives": [
-                1103,
-                {
-                    "distinct_on": [
-                        1124,
-                        "[player_objectives_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        1122,
-                        "[player_objectives_order_by!]"
-                    ],
-                    "where": [
-                        1112
-                    ]
-                }
-            ],
-            "player_objectives_aggregate": [
-                1104,
-                {
-                    "distinct_on": [
-                        1124,
-                        "[player_objectives_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        1122,
-                        "[player_objectives_order_by!]"
-                    ],
-                    "where": [
-                        1112
-                    ]
-                }
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_aggregate": {
-            "aggregate": [
-                250
-            ],
-            "nodes": [
-                248
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        262,
-                        "[e_objective_types_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                256
-            ],
-            "min": [
-                257
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_bool_exp": {
-            "_and": [
-                251
-            ],
-            "_not": [
-                251
-            ],
-            "_or": [
-                251
-            ],
-            "description": [
-                8
-            ],
-            "player_objectives": [
-                1112
-            ],
-            "player_objectives_aggregate": [
-                1105
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_constraint": {},
-        "e_objective_types_enum": {},
-        "e_objective_types_enum_comparison_exp": {
-            "_eq": [
-                253
-            ],
-            "_in": [
-                253
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                253
-            ],
-            "_nin": [
-                253
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_insert_input": {
-            "description": [
-                7
-            ],
-            "player_objectives": [
-                1109
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_mutation_response": {
-            "affected_rows": [
-                3
-            ],
-            "returning": [
-                248
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_on_conflict": {
-            "constraint": [
-                252
-            ],
-            "update_columns": [
-                266
-            ],
-            "where": [
-                251
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_order_by": {
-            "description": [
-                926
-            ],
-            "player_objectives_aggregate": [
-                1108
-            ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_select_column": {},
-        "e_objective_types_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_stream_cursor_input": {
-            "initial_value": [
-                265
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_objective_types_update_column": {},
-        "e_objective_types_updates": {
-            "_set": [
-                263
-            ],
-            "where": [
-                251
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_aggregate": {
-            "aggregate": [
-                270
-            ],
-            "nodes": [
-                268
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_aggregate_fields": {
-            "count": [
-                3,
-                {
-                    "columns": [
-                        282,
-                        "[e_player_roles_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
                 276
             ],
-            "min": [
-                277
+            "where": [
+                263
             ],
             "__typename": [
                 7
             ]
         },
-        "e_player_roles_bool_exp": {
-            "_and": [
-                271
-            ],
-            "_not": [
-                271
-            ],
-            "_or": [
-                271
-            ],
-            "description": [
-                8
-            ],
-            "value": [
-                8
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_constraint": {},
-        "e_player_roles_enum": {},
-        "e_player_roles_enum_comparison_exp": {
-            "_eq": [
-                273
-            ],
-            "_in": [
-                273
-            ],
-            "_is_null": [
-                0
-            ],
-            "_neq": [
-                273
-            ],
-            "_nin": [
-                273
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_insert_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_max_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_min_fields": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_mutation_response": {
-            "affected_rows": [
+        "e_server_regions_var_pop_fields": {
+            "available_server_count": [
                 3
             ],
-            "returning": [
-                268
+            "total_server_count": [
+                3
             ],
             "__typename": [
                 7
             ]
         },
-        "e_player_roles_on_conflict": {
-            "constraint": [
-                272
+        "e_server_regions_var_samp_fields": {
+            "available_server_count": [
+                3
             ],
-            "update_columns": [
-                286
-            ],
-            "where": [
-                271
+            "total_server_count": [
+                3
             ],
             "__typename": [
                 7
             ]
         },
-        "e_player_roles_order_by": {
-            "description": [
-                926
+        "e_server_regions_variance_fields": {
+            "available_server_count": [
+                3
             ],
-            "value": [
-                926
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_pk_columns_input": {
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_select_column": {},
-        "e_player_roles_set_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_stream_cursor_input": {
-            "initial_value": [
-                285
-            ],
-            "ordering": [
-                73
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_stream_cursor_value_input": {
-            "description": [
-                7
-            ],
-            "value": [
-                7
-            ],
-            "__typename": [
-                7
-            ]
-        },
-        "e_player_roles_update_column": {},
-        "e_player_roles_updates": {
-            "_set": [
-                283
-            ],
-            "where": [
-                271
+            "total_server_count": [
+                3
             ],
             "__typename": [
                 7
@@ -5690,10 +5690,10 @@ export default {
                 3
             ],
             "e_region": [
-                74
+                259
             ],
             "e_status": [
-                103
+                74
             ],
             "enabled": [
                 0
@@ -5708,7 +5708,7 @@ export default {
                 477
             ],
             "region": [
-                80
+                265
             ],
             "servers": [
                 1254,
@@ -5758,7 +5758,7 @@ export default {
                 3
             ],
             "status": [
-                108
+                79
             ],
             "token": [
                 7
@@ -5993,10 +5993,10 @@ export default {
                 4
             ],
             "e_region": [
-                78
+                263
             ],
             "e_status": [
-                106
+                77
             ],
             "enabled": [
                 1
@@ -6011,7 +6011,7 @@ export default {
                 478
             ],
             "region": [
-                81
+                266
             ],
             "servers": [
                 1265
@@ -6023,7 +6023,7 @@ export default {
                 4
             ],
             "status": [
-                109
+                80
             ],
             "token": [
                 8
@@ -6055,10 +6055,10 @@ export default {
                 3
             ],
             "e_region": [
-                86
+                271
             ],
             "e_status": [
-                114
+                85
             ],
             "enabled": [
                 0
@@ -6073,7 +6073,7 @@ export default {
                 477
             ],
             "region": [
-                80
+                265
             ],
             "servers": [
                 1262
@@ -6082,7 +6082,7 @@ export default {
                 3
             ],
             "status": [
-                108
+                79
             ],
             "token": [
                 7
@@ -6227,10 +6227,10 @@ export default {
                 926
             ],
             "e_region": [
-                88
+                273
             ],
             "e_status": [
-                116
+                87
             ],
             "enabled": [
                 926
@@ -6294,13 +6294,13 @@ export default {
                 477
             ],
             "region": [
-                80
+                265
             ],
             "start_port_range": [
                 3
             ],
             "status": [
-                108
+                79
             ],
             "token": [
                 7
@@ -6439,13 +6439,13 @@ export default {
                 477
             ],
             "region": [
-                80
+                265
             ],
             "start_port_range": [
                 3
             ],
             "status": [
-                108
+                79
             ],
             "token": [
                 7
@@ -6732,7 +6732,7 @@ export default {
         },
         "map_pools": {
             "e_type": [
-                144
+                115
             ],
             "enabled": [
                 0
@@ -6788,7 +6788,7 @@ export default {
                 0
             ],
             "type": [
-                149
+                120
             ],
             "__typename": [
                 7
@@ -6839,7 +6839,7 @@ export default {
                 487
             ],
             "e_type": [
-                147
+                118
             ],
             "enabled": [
                 1
@@ -6857,7 +6857,7 @@ export default {
                 1
             ],
             "type": [
-                150
+                121
             ],
             "__typename": [
                 7
@@ -6866,7 +6866,7 @@ export default {
         "map_pools_constraint": {},
         "map_pools_insert_input": {
             "e_type": [
-                155
+                126
             ],
             "enabled": [
                 0
@@ -6881,7 +6881,7 @@ export default {
                 0
             ],
             "type": [
-                149
+                120
             ],
             "__typename": [
                 7
@@ -6941,7 +6941,7 @@ export default {
         },
         "map_pools_order_by": {
             "e_type": [
-                157
+                128
             ],
             "enabled": [
                 926
@@ -6982,7 +6982,7 @@ export default {
                 0
             ],
             "type": [
-                149
+                120
             ],
             "__typename": [
                 7
@@ -7010,7 +7010,7 @@ export default {
                 0
             ],
             "type": [
-                149
+                120
             ],
             "__typename": [
                 7
@@ -7033,7 +7033,7 @@ export default {
                 0
             ],
             "e_match_type": [
-                207
+                178
             ],
             "id": [
                 1698
@@ -7136,7 +7136,7 @@ export default {
                 7
             ],
             "type": [
-                212
+                183
             ],
             "workshop_map_id": [
                 7
@@ -7283,7 +7283,7 @@ export default {
                 1
             ],
             "e_match_type": [
-                210
+                181
             ],
             "id": [
                 1699
@@ -7310,7 +7310,7 @@ export default {
                 8
             ],
             "type": [
-                213
+                184
             ],
             "workshop_map_id": [
                 8
@@ -7325,7 +7325,7 @@ export default {
                 0
             ],
             "e_match_type": [
-                218
+                189
             ],
             "id": [
                 1698
@@ -7346,7 +7346,7 @@ export default {
                 7
             ],
             "type": [
-                212
+                183
             ],
             "workshop_map_id": [
                 7
@@ -7476,7 +7476,7 @@ export default {
                 926
             ],
             "e_match_type": [
-                220
+                191
             ],
             "id": [
                 926
@@ -7534,7 +7534,7 @@ export default {
                 7
             ],
             "type": [
-                212
+                183
             ],
             "workshop_map_id": [
                 7
@@ -7571,7 +7571,7 @@ export default {
                 7
             ],
             "type": [
-                212
+                183
             ],
             "workshop_map_id": [
                 7
@@ -11145,7 +11145,7 @@ export default {
                 3
             ],
             "e_match_map_status": [
-                165
+                136
             ],
             "ended_at": [
                 1442
@@ -11501,7 +11501,7 @@ export default {
                 1442
             ],
             "status": [
-                170
+                141
             ],
             "utility": [
                 1185,
@@ -11793,7 +11793,7 @@ export default {
                 4
             ],
             "e_match_map_status": [
-                168
+                139
             ],
             "ended_at": [
                 1443
@@ -11883,7 +11883,7 @@ export default {
                 1443
             ],
             "status": [
-                171
+                142
             ],
             "utility": [
                 1194
@@ -11927,7 +11927,7 @@ export default {
                 625
             ],
             "e_match_map_status": [
-                176
+                147
             ],
             "ended_at": [
                 1442
@@ -11987,7 +11987,7 @@ export default {
                 1442
             ],
             "status": [
-                170
+                141
             ],
             "utility": [
                 1191
@@ -12207,7 +12207,7 @@ export default {
                 926
             ],
             "e_match_map_status": [
-                178
+                149
             ],
             "ended_at": [
                 926
@@ -12335,7 +12335,7 @@ export default {
                 1442
             ],
             "status": [
-                170
+                141
             ],
             "__typename": [
                 7
@@ -12498,7 +12498,7 @@ export default {
                 1442
             ],
             "status": [
-                170
+                141
             ],
             "__typename": [
                 7
@@ -12690,7 +12690,7 @@ export default {
                 0
             ],
             "lobby_access": [
-                129
+                100
             ],
             "map_pool": [
                 484
@@ -12781,7 +12781,7 @@ export default {
                 3
             ],
             "type": [
-                212
+                183
             ],
             "__typename": [
                 7
@@ -12894,7 +12894,7 @@ export default {
                 1
             ],
             "lobby_access": [
-                130
+                101
             ],
             "map_pool": [
                 487
@@ -12942,7 +12942,7 @@ export default {
                 4
             ],
             "type": [
-                213
+                184
             ],
             "__typename": [
                 7
@@ -12986,7 +12986,7 @@ export default {
                 0
             ],
             "lobby_access": [
-                129
+                100
             ],
             "map_pool": [
                 493
@@ -13031,7 +13031,7 @@ export default {
                 3
             ],
             "type": [
-                212
+                183
             ],
             "__typename": [
                 7
@@ -13228,7 +13228,7 @@ export default {
                 0
             ],
             "lobby_access": [
-                129
+                100
             ],
             "map_pool_id": [
                 1698
@@ -13264,7 +13264,7 @@ export default {
                 3
             ],
             "type": [
-                212
+                183
             ],
             "__typename": [
                 7
@@ -13352,7 +13352,7 @@ export default {
                 0
             ],
             "lobby_access": [
-                129
+                100
             ],
             "map_pool_id": [
                 1698
@@ -13388,7 +13388,7 @@ export default {
                 3
             ],
             "type": [
-                212
+                183
             ],
             "__typename": [
                 7
@@ -13497,7 +13497,7 @@ export default {
                 1698
             ],
             "region": [
-                80
+                265
             ],
             "type": [
                 416
@@ -13619,7 +13619,7 @@ export default {
                 1699
             ],
             "region": [
-                81
+                266
             ],
             "type": [
                 417
@@ -13649,7 +13649,7 @@ export default {
                 1698
             ],
             "region": [
-                80
+                265
             ],
             "type": [
                 416
@@ -13803,7 +13803,7 @@ export default {
                 1698
             ],
             "region": [
-                80
+                265
             ],
             "type": [
                 416
@@ -13837,7 +13837,7 @@ export default {
                 1698
             ],
             "region": [
-                80
+                265
             ],
             "type": [
                 416
@@ -13934,10 +13934,10 @@ export default {
                 }
             ],
             "e_match_status": [
-                186
+                157
             ],
             "e_region": [
-                74
+                259
             ],
             "ended_at": [
                 1442
@@ -14408,7 +14408,7 @@ export default {
                 }
             ],
             "region": [
-                80
+                265
             ],
             "region_veto_picking_lineup_id": [
                 1698
@@ -14479,7 +14479,7 @@ export default {
                 1442
             ],
             "status": [
-                191
+                162
             ],
             "teams": [
                 1400,
@@ -14764,10 +14764,10 @@ export default {
                 621
             ],
             "e_match_status": [
-                189
+                160
             ],
             "e_region": [
-                78
+                263
             ],
             "ended_at": [
                 1443
@@ -14896,7 +14896,7 @@ export default {
                 1187
             ],
             "region": [
-                81
+                266
             ],
             "region_veto_picking_lineup_id": [
                 1699
@@ -14929,7 +14929,7 @@ export default {
                 1443
             ],
             "status": [
-                192
+                163
             ],
             "teams": [
                 1409
@@ -14976,10 +14976,10 @@ export default {
                 625
             ],
             "e_match_status": [
-                197
+                168
             ],
             "e_region": [
-                86
+                271
             ],
             "ended_at": [
                 1442
@@ -15045,7 +15045,7 @@ export default {
                 1191
             ],
             "region": [
-                80
+                265
             ],
             "region_veto_picks": [
                 801
@@ -15063,7 +15063,7 @@ export default {
                 1442
             ],
             "status": [
-                191
+                162
             ],
             "tournament_brackets": [
                 1450
@@ -15415,10 +15415,10 @@ export default {
                 624
             ],
             "e_match_status": [
-                199
+                170
             ],
             "e_region": [
-                88
+                273
             ],
             "ended_at": [
                 926
@@ -15615,7 +15615,7 @@ export default {
                 7
             ],
             "region": [
-                80
+                265
             ],
             "scheduled_at": [
                 1442
@@ -15627,7 +15627,7 @@ export default {
                 1442
             ],
             "status": [
-                191
+                162
             ],
             "winning_lineup_id": [
                 1698
@@ -15745,7 +15745,7 @@ export default {
                 7
             ],
             "region": [
-                80
+                265
             ],
             "scheduled_at": [
                 1442
@@ -15757,7 +15757,7 @@ export default {
                 1442
             ],
             "status": [
-                191
+                162
             ],
             "winning_lineup_id": [
                 1698
@@ -16081,7 +16081,7 @@ export default {
                 1226
             ],
             "role": [
-                273
+                244
             ],
             "steam_id": [
                 69
@@ -16090,7 +16090,7 @@ export default {
                 7
             ],
             "type": [
-                233
+                204
             ],
             "__typename": [
                 7
@@ -16316,7 +16316,7 @@ export default {
                 1230
             ],
             "role": [
-                274
+                245
             ],
             "steam_id": [
                 70
@@ -16325,7 +16325,7 @@ export default {
                 8
             ],
             "type": [
-                234
+                205
             ],
             "__typename": [
                 7
@@ -16363,7 +16363,7 @@ export default {
                 1237
             ],
             "role": [
-                273
+                244
             ],
             "steam_id": [
                 69
@@ -16372,7 +16372,7 @@ export default {
                 7
             ],
             "type": [
-                233
+                204
             ],
             "__typename": [
                 7
@@ -16576,7 +16576,7 @@ export default {
                 7
             ],
             "role": [
-                273
+                244
             ],
             "steam_id": [
                 69
@@ -16585,7 +16585,7 @@ export default {
                 7
             ],
             "type": [
-                233
+                204
             ],
             "__typename": [
                 7
@@ -16670,7 +16670,7 @@ export default {
                 7
             ],
             "role": [
-                273
+                244
             ],
             "steam_id": [
                 69
@@ -16679,7 +16679,7 @@ export default {
                 7
             ],
             "type": [
-                233
+                204
             ],
             "__typename": [
                 7
@@ -21061,7 +21061,7 @@ export default {
                 1442
             ],
             "type": [
-                253
+                224
             ],
             "__typename": [
                 7
@@ -21259,7 +21259,7 @@ export default {
                 1443
             ],
             "type": [
-                254
+                225
             ],
             "__typename": [
                 7
@@ -21306,7 +21306,7 @@ export default {
                 1442
             ],
             "type": [
-                253
+                224
             ],
             "__typename": [
                 7
@@ -21493,7 +21493,7 @@ export default {
                 1442
             ],
             "type": [
-                253
+                224
             ],
             "__typename": [
                 7
@@ -21596,7 +21596,7 @@ export default {
                 1442
             ],
             "type": [
-                253
+                224
             ],
             "__typename": [
                 7
@@ -23954,7 +23954,7 @@ export default {
                 7
             ],
             "role": [
-                273
+                244
             ],
             "servers": [
                 1254,
@@ -24505,7 +24505,7 @@ export default {
                 8
             ],
             "role": [
-                274
+                245
             ],
             "servers": [
                 1265
@@ -24642,7 +24642,7 @@ export default {
                 7
             ],
             "role": [
-                273
+                244
             ],
             "servers": [
                 1262
@@ -24911,7 +24911,7 @@ export default {
                 7
             ],
             "role": [
-                273
+                244
             ],
             "steam_id": [
                 69
@@ -24975,7 +24975,7 @@ export default {
                 7
             ],
             "role": [
-                273
+                244
             ],
             "steam_id": [
                 69
@@ -36046,64 +36046,11 @@ export default {
                     ]
                 }
             ],
-            "e_game_server_node_regions": [
-                74,
-                {
-                    "distinct_on": [
-                        90,
-                        "[e_game_server_node_regions_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        88,
-                        "[e_game_server_node_regions_order_by!]"
-                    ],
-                    "where": [
-                        78
-                    ]
-                }
-            ],
-            "e_game_server_node_regions_aggregate": [
-                75,
-                {
-                    "distinct_on": [
-                        90,
-                        "[e_game_server_node_regions_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        88,
-                        "[e_game_server_node_regions_order_by!]"
-                    ],
-                    "where": [
-                        78
-                    ]
-                }
-            ],
-            "e_game_server_node_regions_by_pk": [
-                74,
-                {
-                    "value": [
-                        7,
-                        "String!"
-                    ]
-                }
-            ],
             "e_game_server_node_statuses": [
-                103,
+                74,
                 {
                     "distinct_on": [
-                        118,
+                        89,
                         "[e_game_server_node_statuses_select_column!]"
                     ],
                     "limit": [
@@ -36113,19 +36060,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        116,
+                        87,
                         "[e_game_server_node_statuses_order_by!]"
                     ],
                     "where": [
-                        106
+                        77
                     ]
                 }
             ],
             "e_game_server_node_statuses_aggregate": [
-                104,
+                75,
                 {
                     "distinct_on": [
-                        118,
+                        89,
                         "[e_game_server_node_statuses_select_column!]"
                     ],
                     "limit": [
@@ -36135,16 +36082,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        116,
+                        87,
                         "[e_game_server_node_statuses_order_by!]"
                     ],
                     "where": [
-                        106
+                        77
                     ]
                 }
             ],
             "e_game_server_node_statuses_by_pk": [
-                103,
+                74,
                 {
                     "value": [
                         7,
@@ -36153,10 +36100,10 @@ export default {
                 }
             ],
             "e_lobby_access": [
-                124,
+                95,
                 {
                     "distinct_on": [
-                        138,
+                        109,
                         "[e_lobby_access_select_column!]"
                     ],
                     "limit": [
@@ -36166,19 +36113,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        136,
+                        107,
                         "[e_lobby_access_order_by!]"
                     ],
                     "where": [
-                        127
+                        98
                     ]
                 }
             ],
             "e_lobby_access_aggregate": [
-                125,
+                96,
                 {
                     "distinct_on": [
-                        138,
+                        109,
                         "[e_lobby_access_select_column!]"
                     ],
                     "limit": [
@@ -36188,16 +36135,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        136,
+                        107,
                         "[e_lobby_access_order_by!]"
                     ],
                     "where": [
-                        127
+                        98
                     ]
                 }
             ],
             "e_lobby_access_by_pk": [
-                124,
+                95,
                 {
                     "value": [
                         7,
@@ -36206,10 +36153,10 @@ export default {
                 }
             ],
             "e_map_pool_types": [
-                144,
+                115,
                 {
                     "distinct_on": [
-                        159,
+                        130,
                         "[e_map_pool_types_select_column!]"
                     ],
                     "limit": [
@@ -36219,19 +36166,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        157,
+                        128,
                         "[e_map_pool_types_order_by!]"
                     ],
                     "where": [
-                        147
+                        118
                     ]
                 }
             ],
             "e_map_pool_types_aggregate": [
-                145,
+                116,
                 {
                     "distinct_on": [
-                        159,
+                        130,
                         "[e_map_pool_types_select_column!]"
                     ],
                     "limit": [
@@ -36241,16 +36188,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        157,
+                        128,
                         "[e_map_pool_types_order_by!]"
                     ],
                     "where": [
-                        147
+                        118
                     ]
                 }
             ],
             "e_map_pool_types_by_pk": [
-                144,
+                115,
                 {
                     "value": [
                         7,
@@ -36259,10 +36206,10 @@ export default {
                 }
             ],
             "e_match_map_status": [
-                165,
+                136,
                 {
                     "distinct_on": [
-                        180,
+                        151,
                         "[e_match_map_status_select_column!]"
                     ],
                     "limit": [
@@ -36272,19 +36219,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        178,
+                        149,
                         "[e_match_map_status_order_by!]"
                     ],
                     "where": [
-                        168
+                        139
                     ]
                 }
             ],
             "e_match_map_status_aggregate": [
-                166,
+                137,
                 {
                     "distinct_on": [
-                        180,
+                        151,
                         "[e_match_map_status_select_column!]"
                     ],
                     "limit": [
@@ -36294,16 +36241,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        178,
+                        149,
                         "[e_match_map_status_order_by!]"
                     ],
                     "where": [
-                        168
+                        139
                     ]
                 }
             ],
             "e_match_map_status_by_pk": [
-                165,
+                136,
                 {
                     "value": [
                         7,
@@ -36312,10 +36259,10 @@ export default {
                 }
             ],
             "e_match_status": [
-                186,
+                157,
                 {
                     "distinct_on": [
-                        201,
+                        172,
                         "[e_match_status_select_column!]"
                     ],
                     "limit": [
@@ -36325,19 +36272,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        199,
+                        170,
                         "[e_match_status_order_by!]"
                     ],
                     "where": [
-                        189
+                        160
                     ]
                 }
             ],
             "e_match_status_aggregate": [
-                187,
+                158,
                 {
                     "distinct_on": [
-                        201,
+                        172,
                         "[e_match_status_select_column!]"
                     ],
                     "limit": [
@@ -36347,16 +36294,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        199,
+                        170,
                         "[e_match_status_order_by!]"
                     ],
                     "where": [
-                        189
+                        160
                     ]
                 }
             ],
             "e_match_status_by_pk": [
-                186,
+                157,
                 {
                     "value": [
                         7,
@@ -36365,10 +36312,10 @@ export default {
                 }
             ],
             "e_match_types": [
-                207,
+                178,
                 {
                     "distinct_on": [
-                        222,
+                        193,
                         "[e_match_types_select_column!]"
                     ],
                     "limit": [
@@ -36378,19 +36325,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        220,
+                        191,
                         "[e_match_types_order_by!]"
                     ],
                     "where": [
-                        210
+                        181
                     ]
                 }
             ],
             "e_match_types_aggregate": [
-                208,
+                179,
                 {
                     "distinct_on": [
-                        222,
+                        193,
                         "[e_match_types_select_column!]"
                     ],
                     "limit": [
@@ -36400,16 +36347,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        220,
+                        191,
                         "[e_match_types_order_by!]"
                     ],
                     "where": [
-                        210
+                        181
                     ]
                 }
             ],
             "e_match_types_by_pk": [
-                207,
+                178,
                 {
                     "value": [
                         7,
@@ -36418,10 +36365,10 @@ export default {
                 }
             ],
             "e_notification_types": [
-                228,
+                199,
                 {
                     "distinct_on": [
-                        242,
+                        213,
                         "[e_notification_types_select_column!]"
                     ],
                     "limit": [
@@ -36431,19 +36378,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        240,
+                        211,
                         "[e_notification_types_order_by!]"
                     ],
                     "where": [
-                        231
+                        202
                     ]
                 }
             ],
             "e_notification_types_aggregate": [
-                229,
+                200,
                 {
                     "distinct_on": [
-                        242,
+                        213,
                         "[e_notification_types_select_column!]"
                     ],
                     "limit": [
@@ -36453,16 +36400,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        240,
+                        211,
                         "[e_notification_types_order_by!]"
                     ],
                     "where": [
-                        231
+                        202
                     ]
                 }
             ],
             "e_notification_types_by_pk": [
-                228,
+                199,
                 {
                     "value": [
                         7,
@@ -36471,10 +36418,10 @@ export default {
                 }
             ],
             "e_objective_types": [
-                248,
+                219,
                 {
                     "distinct_on": [
-                        262,
+                        233,
                         "[e_objective_types_select_column!]"
                     ],
                     "limit": [
@@ -36484,19 +36431,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        260,
+                        231,
                         "[e_objective_types_order_by!]"
                     ],
                     "where": [
-                        251
+                        222
                     ]
                 }
             ],
             "e_objective_types_aggregate": [
-                249,
+                220,
                 {
                     "distinct_on": [
-                        262,
+                        233,
                         "[e_objective_types_select_column!]"
                     ],
                     "limit": [
@@ -36506,16 +36453,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        260,
+                        231,
                         "[e_objective_types_order_by!]"
                     ],
                     "where": [
-                        251
+                        222
                     ]
                 }
             ],
             "e_objective_types_by_pk": [
-                248,
+                219,
                 {
                     "value": [
                         7,
@@ -36524,10 +36471,10 @@ export default {
                 }
             ],
             "e_player_roles": [
-                268,
+                239,
                 {
                     "distinct_on": [
-                        282,
+                        253,
                         "[e_player_roles_select_column!]"
                     ],
                     "limit": [
@@ -36537,19 +36484,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        280,
+                        251,
                         "[e_player_roles_order_by!]"
                     ],
                     "where": [
-                        271
+                        242
                     ]
                 }
             ],
             "e_player_roles_aggregate": [
-                269,
+                240,
                 {
                     "distinct_on": [
-                        282,
+                        253,
                         "[e_player_roles_select_column!]"
                     ],
                     "limit": [
@@ -36559,16 +36506,69 @@ export default {
                         3
                     ],
                     "order_by": [
-                        280,
+                        251,
                         "[e_player_roles_order_by!]"
                     ],
                     "where": [
-                        271
+                        242
                     ]
                 }
             ],
             "e_player_roles_by_pk": [
-                268,
+                239,
+                {
+                    "value": [
+                        7,
+                        "String!"
+                    ]
+                }
+            ],
+            "e_server_regions": [
+                259,
+                {
+                    "distinct_on": [
+                        275,
+                        "[e_server_regions_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        273,
+                        "[e_server_regions_order_by!]"
+                    ],
+                    "where": [
+                        263
+                    ]
+                }
+            ],
+            "e_server_regions_aggregate": [
+                260,
+                {
+                    "distinct_on": [
+                        275,
+                        "[e_server_regions_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        273,
+                        "[e_server_regions_order_by!]"
+                    ],
+                    "where": [
+                        263
+                    ]
+                }
+            ],
+            "e_server_regions_by_pk": [
+                259,
                 {
                     "value": [
                         7,
@@ -39188,16 +39188,16 @@ export default {
                     ]
                 }
             ],
-            "delete_e_game_server_node_regions": [
-                85,
+            "delete_e_game_server_node_statuses": [
+                84,
                 {
                     "where": [
-                        78,
-                        "e_game_server_node_regions_bool_exp!"
+                        77,
+                        "e_game_server_node_statuses_bool_exp!"
                     ]
                 }
             ],
-            "delete_e_game_server_node_regions_by_pk": [
+            "delete_e_game_server_node_statuses_by_pk": [
                 74,
                 {
                     "value": [
@@ -39206,35 +39206,17 @@ export default {
                     ]
                 }
             ],
-            "delete_e_game_server_node_statuses": [
-                113,
-                {
-                    "where": [
-                        106,
-                        "e_game_server_node_statuses_bool_exp!"
-                    ]
-                }
-            ],
-            "delete_e_game_server_node_statuses_by_pk": [
-                103,
-                {
-                    "value": [
-                        7,
-                        "String!"
-                    ]
-                }
-            ],
             "delete_e_lobby_access": [
-                134,
+                105,
                 {
                     "where": [
-                        127,
+                        98,
                         "e_lobby_access_bool_exp!"
                     ]
                 }
             ],
             "delete_e_lobby_access_by_pk": [
-                124,
+                95,
                 {
                     "value": [
                         7,
@@ -39243,16 +39225,16 @@ export default {
                 }
             ],
             "delete_e_map_pool_types": [
-                154,
+                125,
                 {
                     "where": [
-                        147,
+                        118,
                         "e_map_pool_types_bool_exp!"
                     ]
                 }
             ],
             "delete_e_map_pool_types_by_pk": [
-                144,
+                115,
                 {
                     "value": [
                         7,
@@ -39261,16 +39243,16 @@ export default {
                 }
             ],
             "delete_e_match_map_status": [
-                175,
+                146,
                 {
                     "where": [
-                        168,
+                        139,
                         "e_match_map_status_bool_exp!"
                     ]
                 }
             ],
             "delete_e_match_map_status_by_pk": [
-                165,
+                136,
                 {
                     "value": [
                         7,
@@ -39279,16 +39261,16 @@ export default {
                 }
             ],
             "delete_e_match_status": [
-                196,
+                167,
                 {
                     "where": [
-                        189,
+                        160,
                         "e_match_status_bool_exp!"
                     ]
                 }
             ],
             "delete_e_match_status_by_pk": [
-                186,
+                157,
                 {
                     "value": [
                         7,
@@ -39297,16 +39279,16 @@ export default {
                 }
             ],
             "delete_e_match_types": [
-                217,
+                188,
                 {
                     "where": [
-                        210,
+                        181,
                         "e_match_types_bool_exp!"
                     ]
                 }
             ],
             "delete_e_match_types_by_pk": [
-                207,
+                178,
                 {
                     "value": [
                         7,
@@ -39315,16 +39297,16 @@ export default {
                 }
             ],
             "delete_e_notification_types": [
-                238,
+                209,
                 {
                     "where": [
-                        231,
+                        202,
                         "e_notification_types_bool_exp!"
                     ]
                 }
             ],
             "delete_e_notification_types_by_pk": [
-                228,
+                199,
                 {
                     "value": [
                         7,
@@ -39333,16 +39315,16 @@ export default {
                 }
             ],
             "delete_e_objective_types": [
-                258,
+                229,
                 {
                     "where": [
-                        251,
+                        222,
                         "e_objective_types_bool_exp!"
                     ]
                 }
             ],
             "delete_e_objective_types_by_pk": [
-                248,
+                219,
                 {
                     "value": [
                         7,
@@ -39351,16 +39333,34 @@ export default {
                 }
             ],
             "delete_e_player_roles": [
-                278,
+                249,
                 {
                     "where": [
-                        271,
+                        242,
                         "e_player_roles_bool_exp!"
                     ]
                 }
             ],
             "delete_e_player_roles_by_pk": [
-                268,
+                239,
+                {
+                    "value": [
+                        7,
+                        "String!"
+                    ]
+                }
+            ],
+            "delete_e_server_regions": [
+                270,
+                {
+                    "where": [
+                        263,
+                        "e_server_regions_bool_exp!"
+                    ]
+                }
+            ],
+            "delete_e_server_regions_by_pk": [
+                259,
                 {
                     "value": [
                         7,
@@ -40188,243 +40188,243 @@ export default {
                     ]
                 }
             ],
-            "insert_e_game_server_node_regions": [
-                85,
-                {
-                    "objects": [
-                        82,
-                        "[e_game_server_node_regions_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        87
-                    ]
-                }
-            ],
-            "insert_e_game_server_node_regions_one": [
-                74,
-                {
-                    "object": [
-                        82,
-                        "e_game_server_node_regions_insert_input!"
-                    ],
-                    "on_conflict": [
-                        87
-                    ]
-                }
-            ],
             "insert_e_game_server_node_statuses": [
-                113,
+                84,
                 {
                     "objects": [
-                        110,
+                        81,
                         "[e_game_server_node_statuses_insert_input!]!"
                     ],
                     "on_conflict": [
-                        115
+                        86
                     ]
                 }
             ],
             "insert_e_game_server_node_statuses_one": [
-                103,
+                74,
                 {
                     "object": [
-                        110,
+                        81,
                         "e_game_server_node_statuses_insert_input!"
                     ],
                     "on_conflict": [
-                        115
+                        86
                     ]
                 }
             ],
             "insert_e_lobby_access": [
-                134,
+                105,
                 {
                     "objects": [
-                        131,
+                        102,
                         "[e_lobby_access_insert_input!]!"
                     ],
                     "on_conflict": [
-                        135
+                        106
                     ]
                 }
             ],
             "insert_e_lobby_access_one": [
-                124,
+                95,
                 {
                     "object": [
-                        131,
+                        102,
                         "e_lobby_access_insert_input!"
                     ],
                     "on_conflict": [
-                        135
+                        106
                     ]
                 }
             ],
             "insert_e_map_pool_types": [
-                154,
+                125,
                 {
                     "objects": [
-                        151,
+                        122,
                         "[e_map_pool_types_insert_input!]!"
                     ],
                     "on_conflict": [
-                        156
+                        127
                     ]
                 }
             ],
             "insert_e_map_pool_types_one": [
-                144,
+                115,
                 {
                     "object": [
-                        151,
+                        122,
                         "e_map_pool_types_insert_input!"
                     ],
                     "on_conflict": [
-                        156
+                        127
                     ]
                 }
             ],
             "insert_e_match_map_status": [
-                175,
+                146,
                 {
                     "objects": [
-                        172,
+                        143,
                         "[e_match_map_status_insert_input!]!"
                     ],
                     "on_conflict": [
-                        177
+                        148
                     ]
                 }
             ],
             "insert_e_match_map_status_one": [
-                165,
+                136,
                 {
                     "object": [
-                        172,
+                        143,
                         "e_match_map_status_insert_input!"
                     ],
                     "on_conflict": [
-                        177
+                        148
                     ]
                 }
             ],
             "insert_e_match_status": [
-                196,
+                167,
                 {
                     "objects": [
-                        193,
+                        164,
                         "[e_match_status_insert_input!]!"
                     ],
                     "on_conflict": [
-                        198
+                        169
                     ]
                 }
             ],
             "insert_e_match_status_one": [
-                186,
+                157,
                 {
                     "object": [
-                        193,
+                        164,
                         "e_match_status_insert_input!"
                     ],
                     "on_conflict": [
-                        198
+                        169
                     ]
                 }
             ],
             "insert_e_match_types": [
-                217,
+                188,
                 {
                     "objects": [
-                        214,
+                        185,
                         "[e_match_types_insert_input!]!"
                     ],
                     "on_conflict": [
-                        219
+                        190
                     ]
                 }
             ],
             "insert_e_match_types_one": [
-                207,
+                178,
                 {
                     "object": [
-                        214,
+                        185,
                         "e_match_types_insert_input!"
                     ],
                     "on_conflict": [
-                        219
+                        190
                     ]
                 }
             ],
             "insert_e_notification_types": [
-                238,
+                209,
                 {
                     "objects": [
-                        235,
+                        206,
                         "[e_notification_types_insert_input!]!"
                     ],
                     "on_conflict": [
-                        239
+                        210
                     ]
                 }
             ],
             "insert_e_notification_types_one": [
-                228,
+                199,
                 {
                     "object": [
-                        235,
+                        206,
                         "e_notification_types_insert_input!"
                     ],
                     "on_conflict": [
-                        239
+                        210
                     ]
                 }
             ],
             "insert_e_objective_types": [
-                258,
+                229,
                 {
                     "objects": [
-                        255,
+                        226,
                         "[e_objective_types_insert_input!]!"
                     ],
                     "on_conflict": [
-                        259
+                        230
                     ]
                 }
             ],
             "insert_e_objective_types_one": [
-                248,
+                219,
                 {
                     "object": [
-                        255,
+                        226,
                         "e_objective_types_insert_input!"
                     ],
                     "on_conflict": [
-                        259
+                        230
                     ]
                 }
             ],
             "insert_e_player_roles": [
-                278,
+                249,
                 {
                     "objects": [
-                        275,
+                        246,
                         "[e_player_roles_insert_input!]!"
                     ],
                     "on_conflict": [
-                        279
+                        250
                     ]
                 }
             ],
             "insert_e_player_roles_one": [
-                268,
+                239,
                 {
                     "object": [
-                        275,
+                        246,
                         "e_player_roles_insert_input!"
                     ],
                     "on_conflict": [
-                        279
+                        250
+                    ]
+                }
+            ],
+            "insert_e_server_regions": [
+                270,
+                {
+                    "objects": [
+                        267,
+                        "[e_server_regions_insert_input!]!"
+                    ],
+                    "on_conflict": [
+                        272
+                    ]
+                }
+            ],
+            "insert_e_server_regions_one": [
+                259,
+                {
+                    "object": [
+                        267,
+                        "e_server_regions_insert_input!"
+                    ],
+                    "on_conflict": [
+                        272
                     ]
                 }
             ],
@@ -41560,333 +41560,333 @@ export default {
                     ]
                 }
             ],
-            "update_e_game_server_node_regions": [
-                85,
-                {
-                    "_set": [
-                        91
-                    ],
-                    "where": [
-                        78,
-                        "e_game_server_node_regions_bool_exp!"
-                    ]
-                }
-            ],
-            "update_e_game_server_node_regions_by_pk": [
-                74,
-                {
-                    "_set": [
-                        91
-                    ],
-                    "pk_columns": [
-                        89,
-                        "e_game_server_node_regions_pk_columns_input!"
-                    ]
-                }
-            ],
-            "update_e_game_server_node_regions_many": [
-                85,
-                {
-                    "updates": [
-                        99,
-                        "[e_game_server_node_regions_updates!]!"
-                    ]
-                }
-            ],
             "update_e_game_server_node_statuses": [
-                113,
+                84,
                 {
                     "_set": [
-                        119
+                        90
                     ],
                     "where": [
-                        106,
+                        77,
                         "e_game_server_node_statuses_bool_exp!"
                     ]
                 }
             ],
             "update_e_game_server_node_statuses_by_pk": [
-                103,
+                74,
                 {
                     "_set": [
-                        119
+                        90
                     ],
                     "pk_columns": [
-                        117,
+                        88,
                         "e_game_server_node_statuses_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_game_server_node_statuses_many": [
-                113,
+                84,
                 {
                     "updates": [
-                        123,
+                        94,
                         "[e_game_server_node_statuses_updates!]!"
                     ]
                 }
             ],
             "update_e_lobby_access": [
-                134,
+                105,
                 {
                     "_set": [
-                        139
+                        110
                     ],
                     "where": [
-                        127,
+                        98,
                         "e_lobby_access_bool_exp!"
                     ]
                 }
             ],
             "update_e_lobby_access_by_pk": [
-                124,
+                95,
                 {
                     "_set": [
-                        139
+                        110
                     ],
                     "pk_columns": [
-                        137,
+                        108,
                         "e_lobby_access_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_lobby_access_many": [
-                134,
+                105,
                 {
                     "updates": [
-                        143,
+                        114,
                         "[e_lobby_access_updates!]!"
                     ]
                 }
             ],
             "update_e_map_pool_types": [
-                154,
+                125,
                 {
                     "_set": [
-                        160
+                        131
                     ],
                     "where": [
-                        147,
+                        118,
                         "e_map_pool_types_bool_exp!"
                     ]
                 }
             ],
             "update_e_map_pool_types_by_pk": [
-                144,
+                115,
                 {
                     "_set": [
-                        160
+                        131
                     ],
                     "pk_columns": [
-                        158,
+                        129,
                         "e_map_pool_types_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_map_pool_types_many": [
-                154,
+                125,
                 {
                     "updates": [
-                        164,
+                        135,
                         "[e_map_pool_types_updates!]!"
                     ]
                 }
             ],
             "update_e_match_map_status": [
-                175,
+                146,
                 {
                     "_set": [
-                        181
+                        152
                     ],
                     "where": [
-                        168,
+                        139,
                         "e_match_map_status_bool_exp!"
                     ]
                 }
             ],
             "update_e_match_map_status_by_pk": [
-                165,
+                136,
                 {
                     "_set": [
-                        181
+                        152
                     ],
                     "pk_columns": [
-                        179,
+                        150,
                         "e_match_map_status_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_match_map_status_many": [
-                175,
+                146,
                 {
                     "updates": [
-                        185,
+                        156,
                         "[e_match_map_status_updates!]!"
                     ]
                 }
             ],
             "update_e_match_status": [
-                196,
+                167,
                 {
                     "_set": [
-                        202
+                        173
                     ],
                     "where": [
-                        189,
+                        160,
                         "e_match_status_bool_exp!"
                     ]
                 }
             ],
             "update_e_match_status_by_pk": [
-                186,
+                157,
                 {
                     "_set": [
-                        202
+                        173
                     ],
                     "pk_columns": [
-                        200,
+                        171,
                         "e_match_status_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_match_status_many": [
-                196,
+                167,
                 {
                     "updates": [
-                        206,
+                        177,
                         "[e_match_status_updates!]!"
                     ]
                 }
             ],
             "update_e_match_types": [
-                217,
+                188,
                 {
                     "_set": [
-                        223
+                        194
                     ],
                     "where": [
-                        210,
+                        181,
                         "e_match_types_bool_exp!"
                     ]
                 }
             ],
             "update_e_match_types_by_pk": [
-                207,
+                178,
                 {
                     "_set": [
-                        223
+                        194
                     ],
                     "pk_columns": [
-                        221,
+                        192,
                         "e_match_types_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_match_types_many": [
-                217,
+                188,
                 {
                     "updates": [
-                        227,
+                        198,
                         "[e_match_types_updates!]!"
                     ]
                 }
             ],
             "update_e_notification_types": [
-                238,
+                209,
                 {
                     "_set": [
-                        243
+                        214
                     ],
                     "where": [
-                        231,
+                        202,
                         "e_notification_types_bool_exp!"
                     ]
                 }
             ],
             "update_e_notification_types_by_pk": [
-                228,
+                199,
                 {
                     "_set": [
-                        243
+                        214
                     ],
                     "pk_columns": [
-                        241,
+                        212,
                         "e_notification_types_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_notification_types_many": [
-                238,
+                209,
                 {
                     "updates": [
-                        247,
+                        218,
                         "[e_notification_types_updates!]!"
                     ]
                 }
             ],
             "update_e_objective_types": [
-                258,
+                229,
                 {
                     "_set": [
-                        263
+                        234
                     ],
                     "where": [
-                        251,
+                        222,
                         "e_objective_types_bool_exp!"
                     ]
                 }
             ],
             "update_e_objective_types_by_pk": [
-                248,
+                219,
                 {
                     "_set": [
-                        263
+                        234
                     ],
                     "pk_columns": [
-                        261,
+                        232,
                         "e_objective_types_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_objective_types_many": [
-                258,
+                229,
                 {
                     "updates": [
-                        267,
+                        238,
                         "[e_objective_types_updates!]!"
                     ]
                 }
             ],
             "update_e_player_roles": [
-                278,
+                249,
                 {
                     "_set": [
-                        283
+                        254
                     ],
                     "where": [
-                        271,
+                        242,
                         "e_player_roles_bool_exp!"
                     ]
                 }
             ],
             "update_e_player_roles_by_pk": [
-                268,
+                239,
                 {
                     "_set": [
-                        283
+                        254
                     ],
                     "pk_columns": [
-                        281,
+                        252,
                         "e_player_roles_pk_columns_input!"
                     ]
                 }
             ],
             "update_e_player_roles_many": [
-                278,
+                249,
                 {
                     "updates": [
-                        287,
+                        258,
                         "[e_player_roles_updates!]!"
+                    ]
+                }
+            ],
+            "update_e_server_regions": [
+                270,
+                {
+                    "_set": [
+                        276
+                    ],
+                    "where": [
+                        263,
+                        "e_server_regions_bool_exp!"
+                    ]
+                }
+            ],
+            "update_e_server_regions_by_pk": [
+                259,
+                {
+                    "_set": [
+                        276
+                    ],
+                    "pk_columns": [
+                        274,
+                        "e_server_regions_pk_columns_input!"
+                    ]
+                }
+            ],
+            "update_e_server_regions_many": [
+                270,
+                {
+                    "updates": [
+                        284,
+                        "[e_server_regions_updates!]!"
                     ]
                 }
             ],
@@ -43573,80 +43573,11 @@ export default {
                     ]
                 }
             ],
-            "e_game_server_node_regions": [
-                74,
-                {
-                    "distinct_on": [
-                        90,
-                        "[e_game_server_node_regions_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        88,
-                        "[e_game_server_node_regions_order_by!]"
-                    ],
-                    "where": [
-                        78
-                    ]
-                }
-            ],
-            "e_game_server_node_regions_aggregate": [
-                75,
-                {
-                    "distinct_on": [
-                        90,
-                        "[e_game_server_node_regions_select_column!]"
-                    ],
-                    "limit": [
-                        3
-                    ],
-                    "offset": [
-                        3
-                    ],
-                    "order_by": [
-                        88,
-                        "[e_game_server_node_regions_order_by!]"
-                    ],
-                    "where": [
-                        78
-                    ]
-                }
-            ],
-            "e_game_server_node_regions_by_pk": [
-                74,
-                {
-                    "value": [
-                        7,
-                        "String!"
-                    ]
-                }
-            ],
-            "e_game_server_node_regions_stream": [
-                74,
-                {
-                    "batch_size": [
-                        3,
-                        "Int!"
-                    ],
-                    "cursor": [
-                        95,
-                        "[e_game_server_node_regions_stream_cursor_input]!"
-                    ],
-                    "where": [
-                        78
-                    ]
-                }
-            ],
             "e_game_server_node_statuses": [
-                103,
+                74,
                 {
                     "distinct_on": [
-                        118,
+                        89,
                         "[e_game_server_node_statuses_select_column!]"
                     ],
                     "limit": [
@@ -43656,19 +43587,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        116,
+                        87,
                         "[e_game_server_node_statuses_order_by!]"
                     ],
                     "where": [
-                        106
+                        77
                     ]
                 }
             ],
             "e_game_server_node_statuses_aggregate": [
-                104,
+                75,
                 {
                     "distinct_on": [
-                        118,
+                        89,
                         "[e_game_server_node_statuses_select_column!]"
                     ],
                     "limit": [
@@ -43678,16 +43609,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        116,
+                        87,
                         "[e_game_server_node_statuses_order_by!]"
                     ],
                     "where": [
-                        106
+                        77
                     ]
                 }
             ],
             "e_game_server_node_statuses_by_pk": [
-                103,
+                74,
                 {
                     "value": [
                         7,
@@ -43696,26 +43627,26 @@ export default {
                 }
             ],
             "e_game_server_node_statuses_stream": [
-                103,
+                74,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        120,
+                        91,
                         "[e_game_server_node_statuses_stream_cursor_input]!"
                     ],
                     "where": [
-                        106
+                        77
                     ]
                 }
             ],
             "e_lobby_access": [
-                124,
+                95,
                 {
                     "distinct_on": [
-                        138,
+                        109,
                         "[e_lobby_access_select_column!]"
                     ],
                     "limit": [
@@ -43725,19 +43656,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        136,
+                        107,
                         "[e_lobby_access_order_by!]"
                     ],
                     "where": [
-                        127
+                        98
                     ]
                 }
             ],
             "e_lobby_access_aggregate": [
-                125,
+                96,
                 {
                     "distinct_on": [
-                        138,
+                        109,
                         "[e_lobby_access_select_column!]"
                     ],
                     "limit": [
@@ -43747,16 +43678,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        136,
+                        107,
                         "[e_lobby_access_order_by!]"
                     ],
                     "where": [
-                        127
+                        98
                     ]
                 }
             ],
             "e_lobby_access_by_pk": [
-                124,
+                95,
                 {
                     "value": [
                         7,
@@ -43765,26 +43696,26 @@ export default {
                 }
             ],
             "e_lobby_access_stream": [
-                124,
+                95,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        140,
+                        111,
                         "[e_lobby_access_stream_cursor_input]!"
                     ],
                     "where": [
-                        127
+                        98
                     ]
                 }
             ],
             "e_map_pool_types": [
-                144,
+                115,
                 {
                     "distinct_on": [
-                        159,
+                        130,
                         "[e_map_pool_types_select_column!]"
                     ],
                     "limit": [
@@ -43794,19 +43725,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        157,
+                        128,
                         "[e_map_pool_types_order_by!]"
                     ],
                     "where": [
-                        147
+                        118
                     ]
                 }
             ],
             "e_map_pool_types_aggregate": [
-                145,
+                116,
                 {
                     "distinct_on": [
-                        159,
+                        130,
                         "[e_map_pool_types_select_column!]"
                     ],
                     "limit": [
@@ -43816,16 +43747,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        157,
+                        128,
                         "[e_map_pool_types_order_by!]"
                     ],
                     "where": [
-                        147
+                        118
                     ]
                 }
             ],
             "e_map_pool_types_by_pk": [
-                144,
+                115,
                 {
                     "value": [
                         7,
@@ -43834,26 +43765,26 @@ export default {
                 }
             ],
             "e_map_pool_types_stream": [
-                144,
+                115,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        161,
+                        132,
                         "[e_map_pool_types_stream_cursor_input]!"
                     ],
                     "where": [
-                        147
+                        118
                     ]
                 }
             ],
             "e_match_map_status": [
-                165,
+                136,
                 {
                     "distinct_on": [
-                        180,
+                        151,
                         "[e_match_map_status_select_column!]"
                     ],
                     "limit": [
@@ -43863,19 +43794,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        178,
+                        149,
                         "[e_match_map_status_order_by!]"
                     ],
                     "where": [
-                        168
+                        139
                     ]
                 }
             ],
             "e_match_map_status_aggregate": [
-                166,
+                137,
                 {
                     "distinct_on": [
-                        180,
+                        151,
                         "[e_match_map_status_select_column!]"
                     ],
                     "limit": [
@@ -43885,16 +43816,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        178,
+                        149,
                         "[e_match_map_status_order_by!]"
                     ],
                     "where": [
-                        168
+                        139
                     ]
                 }
             ],
             "e_match_map_status_by_pk": [
-                165,
+                136,
                 {
                     "value": [
                         7,
@@ -43903,26 +43834,26 @@ export default {
                 }
             ],
             "e_match_map_status_stream": [
-                165,
+                136,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        182,
+                        153,
                         "[e_match_map_status_stream_cursor_input]!"
                     ],
                     "where": [
-                        168
+                        139
                     ]
                 }
             ],
             "e_match_status": [
-                186,
+                157,
                 {
                     "distinct_on": [
-                        201,
+                        172,
                         "[e_match_status_select_column!]"
                     ],
                     "limit": [
@@ -43932,19 +43863,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        199,
+                        170,
                         "[e_match_status_order_by!]"
                     ],
                     "where": [
-                        189
+                        160
                     ]
                 }
             ],
             "e_match_status_aggregate": [
-                187,
+                158,
                 {
                     "distinct_on": [
-                        201,
+                        172,
                         "[e_match_status_select_column!]"
                     ],
                     "limit": [
@@ -43954,16 +43885,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        199,
+                        170,
                         "[e_match_status_order_by!]"
                     ],
                     "where": [
-                        189
+                        160
                     ]
                 }
             ],
             "e_match_status_by_pk": [
-                186,
+                157,
                 {
                     "value": [
                         7,
@@ -43972,26 +43903,26 @@ export default {
                 }
             ],
             "e_match_status_stream": [
-                186,
+                157,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        203,
+                        174,
                         "[e_match_status_stream_cursor_input]!"
                     ],
                     "where": [
-                        189
+                        160
                     ]
                 }
             ],
             "e_match_types": [
-                207,
+                178,
                 {
                     "distinct_on": [
-                        222,
+                        193,
                         "[e_match_types_select_column!]"
                     ],
                     "limit": [
@@ -44001,19 +43932,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        220,
+                        191,
                         "[e_match_types_order_by!]"
                     ],
                     "where": [
-                        210
+                        181
                     ]
                 }
             ],
             "e_match_types_aggregate": [
-                208,
+                179,
                 {
                     "distinct_on": [
-                        222,
+                        193,
                         "[e_match_types_select_column!]"
                     ],
                     "limit": [
@@ -44023,16 +43954,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        220,
+                        191,
                         "[e_match_types_order_by!]"
                     ],
                     "where": [
-                        210
+                        181
                     ]
                 }
             ],
             "e_match_types_by_pk": [
-                207,
+                178,
                 {
                     "value": [
                         7,
@@ -44041,26 +43972,26 @@ export default {
                 }
             ],
             "e_match_types_stream": [
-                207,
+                178,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        224,
+                        195,
                         "[e_match_types_stream_cursor_input]!"
                     ],
                     "where": [
-                        210
+                        181
                     ]
                 }
             ],
             "e_notification_types": [
-                228,
+                199,
                 {
                     "distinct_on": [
-                        242,
+                        213,
                         "[e_notification_types_select_column!]"
                     ],
                     "limit": [
@@ -44070,19 +44001,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        240,
+                        211,
                         "[e_notification_types_order_by!]"
                     ],
                     "where": [
-                        231
+                        202
                     ]
                 }
             ],
             "e_notification_types_aggregate": [
-                229,
+                200,
                 {
                     "distinct_on": [
-                        242,
+                        213,
                         "[e_notification_types_select_column!]"
                     ],
                     "limit": [
@@ -44092,16 +44023,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        240,
+                        211,
                         "[e_notification_types_order_by!]"
                     ],
                     "where": [
-                        231
+                        202
                     ]
                 }
             ],
             "e_notification_types_by_pk": [
-                228,
+                199,
                 {
                     "value": [
                         7,
@@ -44110,26 +44041,26 @@ export default {
                 }
             ],
             "e_notification_types_stream": [
-                228,
+                199,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        244,
+                        215,
                         "[e_notification_types_stream_cursor_input]!"
                     ],
                     "where": [
-                        231
+                        202
                     ]
                 }
             ],
             "e_objective_types": [
-                248,
+                219,
                 {
                     "distinct_on": [
-                        262,
+                        233,
                         "[e_objective_types_select_column!]"
                     ],
                     "limit": [
@@ -44139,19 +44070,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        260,
+                        231,
                         "[e_objective_types_order_by!]"
                     ],
                     "where": [
-                        251
+                        222
                     ]
                 }
             ],
             "e_objective_types_aggregate": [
-                249,
+                220,
                 {
                     "distinct_on": [
-                        262,
+                        233,
                         "[e_objective_types_select_column!]"
                     ],
                     "limit": [
@@ -44161,16 +44092,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        260,
+                        231,
                         "[e_objective_types_order_by!]"
                     ],
                     "where": [
-                        251
+                        222
                     ]
                 }
             ],
             "e_objective_types_by_pk": [
-                248,
+                219,
                 {
                     "value": [
                         7,
@@ -44179,26 +44110,26 @@ export default {
                 }
             ],
             "e_objective_types_stream": [
-                248,
+                219,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        264,
+                        235,
                         "[e_objective_types_stream_cursor_input]!"
                     ],
                     "where": [
-                        251
+                        222
                     ]
                 }
             ],
             "e_player_roles": [
-                268,
+                239,
                 {
                     "distinct_on": [
-                        282,
+                        253,
                         "[e_player_roles_select_column!]"
                     ],
                     "limit": [
@@ -44208,19 +44139,19 @@ export default {
                         3
                     ],
                     "order_by": [
-                        280,
+                        251,
                         "[e_player_roles_order_by!]"
                     ],
                     "where": [
-                        271
+                        242
                     ]
                 }
             ],
             "e_player_roles_aggregate": [
-                269,
+                240,
                 {
                     "distinct_on": [
-                        282,
+                        253,
                         "[e_player_roles_select_column!]"
                     ],
                     "limit": [
@@ -44230,16 +44161,16 @@ export default {
                         3
                     ],
                     "order_by": [
-                        280,
+                        251,
                         "[e_player_roles_order_by!]"
                     ],
                     "where": [
-                        271
+                        242
                     ]
                 }
             ],
             "e_player_roles_by_pk": [
-                268,
+                239,
                 {
                     "value": [
                         7,
@@ -44248,18 +44179,87 @@ export default {
                 }
             ],
             "e_player_roles_stream": [
-                268,
+                239,
                 {
                     "batch_size": [
                         3,
                         "Int!"
                     ],
                     "cursor": [
-                        284,
+                        255,
                         "[e_player_roles_stream_cursor_input]!"
                     ],
                     "where": [
-                        271
+                        242
+                    ]
+                }
+            ],
+            "e_server_regions": [
+                259,
+                {
+                    "distinct_on": [
+                        275,
+                        "[e_server_regions_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        273,
+                        "[e_server_regions_order_by!]"
+                    ],
+                    "where": [
+                        263
+                    ]
+                }
+            ],
+            "e_server_regions_aggregate": [
+                260,
+                {
+                    "distinct_on": [
+                        275,
+                        "[e_server_regions_select_column!]"
+                    ],
+                    "limit": [
+                        3
+                    ],
+                    "offset": [
+                        3
+                    ],
+                    "order_by": [
+                        273,
+                        "[e_server_regions_order_by!]"
+                    ],
+                    "where": [
+                        263
+                    ]
+                }
+            ],
+            "e_server_regions_by_pk": [
+                259,
+                {
+                    "value": [
+                        7,
+                        "String!"
+                    ]
+                }
+            ],
+            "e_server_regions_stream": [
+                259,
+                {
+                    "batch_size": [
+                        3,
+                        "Int!"
+                    ],
+                    "cursor": [
+                        280,
+                        "[e_server_regions_stream_cursor_input]!"
+                    ],
+                    "where": [
+                        263
                     ]
                 }
             ],
