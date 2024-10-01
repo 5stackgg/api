@@ -324,17 +324,8 @@ export class MatchMakingService {
           where: {
             _and: [
               {
-                game_server_nodes: {
-                  enabled: {
-                    _eq: true,
-                  },
-                },
-                game_server_nodes_aggregate: {
-                  count: {
-                    predicate: {
-                      _gt: 0,
-                    },
-                  },
+                total_server_count: {
+                  _gt: 0,
                 },
               },
             ],
