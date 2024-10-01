@@ -9240,7 +9240,6 @@ type match_options {
   id: uuid!
   invite_code: String
   knife_round: Boolean!
-  lan: Boolean!
   lobby_access: e_lobby_access_enum
 
   """An object relationship"""
@@ -9347,7 +9346,6 @@ input match_options_bool_exp {
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
   knife_round: Boolean_comparison_exp
-  lan: Boolean_comparison_exp
   lobby_access: e_lobby_access_enum_comparison_exp
   map_pool: map_pools_bool_exp
   map_pool_id: uuid_comparison_exp
@@ -9396,7 +9394,6 @@ input match_options_insert_input {
   id: uuid
   invite_code: String
   knife_round: Boolean
-  lan: Boolean
   lobby_access: e_lobby_access_enum
   map_pool: map_pools_obj_rel_insert_input
   map_pool_id: uuid
@@ -9475,7 +9472,6 @@ input match_options_order_by {
   id: order_by
   invite_code: order_by
   knife_round: order_by
-  lan: order_by
   lobby_access: order_by
   map_pool: map_pools_order_by
   map_pool_id: order_by
@@ -9517,9 +9513,6 @@ enum match_options_select_column {
 
   """column name"""
   knife_round
-
-  """column name"""
-  lan
 
   """column name"""
   lobby_access
@@ -9570,7 +9563,6 @@ input match_options_set_input {
   id: uuid
   invite_code: String
   knife_round: Boolean
-  lan: Boolean
   lobby_access: e_lobby_access_enum
   map_pool_id: uuid
   map_veto: Boolean
@@ -9628,7 +9620,6 @@ input match_options_stream_cursor_value_input {
   id: uuid
   invite_code: String
   knife_round: Boolean
-  lan: Boolean
   lobby_access: e_lobby_access_enum
   map_pool_id: uuid
   map_veto: Boolean
@@ -9670,9 +9661,6 @@ enum match_options_update_column {
 
   """column name"""
   knife_round
-
-  """column name"""
-  lan
 
   """column name"""
   lobby_access

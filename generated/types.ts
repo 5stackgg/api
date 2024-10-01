@@ -12686,9 +12686,6 @@ export default {
             "knife_round": [
                 0
             ],
-            "lan": [
-                0
-            ],
             "lobby_access": [
                 100
             ],
@@ -12890,9 +12887,6 @@ export default {
             "knife_round": [
                 1
             ],
-            "lan": [
-                1
-            ],
             "lobby_access": [
                 101
             ],
@@ -12980,9 +12974,6 @@ export default {
                 7
             ],
             "knife_round": [
-                0
-            ],
-            "lan": [
                 0
             ],
             "lobby_access": [
@@ -13144,9 +13135,6 @@ export default {
             "knife_round": [
                 926
             ],
-            "lan": [
-                926
-            ],
             "lobby_access": [
                 926
             ],
@@ -13222,9 +13210,6 @@ export default {
                 7
             ],
             "knife_round": [
-                0
-            ],
-            "lan": [
                 0
             ],
             "lobby_access": [
@@ -13346,9 +13331,6 @@ export default {
                 7
             ],
             "knife_round": [
-                0
-            ],
-            "lan": [
                 0
             ],
             "lobby_access": [
