@@ -43,17 +43,6 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const options = this.getMatchOptions(interaction.options.data, matchType);
 
-    let serverId: string;
-    if (options["on-demand-server"] === false) {
-      serverId = await this.askForDedicatedServerId(interaction);
-      if (!serverId) {
-        await interaction.editReply({
-          components: [],
-          content: `Server was not selected`,
-        });
-      }
-    }
-
     const guild = await this.bot.client.guilds.fetch(interaction.channel);
 
     const teamSelectionChannel = (await guild.channels.fetch(
@@ -95,7 +84,6 @@ export default class ScheduleMatch extends DiscordInteraction {
         map: options.map,
         overtime: options.overtime,
       },
-      serverId,
     );
     const matchId = match.id;
 
@@ -152,7 +140,6 @@ export default class ScheduleMatch extends DiscordInteraction {
       knife: true,
       overtime: true,
       captains: true,
-      "on-demand-server": true,
     };
 
     for (const index in _options) {
@@ -271,66 +258,5 @@ export default class ScheduleMatch extends DiscordInteraction {
       captain1,
       captain2,
     };
-  }
-
-  private async askForDedicatedServerId(
-    interaction: ChatInputCommandInteraction,
-  ): Promise<string> {
-    const { servers } = await this.hasura.query({
-      servers: {
-        __args: {
-          where: {
-            owner: {
-              discord_id: {
-                _eq: interaction.user.id,
-              },
-            },
-          },
-        },
-        id: true,
-        label: true,
-        host: true,
-        port: true,
-      },
-    });
-
-    let serverId: string;
-    let serverReply: Message;
-
-    if (servers.length != 0) {
-      const availableServers = servers.map((server) => {
-        return {
-          value: server.id,
-          label: `${server.label} @ ${server.host}:${server.port}`,
-        };
-      });
-
-      const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-        new StringSelectMenuBuilder({
-          custom_id: "server-id",
-          placeholder: "Pick One of Your Dedicated Servers",
-        }).addOptions(...availableServers),
-      );
-
-      try {
-        serverReply = await interaction.reply({
-          fetchReply: true,
-          ephemeral: true,
-          content: "Please select an option:",
-          components: [row],
-        });
-
-        const serverInteraction =
-          await serverReply.awaitMessageComponent<ComponentType.StringSelect>({
-            time: 15 * 1000,
-          });
-
-        serverId = serverInteraction.values?.[0];
-      } catch (error) {
-        this.logger.warn("unknown error", error);
-      }
-    }
-
-    return serverId;
   }
 }

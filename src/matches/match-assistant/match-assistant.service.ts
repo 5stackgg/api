@@ -766,7 +766,6 @@ export class MatchAssistantService {
       timeout_setting?: e_timeout_settings_enum;
       region?: e_game_server_node_regions_enum;
     },
-    serverId?: string,
   ) {
     const { map_pools } = await this.hasura.query({
       map_pools: {
@@ -788,7 +787,6 @@ export class MatchAssistantService {
         __args: {
           object: {
             map: options.map,
-            server_id: serverId,
             region: options.region,
             options: {
               data: {

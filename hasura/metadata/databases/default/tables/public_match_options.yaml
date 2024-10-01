@@ -41,7 +41,9 @@ insert_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -61,7 +63,9 @@ insert_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -81,7 +85,9 @@ insert_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -100,7 +106,9 @@ insert_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -121,7 +129,9 @@ select_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -142,7 +152,9 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -190,7 +202,9 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -216,7 +230,9 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay

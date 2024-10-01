@@ -26,13 +26,6 @@ array_relationships:
         table:
           name: tournament_team_roster
           schema: public
-  - name: servers
-    using:
-      foreign_key_constraint_on:
-        column: tournament_id
-        table:
-          name: tournament_servers
-          schema: public
   - name: stages
     using:
       foreign_key_constraint_on:

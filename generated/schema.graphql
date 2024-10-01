@@ -5118,6 +5118,23 @@ input inet_comparison_exp {
   _nin: [inet!]
 }
 
+scalar json
+
+"""
+Boolean expression to compare columns of type "json". All fields are combined with logical 'AND'.
+"""
+input json_comparison_exp {
+  _eq: json
+  _gt: json
+  _gte: json
+  _in: [json!]
+  _is_null: Boolean
+  _lt: json
+  _lte: json
+  _neq: json
+  _nin: [json!]
+}
+
 scalar jsonb
 
 input jsonb_cast_exp {
@@ -9271,7 +9288,12 @@ type match_options {
   mr: Int!
   number_of_substitutes: Int!
   overtime: Boolean!
+  prefer_dedicated_server: Boolean!
   region_veto: Boolean!
+  regions(
+    """JSON select path"""
+    path: String
+  ): json
   tech_timeout_setting: e_timeout_settings_enum!
   timeout_setting: e_timeout_settings_enum!
 
@@ -9337,7 +9359,9 @@ input match_options_bool_exp {
   mr: Int_comparison_exp
   number_of_substitutes: Int_comparison_exp
   overtime: Boolean_comparison_exp
+  prefer_dedicated_server: Boolean_comparison_exp
   region_veto: Boolean_comparison_exp
+  regions: json_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
@@ -9383,7 +9407,9 @@ input match_options_insert_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  prefer_dedicated_server: Boolean
   region_veto: Boolean
+  regions: json
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
@@ -9460,7 +9486,9 @@ input match_options_order_by {
   mr: order_by
   number_of_substitutes: order_by
   overtime: order_by
+  prefer_dedicated_server: order_by
   region_veto: order_by
+  regions: order_by
   tech_timeout_setting: order_by
   timeout_setting: order_by
   tournament: tournaments_order_by
@@ -9514,7 +9542,13 @@ enum match_options_select_column {
   overtime
 
   """column name"""
+  prefer_dedicated_server
+
+  """column name"""
   region_veto
+
+  """column name"""
+  regions
 
   """column name"""
   tech_timeout_setting
@@ -9545,7 +9579,9 @@ input match_options_set_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  prefer_dedicated_server: Boolean
   region_veto: Boolean
+  regions: json
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -9601,7 +9637,9 @@ input match_options_stream_cursor_value_input {
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
+  prefer_dedicated_server: Boolean
   region_veto: Boolean
+  regions: json
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -9657,7 +9695,13 @@ enum match_options_update_column {
   overtime
 
   """column name"""
+  prefer_dedicated_server
+
+  """column name"""
   region_veto
+
+  """column name"""
+  regions
 
   """column name"""
   tech_timeout_setting
@@ -12258,19 +12302,6 @@ type mutation_root {
   delete_tournament_organizers_by_pk(steam_id: bigint!, tournament_id: uuid!): tournament_organizers
 
   """
-  delete data from the table: "tournament_servers"
-  """
-  delete_tournament_servers(
-    """filter the rows which have to be deleted"""
-    where: tournament_servers_bool_exp!
-  ): tournament_servers_mutation_response
-
-  """
-  delete single row from the table: "tournament_servers"
-  """
-  delete_tournament_servers_by_pk(server_id: uuid!, tournament_id: uuid!): tournament_servers
-
-  """
   delete data from the table: "tournament_stages"
   """
   delete_tournament_stages(
@@ -13395,28 +13426,6 @@ type mutation_root {
     """upsert condition"""
     on_conflict: tournament_organizers_on_conflict
   ): tournament_organizers
-
-  """
-  insert data into the table: "tournament_servers"
-  """
-  insert_tournament_servers(
-    """the rows to be inserted"""
-    objects: [tournament_servers_insert_input!]!
-
-    """upsert condition"""
-    on_conflict: tournament_servers_on_conflict
-  ): tournament_servers_mutation_response
-
-  """
-  insert a single row into the table: "tournament_servers"
-  """
-  insert_tournament_servers_one(
-    """the row to be inserted"""
-    object: tournament_servers_insert_input!
-
-    """upsert condition"""
-    on_conflict: tournament_servers_on_conflict
-  ): tournament_servers
 
   """
   insert data into the table: "tournament_stages"
@@ -15037,34 +15046,6 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [tournament_organizers_updates!]!
   ): [tournament_organizers_mutation_response]
-
-  """
-  update data of the table: "tournament_servers"
-  """
-  update_tournament_servers(
-    """sets the columns of the filtered rows to the given values"""
-    _set: tournament_servers_set_input
-
-    """filter the rows which have to be updated"""
-    where: tournament_servers_bool_exp!
-  ): tournament_servers_mutation_response
-
-  """
-  update single row of the table: "tournament_servers"
-  """
-  update_tournament_servers_by_pk(
-    """sets the columns of the filtered rows to the given values"""
-    _set: tournament_servers_set_input
-    pk_columns: tournament_servers_pk_columns_input!
-  ): tournament_servers
-
-  """
-  update multiples rows of table: "tournament_servers"
-  """
-  update_tournament_servers_many(
-    """updates to execute, in order"""
-    updates: [tournament_servers_updates!]!
-  ): [tournament_servers_mutation_response]
 
   """
   update data of the table: "tournament_stages"
@@ -23046,47 +23027,6 @@ type query_root {
   tournament_organizers_by_pk(steam_id: bigint!, tournament_id: uuid!): tournament_organizers
 
   """An array relationship"""
-  tournament_servers(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): [tournament_servers!]!
-
-  """An aggregate relationship"""
-  tournament_servers_aggregate(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): tournament_servers_aggregate!
-
-  """
-  fetch data from the table: "tournament_servers" using primary key columns
-  """
-  tournament_servers_by_pk(server_id: uuid!, tournament_id: uuid!): tournament_servers
-
-  """An array relationship"""
   tournament_stages(
     """distinct select on columns"""
     distinct_on: [tournament_stages_select_column!]
@@ -23671,49 +23611,11 @@ type servers {
     """filter the rows returned"""
     where: matches_bool_exp
   ): matches_aggregate!
-
-  """An object relationship"""
-  owner: players
   owner_steam_id: bigint
   port: Int!
   rcon_password: bytea!
+  region: String!
   reserved_by_match_id: uuid
-
-  """An array relationship"""
-  tournament_servers(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): [tournament_servers!]!
-
-  """An aggregate relationship"""
-  tournament_servers_aggregate(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): tournament_servers_aggregate!
   tv_port: Int
 }
 
@@ -23831,13 +23733,11 @@ input servers_bool_exp {
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
-  owner: players_bool_exp
   owner_steam_id: bigint_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
+  region: String_comparison_exp
   reserved_by_match_id: uuid_comparison_exp
-  tournament_servers: tournament_servers_bool_exp
-  tournament_servers_aggregate: tournament_servers_aggregate_bool_exp
   tv_port: Int_comparison_exp
 }
 
@@ -23879,12 +23779,11 @@ input servers_insert_input {
   id: uuid
   label: String
   matches: matches_arr_rel_insert_input
-  owner: players_obj_rel_insert_input
   owner_steam_id: bigint
   port: Int
   rcon_password: bytea
+  region: String
   reserved_by_match_id: uuid
-  tournament_servers: tournament_servers_arr_rel_insert_input
   tv_port: Int
 }
 
@@ -23897,6 +23796,7 @@ type servers_max_fields {
   label: String
   owner_steam_id: bigint
   port: Int
+  region: String
   reserved_by_match_id: uuid
   tv_port: Int
 }
@@ -23912,6 +23812,7 @@ input servers_max_order_by {
   label: order_by
   owner_steam_id: order_by
   port: order_by
+  region: order_by
   reserved_by_match_id: order_by
   tv_port: order_by
 }
@@ -23925,6 +23826,7 @@ type servers_min_fields {
   label: String
   owner_steam_id: bigint
   port: Int
+  region: String
   reserved_by_match_id: uuid
   tv_port: Int
 }
@@ -23940,6 +23842,7 @@ input servers_min_order_by {
   label: order_by
   owner_steam_id: order_by
   port: order_by
+  region: order_by
   reserved_by_match_id: order_by
   tv_port: order_by
 }
@@ -23987,12 +23890,11 @@ input servers_order_by {
   is_dedicated: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
-  owner: players_order_by
   owner_steam_id: order_by
   port: order_by
   rcon_password: order_by
+  region: order_by
   reserved_by_match_id: order_by
-  tournament_servers_aggregate: tournament_servers_aggregate_order_by
   tv_port: order_by
 }
 
@@ -24034,6 +23936,9 @@ enum servers_select_column {
 
   """column name"""
   rcon_password
+
+  """column name"""
+  region
 
   """column name"""
   reserved_by_match_id
@@ -24078,6 +23983,7 @@ input servers_set_input {
   owner_steam_id: bigint
   port: Int
   rcon_password: bytea
+  region: String
   reserved_by_match_id: uuid
   tv_port: Int
 }
@@ -24153,6 +24059,7 @@ input servers_stream_cursor_value_input {
   owner_steam_id: bigint
   port: Int
   rcon_password: bytea
+  region: String
   reserved_by_match_id: uuid
   tv_port: Int
 }
@@ -24206,6 +24113,9 @@ enum servers_update_column {
 
   """column name"""
   rcon_password
+
+  """column name"""
+  region
 
   """column name"""
   reserved_by_match_id
@@ -27137,61 +27047,6 @@ type subscription_root {
   ): [tournament_organizers!]!
 
   """An array relationship"""
-  tournament_servers(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): [tournament_servers!]!
-
-  """An aggregate relationship"""
-  tournament_servers_aggregate(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): tournament_servers_aggregate!
-
-  """
-  fetch data from the table: "tournament_servers" using primary key columns
-  """
-  tournament_servers_by_pk(server_id: uuid!, tournament_id: uuid!): tournament_servers
-
-  """
-  fetch data from the table in a streaming manner: "tournament_servers"
-  """
-  tournament_servers_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [tournament_servers_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): [tournament_servers!]!
-
-  """An array relationship"""
   tournament_stages(
     """distinct select on columns"""
     distinct_on: [tournament_stages_select_column!]
@@ -30048,221 +29903,6 @@ input tournament_organizers_variance_order_by {
 }
 
 """
-columns and relationships of "tournament_servers"
-"""
-type tournament_servers {
-  """An object relationship"""
-  server: servers!
-  server_id: uuid!
-
-  """An object relationship"""
-  tournament: tournaments!
-  tournament_id: uuid!
-}
-
-"""
-aggregated selection of "tournament_servers"
-"""
-type tournament_servers_aggregate {
-  aggregate: tournament_servers_aggregate_fields
-  nodes: [tournament_servers!]!
-}
-
-input tournament_servers_aggregate_bool_exp {
-  count: tournament_servers_aggregate_bool_exp_count
-}
-
-input tournament_servers_aggregate_bool_exp_count {
-  arguments: [tournament_servers_select_column!]
-  distinct: Boolean
-  filter: tournament_servers_bool_exp
-  predicate: Int_comparison_exp!
-}
-
-"""
-aggregate fields of "tournament_servers"
-"""
-type tournament_servers_aggregate_fields {
-  count(columns: [tournament_servers_select_column!], distinct: Boolean): Int!
-  max: tournament_servers_max_fields
-  min: tournament_servers_min_fields
-}
-
-"""
-order by aggregate values of table "tournament_servers"
-"""
-input tournament_servers_aggregate_order_by {
-  count: order_by
-  max: tournament_servers_max_order_by
-  min: tournament_servers_min_order_by
-}
-
-"""
-input type for inserting array relation for remote table "tournament_servers"
-"""
-input tournament_servers_arr_rel_insert_input {
-  data: [tournament_servers_insert_input!]!
-
-  """upsert condition"""
-  on_conflict: tournament_servers_on_conflict
-}
-
-"""
-Boolean expression to filter rows from the table "tournament_servers". All fields are combined with a logical 'AND'.
-"""
-input tournament_servers_bool_exp {
-  _and: [tournament_servers_bool_exp!]
-  _not: tournament_servers_bool_exp
-  _or: [tournament_servers_bool_exp!]
-  server: servers_bool_exp
-  server_id: uuid_comparison_exp
-  tournament: tournaments_bool_exp
-  tournament_id: uuid_comparison_exp
-}
-
-"""
-unique or primary key constraints on table "tournament_servers"
-"""
-enum tournament_servers_constraint {
-  """
-  unique or primary key constraint on columns "server_id", "tournament_id"
-  """
-  tournament_servers_pkey
-
-  """
-  unique or primary key constraint on columns "server_id", "tournament_id"
-  """
-  tournament_servers_server_id_tournament_id_key
-}
-
-"""
-input type for inserting data into table "tournament_servers"
-"""
-input tournament_servers_insert_input {
-  server: servers_obj_rel_insert_input
-  server_id: uuid
-  tournament: tournaments_obj_rel_insert_input
-  tournament_id: uuid
-}
-
-"""aggregate max on columns"""
-type tournament_servers_max_fields {
-  server_id: uuid
-  tournament_id: uuid
-}
-
-"""
-order by max() on columns of table "tournament_servers"
-"""
-input tournament_servers_max_order_by {
-  server_id: order_by
-  tournament_id: order_by
-}
-
-"""aggregate min on columns"""
-type tournament_servers_min_fields {
-  server_id: uuid
-  tournament_id: uuid
-}
-
-"""
-order by min() on columns of table "tournament_servers"
-"""
-input tournament_servers_min_order_by {
-  server_id: order_by
-  tournament_id: order_by
-}
-
-"""
-response of any mutation on the table "tournament_servers"
-"""
-type tournament_servers_mutation_response {
-  """number of rows affected by the mutation"""
-  affected_rows: Int!
-
-  """data from the rows affected by the mutation"""
-  returning: [tournament_servers!]!
-}
-
-"""
-on_conflict condition type for table "tournament_servers"
-"""
-input tournament_servers_on_conflict {
-  constraint: tournament_servers_constraint!
-  update_columns: [tournament_servers_update_column!]! = []
-  where: tournament_servers_bool_exp
-}
-
-"""Ordering options when selecting data from "tournament_servers"."""
-input tournament_servers_order_by {
-  server: servers_order_by
-  server_id: order_by
-  tournament: tournaments_order_by
-  tournament_id: order_by
-}
-
-"""primary key columns input for table: tournament_servers"""
-input tournament_servers_pk_columns_input {
-  server_id: uuid!
-  tournament_id: uuid!
-}
-
-"""
-select columns of table "tournament_servers"
-"""
-enum tournament_servers_select_column {
-  """column name"""
-  server_id
-
-  """column name"""
-  tournament_id
-}
-
-"""
-input type for updating data in table "tournament_servers"
-"""
-input tournament_servers_set_input {
-  server_id: uuid
-  tournament_id: uuid
-}
-
-"""
-Streaming cursor of the table "tournament_servers"
-"""
-input tournament_servers_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: tournament_servers_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input tournament_servers_stream_cursor_value_input {
-  server_id: uuid
-  tournament_id: uuid
-}
-
-"""
-update columns of table "tournament_servers"
-"""
-enum tournament_servers_update_column {
-  """column name"""
-  server_id
-
-  """column name"""
-  tournament_id
-}
-
-input tournament_servers_updates {
-  """sets the columns of the filtered rows to the given values"""
-  _set: tournament_servers_set_input
-
-  """filter the rows which have to be updated"""
-  where: tournament_servers_bool_exp!
-}
-
-"""
 columns and relationships of "tournament_stages"
 """
 type tournament_stages {
@@ -31806,42 +31446,6 @@ type tournaments {
   ): tournament_team_roster_aggregate!
 
   """An array relationship"""
-  servers(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): [tournament_servers!]!
-
-  """An aggregate relationship"""
-  servers_aggregate(
-    """distinct select on columns"""
-    distinct_on: [tournament_servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [tournament_servers_order_by!]
-
-    """filter the rows returned"""
-    where: tournament_servers_bool_exp
-  ): tournament_servers_aggregate!
-
-  """An array relationship"""
   stages(
     """distinct select on columns"""
     distinct_on: [tournament_stages_select_column!]
@@ -32027,8 +31631,6 @@ input tournaments_bool_exp {
   organizers_aggregate: tournament_organizers_aggregate_bool_exp
   rosters: tournament_team_roster_bool_exp
   rosters_aggregate: tournament_team_roster_aggregate_bool_exp
-  servers: tournament_servers_bool_exp
-  servers_aggregate: tournament_servers_aggregate_bool_exp
   stages: tournament_stages_bool_exp
   stages_aggregate: tournament_stages_aggregate_bool_exp
   start: timestamptz_comparison_exp
@@ -32073,7 +31675,6 @@ input tournaments_insert_input {
   organizer_steam_id: bigint
   organizers: tournament_organizers_arr_rel_insert_input
   rosters: tournament_team_roster_arr_rel_insert_input
-  servers: tournament_servers_arr_rel_insert_input
   stages: tournament_stages_arr_rel_insert_input
   start: timestamptz
   status: e_tournament_status_enum
@@ -32194,7 +31795,6 @@ input tournaments_order_by {
   organizer_steam_id: order_by
   organizers_aggregate: tournament_organizers_aggregate_order_by
   rosters_aggregate: tournament_team_roster_aggregate_order_by
-  servers_aggregate: tournament_servers_aggregate_order_by
   stages_aggregate: tournament_stages_aggregate_order_by
   start: order_by
   status: order_by

@@ -14,9 +14,6 @@ object_relationships:
   - name: game_server_node
     using:
       foreign_key_constraint_on: game_server_node_id
-  - name: owner
-    using:
-      foreign_key_constraint_on: owner_steam_id
 array_relationships:
   - name: matches
     using:
@@ -25,13 +22,6 @@ array_relationships:
         table:
           name: matches
           schema: public
-  - name: tournament_servers
-    using:
-      foreign_key_constraint_on:
-        column: server_id
-        table:
-          name: tournament_servers
-          schema: public
 computed_fields:
   - name: is_dedicated
     definition:
@@ -39,7 +29,7 @@ computed_fields:
         name: is_dedicated_server
         schema: public
 insert_permissions:
-  - role: user
+  - role: administrator
     permission:
       check: {}
       set:
@@ -50,10 +40,11 @@ insert_permissions:
         - label
         - port
         - rcon_password
+        - region
         - tv_port
     comment: ""
 select_permissions:
-  - role: user
+  - role: administrator
     permission:
       columns:
         - api_password
@@ -72,7 +63,7 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: user
+  - role: administrator
     permission:
       columns:
         - enabled
@@ -89,7 +80,7 @@ update_permissions:
           _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
-  - role: user
+  - role: administrator
     permission:
       filter:
         owner_steam_id:

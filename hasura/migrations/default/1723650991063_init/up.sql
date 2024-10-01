@@ -343,10 +343,6 @@ CREATE TABLE public.tournament_organizers (
     steam_id bigint NOT NULL,
     tournament_id uuid NOT NULL
 );
-CREATE TABLE public.tournament_servers (
-    server_id uuid NOT NULL,
-    tournament_id uuid NOT NULL
-);
 CREATE TABLE public.tournament_stages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tournament_id uuid NOT NULL,
@@ -592,10 +588,6 @@ ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_pkey PRIMARY KEY (player_steam_id, tournament_id);
 ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_player_steam_id_tournament_id_key UNIQUE (player_steam_id, tournament_id);
-ALTER TABLE ONLY public.tournament_servers
-    ADD CONSTRAINT tournament_servers_pkey PRIMARY KEY (server_id, tournament_id);
-ALTER TABLE ONLY public.tournament_servers
-    ADD CONSTRAINT tournament_servers_server_id_tournament_id_key UNIQUE (server_id, tournament_id);
 ALTER TABLE ONLY public.tournament_stages
     ADD CONSTRAINT tournament_stages_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tournament_teams
@@ -767,10 +759,6 @@ ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_team_roster
     ADD CONSTRAINT tournament_roster_tournament_team_id_fkey FOREIGN KEY (tournament_team_id) REFERENCES public.tournament_teams(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournament_servers
-    ADD CONSTRAINT tournament_servers_server_id_fkey FOREIGN KEY (server_id) REFERENCES public.servers(id) ON UPDATE CASCADE ON DELETE CASCADE;
-ALTER TABLE ONLY public.tournament_servers
-    ADD CONSTRAINT tournament_servers_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_stages
     ADD CONSTRAINT tournament_stages_tournament_id_fkey FOREIGN KEY (tournament_id) REFERENCES public.tournaments(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.tournament_stages

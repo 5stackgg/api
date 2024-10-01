@@ -150,13 +150,6 @@ export class DiscordBotService {
       .addUserOption((option) =>
         option.setName("captain-2").setDescription("Captain #2"),
       )
-      .addBooleanOption((option) =>
-        option
-          .setName("on-demand-server")
-          .setDescription(
-            "Use On Demand Server. If disabled, it will ask to use one of your servers (default: true)",
-          ),
-      )
       .addStringOption((option) =>
         option
           .setName("mr")
