@@ -132,13 +132,6 @@ array_relationships:
         table:
           name: player_unused_utility
           schema: public
-  - name: servers
-    using:
-      foreign_key_constraint_on:
-        column: owner_steam_id
-        table:
-          name: servers
-          schema: public
   - name: team_invites
     using:
       foreign_key_constraint_on:

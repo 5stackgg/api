@@ -92,7 +92,6 @@ CREATE TABLE public.servers (
     tv_port integer,
     is_on_demand boolean DEFAULT false NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
-    owner_steam_id bigint,
     api_password uuid DEFAULT gen_random_uuid() NOT NULL
 );
 

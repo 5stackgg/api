@@ -32,8 +32,6 @@ insert_permissions:
   - role: administrator
     permission:
       check: {}
-      set:
-        owner_steam_id: x-hasura-user-id
       columns:
         - enabled
         - host
@@ -59,8 +57,46 @@ select_permissions:
       computed_fields:
         - is_dedicated
       filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        is_dedicated:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - connected
+        - enabled
+        - host
+        - id
+        - label
+        - port
+        - region
+        - reserved_by_match_id
+        - tv_port
+      computed_fields:
+        - is_dedicated
+      filter:
+        is_dedicated:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - connected
+        - enabled
+        - host
+        - id
+        - label
+        - port
+        - region
+        - reserved_by_match_id
+        - tv_port
+      computed_fields:
+        - is_dedicated
+      filter:
+        is_dedicated:
+          _eq: true
       allow_aggregations: true
     comment: ""
 update_permissions:
@@ -75,18 +111,18 @@ update_permissions:
         - region
         - tv_port
       filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        is_dedicated:
+          _eq: true
       check:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        is_dedicated:
+          _eq: true
     comment: ""
 delete_permissions:
   - role: administrator
     permission:
       filter:
-        owner_steam_id:
-          _eq: X-Hasura-User-Id
+        is_dedicated:
+          _eq: true
     comment: ""
 event_triggers:
   - name: server_availability

@@ -20291,42 +20291,6 @@ type players {
   ): player_unused_utility_aggregate!
   profile_url: String
   role: e_player_roles_enum!
-
-  """An array relationship"""
-  servers(
-    """distinct select on columns"""
-    distinct_on: [servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [servers_order_by!]
-
-    """filter the rows returned"""
-    where: servers_bool_exp
-  ): [servers!]!
-
-  """An aggregate relationship"""
-  servers_aggregate(
-    """distinct select on columns"""
-    distinct_on: [servers_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [servers_order_by!]
-
-    """filter the rows returned"""
-    where: servers_bool_exp
-  ): servers_aggregate!
   steam_id: bigint!
 
   """An array relationship"""
@@ -20649,8 +20613,6 @@ input players_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   profile_url: String_comparison_exp
   role: e_player_roles_enum_comparison_exp
-  servers: servers_bool_exp
-  servers_aggregate: servers_aggregate_bool_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -20723,7 +20685,6 @@ input players_insert_input {
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   profile_url: String
   role: e_player_roles_enum
-  servers: servers_arr_rel_insert_input
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -20825,7 +20786,6 @@ input players_order_by {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   profile_url: order_by
   role: order_by
-  servers_aggregate: servers_aggregate_order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
   team_members_aggregate: team_roster_aggregate_order_by
@@ -23609,7 +23569,6 @@ type servers {
     """filter the rows returned"""
     where: matches_bool_exp
   ): matches_aggregate!
-  owner_steam_id: bigint
   port: Int!
   rcon_password: bytea!
   region: String!
@@ -23698,7 +23657,6 @@ input servers_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type servers_avg_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -23707,7 +23665,6 @@ type servers_avg_fields {
 order by avg() on columns of table "servers"
 """
 input servers_avg_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
@@ -23731,7 +23688,6 @@ input servers_bool_exp {
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
-  owner_steam_id: bigint_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
   region: String_comparison_exp
@@ -23758,7 +23714,6 @@ enum servers_constraint {
 input type for incrementing numeric columns in table "servers"
 """
 input servers_inc_input {
-  owner_steam_id: bigint
   port: Int
   tv_port: Int
 }
@@ -23777,7 +23732,6 @@ input servers_insert_input {
   id: uuid
   label: String
   matches: matches_arr_rel_insert_input
-  owner_steam_id: bigint
   port: Int
   rcon_password: bytea
   region: String
@@ -23792,7 +23746,6 @@ type servers_max_fields {
   host: String
   id: uuid
   label: String
-  owner_steam_id: bigint
   port: Int
   region: String
   reserved_by_match_id: uuid
@@ -23808,7 +23761,6 @@ input servers_max_order_by {
   host: order_by
   id: order_by
   label: order_by
-  owner_steam_id: order_by
   port: order_by
   region: order_by
   reserved_by_match_id: order_by
@@ -23822,7 +23774,6 @@ type servers_min_fields {
   host: String
   id: uuid
   label: String
-  owner_steam_id: bigint
   port: Int
   region: String
   reserved_by_match_id: uuid
@@ -23838,7 +23789,6 @@ input servers_min_order_by {
   host: order_by
   id: order_by
   label: order_by
-  owner_steam_id: order_by
   port: order_by
   region: order_by
   reserved_by_match_id: order_by
@@ -23888,7 +23838,6 @@ input servers_order_by {
   is_dedicated: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
-  owner_steam_id: order_by
   port: order_by
   rcon_password: order_by
   region: order_by
@@ -23925,9 +23874,6 @@ enum servers_select_column {
 
   """column name"""
   label
-
-  """column name"""
-  owner_steam_id
 
   """column name"""
   port
@@ -23978,7 +23924,6 @@ input servers_set_input {
   host: String
   id: uuid
   label: String
-  owner_steam_id: bigint
   port: Int
   rcon_password: bytea
   region: String
@@ -23988,7 +23933,6 @@ input servers_set_input {
 
 """aggregate stddev on columns"""
 type servers_stddev_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -23997,14 +23941,12 @@ type servers_stddev_fields {
 order by stddev() on columns of table "servers"
 """
 input servers_stddev_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type servers_stddev_pop_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -24013,14 +23955,12 @@ type servers_stddev_pop_fields {
 order by stddev_pop() on columns of table "servers"
 """
 input servers_stddev_pop_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type servers_stddev_samp_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -24029,7 +23969,6 @@ type servers_stddev_samp_fields {
 order by stddev_samp() on columns of table "servers"
 """
 input servers_stddev_samp_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
@@ -24054,7 +23993,6 @@ input servers_stream_cursor_value_input {
   host: String
   id: uuid
   label: String
-  owner_steam_id: bigint
   port: Int
   rcon_password: bytea
   region: String
@@ -24064,7 +24002,6 @@ input servers_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type servers_sum_fields {
-  owner_steam_id: bigint
   port: Int
   tv_port: Int
 }
@@ -24073,7 +24010,6 @@ type servers_sum_fields {
 order by sum() on columns of table "servers"
 """
 input servers_sum_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
@@ -24104,9 +24040,6 @@ enum servers_update_column {
   label
 
   """column name"""
-  owner_steam_id
-
-  """column name"""
   port
 
   """column name"""
@@ -24135,7 +24068,6 @@ input servers_updates {
 
 """aggregate var_pop on columns"""
 type servers_var_pop_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -24144,14 +24076,12 @@ type servers_var_pop_fields {
 order by var_pop() on columns of table "servers"
 """
 input servers_var_pop_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate var_samp on columns"""
 type servers_var_samp_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -24160,14 +24090,12 @@ type servers_var_samp_fields {
 order by var_samp() on columns of table "servers"
 """
 input servers_var_samp_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate variance on columns"""
 type servers_variance_fields {
-  owner_steam_id: Float
   port: Float
   tv_port: Float
 }
@@ -24176,7 +24104,6 @@ type servers_variance_fields {
 order by variance() on columns of table "servers"
 """
 input servers_variance_order_by {
-  owner_steam_id: order_by
   port: order_by
   tv_port: order_by
 }

@@ -345,10 +345,7 @@ export class MatchMakingService {
     });
 
     const regionStats: Partial<
-      Record<
-        e_server_regions_enum,
-        Partial<Record<e_match_types_enum, number>>
-      >
+      Record<e_server_regions_enum, Partial<Record<e_match_types_enum, number>>>
     > = {};
 
     for (const region of regions.e_server_regions) {

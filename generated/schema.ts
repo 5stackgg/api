@@ -5906,10 +5906,6 @@ export interface players {
     player_unused_utilities_aggregate: player_unused_utility_aggregate
     profile_url: (Scalars['String'] | null)
     role: e_player_roles_enum
-    /** An array relationship */
-    servers: servers[]
-    /** An aggregate relationship */
-    servers_aggregate: servers_aggregate
     steam_id: Scalars['bigint']
     /** An array relationship */
     team_invites: team_invites[]
@@ -6447,7 +6443,6 @@ export interface servers {
     matches: matches[]
     /** An aggregate relationship */
     matches_aggregate: matches_aggregate
-    owner_steam_id: (Scalars['bigint'] | null)
     port: Scalars['Int']
     rcon_password: Scalars['bytea']
     region: Scalars['String']
@@ -6484,7 +6479,6 @@ export interface servers_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface servers_avg_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_avg_fields'
@@ -6502,7 +6496,6 @@ export interface servers_max_fields {
     host: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     label: (Scalars['String'] | null)
-    owner_steam_id: (Scalars['bigint'] | null)
     port: (Scalars['Int'] | null)
     region: (Scalars['String'] | null)
     reserved_by_match_id: (Scalars['uuid'] | null)
@@ -6518,7 +6511,6 @@ export interface servers_min_fields {
     host: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     label: (Scalars['String'] | null)
-    owner_steam_id: (Scalars['bigint'] | null)
     port: (Scalars['Int'] | null)
     region: (Scalars['String'] | null)
     reserved_by_match_id: (Scalars['uuid'] | null)
@@ -6538,7 +6530,7 @@ export interface servers_mutation_response {
 
 
 /** select columns of table "servers" */
-export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'owner_steam_id' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
+export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
 
 
 /** select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table "servers" */
@@ -6551,7 +6543,6 @@ export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_c
 
 /** aggregate stddev on columns */
 export interface servers_stddev_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_stddev_fields'
@@ -6560,7 +6551,6 @@ export interface servers_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface servers_stddev_pop_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_stddev_pop_fields'
@@ -6569,7 +6559,6 @@ export interface servers_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface servers_stddev_samp_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_stddev_samp_fields'
@@ -6578,7 +6567,6 @@ export interface servers_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface servers_sum_fields {
-    owner_steam_id: (Scalars['bigint'] | null)
     port: (Scalars['Int'] | null)
     tv_port: (Scalars['Int'] | null)
     __typename: 'servers_sum_fields'
@@ -6586,12 +6574,11 @@ export interface servers_sum_fields {
 
 
 /** update columns of table "servers" */
-export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'owner_steam_id' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
+export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
 
 
 /** aggregate var_pop on columns */
 export interface servers_var_pop_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_var_pop_fields'
@@ -6600,7 +6587,6 @@ export interface servers_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface servers_var_samp_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_var_samp_fields'
@@ -6609,7 +6595,6 @@ export interface servers_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface servers_variance_fields {
-    owner_steam_id: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_variance_fields'
@@ -20709,30 +20694,6 @@ export interface playersGenqlSelection{
     where?: (player_unused_utility_bool_exp | null)} })
     profile_url?: boolean | number
     role?: boolean | number
-    /** An array relationship */
-    servers?: (serversGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (servers_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (servers_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (servers_bool_exp | null)} })
-    /** An aggregate relationship */
-    servers_aggregate?: (servers_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (servers_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (servers_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (servers_bool_exp | null)} })
     steam_id?: boolean | number
     /** An array relationship */
     team_invites?: (team_invitesGenqlSelection & { __args?: {
@@ -20931,7 +20892,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -20939,7 +20900,7 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),servers?: (servers_arr_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),opening_duels?: (v_player_opening_duels_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -20996,7 +20957,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -22697,7 +22658,6 @@ export interface serversGenqlSelection{
     order_by?: (matches_order_by[] | null), 
     /** filter the rows returned */
     where?: (matches_bool_exp | null)} })
-    owner_steam_id?: boolean | number
     port?: boolean | number
     rcon_password?: boolean | number
     region?: boolean | number
@@ -22755,7 +22715,6 @@ on_conflict?: (servers_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface servers_avg_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22764,19 +22723,19 @@ export interface servers_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "servers" */
-export interface servers_avg_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_avg_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
-export interface servers_inc_input {owner_steam_id?: (Scalars['bigint'] | null),port?: (Scalars['Int'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_inc_input {port?: (Scalars['Int'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "servers" */
-export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -22786,7 +22745,6 @@ export interface servers_max_fieldsGenqlSelection{
     host?: boolean | number
     id?: boolean | number
     label?: boolean | number
-    owner_steam_id?: boolean | number
     port?: boolean | number
     region?: boolean | number
     reserved_by_match_id?: boolean | number
@@ -22797,7 +22755,7 @@ export interface servers_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "servers" */
-export interface servers_max_order_by {api_password?: (order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),owner_steam_id?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_max_order_by {api_password?: (order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -22807,7 +22765,6 @@ export interface servers_min_fieldsGenqlSelection{
     host?: boolean | number
     id?: boolean | number
     label?: boolean | number
-    owner_steam_id?: boolean | number
     port?: boolean | number
     region?: boolean | number
     reserved_by_match_id?: boolean | number
@@ -22818,7 +22775,7 @@ export interface servers_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "servers" */
-export interface servers_min_order_by {api_password?: (order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),owner_steam_id?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_min_order_by {api_password?: (order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** response of any mutation on the table "servers" */
@@ -22843,7 +22800,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),owner_steam_id?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */
@@ -22851,12 +22808,11 @@ export interface servers_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "servers" */
-export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface servers_stddev_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22865,12 +22821,11 @@ export interface servers_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "servers" */
-export interface servers_stddev_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_stddev_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface servers_stddev_pop_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22879,12 +22834,11 @@ export interface servers_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "servers" */
-export interface servers_stddev_pop_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_stddev_pop_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface servers_stddev_samp_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22893,7 +22847,7 @@ export interface servers_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "servers" */
-export interface servers_stddev_samp_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_stddev_samp_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** Streaming cursor of the table "servers" */
@@ -22905,12 +22859,11 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
 export interface servers_sum_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22919,7 +22872,7 @@ export interface servers_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "servers" */
-export interface servers_sum_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_sum_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 export interface servers_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -22932,7 +22885,6 @@ where: servers_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface servers_var_pop_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22941,12 +22893,11 @@ export interface servers_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "servers" */
-export interface servers_var_pop_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_var_pop_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface servers_var_samp_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22955,12 +22906,11 @@ export interface servers_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "servers" */
-export interface servers_var_samp_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_var_samp_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface servers_variance_fieldsGenqlSelection{
-    owner_steam_id?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -22969,7 +22919,7 @@ export interface servers_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "servers" */
-export interface servers_variance_order_by {owner_steam_id?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_variance_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** columns and relationships of "settings" */
@@ -35748,7 +35698,6 @@ export const enumServersSelectColumn = {
    host: 'host' as const,
    id: 'id' as const,
    label: 'label' as const,
-   owner_steam_id: 'owner_steam_id' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,
    region: 'region' as const,
@@ -35774,7 +35723,6 @@ export const enumServersUpdateColumn = {
    host: 'host' as const,
    id: 'id' as const,
    label: 'label' as const,
-   owner_steam_id: 'owner_steam_id' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,
    region: 'region' as const,
