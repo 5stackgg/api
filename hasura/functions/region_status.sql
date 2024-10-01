@@ -24,7 +24,7 @@ BEGIN
     IF (node_online_count + online_count) = (total_count + node_total_count) THEN
         RETURN 'Online';
     ELSIF node_online_count + online_count > 0 THEN
-        RETURN 'Partial';
+        RETURN 'Partial (' || (node_online_count + online_count)::TEXT || '/' || (total_count + node_total_count)::TEXT || ')';
     ELSE
         RETURN 'Offline';
     END IF;
