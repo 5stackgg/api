@@ -14,7 +14,7 @@ BEGIN
 	    INTO region
 	    FROM servers s
 	        INNER JOIN game_server_nodes gsn on gsn.id = s.game_server_node_id
-	        INNER JOIN e_game_server_node_regions sr on sr.value = gsn.region
+	        INNER JOIN e_server_regions sr on sr.value = gsn.region
 	    WHERE s.id = match.server_id;
 
 	return region;
