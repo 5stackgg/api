@@ -17,7 +17,7 @@ BEGIN
        NEW.lineup_2_id = _lineup_2_id;
     END IF;
 
-    select array_agg(sr.value) INTO available_regions from e_server_regions gsr
+    select array_agg(sr.value) INTO available_regions from e_server_regions sr
         INNER JOIN game_server_nodes gsn on gsn.region = sr.value and gsn.enabled = true
         where gsn.region != 'Lan';
 
