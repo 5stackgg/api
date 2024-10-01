@@ -25,18 +25,6 @@ BEGIN
         NEW.region_veto = false;
     END IF;
 
-    IF NEW.lan = true THEN
-        NEW.region_veto = false;
-
-        SELECT COUNT(*) INTO lan_count FROM game_server_nodes
-        WHERE region = 'Lan' AND enabled = true;
-
-        IF lan_count = 0 THEN
-            RAISE EXCEPTION 'No enabled LAN servers available' USING ERRCODE = '22000';
-        END IF;
-    END IF;
-
-
     IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
         RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
     END IF;
@@ -61,11 +49,6 @@ CREATE OR REPLACE FUNCTION public.tau_match_options() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF NEW.lan THEN
-        UPDATE matches SET region = 'Lan' WHERE match_options_id = NEW.id;
-    END IF;
-
-
     IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
         RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
     END IF;
@@ -80,11 +63,6 @@ CREATE OR REPLACE FUNCTION public.tbu_match_options() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF NEW.lan THEN
-        UPDATE matches SET region = 'Lan' WHERE match_options_id = NEW.id;
-    END IF;
-
-
     IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
         RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
     END IF;
