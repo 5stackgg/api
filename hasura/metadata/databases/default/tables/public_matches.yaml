@@ -427,7 +427,15 @@ select_permissions:
         - server_type
         - tv_connection_link
         - tv_connection_string
-      filter: {}
+      filter:
+        _or:
+          - is_organizer:
+              _eq: true
+          - options:
+              lobby_access:
+                _eq: Open
+          - is_in_lineup:
+              _eq: true
       allow_aggregations: true
     comment: ""
 update_permissions:
