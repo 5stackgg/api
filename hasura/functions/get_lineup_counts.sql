@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION public.get_lineup_counts(match matches) RETURNS json
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
     lineup_1_count INTEGER;
