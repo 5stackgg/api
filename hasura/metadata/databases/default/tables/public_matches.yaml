@@ -216,6 +216,11 @@ computed_fields:
       function:
         name: is_tournament_match
         schema: public
+  - name: lineup_counts
+    definition:
+      function:
+        name: get_lineup_counts
+        schema: public
   - name: map_veto_picking_lineup_id
     definition:
       function:
@@ -417,6 +422,7 @@ select_permissions:
         - is_organizer
         - is_server_online
         - is_tournament_match
+        - lineup_counts
         - map_veto_picking_lineup_id
         - map_veto_type
         - max_players_per_lineup

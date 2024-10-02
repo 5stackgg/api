@@ -5136,6 +5136,23 @@ input inet_comparison_exp {
   _nin: [inet!]
 }
 
+scalar json
+
+"""
+Boolean expression to compare columns of type "json". All fields are combined with logical 'AND'.
+"""
+input json_comparison_exp {
+  _eq: json
+  _gt: json
+  _gte: json
+  _in: [json!]
+  _is_null: Boolean
+  _lt: json
+  _lte: json
+  _neq: json
+  _nin: [json!]
+}
+
 scalar jsonb
 
 input jsonb_cast_exp {
@@ -10145,6 +10162,14 @@ type matches {
   lineup_2_id: uuid!
 
   """
+  A computed field, executes function "get_lineup_counts"
+  """
+  lineup_counts(
+    """JSON select path"""
+    path: String
+  ): json
+
+  """
   A computed field, executes function "get_map_veto_picking_lineup_id"
   """
   map_veto_picking_lineup_id: uuid
@@ -10752,6 +10777,7 @@ input matches_bool_exp {
   lineup_1_id: uuid_comparison_exp
   lineup_2: match_lineups_bool_exp
   lineup_2_id: uuid_comparison_exp
+  lineup_counts: json_comparison_exp
   map_veto_picking_lineup_id: uuid_comparison_exp
   map_veto_picks: match_map_veto_picks_bool_exp
   map_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
@@ -11140,6 +11166,7 @@ input matches_order_by {
   lineup_1_id: order_by
   lineup_2: match_lineups_order_by
   lineup_2_id: order_by
+  lineup_counts: order_by
   map_veto_picking_lineup_id: order_by
   map_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   map_veto_type: order_by
