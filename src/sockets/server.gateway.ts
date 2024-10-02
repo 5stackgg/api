@@ -99,9 +99,12 @@ export class ServerGateway {
           client.close();
           return;
         }
+
         client.id = uuidv4();
         client.user = request.user;
         client.node = this.nodeId;
+
+        await this.cleanClients(client.user.steam_id);
 
         const clientKey = ServerGateway.GET_CLIENT_CLIENT_KEY(
           client.user.steam_id,
@@ -120,6 +123,8 @@ export class ServerGateway {
           await this.redis.srem(clientKey, clientValue);
 
           const clients = await this.redis.smembers(clientKey);
+
+          await this.cleanClients(client.user.steam_id);
 
           if (clients.length === 0) {
             await this.redis.del(`user:${client.user.steam_id}`);
@@ -221,16 +226,9 @@ export class ServerGateway {
       ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
     );
     for (const client of clients) {
-      const [id, node] = client.split(":");
-
-      if (node !== this.nodeId) {
-        continue;
-      }
-
-      const _client = this.clients.get(id);
+      const _client = await this.getClient(steamId, client);
 
       if (!_client) {
-        await this.redis.srem(`user:${steamId}:clients`, client);
         continue;
       }
 
@@ -244,9 +242,41 @@ export class ServerGateway {
   }
 
   private async sendPeopleOnline() {
+    const players = await this.redis.keys("user:*");
+
     this.broadcastMessage(
       `players-online`,
-      (await this.redis.keys("user:*")).length,
+      players.map((player) => player.slice(5)),
     );
+  }
+
+  private async cleanClients(steamId: string) {
+    const clients = await this.redis.smembers(
+      ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
+    );
+    for (const client of clients) {
+      await this.getClient(steamId, client);
+    }
+  }
+
+  private async getClient(steamId: string, client: string) {
+    const [id, node] = client.split(":");
+
+    if (node !== this.nodeId) {
+      return;
+    }
+
+    const _client = this.clients.get(id);
+
+    if (_client) {
+      return _client;
+    }
+
+    if (!_client) {
+      await this.redis.srem(
+        ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
+        client,
+      );
+    }
   }
 }
