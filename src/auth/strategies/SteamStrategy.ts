@@ -91,7 +91,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
           },
           on_conflict: {
             constraint: "players_steam_id_key",
-            update_columns: ["name", "avatar_url", "profile_url"],
+            update_columns: ["avatar_url", "profile_url"],
           },
         },
         name: true,
