@@ -13,10 +13,6 @@ BEGIN
             return false;
         END IF;
 
-      IF is_on_lineup(match_lineup, hasura_session) THEN
-        return true;
-      END IF;
-
      IF match_lineup.coach_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint THEN
         return true;
      END IF;
