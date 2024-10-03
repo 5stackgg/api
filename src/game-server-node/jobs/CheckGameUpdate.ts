@@ -29,7 +29,7 @@ export class CheckGameUpdate extends WorkerHost {
 
     if (
       !latestBuildTime ||
-      latestBuildTime > parseInt(publicBuild.timeupdated)
+      latestBuildTime < parseInt(publicBuild.timeupdated)
     ) {
       await this.cache.put("cs:updated-at", parseInt(publicBuild.timeupdated));
 
