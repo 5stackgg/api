@@ -105,6 +105,7 @@ export class HasuraService {
 
     await this.apply(path.resolve("./hasura/enums"));
     await this.apply(path.resolve("./hasura/functions"));
+    await this.apply(path.resolve("./hasura/views"));
     await this.apply(path.resolve("./hasura/triggers"));
   }
 
