@@ -23,6 +23,6 @@ BEGIN
         RETURN true;
     END IF;
 
-    RETURN tournament.organizer_id = hasura_session ->> 'x-hasura-user-id';
+    RETURN tournament.organizer_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
 END;
 $$;
