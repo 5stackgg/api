@@ -43,7 +43,6 @@ BEGIN
 END;
 $$;
 
-
-DROP TRIGGER IF EXISTS tbu_tournament_stages ON public.tournaments;
+DROP TRIGGER IF EXISTS tbu_tournament_stages ON public.tournament_stages;
 CREATE TRIGGER tbu_tournament_stages BEFORE UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tbu_tournament_stages();
 
