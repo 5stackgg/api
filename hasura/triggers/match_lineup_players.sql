@@ -62,7 +62,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     captain_count INT;
-    new_captain_id UUID;
+    new_captain_id bigint;
 BEGIN
     SELECT COUNT(*) INTO captain_count
     FROM match_lineup_players
