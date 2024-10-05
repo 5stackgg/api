@@ -54,3 +54,40 @@ CREATE TRIGGER tbu_match_lineup_players BEFORE UPDATE ON public.match_lineup_pla
 
 DROP TRIGGER IF EXISTS tbid_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tbid_match_lineup_players BEFORE INSERT OR DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbid_match_lineup_players();
+
+
+CREATE OR REPLACE FUNCTION public.tad_match_lineup_players()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    captain_count INT;
+    new_captain_id UUID;
+BEGIN
+    SELECT COUNT(*) INTO captain_count
+    FROM match_lineup_players
+    WHERE match_lineup_id = OLD.match_lineup_id AND captain = true;
+
+    -- If no captains left, assign a new captain
+    IF captain_count = 0 THEN
+        -- Select the first player (by ID) to be the new captain
+        SELECT steam_id INTO new_captain_id
+        FROM match_lineup_players
+        WHERE match_lineup_id = OLD.match_lineup_id
+        ORDER BY steam_id
+        LIMIT 1;
+
+        -- If there's at least one player left, make them captain
+        IF new_captain_id IS NOT NULL THEN
+            UPDATE match_lineup_players
+            SET captain = true
+            WHERE match_lineup_id = OLD.match_lineup_id AND steam_id = new_captain_id;
+        END IF;
+    END IF;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tad_match_lineup_players ON public.match_lineup_players;
+CREATE TRIGGER tad_match_lineup_players AFTER DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tad_match_lineup_players();
