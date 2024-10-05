@@ -1,20 +1,5 @@
-CREATE OR REPLACE FUNCTION public.tbi_match_lineup_players() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    lineup_count INT;
-BEGIN
-    select check_match_lineup_players_count(NEW) into lineup_count;
-
-    IF lineup_count = 0 THEN
-        NEW.captain = true;
-    END IF;
-
-    PERFORM check_match_lineup_players(NEW);
-
-	RETURN NEW;
-END;
-$$;
+DROP TRIGGER IF EXISTS tbi_match_lineup_players ON public.match_lineup_players;
+drop function if exists public.tbi_match_lineup_players;
 
 CREATE OR REPLACE FUNCTION public.tbu_match_lineup_players() RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -36,6 +21,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     status text;
+    lineup_count INT;
 BEGIN
     SELECT m.status INTO status
     FROM matches m
@@ -49,14 +35,19 @@ BEGIN
     IF TG_OP = 'DELETE' THEN
         RETURN OLD;
     ELSE
+        select check_match_lineup_players_count(NEW) into lineup_count;
+
+        IF lineup_count = 0 THEN
+            NEW.captain = true;
+        END IF;
+
+        PERFORM check_match_lineup_players(NEW);
+
         RETURN NEW;
     END IF;
 END;
 $$;
 
-
-DROP TRIGGER IF EXISTS tbi_match_lineup_players ON public.match_lineup_players;
-CREATE TRIGGER tbi_match_lineup_players BEFORE INSERT ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbi_match_lineup_players();
 
 DROP TRIGGER IF EXISTS tbu_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tbu_match_lineup_players BEFORE UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbu_match_lineup_players();
