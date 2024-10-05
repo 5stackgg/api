@@ -101,15 +101,16 @@ export class MatchLobbyService {
 
     const messagesObject = await this.redis.hgetall(`chat_${matchId}`);
 
-    const messages = Object.entries(messagesObject).map(([, value]) =>
-      JSON.parse(value),
-    );
+    const messages = Object.entries(messagesObject)
+      .map(([, value]) => JSON.parse(value));
 
     client.send(
       JSON.stringify({
         event: "lobby:messages",
         data: {
-          messages,
+          messages: messages.sort((a, b) => {
+            return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          }),
           matchId: matchId,
         },
       }),
