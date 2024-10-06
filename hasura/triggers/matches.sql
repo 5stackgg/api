@@ -105,6 +105,11 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
+    IF (NEW.status = 'PickingPlayers' AND OLD.status != 'PickingPlayers')  THEN
+        NEW.cancels_at = NOW() + INTERVAL '1 day';
+        NEW.ended_at = null;
+    END IF; 
+
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
         NEW.cancels_at = NOW() + INTERVAL '15 minutes';
         NEW.ended_at = null;
@@ -123,7 +128,7 @@ BEGIN
 
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
         NEW.started_at = NOW();
-        NEW.cancels_at = null;
+        NEW.cancels_at = NOW() + INTERVAL '1 day';
         NEW.ended_at = null;
     END IF;
 

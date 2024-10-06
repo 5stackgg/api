@@ -32,34 +32,16 @@ export class RemoveCancelledMatches extends WorkerHost {
                 },
               },
               {
-                _or: [
+                _and: [
                   {
-                    _and: [
-                      {
-                        scheduled_at: {
-                          _is_null: true,
-                        },
-                      },
-                      {
-                        created_at: {
-                          _lte: yesterday,
-                        },
-                      },
-                    ],
+                    cancels_at: {
+                      _is_null: false,
+                    },
                   },
                   {
-                    _and: [
-                      {
-                        cancels_at: {
-                          _is_null: false,
-                        },
-                      },
-                      {
-                        cancels_at: {
-                          _lte: yesterday,
-                        },
-                      },
-                    ],
+                    cancels_at: {
+                      _lte: yesterday,
+                    },
                   },
                 ],
               },
