@@ -23,24 +23,33 @@ update_permissions:
       columns:
         - role
       filter:
-        team:
-          roster:
-            role:
-              _eq: Admin
+        _and:
+          - team:
+              roster:
+                role:
+                  _eq: Admin
+          - player_steam_id:
+              _neq: X-Hasura-User-Id
       check:
-        team:
-          roster:
-            role:
-              _eq: Admin
+        _and:
+          - team:
+              roster:
+                role:
+                  _eq: Admin
+          - player_steam_id:
+              _neq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        team:
-          roster:
-            role:
-              _eq: Admin
+        _or:
+          - team:
+              roster:
+                role:
+                  _eq: Admin
+          - player_steam_id:
+              _eq: x-hasura-user-Id
     comment: ""
 event_triggers:
   - name: team_roster_events
