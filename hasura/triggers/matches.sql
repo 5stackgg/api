@@ -106,16 +106,13 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        IF NEW.scheduled_at IS NOT NULL THEN
-           NEW.cancels_at = NOW() + INTERVAL '15 minutes';
-        END IF;
-        
+        NEW.cancels_at = NOW() + INTERVAL '15 minutes';
         NEW.ended_at = null;
     END IF;
 
 
      IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
-        NEW.cancels_at = NOW() + INTERVAL '10 minutes';
+        NEW.cancels_at = NOW() + INTERVAL '15 minutes';
         NEW.ended_at = null;
     END IF;
 
