@@ -5,7 +5,7 @@ AS $$
 DECLARE
     download_url text;
 BEGIN
-    download_url := CONCAT('matches/', match_map.match_id, '/demos/map/', match_map.id);
+    download_url := CONCAT('demos/', match_map.match_id, '/map/', match_map.id);
     RETURN download_url;
 END;
 $$;
