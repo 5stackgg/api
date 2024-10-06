@@ -228,7 +228,6 @@ update_permissions:
   - role: user
     permission:
       columns:
-        - avatar_url
         - country
         - name
       filter:
