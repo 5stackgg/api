@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 
 @Controller("discord-bot")
 export class DiscordBotController {
-  @Get("/discord-bot")
+  @Get("/")
   public async bot(@Req() request: Request, @Res() response: Response) {
     // https://discordapi.com/permissions.html
     const permissions = `326434581584`;
