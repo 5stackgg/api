@@ -439,7 +439,9 @@ select_permissions:
               _eq: true
           - options:
               lobby_access:
-                _eq: Open
+                _in:
+                  - Open
+                  - Invite
           - is_in_lineup:
               _eq: true
       allow_aggregations: true
