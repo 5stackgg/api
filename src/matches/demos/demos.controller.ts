@@ -16,7 +16,7 @@ import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
 
-@Controller("/matches/:matchId/demos")
+@Controller("/demos/:matchId")
 export class DemosController {
   constructor(
     protected readonly s3: S3Service,

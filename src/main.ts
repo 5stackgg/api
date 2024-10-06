@@ -13,7 +13,6 @@ import { RedisManagerService } from "./redis/redis-manager/redis-manager.service
 import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "./configs/types/RedisConfig";
 import { AppConfig } from "./configs/types/AppConfig";
-import { EventEmitter } from "events";
 import { HasuraService } from "./hasura/hasura.service";
 
 async function bootstrap() {

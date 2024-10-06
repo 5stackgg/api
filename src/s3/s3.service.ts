@@ -19,7 +19,12 @@ export class S3Service {
 
     this.bucket = this.config.bucket;
     this.client = new Client({
-      endPoint: this.config.endpoint,
+      // endPoint: this.config.endpoint,
+      // TODO - larger than 100 mb causes issues, unless i go within the cluster
+      // TODO - thsi should be a proxy issue
+      port: 9000,
+      endPoint: "minio",
+      useSSL: false,
       accessKey: this.config.key,
       secretKey: this.config.secret,
     });
@@ -35,6 +40,7 @@ export class S3Service {
         callback: (error?: string, file?: Express.Multer.File) => void,
       ) => {
         try {
+          // TODO - somehow we still leak memory
           await this.put(uploadPath(request, file), file.stream);
 
           request.file = file;
