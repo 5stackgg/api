@@ -44,24 +44,31 @@ insert_permissions:
     permission:
       check:
         _or:
-          - team:
-              roster:
-                _and:
-                  - role:
-                      _eq: Admin
-                  - player_steam_id:
-                      _eq: X-Hasura-User-Id
-          - _and:
-              - team_id:
-                  _is_null: true
-              - owner_steam_id:
-                  _eq: X-Hasura-User-Id
           - tournament:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
+          - tournament:
+              organizers:
+                steam_id:
+                  _eq: X-Hasura-User-Id
+          - _and:
+              - tournament:
+                  status:
+                    _eq: RegistrationOpen
+              - _or:
+                  - team:
+                      roster:
+                        _and:
+                          - role:
+                              _eq: Admin
+                          - player_steam_id:
+                              _eq: X-Hasura-User-Id
+                  - team_id:
+                      _is_null: true
+      set:
+        owner_steam_id: x-hasura-user-id
       columns:
         - name
-        - owner_steam_id
         - team_id
         - tournament_id
     comment: ""

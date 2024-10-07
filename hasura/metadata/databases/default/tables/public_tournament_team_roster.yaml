@@ -19,16 +19,19 @@ insert_permissions:
     permission:
       check:
         _or:
-          - tournament_team:
-              roster:
-                _and:
-                  - player_steam_id:
-                      _eq: X-Hasura-User-Id
-                  - role:
-                      _eq: Admin
           - tournament:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
+          - tournament_team:
+              _or:
+                - roster:
+                    _and:
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - role:
+                          _eq: Admin
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
       columns:
         - player_steam_id
         - tournament_id
