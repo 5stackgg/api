@@ -19,6 +19,11 @@ export class CancelExpiredMatches extends WorkerHost {
           where: {
             _and: [
               {
+                status: {
+                  _neq: "Canceled"
+                }
+              },
+              {
                 is_tournament_match: {
                   _eq: false,
                 },
