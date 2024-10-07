@@ -16,6 +16,7 @@ import { DiscordConfig } from "../configs/types/DiscordConfig";
 import { e_map_pool_types_enum } from "../../generated";
 import { interactions } from "./interactions/interactions";
 import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
+import { Type } from "@nestjs/common";
 
 let client: Client;
 
@@ -50,12 +51,12 @@ export class DiscordBotService {
               interaction.commandName as keyof typeof interactions.chat
             ];
 
-          return await this.moduleRef
-            .get<
-              symbol,
-              DiscordInteraction
-            >(DiscordInteraction as unknown as symbol)
-            .handler(interaction);
+          const discordInteraction =
+            await this.moduleRef.create<DiscordInteraction>(
+              DiscordInteraction as unknown as Type<DiscordInteraction>,
+            );
+
+          return await discordInteraction.handler(interaction);
         }
 
         if (interaction.isButton()) {
@@ -63,12 +64,12 @@ export class DiscordBotService {
           const DiscordInteraction =
             interactions.buttons[type as keyof typeof interactions.buttons];
 
-          return await this.moduleRef
-            .get<
-              symbol,
-              DiscordInteraction
-            >(DiscordInteraction as unknown as symbol)
-            .handler(interaction);
+          const discordInteraction =
+            await this.moduleRef.create<DiscordInteraction>(
+              DiscordInteraction as unknown as Type<DiscordInteraction>,
+            );
+
+          return await discordInteraction.handler(interaction);
         }
       })
       .on("error", (error) => {

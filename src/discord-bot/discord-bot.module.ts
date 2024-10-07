@@ -23,7 +23,7 @@ import { DiscordBotInteractionModule } from "./interactions/discord-bot-interact
     CacheModule,
     HasuraModule,
     MatchesModule,
-    forwardRef(() => DiscordBotInteractionModule),
+    DiscordBotInteractionModule,
     BullModule.registerQueue({
       name: DiscordBotQueues.DiscordBot,
     }),

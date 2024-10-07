@@ -52,19 +52,20 @@ export class DiscordBotOverviewService {
     const { lineup_1, lineup_2 } = match;
 
     const embeds = [];
+    // @ts-ignore
     const components = [];
 
     const row = new ActionRowBuilder<ButtonBuilder>();
 
     const matchControls = {
-      Knife: new ButtonBuilder()
-        .setCustomId(`${ButtonActions.MapStatus}:${matchId}:${"Knife"}`)
-        .setLabel(`Knife Round`)
-        .setStyle(ButtonStyle.Danger),
-      CancelMatch: new ButtonBuilder()
-        .setCustomId(`${ButtonActions.MatchStatus}:${matchId}:${"Canceled"}`)
-        .setLabel(`Cancel Match`)
-        .setStyle(ButtonStyle.Danger),
+      // Knife: new ButtonBuilder()
+      //   .setCustomId(`${ButtonActions.MapStatus}:${matchId}:Knife`)
+      //   .setLabel(`Knife Round`)
+      //   .setStyle(ButtonStyle.Danger),
+      // CancelMatch: new ButtonBuilder()
+      //   .setCustomId(`${ButtonActions.MatchStatus}:${matchId}:Canceled`)
+      //   .setLabel(`Cancel Match`)
+      //   .setStyle(ButtonStyle.Danger),
     };
 
     let color = 3948353;
@@ -91,8 +92,7 @@ export class DiscordBotOverviewService {
           break;
         case "Warmup":
           color = 16695418;
-          row.addComponents(matchControls.Knife);
-          components.push(row);
+          // row.addComponents(matchControls.Knife);
           break;
         default:
           assertUnreachable(currentMatchMap.status);
@@ -105,13 +105,16 @@ export class DiscordBotOverviewService {
       });
     }
 
-    row.addComponents(matchControls.CancelMatch);
-    components.push(row);
+    // row.addComponents(matchControls.CancelMatch);
+    // components.push(row);
 
     const matchOptions = match.options;
+
     const details = {
       url: "",
-      title: "Match Details",
+      title: `${
+        this.config.get<AppConfig>("app").webDomain
+      }/matches/${match.id}`,
       fields: [
         {
           name: "Rules",
@@ -137,37 +140,24 @@ export class DiscordBotOverviewService {
     };
 
     if (match.server) {
-      let serverAvailable = true;
-
-      if (match.status === "Scheduled") {
-        serverAvailable = false;
-      } else if (match.status === "Veto" || match.status === "Live") {
-        serverAvailable = true;
-        if (match.server.game_server_node_id) {
-          serverAvailable =
-            await this.matchAssistant.isOnDemandServerRunning(matchId);
-          if (!serverAvailable) {
-            await this.matchAssistant.delayCheckOnDemandServer(matchId);
-          }
-        }
+      if (!match.connection_link) {
+        await this.matchAssistant.delayCheckOnDemandServer(matchId);
       }
 
       details.fields.push({
         name: " ",
-        value: serverAvailable
-          ? `connect ${match.server.host}:${match.server.port}; password ${match.password};`
+        value: match.connection_link
+          ? match.connection_string
           : match.status === "Scheduled"
             ? "match is scheduled, but warmup has not started"
             : `server is being created`,
         inline: true,
       });
 
-      if (serverAvailable && match.server.port === 27015) {
+      if (match.connection_link) {
         details.url = `${
           this.config.get<AppConfig>("app").apiDomain
-        }/quick-connect?link=${encodeURIComponent(
-          `steam://connect/${match.server.host}:${match.server.port};password/${match.password}`,
-        )}`;
+        }${match.connection_link}`;
       }
     }
     embeds.push(details);
@@ -225,7 +215,8 @@ export class DiscordBotOverviewService {
     const overview = {
       content: `**${lineup_1.name}** vs **${lineup_2.name}**`,
       embeds,
-      components,
+      // @ts-ignore
+      ...(components.length > 0 ? { components } : {}),
     };
 
     if (match.status === "Veto") {
@@ -245,7 +236,7 @@ export class DiscordBotOverviewService {
           {
             removeOnFail: true,
             removeOnComplete: true,
-            delay: MapSelectionTimeoutSeconds,
+            delay: MapSelectionTimeoutSeconds * 1000,
             jobId: DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId),
           },
         );
@@ -267,6 +258,9 @@ export class DiscordBotOverviewService {
         lineup_1_id: true,
         lineup_2_id: true,
         current_match_map_id: true,
+        connection_link: true,
+        connection_string: true,
+        tv_connection_link: true,
         map_veto_picking_lineup_id: true,
         options: {
           mr: true,
@@ -353,6 +347,10 @@ export class DiscordBotOverviewService {
         components[row] = new ActionRowBuilder<ButtonBuilder>();
       }
 
+      console.info(
+        "LETS GO..",
+        `${ButtonActions.VetoPick}:${matchId}:${mapIndex}`,
+      );
       components[row].addComponents(
         new ButtonBuilder()
           .setCustomId(`${ButtonActions.VetoPick}:${matchId}:${mapIndex}`)

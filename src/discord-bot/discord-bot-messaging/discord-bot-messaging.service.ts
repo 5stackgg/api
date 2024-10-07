@@ -83,7 +83,7 @@ export class DiscordBotMessagingService {
     interaction: ChatInputCommandInteraction,
     matchId: string,
   ) {
-    const reply = await interaction.followUp({
+    const reply = await interaction.reply({
       fetchReply: true,
       content: `Match Created: ${matchId}`,
     });

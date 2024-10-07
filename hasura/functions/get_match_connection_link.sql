@@ -7,12 +7,17 @@ DECLARE
     server_host text;
     server_port int;
 BEGIN
-    SELECT
-	 m.password INTO password
-    FROM matches m
-    INNER JOIN v_match_lineups ml on ml.match_id = m.id
-    INNER JOIN match_lineup_players mlp on mlp.match_lineup_id = ml.id
-    WHERE m.id = match.id AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
+    IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
+        SELECT m.password INTO password
+        FROM matches m
+        WHERE m.id = match.id;
+    ELSE
+        SELECT m.password INTO password
+            FROM matches m
+            INNER JOIN v_match_lineups ml ON ml.match_id = m.id
+            INNER JOIN match_lineup_players mlp ON mlp.match_lineup_id = ml.id
+            WHERE m.id = match.id AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
+    END IF;
 
 	 IF password IS NULL THEN
         RETURN NULL;
