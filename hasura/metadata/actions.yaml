@@ -50,6 +50,14 @@ actions:
       forward_client_headers: true
     permissions:
       - role: user
+  - name: logout
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+    comment: logout
   - name: me
     definition:
       kind: ""

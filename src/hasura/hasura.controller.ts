@@ -10,7 +10,6 @@ import {
 import { ModulesContainer } from "@nestjs/core";
 import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
-import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "./hasura.service";
 
 type Handler = {
@@ -70,6 +69,7 @@ export class HasuraController {
     const resolver = this.getResolver(_actions[action.name]);
 
     input.user = request.user;
+    input.session = request.session;
 
     try {
       return response.json(await resolver[action.name].bind(resolver, input)());

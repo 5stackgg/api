@@ -13563,6 +13563,9 @@ type mutation_root {
   ): v_pool_maps
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
 
+  """logout"""
+  logout: SuccessOutput
+
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
 

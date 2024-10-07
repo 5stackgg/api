@@ -5,7 +5,6 @@ import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
-import { MeResponse } from "generated";
 
 @Controller("auth")
 export class AuthController {
@@ -45,4 +44,17 @@ export class AuthController {
 
     return user;
   }
+
+  @HasuraAction()
+  public async logout(@Req() request: Request) {
+    if (request.session) {
+      request.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+      });
+    }
+    return { success: true };
+  }
+
 }

@@ -41338,6 +41338,9 @@ export default {
                     ]
                 }
             ],
+            "logout": [
+                10
+            ],
             "scheduleMatch": [
                 10,
                 {

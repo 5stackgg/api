@@ -4055,6 +4055,8 @@ export interface mutation_root {
     /** insert a single row into the table: "v_pool_maps" */
     insert_v_pool_maps_one: (v_pool_maps | null)
     joinLineup: (SuccessOutput | null)
+    /** logout */
+    logout: (SuccessOutput | null)
     /** scheduleMatch */
     scheduleMatch: (SuccessOutput | null)
     /** setMatchWinner */
@@ -17111,6 +17113,8 @@ export interface mutation_rootGenqlSelection{
     /** the row to be inserted */
     object: v_pool_maps_insert_input} })
     joinLineup?: (SuccessOutputGenqlSelection & { __args: {code?: (Scalars['String'] | null), lineup_id: Scalars['String'], match_id: Scalars['String']} })
+    /** logout */
+    logout?: SuccessOutputGenqlSelection
     /** scheduleMatch */
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     /** setMatchWinner */
