@@ -25,9 +25,19 @@ insert_permissions:
   - role: match_organizer
     permission:
       check:
-        match:
-          is_tournament_match:
-            _eq: false
+        _and:
+          - _or:
+              - _or:
+                  - match_lineup:
+                      captain:
+                        steam_id:
+                          _eq: X-Hasura-User-Id
+                  - match:
+                      organizer_steam_id:
+                        _eq: X-Hasura-User-Id
+              - match:
+                  is_tournament_match:
+                    _eq: false
       columns:
         - map_id
         - match_id
@@ -38,9 +48,17 @@ insert_permissions:
   - role: tournament_organizer
     permission:
       check:
-        match:
-          is_tournament_match:
-            _eq: true
+        _or:
+          - match_lineup:
+              captain:
+                steam_id:
+                  _eq: X-Hasura-User-Id
+          - match:
+              organizer_steam_id:
+                _eq: X-Hasura-User-Id
+          - match:
+              is_tournament_match:
+                _eq: true
       columns:
         - map_id
         - match_id
