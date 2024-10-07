@@ -10,7 +10,7 @@ import { HasuraService } from "../hasura/hasura.service";
 export class AuthController {
   constructor(
     private readonly cache: CacheService,
-    private readonly hasura: HasuraService
+    private readonly hasura: HasuraService,
   ) {}
 
   @UseGuards(SteamGuard)
@@ -47,7 +47,7 @@ export class AuthController {
 
     return user;
   }
-  
+
   @HasuraAction()
   public async unlinkDiscord(@Req() request: Request) {
     await this.hasura.mutation({
@@ -64,23 +64,21 @@ export class AuthController {
       },
     });
 
-    request.user.discord_id  = null;
+    request.user.discord_id = null;
     request.session.save();
 
     return { success: true };
   }
-
 
   @HasuraAction()
   public async logout(@Req() request: Request) {
     if (request.session) {
       request.session.destroy((err) => {
         if (err) {
-          console.error('Error destroying session:', err);
+          console.error("Error destroying session:", err);
         }
       });
     }
     return { success: true };
   }
-
 }

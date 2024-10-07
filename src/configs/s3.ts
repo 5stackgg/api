@@ -8,7 +8,7 @@ export default (): {
     secret: process.env.S3_SECRET,
     bucket: process.env.S3_BUCKET,
     endpoint: process.env.S3_ENDPOINT || "minio",
-    useSSL: process.env.S3_USE_SSL ? process.env.S3_USE_SSL === 'true' : false,
-    port: process.env.S3_PORT || "9900"
+    useSSL: process.env.S3_USE_SSL ? process.env.S3_USE_SSL === "true" : false,
+    port: process.env.S3_PORT || "9900",
   },
 });

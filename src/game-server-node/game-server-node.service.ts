@@ -52,6 +52,7 @@ export class GameServerNodeService {
 
   public async updateStatus(
     node: string,
+    lanIP: string,
     publicIP: string,
     csBulid: number,
     status: e_game_server_node_statuses_enum,
@@ -63,6 +64,7 @@ export class GameServerNodeService {
         },
         token: true,
         status: true,
+        lan_ip: true,
         build_id: true,
         public_ip: true,
       },
@@ -74,6 +76,7 @@ export class GameServerNodeService {
     }
 
     if (
+      game_server_nodes_by_pk.lan_ip !== lanIP ||
       game_server_nodes_by_pk.public_ip !== publicIP ||
       game_server_nodes_by_pk.status !== status ||
       game_server_nodes_by_pk.build_id !== csBulid ||
@@ -87,6 +90,7 @@ export class GameServerNodeService {
             },
             _set: {
               status,
+              lan_ip: lanIP,
               public_ip: publicIP,
               ...(csBulid ? { build_id: csBulid } : {}),
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),

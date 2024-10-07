@@ -5742,6 +5742,9 @@ export default {
             "id": [
                 7
             ],
+            "lan_ip": [
+                478
+            ],
             "public_ip": [
                 478
             ],
@@ -6045,6 +6048,9 @@ export default {
             "id": [
                 9
             ],
+            "lan_ip": [
+                479
+            ],
             "public_ip": [
                 479
             ],
@@ -6106,6 +6112,9 @@ export default {
             ],
             "id": [
                 7
+            ],
+            "lan_ip": [
+                478
             ],
             "public_ip": [
                 478
@@ -6279,6 +6288,9 @@ export default {
             "id": [
                 927
             ],
+            "lan_ip": [
+                927
+            ],
             "public_ip": [
                 927
             ],
@@ -6327,6 +6339,9 @@ export default {
             ],
             "id": [
                 7
+            ],
+            "lan_ip": [
+                478
             ],
             "public_ip": [
                 478
@@ -6472,6 +6487,9 @@ export default {
             ],
             "id": [
                 7
+            ],
+            "lan_ip": [
+                478
             ],
             "public_ip": [
                 478

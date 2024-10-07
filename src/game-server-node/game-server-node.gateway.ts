@@ -24,6 +24,7 @@ export class GameServerNodeGateway {
     client: WebSocket,
     payload: {
       node: string;
+      lanIP: string;
       publicIP: string;
       csBuild: number;
       labels: Record<string, string>;
@@ -35,6 +36,7 @@ export class GameServerNodeGateway {
 
     await this.gameServerNodeService.updateStatus(
       payload.node,
+      payload.lanIP,
       payload.publicIP,
       payload.csBuild,
       "Online",

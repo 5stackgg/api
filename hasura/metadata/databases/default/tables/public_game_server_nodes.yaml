@@ -35,6 +35,7 @@ select_permissions:
         - enabled
         - end_port_range
         - id
+        - lan_ip
         - public_ip
         - region
         - start_port_range
