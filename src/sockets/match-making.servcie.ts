@@ -239,10 +239,6 @@ export class MatchMakingService {
       return;
     }
 
-    await this.matchAssistant.removeCancelMatchMakingDueToReadyCheck(
-      confirmationId,
-    );
-
     const match = await this.matchAssistant.createMatchBasedOnType(
       type as e_match_types_enum,
       // TODO - get map pool by type
@@ -255,6 +251,10 @@ export class MatchMakingService {
         timeout_setting: "Admin",
         region: region as e_server_regions_enum,
       },
+    );
+
+    await this.matchAssistant.removeCancelMatchMakingDueToReadyCheck(
+      confirmationId,
     );
 
     const lineup1PlayersToInsert =
