@@ -3,4 +3,6 @@ export type S3Config = {
   secret: string;
   bucket: string;
   endpoint: string;
+  useSSL: boolean;
+  port: string;
 };

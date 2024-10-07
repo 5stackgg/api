@@ -19,12 +19,9 @@ export class S3Service {
 
     this.bucket = this.config.bucket;
     this.client = new Client({
-      // endPoint: this.config.endpoint,
-      // TODO - larger than 100 mb causes issues, unless i go within the cluster
-      // TODO - thsi should be a proxy issue
-      port: 9000,
-      endPoint: "minio",
-      useSSL: false,
+      port: parseInt(this.config.port),
+      endPoint: this.config.endpoint,
+      useSSL: this.config.useSSL,
       accessKey: this.config.key,
       secretKey: this.config.secret,
     });
