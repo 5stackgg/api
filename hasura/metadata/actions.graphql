@@ -77,6 +77,10 @@ type Mutation {
 }
 
 type Mutation {
+  unlinkDiscord: SuccessOutput
+}
+
+type Mutation {
   updateCs(
     gameServerNodeId: uuid
   ): SuccessOutput

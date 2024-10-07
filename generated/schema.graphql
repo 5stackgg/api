@@ -13575,6 +13575,7 @@ type mutation_root {
 
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
+  unlinkDiscord: SuccessOutput
   updateCs(gameServerNodeId: uuid): SuccessOutput
 
   """

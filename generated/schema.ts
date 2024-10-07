@@ -4064,6 +4064,7 @@ export interface mutation_root {
     setupGameServer: (SetupGameServeOutput | null)
     /** startMatch */
     startMatch: (SuccessOutput | null)
+    unlinkDiscord: (SuccessOutput | null)
     updateCs: (SuccessOutput | null)
     /** update data of the table: "_map_pool" */
     update__map_pool: (_map_pool_mutation_response | null)
@@ -17122,6 +17123,7 @@ export interface mutation_rootGenqlSelection{
     setupGameServer?: SetupGameServeOutputGenqlSelection
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
+    unlinkDiscord?: SuccessOutputGenqlSelection
     updateCs?: (SuccessOutputGenqlSelection & { __args?: {gameServerNodeId?: (Scalars['uuid'] | null)} })
     /** update data of the table: "_map_pool" */
     update__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {

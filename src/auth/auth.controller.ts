@@ -8,7 +8,10 @@ import { HasuraService } from "../hasura/hasura.service";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly cache: CacheService) {}
+  constructor(
+    private readonly cache: CacheService,
+    private readonly hasura: HasuraService
+  ) {}
 
   @UseGuards(SteamGuard)
   @Get("steam")
@@ -44,6 +47,29 @@ export class AuthController {
 
     return user;
   }
+  
+  @HasuraAction()
+  public async unlinkDiscord(@Req() request: Request) {
+    await this.hasura.mutation({
+      update_players_by_pk: {
+        __args: {
+          pk_columns: {
+            steam_id: request.user.steam_id,
+          },
+          _set: {
+            discord_id: null,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    request.user.discord_id  = null;
+    request.session.save();
+
+    return { success: true };
+  }
+
 
   @HasuraAction()
   public async logout(@Req() request: Request) {
