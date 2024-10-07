@@ -8,6 +8,8 @@ DECLARE
     _regions text[];
     available_regions text[];
 BEGIN
+    NEW.cancels_at = NOW() + INTERVAL '1 day';
+    
     IF NEW.lineup_1_id IS NULL THEN
         INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
          NEW.lineup_1_id = _lineup_1_id;
@@ -105,11 +107,6 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
-    IF (NEW.status = 'PickingPlayers' AND OLD.status != 'PickingPlayers')  THEN
-        NEW.cancels_at = NOW() + INTERVAL '1 day';
-        NEW.ended_at = null;
-    END IF; 
-
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
         NEW.cancels_at = NOW() + INTERVAL '15 minutes';
         NEW.ended_at = null;
@@ -126,6 +123,11 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
+    IF (NEW.status = 'Canceled' AND OLD.status != 'Canceled')  THEN
+        NEW.cancels_at = NOW();
+        NEW.ended_at = null;
+    END IF;
+
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
         NEW.started_at = NOW();
         NEW.cancels_at = NOW() + INTERVAL '1 day';
@@ -134,7 +136,6 @@ BEGIN
 
     IF 
         (NEW.status = 'Finished' AND OLD.status != 'Finished')
-        OR (NEW.status = 'Canceled' AND OLD.status != 'Canceled')
         OR (NEW.status = 'Forfeit' AND OLD.status != 'Forfeit')
         OR (NEW.status = 'Tie' AND OLD.status != 'Tie')
     THEN
