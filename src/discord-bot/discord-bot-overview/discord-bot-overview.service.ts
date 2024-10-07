@@ -52,20 +52,27 @@ export class DiscordBotOverviewService {
     const { lineup_1, lineup_2 } = match;
 
     const embeds = [];
-    // @ts-ignore
     const components = [];
 
     const row = new ActionRowBuilder<ButtonBuilder>();
 
+    const matchLink = `${
+      this.config.get<AppConfig>("app").webDomain
+    }/matches/${match.id}`;
+
+    const matchConnectLink = `${
+      this.config.get<AppConfig>("app").webDomain
+    }${match.connection_link}`;
+
     const matchControls = {
-      // Knife: new ButtonBuilder()
-      //   .setCustomId(`${ButtonActions.MapStatus}:${matchId}:Knife`)
-      //   .setLabel(`Knife Round`)
-      //   .setStyle(ButtonStyle.Danger),
-      // CancelMatch: new ButtonBuilder()
-      //   .setCustomId(`${ButtonActions.MatchStatus}:${matchId}:Canceled`)
-      //   .setLabel(`Cancel Match`)
-      //   .setStyle(ButtonStyle.Danger),
+      ViewMatch: new ButtonBuilder()
+        .setLabel(`View on 5Stack`)
+        .setStyle(ButtonStyle.Link)
+        .setURL(matchLink),
+      JoinMatch: new ButtonBuilder()
+        .setLabel(`Join Match`)
+        .setStyle(ButtonStyle.Link)
+        .setURL(matchConnectLink),
     };
 
     let color = 3948353;
@@ -92,7 +99,6 @@ export class DiscordBotOverviewService {
           break;
         case "Warmup":
           color = 16695418;
-          // row.addComponents(matchControls.Knife);
           break;
         default:
           assertUnreachable(currentMatchMap.status);
@@ -105,16 +111,18 @@ export class DiscordBotOverviewService {
       });
     }
 
-    // row.addComponents(matchControls.CancelMatch);
-    // components.push(row);
+    row.addComponents(matchControls.ViewMatch);
+    if (match.connection_link) {
+      row.addComponents(matchControls.JoinMatch);
+    }
+
+    components.push(row);
 
     const matchOptions = match.options;
 
     const details = {
       url: "",
-      title: `${
-        this.config.get<AppConfig>("app").webDomain
-      }/matches/${match.id}`,
+      title: matchLink,
       fields: [
         {
           name: "Rules",
@@ -155,9 +163,7 @@ export class DiscordBotOverviewService {
       });
 
       if (match.connection_link) {
-        details.url = `${
-          this.config.get<AppConfig>("app").apiDomain
-        }${match.connection_link}`;
+        details.url = matchConnectLink;
       }
     }
     embeds.push(details);
@@ -215,8 +221,7 @@ export class DiscordBotOverviewService {
     const overview = {
       content: `**${lineup_1.name}** vs **${lineup_2.name}**`,
       embeds,
-      // @ts-ignore
-      ...(components.length > 0 ? { components } : {}),
+      components,
     };
 
     if (match.status === "Veto") {
