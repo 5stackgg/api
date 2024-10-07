@@ -6,13 +6,15 @@ DECLARE
     serverCount int = 0;
     game_port int;
     tv_port int;
+    server_ip inet;
 BEGIN
     IF TG_OP = 'UPDATE' AND (
         NEW.enabled = true AND
         (
             OLD.public_ip = NEW.public_ip AND
             OLD.start_port_range = NEW.start_port_range AND
-            OLD.end_port_range = NEW.end_port_range
+            OLD.end_port_range = NEW.end_port_range AND
+            OLD.region = NEW.region
         )
     ) THEN
         RETURN NEW;
@@ -36,12 +38,17 @@ BEGIN
       
 
     game_port = NEW.start_port_range;
+    server_ip = 
+        CASE 
+            WHEN NEW.region = 'Lan' THEN NEW.lan_ip
+            ELSE NEW.public_ip
+        END;
 
     WHILE game_port < NEW.end_port_range LOOP
         serverCount = serverCount + 1;
 
         INSERT INTO servers (host, label, rcon_password, port, tv_port, api_password, game_server_node_id, region)
-        VALUES (host(NEW.public_ip), CONCAT('on-demand-', serverCount), gen_random_uuid()::text::bytea, game_port, game_port + 1, gen_random_uuid(), NEW.id, NEW.region);
+        VALUES (host(server_ip), CONCAT('on-demand-', serverCount), gen_random_uuid()::text::bytea, game_port, game_port + 1, gen_random_uuid(), NEW.id, NEW.region);
 
         game_port = game_port + 2;
     END LOOP;
