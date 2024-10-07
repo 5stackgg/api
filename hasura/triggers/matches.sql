@@ -98,6 +98,12 @@ CREATE OR REPLACE FUNCTION public.tbu_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+
+    IF OLD.status = 'WaitingForServer' AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN
+        NEW.status = 'Live';
+    END IF;
+
+
     IF(OLD.status = 'Finished' AND NEW.status = 'Canceled') THEN
       RAISE EXCEPTION 'Cannot cancel a match that is already finished' USING ERRCODE = '22000';
     END IF;
