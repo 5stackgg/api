@@ -99,7 +99,7 @@ CREATE OR REPLACE FUNCTION public.tbu_matches() RETURNS TRIGGER
     AS $$
 BEGIN
 
-    IF OLD.status = 'WaitingForServer' AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN
+    IF (NEW.status = 'WaitingForServer' AND OLD.status = 'WaitingForServer') AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN
         NEW.status = 'Live';
     END IF;
 
