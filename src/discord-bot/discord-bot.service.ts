@@ -13,7 +13,7 @@ import { ChatCommands } from "./enums/ChatCommands";
 import { HasuraService } from "../hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { DiscordConfig } from "../configs/types/DiscordConfig";
-import { e_map_pool_types_enum } from "../../generated";
+import { e_match_types_enum } from "../../generated";
 import { interactions } from "./interactions/interactions";
 import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 import { Type } from "@nestjs/common";
@@ -94,11 +94,13 @@ export class DiscordBotService {
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleComp)
               .setDescription("Creates a Competitive Match"),
+            "Competitive",
           ),
           await this.addBaseOptions(
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleWingMan)
               .setDescription("Creates a Wingman Match"),
+            "Wingman",
           ),
           new SlashCommandBuilder()
             .setName(ChatCommands.LinkDiscord)
@@ -116,8 +118,11 @@ export class DiscordBotService {
     }
   }
 
-  private async addBaseOptions(builder: SlashCommandBuilder) {
-    const mapChoices = await this.getMapChoices("Competitive");
+  private async addBaseOptions(
+    builder: SlashCommandBuilder,
+    type: e_match_types_enum,
+  ) {
+    const mapChoices = await this.getMapChoices(type);
 
     return builder
       .addChannelOption((option) =>
@@ -168,26 +173,23 @@ export class DiscordBotService {
       );
   }
 
-  private async getMapChoices(type: e_map_pool_types_enum) {
-    const { map_pools } = await this.hasura.query({
-      map_pools: {
-        type: true,
-        maps: {
-          id: true,
-          name: true,
+  private async getMapChoices(type: e_match_types_enum) {
+    console.info(type);
+    const { maps } = await this.hasura.query({
+      maps: {
+        __args: {
+          where: {
+            type: {
+              _eq: type,
+            },
+          },
         },
+        id: true,
+        name: true,
       },
     });
 
-    const map_pool = map_pools.find((pool) => {
-      return pool.type === type;
-    });
-
-    if (!map_pool) {
-      throw Error("not able to find map pool");
-    }
-
-    return map_pool.maps.map((map) => {
+    return maps.map((map) => {
       return {
         name: map.name,
         value: map.id,
