@@ -3,7 +3,6 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
-import { ServerAuthService } from "../server-auth/server-auth.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -34,7 +33,6 @@ export class MatchAssistantService {
     private readonly cache: CacheService,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
-    private readonly serverAuth: ServerAuthService,
     private readonly encryption: EncryptionService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
@@ -47,13 +45,8 @@ export class MatchAssistantService {
     return `m-${matchId}`;
   }
 
-  public async addServerAuth(matchId: string) {
-    await this.serverAuth.addMatchById(matchId);
-  }
-
   public async sendServerMatchId(matchId: string) {
     try {
-      await this.addServerAuth(matchId);
       await this.command(matchId, `get_match`);
     } catch (error) {
       this.logger.warn(
@@ -637,7 +630,6 @@ export class MatchAssistantService {
 
   public async stopOnDemandServer(matchId: string, serverId: string) {
     this.logger.debug(`[${matchId}] stopping match server`);
-    await this.serverAuth.removeServer(serverId);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 

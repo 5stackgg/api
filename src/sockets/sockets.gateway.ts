@@ -27,7 +27,7 @@ export type FiveStackWebSocketClient = WebSocket.WebSocket & {
 };
 
 @WebSocketGateway({
-  path: "/ws",
+  path: "/ws/web",
 })
 export class SocketsGateway {
   private redis: Redis;

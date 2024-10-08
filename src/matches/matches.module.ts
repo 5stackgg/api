@@ -11,7 +11,6 @@ import { HasuraModule } from "../hasura/hasura.module";
 import { RconModule } from "../rcon/rcon.module";
 import { DemosController } from "./demos/demos.controller";
 import { BackupRoundsController } from "./backup-rounds/backup-rounds.controller";
-import { ServerAuthService } from "./server-auth/server-auth.service";
 import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { S3Module } from "../s3/s3.module";
@@ -40,6 +39,7 @@ import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { MatchLobbyService } from "./match-lobby.service";
 import { MatchMakingModule } from "src/match-making/match-making.module";
+import { MatchEventsGateway } from "./match-events.gateway";
 
 @Module({
   imports: [
@@ -74,9 +74,9 @@ import { MatchMakingModule } from "src/match-making/match-making.module";
   controllers: [MatchesController, DemosController, BackupRoundsController],
   exports: [MatchAssistantService, MatchLobbyService],
   providers: [
+    MatchEventsGateway,
     MatchAssistantService,
     MatchLobbyService,
-    ServerAuthService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,

@@ -9,10 +9,6 @@ import { MatchAssistantService } from "./match-assistant/match-assistant.service
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
 import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice-channels/discord-bot-voice-channels.service";
-import { EventPattern, Payload, Ctx, NatsContext } from "@nestjs/microservices";
-import { ModuleRef } from "@nestjs/core";
-import { MatchEvents } from "./events";
-import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
 import {
   e_match_status_enum,
   match_map_veto_picks_set_input,
@@ -31,7 +27,6 @@ export class MatchesController {
 
   constructor(
     private readonly logger: Logger,
-    private readonly moduleRef: ModuleRef,
     private readonly hasura: HasuraService,
     private readonly configService: ConfigService,
     private readonly matchMaking: MatchMakingService,
@@ -127,8 +122,6 @@ export class MatchesController {
     if (!matches_by_pk) {
       throw Error("unable to find match");
     }
-
-    await this.matchAssistant.addServerAuth(matches_by_pk.id);
 
     return JSON.parse(safeJsonStringify(matches_by_pk));
   }
@@ -507,35 +500,6 @@ export class MatchesController {
     return {
       success: true,
     };
-  }
-
-  @EventPattern("matches:*")
-  public async matchEvent(
-    @Payload()
-    {
-      event,
-      data,
-    }: {
-      event: string;
-      data: Record<string, unknown>;
-    },
-    @Ctx() context: NatsContext,
-  ) {
-    const Processor = MatchEvents[event as keyof typeof MatchEvents];
-
-    if (!Processor) {
-      this.logger.warn("unable to find event handler", event);
-      return;
-    }
-
-    const processor =
-      await this.moduleRef.resolve<MatchEventProcessor<unknown>>(Processor);
-
-    const [, matchId] = context.getArgByIndex(0).split(":");
-
-    processor.setData(matchId, data);
-
-    await processor.process();
   }
 
   @HasuraAction()
