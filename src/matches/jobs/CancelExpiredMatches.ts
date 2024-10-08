@@ -20,8 +20,8 @@ export class CancelExpiredMatches extends WorkerHost {
             _and: [
               {
                 status: {
-                  _neq: "Canceled"
-                }
+                  _neq: "Canceled",
+                },
               },
               {
                 is_tournament_match: {

@@ -19,9 +19,11 @@ import {
 } from "../../../generated";
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
+import { AppConfig } from "src/configs/types/AppConfig";
 
 @Injectable()
 export class MatchAssistantService {
+  private appConfig: AppConfig;
   private gameServerConfig: GameServersConfig;
 
   private readonly namespace: string;
@@ -36,6 +38,7 @@ export class MatchAssistantService {
     private readonly encryption: EncryptionService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
+    this.appConfig = this.config.get<AppConfig>("app");
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.namespace = this.gameServerConfig.namespace;
   }
@@ -418,6 +421,14 @@ export class MatchAssistantService {
                       {
                         name: "SERVER_API_PASSWORD",
                         value: server.api_password,
+                      },
+                      {
+                        name: "API_DOMAIN",
+                        value: this.appConfig.apiDomain,
+                      },
+                      {
+                        name: "DEMOS_DOMAIN",
+                        value: this.appConfig.demosDomain,
                       },
                     ],
                     volumeMounts: [

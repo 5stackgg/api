@@ -4,5 +4,6 @@ export type AppConfig = {
   encSecret: string;
   webDomain: string;
   apiDomain: string;
+  demosDomain: string;
   authCookieDomain: string;
 };
