@@ -423,6 +423,10 @@ export class MatchAssistantService {
                         name: "DEMOS_DOMAIN",
                         value: this.appConfig.demosDomain,
                       },
+                      {
+                        name: "WS_DOMAIN",
+                        value: this.appConfig.wsDomain,
+                      },
                     ],
                     volumeMounts: [
                       {

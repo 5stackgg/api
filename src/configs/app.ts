@@ -7,6 +7,7 @@ export default (): {
     name: process.env.APP_NAME || "5stack",
     appKey: process.env.APP_KEY,
     encSecret: process.env.ENC_SECRET,
+    wsDomain: `wss://${process.env.WS_DOMAIN}`,
     webDomain: `https://${process.env.WEB_DOMAIN}`,
     apiDomain: `https://${process.env.API_DOMAIN}`,
     demosDomain: `https://${process.env.DEMOS_DOMAIN}`,
