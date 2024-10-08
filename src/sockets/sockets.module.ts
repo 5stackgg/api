@@ -5,14 +5,12 @@ import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { MatchesModule } from "src/matches/matches.module";
 import { MatchMakingModule } from "src/match-making/match-making.module";
-import { CacheModule } from "src/cache/cache.module";
 
 @Module({
   exports: [],
   imports: [
     RconModule,
     RedisModule,
-    // CacheModule,
     forwardRef(() => MatchesModule),
     forwardRef(() => MatchMakingModule),
   ],
