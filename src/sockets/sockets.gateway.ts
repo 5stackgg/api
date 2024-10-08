@@ -29,7 +29,7 @@ export type FiveStackWebSocketClient = WebSocket.WebSocket & {
 @WebSocketGateway({
   path: "/ws",
 })
-export class ServerGateway {
+export class SocketsGateway {
   private redis: Redis;
   private appConfig: AppConfig;
   private nodeId: string = process.env.NODE_ID || "1";
@@ -106,7 +106,7 @@ export class ServerGateway {
 
         await this.cleanClients(client.user.steam_id);
 
-        const clientKey = ServerGateway.GET_CLIENT_CLIENT_KEY(
+        const clientKey = SocketsGateway.GET_CLIENT_CLIENT_KEY(
           client.user.steam_id,
         );
         const clientValue = `${client.id}:${client.node}`;
@@ -223,7 +223,7 @@ export class ServerGateway {
     data: unknown,
   ) {
     const clients = await this.redis.smembers(
-      ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
+      SocketsGateway.GET_CLIENT_CLIENT_KEY(steamId),
     );
     for (const client of clients) {
       const _client = await this.getClient(steamId, client);
@@ -252,7 +252,7 @@ export class ServerGateway {
 
   private async cleanClients(steamId: string) {
     const clients = await this.redis.smembers(
-      ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
+      SocketsGateway.GET_CLIENT_CLIENT_KEY(steamId),
     );
     for (const client of clients) {
       await this.getClient(steamId, client);
@@ -274,7 +274,7 @@ export class ServerGateway {
 
     if (!_client) {
       await this.redis.srem(
-        ServerGateway.GET_CLIENT_CLIENT_KEY(steamId),
+        SocketsGateway.GET_CLIENT_CLIENT_KEY(steamId),
         client,
       );
     }

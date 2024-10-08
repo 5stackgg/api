@@ -11,7 +11,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
-import { FiveStackWebSocketClient } from "../sockets/server.gateway";
+import { FiveStackWebSocketClient } from "../sockets/sockets.gateway";
 import { Logger } from "@nestjs/common";
 
 @WebSocketGateway({

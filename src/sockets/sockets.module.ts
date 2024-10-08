@@ -1,5 +1,5 @@
 import { forwardRef, Module } from "@nestjs/common";
-import { ServerGateway } from "../sockets/server.gateway";
+import { SocketsGateway } from "./sockets.gateway";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
@@ -14,6 +14,6 @@ import { MatchMakingModule } from "src/match-making/match-making.module";
     forwardRef(() => MatchesModule),
     forwardRef(() => MatchMakingModule),
   ],
-  providers: [ServerGateway, loggerFactory()],
+  providers: [SocketsGateway, loggerFactory()],
 })
 export class SocketsModule {}
