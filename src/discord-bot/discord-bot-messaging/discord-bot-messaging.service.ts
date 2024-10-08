@@ -2,10 +2,9 @@ import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "../../cache/cache.service";
 import { DiscordBotService } from "../discord-bot.service";
 import {
-  AnyThreadChannel,
   ChatInputCommandInteraction,
   Message,
-  ThreadAutoArchiveDuration,
+  TextChannel,
   ThreadChannel,
 } from "discord.js";
 
@@ -18,6 +17,12 @@ export class DiscordBotMessagingService {
     private readonly bot: DiscordBotService,
   ) {}
 
+  public async getMatchChannel(matchId: string): Promise<TextChannel> {
+    const thread = await this.getMatchThread(matchId);
+
+    return thread.parent as TextChannel;
+  }
+
   public async getMatchThread(matchId: string) {
     const threadCache = await this.getMatchThreadCache(matchId);
 
@@ -29,14 +34,11 @@ export class DiscordBotMessagingService {
     return (await guild.channels.fetch(threadCache.threadId)) as ThreadChannel;
   }
 
-  public async removeMatchReply(matchId: string) {
+  public async removeMatchChannel(matchId: string) {
     try {
-      const reply = await this.getMatchReply(matchId);
-      if (!reply) {
-        this.logger.warn(`[${matchId}] missing thread`);
-        return;
-      }
-      await reply.delete();
+      const channel = await this.getMatchChannel(matchId);
+
+      await channel.delete();
 
       await this.forgetMatchReplyCache(matchId);
       await this.forgetMatchThreadCache(matchId);
@@ -112,7 +114,7 @@ export class DiscordBotMessagingService {
     return await this.cache.get(this.getMatchReplyCacheKey(matchId));
   }
 
-  public async setMatchThreadCache(matchId: string, thread: AnyThreadChannel) {
+  public async setMatchThreadCache(matchId: string, thread: ThreadChannel) {
     const threadCache = {
       threadId: thread.id,
       guildId: thread.guildId,
@@ -158,23 +160,6 @@ export class DiscordBotMessagingService {
     }
 
     await thread.send(options);
-  }
-
-  public async createMatchThread(matchId: string) {
-    const reply = await this.getMatchReply(matchId);
-    if (!reply) {
-      return;
-    }
-
-    const thread = await reply.startThread({
-      name: `Scrim Match ${matchId}`,
-      reason: `Scrim Match ${matchId}`,
-      autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
-    });
-
-    await this.setMatchThreadCache(matchId, thread);
-
-    return thread;
   }
 
   private getMatchReplyCacheKey(matchId: string) {

@@ -244,7 +244,7 @@ export class MatchesController {
   }
 
   private async removeDiscordIntegration(matchId: string) {
-    await this.discordBotMessaging.removeMatchReply(matchId);
+    await this.discordBotMessaging.removeMatchChannel(matchId);
     await this.discordBotVoiceChannels.removeTeamChannels(matchId);
   }
 

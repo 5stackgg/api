@@ -9,6 +9,8 @@ import {
   ActionRowBuilder,
   StringSelectMenuBuilder,
   Message,
+  ThreadAutoArchiveDuration,
+  PermissionsBitField,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -45,9 +47,24 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const guild = await this.bot.client.guilds.fetch(interaction.channel);
 
-    const teamSelectionChannel = (await guild.channels.fetch(
-      options["team-selection"],
-    )) as undefined as GuildChannel;
+    let teamSelectionChannel;
+    if (options["team-selection"]) {
+      teamSelectionChannel = (await guild.channels.fetch(
+        options["team-selection"],
+      )) as undefined as GuildChannel;
+    } else {
+      const member = await guild.members.fetch(interaction.user.id);
+      teamSelectionChannel = member.voice.channel;
+    }
+
+    if (!teamSelectionChannel) {
+      await interaction.reply({
+        ephemeral: true,
+        content:
+          "You need to be in a voice channel to use this command without specifying a channel.",
+      });
+      return;
+    }
 
     const usersInChannel = await this.getUsersInChannel(teamSelectionChannel);
 
@@ -92,13 +109,22 @@ export default class ScheduleMatch extends DiscordInteraction {
       usersInChannel,
     );
 
-    await this.discordBotMessaging.sendInitialReply(interaction, matchId);
+    const categoryChannel = await this.createMatchesCategory(interaction);
 
-    await this.discordBotMessaging.createMatchThread(matchId);
+    const channel = await this.createMatchThread(
+      categoryChannel,
+      matchId,
+      usersInChannel,
+    );
+
+    await interaction.reply({
+      ephemeral: true,
+      content: `Match Created: ${channel}`,
+    });
 
     await this.createVoiceChannelsForMatch(
       teamSelectionChannel.id,
-      interaction,
+      categoryChannel,
       match,
     );
 
@@ -156,7 +182,7 @@ export default class ScheduleMatch extends DiscordInteraction {
 
   private async createMatchesCategory(
     interaction: ChatInputCommandInteraction,
-  ) {
+  ): Promise<CategoryChannel> {
     const channelName = `${this.config.get<AppConfig>("app").name} Matches`;
 
     let category: CategoryChannel;
@@ -177,15 +203,67 @@ export default class ScheduleMatch extends DiscordInteraction {
     return category;
   }
 
+  private async createMatchThread(
+    categoryChannel: CategoryChannel,
+    matchId: string,
+    usersInChannel: DiscordUser[],
+  ) {
+    const guild = await this.bot.client.guilds.fetch(categoryChannel.guildId);
+
+    const textChannel = await guild.channels.create<ChannelType.GuildText>({
+      name: `Match ${matchId}`,
+      parent: categoryChannel.id,
+      type: ChannelType.GuildText,
+      permissionOverwrites: [
+        {
+          id: guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: guild.client.user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.ManageThreads,
+            PermissionsBitField.Flags.CreatePublicThreads,
+            PermissionsBitField.Flags.CreatePrivateThreads,
+          ],
+        },
+        ...usersInChannel.map((user) => ({
+          id: user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+          ],
+        })),
+      ],
+    });
+
+    const reply = await textChannel.send({
+      content: `Setting up match ${matchId}`,
+    });
+
+    await this.discordBotMessaging.setMatchReplyCache(matchId, reply);
+
+    const thread = await textChannel.threads.create({
+      name: `Match ${matchId}`,
+      reason: `Match ${matchId}`,
+      autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
+    });
+
+    await this.discordBotMessaging.setMatchThreadCache(matchId, thread);
+
+    return textChannel;
+  }
+
   private async createVoiceChannelsForMatch(
     originalChannelId: string,
-    interaction: ChatInputCommandInteraction,
+    categoryChannel: CategoryChannel,
     match: UnwrapPromise<
       ReturnType<typeof this.matchAssistant.createMatchBasedOnType>
     >,
   ) {
     const matchId = match.id;
-    const categoryChannel = await this.createMatchesCategory(interaction);
 
     await this.discordBotVoiceChannels.createMatchVoiceChannel(
       matchId,

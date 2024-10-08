@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
-import { ChannelType, GuildChannel, VoiceChannel } from "discord.js";
+import { ChannelType, GuildChannel } from "discord.js";
 import { CacheService } from "../../cache/cache.service";
-import { CacheTag } from "../../cache/CacheTag";
 import { DiscordBotService } from "../discord-bot.service";
 import { CachedDiscordUser } from "../types/CachedDiscordUser";
 

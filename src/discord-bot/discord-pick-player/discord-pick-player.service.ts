@@ -209,7 +209,7 @@ export class DiscordPickPlayerService {
       [...new Set(pickedDiscordUserIds)].length ===
         ExpectedPlayers[match.options.type]
     ) {
-      const mapVotingLink = `Map Voting is starting: ${await this.discordBotMessaging.getMatchReplyLink(
+      const mapVotingLink = `Map Voting is starting: ${await this.discordBotMessaging.getMatchChannel(
         matchId,
       )}`;
       await captain.send(mapVotingLink);

@@ -121,7 +121,6 @@ export class DiscordBotService {
           .setDescription(
             "This channel should have at least 10 or 4 people to start a match based on the type.",
           )
-          .setRequired(true)
           .addChannelTypes(ChannelType.GuildVoice),
       )
       .addBooleanOption((option) =>
