@@ -87,12 +87,6 @@ export class MatchEventsGateway {
     const processor =
       await this.moduleRef.resolve<MatchEventProcessor<unknown>>(Processor);
 
-    console.info("LETS GO", {
-      matchId,
-      data,
-      event,
-    });
-
     processor.setData(matchId, data);
 
     await processor.process();

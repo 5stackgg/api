@@ -352,10 +352,6 @@ export class DiscordBotOverviewService {
         components[row] = new ActionRowBuilder<ButtonBuilder>();
       }
 
-      console.info(
-        "LETS GO..",
-        `${ButtonActions.VetoPick}:${matchId}:${mapIndex}`,
-      );
       components[row].addComponents(
         new ButtonBuilder()
           .setCustomId(`${ButtonActions.VetoPick}:${matchId}:${mapIndex}`)

@@ -51,7 +51,7 @@ export class CheckForTournamentStart extends WorkerHost {
 
       return update_tournaments.affected_rows;
     } catch (error) {
-      console.info(`cannto update`, JSON.stringify(error));
+      console.info(`cannot update`, JSON.stringify(error));
     }
   }
 }
