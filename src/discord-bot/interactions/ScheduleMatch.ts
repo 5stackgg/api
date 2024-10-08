@@ -1,14 +1,10 @@
 import {
-  ComponentType,
   CategoryChannel,
   ChannelType,
   ChatInputCommandInteraction,
   CommandInteractionOption,
   GuildChannel,
   User as DiscordUser,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  Message,
   ThreadAutoArchiveDuration,
   PermissionsBitField,
 } from "discord.js";

@@ -8,6 +8,7 @@ import VetoPick from "./VetoPick";
 import UpdateMatchStatus from "./UpdateMatchStatus";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 import { CacheModule } from "src/cache/cache.module";
+import LinkDiscord from "./LinkDiscord";
 
 @Module({
   imports: [
@@ -16,8 +17,15 @@ import { CacheModule } from "src/cache/cache.module";
     MatchesModule,
     CacheModule,
   ],
-  exports: [ScheduleMatch, UpdateMapStatus, UpdateMatchStatus, VetoPick],
+  exports: [
+    LinkDiscord,
+    ScheduleMatch,
+    UpdateMapStatus,
+    UpdateMatchStatus,
+    VetoPick,
+  ],
   providers: [
+    LinkDiscord,
     ScheduleMatch,
     UpdateMapStatus,
     UpdateMatchStatus,

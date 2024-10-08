@@ -14,7 +14,7 @@ export class SteamGuard extends AuthGuard("steam") {
 
     const { redirect } = request.query;
 
-    if (process.env.DEV && redirect) {
+    if (redirect) {
       request.session.redirect = redirect as string;
     }
 

@@ -100,6 +100,11 @@ export class DiscordBotService {
               .setName(ChatCommands.ScheduleWingMan)
               .setDescription("Creates a Wingman Match"),
           ),
+          new SlashCommandBuilder()
+            .setName(ChatCommands.LinkDiscord)
+            .setDescription(
+              "Link your Discord account to 5stack.gg for stat tracking",
+            ),
         ],
       });
 
