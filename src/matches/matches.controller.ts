@@ -19,11 +19,11 @@ import {
   matches_set_input,
   servers_set_input,
 } from "../../generated";
-import { MatchMakingService } from "src/sockets/match-making.servcie";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
 import fetch from "node-fetch";
 import TurndownService from "turndown";
+import { MatchMakingService } from "src/match-making/match-making.servcie";
 
 @Controller("matches")
 export class MatchesController {

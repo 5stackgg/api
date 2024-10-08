@@ -1,7 +1,7 @@
 import { Injectable, Logger, Scope } from "@nestjs/common";
 import { HasuraService } from "../../../hasura/hasura.service";
 import { MatchAssistantService } from "../../match-assistant/match-assistant.service";
-import { MatchLobbyService } from "../../../sockets/match-lobby.service";
+import { MatchLobbyService } from "../../match-lobby.service";
 
 @Injectable({ scope: Scope.REQUEST })
 export default abstract class MatchEventProcessor<T> {

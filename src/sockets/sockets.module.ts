@@ -1,28 +1,21 @@
 import { forwardRef, Module } from "@nestjs/common";
-import { HasuraModule } from "../hasura/hasura.module";
 import { ServerGateway } from "../sockets/server.gateway";
-import { RedisModule } from "../redis/redis.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
-import { EncryptionModule } from "../encryption/encryption.module";
-import { RconModule } from "../rcon/rcon.module";
-import { MatchLobbyService } from "./match-lobby.service";
+import { RconModule } from "src/rcon/rcon.module";
+import { RedisModule } from "src/redis/redis.module";
 import { MatchesModule } from "src/matches/matches.module";
-import { MatchMakingService } from "./match-making.servcie";
+import { MatchMakingModule } from "src/match-making/match-making.module";
+import { CacheModule } from "src/cache/cache.module";
 
 @Module({
-  exports: [MatchLobbyService, MatchMakingService],
+  exports: [],
   imports: [
-    HasuraModule,
-    RedisModule,
-    EncryptionModule,
     RconModule,
+    RedisModule,
+    // CacheModule,
     forwardRef(() => MatchesModule),
+    forwardRef(() => MatchMakingModule),
   ],
-  providers: [
-    ServerGateway,
-    MatchLobbyService,
-    MatchMakingService,
-    loggerFactory(),
-  ],
+  providers: [ServerGateway, loggerFactory()],
 })
 export class SocketsModule {}

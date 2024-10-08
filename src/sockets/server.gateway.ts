@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Request } from "express";
 import { User } from "../auth/types/User";
 import { RconService } from "../rcon/rcon.service";
-import { MatchLobbyService } from "./match-lobby.service";
+import { MatchLobbyService } from "../matches/match-lobby.service";
 import session from "express-session";
 import { getCookieOptions } from "../utilities/getCookieOptions";
 import RedisStore from "connect-redis";
@@ -18,7 +18,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { MatchMakingService } from "./match-making.servcie";
+import { MatchMakingService } from "../match-making/match-making.servcie";
 
 export type FiveStackWebSocketClient = WebSocket.WebSocket & {
   id: string;

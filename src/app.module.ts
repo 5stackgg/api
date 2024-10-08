@@ -6,6 +6,7 @@ import { TypeSenseModule } from "./type-sense/type-sense.module";
 import { AuthModule } from "./auth/auth.module";
 import { DiscordBotModule } from "./discord-bot/discord-bot.module";
 import { MatchesModule } from "./matches/matches.module";
+
 import { TeamsModule } from "./teams/teams.module";
 import { EncryptionModule } from "./encryption/encryption.module";
 import { CacheModule } from "./cache/cache.module";
@@ -25,6 +26,7 @@ import { loggerFactory } from "./utilities/LoggerFactory";
 import { SocketsModule } from "./sockets/sockets.module";
 import { TailscaleModule } from "./tailscale/tailscale.module";
 import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
+import { MatchMakingModule } from "./match-making/match-making.module";
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { GameServerNodeModule } from "./game-server-node/game-server-node.module
     SocketsModule,
     TypeSenseModule,
     MatchesModule,
+    MatchMakingModule,
     TeamsModule,
     EncryptionModule,
     CacheModule,

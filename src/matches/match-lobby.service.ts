@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
-import { FiveStackWebSocketClient } from "./server.gateway";
+import { FiveStackWebSocketClient } from "../sockets/server.gateway";
 import { HasuraService } from "../hasura/hasura.service";
 import { RconService } from "../rcon/rcon.service";
 

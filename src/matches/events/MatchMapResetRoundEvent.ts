@@ -3,7 +3,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 import { S3Service } from "../../s3/s3.service";
 import { Logger } from "@nestjs/common";
-import { MatchLobbyService } from "../../sockets/match-lobby.service";
+import { MatchLobbyService } from "../match-lobby.service";
 
 export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   round: string;

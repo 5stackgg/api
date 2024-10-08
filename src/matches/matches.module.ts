@@ -38,6 +38,8 @@ import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
+import { MatchLobbyService } from "./match-lobby.service";
+import { MatchMakingModule } from "src/match-making/match-making.module";
 
 @Module({
   imports: [
@@ -49,6 +51,7 @@ import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
     EncryptionModule,
     SocketsModule,
     forwardRef(() => DiscordBotModule),
+    forwardRef(() => MatchMakingModule),
     BullModule.registerQueue(
       {
         name: MatchQueues.MatchServers,
@@ -69,9 +72,10 @@ import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
     ),
   ],
   controllers: [MatchesController, DemosController, BackupRoundsController],
-  exports: [MatchAssistantService],
+  exports: [MatchAssistantService, MatchLobbyService],
   providers: [
     MatchAssistantService,
+    MatchLobbyService,
     ServerAuthService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
