@@ -196,6 +196,11 @@ computed_fields:
       function:
         name: get_player_teams
         schema: public
+  - name: total_matches
+    definition:
+      function:
+        name: get_total_player_matches
+        schema: public
 select_permissions:
   - role: user
     permission:
@@ -209,6 +214,7 @@ select_permissions:
       computed_fields:
         - is_in_another_match
         - matchmaking_cooldown
+        - total_matches
       filter: {}
       allow_aggregations: true
     comment: ""

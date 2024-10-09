@@ -2696,7 +2696,6 @@ export interface match_maps {
     vetos: match_map_veto_picks[]
     /** An aggregate relationship */
     vetos_aggregate: match_map_veto_picks_aggregate
-    /** A computed field, executes function "get_match_map_winning_lineup_id" */
     winning_lineup_id: (Scalars['uuid'] | null)
     __typename: 'match_maps'
 }
@@ -2765,7 +2764,6 @@ export interface match_maps_max_fields {
     match_id: (Scalars['uuid'] | null)
     order: (Scalars['Int'] | null)
     started_at: (Scalars['timestamptz'] | null)
-    /** A computed field, executes function "get_match_map_winning_lineup_id" */
     winning_lineup_id: (Scalars['uuid'] | null)
     __typename: 'match_maps_max_fields'
 }
@@ -2790,7 +2788,6 @@ export interface match_maps_min_fields {
     match_id: (Scalars['uuid'] | null)
     order: (Scalars['Int'] | null)
     started_at: (Scalars['timestamptz'] | null)
-    /** A computed field, executes function "get_match_map_winning_lineup_id" */
     winning_lineup_id: (Scalars['uuid'] | null)
     __typename: 'match_maps_min_fields'
 }
@@ -2807,7 +2804,7 @@ export interface match_maps_mutation_response {
 
 
 /** select columns of table "match_maps" */
-export type match_maps_select_column = 'created_at' | 'ended_at' | 'id' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'started_at' | 'status'
+export type match_maps_select_column = 'created_at' | 'ended_at' | 'id' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'started_at' | 'status' | 'winning_lineup_id'
 
 
 /** aggregate stddev on columns */
@@ -2871,7 +2868,7 @@ export interface match_maps_sum_fields {
 
 
 /** update columns of table "match_maps" */
-export type match_maps_update_column = 'created_at' | 'ended_at' | 'id' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'started_at' | 'status'
+export type match_maps_update_column = 'created_at' | 'ended_at' | 'id' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'started_at' | 'status' | 'winning_lineup_id'
 
 
 /** aggregate var_pop on columns */
@@ -5924,6 +5921,8 @@ export interface players {
     team_members_aggregate: team_roster_aggregate
     /** A computed field, executes function "get_player_teams" */
     teams: (teams[] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     /** An array relationship */
     tournament_organizers: tournament_organizers[]
     /** An aggregate relationship */
@@ -5972,6 +5971,8 @@ export interface players_aggregate_fields {
 /** aggregate avg on columns */
 export interface players_avg_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_avg_fields'
 }
 
@@ -5991,6 +5992,8 @@ export interface players_max_fields {
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_max_fields'
 }
 
@@ -6006,6 +6009,8 @@ export interface players_min_fields {
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_min_fields'
 }
 
@@ -6027,6 +6032,8 @@ export type players_select_column = 'avatar_url' | 'country' | 'created_at' | 'd
 /** aggregate stddev on columns */
 export interface players_stddev_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_stddev_fields'
 }
 
@@ -6034,6 +6041,8 @@ export interface players_stddev_fields {
 /** aggregate stddev_pop on columns */
 export interface players_stddev_pop_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_stddev_pop_fields'
 }
 
@@ -6041,6 +6050,8 @@ export interface players_stddev_pop_fields {
 /** aggregate stddev_samp on columns */
 export interface players_stddev_samp_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_stddev_samp_fields'
 }
 
@@ -6048,6 +6059,8 @@ export interface players_stddev_samp_fields {
 /** aggregate sum on columns */
 export interface players_sum_fields {
     steam_id: (Scalars['bigint'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_sum_fields'
 }
 
@@ -6059,6 +6072,8 @@ export type players_update_column = 'avatar_url' | 'country' | 'created_at' | 'd
 /** aggregate var_pop on columns */
 export interface players_var_pop_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_var_pop_fields'
 }
 
@@ -6066,6 +6081,8 @@ export interface players_var_pop_fields {
 /** aggregate var_samp on columns */
 export interface players_var_samp_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_var_samp_fields'
 }
 
@@ -6073,6 +6090,8 @@ export interface players_var_samp_fields {
 /** aggregate variance on columns */
 export interface players_variance_fields {
     steam_id: (Scalars['Float'] | null)
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches: (Scalars['Int'] | null)
     __typename: 'players_variance_fields'
 }
 
@@ -6411,6 +6430,14 @@ export interface query_root {
     v_player_killed_player_counts: v_player_killed_player_counts[]
     /** fetch aggregated fields from the table: "v_player_killed_player_counts" */
     v_player_killed_player_counts_aggregate: v_player_killed_player_counts_aggregate
+    /** fetch data from the table: "v_player_map_losses" */
+    v_player_map_losses: v_player_map_losses[]
+    /** fetch aggregated fields from the table: "v_player_map_losses" */
+    v_player_map_losses_aggregate: v_player_map_losses_aggregate
+    /** fetch data from the table: "v_player_map_wins" */
+    v_player_map_wins: v_player_map_wins[]
+    /** fetch aggregated fields from the table: "v_player_map_wins" */
+    v_player_map_wins_aggregate: v_player_map_wins_aggregate
     /** fetch data from the table: "v_player_match_kills" */
     v_player_match_kills: v_player_match_kills[]
     /** fetch aggregated fields from the table: "v_player_match_kills" */
@@ -7117,6 +7144,18 @@ export interface subscription_root {
     v_player_killed_player_counts_aggregate: v_player_killed_player_counts_aggregate
     /** fetch data from the table in a streaming manner: "v_player_killed_player_counts" */
     v_player_killed_player_counts_stream: v_player_killed_player_counts[]
+    /** fetch data from the table: "v_player_map_losses" */
+    v_player_map_losses: v_player_map_losses[]
+    /** fetch aggregated fields from the table: "v_player_map_losses" */
+    v_player_map_losses_aggregate: v_player_map_losses_aggregate
+    /** fetch data from the table in a streaming manner: "v_player_map_losses" */
+    v_player_map_losses_stream: v_player_map_losses[]
+    /** fetch data from the table: "v_player_map_wins" */
+    v_player_map_wins: v_player_map_wins[]
+    /** fetch aggregated fields from the table: "v_player_map_wins" */
+    v_player_map_wins_aggregate: v_player_map_wins_aggregate
+    /** fetch data from the table in a streaming manner: "v_player_map_wins" */
+    v_player_map_wins_stream: v_player_map_wins[]
     /** fetch data from the table: "v_player_match_kills" */
     v_player_match_kills: v_player_match_kills[]
     /** fetch aggregated fields from the table: "v_player_match_kills" */
@@ -9208,6 +9247,244 @@ export interface v_player_killed_player_counts_variance_fields {
     player_id: (Scalars['Float'] | null)
     victim_id: (Scalars['Float'] | null)
     __typename: 'v_player_killed_player_counts_variance_fields'
+}
+
+
+/** columns and relationships of "v_player_map_losses" */
+export interface v_player_map_losses {
+    /** An object relationship */
+    map: (maps | null)
+    map_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    match: (matches | null)
+    match_id: (Scalars['uuid'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_losses'
+}
+
+
+/** aggregated selection of "v_player_map_losses" */
+export interface v_player_map_losses_aggregate {
+    aggregate: (v_player_map_losses_aggregate_fields | null)
+    nodes: v_player_map_losses[]
+    __typename: 'v_player_map_losses_aggregate'
+}
+
+
+/** aggregate fields of "v_player_map_losses" */
+export interface v_player_map_losses_aggregate_fields {
+    avg: (v_player_map_losses_avg_fields | null)
+    count: Scalars['Int']
+    max: (v_player_map_losses_max_fields | null)
+    min: (v_player_map_losses_min_fields | null)
+    stddev: (v_player_map_losses_stddev_fields | null)
+    stddev_pop: (v_player_map_losses_stddev_pop_fields | null)
+    stddev_samp: (v_player_map_losses_stddev_samp_fields | null)
+    sum: (v_player_map_losses_sum_fields | null)
+    var_pop: (v_player_map_losses_var_pop_fields | null)
+    var_samp: (v_player_map_losses_var_samp_fields | null)
+    variance: (v_player_map_losses_variance_fields | null)
+    __typename: 'v_player_map_losses_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface v_player_map_losses_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface v_player_map_losses_max_fields {
+    map_id: (Scalars['uuid'] | null)
+    match_id: (Scalars['uuid'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_losses_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface v_player_map_losses_min_fields {
+    map_id: (Scalars['uuid'] | null)
+    match_id: (Scalars['uuid'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_losses_min_fields'
+}
+
+
+/** select columns of table "v_player_map_losses" */
+export type v_player_map_losses_select_column = 'map_id' | 'match_id' | 'started_at' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface v_player_map_losses_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface v_player_map_losses_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface v_player_map_losses_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface v_player_map_losses_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_losses_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface v_player_map_losses_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface v_player_map_losses_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface v_player_map_losses_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_losses_variance_fields'
+}
+
+
+/** columns and relationships of "v_player_map_wins" */
+export interface v_player_map_wins {
+    /** An object relationship */
+    map: (maps | null)
+    map_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    match: (matches | null)
+    match_id: (Scalars['uuid'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_wins'
+}
+
+
+/** aggregated selection of "v_player_map_wins" */
+export interface v_player_map_wins_aggregate {
+    aggregate: (v_player_map_wins_aggregate_fields | null)
+    nodes: v_player_map_wins[]
+    __typename: 'v_player_map_wins_aggregate'
+}
+
+
+/** aggregate fields of "v_player_map_wins" */
+export interface v_player_map_wins_aggregate_fields {
+    avg: (v_player_map_wins_avg_fields | null)
+    count: Scalars['Int']
+    max: (v_player_map_wins_max_fields | null)
+    min: (v_player_map_wins_min_fields | null)
+    stddev: (v_player_map_wins_stddev_fields | null)
+    stddev_pop: (v_player_map_wins_stddev_pop_fields | null)
+    stddev_samp: (v_player_map_wins_stddev_samp_fields | null)
+    sum: (v_player_map_wins_sum_fields | null)
+    var_pop: (v_player_map_wins_var_pop_fields | null)
+    var_samp: (v_player_map_wins_var_samp_fields | null)
+    variance: (v_player_map_wins_variance_fields | null)
+    __typename: 'v_player_map_wins_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface v_player_map_wins_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface v_player_map_wins_max_fields {
+    map_id: (Scalars['uuid'] | null)
+    match_id: (Scalars['uuid'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_wins_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface v_player_map_wins_min_fields {
+    map_id: (Scalars['uuid'] | null)
+    match_id: (Scalars['uuid'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_wins_min_fields'
+}
+
+
+/** select columns of table "v_player_map_wins" */
+export type v_player_map_wins_select_column = 'map_id' | 'match_id' | 'started_at' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface v_player_map_wins_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface v_player_map_wins_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface v_player_map_wins_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface v_player_map_wins_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'v_player_map_wins_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface v_player_map_wins_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface v_player_map_wins_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface v_player_map_wins_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'v_player_map_wins_variance_fields'
 }
 
 
@@ -14582,7 +14859,6 @@ export interface match_mapsGenqlSelection{
     order_by?: (match_map_veto_picks_order_by[] | null), 
     /** filter the rows returned */
     where?: (match_map_veto_picks_bool_exp | null)} })
-    /** A computed field, executes function "get_match_map_winning_lineup_id" */
     winning_lineup_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -14659,7 +14935,7 @@ export interface match_maps_inc_input {lineup_1_timeouts_available?: (Scalars['I
 
 
 /** input type for inserting data into table "match_maps" */
-export interface match_maps_insert_input {created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_map_status?: (e_match_map_status_obj_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),flashes?: (player_flashes_arr_rel_insert_input | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),order?: (Scalars['Int'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),rounds?: (match_map_rounds_arr_rel_insert_input | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),utility?: (player_utility_arr_rel_insert_input | null),vetos?: (match_map_veto_picks_arr_rel_insert_input | null)}
+export interface match_maps_insert_input {created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_map_status?: (e_match_map_status_obj_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),flashes?: (player_flashes_arr_rel_insert_input | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),order?: (Scalars['Int'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),rounds?: (match_map_rounds_arr_rel_insert_input | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),utility?: (player_utility_arr_rel_insert_input | null),vetos?: (match_map_veto_picks_arr_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -14681,7 +14957,6 @@ export interface match_maps_max_fieldsGenqlSelection{
     match_id?: boolean | number
     order?: boolean | number
     started_at?: boolean | number
-    /** A computed field, executes function "get_match_map_winning_lineup_id" */
     winning_lineup_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -14689,7 +14964,7 @@ export interface match_maps_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_maps" */
-export interface match_maps_max_order_by {created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),started_at?: (order_by | null)}
+export interface match_maps_max_order_by {created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -14711,7 +14986,6 @@ export interface match_maps_min_fieldsGenqlSelection{
     match_id?: boolean | number
     order?: boolean | number
     started_at?: boolean | number
-    /** A computed field, executes function "get_match_map_winning_lineup_id" */
     winning_lineup_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -14719,7 +14993,7 @@ export interface match_maps_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_maps" */
-export interface match_maps_min_order_by {created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),started_at?: (order_by | null)}
+export interface match_maps_min_order_by {created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_maps" */
@@ -14752,7 +15026,7 @@ export interface match_maps_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_maps" */
-export interface match_maps_set_input {created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null)}
+export interface match_maps_set_input {created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -14824,7 +15098,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_maps_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null)}
+export interface match_maps_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -20777,6 +21051,8 @@ export interface playersGenqlSelection{
     order_by?: (teams_order_by[] | null), 
     /** filter the rows returned */
     where?: (teams_bool_exp | null)} })
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     /** An array relationship */
     tournament_organizers?: (tournament_organizersGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -20908,13 +21184,15 @@ export interface players_aggregate_fieldsGenqlSelection{
 /** aggregate avg on columns */
 export interface players_avg_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),opening_duels?: (v_player_opening_duels_bool_exp | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -20936,6 +21214,8 @@ export interface players_max_fieldsGenqlSelection{
     name?: boolean | number
     profile_url?: boolean | number
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -20952,6 +21232,8 @@ export interface players_min_fieldsGenqlSelection{
     name?: boolean | number
     profile_url?: boolean | number
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -20979,7 +21261,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),opening_duels_aggregate?: (v_player_opening_duels_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -20993,6 +21275,8 @@ export interface players_set_input {avatar_url?: (Scalars['String'] | null),coun
 /** aggregate stddev on columns */
 export interface players_stddev_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21001,6 +21285,8 @@ export interface players_stddev_fieldsGenqlSelection{
 /** aggregate stddev_pop on columns */
 export interface players_stddev_pop_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21009,6 +21295,8 @@ export interface players_stddev_pop_fieldsGenqlSelection{
 /** aggregate stddev_samp on columns */
 export interface players_stddev_samp_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21029,6 +21317,8 @@ export interface players_stream_cursor_value_input {avatar_url?: (Scalars['Strin
 /** aggregate sum on columns */
 export interface players_sum_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21045,6 +21335,8 @@ where: players_bool_exp}
 /** aggregate var_pop on columns */
 export interface players_var_pop_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21053,6 +21345,8 @@ export interface players_var_pop_fieldsGenqlSelection{
 /** aggregate var_samp on columns */
 export interface players_var_samp_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21061,6 +21355,8 @@ export interface players_var_samp_fieldsGenqlSelection{
 /** aggregate variance on columns */
 export interface players_variance_fieldsGenqlSelection{
     steam_id?: boolean | number
+    /** A computed field, executes function "get_total_player_matches" */
+    total_matches?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -22540,6 +22836,54 @@ export interface query_rootGenqlSelection{
     order_by?: (v_player_killed_player_counts_order_by[] | null), 
     /** filter the rows returned */
     where?: (v_player_killed_player_counts_bool_exp | null)} })
+    /** fetch data from the table: "v_player_map_losses" */
+    v_player_map_losses?: (v_player_map_lossesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_losses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_losses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_losses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_player_map_losses" */
+    v_player_map_losses_aggregate?: (v_player_map_losses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_losses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_losses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_losses_bool_exp | null)} })
+    /** fetch data from the table: "v_player_map_wins" */
+    v_player_map_wins?: (v_player_map_winsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_wins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_wins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_wins_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_player_map_wins" */
+    v_player_map_wins_aggregate?: (v_player_map_wins_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_wins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_wins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_wins_bool_exp | null)} })
     /** fetch data from the table: "v_player_match_kills" */
     v_player_match_kills?: (v_player_match_killsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -24971,6 +25315,70 @@ export interface subscription_rootGenqlSelection{
     cursor: (v_player_killed_player_counts_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (v_player_killed_player_counts_bool_exp | null)} })
+    /** fetch data from the table: "v_player_map_losses" */
+    v_player_map_losses?: (v_player_map_lossesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_losses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_losses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_losses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_player_map_losses" */
+    v_player_map_losses_aggregate?: (v_player_map_losses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_losses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_losses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_losses_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "v_player_map_losses" */
+    v_player_map_losses_stream?: (v_player_map_lossesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (v_player_map_losses_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (v_player_map_losses_bool_exp | null)} })
+    /** fetch data from the table: "v_player_map_wins" */
+    v_player_map_wins?: (v_player_map_winsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_wins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_wins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_wins_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_player_map_wins" */
+    v_player_map_wins_aggregate?: (v_player_map_wins_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_player_map_wins_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_player_map_wins_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_player_map_wins_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "v_player_map_wins" */
+    v_player_map_wins_stream?: (v_player_map_winsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (v_player_map_wins_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (v_player_map_wins_bool_exp | null)} })
     /** fetch data from the table: "v_player_match_kills" */
     v_player_match_kills?: (v_player_match_killsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -28553,6 +28961,302 @@ export interface v_player_killed_player_counts_variance_fieldsGenqlSelection{
     kill_count?: boolean | number
     player_id?: boolean | number
     victim_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "v_player_map_losses" */
+export interface v_player_map_lossesGenqlSelection{
+    /** An object relationship */
+    map?: mapsGenqlSelection
+    map_id?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "v_player_map_losses" */
+export interface v_player_map_losses_aggregateGenqlSelection{
+    aggregate?: v_player_map_losses_aggregate_fieldsGenqlSelection
+    nodes?: v_player_map_lossesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "v_player_map_losses" */
+export interface v_player_map_losses_aggregate_fieldsGenqlSelection{
+    avg?: v_player_map_losses_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (v_player_map_losses_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: v_player_map_losses_max_fieldsGenqlSelection
+    min?: v_player_map_losses_min_fieldsGenqlSelection
+    stddev?: v_player_map_losses_stddev_fieldsGenqlSelection
+    stddev_pop?: v_player_map_losses_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: v_player_map_losses_stddev_samp_fieldsGenqlSelection
+    sum?: v_player_map_losses_sum_fieldsGenqlSelection
+    var_pop?: v_player_map_losses_var_pop_fieldsGenqlSelection
+    var_samp?: v_player_map_losses_var_samp_fieldsGenqlSelection
+    variance?: v_player_map_losses_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface v_player_map_losses_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "v_player_map_losses". All fields are combined with a logical 'AND'. */
+export interface v_player_map_losses_bool_exp {_and?: (v_player_map_losses_bool_exp[] | null),_not?: (v_player_map_losses_bool_exp | null),_or?: (v_player_map_losses_bool_exp[] | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** aggregate max on columns */
+export interface v_player_map_losses_max_fieldsGenqlSelection{
+    map_id?: boolean | number
+    match_id?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface v_player_map_losses_min_fieldsGenqlSelection{
+    map_id?: boolean | number
+    match_id?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "v_player_map_losses". */
+export interface v_player_map_losses_order_by {map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),started_at?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface v_player_map_losses_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface v_player_map_losses_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface v_player_map_losses_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "v_player_map_losses" */
+export interface v_player_map_losses_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: v_player_map_losses_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface v_player_map_losses_stream_cursor_value_input {map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface v_player_map_losses_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_pop on columns */
+export interface v_player_map_losses_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface v_player_map_losses_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface v_player_map_losses_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "v_player_map_wins" */
+export interface v_player_map_winsGenqlSelection{
+    /** An object relationship */
+    map?: mapsGenqlSelection
+    map_id?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "v_player_map_wins" */
+export interface v_player_map_wins_aggregateGenqlSelection{
+    aggregate?: v_player_map_wins_aggregate_fieldsGenqlSelection
+    nodes?: v_player_map_winsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "v_player_map_wins" */
+export interface v_player_map_wins_aggregate_fieldsGenqlSelection{
+    avg?: v_player_map_wins_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (v_player_map_wins_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: v_player_map_wins_max_fieldsGenqlSelection
+    min?: v_player_map_wins_min_fieldsGenqlSelection
+    stddev?: v_player_map_wins_stddev_fieldsGenqlSelection
+    stddev_pop?: v_player_map_wins_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: v_player_map_wins_stddev_samp_fieldsGenqlSelection
+    sum?: v_player_map_wins_sum_fieldsGenqlSelection
+    var_pop?: v_player_map_wins_var_pop_fieldsGenqlSelection
+    var_samp?: v_player_map_wins_var_samp_fieldsGenqlSelection
+    variance?: v_player_map_wins_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface v_player_map_wins_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "v_player_map_wins". All fields are combined with a logical 'AND'. */
+export interface v_player_map_wins_bool_exp {_and?: (v_player_map_wins_bool_exp[] | null),_not?: (v_player_map_wins_bool_exp | null),_or?: (v_player_map_wins_bool_exp[] | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** aggregate max on columns */
+export interface v_player_map_wins_max_fieldsGenqlSelection{
+    map_id?: boolean | number
+    match_id?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface v_player_map_wins_min_fieldsGenqlSelection{
+    map_id?: boolean | number
+    match_id?: boolean | number
+    started_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "v_player_map_wins". */
+export interface v_player_map_wins_order_by {map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),started_at?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface v_player_map_wins_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface v_player_map_wins_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface v_player_map_wins_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "v_player_map_wins" */
+export interface v_player_map_wins_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: v_player_map_wins_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface v_player_map_wins_stream_cursor_value_input {map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface v_player_map_wins_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_pop on columns */
+export interface v_player_map_wins_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface v_player_map_wins_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface v_player_map_wins_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -34218,6 +34922,214 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const v_player_map_losses_possibleTypes: string[] = ['v_player_map_losses']
+    export const isv_player_map_losses = (obj?: { __typename?: any } | null): obj is v_player_map_losses => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses"')
+      return v_player_map_losses_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_aggregate_possibleTypes: string[] = ['v_player_map_losses_aggregate']
+    export const isv_player_map_losses_aggregate = (obj?: { __typename?: any } | null): obj is v_player_map_losses_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_aggregate"')
+      return v_player_map_losses_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_aggregate_fields_possibleTypes: string[] = ['v_player_map_losses_aggregate_fields']
+    export const isv_player_map_losses_aggregate_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_aggregate_fields"')
+      return v_player_map_losses_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_avg_fields_possibleTypes: string[] = ['v_player_map_losses_avg_fields']
+    export const isv_player_map_losses_avg_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_avg_fields"')
+      return v_player_map_losses_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_max_fields_possibleTypes: string[] = ['v_player_map_losses_max_fields']
+    export const isv_player_map_losses_max_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_max_fields"')
+      return v_player_map_losses_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_min_fields_possibleTypes: string[] = ['v_player_map_losses_min_fields']
+    export const isv_player_map_losses_min_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_min_fields"')
+      return v_player_map_losses_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_stddev_fields_possibleTypes: string[] = ['v_player_map_losses_stddev_fields']
+    export const isv_player_map_losses_stddev_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_stddev_fields"')
+      return v_player_map_losses_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_stddev_pop_fields_possibleTypes: string[] = ['v_player_map_losses_stddev_pop_fields']
+    export const isv_player_map_losses_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_stddev_pop_fields"')
+      return v_player_map_losses_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_stddev_samp_fields_possibleTypes: string[] = ['v_player_map_losses_stddev_samp_fields']
+    export const isv_player_map_losses_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_stddev_samp_fields"')
+      return v_player_map_losses_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_sum_fields_possibleTypes: string[] = ['v_player_map_losses_sum_fields']
+    export const isv_player_map_losses_sum_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_sum_fields"')
+      return v_player_map_losses_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_var_pop_fields_possibleTypes: string[] = ['v_player_map_losses_var_pop_fields']
+    export const isv_player_map_losses_var_pop_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_var_pop_fields"')
+      return v_player_map_losses_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_var_samp_fields_possibleTypes: string[] = ['v_player_map_losses_var_samp_fields']
+    export const isv_player_map_losses_var_samp_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_var_samp_fields"')
+      return v_player_map_losses_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_losses_variance_fields_possibleTypes: string[] = ['v_player_map_losses_variance_fields']
+    export const isv_player_map_losses_variance_fields = (obj?: { __typename?: any } | null): obj is v_player_map_losses_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_losses_variance_fields"')
+      return v_player_map_losses_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_possibleTypes: string[] = ['v_player_map_wins']
+    export const isv_player_map_wins = (obj?: { __typename?: any } | null): obj is v_player_map_wins => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins"')
+      return v_player_map_wins_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_aggregate_possibleTypes: string[] = ['v_player_map_wins_aggregate']
+    export const isv_player_map_wins_aggregate = (obj?: { __typename?: any } | null): obj is v_player_map_wins_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_aggregate"')
+      return v_player_map_wins_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_aggregate_fields_possibleTypes: string[] = ['v_player_map_wins_aggregate_fields']
+    export const isv_player_map_wins_aggregate_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_aggregate_fields"')
+      return v_player_map_wins_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_avg_fields_possibleTypes: string[] = ['v_player_map_wins_avg_fields']
+    export const isv_player_map_wins_avg_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_avg_fields"')
+      return v_player_map_wins_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_max_fields_possibleTypes: string[] = ['v_player_map_wins_max_fields']
+    export const isv_player_map_wins_max_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_max_fields"')
+      return v_player_map_wins_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_min_fields_possibleTypes: string[] = ['v_player_map_wins_min_fields']
+    export const isv_player_map_wins_min_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_min_fields"')
+      return v_player_map_wins_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_stddev_fields_possibleTypes: string[] = ['v_player_map_wins_stddev_fields']
+    export const isv_player_map_wins_stddev_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_stddev_fields"')
+      return v_player_map_wins_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_stddev_pop_fields_possibleTypes: string[] = ['v_player_map_wins_stddev_pop_fields']
+    export const isv_player_map_wins_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_stddev_pop_fields"')
+      return v_player_map_wins_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_stddev_samp_fields_possibleTypes: string[] = ['v_player_map_wins_stddev_samp_fields']
+    export const isv_player_map_wins_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_stddev_samp_fields"')
+      return v_player_map_wins_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_sum_fields_possibleTypes: string[] = ['v_player_map_wins_sum_fields']
+    export const isv_player_map_wins_sum_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_sum_fields"')
+      return v_player_map_wins_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_var_pop_fields_possibleTypes: string[] = ['v_player_map_wins_var_pop_fields']
+    export const isv_player_map_wins_var_pop_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_var_pop_fields"')
+      return v_player_map_wins_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_var_samp_fields_possibleTypes: string[] = ['v_player_map_wins_var_samp_fields']
+    export const isv_player_map_wins_var_samp_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_var_samp_fields"')
+      return v_player_map_wins_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_player_map_wins_variance_fields_possibleTypes: string[] = ['v_player_map_wins_variance_fields']
+    export const isv_player_map_wins_variance_fields = (obj?: { __typename?: any } | null): obj is v_player_map_wins_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_map_wins_variance_fields"')
+      return v_player_map_wins_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const v_player_match_kills_possibleTypes: string[] = ['v_player_match_kills']
     export const isv_player_match_kills = (obj?: { __typename?: any } | null): obj is v_player_match_kills => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_match_kills"')
@@ -35219,7 +36131,8 @@ export const enumMatchMapsSelectColumn = {
    match_id: 'match_id' as const,
    order: 'order' as const,
    started_at: 'started_at' as const,
-   status: 'status' as const
+   status: 'status' as const,
+   winning_lineup_id: 'winning_lineup_id' as const
 }
 
 export const enumMatchMapsUpdateColumn = {
@@ -35234,7 +36147,8 @@ export const enumMatchMapsUpdateColumn = {
    match_id: 'match_id' as const,
    order: 'order' as const,
    started_at: 'started_at' as const,
-   status: 'status' as const
+   status: 'status' as const,
+   winning_lineup_id: 'winning_lineup_id' as const
 }
 
 export const enumMatchOptionsConstraint = {
@@ -35992,6 +36906,20 @@ export const enumVPlayerKilledPlayerCountsSelectColumn = {
    kill_count: 'kill_count' as const,
    player_id: 'player_id' as const,
    victim_id: 'victim_id' as const
+}
+
+export const enumVPlayerMapLossesSelectColumn = {
+   map_id: 'map_id' as const,
+   match_id: 'match_id' as const,
+   started_at: 'started_at' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumVPlayerMapWinsSelectColumn = {
+   map_id: 'map_id' as const,
+   match_id: 'match_id' as const,
+   started_at: 'started_at' as const,
+   steam_id: 'steam_id' as const
 }
 
 export const enumVPlayerMatchKillsSelectColumn = {
