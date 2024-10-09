@@ -28,7 +28,7 @@ BEGIN
     INNER JOIN v_match_lineups ml ON ml.match_id = m.id
     WHERE ml.id = COALESCE(NEW.match_lineup_id, OLD.match_lineup_id);
 
-    IF status != 'PickingPlayers' AND status != 'Scheduled' THEN
+    IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' AND status != 'PickingPlayers' AND status != 'Scheduled' THEN
         RAISE EXCEPTION 'Cannot add players: not in picking players status' USING ERRCODE = '22000';
     END IF;
 

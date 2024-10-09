@@ -17,20 +17,6 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   public async process() {
     const match = await this.matchAssistant.getMatchLineups(this.matchId);
 
-    // TODO - just dlete the ones missing , and inesrt the ones missing
-    await this.hasura.mutation({
-      delete_match_lineup_players: {
-        __args: {
-          where: {
-            match_lineup_id: {
-              _in: [match.lineup_1_id, match.lineup_2_id],
-            },
-          },
-        },
-        affected_rows: true,
-      },
-    });
-
     const players: Array<{
       steam_id?: string;
       captain: boolean;
@@ -58,6 +44,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
           continue;
         }
 
+        // add player to the system
         await this.hasura.mutation({
           insert_players_one: {
             __args: {
@@ -76,10 +63,43 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
       }
     }
 
+    // remove anyone not in the match
+    await this.hasura.mutation({
+      delete_match_lineup_players: {
+        __args: {
+          where: {
+            match_lineup_id: {
+              _in: [match.lineup_1_id, match.lineup_2_id],
+            },
+            steam_id: {
+              _nin: players.map(({ steam_id }) => {
+                return steam_id;
+              }),
+            },
+          },
+        },
+        affected_rows: true,
+      },
+    });
+
+    const newPlayers = [];
+    for (const player of players) {
+      if (
+        match.lineup_players.find((_player) => {
+          return _player.steam_id === player.steam_id;
+        })
+      ) {
+        // player already is in the match
+        continue;
+      }
+
+      newPlayers.push(player);
+    }
+
     await this.hasura.mutation({
       insert_match_lineup_players: {
         __args: {
-          objects: players,
+          objects: newPlayers,
         },
         affected_rows: true,
       },
