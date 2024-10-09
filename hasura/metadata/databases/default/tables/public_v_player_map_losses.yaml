@@ -1,0 +1,33 @@
+table:
+  name: v_player_map_losses
+  schema: public
+object_relationships:
+  - name: map
+    using:
+      manual_configuration:
+        column_mapping:
+          map_id: id
+        insertion_order: null
+        remote_table:
+          name: maps
+          schema: public
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - started_at
+        - map_id
+        - match_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""

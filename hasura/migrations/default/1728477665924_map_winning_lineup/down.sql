@@ -1,0 +1,1 @@
+alter table "public"."match_maps" drop column if exists "winning_lineup_id"

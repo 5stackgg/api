@@ -111,11 +111,6 @@ computed_fields:
       function:
         name: lineup_2_score
         schema: public
-  - name: winning_lineup_id
-    definition:
-      function:
-        name: get_match_map_winning_lineup_id
-        schema: public
 insert_permissions:
   - role: administrator
     permission:
@@ -170,24 +165,25 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - ended_at
-        - id
-        - lineup_1_side
         - lineup_1_timeouts_available
-        - lineup_2_side
         - lineup_2_timeouts_available
+        - order
+        - lineup_1_side
+        - lineup_2_side
+        - status
+        - created_at
+        - ended_at
+        - started_at
+        - id
         - map_id
         - match_id
-        - order
-        - started_at
-        - status
+        - winning_lineup_id
       computed_fields:
         - demos_download_url
         - demos_total_size
         - is_current_map
         - lineup_1_score
         - lineup_2_score
-        - winning_lineup_id
       filter: {}
     comment: ""
 update_permissions:
