@@ -48,6 +48,25 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
       },
     });
 
+    await this.hasura.mutation({
+      update_match_lineup_players: {
+        __args: {
+          where: {
+            discord_id:{
+              _eq : profile.id
+            }
+          },
+          _set: {
+            discord_id: null,
+            placeholder_name: null,
+            steam_id: request.user.steam_id,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+
     request.user.discord_id = profile.id;
 
     done(null, request.user);
