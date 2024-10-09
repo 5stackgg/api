@@ -12,7 +12,12 @@ export default class CaptainEvent extends MatchEventProcessor<{
       if (lineup_player.steam_id) {
         return lineup_player.steam_id.toString() === this.data.steam_id;
       }
-      return lineup_player.player.name.startsWith(this.data.player_name);
+
+      if (lineup_player.player) {
+        return lineup_player.player.name.startsWith(this.data.player_name);
+      }
+
+      return lineup_player.placeholder_name.startsWith(this.data.player_name);
     });
 
     if (!lineup_player) {
