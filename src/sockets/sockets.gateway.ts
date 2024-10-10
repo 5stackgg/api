@@ -183,6 +183,7 @@ export class SocketsGateway {
     );
   }
 
+  // TODO - rcon gateway
   @SubscribeMessage("rcon")
   async rconEvent(
     @MessageBody()

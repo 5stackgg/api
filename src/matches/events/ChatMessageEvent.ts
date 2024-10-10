@@ -19,6 +19,11 @@ export default class ChatMessageEvent extends MatchEventProcessor<{
       },
     });
 
+    if (!players_by_pk) {
+      console.warn("unable to find player", this.data.player);
+      return;
+    }
+
     await this.matchLobby.sendMessageToChat(
       players_by_pk,
       this.matchId,

@@ -85,6 +85,10 @@ export class MatchLobbyService {
       });
     }
 
+    if (userData.sessions.includes(client)) {
+      return;
+    }
+
     userData.sessions.push(client);
 
     client.send(
