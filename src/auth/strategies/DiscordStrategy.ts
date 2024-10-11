@@ -52,9 +52,9 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
       update_match_lineup_players: {
         __args: {
           where: {
-            discord_id:{
-              _eq : profile.id
-            }
+            discord_id: {
+              _eq: profile.id,
+            },
           },
           _set: {
             discord_id: null,
@@ -65,7 +65,6 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
         __typename: true,
       },
     });
-
 
     request.user.discord_id = profile.id;
 

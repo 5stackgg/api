@@ -2,9 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
-import { FiveStackWebSocketClient } from "../sockets/sockets.gateway";
 import { HasuraService } from "../hasura/hasura.service";
 import { RconService } from "../rcon/rcon.service";
+import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 
 @Injectable()
 export class MatchLobbyService {

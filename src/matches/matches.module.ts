@@ -40,6 +40,7 @@ import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { MatchLobbyService } from "./match-lobby.service";
 import { MatchMakingModule } from "src/match-making/match-making.module";
 import { MatchEventsGateway } from "./match-events.gateway";
+import { MatchLobbyGateway } from "./match-lobby.gateway";
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { MatchEventsGateway } from "./match-events.gateway";
   controllers: [MatchesController, DemosController, BackupRoundsController],
   exports: [MatchAssistantService, MatchLobbyService],
   providers: [
+    MatchLobbyGateway,
     MatchEventsGateway,
     MatchAssistantService,
     MatchLobbyService,

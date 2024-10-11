@@ -1,15 +1,6 @@
-import {
-  MessageBody,
-  ConnectedSocket,
-  SubscribeMessage,
-  WebSocketGateway,
-} from "@nestjs/websockets";
-import WebSocket from "ws";
+import { ConnectedSocket, WebSocketGateway } from "@nestjs/websockets";
 import { v4 as uuidv4 } from "uuid";
 import { Request } from "express";
-import { User } from "../auth/types/User";
-import { RconService } from "../rcon/rcon.service";
-import { MatchLobbyService } from "../matches/match-lobby.service";
 import session from "express-session";
 import { getCookieOptions } from "../utilities/getCookieOptions";
 import RedisStore from "connect-redis";
@@ -19,12 +10,7 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
 import { MatchMakingService } from "../match-making/match-making.servcie";
-
-export type FiveStackWebSocketClient = WebSocket.WebSocket & {
-  id: string;
-  user: User;
-  node: string;
-};
+import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -37,8 +23,6 @@ export class SocketsGateway {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly rconService: RconService,
-    private readonly matchLobby: MatchLobbyService,
     private readonly matchMaking: MatchMakingService,
     private readonly redisManager: RedisManagerService,
   ) {
@@ -136,75 +120,6 @@ export class SocketsGateway {
         });
       });
     });
-  }
-
-  @SubscribeMessage("lobby:join")
-  async joinLobby(
-    @MessageBody()
-    data: {
-      matchId: string;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    await this.matchLobby.joinMatchLobby(client, data.matchId);
-  }
-
-  @SubscribeMessage("lobby:leave")
-  async leaveLobby(
-    @MessageBody()
-    data: {
-      matchId: string;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    this.matchLobby.removeFromLobby(data.matchId, client);
-  }
-
-  @SubscribeMessage("lobby:chat")
-  async lobby(
-    @MessageBody()
-    data: {
-      matchId: string;
-      message: string;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    await this.matchLobby.sendMessageToChat(
-      client.user,
-      data.matchId,
-      data.message,
-    );
-    await this.matchLobby.sendChatToServer(
-      data.matchId,
-      `${client.user.role ? `[${client.user.role}] ` : ""}${client.user.name}: ${data.message}`.replaceAll(
-        `"`,
-        `'`,
-      ),
-    );
-  }
-
-  // TODO - rcon gateway
-  @SubscribeMessage("rcon")
-  async rconEvent(
-    @MessageBody()
-    data: {
-      uuid: string;
-      command: string;
-      serverId: string;
-    },
-    @ConnectedSocket() client: FiveStackWebSocketClient,
-  ) {
-    const rcon = await this.rconService.connect(data.serverId);
-
-    client.send(
-      JSON.stringify({
-        event: "rcon",
-        data: {
-          uuid: data.uuid,
-          result: await rcon.send(data.command),
-        },
-      }),
-    );
   }
 
   public async broadcastMessage(event: string, data: unknown) {
