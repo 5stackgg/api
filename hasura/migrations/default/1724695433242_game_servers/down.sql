@@ -3,5 +3,5 @@ alter table "public"."servers" drop column "game_server_node_id";
 alter table "public"."servers" drop column "reserved_by_match_id";
 
 DROP TABLE "public"."game_server_nodes";
-DROP TABLE "public"."server_regions";
+DROP TABLE "public"."e_server_regions";
 DROP TABLE "public"."e_game_server_node_statuses";

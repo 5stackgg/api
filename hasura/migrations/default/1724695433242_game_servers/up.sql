@@ -7,7 +7,7 @@ CREATE TABLE "public"."e_game_server_node_statuses" ("value" text NOT NULL, "des
 alter table "public"."game_server_nodes"
   add constraint "game_server_nodes_region_fkey"
   foreign key ("region")
-  references "public"."server_regions"
+  references "public"."e_server_regions"
   ("value") on update cascade on delete restrict;
 
 alter table "public"."game_server_nodes"
