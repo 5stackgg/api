@@ -1,4 +1,4 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { DiscordBotService } from "./discord-bot.service";
 import { DiscordBotController } from "./discord-bot.controller";
 import { DiscordBotMessagingService } from "./discord-bot-messaging/discord-bot-messaging.service";

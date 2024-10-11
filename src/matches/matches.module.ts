@@ -52,7 +52,7 @@ import { MatchLobbyGateway } from "./match-lobby.gateway";
     EncryptionModule,
     SocketsModule,
     forwardRef(() => DiscordBotModule),
-    forwardRef(() => MatchMakingModule),
+    MatchMakingModule,
     BullModule.registerQueue(
       {
         name: MatchQueues.MatchServers,
