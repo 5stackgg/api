@@ -15,7 +15,7 @@ import { FiveStackWebSocketClient } from "../sockets/sockets.gateway";
 import { Logger } from "@nestjs/common";
 
 @WebSocketGateway({
-  path: "/ws",
+  path: "/ws/web",
 })
 export class MatchMakingService {
   private redis: Redis;
