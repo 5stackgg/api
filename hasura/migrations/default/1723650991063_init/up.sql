@@ -608,8 +608,6 @@ ALTER TABLE ONLY public.player_utility
     ADD CONSTRAINT player_utility_type_fkey FOREIGN KEY (type) REFERENCES public.e_utility_types(value) ON UPDATE CASCADE ON DELETE RESTRICT;
 ALTER TABLE ONLY public.players
     ADD CONSTRAINT players_role_fkey FOREIGN KEY (role) REFERENCES public.e_player_roles(value) ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE ONLY public.servers
-    ADD CONSTRAINT servers_player_steam_id_fkey FOREIGN KEY (owner_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.team_invites
     ADD CONSTRAINT team_invites_invited_by_player_steam_id_fkey FOREIGN KEY (invited_by_player_steam_id) REFERENCES public.players(steam_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.team_invites
