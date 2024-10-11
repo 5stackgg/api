@@ -44,6 +44,16 @@ export class MatchLobbyGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    if (!data.message) {
+      return;
+    }
+
+    data.message = data.message.trim();
+
+    if (data.message.length === 0) {
+      return;
+    }
+
     await this.matchLobby.sendMessageToChat(
       client.user,
       data.matchId,
