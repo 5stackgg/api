@@ -1,6 +1,6 @@
 CREATE TABLE "public"."game_server_nodes" ("id" text NOT NULL DEFAULT gen_random_uuid(), "public_ip" inet, "start_port_range" integer, "end_port_range" integer, "region" text DEFAULT 'Lan', "status" text DEFAULT 'Setup', "enabled" boolean NOT NULL DEFAULT true, PRIMARY KEY ("id") );
 
-CREATE TABLE "public"."server_regions" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
+CREATE TABLE "public"."e_server_regions" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
 
 CREATE TABLE "public"."e_game_server_node_statuses" ("value" text NOT NULL, "description" text NOT NULL, PRIMARY KEY ("value") );
 
