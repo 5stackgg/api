@@ -7,6 +7,8 @@ import {
   User as DiscordUser,
   ThreadAutoArchiveDuration,
   PermissionsBitField,
+  StringSelectMenuBuilder,
+  ActionRowBuilder,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -41,7 +43,57 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const options = this.getMatchOptions(interaction.options.data, matchType);
 
-    const guild = await this.bot.client.guilds.fetch(interaction.channel);
+    let customMapPool: string[];
+
+    if (options["custom-map-pool"]) {
+      const maps = await this.getMapChoices(matchType);
+
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId("multi_select")
+        .setPlaceholder("Choose custom map pool")
+        .setMinValues(1)
+        .setMaxValues(maps.length)
+        .addOptions(maps);
+
+      const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        selectMenu,
+      );
+
+      const customMapPoolReply = await interaction.reply({
+        content: "Create your custom map pool:",
+        components: [row],
+        fetchReply: true,
+      });
+
+      await new Promise<void>((resolve) => {
+        const collector = customMapPoolReply.createMessageComponentCollector({
+          time: 60 * 1000,
+        });
+
+        collector.on("collect", async (selections) => {
+          if (selections.isStringSelectMenu()) {
+            customMapPool = selections.values;
+            collector.stop();
+          }
+        });
+
+        collector.on("end", () => {
+          resolve();
+        });
+      });
+
+      if (customMapPool.length === 0) {
+        await interaction.followUp({
+          ephemeral: true,
+          content: "Custom map pool selection timed out.",
+        });
+        return;
+      }
+
+      await customMapPoolReply.delete();
+    }
+
+    const guild = await this.bot.client.guilds.fetch(interaction.guildId);
 
     let teamSelectionChannel;
     if (options["team-selection"]) {
@@ -67,8 +119,8 @@ export default class ScheduleMatch extends DiscordInteraction {
     if (usersInChannel.length < ExpectedPlayers[matchType]) {
       const notEnoughUsersMessage = `Not enough users for captain selection`;
       if (interaction.replied) {
-        await interaction.editReply({
-          components: [],
+        await interaction.followUp({
+          ephemeral: true,
           content: notEnoughUsersMessage,
         });
         return;
@@ -96,6 +148,7 @@ export default class ScheduleMatch extends DiscordInteraction {
         knife: options.knife,
         map: options.map,
         overtime: options.overtime,
+        maps: customMapPool,
       },
     );
     const matchId = match.id;
@@ -332,5 +385,26 @@ export default class ScheduleMatch extends DiscordInteraction {
       captain1,
       captain2,
     };
+  }
+
+  private async getMapChoices(type: e_match_types_enum) {
+    const { maps } = await this.hasura.query({
+      maps: {
+        __args: {
+          where: {
+            type: {
+              _eq: type,
+            },
+          },
+        },
+        id: true,
+        name: true,
+      },
+    });
+
+    return maps.map((map) => ({
+      label: map.name,
+      value: map.id,
+    }));
   }
 }

@@ -146,8 +146,13 @@ export class DiscordBotService {
       .addStringOption((option) =>
         option
           .setName("map")
-          .setDescription("override map")
+          .setDescription("Map Selection")
           .addChoices(...mapChoices),
+      )
+      .addBooleanOption((option) =>
+        option
+          .setName("custom-map-pool")
+          .setDescription("Allows yout to setup a custom map pool"),
       )
       .addBooleanOption((option) =>
         option
@@ -174,7 +179,6 @@ export class DiscordBotService {
   }
 
   private async getMapChoices(type: e_match_types_enum) {
-    console.info(type);
     const { maps } = await this.hasura.query({
       maps: {
         __args: {

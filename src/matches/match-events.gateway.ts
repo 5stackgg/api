@@ -57,7 +57,6 @@ export class MatchEventsGateway {
         }
       }
     } catch (error) {
-      this.logger.error("unable to verify game server connection", error);
       client.close();
     }
   }

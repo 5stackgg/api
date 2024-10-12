@@ -840,22 +840,47 @@ export class MatchAssistantService {
       overtime: boolean;
       timeout_setting?: e_timeout_settings_enum;
       region?: e_server_regions_enum;
+      maps?: Array<string>;
     },
   ) {
-    const { map_pools } = await this.hasura.query({
-      map_pools: {
-        __args: {
-          where: {
-            type: {
-              _eq: mapPoolType,
+    let map_pool_id;
+    if (options.maps) {
+      const { insert_map_pools_one } = await this.hasura.mutation({
+        insert_map_pools_one: {
+          __args: {
+            object: {
+              type: "Custom",
+              maps: {
+                data: options.maps.map((map_id) => {
+                  return {
+                    id: map_id,
+                  };
+                }),
+              },
             },
           },
+          id: true,
         },
-        id: true,
-      },
-    });
+      });
+      map_pool_id = insert_map_pools_one.id;
+    }
 
-    const { id: map_pool_id } = map_pools.at(0);
+    if (!map_pool_id) {
+      const { map_pools } = await this.hasura.query({
+        map_pools: {
+          __args: {
+            where: {
+              type: {
+                _eq: mapPoolType,
+              },
+            },
+          },
+          id: true,
+        },
+      });
+
+      map_pool_id = map_pools.at(0).id;
+    }
 
     const { insert_matches_one } = await this.hasura.mutation({
       insert_matches_one: {
