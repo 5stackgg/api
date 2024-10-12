@@ -792,22 +792,19 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async leaveLineup(data: {
-    user: User;
-    match_id: string;
-  }) {
+  public async leaveLineup(data: { user: User; match_id: string }) {
     const { delete_match_lineup_players } = await this.hasura.mutation({
       delete_match_lineup_players: {
         __args: {
           where: {
             steam_id: {
-              _eq: data.user.steam_id
+              _eq: data.user.steam_id,
             },
-          }
+          },
         },
         returning: {
           id: true,
-        }
+        },
       },
     });
 
@@ -817,73 +814,86 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async switchLineup(data: {
-    user: User;
-    match_id: string;
-  }) {
-    const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: data.match_id
+  public async switchLineup(data: { user: User; match_id: string }) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: data.match_id,
+          },
+          options: {
+            lobby_access: true,
+          },
+          max_players_per_lineup: true,
+          lineup_1: {
+            id: true,
+            is_on_lineup: true,
+            lineup_players: {
+              steam_id: true,
+            },
+          },
+          lineup_2: {
+            id: true,
+            is_on_lineup: true,
+            lineup_players: {
+              steam_id: true,
+            },
+          },
         },
-        options: {
-          lobby_access: true,
-        },
-        max_players_per_lineup: true,
-        lineup_1: {
-          id: true,
-          is_on_lineup: true,
-          lineup_players: {
-            steam_id: true,
-          }
-        },
-        lineup_2: {
-          id: true,
-          is_on_lineup: true,
-          lineup_players: {
-            steam_id: true,
-          }
-        }
-      }
-    }, data.user);
+      },
+      data.user,
+    );
 
-
-    if(matches_by_pk.options.lobby_access === "Private") {
-        throw Error("cannot switch when match is set to private");
+    if (matches_by_pk.options.lobby_access === "Private") {
+      throw Error("cannot switch when match is set to private");
     }
 
-    if(!matches_by_pk.lineup_1.is_on_lineup && !matches_by_pk.lineup_2.is_on_lineup) {
+    if (
+      !matches_by_pk.lineup_1.is_on_lineup &&
+      !matches_by_pk.lineup_2.is_on_lineup
+    ) {
       throw Error("not able to switch a lineup which you are not on");
     }
-    
-    if(matches_by_pk.lineup_1.is_on_lineup) {
-      if(matches_by_pk.lineup_2.lineup_players.length >= matches_by_pk.max_players_per_lineup) {
-        throw Error("unable to swithch because the lineup  has the maximum nubmer of players");
+
+    if (matches_by_pk.lineup_1.is_on_lineup) {
+      if (
+        matches_by_pk.lineup_2.lineup_players.length >=
+        matches_by_pk.max_players_per_lineup
+      ) {
+        throw Error(
+          "unable to swithch because the lineup  has the maximum nubmer of players",
+        );
       }
     }
 
-    if(matches_by_pk.lineup_2.is_on_lineup) {
-      if(matches_by_pk.lineup_1.lineup_players.length >= matches_by_pk.max_players_per_lineup) {
-        throw Error("unable to swithch because the lineup  has the maximum nubmer of players");
+    if (matches_by_pk.lineup_2.is_on_lineup) {
+      if (
+        matches_by_pk.lineup_1.lineup_players.length >=
+        matches_by_pk.max_players_per_lineup
+      ) {
+        throw Error(
+          "unable to swithch because the lineup  has the maximum nubmer of players",
+        );
       }
     }
 
-    const switchingToLineupId = matches_by_pk.lineup_1.is_on_lineup ? matches_by_pk.lineup_2.id : matches_by_pk.lineup_1.id;
+    const switchingToLineupId = matches_by_pk.lineup_1.is_on_lineup
+      ? matches_by_pk.lineup_2.id
+      : matches_by_pk.lineup_1.id;
 
     await this.hasura.mutation({
       delete_match_lineup_players: {
         __args: {
           where: {
             steam_id: {
-              _eq: data.user.steam_id
-            }
-          }
+              _eq: data.user.steam_id,
+            },
+          },
         },
         __typename: true,
-      }
+      },
     });
 
-    
     const { insert_match_lineup_players_one } = await this.hasura.mutation({
       insert_match_lineup_players_one: {
         __args: {
