@@ -8,7 +8,7 @@ export default (): {
       default: {
         user: process.env.POSTGRES_USER || "hasura",
         password: process.env.POSTGRES_PASSWORD || "hasura",
-        host: process.env.POSTGRES_HOST || "postgres",
+        host: process.env.POSTGRES_HOST || "timescaledb",
         port: process.env.POSTGRES_SERVICE_PORT
           ? parseInt(process.env.POSTGRES_SERVICE_PORT)
           : undefined,
