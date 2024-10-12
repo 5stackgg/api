@@ -4053,6 +4053,7 @@ export interface mutation_root {
     /** insert a single row into the table: "v_pool_maps" */
     insert_v_pool_maps_one: (v_pool_maps | null)
     joinLineup: (SuccessOutput | null)
+    leaveLineup: (SuccessOutput | null)
     /** logout */
     logout: (SuccessOutput | null)
     /** scheduleMatch */
@@ -4062,6 +4063,7 @@ export interface mutation_root {
     setupGameServer: (SetupGameServeOutput | null)
     /** startMatch */
     startMatch: (SuccessOutput | null)
+    switchLineup: (SuccessOutput | null)
     unlinkDiscord: (SuccessOutput | null)
     updateCs: (SuccessOutput | null)
     /** update data of the table: "_map_pool" */
@@ -8276,7 +8278,7 @@ export interface tournament_teams_avg_fields {
 
 
 /** unique or primary key constraints on table "tournament_teams" */
-export type tournament_teams_constraint = 'tournament_teams_creator_steam_id_tournament_id_key' | 'tournament_teams_pkey' | 'tournament_teams_tournament_id_team_id_key'
+export type tournament_teams_constraint = 'tournament_teams_creator_steam_id_tournament_id_key' | 'tournament_teams_pkey' | 'tournament_teams_tournament_id_name_key' | 'tournament_teams_tournament_id_team_id_key'
 
 
 /** aggregate max on columns */
@@ -17390,6 +17392,7 @@ export interface mutation_rootGenqlSelection{
     /** the row to be inserted */
     object: v_pool_maps_insert_input} })
     joinLineup?: (SuccessOutputGenqlSelection & { __args: {code?: (Scalars['String'] | null), lineup_id: Scalars['String'], match_id: Scalars['String']} })
+    leaveLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** logout */
     logout?: SuccessOutputGenqlSelection
     /** scheduleMatch */
@@ -17399,6 +17402,7 @@ export interface mutation_rootGenqlSelection{
     setupGameServer?: SetupGameServeOutputGenqlSelection
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
+    switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     unlinkDiscord?: SuccessOutputGenqlSelection
     updateCs?: (SuccessOutputGenqlSelection & { __args?: {gameServerNodeId?: (Scalars['uuid'] | null)} })
     /** update data of the table: "_map_pool" */
@@ -36825,6 +36829,7 @@ export const enumTournamentTeamRosterUpdateColumn = {
 export const enumTournamentTeamsConstraint = {
    tournament_teams_creator_steam_id_tournament_id_key: 'tournament_teams_creator_steam_id_tournament_id_key' as const,
    tournament_teams_pkey: 'tournament_teams_pkey' as const,
+   tournament_teams_tournament_id_name_key: 'tournament_teams_tournament_id_name_key' as const,
    tournament_teams_tournament_id_team_id_key: 'tournament_teams_tournament_id_team_id_key' as const
 }
 

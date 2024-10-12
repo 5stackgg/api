@@ -44,6 +44,12 @@ type Mutation {
 }
 
 type Mutation {
+  leaveLineup(
+    match_id: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   logout: SuccessOutput
 }
 
@@ -73,6 +79,12 @@ type Mutation {
   startMatch(
     match_id: uuid!
     server_id: uuid
+  ): SuccessOutput
+}
+
+type Mutation {
+  switchLineup(
+    match_id: String!
   ): SuccessOutput
 }
 

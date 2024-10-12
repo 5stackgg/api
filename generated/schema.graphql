@@ -13573,6 +13573,7 @@ type mutation_root {
     object: v_pool_maps_insert_input!
   ): v_pool_maps
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
+  leaveLineup(match_id: String!): SuccessOutput
 
   """logout"""
   logout: SuccessOutput
@@ -13586,6 +13587,7 @@ type mutation_root {
 
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
+  switchLineup(match_id: String!): SuccessOutput
   unlinkDiscord: SuccessOutput
   updateCs(gameServerNodeId: uuid): SuccessOutput
 
@@ -31191,6 +31193,11 @@ enum tournament_teams_constraint {
   unique or primary key constraint on columns "id"
   """
   tournament_teams_pkey
+
+  """
+  unique or primary key constraint on columns "tournament_id", "name"
+  """
+  tournament_teams_tournament_id_name_key
 
   """
   unique or primary key constraint on columns "tournament_id", "team_id"

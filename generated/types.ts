@@ -42026,6 +42026,15 @@ export default {
                     ]
                 }
             ],
+            "leaveLineup": [
+                10,
+                {
+                    "match_id": [
+                        7,
+                        "String!"
+                    ]
+                }
+            ],
             "logout": [
                 10
             ],
@@ -42066,6 +42075,15 @@ export default {
                     ],
                     "server_id": [
                         1699
+                    ]
+                }
+            ],
+            "switchLineup": [
+                10,
+                {
+                    "match_id": [
+                        7,
+                        "String!"
                     ]
                 }
             ],
