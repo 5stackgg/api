@@ -13584,6 +13584,7 @@ type mutation_root {
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
   setupGameServer: SetupGameServeOutput
+  setupVolumes(gameServerNodeId: String!): SuccessOutput
 
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput

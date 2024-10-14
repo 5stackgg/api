@@ -209,6 +209,29 @@ export class GameServerNodeController {
     };
   }
 
+  @HasuraAction()
+  public async setupVolumes(data: { user: User; gameServerNodeId: string }) {
+    const gameServerNodeId = data.gameServerNodeId;
+    await this.createVolume(
+      gameServerNodeId,
+      `/opt/5stack/demos`,
+      `demos`,
+      "25Gi",
+    );
+    await this.createVolume(
+      gameServerNodeId,
+      `/opt/5stack/steamcmd`,
+      `steamcmd`,
+      "1Gi",
+    );
+    await this.createVolume(
+      gameServerNodeId,
+      `/opt/5stack/serverfiles`,
+      `serverfiles`,
+      "75Gi",
+    );
+  }
+
   @Get("/ping/:serverId")
   public async ping(@Req() request: Request) {
     const serverId = request.params.serverId;

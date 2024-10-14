@@ -76,6 +76,12 @@ type Mutation {
 }
 
 type Mutation {
+  setupVolumes(
+    gameServerNodeId: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   startMatch(
     match_id: uuid!
     server_id: uuid
