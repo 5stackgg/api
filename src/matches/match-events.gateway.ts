@@ -53,7 +53,10 @@ export class MatchEventsGateway {
 
         if (servers_by_pk?.api_password !== apiPassword) {
           client.close();
-          this.logger.warn("game server auth failure", serverId);
+          this.logger.warn("game server auth failure", {
+            serverId,
+            ip: request.headers["cf-connecting-ip"],
+          });
         }
       }
     } catch (error) {

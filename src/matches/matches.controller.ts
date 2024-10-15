@@ -20,8 +20,6 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import fetch from "node-fetch";
 import TurndownService from "turndown";
 import { MatchMakingService } from "src/match-making/match-making.servcie";
-import { request } from "http";
-import { match } from "assert";
 
 @Controller("matches")
 export class MatchesController {
@@ -57,6 +55,10 @@ export class MatchesController {
     });
 
     if (!server?.current_match?.id) {
+      this.logger.warn(`server tried to get match`, {
+        serverId,
+        ip: request.headers["cf-connecting-ip"],
+      });
       throw Error("unable to find match");
     }
 
