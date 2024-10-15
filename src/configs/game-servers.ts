@@ -5,6 +5,6 @@ export default (): {
 } => ({
   gameServers: {
     serverImage: process.env.SERVER_IMAGE,
-    namespace: process.env.SERVER_NAMESPACE,
+    namespace: "5stack",
   },
 });
