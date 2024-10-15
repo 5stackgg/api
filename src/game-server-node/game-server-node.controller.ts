@@ -11,7 +11,6 @@ import { MarkGameServerOffline } from "./jobs/MarkGameServerOffline";
 import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../configs/types/GameServersConfig";
 import { AppConfig } from "../configs/types/AppConfig";
-import { CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import { Request, Response } from "express";
 
 @Controller("game-server-node")
@@ -96,141 +95,17 @@ export class GameServerNodeController {
     response.end();
   }
 
-  private async createVolume(
-    gameServerNodeId: string,
-    path: string,
-    name: string,
-    size: string,
-  ) {
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-
-    const k8sApi = kc.makeApiClient(CoreV1Api);
-
-    try {
-      await k8sApi.createPersistentVolume({
-        apiVersion: "v1",
-        kind: "PersistentVolume",
-        metadata: {
-          name: `${name}-${gameServerNodeId}`,
-        },
-        spec: {
-          capacity: {
-            storage: size,
-          },
-          volumeMode: "Filesystem",
-          accessModes: ["ReadWriteOnce"],
-          storageClassName: "local-storage",
-          local: {
-            path,
-          },
-          nodeAffinity: {
-            required: {
-              nodeSelectorTerms: [
-                {
-                  matchExpressions: [
-                    {
-                      key: "5stack-id",
-                      operator: "In",
-                      values: [gameServerNodeId],
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error creating volume ${name}-${gameServerNodeId}`,
-        error?.response?.body?.message || error,
-      );
-      throw error;
-    }
-
-    try {
-      await k8sApi.createNamespacedPersistentVolumeClaim(this.namespace, {
-        apiVersion: "v1",
-        kind: "PersistentVolumeClaim",
-        metadata: {
-          name: `${name}-${gameServerNodeId}-claim`,
-          namespace: this.namespace,
-        },
-        spec: {
-          volumeName: `${name}-${gameServerNodeId}`,
-          storageClassName: "local-storage",
-          accessModes: ["ReadWriteOnce"],
-          resources: {
-            requests: {
-              storage: size,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error creating volume claim ${name}-${gameServerNodeId}`,
-        error?.response?.body?.message || error,
-      );
-      throw error;
-    }
-  }
-
   @HasuraAction()
   public async setupGameServer(data: { user: User }) {
     const gameServer = await this.gameServerNodeService.create(
       await this.tailscale.getAuthKey(),
     );
 
-    const gameServerNodeId = gameServer.id;
-
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/demos`,
-      `demos`,
-      "25Gi",
-    );
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/steamcmd`,
-      `steamcmd`,
-      "1Gi",
-    );
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/serverfiles`,
-      `serverfiles`,
-      "75Gi",
-    );
-
     return {
-      link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServerNodeId}.sh?token=${gameServer.token} | bash`,
+      link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServer.id}.sh?token=${gameServer.token} | bash`,
     };
   }
 
-  @HasuraAction()
-  public async setupVolumes(data: { user: User; gameServerNodeId: string }) {
-    const gameServerNodeId = data.gameServerNodeId;
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/demos`,
-      `demos`,
-      "25Gi",
-    );
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/steamcmd`,
-      `steamcmd`,
-      "1Gi",
-    );
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/serverfiles`,
-      `serverfiles`,
-      "75Gi",
-    );
-  }
 
   @Get("/ping/:serverId")
   public async ping(@Req() request: Request) {

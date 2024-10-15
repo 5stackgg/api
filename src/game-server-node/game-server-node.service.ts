@@ -140,6 +140,28 @@ export class GameServerNodeService {
 
   public async updateCs(gameServerNodeId?: string) {
     if (gameServerNodeId) {
+
+      await this.createVolume(
+        gameServerNodeId,
+        `/opt/5stack/demos`,
+        `demos`,
+        "25Gi",
+      );
+
+      await this.createVolume(
+        gameServerNodeId,
+        `/opt/5stack/steamcmd`,
+        `steamcmd`,
+        "1Gi",
+      );
+      
+      await this.createVolume(
+        gameServerNodeId,
+        `/opt/5stack/serverfiles`,
+        `serverfiles`,
+        "75Gi",
+      );
+
       const { game_server_nodes_by_pk } = await this.hasura.query({
         game_server_nodes_by_pk: {
           __args: {
@@ -255,4 +277,99 @@ export class GameServerNodeService {
       throw error;
     }
   }
+
+
+  private async createVolume(
+    gameServerNodeId: string,
+    path: string,
+    name: string,
+    size: string,
+  ) {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+
+    const k8sApi = kc.makeApiClient(CoreV1Api);
+
+    try {
+      const existingPV = await k8sApi.readPersistentVolume(`${name}-${gameServerNodeId}`);
+      if (!existingPV.body) {
+        await k8sApi.createPersistentVolume({
+          apiVersion: "v1",
+          kind: "PersistentVolume",
+          metadata: {
+            name: `${name}-${gameServerNodeId}`,
+          },
+          spec: {
+            capacity: {
+              storage: size,
+            },
+            volumeMode: "Filesystem",
+            accessModes: ["ReadWriteOnce"],
+            storageClassName: "local-storage",
+            local: {
+              path,
+            },
+            nodeAffinity: {
+              required: {
+                nodeSelectorTerms: [
+                  {
+                    matchExpressions: [
+                      {
+                        key: "5stack-id",
+                        operator: "In",
+                        values: [gameServerNodeId],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        });
+        this.logger.log(`Created PersistentVolume ${name}-${gameServerNodeId}`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error creating volume ${name}-${gameServerNodeId}`,
+        error?.response?.body?.message || error,
+      );
+      throw error;
+    }
+
+    try {
+      const existingClaim = await k8sApi.readNamespacedPersistentVolumeClaim(
+        `${name}-${gameServerNodeId}-claim`,
+        this.namespace
+      );
+
+      if (!existingClaim.body) {
+        await k8sApi.createNamespacedPersistentVolumeClaim(this.namespace, {
+          apiVersion: "v1",
+          kind: "PersistentVolumeClaim",
+          metadata: {
+            name: `${name}-${gameServerNodeId}-claim`,
+            namespace: this.namespace,
+          },
+          spec: {
+            volumeName: `${name}-${gameServerNodeId}`,
+            storageClassName: "local-storage",
+            accessModes: ["ReadWriteOnce"],
+            resources: {
+              requests: {
+                storage: size,
+              },
+            },
+          },
+        });
+        this.logger.log(`Created PersistentVolumeClaim ${name}-${gameServerNodeId}-claim`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error creating claim ${name}-${gameServerNodeId}`,
+        error?.response?.body?.message || error,
+      );
+      throw error;
+    }
+  }
+
 }
