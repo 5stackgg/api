@@ -18,7 +18,7 @@ import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 export class SocketsGateway {
   private redis: Redis;
   private appConfig: AppConfig;
-  private nodeId: string = process.env.NODE_ID || "1";
+  private nodeId: string = process.env.POD_NAME;
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
 
   constructor(
