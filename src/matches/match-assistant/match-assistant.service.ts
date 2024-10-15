@@ -222,29 +222,27 @@ export class MatchAssistantService {
       },
     });
 
-
-    const { game_server_nodes} = await this.hasura.query({
+    const { game_server_nodes } = await this.hasura.query({
       game_server_nodes: {
         __args: {
           where: {
             status: {
-              _eq: "Online"
+              _eq: "Online",
             },
             enabled: {
               _eq: true,
             },
-            region:{
-              _eq:  match.region
-            }
-          }
+            region: {
+              _eq: match.region,
+            },
+          },
         },
         id: true,
-      }
-    })
-
+      },
+    });
 
     if (
-      game_server_nodes.length === 0 || 
+      game_server_nodes.length === 0 ||
       match.options.prefer_dedicated_server
     ) {
       const assigned = await this.assignDedicatedServer(match.id, match.region);
@@ -305,7 +303,7 @@ export class MatchAssistantService {
         __typename: true,
       },
     });
-    
+
     await this.hasura.mutation({
       update_servers_by_pk: {
         __args: {

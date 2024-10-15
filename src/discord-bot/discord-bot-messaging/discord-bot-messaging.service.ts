@@ -38,7 +38,7 @@ export class DiscordBotMessagingService {
     try {
       const channel = await this.getMatchChannel(matchId);
 
-      if(channel) {
+      if (channel) {
         await channel.delete();
       }
 
