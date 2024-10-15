@@ -20,7 +20,7 @@ export class DiscordBotMessagingService {
   public async getMatchChannel(matchId: string): Promise<TextChannel> {
     const thread = await this.getMatchThread(matchId);
 
-    return thread.parent as TextChannel;
+    return thread?.parent as TextChannel;
   }
 
   public async getMatchThread(matchId: string) {
@@ -38,7 +38,9 @@ export class DiscordBotMessagingService {
     try {
       const channel = await this.getMatchChannel(matchId);
 
-      await channel.delete();
+      if(channel) {
+        await channel.delete();
+      }
 
       await this.forgetMatchReplyCache(matchId);
       await this.forgetMatchThreadCache(matchId);

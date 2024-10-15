@@ -222,11 +222,36 @@ export class MatchAssistantService {
       },
     });
 
+
+    const { game_server_nodes} = await this.hasura.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            status: {
+              _eq: "Online"
+            },
+            enabled: {
+              _eq: true,
+            },
+            region:{
+              _eq:  match.region
+            }
+          }
+        },
+        id: true,
+      }
+    })
+
+
     if (
-      match.options.prefer_dedicated_server &&
-      (await this.assignDedicatedServer(match.id, match.region))
+      game_server_nodes.length === 0 || 
+      match.options.prefer_dedicated_server
     ) {
-      return true;
+      const assigned = await this.assignDedicatedServer(match.id, match.region);
+
+      if (assigned) {
+        return true;
+      }
     }
 
     return await this.assignOnDemandServer(matchId);
@@ -241,6 +266,12 @@ export class MatchAssistantService {
         __args: {
           limit: 1,
           where: {
+            connected: {
+              _eq: true,
+            },
+            is_dedicated: {
+              _eq: true,
+            },
             reserved_by_match_id: {
               _is_null: true,
             },
@@ -255,10 +286,26 @@ export class MatchAssistantService {
 
     const server = servers.at(0);
 
-    if (server) {
+    if (!server) {
       return false;
     }
 
+    this.logger.debug(`[${matchId}] assigning on dedicated server`);
+
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: {
+            id: matchId,
+          },
+          _set: {
+            server_id: server.id,
+          },
+        },
+        __typename: true,
+      },
+    });
+    
     await this.hasura.mutation({
       update_servers_by_pk: {
         __args: {

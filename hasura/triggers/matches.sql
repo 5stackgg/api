@@ -76,7 +76,7 @@ BEGIN
 
 
    IF NOT is_tournament_match(NEW) THEN 
-        IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' THEN
+        IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' THEN
             INSERT INTO match_lineup_players(match_lineup_id, steam_id) 
             VALUES (NEW.lineup_1_id, (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint);
         END IF;
