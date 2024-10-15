@@ -17,9 +17,9 @@ DECLARE
 lan_count int;
 region_count int;
 BEGIN
-    select count(*) INTO region_count from e_server_regions sr
-        INNER JOIN game_server_nodes gsn on gsn.region = sr.value and gsn.enabled = true 
-        where gsn.region != 'Lan';
+    SELECT COUNT(DISTINCT region) INTO region_count
+        FROM servers
+        WHERE region != 'Lan';
 
     IF region_count = 1 THEN
         NEW.region_veto = false;
