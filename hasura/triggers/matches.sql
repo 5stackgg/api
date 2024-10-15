@@ -74,6 +74,14 @@ BEGIN
             VALUES (NEW.id, _map_id, 1, 'CT', 'TERRORIST');
     END IF;
 
+
+   IF NOT is_tournament_match(NEW) THEN 
+        IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' THEN
+            INSERT INTO match_lineup_players(match_lineup_id, steam_id) 
+            VALUES (NEW.lineup_1_id, (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint);
+        END IF;
+   END IF;
+
     RETURN NEW;
 END;
 $$;
@@ -86,7 +94,10 @@ CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM update_tournament_bracket(NEW);
+    IF is_tournament_match(NEW) THEN
+        PERFORM update_tournament_bracket(NEW);
+    END IF;
+
 	RETURN NEW;
 END;
 $$;
