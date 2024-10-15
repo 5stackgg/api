@@ -321,8 +321,10 @@ export class MatchesController {
           id: match_id,
         },
         server_id: true,
+        region: true,
         options: {
           map_veto: true,
+          region_veto: true,
           best_of: true,
         },
         match_maps: {
@@ -337,8 +339,14 @@ export class MatchesController {
 
     let nextPhase: e_match_status_enum = "Live";
     if (
-      match.options.map_veto &&
-      match.match_maps.length !== match.options.best_of
+      (
+        match.options.map_veto && 
+        match.match_maps.length !== match.options.best_of  
+      ) ||
+      (
+        !match.region && 
+        match.options.region_veto 
+      )
     ) {
       nextPhase = "Veto";
     }
