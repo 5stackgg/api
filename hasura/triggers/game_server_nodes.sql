@@ -14,7 +14,8 @@ BEGIN
             OLD.public_ip = NEW.public_ip AND
             OLD.start_port_range = NEW.start_port_range AND
             OLD.end_port_range = NEW.end_port_range AND
-            OLD.region = NEW.region
+            OLD.region = NEW.region AND
+            OLD.enabled = NEW.enabled
         )
     ) THEN
         RETURN NEW;
