@@ -42066,15 +42066,6 @@ export default {
             "setupGameServer": [
                 6
             ],
-            "setupVolumes": [
-                10,
-                {
-                    "gameServerNodeId": [
-                        7,
-                        "String!"
-                    ]
-                }
-            ],
             "startMatch": [
                 10,
                 {

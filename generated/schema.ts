@@ -4061,7 +4061,6 @@ export interface mutation_root {
     /** setMatchWinner */
     setMatchWinner: (SuccessOutput | null)
     setupGameServer: (SetupGameServeOutput | null)
-    setupVolumes: (SuccessOutput | null)
     /** startMatch */
     startMatch: (SuccessOutput | null)
     switchLineup: (SuccessOutput | null)
@@ -17401,7 +17400,6 @@ export interface mutation_rootGenqlSelection{
     /** setMatchWinner */
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection
-    setupVolumes?: (SuccessOutputGenqlSelection & { __args: {gameServerNodeId: Scalars['String']} })
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
     switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
