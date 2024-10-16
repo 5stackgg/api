@@ -98,6 +98,12 @@ BEGIN
         PERFORM update_tournament_bracket(NEW);
     END IF;
 
+    IF (OLD.status = 'WaitingForCheckIn' AND NEW.status != 'WaitingForCheckIn') THEN
+        UPDATE match_lineup_players 
+            SET checked_in = false 
+            WHERE match_lineup_id = NEW.lineup_1_id OR match_lineup_id = NEW.lineup_2_id;
+    END IF;
+
 	RETURN NEW;
 END;
 $$;

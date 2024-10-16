@@ -1,7 +1,10 @@
 DROP TRIGGER IF EXISTS tbi_match_lineup_players ON public.match_lineup_players;
 drop function if exists public.tbi_match_lineup_players;
 
-CREATE OR REPLACE FUNCTION public.tbu_match_lineup_players() RETURNS TRIGGER
+DROP TRIGGER IF EXISTS tbu_match_lineup_players ON public.match_lineup_players;
+drop function if exists public.tbu_match_lineup_player;
+
+CREATE OR REPLACE FUNCTION public.tau_match_lineup_players() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -49,8 +52,8 @@ END;
 $$;
 
 
-DROP TRIGGER IF EXISTS tbu_match_lineup_players ON public.match_lineup_players;
-CREATE TRIGGER tbu_match_lineup_players BEFORE UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbu_match_lineup_players();
+DROP TRIGGER IF EXISTS tau_match_lineup_players ON public.match_lineup_players;
+CREATE TRIGGER tau_match_lineup_players AFTER UPDATE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tau_match_lineup_players();
 
 DROP TRIGGER IF EXISTS tbid_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tbid_match_lineup_players BEFORE INSERT OR DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tbid_match_lineup_players();
