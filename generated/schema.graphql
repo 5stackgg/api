@@ -15805,6 +15805,11 @@ type player_assists {
   flash: Boolean!
   id: uuid!
 
+  """
+  A computed field, executes function "is_team_assist"
+  """
+  is_team_assist: Boolean
+
   """An object relationship"""
   match: matches!
   match_id: uuid!
@@ -15928,6 +15933,7 @@ input player_assists_bool_exp {
   attacker_team: String_comparison_exp
   flash: Boolean_comparison_exp
   id: uuid_comparison_exp
+  is_team_assist: Boolean_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
@@ -16061,6 +16067,7 @@ input player_assists_order_by {
   attacker_team: order_by
   flash: order_by
   id: order_by
+  is_team_assist: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
@@ -17607,6 +17614,11 @@ type player_kills {
   id: uuid!
   in_air: Boolean!
 
+  """
+  A computed field, executes function "is_suicide"
+  """
+  is_suicide: Boolean
+
   """An object relationship"""
   match: matches!
   match_id: uuid!
@@ -17619,6 +17631,11 @@ type player_kills {
   """An object relationship"""
   player: players
   round: Int!
+
+  """
+  A computed field, executes function "is_team_kill"
+  """
+  team_kill: Boolean
   thru_smoke: Boolean!
   thru_wall: Boolean!
   time: timestamptz!
@@ -17742,6 +17759,7 @@ input player_kills_bool_exp {
   hitgroup: String_comparison_exp
   id: uuid_comparison_exp
   in_air: Boolean_comparison_exp
+  is_suicide: Boolean_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
@@ -17749,6 +17767,7 @@ input player_kills_bool_exp {
   no_scope: Boolean_comparison_exp
   player: players_bool_exp
   round: Int_comparison_exp
+  team_kill: Boolean_comparison_exp
   thru_smoke: Boolean_comparison_exp
   thru_wall: Boolean_comparison_exp
   time: timestamptz_comparison_exp
@@ -17923,6 +17942,7 @@ input player_kills_order_by {
   hitgroup: order_by
   id: order_by
   in_air: order_by
+  is_suicide: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
@@ -17930,6 +17950,7 @@ input player_kills_order_by {
   no_scope: order_by
   player: players_order_by
   round: order_by
+  team_kill: order_by
   thru_smoke: order_by
   thru_wall: order_by
   time: order_by
@@ -20181,42 +20202,6 @@ type players {
   ): player_objectives_aggregate!
 
   """An array relationship"""
-  opening_duels(
-    """distinct select on columns"""
-    distinct_on: [v_player_opening_duels_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_opening_duels_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): [v_player_opening_duels!]!
-
-  """An aggregate relationship"""
-  opening_duels_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_opening_duels_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_opening_duels_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): v_player_opening_duels_aggregate!
-
-  """An array relationship"""
   owned_teams(
     """distinct select on columns"""
     distinct_on: [teams_select_column!]
@@ -20647,8 +20632,6 @@ input players_bool_exp {
   notifications_aggregate: notifications_aggregate_bool_exp
   objectives: player_objectives_bool_exp
   objectives_aggregate: player_objectives_aggregate_bool_exp
-  opening_duels: v_player_opening_duels_bool_exp
-  opening_duels_aggregate: v_player_opening_duels_aggregate_bool_exp
   owned_teams: teams_bool_exp
   owned_teams_aggregate: teams_aggregate_bool_exp
   player_lineup: match_lineup_players_bool_exp
@@ -20724,7 +20707,6 @@ input players_insert_input {
   name: String
   notifications: notifications_arr_rel_insert_input
   objectives: player_objectives_arr_rel_insert_input
-  opening_duels: v_player_opening_duels_arr_rel_insert_input
   owned_teams: teams_arr_rel_insert_input
   player_lineup: match_lineup_players_arr_rel_insert_input
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
@@ -20835,7 +20817,6 @@ input players_order_by {
   name: order_by
   notifications_aggregate: notifications_aggregate_order_by
   objectives_aggregate: player_objectives_aggregate_order_by
-  opening_duels_aggregate: v_player_opening_duels_aggregate_order_by
   owned_teams_aggregate: teams_aggregate_order_by
   player_lineup_aggregate: match_lineup_players_aggregate_order_by
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
@@ -23402,46 +23383,6 @@ type query_root {
   ): v_player_damage_aggregate!
 
   """
-  fetch data from the table: "v_player_killed_player_counts"
-  """
-  v_player_killed_player_counts(
-    """distinct select on columns"""
-    distinct_on: [v_player_killed_player_counts_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_killed_player_counts_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_killed_player_counts_bool_exp
-  ): [v_player_killed_player_counts!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_killed_player_counts"
-  """
-  v_player_killed_player_counts_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_killed_player_counts_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_killed_player_counts_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_killed_player_counts_bool_exp
-  ): v_player_killed_player_counts_aggregate!
-
-  """
   fetch data from the table: "v_player_map_losses"
   """
   v_player_map_losses(
@@ -23522,46 +23463,6 @@ type query_root {
   ): v_player_map_wins_aggregate!
 
   """
-  fetch data from the table: "v_player_match_kills"
-  """
-  v_player_match_kills(
-    """distinct select on columns"""
-    distinct_on: [v_player_match_kills_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_match_kills_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_match_kills_bool_exp
-  ): [v_player_match_kills!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_match_kills"
-  """
-  v_player_match_kills_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_match_kills_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_match_kills_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_match_kills_bool_exp
-  ): v_player_match_kills_aggregate!
-
-  """
   fetch data from the table: "v_player_multi_kills"
   """
   v_player_multi_kills(
@@ -23600,46 +23501,6 @@ type query_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): v_player_multi_kills_aggregate!
-
-  """
-  fetch data from the table: "v_player_opening_duels"
-  """
-  v_player_opening_duels(
-    """distinct select on columns"""
-    distinct_on: [v_player_opening_duels_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_opening_duels_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): [v_player_opening_duels!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_opening_duels"
-  """
-  v_player_opening_duels_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_opening_duels_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_opening_duels_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): v_player_opening_duels_aggregate!
 
   """
   fetch data from the table: "v_pool_maps"
@@ -27581,60 +27442,6 @@ type subscription_root {
   ): [v_player_damage!]!
 
   """
-  fetch data from the table: "v_player_killed_player_counts"
-  """
-  v_player_killed_player_counts(
-    """distinct select on columns"""
-    distinct_on: [v_player_killed_player_counts_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_killed_player_counts_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_killed_player_counts_bool_exp
-  ): [v_player_killed_player_counts!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_killed_player_counts"
-  """
-  v_player_killed_player_counts_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_killed_player_counts_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_killed_player_counts_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_killed_player_counts_bool_exp
-  ): v_player_killed_player_counts_aggregate!
-
-  """
-  fetch data from the table in a streaming manner: "v_player_killed_player_counts"
-  """
-  v_player_killed_player_counts_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [v_player_killed_player_counts_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: v_player_killed_player_counts_bool_exp
-  ): [v_player_killed_player_counts!]!
-
-  """
   fetch data from the table: "v_player_map_losses"
   """
   v_player_map_losses(
@@ -27743,60 +27550,6 @@ type subscription_root {
   ): [v_player_map_wins!]!
 
   """
-  fetch data from the table: "v_player_match_kills"
-  """
-  v_player_match_kills(
-    """distinct select on columns"""
-    distinct_on: [v_player_match_kills_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_match_kills_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_match_kills_bool_exp
-  ): [v_player_match_kills!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_match_kills"
-  """
-  v_player_match_kills_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_match_kills_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_match_kills_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_match_kills_bool_exp
-  ): v_player_match_kills_aggregate!
-
-  """
-  fetch data from the table in a streaming manner: "v_player_match_kills"
-  """
-  v_player_match_kills_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [v_player_match_kills_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: v_player_match_kills_bool_exp
-  ): [v_player_match_kills!]!
-
-  """
   fetch data from the table: "v_player_multi_kills"
   """
   v_player_multi_kills(
@@ -27849,60 +27602,6 @@ type subscription_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): [v_player_multi_kills!]!
-
-  """
-  fetch data from the table: "v_player_opening_duels"
-  """
-  v_player_opening_duels(
-    """distinct select on columns"""
-    distinct_on: [v_player_opening_duels_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_opening_duels_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): [v_player_opening_duels!]!
-
-  """
-  fetch aggregated fields from the table: "v_player_opening_duels"
-  """
-  v_player_opening_duels_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_player_opening_duels_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_player_opening_duels_order_by!]
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): v_player_opening_duels_aggregate!
-
-  """
-  fetch data from the table in a streaming manner: "v_player_opening_duels"
-  """
-  v_player_opening_duels_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [v_player_opening_duels_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: v_player_opening_duels_bool_exp
-  ): [v_player_opening_duels!]!
 
   """
   fetch data from the table: "v_pool_maps"
@@ -33033,163 +32732,6 @@ type v_player_damage_variance_fields {
 }
 
 """
-columns and relationships of "v_player_killed_player_counts"
-"""
-type v_player_killed_player_counts {
-  kill_count: bigint
-  player_id: bigint
-  victim_id: bigint
-}
-
-"""
-aggregated selection of "v_player_killed_player_counts"
-"""
-type v_player_killed_player_counts_aggregate {
-  aggregate: v_player_killed_player_counts_aggregate_fields
-  nodes: [v_player_killed_player_counts!]!
-}
-
-"""
-aggregate fields of "v_player_killed_player_counts"
-"""
-type v_player_killed_player_counts_aggregate_fields {
-  avg: v_player_killed_player_counts_avg_fields
-  count(columns: [v_player_killed_player_counts_select_column!], distinct: Boolean): Int!
-  max: v_player_killed_player_counts_max_fields
-  min: v_player_killed_player_counts_min_fields
-  stddev: v_player_killed_player_counts_stddev_fields
-  stddev_pop: v_player_killed_player_counts_stddev_pop_fields
-  stddev_samp: v_player_killed_player_counts_stddev_samp_fields
-  sum: v_player_killed_player_counts_sum_fields
-  var_pop: v_player_killed_player_counts_var_pop_fields
-  var_samp: v_player_killed_player_counts_var_samp_fields
-  variance: v_player_killed_player_counts_variance_fields
-}
-
-"""aggregate avg on columns"""
-type v_player_killed_player_counts_avg_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""
-Boolean expression to filter rows from the table "v_player_killed_player_counts". All fields are combined with a logical 'AND'.
-"""
-input v_player_killed_player_counts_bool_exp {
-  _and: [v_player_killed_player_counts_bool_exp!]
-  _not: v_player_killed_player_counts_bool_exp
-  _or: [v_player_killed_player_counts_bool_exp!]
-  kill_count: bigint_comparison_exp
-  player_id: bigint_comparison_exp
-  victim_id: bigint_comparison_exp
-}
-
-"""aggregate max on columns"""
-type v_player_killed_player_counts_max_fields {
-  kill_count: bigint
-  player_id: bigint
-  victim_id: bigint
-}
-
-"""aggregate min on columns"""
-type v_player_killed_player_counts_min_fields {
-  kill_count: bigint
-  player_id: bigint
-  victim_id: bigint
-}
-
-"""
-Ordering options when selecting data from "v_player_killed_player_counts".
-"""
-input v_player_killed_player_counts_order_by {
-  kill_count: order_by
-  player_id: order_by
-  victim_id: order_by
-}
-
-"""
-select columns of table "v_player_killed_player_counts"
-"""
-enum v_player_killed_player_counts_select_column {
-  """column name"""
-  kill_count
-
-  """column name"""
-  player_id
-
-  """column name"""
-  victim_id
-}
-
-"""aggregate stddev on columns"""
-type v_player_killed_player_counts_stddev_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""aggregate stddev_pop on columns"""
-type v_player_killed_player_counts_stddev_pop_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""aggregate stddev_samp on columns"""
-type v_player_killed_player_counts_stddev_samp_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""
-Streaming cursor of the table "v_player_killed_player_counts"
-"""
-input v_player_killed_player_counts_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: v_player_killed_player_counts_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input v_player_killed_player_counts_stream_cursor_value_input {
-  kill_count: bigint
-  player_id: bigint
-  victim_id: bigint
-}
-
-"""aggregate sum on columns"""
-type v_player_killed_player_counts_sum_fields {
-  kill_count: bigint
-  player_id: bigint
-  victim_id: bigint
-}
-
-"""aggregate var_pop on columns"""
-type v_player_killed_player_counts_var_pop_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""aggregate var_samp on columns"""
-type v_player_killed_player_counts_var_samp_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""aggregate variance on columns"""
-type v_player_killed_player_counts_variance_fields {
-  kill_count: Float
-  player_id: Float
-  victim_id: Float
-}
-
-"""
 columns and relationships of "v_player_map_losses"
 """
 type v_player_map_losses {
@@ -33504,183 +33046,6 @@ type v_player_map_wins_variance_fields {
 }
 
 """
-columns and relationships of "v_player_match_kills"
-"""
-type v_player_match_kills {
-  avg_kills_per_game: bigint
-  kills: bigint
-
-  """An object relationship"""
-  player: players
-  player_steam_id: bigint
-  total_matches: bigint
-}
-
-"""
-aggregated selection of "v_player_match_kills"
-"""
-type v_player_match_kills_aggregate {
-  aggregate: v_player_match_kills_aggregate_fields
-  nodes: [v_player_match_kills!]!
-}
-
-"""
-aggregate fields of "v_player_match_kills"
-"""
-type v_player_match_kills_aggregate_fields {
-  avg: v_player_match_kills_avg_fields
-  count(columns: [v_player_match_kills_select_column!], distinct: Boolean): Int!
-  max: v_player_match_kills_max_fields
-  min: v_player_match_kills_min_fields
-  stddev: v_player_match_kills_stddev_fields
-  stddev_pop: v_player_match_kills_stddev_pop_fields
-  stddev_samp: v_player_match_kills_stddev_samp_fields
-  sum: v_player_match_kills_sum_fields
-  var_pop: v_player_match_kills_var_pop_fields
-  var_samp: v_player_match_kills_var_samp_fields
-  variance: v_player_match_kills_variance_fields
-}
-
-"""aggregate avg on columns"""
-type v_player_match_kills_avg_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""
-Boolean expression to filter rows from the table "v_player_match_kills". All fields are combined with a logical 'AND'.
-"""
-input v_player_match_kills_bool_exp {
-  _and: [v_player_match_kills_bool_exp!]
-  _not: v_player_match_kills_bool_exp
-  _or: [v_player_match_kills_bool_exp!]
-  avg_kills_per_game: bigint_comparison_exp
-  kills: bigint_comparison_exp
-  player: players_bool_exp
-  player_steam_id: bigint_comparison_exp
-  total_matches: bigint_comparison_exp
-}
-
-"""aggregate max on columns"""
-type v_player_match_kills_max_fields {
-  avg_kills_per_game: bigint
-  kills: bigint
-  player_steam_id: bigint
-  total_matches: bigint
-}
-
-"""aggregate min on columns"""
-type v_player_match_kills_min_fields {
-  avg_kills_per_game: bigint
-  kills: bigint
-  player_steam_id: bigint
-  total_matches: bigint
-}
-
-"""Ordering options when selecting data from "v_player_match_kills"."""
-input v_player_match_kills_order_by {
-  avg_kills_per_game: order_by
-  kills: order_by
-  player: players_order_by
-  player_steam_id: order_by
-  total_matches: order_by
-}
-
-"""
-select columns of table "v_player_match_kills"
-"""
-enum v_player_match_kills_select_column {
-  """column name"""
-  avg_kills_per_game
-
-  """column name"""
-  kills
-
-  """column name"""
-  player_steam_id
-
-  """column name"""
-  total_matches
-}
-
-"""aggregate stddev on columns"""
-type v_player_match_kills_stddev_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""aggregate stddev_pop on columns"""
-type v_player_match_kills_stddev_pop_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""aggregate stddev_samp on columns"""
-type v_player_match_kills_stddev_samp_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""
-Streaming cursor of the table "v_player_match_kills"
-"""
-input v_player_match_kills_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: v_player_match_kills_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input v_player_match_kills_stream_cursor_value_input {
-  avg_kills_per_game: bigint
-  kills: bigint
-  player_steam_id: bigint
-  total_matches: bigint
-}
-
-"""aggregate sum on columns"""
-type v_player_match_kills_sum_fields {
-  avg_kills_per_game: bigint
-  kills: bigint
-  player_steam_id: bigint
-  total_matches: bigint
-}
-
-"""aggregate var_pop on columns"""
-type v_player_match_kills_var_pop_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""aggregate var_samp on columns"""
-type v_player_match_kills_var_samp_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""aggregate variance on columns"""
-type v_player_match_kills_variance_fields {
-  avg_kills_per_game: Float
-  kills: Float
-  player_steam_id: Float
-  total_matches: Float
-}
-
-"""
 columns and relationships of "v_player_multi_kills"
 """
 type v_player_multi_kills {
@@ -33979,319 +33344,6 @@ input v_player_multi_kills_variance_order_by {
   attacker_steam_id: order_by
   kills: order_by
   round: order_by
-}
-
-"""
-columns and relationships of "v_player_opening_duels"
-"""
-type v_player_opening_duels {
-  attempts: bigint
-  match_id: uuid
-  match_map_id: uuid
-  steam_id: bigint
-  successes: bigint
-}
-
-"""
-aggregated selection of "v_player_opening_duels"
-"""
-type v_player_opening_duels_aggregate {
-  aggregate: v_player_opening_duels_aggregate_fields
-  nodes: [v_player_opening_duels!]!
-}
-
-input v_player_opening_duels_aggregate_bool_exp {
-  count: v_player_opening_duels_aggregate_bool_exp_count
-}
-
-input v_player_opening_duels_aggregate_bool_exp_count {
-  arguments: [v_player_opening_duels_select_column!]
-  distinct: Boolean
-  filter: v_player_opening_duels_bool_exp
-  predicate: Int_comparison_exp!
-}
-
-"""
-aggregate fields of "v_player_opening_duels"
-"""
-type v_player_opening_duels_aggregate_fields {
-  avg: v_player_opening_duels_avg_fields
-  count(columns: [v_player_opening_duels_select_column!], distinct: Boolean): Int!
-  max: v_player_opening_duels_max_fields
-  min: v_player_opening_duels_min_fields
-  stddev: v_player_opening_duels_stddev_fields
-  stddev_pop: v_player_opening_duels_stddev_pop_fields
-  stddev_samp: v_player_opening_duels_stddev_samp_fields
-  sum: v_player_opening_duels_sum_fields
-  var_pop: v_player_opening_duels_var_pop_fields
-  var_samp: v_player_opening_duels_var_samp_fields
-  variance: v_player_opening_duels_variance_fields
-}
-
-"""
-order by aggregate values of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_aggregate_order_by {
-  avg: v_player_opening_duels_avg_order_by
-  count: order_by
-  max: v_player_opening_duels_max_order_by
-  min: v_player_opening_duels_min_order_by
-  stddev: v_player_opening_duels_stddev_order_by
-  stddev_pop: v_player_opening_duels_stddev_pop_order_by
-  stddev_samp: v_player_opening_duels_stddev_samp_order_by
-  sum: v_player_opening_duels_sum_order_by
-  var_pop: v_player_opening_duels_var_pop_order_by
-  var_samp: v_player_opening_duels_var_samp_order_by
-  variance: v_player_opening_duels_variance_order_by
-}
-
-"""
-input type for inserting array relation for remote table "v_player_opening_duels"
-"""
-input v_player_opening_duels_arr_rel_insert_input {
-  data: [v_player_opening_duels_insert_input!]!
-}
-
-"""aggregate avg on columns"""
-type v_player_opening_duels_avg_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by avg() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_avg_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""
-Boolean expression to filter rows from the table "v_player_opening_duels". All fields are combined with a logical 'AND'.
-"""
-input v_player_opening_duels_bool_exp {
-  _and: [v_player_opening_duels_bool_exp!]
-  _not: v_player_opening_duels_bool_exp
-  _or: [v_player_opening_duels_bool_exp!]
-  attempts: bigint_comparison_exp
-  match_id: uuid_comparison_exp
-  match_map_id: uuid_comparison_exp
-  steam_id: bigint_comparison_exp
-  successes: bigint_comparison_exp
-}
-
-"""
-input type for inserting data into table "v_player_opening_duels"
-"""
-input v_player_opening_duels_insert_input {
-  attempts: bigint
-  match_id: uuid
-  match_map_id: uuid
-  steam_id: bigint
-  successes: bigint
-}
-
-"""aggregate max on columns"""
-type v_player_opening_duels_max_fields {
-  attempts: bigint
-  match_id: uuid
-  match_map_id: uuid
-  steam_id: bigint
-  successes: bigint
-}
-
-"""
-order by max() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_max_order_by {
-  attempts: order_by
-  match_id: order_by
-  match_map_id: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""aggregate min on columns"""
-type v_player_opening_duels_min_fields {
-  attempts: bigint
-  match_id: uuid
-  match_map_id: uuid
-  steam_id: bigint
-  successes: bigint
-}
-
-"""
-order by min() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_min_order_by {
-  attempts: order_by
-  match_id: order_by
-  match_map_id: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""Ordering options when selecting data from "v_player_opening_duels"."""
-input v_player_opening_duels_order_by {
-  attempts: order_by
-  match_id: order_by
-  match_map_id: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""
-select columns of table "v_player_opening_duels"
-"""
-enum v_player_opening_duels_select_column {
-  """column name"""
-  attempts
-
-  """column name"""
-  match_id
-
-  """column name"""
-  match_map_id
-
-  """column name"""
-  steam_id
-
-  """column name"""
-  successes
-}
-
-"""aggregate stddev on columns"""
-type v_player_opening_duels_stddev_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by stddev() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_stddev_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""aggregate stddev_pop on columns"""
-type v_player_opening_duels_stddev_pop_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by stddev_pop() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_stddev_pop_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""aggregate stddev_samp on columns"""
-type v_player_opening_duels_stddev_samp_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by stddev_samp() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_stddev_samp_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""
-Streaming cursor of the table "v_player_opening_duels"
-"""
-input v_player_opening_duels_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: v_player_opening_duels_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input v_player_opening_duels_stream_cursor_value_input {
-  attempts: bigint
-  match_id: uuid
-  match_map_id: uuid
-  steam_id: bigint
-  successes: bigint
-}
-
-"""aggregate sum on columns"""
-type v_player_opening_duels_sum_fields {
-  attempts: bigint
-  steam_id: bigint
-  successes: bigint
-}
-
-"""
-order by sum() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_sum_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""aggregate var_pop on columns"""
-type v_player_opening_duels_var_pop_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by var_pop() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_var_pop_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""aggregate var_samp on columns"""
-type v_player_opening_duels_var_samp_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by var_samp() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_var_samp_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
-}
-
-"""aggregate variance on columns"""
-type v_player_opening_duels_variance_fields {
-  attempts: Float
-  steam_id: Float
-  successes: Float
-}
-
-"""
-order by variance() on columns of table "v_player_opening_duels"
-"""
-input v_player_opening_duels_variance_order_by {
-  attempts: order_by
-  steam_id: order_by
-  successes: order_by
 }
 
 """

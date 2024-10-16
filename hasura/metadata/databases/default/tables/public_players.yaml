@@ -102,15 +102,6 @@ array_relationships:
         table:
           name: player_objectives
           schema: public
-  - name: opening_duels
-    using:
-      manual_configuration:
-        column_mapping:
-          steam_id: steam_id
-        insertion_order: null
-        remote_table:
-          name: v_player_opening_duels
-          schema: public
   - name: owned_teams
     using:
       foreign_key_constraint_on:

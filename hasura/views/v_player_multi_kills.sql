@@ -5,6 +5,7 @@ CREATE OR REPLACE VIEW public.v_player_multi_kills AS
       player_kills.round,
       count(*) AS kills
    FROM public.player_kills
+   WHERE player_kills.attacker_steam_id != player_kills.attacker_steam_id
    GROUP BY player_kills.match_id, player_kills.round, player_kills.attacker_steam_id
  )
  SELECT match_id,
