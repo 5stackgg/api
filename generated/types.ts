@@ -40779,6 +40779,9 @@ export default {
                     ]
                 }
             ],
+            "updateServices": [
+                10
+            ],
             "update__map_pool": [
                 19,
                 {

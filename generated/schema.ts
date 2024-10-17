@@ -4066,6 +4066,7 @@ export interface mutation_root {
     switchLineup: (SuccessOutput | null)
     unlinkDiscord: (SuccessOutput | null)
     updateCs: (SuccessOutput | null)
+    updateServices: (SuccessOutput | null)
     /** update data of the table: "_map_pool" */
     update__map_pool: (_map_pool_mutation_response | null)
     /** update single row of the table: "_map_pool" */
@@ -16974,6 +16975,7 @@ export interface mutation_rootGenqlSelection{
     switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     unlinkDiscord?: SuccessOutputGenqlSelection
     updateCs?: (SuccessOutputGenqlSelection & { __args?: {gameServerNodeId?: (Scalars['uuid'] | null)} })
+    updateServices?: SuccessOutputGenqlSelection
     /** update data of the table: "_map_pool" */
     update__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */

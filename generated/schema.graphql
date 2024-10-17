@@ -13590,6 +13590,7 @@ type mutation_root {
   switchLineup(match_id: String!): SuccessOutput
   unlinkDiscord: SuccessOutput
   updateCs(gameServerNodeId: uuid): SuccessOutput
+  updateServices: SuccessOutput
 
   """
   update data of the table: "_map_pool"

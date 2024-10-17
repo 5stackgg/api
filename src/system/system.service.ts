@@ -18,7 +18,16 @@ export class SystemService {
   }
 
   public async updateServices() {
-    console.info("lets go");
+    const services = await this.getServices();
+    const latestVersions = await this.getLatestVersions();
+
+    for (const { service, version, pod } of services) {
+      if (version === latestVersions[service]) {
+        continue;
+      }
+
+      await this.restartPod(pod);
+    }
   }
 
   public async setVersions() {

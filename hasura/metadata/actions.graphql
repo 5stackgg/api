@@ -98,6 +98,10 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  updateServices: SuccessOutput
+}
+
 input SampleInput {
   username: String!
   password: String!
