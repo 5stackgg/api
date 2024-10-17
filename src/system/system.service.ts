@@ -91,7 +91,7 @@ export class SystemService {
             ),
           };
         },
-        500,
+        300,
       );
 
       latestVersions[data.service] = data.latestVersion;
