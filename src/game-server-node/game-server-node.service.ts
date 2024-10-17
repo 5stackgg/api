@@ -140,7 +140,6 @@ export class GameServerNodeService {
 
   public async updateCs(gameServerNodeId?: string) {
     if (gameServerNodeId) {
-
       await this.createVolume(
         gameServerNodeId,
         `/opt/5stack/demos`,
@@ -154,7 +153,7 @@ export class GameServerNodeService {
         `steamcmd`,
         "1Gi",
       );
-      
+
       await this.createVolume(
         gameServerNodeId,
         `/opt/5stack/serverfiles`,
@@ -278,7 +277,6 @@ export class GameServerNodeService {
     }
   }
 
-
   private async createVolume(
     gameServerNodeId: string,
     path: string,
@@ -291,7 +289,9 @@ export class GameServerNodeService {
     const k8sApi = kc.makeApiClient(CoreV1Api);
 
     try {
-      const existingPV = await k8sApi.readPersistentVolume(`${name}-${gameServerNodeId}`);
+      const existingPV = await k8sApi.readPersistentVolume(
+        `${name}-${gameServerNodeId}`,
+      );
       if (!existingPV.body) {
         await k8sApi.createPersistentVolume({
           apiVersion: "v1",
@@ -339,7 +339,7 @@ export class GameServerNodeService {
     try {
       const existingClaim = await k8sApi.readNamespacedPersistentVolumeClaim(
         `${name}-${gameServerNodeId}-claim`,
-        this.namespace
+        this.namespace,
       );
 
       if (!existingClaim.body) {
@@ -361,7 +361,9 @@ export class GameServerNodeService {
             },
           },
         });
-        this.logger.log(`Created PersistentVolumeClaim ${name}-${gameServerNodeId}-claim`);
+        this.logger.log(
+          `Created PersistentVolumeClaim ${name}-${gameServerNodeId}-claim`,
+        );
       }
     } catch (error) {
       this.logger.error(
@@ -371,5 +373,4 @@ export class GameServerNodeService {
       throw error;
     }
   }
-
 }

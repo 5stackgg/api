@@ -11,7 +11,8 @@ type Modules =
   | "Hasura"
   | "GameServerNode"
   | "DiscordBot"
-  | "Postgres";
+  | "Postgres"
+  | "System";
 
 export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
   return (target) => {

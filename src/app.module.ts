@@ -27,6 +27,7 @@ import { SocketsModule } from "./sockets/sockets.module";
 import { TailscaleModule } from "./tailscale/tailscale.module";
 import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
 import { MatchMakingModule } from "./match-making/match-making.module";
+import { SystemModule } from "./system/system.module";
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { MatchMakingModule } from "./match-making/match-making.module";
       load: configs,
     }),
     GameServerNodeModule,
+    SystemModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

@@ -106,7 +106,6 @@ export class GameServerNodeController {
     };
   }
 
-
   @Get("/ping/:serverId")
   public async ping(@Req() request: Request) {
     const serverId = request.params.serverId;
