@@ -27,6 +27,7 @@ export class SystemService {
       }
 
       await this.restartPod(pod);
+      await this.cache.forget(this.getServiceCacheKey(service));
     }
   }
 
@@ -65,7 +66,7 @@ export class SystemService {
         service: string;
         latestVersion: string;
       }>(
-        registry,
+        this.getServiceCacheKey(registry),
         async () => {
           const token = await this.getToken(registry);
           const latestManifestResponse = await fetch(
@@ -150,5 +151,9 @@ export class SystemService {
     const { token } = await tokenResponse.json();
 
     return token;
+  }
+
+  private getServiceCacheKey(service: string) {
+    return `version:${service}`;
   }
 }
