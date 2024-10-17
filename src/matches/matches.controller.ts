@@ -826,6 +826,7 @@ export class MatchesController {
           __args: {
             id: data.match_id,
           },
+          id: true,
           options: {
             lobby_access: true,
           },
@@ -882,37 +883,29 @@ export class MatchesController {
       }
     }
 
-    const switchingToLineupId = matches_by_pk.lineup_1.is_on_lineup
-      ? matches_by_pk.lineup_2.id
-      : matches_by_pk.lineup_1.id;
-
-    await this.hasura.mutation({
-      delete_match_lineup_players: {
+    const { update_match_lineup_players } = await this.hasura.mutation({
+      update_match_lineup_players: {
         __args: {
           where: {
-            steam_id: {
-              _eq: data.user.steam_id,
+            steam_id: { _eq: data.user.steam_id },
+            match_lineup_id: {
+              _eq: matches_by_pk.lineup_1.is_on_lineup
+                ? matches_by_pk.lineup_1.id
+                : matches_by_pk.lineup_2.id,
             },
           },
-        },
-        __typename: true,
-      },
-    });
-
-    const { insert_match_lineup_players_one } = await this.hasura.mutation({
-      insert_match_lineup_players_one: {
-        __args: {
-          object: {
-            steam_id: data.user.steam_id,
-            match_lineup_id: switchingToLineupId,
+          _set: {
+            match_lineup_id: matches_by_pk.lineup_1.is_on_lineup
+              ? matches_by_pk.lineup_2.id
+              : matches_by_pk.lineup_1.id,
           },
         },
-        id: true,
+        affected_rows: true,
       },
     });
 
     return {
-      success: !!insert_match_lineup_players_one.id,
+      success: !!update_match_lineup_players.affected_rows,
     };
   }
 }
