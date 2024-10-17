@@ -67,6 +67,7 @@ update_permissions:
     permission:
       columns:
         - captain
+        - match_lineup_id
       filter: {}
       check: null
     comment: ""
@@ -74,6 +75,7 @@ update_permissions:
     permission:
       columns:
         - captain
+        - match_lineup_id
       filter:
         lineup:
           v_match_lineup:
@@ -97,6 +99,7 @@ update_permissions:
     permission:
       columns:
         - captain
+        - match_lineup_id
       filter:
         lineup:
           v_match_lineup:
