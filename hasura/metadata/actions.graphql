@@ -6,7 +6,7 @@ type Mutation {
 
 type Mutation {
   callForOrganizer(
-    matchId: String!
+    match_id: String!
   ): SuccessOutput
 }
 
@@ -58,6 +58,12 @@ type Query {
 }
 
 type Mutation {
+  randomizeTeams(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   scheduleMatch(
     match_id: uuid!
     time: timestamptz
@@ -94,7 +100,7 @@ type Mutation {
 
 type Mutation {
   updateCs(
-    gameServerNodeId: uuid
+    game_server_node_id: uuid
   ): SuccessOutput
 }
 

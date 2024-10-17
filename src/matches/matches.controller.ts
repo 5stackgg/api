@@ -20,6 +20,7 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import fetch from "node-fetch";
 import TurndownService from "turndown";
 import { MatchMakingService } from "src/match-making/match-making.servcie";
+import { PostgresService } from "src/postgres/postgres.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -28,6 +29,7 @@ export class MatchesController {
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
     private readonly matchMaking: MatchMakingService,
     private readonly matchAssistant: MatchAssistantService,
@@ -906,6 +908,32 @@ export class MatchesController {
 
     return {
       success: !!update_match_lineup_players.affected_rows,
+    };
+  }
+
+  @HasuraAction()
+  public async randomizeTeams(data: { user: User; match_id: string }) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: data.match_id,
+          },
+          id: true,
+          is_organizer: true,
+        },
+      },
+      data.user,
+    );
+
+    if (!matches_by_pk.is_organizer) {
+      throw Error("not the match organizer");
+    }
+
+    await this.postgres.query(`SELECT randomize_teams($1)`, [data.match_id]);
+
+    return {
+      success: true,
     };
   }
 }

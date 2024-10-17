@@ -38391,7 +38391,7 @@ export default {
             "callForOrganizer": [
                 10,
                 {
-                    "matchId": [
+                    "match_id": [
                         7,
                         "String!"
                     ]
@@ -40719,6 +40719,15 @@ export default {
             "logout": [
                 10
             ],
+            "randomizeTeams": [
+                10,
+                {
+                    "match_id": [
+                        1699,
+                        "uuid!"
+                    ]
+                }
+            ],
             "scheduleMatch": [
                 10,
                 {
@@ -40774,7 +40783,7 @@ export default {
             "updateCs": [
                 10,
                 {
-                    "gameServerNodeId": [
+                    "game_server_node_id": [
                         1699
                     ]
                 }

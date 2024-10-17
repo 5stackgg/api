@@ -41,6 +41,7 @@ import { MatchLobbyService } from "./match-lobby.service";
 import { MatchMakingModule } from "src/match-making/match-making.module";
 import { MatchEventsGateway } from "./match-events.gateway";
 import { MatchLobbyGateway } from "./match-lobby.gateway";
+import { PostgresModule } from "src/postgres/postgres.module";
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { MatchLobbyGateway } from "./match-lobby.gateway";
     S3Module,
     EncryptionModule,
     SocketsModule,
+    PostgresModule,
     forwardRef(() => DiscordBotModule),
     MatchMakingModule,
     BullModule.registerQueue(

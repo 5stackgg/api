@@ -11695,7 +11695,7 @@ type mutation_root {
   acceptTeamInvite(invite_id: uuid!): SuccessOutput
 
   """callForOrganizer"""
-  callForOrganizer(matchId: String!): SuccessOutput
+  callForOrganizer(match_id: String!): SuccessOutput
 
   """cancelMatch"""
   cancelMatch(match_id: uuid!): SuccessOutput
@@ -13577,6 +13577,7 @@ type mutation_root {
 
   """logout"""
   logout: SuccessOutput
+  randomizeTeams(match_id: uuid!): SuccessOutput
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
@@ -13589,7 +13590,7 @@ type mutation_root {
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
   unlinkDiscord: SuccessOutput
-  updateCs(gameServerNodeId: uuid): SuccessOutput
+  updateCs(game_server_node_id: uuid): SuccessOutput
   updateServices: SuccessOutput
 
   """

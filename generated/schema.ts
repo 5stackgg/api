@@ -4056,6 +4056,7 @@ export interface mutation_root {
     leaveLineup: (SuccessOutput | null)
     /** logout */
     logout: (SuccessOutput | null)
+    randomizeTeams: (SuccessOutput | null)
     /** scheduleMatch */
     scheduleMatch: (SuccessOutput | null)
     /** setMatchWinner */
@@ -15994,7 +15995,7 @@ export interface mutation_rootGenqlSelection{
     /** accept team invite */
     acceptTeamInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid']} })
     /** callForOrganizer */
-    callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {matchId: Scalars['String']} })
+    callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** cancelMatch */
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** checkIntoMatch */
@@ -16965,6 +16966,7 @@ export interface mutation_rootGenqlSelection{
     leaveLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** logout */
     logout?: SuccessOutputGenqlSelection
+    randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** scheduleMatch */
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     /** setMatchWinner */
@@ -16974,7 +16976,7 @@ export interface mutation_rootGenqlSelection{
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
     switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     unlinkDiscord?: SuccessOutputGenqlSelection
-    updateCs?: (SuccessOutputGenqlSelection & { __args?: {gameServerNodeId?: (Scalars['uuid'] | null)} })
+    updateCs?: (SuccessOutputGenqlSelection & { __args?: {game_server_node_id?: (Scalars['uuid'] | null)} })
     updateServices?: SuccessOutputGenqlSelection
     /** update data of the table: "_map_pool" */
     update__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
