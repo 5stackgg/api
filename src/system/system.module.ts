@@ -10,10 +10,12 @@ import { loggerFactory } from "src/utilities/LoggerFactory";
 import { CheckSystemUpdateJob } from "./jobs/CheckSystemUpdateJob";
 import { Queue } from "bullmq";
 import { CacheModule } from "src/cache/cache.module";
+import { HasuraModule } from "src/hasura/hasura.module";
 
 @Module({
   imports: [
     CacheModule,
+    HasuraModule,
     BullModule.registerQueue({
       name: SystemQueues.Version,
     }),
@@ -37,7 +39,7 @@ export class SystemModule {
       {},
       {
         repeat: {
-          pattern: "0 * * * *",
+          pattern: "* * * * *",
         },
       },
     );

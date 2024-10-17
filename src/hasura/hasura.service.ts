@@ -63,6 +63,7 @@ export class HasuraService {
   private async getClient(user?: User) {
     return createClient({
       url: `${this.config.endpoint}/v1/graphql`,
+      // @ts-ignore
       headers: {
         "Content-Type": "application/json",
         "x-hasura-admin-secret": this.config.secret,

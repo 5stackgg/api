@@ -52,11 +52,11 @@ export class CacheService {
     }
   }
 
-  public async remember(
+  public async remember<T>(
     key: string,
     callback: () => CachedValue,
     seconds: number,
-  ) {
+  ): Promise<T> {
     const value = await this.get(key);
     if (value !== undefined) {
       return value;
