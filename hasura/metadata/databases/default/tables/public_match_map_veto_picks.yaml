@@ -69,14 +69,10 @@ insert_permissions:
   - role: user
     permission:
       check:
-        _or:
-          - match_lineup:
-              captain:
-                steam_id:
-                  _eq: X-Hasura-User-Id
-          - match:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+        match_lineup:
+          captain:
+            steam_id:
+              _eq: X-Hasura-User-Id
       columns:
         - map_id
         - match_id
