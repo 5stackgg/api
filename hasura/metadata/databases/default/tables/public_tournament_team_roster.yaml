@@ -93,4 +93,6 @@ delete_permissions:
           - tournament:
               organizer_steam_id:
                 _eq: X-Hasura-User-Id
+          - player_steam_id:
+              _eq: X-Hasura-User-Id
     comment: ""
