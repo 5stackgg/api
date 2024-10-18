@@ -55,13 +55,13 @@ import { SystemModule } from "./system/system.module";
           defaultJobOptions: {
             removeOnComplete: {
               // 24 hours
-              age: 24 * 3600
+              age: 24 * 3600,
             },
             removeOnFail: {
               // 24 hours
-              age: 7 * 24 * 3600
-            }
-          }
+              age: 7 * 24 * 3600,
+            },
+          },
         };
       },
     }),
