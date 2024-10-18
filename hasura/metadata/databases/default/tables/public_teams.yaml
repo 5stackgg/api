@@ -47,6 +47,12 @@ computed_fields:
         name: can_invite_to_team
         schema: public
       session_argument: hasura_session
+  - name: can_remove
+    definition:
+      function:
+        name: can_remove_from_team
+        schema: public
+      session_argument: hasura_session
   - name: matches
     definition:
       function:
@@ -73,6 +79,7 @@ select_permissions:
       computed_fields:
         - can_change_role
         - can_invite
+        - can_remove
       filter: {}
       allow_aggregations: true
     comment: ""
