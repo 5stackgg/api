@@ -19,6 +19,13 @@ array_relationships:
         table:
           name: tournament_team_roster
           schema: public
+computed_fields:
+  - name: can_manage
+    definition:
+      function:
+        name: can_manage_tournament_team
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: administrator
     permission:
@@ -83,6 +90,8 @@ select_permissions:
         - seed
         - team_id
         - tournament_id
+      computed_fields:
+        - can_manage
       filter: {}
       allow_aggregations: true
     comment: ""
