@@ -12,6 +12,13 @@ object_relationships:
     using:
       foreign_key_constraint_on: tournament_id
 array_relationships:
+  - name: invites
+    using:
+      foreign_key_constraint_on:
+        column: tournament_team_id
+        table:
+          name: tournament_team_invites
+          schema: public
   - name: roster
     using:
       foreign_key_constraint_on:

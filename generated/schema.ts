@@ -3615,7 +3615,7 @@ export type migration_hashes_hashes_update_column = 'hash' | 'name'
 /** mutation root */
 export interface mutation_root {
     /** accept team invite */
-    acceptTeamInvite: (SuccessOutput | null)
+    acceptInvite: (SuccessOutput | null)
     /** callForOrganizer */
     callForOrganizer: (SuccessOutput | null)
     /** cancelMatch */
@@ -3818,6 +3818,10 @@ export interface mutation_root {
     delete_tournament_stages: (tournament_stages_mutation_response | null)
     /** delete single row from the table: "tournament_stages" */
     delete_tournament_stages_by_pk: (tournament_stages | null)
+    /** delete data from the table: "tournament_team_invites" */
+    delete_tournament_team_invites: (tournament_team_invites_mutation_response | null)
+    /** delete single row from the table: "tournament_team_invites" */
+    delete_tournament_team_invites_by_pk: (tournament_team_invites | null)
     /** delete data from the table: "tournament_team_roster" */
     delete_tournament_team_roster: (tournament_team_roster_mutation_response | null)
     /** delete single row from the table: "tournament_team_roster" */
@@ -3834,7 +3838,7 @@ export interface mutation_root {
     delete_v_match_captains: (v_match_captains_mutation_response | null)
     /** delete data from the table: "v_pool_maps" */
     delete_v_pool_maps: (v_pool_maps_mutation_response | null)
-    denyTeamInvite: (SuccessOutput | null)
+    denyInvite: (SuccessOutput | null)
     forfeitMatch: (SuccessOutput | null)
     /** insert data into the table: "_map_pool" */
     insert__map_pool: (_map_pool_mutation_response | null)
@@ -4032,6 +4036,10 @@ export interface mutation_root {
     insert_tournament_stages: (tournament_stages_mutation_response | null)
     /** insert a single row into the table: "tournament_stages" */
     insert_tournament_stages_one: (tournament_stages | null)
+    /** insert data into the table: "tournament_team_invites" */
+    insert_tournament_team_invites: (tournament_team_invites_mutation_response | null)
+    /** insert a single row into the table: "tournament_team_invites" */
+    insert_tournament_team_invites_one: (tournament_team_invites | null)
     /** insert data into the table: "tournament_team_roster" */
     insert_tournament_team_roster: (tournament_team_roster_mutation_response | null)
     /** insert a single row into the table: "tournament_team_roster" */
@@ -4362,6 +4370,12 @@ export interface mutation_root {
     update_tournament_stages_by_pk: (tournament_stages | null)
     /** update multiples rows of table: "tournament_stages" */
     update_tournament_stages_many: ((tournament_stages_mutation_response | null)[] | null)
+    /** update data of the table: "tournament_team_invites" */
+    update_tournament_team_invites: (tournament_team_invites_mutation_response | null)
+    /** update single row of the table: "tournament_team_invites" */
+    update_tournament_team_invites_by_pk: (tournament_team_invites | null)
+    /** update multiples rows of table: "tournament_team_invites" */
+    update_tournament_team_invites_many: ((tournament_team_invites_mutation_response | null)[] | null)
     /** update data of the table: "tournament_team_roster" */
     update_tournament_team_roster: (tournament_team_roster_mutation_response | null)
     /** update single row of the table: "tournament_team_roster" */
@@ -6398,6 +6412,12 @@ export interface query_root {
     tournament_stages_aggregate: tournament_stages_aggregate
     /** fetch data from the table: "tournament_stages" using primary key columns */
     tournament_stages_by_pk: (tournament_stages | null)
+    /** fetch data from the table: "tournament_team_invites" */
+    tournament_team_invites: tournament_team_invites[]
+    /** fetch aggregated fields from the table: "tournament_team_invites" */
+    tournament_team_invites_aggregate: tournament_team_invites_aggregate
+    /** fetch data from the table: "tournament_team_invites" using primary key columns */
+    tournament_team_invites_by_pk: (tournament_team_invites | null)
     /** fetch data from the table: "tournament_team_roster" */
     tournament_team_roster: tournament_team_roster[]
     /** fetch aggregated fields from the table: "tournament_team_roster" */
@@ -7084,6 +7104,14 @@ export interface subscription_root {
     tournament_stages_by_pk: (tournament_stages | null)
     /** fetch data from the table in a streaming manner: "tournament_stages" */
     tournament_stages_stream: tournament_stages[]
+    /** fetch data from the table: "tournament_team_invites" */
+    tournament_team_invites: tournament_team_invites[]
+    /** fetch aggregated fields from the table: "tournament_team_invites" */
+    tournament_team_invites_aggregate: tournament_team_invites_aggregate
+    /** fetch data from the table: "tournament_team_invites" using primary key columns */
+    tournament_team_invites_by_pk: (tournament_team_invites | null)
+    /** fetch data from the table in a streaming manner: "tournament_team_invites" */
+    tournament_team_invites_stream: tournament_team_invites[]
     /** fetch data from the table: "tournament_team_roster" */
     tournament_team_roster: tournament_team_roster[]
     /** fetch aggregated fields from the table: "tournament_team_roster" */
@@ -7211,7 +7239,7 @@ export interface team_invites_avg_fields {
 
 
 /** unique or primary key constraints on table "team_invites" */
-export type team_invites_constraint = 'team_invites_id_key' | 'team_invites_pkey'
+export type team_invites_constraint = 'team_invites_pkey' | 'team_invites_team_id_steam_id_key'
 
 
 /** aggregate max on columns */
@@ -7448,6 +7476,8 @@ export interface teams {
     can_change_role: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_invite_to_team" */
     can_invite: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_remove_from_team" */
+    can_remove: (Scalars['Boolean'] | null)
     id: Scalars['uuid']
     /** An array relationship */
     invites: team_invites[]
@@ -8056,6 +8086,156 @@ export interface tournament_stages_variance_fields {
 }
 
 
+/** columns and relationships of "tournament_team_invites" */
+export interface tournament_team_invites {
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    /** An object relationship */
+    invited_by: players
+    invited_by_player_steam_id: Scalars['bigint']
+    /** An object relationship */
+    player: players
+    steam_id: Scalars['bigint']
+    /** An object relationship */
+    team: tournament_teams
+    tournament_team_id: Scalars['uuid']
+    __typename: 'tournament_team_invites'
+}
+
+
+/** aggregated selection of "tournament_team_invites" */
+export interface tournament_team_invites_aggregate {
+    aggregate: (tournament_team_invites_aggregate_fields | null)
+    nodes: tournament_team_invites[]
+    __typename: 'tournament_team_invites_aggregate'
+}
+
+
+/** aggregate fields of "tournament_team_invites" */
+export interface tournament_team_invites_aggregate_fields {
+    avg: (tournament_team_invites_avg_fields | null)
+    count: Scalars['Int']
+    max: (tournament_team_invites_max_fields | null)
+    min: (tournament_team_invites_min_fields | null)
+    stddev: (tournament_team_invites_stddev_fields | null)
+    stddev_pop: (tournament_team_invites_stddev_pop_fields | null)
+    stddev_samp: (tournament_team_invites_stddev_samp_fields | null)
+    sum: (tournament_team_invites_sum_fields | null)
+    var_pop: (tournament_team_invites_var_pop_fields | null)
+    var_samp: (tournament_team_invites_var_samp_fields | null)
+    variance: (tournament_team_invites_variance_fields | null)
+    __typename: 'tournament_team_invites_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface tournament_team_invites_avg_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "tournament_team_invites" */
+export type tournament_team_invites_constraint = 'tournament_team_invites_pkey' | 'tournament_team_invites_steam_id_tournament_team_id_key'
+
+
+/** aggregate max on columns */
+export interface tournament_team_invites_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    invited_by_player_steam_id: (Scalars['bigint'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'tournament_team_invites_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface tournament_team_invites_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    invited_by_player_steam_id: (Scalars['bigint'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'tournament_team_invites_min_fields'
+}
+
+
+/** response of any mutation on the table "tournament_team_invites" */
+export interface tournament_team_invites_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: tournament_team_invites[]
+    __typename: 'tournament_team_invites_mutation_response'
+}
+
+
+/** select columns of table "tournament_team_invites" */
+export type tournament_team_invites_select_column = 'created_at' | 'id' | 'invited_by_player_steam_id' | 'steam_id' | 'tournament_team_id'
+
+
+/** aggregate stddev on columns */
+export interface tournament_team_invites_stddev_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_team_invites_stddev_pop_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_team_invites_stddev_samp_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface tournament_team_invites_sum_fields {
+    invited_by_player_steam_id: (Scalars['bigint'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'tournament_team_invites_sum_fields'
+}
+
+
+/** update columns of table "tournament_team_invites" */
+export type tournament_team_invites_update_column = 'created_at' | 'id' | 'invited_by_player_steam_id' | 'steam_id' | 'tournament_team_id'
+
+
+/** aggregate var_pop on columns */
+export interface tournament_team_invites_var_pop_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_team_invites_var_samp_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface tournament_team_invites_variance_fields {
+    invited_by_player_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_team_invites_variance_fields'
+}
+
+
 /** columns and relationships of "tournament_team_roster" */
 export interface tournament_team_roster {
     /** An object relationship */
@@ -8197,10 +8377,16 @@ export interface tournament_team_roster_variance_fields {
 
 /** columns and relationships of "tournament_teams" */
 export interface tournament_teams {
+    /** A computed field, executes function "can_manage_tournament_team" */
+    can_manage: (Scalars['Boolean'] | null)
     /** An object relationship */
     creator: players
     eligible_at: (Scalars['timestamptz'] | null)
     id: Scalars['uuid']
+    /** An array relationship */
+    invites: tournament_team_invites[]
+    /** An aggregate relationship */
+    invites_aggregate: tournament_team_invites_aggregate
     name: Scalars['String']
     owner_steam_id: Scalars['bigint']
     /** An array relationship */
@@ -15993,7 +16179,7 @@ where: migration_hashes_hashes_bool_exp}
 /** mutation root */
 export interface mutation_rootGenqlSelection{
     /** accept team invite */
-    acceptTeamInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid']} })
+    acceptInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     /** callForOrganizer */
     callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** cancelMatch */
@@ -16294,6 +16480,12 @@ export interface mutation_rootGenqlSelection{
     where: tournament_stages_bool_exp} })
     /** delete single row from the table: "tournament_stages" */
     delete_tournament_stages_by_pk?: (tournament_stagesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "tournament_team_invites" */
+    delete_tournament_team_invites?: (tournament_team_invites_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: tournament_team_invites_bool_exp} })
+    /** delete single row from the table: "tournament_team_invites" */
+    delete_tournament_team_invites_by_pk?: (tournament_team_invitesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "tournament_team_roster" */
     delete_tournament_team_roster?: (tournament_team_roster_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -16320,7 +16512,7 @@ export interface mutation_rootGenqlSelection{
     delete_v_pool_maps?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
     where: v_pool_maps_bool_exp} })
-    denyTeamInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid']} })
+    denyInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     forfeitMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** insert data into the table: "_map_pool" */
     insert__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
@@ -16910,6 +17102,18 @@ export interface mutation_rootGenqlSelection{
     object: tournament_stages_insert_input, 
     /** upsert condition */
     on_conflict?: (tournament_stages_on_conflict | null)} })
+    /** insert data into the table: "tournament_team_invites" */
+    insert_tournament_team_invites?: (tournament_team_invites_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: tournament_team_invites_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (tournament_team_invites_on_conflict | null)} })
+    /** insert a single row into the table: "tournament_team_invites" */
+    insert_tournament_team_invites_one?: (tournament_team_invitesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: tournament_team_invites_insert_input, 
+    /** upsert condition */
+    on_conflict?: (tournament_team_invites_on_conflict | null)} })
     /** insert data into the table: "tournament_team_roster" */
     insert_tournament_team_roster?: (tournament_team_roster_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -17784,6 +17988,24 @@ export interface mutation_rootGenqlSelection{
     update_tournament_stages_many?: (tournament_stages_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: tournament_stages_updates[]} })
+    /** update data of the table: "tournament_team_invites" */
+    update_tournament_team_invites?: (tournament_team_invites_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_team_invites_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_team_invites_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: tournament_team_invites_bool_exp} })
+    /** update single row of the table: "tournament_team_invites" */
+    update_tournament_team_invites_by_pk?: (tournament_team_invitesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_team_invites_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_team_invites_set_input | null), pk_columns: tournament_team_invites_pk_columns_input} })
+    /** update multiples rows of table: "tournament_team_invites" */
+    update_tournament_team_invites_many?: (tournament_team_invites_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: tournament_team_invites_updates[]} })
     /** update data of the table: "tournament_team_roster" */
     update_tournament_team_roster?: (tournament_team_roster_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -22197,6 +22419,32 @@ export interface query_rootGenqlSelection{
     where?: (tournament_stages_bool_exp | null)} })
     /** fetch data from the table: "tournament_stages" using primary key columns */
     tournament_stages_by_pk?: (tournament_stagesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "tournament_team_invites" */
+    tournament_team_invites?: (tournament_team_invitesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_team_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_team_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_team_invites" */
+    tournament_team_invites_aggregate?: (tournament_team_invites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_team_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_team_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
+    /** fetch data from the table: "tournament_team_invites" using primary key columns */
+    tournament_team_invites_by_pk?: (tournament_team_invitesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "tournament_team_roster" */
     tournament_team_roster?: (tournament_team_rosterGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -24540,6 +24788,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (tournament_stages_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (tournament_stages_bool_exp | null)} })
+    /** fetch data from the table: "tournament_team_invites" */
+    tournament_team_invites?: (tournament_team_invitesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_team_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_team_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_team_invites" */
+    tournament_team_invites_aggregate?: (tournament_team_invites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_team_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_team_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
+    /** fetch data from the table: "tournament_team_invites" using primary key columns */
+    tournament_team_invites_by_pk?: (tournament_team_invitesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "tournament_team_invites" */
+    tournament_team_invites_stream?: (tournament_team_invitesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (tournament_team_invites_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
     /** fetch data from the table: "tournament_team_roster" */
     tournament_team_roster?: (tournament_team_rosterGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -25399,6 +25681,8 @@ export interface teamsGenqlSelection{
     can_change_role?: boolean | number
     /** A computed field, executes function "can_invite_to_team" */
     can_invite?: boolean | number
+    /** A computed field, executes function "can_remove_from_team" */
+    can_remove?: boolean | number
     id?: boolean | number
     /** An array relationship */
     invites?: (team_invitesGenqlSelection & { __args?: {
@@ -25572,7 +25856,7 @@ export interface teams_avg_order_by {owner_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "teams". All fields are combined with a logical 'AND'. */
-export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),can_remove?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "teams" */
@@ -25635,7 +25919,7 @@ export interface teams_on_conflict {constraint: teams_constraint,update_columns?
 
 
 /** Ordering options when selecting data from "teams". */
-export interface teams_order_by {can_change_role?: (order_by | null),can_invite?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface teams_order_by {can_change_role?: (order_by | null),can_invite?: (order_by | null),can_remove?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: teams */
@@ -26581,6 +26865,260 @@ export interface tournament_stages_variance_fieldsGenqlSelection{
 export interface tournament_stages_variance_order_by {max_teams?: (order_by | null),min_teams?: (order_by | null),order?: (order_by | null)}
 
 
+/** columns and relationships of "tournament_team_invites" */
+export interface tournament_team_invitesGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    /** An object relationship */
+    invited_by?: playersGenqlSelection
+    invited_by_player_steam_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    steam_id?: boolean | number
+    /** An object relationship */
+    team?: tournament_teamsGenqlSelection
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "tournament_team_invites" */
+export interface tournament_team_invites_aggregateGenqlSelection{
+    aggregate?: tournament_team_invites_aggregate_fieldsGenqlSelection
+    nodes?: tournament_team_invitesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface tournament_team_invites_aggregate_bool_exp {count?: (tournament_team_invites_aggregate_bool_exp_count | null)}
+
+export interface tournament_team_invites_aggregate_bool_exp_count {arguments?: (tournament_team_invites_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_team_invites_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "tournament_team_invites" */
+export interface tournament_team_invites_aggregate_fieldsGenqlSelection{
+    avg?: tournament_team_invites_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (tournament_team_invites_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: tournament_team_invites_max_fieldsGenqlSelection
+    min?: tournament_team_invites_min_fieldsGenqlSelection
+    stddev?: tournament_team_invites_stddev_fieldsGenqlSelection
+    stddev_pop?: tournament_team_invites_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: tournament_team_invites_stddev_samp_fieldsGenqlSelection
+    sum?: tournament_team_invites_sum_fieldsGenqlSelection
+    var_pop?: tournament_team_invites_var_pop_fieldsGenqlSelection
+    var_samp?: tournament_team_invites_var_samp_fieldsGenqlSelection
+    variance?: tournament_team_invites_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "tournament_team_invites" */
+export interface tournament_team_invites_aggregate_order_by {avg?: (tournament_team_invites_avg_order_by | null),count?: (order_by | null),max?: (tournament_team_invites_max_order_by | null),min?: (tournament_team_invites_min_order_by | null),stddev?: (tournament_team_invites_stddev_order_by | null),stddev_pop?: (tournament_team_invites_stddev_pop_order_by | null),stddev_samp?: (tournament_team_invites_stddev_samp_order_by | null),sum?: (tournament_team_invites_sum_order_by | null),var_pop?: (tournament_team_invites_var_pop_order_by | null),var_samp?: (tournament_team_invites_var_samp_order_by | null),variance?: (tournament_team_invites_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "tournament_team_invites" */
+export interface tournament_team_invites_arr_rel_insert_input {data: tournament_team_invites_insert_input[],
+/** upsert condition */
+on_conflict?: (tournament_team_invites_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface tournament_team_invites_avg_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_avg_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "tournament_team_invites". All fields are combined with a logical 'AND'. */
+export interface tournament_team_invites_bool_exp {_and?: (tournament_team_invites_bool_exp[] | null),_not?: (tournament_team_invites_bool_exp | null),_or?: (tournament_team_invites_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invited_by?: (players_bool_exp | null),invited_by_player_steam_id?: (bigint_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "tournament_team_invites" */
+export interface tournament_team_invites_inc_input {invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "tournament_team_invites" */
+export interface tournament_team_invites_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by?: (players_obj_rel_insert_input | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface tournament_team_invites_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_max_order_by {created_at?: (order_by | null),id?: (order_by | null),invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface tournament_team_invites_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_min_order_by {created_at?: (order_by | null),id?: (order_by | null),invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "tournament_team_invites" */
+export interface tournament_team_invites_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: tournament_team_invitesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "tournament_team_invites" */
+export interface tournament_team_invites_on_conflict {constraint: tournament_team_invites_constraint,update_columns?: tournament_team_invites_update_column[],where?: (tournament_team_invites_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "tournament_team_invites". */
+export interface tournament_team_invites_order_by {created_at?: (order_by | null),id?: (order_by | null),invited_by?: (players_order_by | null),invited_by_player_steam_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** primary key columns input for table: tournament_team_invites */
+export interface tournament_team_invites_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "tournament_team_invites" */
+export interface tournament_team_invites_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface tournament_team_invites_stddev_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_stddev_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_team_invites_stddev_pop_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_stddev_pop_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_team_invites_stddev_samp_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_stddev_samp_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "tournament_team_invites" */
+export interface tournament_team_invites_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: tournament_team_invites_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface tournament_team_invites_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate sum on columns */
+export interface tournament_team_invites_sum_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_sum_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+export interface tournament_team_invites_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (tournament_team_invites_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (tournament_team_invites_set_input | null),
+/** filter the rows which have to be updated */
+where: tournament_team_invites_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface tournament_team_invites_var_pop_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_var_pop_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_team_invites_var_samp_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_var_samp_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface tournament_team_invites_variance_fieldsGenqlSelection{
+    invited_by_player_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "tournament_team_invites" */
+export interface tournament_team_invites_variance_order_by {invited_by_player_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
 /** columns and relationships of "tournament_team_roster" */
 export interface tournament_team_rosterGenqlSelection{
     /** An object relationship */
@@ -26826,10 +27364,36 @@ export interface tournament_team_roster_variance_order_by {player_steam_id?: (or
 
 /** columns and relationships of "tournament_teams" */
 export interface tournament_teamsGenqlSelection{
+    /** A computed field, executes function "can_manage_tournament_team" */
+    can_manage?: boolean | number
     /** An object relationship */
     creator?: playersGenqlSelection
     eligible_at?: boolean | number
     id?: boolean | number
+    /** An array relationship */
+    invites?: (tournament_team_invitesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_team_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_team_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
+    /** An aggregate relationship */
+    invites_aggregate?: (tournament_team_invites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_team_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_team_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_team_invites_bool_exp | null)} })
     name?: boolean | number
     owner_steam_id?: boolean | number
     /** An array relationship */
@@ -26923,7 +27487,7 @@ export interface tournament_teams_avg_order_by {owner_steam_id?: (order_by | nul
 
 
 /** Boolean expression to filter rows from the table "tournament_teams". All fields are combined with a logical 'AND'. */
-export interface tournament_teams_bool_exp {_and?: (tournament_teams_bool_exp[] | null),_not?: (tournament_teams_bool_exp | null),_or?: (tournament_teams_bool_exp[] | null),creator?: (players_bool_exp | null),eligible_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),owner_steam_id?: (bigint_comparison_exp | null),roster?: (tournament_team_roster_bool_exp | null),roster_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),seed?: (Int_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
+export interface tournament_teams_bool_exp {_and?: (tournament_teams_bool_exp[] | null),_not?: (tournament_teams_bool_exp | null),_or?: (tournament_teams_bool_exp[] | null),can_manage?: (Boolean_comparison_exp | null),creator?: (players_bool_exp | null),eligible_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (tournament_team_invites_bool_exp | null),invites_aggregate?: (tournament_team_invites_aggregate_bool_exp | null),name?: (String_comparison_exp | null),owner_steam_id?: (bigint_comparison_exp | null),roster?: (tournament_team_roster_bool_exp | null),roster_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),seed?: (Int_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_teams" */
@@ -26931,7 +27495,7 @@ export interface tournament_teams_inc_input {owner_steam_id?: (Scalars['bigint']
 
 
 /** input type for inserting data into table "tournament_teams" */
-export interface tournament_teams_insert_input {creator?: (players_obj_rel_insert_input | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),roster?: (tournament_team_roster_arr_rel_insert_input | null),seed?: (Scalars['Int'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_teams_insert_input {creator?: (players_obj_rel_insert_input | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invites?: (tournament_team_invites_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),roster?: (tournament_team_roster_arr_rel_insert_input | null),seed?: (Scalars['Int'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -26992,7 +27556,7 @@ export interface tournament_teams_on_conflict {constraint: tournament_teams_cons
 
 
 /** Ordering options when selecting data from "tournament_teams". */
-export interface tournament_teams_order_by {creator?: (players_order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),roster_aggregate?: (tournament_team_roster_aggregate_order_by | null),seed?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_teams_order_by {can_manage?: (order_by | null),creator?: (players_order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),invites_aggregate?: (tournament_team_invites_aggregate_order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),roster_aggregate?: (tournament_team_roster_aggregate_order_by | null),seed?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_teams */
@@ -32903,6 +33467,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const tournament_team_invites_possibleTypes: string[] = ['tournament_team_invites']
+    export const istournament_team_invites = (obj?: { __typename?: any } | null): obj is tournament_team_invites => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites"')
+      return tournament_team_invites_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_aggregate_possibleTypes: string[] = ['tournament_team_invites_aggregate']
+    export const istournament_team_invites_aggregate = (obj?: { __typename?: any } | null): obj is tournament_team_invites_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_aggregate"')
+      return tournament_team_invites_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_aggregate_fields_possibleTypes: string[] = ['tournament_team_invites_aggregate_fields']
+    export const istournament_team_invites_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_aggregate_fields"')
+      return tournament_team_invites_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_avg_fields_possibleTypes: string[] = ['tournament_team_invites_avg_fields']
+    export const istournament_team_invites_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_avg_fields"')
+      return tournament_team_invites_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_max_fields_possibleTypes: string[] = ['tournament_team_invites_max_fields']
+    export const istournament_team_invites_max_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_max_fields"')
+      return tournament_team_invites_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_min_fields_possibleTypes: string[] = ['tournament_team_invites_min_fields']
+    export const istournament_team_invites_min_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_min_fields"')
+      return tournament_team_invites_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_mutation_response_possibleTypes: string[] = ['tournament_team_invites_mutation_response']
+    export const istournament_team_invites_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_team_invites_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_mutation_response"')
+      return tournament_team_invites_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_stddev_fields_possibleTypes: string[] = ['tournament_team_invites_stddev_fields']
+    export const istournament_team_invites_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_stddev_fields"')
+      return tournament_team_invites_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_stddev_pop_fields_possibleTypes: string[] = ['tournament_team_invites_stddev_pop_fields']
+    export const istournament_team_invites_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_stddev_pop_fields"')
+      return tournament_team_invites_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_stddev_samp_fields_possibleTypes: string[] = ['tournament_team_invites_stddev_samp_fields']
+    export const istournament_team_invites_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_stddev_samp_fields"')
+      return tournament_team_invites_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_sum_fields_possibleTypes: string[] = ['tournament_team_invites_sum_fields']
+    export const istournament_team_invites_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_sum_fields"')
+      return tournament_team_invites_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_var_pop_fields_possibleTypes: string[] = ['tournament_team_invites_var_pop_fields']
+    export const istournament_team_invites_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_var_pop_fields"')
+      return tournament_team_invites_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_var_samp_fields_possibleTypes: string[] = ['tournament_team_invites_var_samp_fields']
+    export const istournament_team_invites_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_var_samp_fields"')
+      return tournament_team_invites_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_team_invites_variance_fields_possibleTypes: string[] = ['tournament_team_invites_variance_fields']
+    export const istournament_team_invites_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_team_invites_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_invites_variance_fields"')
+      return tournament_team_invites_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const tournament_team_roster_possibleTypes: string[] = ['tournament_team_roster']
     export const istournament_team_roster = (obj?: { __typename?: any } | null): obj is tournament_team_roster => {
       if (!obj?.__typename) throw new Error('__typename is missing in "istournament_team_roster"')
@@ -35214,8 +35890,8 @@ export const enumSettingsUpdateColumn = {
 }
 
 export const enumTeamInvitesConstraint = {
-   team_invites_id_key: 'team_invites_id_key' as const,
-   team_invites_pkey: 'team_invites_pkey' as const
+   team_invites_pkey: 'team_invites_pkey' as const,
+   team_invites_team_id_steam_id_key: 'team_invites_team_id_steam_id_key' as const
 }
 
 export const enumTeamInvitesSelectColumn = {
@@ -35334,6 +36010,27 @@ export const enumTournamentStagesUpdateColumn = {
    settings: 'settings' as const,
    tournament_id: 'tournament_id' as const,
    type: 'type' as const
+}
+
+export const enumTournamentTeamInvitesConstraint = {
+   tournament_team_invites_pkey: 'tournament_team_invites_pkey' as const,
+   tournament_team_invites_steam_id_tournament_team_id_key: 'tournament_team_invites_steam_id_tournament_team_id_key' as const
+}
+
+export const enumTournamentTeamInvitesSelectColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   invited_by_player_steam_id: 'invited_by_player_steam_id' as const,
+   steam_id: 'steam_id' as const,
+   tournament_team_id: 'tournament_team_id' as const
+}
+
+export const enumTournamentTeamInvitesUpdateColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   invited_by_player_steam_id: 'invited_by_player_steam_id' as const,
+   steam_id: 'steam_id' as const,
+   tournament_team_id: 'tournament_team_id' as const
 }
 
 export const enumTournamentTeamRosterConstraint = {

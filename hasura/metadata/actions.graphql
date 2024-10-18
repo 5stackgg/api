@@ -1,6 +1,7 @@
 type Mutation {
-  acceptTeamInvite(
+  acceptInvite(
     invite_id: uuid!
+    type: String!
   ): SuccessOutput
 }
 
@@ -23,8 +24,9 @@ type Mutation {
 }
 
 type Mutation {
-  denyTeamInvite(
+  denyInvite(
     invite_id: uuid!
+    type: String!
   ): SuccessOutput
 }
 

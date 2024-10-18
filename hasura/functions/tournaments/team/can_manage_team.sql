@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.can_change_tournament_team_role(tournament_team public.tournament_teams, hasura_session json) RETURNS BOOLEAN
+CREATE OR REPLACE FUNCTION public.can_manage_tournament_team(tournament_team public.tournament_teams, hasura_session json) RETURNS BOOLEAN
     LANGUAGE plpgsql STABLE
     AS $$
 BEGIN
