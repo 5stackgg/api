@@ -11,7 +11,7 @@ BEGIN
     FROM matches
     WHERE id = match_id;
 
-    IF  match.status != 'PickingPlayers' THEN
+    IF match_status != 'PickingPlayers' THEN
         RAISE EXCEPTION 'Match is not picking players' USING ERRCODE = '22000';
     END IF;
 
@@ -35,7 +35,6 @@ BEGIN
             ORDER BY rn) AS team_rn
         FROM randomized_players
     )
-    
     UPDATE match_lineup_players mlp
     SET 
         match_lineup_id = ta.new_lineup_id,
