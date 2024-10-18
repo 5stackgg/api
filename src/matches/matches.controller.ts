@@ -512,12 +512,12 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async callForOrganizer(data: { user: User; matchId: string }) {
+  public async callForOrganizer(data: { user: User; match_id: string }) {
     const { matches_by_pk: match } = await this.hasura.query(
       {
         matches_by_pk: {
           __args: {
-            id: data.matchId,
+            id: data.match_id,
           },
           is_in_lineup: true,
           requested_organizer: true,
