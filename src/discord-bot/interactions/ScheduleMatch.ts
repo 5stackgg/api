@@ -117,7 +117,7 @@ export default class ScheduleMatch extends DiscordInteraction {
     const usersInChannel = await this.getUsersInChannel(teamSelectionChannel);
 
     if (usersInChannel.length < ExpectedPlayers[matchType]) {
-      const notEnoughUsersMessage = `Not enough users for captain selection`;
+      const notEnoughUsersMessage = `Not enough players for ${matchType}`;
       if (interaction.replied) {
         await interaction.followUp({
           ephemeral: true,
