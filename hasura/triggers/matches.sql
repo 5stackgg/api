@@ -114,6 +114,9 @@ CREATE TRIGGER tau_matches AFTER UPDATE ON public.matches FOR EACH ROW EXECUTE F
 CREATE OR REPLACE FUNCTION public.tbu_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    has_map_veto BOOLEAN;
+    has_region_veto BOOLEAN;
 BEGIN
 
     IF (NEW.status = 'WaitingForServer' AND OLD.status = 'WaitingForServer') AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN
@@ -152,10 +155,17 @@ BEGIN
     END IF;
 
 
-    IF (OLD.status = 'Canceled' AND NEW.status != 'Canceled')  THEN
-        DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
-        DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
-        DELETE FROM match_maps WHERE match_id = NEW.id;
+    IF (OLD.status = 'Canceled' AND NEW.status != 'Canceled') THEN
+        SELECT map_veto, region_veto INTO has_map_veto, has_region_veto FROM match_options WHERE id = NEW.match_options_id;
+
+        IF has_region_veto THEN
+            DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
+        END IF;
+
+        IF has_map_veto THEN 
+            DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
+            DELETE FROM match_maps WHERE match_id = NEW.id;
+        END IF;
     END IF;
 
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
