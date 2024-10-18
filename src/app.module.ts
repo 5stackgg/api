@@ -52,6 +52,16 @@ import { SystemModule } from "./system/system.module";
       useFactory: async (redisManagerService: RedisManagerService) => {
         return {
           connection: redisManagerService.getConnection(),
+          defaultJobOptions: {
+            removeOnComplete: {
+              // 24 hours
+              age: 24 * 3600
+            },
+            removeOnFail: {
+              // 24 hours
+              age: 7 * 24 * 3600
+            }
+          }
         };
       },
     }),
