@@ -543,7 +543,7 @@ export class MatchesController {
       },
     );
 
-    const message = `Organaizer need for match <a href="${this.appConfig.webDomain}/matches/${data.matchId}">${data.matchId}</a>`;
+    const message = `Organaizer need for match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`;
     await this.hasura.mutation({
       insert_notifications_one: {
         __args: {
@@ -552,7 +552,7 @@ export class MatchesController {
             title: "Match Assistanced Required",
             role: "match_organizer",
             type: "MatchSupport",
-            entity_id: data.matchId,
+            entity_id: data.match_id,
           },
         },
         id: true,
