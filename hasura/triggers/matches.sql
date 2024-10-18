@@ -151,6 +151,13 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
+
+    IF (OLD.status = 'Canceled' AND NEW.status != 'Canceled')  THEN
+        DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
+        DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
+        DELETE FROM match_maps WHERE match_id = NEW.id;
+    END IF;
+
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
         NEW.started_at = NOW();
         NEW.cancels_at = NOW() + INTERVAL '1 day';
