@@ -239,7 +239,6 @@ export class DiscordPickPlayerService {
     matchId: string,
     lineupId: string,
     user: CachedDiscordUser,
-    captain = false,
   ) {
     const { players } = await this.hasura.query({
       players: {
@@ -260,7 +259,6 @@ export class DiscordPickPlayerService {
       insert_match_lineup_players_one: {
         __args: {
           object: {
-            captain,
             discord_id: user.id,
             match_lineup_id: lineupId,
             steam_id: player?.steam_id,
@@ -278,7 +276,7 @@ export class DiscordPickPlayerService {
     );
   }
 
-  private async startVeto(matchId: string) {
+  public async startVeto(matchId: string) {
     await this.cache.forget(this.getAvailableUsersCacheKey(matchId));
 
     await this.matchAssistant.updateMatchStatus(matchId, "Veto");

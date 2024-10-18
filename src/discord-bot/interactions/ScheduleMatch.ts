@@ -134,11 +134,6 @@ export default class ScheduleMatch extends DiscordInteraction {
       return;
     }
 
-    const { captain1, captain2 } = await this.getCaptains(
-      options,
-      usersInChannel,
-    );
-
     const match = await this.matchAssistant.createMatchBasedOnType(
       matchType,
       mapPoolType,
@@ -177,21 +172,48 @@ export default class ScheduleMatch extends DiscordInteraction {
       match,
     );
 
-    await this.discordPickPlayer.addDiscordUserToLineup(
-      matchId,
-      match.lineup_1_id,
-      captain1,
-      true,
-    );
+    if (options.captains) {
+      const { captain1, captain2 } = await this.getCaptains(
+        options,
+        usersInChannel,
+      );
 
-    await this.discordPickPlayer.addDiscordUserToLineup(
-      matchId,
-      match.lineup_2_id,
-      captain2,
-      true,
-    );
+      await this.discordPickPlayer.addDiscordUserToLineup(
+        matchId,
+        match.lineup_1_id,
+        captain1,
+      );
 
-    await this.discordPickPlayer.pickMember(matchId, match.lineup_1_id, 1);
+      await this.discordPickPlayer.addDiscordUserToLineup(
+        matchId,
+        match.lineup_2_id,
+        captain2,
+      );
+
+      await this.discordPickPlayer.pickMember(matchId, match.lineup_1_id, 1);
+
+      return;
+    }
+
+    const availableUsers = usersInChannel;
+    const shuffledUsers = availableUsers.sort(() => Math.random() - 0.5);
+
+    const playersPerTeam = matchType === "Wingman" ? 2 : 5;
+    for (let playerIndex = 0; playerIndex < playersPerTeam * 2; playerIndex++) {
+      if (playerIndex < shuffledUsers.length) {
+        const user = shuffledUsers[playerIndex];
+        const lineupId =
+          playerIndex < playersPerTeam ? match.lineup_1_id : match.lineup_2_id;
+
+        await this.discordPickPlayer.addDiscordUserToLineup(
+          matchId,
+          lineupId,
+          user,
+        );
+      }
+    }
+
+    await this.discordPickPlayer.startVeto(matchId);
   }
 
   private async getUsersInChannel(channel: GuildChannel) {
@@ -214,7 +236,7 @@ export default class ScheduleMatch extends DiscordInteraction {
       best_of: 1,
       knife: true,
       overtime: true,
-      captains: true,
+      captains: false,
     };
 
     for (const index in _options) {

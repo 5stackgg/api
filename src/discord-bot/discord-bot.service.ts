@@ -157,7 +157,9 @@ export class DiscordBotService {
       .addBooleanOption((option) =>
         option
           .setName("captains")
-          .setDescription("Captain Picks (default: true)"),
+          .setDescription(
+            "Captain Picks Player Lineups, otherwise will be random lineups (default: false)",
+          ),
       )
       .addUserOption((option) =>
         option.setName("captain-1").setDescription("Captain #1"),
