@@ -1,6 +1,6 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
-export default class PlayerEvent extends MatchEventProcessor<{
+export default class PlayerConnected extends MatchEventProcessor<{
   steam_id: string;
   player_name: string;
 }> {
@@ -20,5 +20,6 @@ export default class PlayerEvent extends MatchEventProcessor<{
         __typename: true,
       },
     });
+    await this.matchLobby.joinLobbyViaGame(this.matchId, this.data.steam_id);
   }
 }

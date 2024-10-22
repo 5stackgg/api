@@ -9,12 +9,16 @@ import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketCl
 @Injectable()
 export class MatchLobbyService {
   private redis: Redis;
+  /**
+   * TODO - put into redis ratehr than here because it wont scale
+   */
   private matches: Record<
     string,
     Map<
       string,
       {
         user: User;
+        inGame?: Boolean;
         sessions: Array<FiveStackWebSocketClient>;
       }
     >
@@ -58,30 +62,14 @@ export class MatchLobbyService {
       return;
     }
 
-    if (!this.matches[matchId]) {
-      this.matches[matchId] = new Map();
-    }
-
-    let userData = this.matches[matchId].get(client.user.steam_id);
-
-    if (!userData) {
-      userData = {
-        sessions: [],
-        user: client.user,
-      };
-      this.matches[matchId].set(client.user.steam_id, userData);
-    }
-
-    const { name, steam_id, avatar_url } = client.user;
+    const userData = this.addUserToMatch(matchId, client.user, false);
 
     if (userData.sessions.length === 0) {
       this.to(matchId, "lobby:joined", {
         user: {
-          name,
-          steam_id,
-          avatar_url,
+          ...userData.user,
+          inGame: userData.inGame,
         },
-        client,
       });
     }
 
@@ -96,9 +84,14 @@ export class MatchLobbyService {
         event: "lobby:list",
         data: {
           matchId: matchId,
-          lobby: Array.from(this.matches[matchId].values()).map(({ user }) => {
-            return user;
-          }),
+          lobby: Array.from(this.matches[matchId].values()).map(
+            ({ user, inGame }) => {
+              return {
+                inGame,
+                ...user,
+              };
+            },
+          ),
         },
       }),
     );
@@ -218,6 +211,17 @@ export class MatchLobbyService {
       return _client !== client;
     });
 
+    if (userData.inGame) {
+      this.to(matchId, "lobby:joined", {
+        user: {
+          ...userData.user,
+          inGame: userData.inGame,
+        },
+      });
+
+      return;
+    }
+
     if (userData.sessions.length === 0) {
       this.matches[matchId].delete(client.user.steam_id);
       this.to(matchId, "lobby:left", {
@@ -260,5 +264,77 @@ export class MatchLobbyService {
         error.message,
       );
     }
+  }
+
+  public async joinLobbyViaGame(matchId: string, steamId: string) {
+    const { players_by_pk: player } = await this.hasuraService.query({
+      players_by_pk: {
+        __args: {
+          steam_id: steamId,
+        },
+        name: true,
+        role: true,
+        steam_id: true,
+        avatar_url: true,
+        discord_id: true,
+      },
+    });
+
+    const userData = this.addUserToMatch(matchId, player, true);
+
+    this.to(matchId, "lobby:joined", {
+      user: {
+        ...userData.user,
+        inGame: userData.inGame,
+      },
+    });
+  }
+
+  public async leaveLobbyViaGame(matchId: string, steamId: string) {
+    const userData = this.matches[matchId].get(steamId);
+
+    if (userData) {
+      userData.inGame = false;
+    }
+
+    if (userData.sessions.length > 0) {
+      this.to(matchId, "lobby:joined", {
+        user: {
+          ...userData.user,
+          inGame: userData.inGame,
+        },
+      });
+      return;
+    }
+
+    this.matches[matchId].delete(steamId);
+
+    this.to(matchId, "lobby:left", {
+      user: {
+        steam_id: steamId,
+      },
+    });
+  }
+
+  private addUserToMatch(matchId: string, user: User, game: boolean) {
+    if (!this.matches[matchId]) {
+      this.matches[matchId] = new Map();
+    }
+
+    let userData = this.matches[matchId].get(user.steam_id);
+
+    if (!userData) {
+      userData = {
+        user,
+        sessions: [],
+      };
+      this.matches[matchId].set(user.steam_id, userData);
+    }
+
+    if (game) {
+      userData.inGame = true;
+    }
+
+    return userData;
   }
 }
