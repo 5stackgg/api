@@ -109,7 +109,7 @@ export class SocketsGateway {
       secret: this.appConfig.encSecret,
       cookie: getCookieOptions(),
       store: new RedisStore({
-        prefix: this.appConfig.name,
+        prefix: `${this.appConfig.name}:auth:`,
         client: this.redis,
       }),
       // @ts-ignore

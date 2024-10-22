@@ -71,7 +71,7 @@ async function bootstrap() {
       secret: appConfig.encSecret,
       cookie: getCookieOptions(),
       store: new RedisStore({
-        prefix: appConfig.name,
+        prefix: `${appConfig.name}:auth:`,
         client: redisManagerService.getConnection(),
       }),
     }),
