@@ -1,4 +1,8 @@
-import { ConnectedSocket, WebSocketGateway } from "@nestjs/websockets";
+import {
+  ConnectedSocket,
+  SubscribeMessage,
+  WebSocketGateway,
+} from "@nestjs/websockets";
 import { v4 as uuidv4 } from "uuid";
 import { Request } from "express";
 import session from "express-session";
@@ -21,10 +25,6 @@ export class SocketsGateway {
   private nodeId: string = process.env.POD_NAME;
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
 
-  public static GET_CLIENT_CLIENTS_LIST_KEY(steamId: string) {
-    return `ws-clients:${steamId}:clients`;
-  }
-
   public static GET_AVAILABLE_NODES_KEY() {
     return `available-socket-nodes`;
   }
@@ -33,20 +33,24 @@ export class SocketsGateway {
     return `socket-node:${nodeId}:status`;
   }
 
-  public static GET_NODE_CLIENTS_KEY(nodeId: string) {
-    return `socket-nodes:${nodeId}:clients`;
+  public static GET_PLAYER_KEY(steamId: string) {
+    return `players:${steamId}`;
   }
 
-  public static GET_CLIENT_NODE_KEY(clientId: string, nodeId: string) {
-    return `${clientId}:${nodeId}`;
+  public static GET_PLAYER_CLIENTS(steamId: string) {
+    return `clients:${steamId}`;
   }
 
-  public static GET_STEAM_CLIENT_KEY(steamId: string, clientId: string) {
-    return `${steamId}:${clientId}`;
+  public static GET_PLAYER_CLIENTS_BY_NODE(steamId: string, nodeId: string) {
+    return `${SocketsGateway.GET_PLAYER_CLIENTS(steamId)}:${nodeId}`;
   }
 
-  public static GET_USER_CONNECTIONS_KEY(steamId: string) {
-    return `user:${steamId}`;
+  public static GET_PLAYER_CLIENT(
+    steamId: string,
+    nodeId: string,
+    clientId: string,
+  ) {
+    return `${SocketsGateway.GET_PLAYER_CLIENTS_BY_NODE(steamId, nodeId)}:${clientId}`;
   }
 
   constructor(
@@ -79,6 +83,11 @@ export class SocketsGateway {
     });
 
     void this.setupNode();
+  }
+
+  @SubscribeMessage("ping")
+  public async handleMessage(client: FiveStackWebSocketClient): Promise<void> {
+    await this.updateClient(client.user.steam_id, client.id);
   }
 
   private async handleConnection(
@@ -117,50 +126,52 @@ export class SocketsGateway {
         client.user = request.user;
         client.node = this.nodeId;
 
-        await this.cleanClients(client.user.steam_id);
-
-        const nodeClientsKey = SocketsGateway.GET_NODE_CLIENTS_KEY(this.nodeId);
-        const clientKey = SocketsGateway.GET_CLIENT_CLIENTS_LIST_KEY(
-          client.user.steam_id,
-        );
-        const clientNodeKey = SocketsGateway.GET_CLIENT_NODE_KEY(
-          client.id,
-          this.nodeId,
-        );
-        const steamClientKey = SocketsGateway.GET_STEAM_CLIENT_KEY(
-          client.id,
-          client.user.steam_id,
-        );
-
-        await this.redis.sadd(clientKey, clientNodeKey);
-        await this.redis.sadd(nodeClientsKey, steamClientKey);
-
         this.clients.set(client.id, client);
+
+        await this.updateClient(client.user.steam_id, client.id);
 
         await this.sendPeopleOnline();
         await this.matchMaking.sendRegionStats(client.user);
         await this.matchMaking.sendQueueDetailsToUser(client.user.steam_id);
 
         client.on("close", async () => {
-          await this.redis.srem(clientKey, clientNodeKey);
-          await this.redis.srem(nodeClientsKey, steamClientKey);
+          await this.redis.del(
+            SocketsGateway.GET_PLAYER_CLIENT(
+              client.user.steam_id,
+              this.nodeId,
+              client.id,
+            ),
+          );
 
-          const clients = await this.redis.smembers(clientKey);
-
-          await this.cleanClients(client.user.steam_id);
+          const clients = await this.redis.keys(
+            `${SocketsGateway.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
+          );
 
           if (clients.length === 0) {
             await this.redis.del(
-              SocketsGateway.GET_USER_CONNECTIONS_KEY(client.user.steam_id),
+              SocketsGateway.GET_PLAYER_KEY(client.user.steam_id),
             );
+            await this.sendPeopleOnline();
           }
-
-          this.clients.delete(client.id);
-
-          await this.sendPeopleOnline();
         });
       });
     });
+  }
+
+  private async updateClient(steamId: string, clientId: string) {
+    await this.redis.set(
+      SocketsGateway.GET_PLAYER_KEY(steamId),
+      JSON.stringify({ lastSeen: Date.now() }),
+      "EX",
+      20,
+    );
+
+    await this.redis.set(
+      SocketsGateway.GET_PLAYER_CLIENT(steamId, this.nodeId, clientId),
+      "1",
+      "EX",
+      20,
+    );
   }
 
   private async broadcastMessage(event: string, data: unknown) {
@@ -179,11 +190,13 @@ export class SocketsGateway {
     event: string,
     data: unknown,
   ) {
-    const clients = await this.redis.smembers(
-      SocketsGateway.GET_CLIENT_CLIENTS_LIST_KEY(steamId),
+    const clients = await this.redis.keys(
+      `${SocketsGateway.GET_PLAYER_CLIENTS_BY_NODE(steamId, this.nodeId)}:*`,
     );
     for (const client of clients) {
-      const _client = await this.getClient(steamId, client);
+      const [, , clientId] = client.split(":");
+
+      const _client = this.getClient(clientId);
 
       if (!_client) {
         continue;
@@ -199,45 +212,27 @@ export class SocketsGateway {
   }
 
   public async sendPeopleOnline() {
-    const players = await this.redis.keys("user:*");
+    const players = await this.redis.keys("players:*");
 
     await this.redis.publish(
       `broadcast-message`,
       JSON.stringify({
         event: `players-online`,
-        data: players.map((player) => player.slice(5)),
+        data: players.map((player) => {
+          return player.slice(8);
+        }),
       }),
     );
   }
 
-  private async cleanClients(steamId: string) {
-    const clients = await this.redis.smembers(
-      SocketsGateway.GET_CLIENT_CLIENTS_LIST_KEY(steamId),
-    );
-    for (const client of clients) {
-      await this.getClient(steamId, client);
-    }
-  }
-
-  private async getClient(steamId: string, client: string) {
-    const [id, node] = client.split(":");
-
-    if (node !== this.nodeId) {
-      return;
-    }
-
-    const _client = this.clients.get(id);
+  private getClient(clientId: string) {
+    const _client = this.clients.get(clientId);
 
     if (_client) {
       return _client;
     }
 
-    if (!_client) {
-      await this.redis.srem(
-        SocketsGateway.GET_CLIENT_CLIENTS_LIST_KEY(steamId),
-        client,
-      );
-    }
+    this.clients.delete(clientId);
   }
 
   private async setupNode() {

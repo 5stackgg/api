@@ -28,8 +28,6 @@ export class DiscordBotController {
       },
     });
 
-    console.info(settings_by_pk);
-
     return response.redirect(
       302,
       settings_by_pk?.value
