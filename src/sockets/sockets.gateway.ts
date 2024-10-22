@@ -13,7 +13,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { MatchMakingService } from "../match-making/match-making.servcie";
+import { MatchMakingGateway } from "../match-making/match-making.gateway";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 
 @WebSocketGateway({
@@ -55,7 +55,7 @@ export class SocketsGateway {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly matchMaking: MatchMakingService,
+    private readonly matchMaking: MatchMakingGateway,
     private readonly redisManager: RedisManagerService,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -197,8 +197,9 @@ export class SocketsGateway {
     const clients = await this.redis.keys(
       `${SocketsGateway.GET_PLAYER_CLIENTS_BY_NODE(steamId, this.nodeId)}:*`,
     );
+
     for (const client of clients) {
-      const [, , clientId] = client.split(":");
+      const [, , , clientId] = client.split(":");
 
       const _client = this.getClient(clientId);
 

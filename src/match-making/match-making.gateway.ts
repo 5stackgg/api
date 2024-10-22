@@ -17,7 +17,7 @@ import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketCl
 @WebSocketGateway({
   path: "/ws/web",
 })
-export class MatchMakingService {
+export class MatchMakingGateway {
   private redis: Redis;
 
   constructor(
@@ -91,7 +91,7 @@ export class MatchMakingService {
      * setup the user queue details
      */
     await this.redis.hset(
-      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
+      MatchMakingGateway.MATCH_MAKING_USER_QUEUE_KEY(user.steam_id),
       "details",
       JSON.stringify({ type, regions, joinedAt: joinedAt.toISOString() }),
     );
@@ -102,7 +102,7 @@ export class MatchMakingService {
     for (const region of regions) {
       // TODO - and speicic maps or map pool id
       await this.redis.zadd(
-        MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+        MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
         joinedAt.getTime(),
         user.steam_id,
       );
@@ -118,7 +118,7 @@ export class MatchMakingService {
 
   private async getUserQueueDetails(steamId: string) {
     const data = await this.redis.hget(
-      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+      MatchMakingGateway.MATCH_MAKING_USER_QUEUE_KEY(steamId),
       "details",
     );
 
@@ -132,7 +132,7 @@ export class MatchMakingService {
 
     for (const region of details.regions) {
       const position = await this.redis.zrank(
-        MatchMakingService.MATCH_MAKING_QUEUE_KEY(details.type, region),
+        MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(details.type, region),
         steamId,
       );
 
@@ -149,7 +149,7 @@ export class MatchMakingService {
      * remove the user queue details
      */
     await this.redis.del(
-      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+      MatchMakingGateway.MATCH_MAKING_USER_QUEUE_KEY(steamId),
     );
   }
 
@@ -167,7 +167,7 @@ export class MatchMakingService {
      */
     for (const region of userQueueDetails.regions) {
       await this.redis.zrem(
-        MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+        MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
         steamId,
       );
     }
@@ -216,7 +216,7 @@ export class MatchMakingService {
      */
     if (
       await this.redis.hget(
-        MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+        MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
         `${user.steam_id}`,
       )
     ) {
@@ -227,7 +227,7 @@ export class MatchMakingService {
      * increment the number of players that have confirmed
      */
     await this.redis.hincrby(
-      MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+      MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       "confirmed",
       1,
     );
@@ -236,7 +236,7 @@ export class MatchMakingService {
      * set the user as confirmed
      */
     await this.redis.hset(
-      MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+      MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       `${user.steam_id}`,
       1,
     );
@@ -309,7 +309,7 @@ export class MatchMakingService {
      * add match id to the confirmation details
      */
     await this.redis.hset(
-      MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+      MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       "matchId",
       match.id,
     );
@@ -326,7 +326,7 @@ export class MatchMakingService {
     region: e_server_regions_enum,
   ) {
     return await this.redis.zcard(
-      MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+      MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
     );
   }
 
@@ -393,7 +393,7 @@ export class MatchMakingService {
   public async sendQueueDetailsToUser(steamId: string) {
     let confirmationDetails;
     const confirmationId = await this.redis.hget(
-      MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+      MatchMakingGateway.MATCH_MAKING_USER_QUEUE_KEY(steamId),
       "confirmationId",
     );
 
@@ -402,7 +402,7 @@ export class MatchMakingService {
         await this.getMatchConfirmationDetails(confirmationId);
 
       const isReady = await this.redis.hget(
-        MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+        MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
         steamId,
       );
 
@@ -436,7 +436,7 @@ export class MatchMakingService {
     region: e_server_regions_enum,
   ) {
     const steamIds = await this.redis.zrange(
-      MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+      MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
       0,
       -1,
     );
@@ -466,7 +466,7 @@ export class MatchMakingService {
     for (const steamId of players) {
       if (readyCheckFailed) {
         const wasReady = await this.redis.hget(
-          MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+          MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
           steamId,
         );
 
@@ -475,14 +475,14 @@ export class MatchMakingService {
            * if they wre ready, we want to requeue them into the queue
            */
           await this.redis.hdel(
-            MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+            MatchMakingGateway.MATCH_MAKING_USER_QUEUE_KEY(steamId),
             "confirmationId",
           );
 
           const { regions, joinedAt } = await this.getUserQueueDetails(steamId);
           for (const region of regions) {
             await this.redis.zadd(
-              MatchMakingService.MATCH_MAKING_QUEUE_KEY(type, region),
+              MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
               new Date(joinedAt).getTime(),
               steamId,
             );
@@ -502,7 +502,7 @@ export class MatchMakingService {
      * remove the confirmation details
      */
     await this.redis.del(
-      MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+      MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
     );
 
     await this.sendRegionStats();
@@ -550,7 +550,7 @@ export class MatchMakingService {
 
     const confirmationId = uuidv4();
 
-    const matchMakingQueueKey = MatchMakingService.MATCH_MAKING_QUEUE_KEY(
+    const matchMakingQueueKey = MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(
       type,
       region,
     );
@@ -567,7 +567,7 @@ export class MatchMakingService {
     expiresAt.setSeconds(expiresAt.getSeconds() + 30);
 
     await this.redis.hset(
-      MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+      MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       {
         type,
         region,
@@ -581,7 +581,7 @@ export class MatchMakingService {
      */
     for (const steamId of steamIds) {
       await this.redis.hset(
-        MatchMakingService.MATCH_MAKING_USER_QUEUE_KEY(steamId),
+        MatchMakingGateway.MATCH_MAKING_USER_QUEUE_KEY(steamId),
         "confirmationId",
         confirmationId,
       );
@@ -600,7 +600,7 @@ export class MatchMakingService {
   private async getMatchConfirmationDetails(confirmationId: string) {
     const { type, region, steamIds, confirmed, matchId, expiresAt } =
       await this.redis.hgetall(
-        MatchMakingService.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
+        MatchMakingGateway.MATCH_MAKING_CONFIRMATION_KEY(confirmationId),
       );
 
     return {

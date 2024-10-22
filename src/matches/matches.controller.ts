@@ -19,7 +19,7 @@ import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
 import fetch from "node-fetch";
 import TurndownService from "turndown";
-import { MatchMakingService } from "src/match-making/match-making.servcie";
+import { MatchMakingGateway } from "src/match-making/match-making.gateway";
 import { PostgresService } from "src/postgres/postgres.service";
 
 @Controller("matches")
@@ -31,7 +31,7 @@ export class MatchesController {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
-    private readonly matchMaking: MatchMakingService,
+    private readonly matchMaking: MatchMakingGateway,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,
