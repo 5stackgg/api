@@ -25,7 +25,7 @@ DECLARE
     _team_id uuid;
     _owner_steam_id bigint;
 BEGIN
-    IF current_setting('hasura.user')::jsonb ->> 'x-hasura-role' = 'admin' THEN
+    IF current_setting('hasura.user')::jsonb ->> 'x-hasura-role' IN ('admin', 'administrator', 'tournament_organizer') THEN
         RETURN NEW;
     END IF;
 

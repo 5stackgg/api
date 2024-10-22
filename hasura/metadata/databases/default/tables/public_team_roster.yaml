@@ -8,6 +8,21 @@ object_relationships:
   - name: team
     using:
       foreign_key_constraint_on: team_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        _or:
+          - team:
+              roster:
+                role:
+                  _in:
+                    - Admin
+                    - Invite
+      columns:
+        - player_steam_id
+        - team_id
+    comment: ""
 select_permissions:
   - role: user
     permission:

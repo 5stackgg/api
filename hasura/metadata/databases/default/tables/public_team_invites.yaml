@@ -11,27 +11,6 @@ object_relationships:
   - name: team
     using:
       foreign_key_constraint_on: team_id
-insert_permissions:
-  - role: user
-    permission:
-      check:
-        _and:
-          - team:
-              roster:
-                _and:
-                  - player_steam_id:
-                      _eq: X-Hasura-User-Id
-                  - _or:
-                      - role:
-                          _eq: Admin
-                      - role:
-                          _eq: Invite
-      set:
-        invited_by_player_steam_id: x-hasura-user-id
-      columns:
-        - steam_id
-        - team_id
-    comment: ""
 select_permissions:
   - role: user
     permission:
