@@ -35,34 +35,27 @@ export class SystemService {
     const services = await this.getServices();
     const latestVersions = await this.getLatestVersions();
 
-    /**
-     * This happens when we are dev-swapped
-     */
-    if (!services.api && services.hasura) {
-      services.hasura.service = "api";
-      services.api = services.hasura;
-    }
-
-    /**
-     * if our api or hasura is out of date we restart both of them together since they are using the same image
-     */
-    if (
-      services.api.version !== latestVersions.api ||
-      services.hasura.version !== latestVersions.hasura
-    ) {
-      services.api.version = "migrations";
-    }
+    const hasUpdates = [];
 
     for (const { service, version, pod } of Object.values(services)) {
+      const latestVersion = latestVersions[service];
+      if (version !== latestVersion) {
+        hasUpdates.push({
+          service,
+          pod,
+          currentVersion: version,
+          newVersion: latestVersion,
+        });
+      }
+    }
+
+    if (hasUpdates.length > 0) {
       await this.hasura.mutation({
         insert_settings_one: {
           __args: {
             object: {
-              name: service,
-              value: JSON.stringify({
-                current: version,
-                latest: latestVersions[service],
-              }),
+              name: "updates",
+              value: JSON.stringify(hasUpdates),
             },
             on_conflict: {
               constraint: "settings_pkey",
@@ -137,21 +130,19 @@ export class SystemService {
       );
     });
 
-    const services: Record<
-      string,
-      { pod: string; service: string; version: string }
-    > = {};
+    const services: Array<{ pod: string; service: string; version: string }> =
+      [];
 
     for (const pod of pods) {
       const service = pod.metadata.labels.app;
-      services[service] = {
+      services.push({
         pod: pod.metadata.name,
         service:
           service === "game-server-node-connector"
             ? "game-server-node"
             : service,
         version: await this.getServiceVersion(service, pod.metadata.name),
-      };
+      });
     }
 
     return services;
