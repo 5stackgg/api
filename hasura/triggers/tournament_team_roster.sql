@@ -23,16 +23,22 @@ CREATE OR REPLACE FUNCTION public.tbi_tournament_team_roster() RETURNS TRIGGER
     AS $$
 DECLARE
     _team_id uuid;
+    _owner_steam_id bigint;
 BEGIN
     IF current_setting('hasura.user')::jsonb ->> 'x-hasura-role' = 'admin' THEN
         RETURN NEW;
     END IF;
 
-    SELECT team_id INTO _team_id FROM tournament_teams WHERE id = NEW.tournament_team_id;
+    SELECT team_id, owner_steam_id INTO _team_id, _owner_steam_id FROM tournament_teams WHERE id = NEW.tournament_team_id;
 
     IF _team_id IS NULL THEN
+        IF _owner_steam_id = NEW.player_steam_id THEN 
+            NEW.role = 'Admin';
+            RETURN NEW;
+        END IF;
+
         INSERT INTO tournament_team_invites (tournament_team_id, steam_id, invited_by_player_steam_id)
-        VALUES (NEW.tournament_team_id, NEW.player_steam_id, (current_setting('hasura.user')::jsonb->>'x-hasura-user-id')::bigint);
+            VALUES (NEW.tournament_team_id, NEW.player_steam_id, (current_setting('hasura.user')::jsonb->>'x-hasura-user-id')::bigint);
 
         RETURN NULL;
     END IF;

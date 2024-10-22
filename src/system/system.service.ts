@@ -21,7 +21,7 @@ export class SystemService {
     const services = await this.getServices();
     const latestVersions = await this.getLatestVersions();
 
-    for (const { service, version, pod } of services) {
+    for (const { pod, service, version } of Object.values(services)) {
       if (version === latestVersions[service]) {
         continue;
       }
@@ -35,7 +35,25 @@ export class SystemService {
     const services = await this.getServices();
     const latestVersions = await this.getLatestVersions();
 
-    for (const { service, version, pod } of services) {
+    /**
+     * This happens when we are dev-swapped
+     */
+    if (!services.api && services.hasura) {
+      services.hasura.service = "api";
+      services.api = services.hasura;
+    }
+
+    /**
+     * if our api or hasura is out of date we restart both of them together since they are using the same image
+     */
+    if (
+      services.api.version !== latestVersions.api ||
+      services.hasura.version !== latestVersions.hasura
+    ) {
+      services.api.version = "migrations";
+    }
+
+    for (const { service, version, pod } of Object.values(services)) {
       await this.hasura.mutation({
         insert_settings_one: {
           __args: {
@@ -97,6 +115,8 @@ export class SystemService {
       latestVersions[data.service] = data.latestVersion;
     }
 
+    latestVersions.hasura = latestVersions.api;
+
     return latestVersions;
   }
 
@@ -107,38 +127,50 @@ export class SystemService {
   public async getServices() {
     const { body } = await this.apiClient.listNamespacedPod("5stack");
 
-    const services = body.items.filter((pod) => {
+    const pods = body.items.filter((pod) => {
       if (pod.metadata.labels.codepier) {
         return false;
       }
 
-      return ["api", "web", "game-server-node-connector"].includes(
+      return ["api", "web", "game-server-node-connector", "hasura"].includes(
         pod.metadata.labels.app,
       );
     });
 
-    return Promise.all(
-      services.map(async (pod) => {
-        return {
-          pod: pod.metadata.name,
-          service:
-            pod.metadata.labels.app === "game-server-node-connector"
-              ? "game-server-node"
-              : pod.metadata.labels.app,
-          version: await this.getServiceVersion(pod.metadata.name),
-        };
-      }),
-    );
+    const services: Record<
+      string,
+      { pod: string; service: string; version: string }
+    > = {};
+
+    for (const pod of pods) {
+      const service = pod.metadata.labels.app;
+      services[service] = {
+        pod: pod.metadata.name,
+        service:
+          service === "game-server-node-connector"
+            ? "game-server-node"
+            : service,
+        version: await this.getServiceVersion(service, pod.metadata.name),
+      };
+    }
+
+    return services;
   }
 
-  private async getServiceVersion(podName: string) {
+  private async getServiceVersion(service: string, podName: string) {
     try {
       const { body } = await this.apiClient.readNamespacedPod(
         podName,
         "5stack",
       );
-      const imageID = body.status.containerStatuses[0].imageID;
-      return imageID.split("@")[1];
+
+      return (
+        service === "hasura"
+          ? body.status.initContainerStatuses.at(0).imageID
+          : body.status.containerStatuses.at(0).imageID
+      )
+        .split("@")
+        .at(1);
     } catch (error) {
       console.error(`Error fetching pod info: ${error.message}`);
     }
