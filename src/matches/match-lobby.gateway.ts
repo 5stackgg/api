@@ -21,6 +21,10 @@ export class MatchLobbyGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    if (!client.user) {
+      return;
+    }
+
     await this.matchLobby.joinMatchLobby(client, data.matchId);
   }
 
@@ -32,6 +36,10 @@ export class MatchLobbyGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    if (!client.user) {
+      return;
+    }
+
     this.matchLobby.removeFromLobby(data.matchId, client);
   }
 

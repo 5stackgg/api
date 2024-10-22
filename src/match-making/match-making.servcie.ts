@@ -53,13 +53,17 @@ export class MatchMakingService {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    const user = client.user;
+
+    if (!user) {
+      return;
+    }
+
     const { type, regions } = data;
 
     if (!type || !regions || regions.length === 0) {
       return;
     }
-
-    const user = client.user;
 
     const existingUserInQueue = await this.getUserQueueDetails(user.steam_id);
 
@@ -173,6 +177,10 @@ export class MatchMakingService {
   async leaveQueue(@ConnectedSocket() client: FiveStackWebSocketClient) {
     const user = client.user;
 
+    if (!user) {
+      return;
+    }
+
     const userQueueDetails = await this.getUserQueueDetails(user.steam_id);
 
     const type = userQueueDetails.type;
@@ -196,6 +204,11 @@ export class MatchMakingService {
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
     const user = client.user;
+
+    if (!user) {
+      return;
+    }
+
     const { confirmationId } = data;
 
     /**

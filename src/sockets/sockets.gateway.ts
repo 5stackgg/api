@@ -87,6 +87,10 @@ export class SocketsGateway {
 
   @SubscribeMessage("ping")
   public async handleMessage(client: FiveStackWebSocketClient): Promise<void> {
+    if (!client.user) {
+      return;
+    }
+
     await this.updateClient(client.user.steam_id, client.id);
   }
 
