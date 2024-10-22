@@ -49,23 +49,21 @@ export class SystemService {
       }
     }
 
-    if (hasUpdates.length > 0) {
-      await this.hasura.mutation({
-        insert_settings_one: {
-          __args: {
-            object: {
-              name: "updates",
-              value: JSON.stringify(hasUpdates),
-            },
-            on_conflict: {
-              constraint: "settings_pkey",
-              update_columns: ["value"],
-            },
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: "updates",
+            value: JSON.stringify(hasUpdates),
           },
-          __typename: true,
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
         },
-      });
-    }
+        __typename: true,
+      },
+    });
   }
 
   public async getLatestVersions(): Promise<Record<string, string>> {
