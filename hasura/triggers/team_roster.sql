@@ -6,15 +6,14 @@ DECLARE
 BEGIN
     NEW.role = 'Member';
 
-   IF current_setting('hasura.user')::jsonb ->> 'x-hasura-role' IN ('admin', 'administrator') THEN
-        RETURN NEW;
-    END IF;
-
-
     SELECT owner_steam_id INTO _owner_steam_id FROM teams WHERE id = NEW.team_id;
 
     IF _owner_steam_id = NEW.player_steam_id THEN 
         NEW.role = 'Admin';
+        RETURN NEW;
+    END IF;
+
+   IF current_setting('hasura.user')::jsonb ->> 'x-hasura-role' IN ('admin', 'administrator') THEN
         RETURN NEW;
     END IF;
 
