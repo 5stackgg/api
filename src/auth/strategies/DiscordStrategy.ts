@@ -18,7 +18,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
 
     super({
       passReqToCallback: true,
-      clientID: discordService.clientId,
+      clientID: discordService.clientId || "dev",
       clientSecret: discordService.clientSecret,
       callbackURL: `${
         config.get<AppConfig>("app").webDomain
