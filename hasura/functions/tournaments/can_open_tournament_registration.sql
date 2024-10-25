@@ -9,7 +9,11 @@ DECLARE
     has_stages boolean;
 BEGIN
     IF tournament.status != 'Setup' AND tournament.status != 'RegistrationClosed' AND tournament.status != 'Cancelled' AND tournament.status != 'CancelledMinTeams' THEN
-        return false;
+        RETURN false;
+    END IF;
+
+    IF tournament.start > now() THEN
+        RETURN false;
     END IF;
 
     SELECT EXISTS (
