@@ -11,7 +11,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private config: ConfigService,
+    config: ConfigService,
     private readonly hasura: HasuraService,
   ) {
     const discordService = config.get<DiscordConfig>("discord");
