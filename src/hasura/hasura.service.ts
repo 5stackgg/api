@@ -200,7 +200,7 @@ export class HasuraService {
       const sql = fs.readFileSync(filePath, "utf8");
 
       const digest = this.calcSqlDigest(sql);
-      const setting = path.basename(filePath.replace(".sql", ""));
+      const setting = path.relative(process.cwd(), filePath.replace(".sql", ""));
 
       if (digest === (await this.getSetting(setting))) {
         return;
