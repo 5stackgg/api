@@ -9,6 +9,7 @@ export class DiscordBotController {
   @Get("/discord-bot")
   public async bot(@Req() request: Request, @Res() response: Response) {
     // https://discordapi.com/permissions.html
+    // https://discordlookup.com/permissions-calculator/326434581584
     const permissions = `326434581584`;
 
     return response.redirect(

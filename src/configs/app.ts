@@ -11,6 +11,6 @@ export default (): {
     webDomain: `https://${process.env.WEB_DOMAIN}`,
     apiDomain: `https://${process.env.API_DOMAIN}`,
     demosDomain: `https://${process.env.DEMOS_DOMAIN}`,
-    authCookieDomain: process.env.AUTH_COOKIE_DOMAIN,
+    authCookieDomain: process.env.AUTH_COOKIE_DOMAIN || `.${process.env.WEB_DOMAIN}`,
   },
 });
