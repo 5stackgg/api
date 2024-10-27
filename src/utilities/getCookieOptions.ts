@@ -32,7 +32,7 @@ export function getCookieOptions(
      */
     sameSite: process.env.DEV ? "none" : undefined,
     httpOnly: true,
-    domain: process.env.AUTH_COOKIE_DOMAIN,
+    domain: process.env.AUTH_COOKIE_DOMAIN || `.${process.env.WEB_DOMAIN}`,
     maxAge: 14 * 24 * 60 * 60 * 1000,
     secure: true,
   },

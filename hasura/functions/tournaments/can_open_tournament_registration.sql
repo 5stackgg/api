@@ -12,7 +12,7 @@ BEGIN
         RETURN false;
     END IF;
 
-    IF tournament.start > now() THEN
+    IF tournament.start < now() THEN
         RETURN false;
     END IF;
 
