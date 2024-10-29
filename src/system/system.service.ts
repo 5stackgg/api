@@ -83,7 +83,7 @@ export class SystemService {
             {
               headers: {
                 Authorization: `Bearer ${token}`,
-                Accept: "application/vnd.oci.image.index.v1+json"
+                Accept: "application/vnd.oci.image.index.v1+json",
               },
             },
           );
