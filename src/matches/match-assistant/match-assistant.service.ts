@@ -677,6 +677,12 @@ export class MatchAssistantService {
     );
   }
 
+  public async restartServer(serverId: string) {
+    this.logger.log(`[${serverId}] restarting server`);
+    const rcon = await this.rcon.connect(serverId);
+    await rcon.send("sv_cheats 1; quit");
+  }
+
   public async stopOnDemandServer(matchId: string, serverId: string) {
     this.logger.debug(`[${matchId}] stopping match server`);
 

@@ -157,7 +157,20 @@ export class MatchesController {
         return;
       }
 
-      await this.matchAssistant.stopOnDemandServer(matchId, serverId);
+      const { servers_by_pk: server } = await this.hasura.query({
+        servers_by_pk: {
+          __args: {
+            id: serverId,
+          },
+          is_dedicated: true,
+        },
+      });
+
+      if (server.is_dedicated) {
+        await this.matchAssistant.restartServer(serverId);
+      } else {
+        await this.matchAssistant.stopOnDemandServer(matchId, serverId);
+      }
 
       await this.hasura.mutation({
         update_matches_by_pk: {
