@@ -33,7 +33,10 @@ import { HasuraModule } from "src/hasura/hasura.module";
   controllers: [SystemController],
 })
 export class SystemModule {
-  constructor(@InjectQueue(SystemQueues.Version) private queue: Queue) {
+  constructor(
+    @InjectQueue(SystemQueues.Version) private queue: Queue,
+    private readonly systemService: SystemService,
+  ) {
     void queue.add(
       CheckSystemUpdateJob.name,
       {},
@@ -43,5 +46,7 @@ export class SystemModule {
         },
       },
     );
+
+    void systemService.detectFeatures();
   }
 }

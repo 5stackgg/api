@@ -3,6 +3,9 @@ import { Injectable } from "@nestjs/common";
 import { CacheService } from "src/cache/cache.service";
 import { CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
+import { ConfigService } from "@nestjs/config";
+import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
+import { DiscordConfig } from "src/configs/types/DiscordConfig";
 
 @Injectable()
 export class SystemService {
@@ -11,10 +14,67 @@ export class SystemService {
   constructor(
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
+    private readonly config: ConfigService,
   ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     this.apiClient = kc.makeApiClient(CoreV1Api);
+  }
+
+  public async detectFeatures() {
+    const tailscaleConfig = this.config.get<TailscaleConfig>("tailscale");
+
+    let supportsGameServerNodes = false;
+    if (
+      tailscaleConfig.key &&
+      tailscaleConfig.secret &&
+      tailscaleConfig.netName
+    ) {
+      supportsGameServerNodes = true;
+    }
+
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: "public.supports_game_server_nodes",
+            value: supportsGameServerNodes.toString(),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    const discordConfig = this.config.get<DiscordConfig>("discord");
+
+    let supportsDiscordBot = false;
+    if (
+      discordConfig.clientId &&
+      discordConfig.clientSecret &&
+      discordConfig.token
+    ) {
+      supportsDiscordBot = true;
+    }
+
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: "public.supports_discord_dot",
+            value: supportsDiscordBot.toString(),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   public async updateServices() {
