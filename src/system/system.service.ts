@@ -64,7 +64,7 @@ export class SystemService {
       insert_settings_one: {
         __args: {
           object: {
-            name: "public.supports_discord_dot",
+            name: "public.supports_discord_bot",
             value: supportsDiscordBot.toString(),
           },
           on_conflict: {
