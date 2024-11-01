@@ -14,6 +14,7 @@ import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "./configs/types/RedisConfig";
 import { AppConfig } from "./configs/types/AppConfig";
 import { HasuraService } from "./hasura/hasura.service";
+import { SystemService } from "./system/system.service";
 
 async function bootstrap() {
   // TODO - handle clustering, but need to move web sockets to redis
@@ -58,7 +59,10 @@ async function bootstrap() {
     return true;
   });
 
+  const systemService = app.get(SystemService);
   const redisManagerService = app.get(RedisManagerService);
+
+  await systemService.detectFeatures();
 
   const appConfig = configService.get<AppConfig>("app");
 

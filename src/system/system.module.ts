@@ -46,7 +46,5 @@ export class SystemModule {
         },
       },
     );
-
-    void systemService.detectFeatures();
   }
 }
