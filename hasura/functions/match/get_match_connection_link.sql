@@ -34,7 +34,7 @@ BEGIN
         return NULL;
     END IF;
 
-    connection_string := CONCAT('steam://connect/', server_host, ':', server_port, ';password/', password);
+    connection_string := CONCAT('steam://connect/', server_host, ':', server_port, ';password ', password);
 
     RETURN CONCAT('/quick-connect?link=', connection_string);
 END;

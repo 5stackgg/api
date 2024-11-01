@@ -34,6 +34,6 @@ BEGIN
         return NULL;
     END IF;
 
-    return CONCAT('connect ', server_host, ':', server_port, ';password', password);
+    return CONCAT('connect ', server_host, ':', server_port, ';password ', password);
 END;
 $$;
