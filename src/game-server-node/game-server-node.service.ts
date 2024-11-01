@@ -288,11 +288,18 @@ export class GameServerNodeService {
 
     const k8sApi = kc.makeApiClient(CoreV1Api);
 
+    let existingPV;
     try {
-      const existingPV = await k8sApi.readPersistentVolume(
+      existingPV = await k8sApi.readPersistentVolume(
         `${name}-${gameServerNodeId}`,
       );
-      if (!existingPV.body) {
+    } catch (error) {
+      if (error?.response?.statusCode !== 404) {
+        throw error;
+      }
+    }
+    if (!existingPV) {
+      try {
         await k8sApi.createPersistentVolume({
           apiVersion: "v1",
           kind: "PersistentVolume",
@@ -327,22 +334,29 @@ export class GameServerNodeService {
           },
         });
         this.logger.log(`Created PersistentVolume ${name}-${gameServerNodeId}`);
+      } catch (error) {
+        this.logger.error(
+          `Error creating volume ${name}-${gameServerNodeId}`,
+          error?.response?.body?.message || error,
+        );
+        throw error;
       }
-    } catch (error) {
-      this.logger.error(
-        `Error creating volume ${name}-${gameServerNodeId}`,
-        error?.response?.body?.message || error,
-      );
-      throw error;
     }
 
+    let existingClaim;
     try {
-      const existingClaim = await k8sApi.readNamespacedPersistentVolumeClaim(
+      existingClaim = await k8sApi.readNamespacedPersistentVolumeClaim(
         `${name}-${gameServerNodeId}-claim`,
         this.namespace,
       );
+    } catch (error) {
+      if (error?.response?.statusCode !== 404) {
+        throw error;
+      }
+    }
 
-      if (!existingClaim.body) {
+    if (!existingClaim) {
+      try {
         await k8sApi.createNamespacedPersistentVolumeClaim(this.namespace, {
           apiVersion: "v1",
           kind: "PersistentVolumeClaim",
@@ -364,13 +378,13 @@ export class GameServerNodeService {
         this.logger.log(
           `Created PersistentVolumeClaim ${name}-${gameServerNodeId}-claim`,
         );
+      } catch (error) {
+        this.logger.error(
+          `Error creating claim ${name}-${gameServerNodeId}`,
+          error?.response?.body?.message || error,
+        );
+        throw error;
       }
-    } catch (error) {
-      this.logger.error(
-        `Error creating claim ${name}-${gameServerNodeId}`,
-        error?.response?.body?.message || error,
-      );
-      throw error;
     }
   }
 }
