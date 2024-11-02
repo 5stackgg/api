@@ -12,6 +12,7 @@ import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../configs/types/GameServersConfig";
 import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
+import { LoggingServiceService } from "./logging-service/logging-service.service";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -24,6 +25,7 @@ export class GameServerNodeController {
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
     protected readonly tailscale: TailscaleService,
+    protected readonly loggingService: LoggingServiceService,
     protected readonly gameServerNodeService: GameServerNodeService,
     @InjectQueue(GameServerQueues.GameUpdate) private queue: Queue,
   ) {

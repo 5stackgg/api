@@ -11,11 +11,14 @@ import { CheckSystemUpdateJob } from "./jobs/CheckSystemUpdateJob";
 import { Queue } from "bullmq";
 import { CacheModule } from "src/cache/cache.module";
 import { HasuraModule } from "src/hasura/hasura.module";
+import { SystemGateway } from "./system.gateway.ts";
+import { GameServerNodeModule } from "src/game-server-node/game-server-node.module";
 
 @Module({
   imports: [
     CacheModule,
     HasuraModule,
+    GameServerNodeModule,
     BullModule.registerQueue({
       name: SystemQueues.Version,
     }),
@@ -25,6 +28,7 @@ import { HasuraModule } from "src/hasura/hasura.module";
     }),
   ],
   providers: [
+    SystemGateway,
     SystemService,
     CheckSystemUpdateJob,
     ...getQueuesProcessors("System"),

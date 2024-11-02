@@ -16,6 +16,7 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
 import { MarkGameServerOffline } from "./jobs/MarkGameServerOffline";
+import { LoggingServiceService } from "./logging-service/logging-service.service";
 
 @Module({
   providers: [
@@ -26,6 +27,7 @@ import { MarkGameServerOffline } from "./jobs/MarkGameServerOffline";
     MarkGameServerOffline,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
+    LoggingServiceService,
   ],
   imports: [
     TailscaleModule,
@@ -50,6 +52,7 @@ import { MarkGameServerOffline } from "./jobs/MarkGameServerOffline";
       },
     ),
   ],
+  exports: [LoggingServiceService],
   controllers: [GameServerNodeController],
 })
 export class GameServerNodeModule {
