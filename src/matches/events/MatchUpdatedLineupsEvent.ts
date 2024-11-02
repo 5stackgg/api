@@ -29,20 +29,17 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
       for (const player of this.data.lineups[
         lineup as keyof typeof this.data.lineups
       ]) {
-        players.push({
-          discord_id: player.name,
-          captain: player.captain,
-          steam_id: player.steam_id !== "0" ? player.steam_id : undefined,
-          // this shouldn't really happen, but it happens in DEV
-          placeholder_name:
-            player.steam_id === "0" ? `BOT - ${player.name}` : undefined,
-          match_lineup_id:
-            lineup === "lineup_1" ? match.lineup_1_id : match.lineup_2_id,
-        });
-
         if (player.steam_id === "0") {
           continue;
         }
+
+        players.push({
+          discord_id: player.name,
+          captain: player.captain,
+          steam_id: player.steam_id,
+          match_lineup_id:
+            lineup === "lineup_1" ? match.lineup_1_id : match.lineup_2_id,
+        });
 
         // add player to the system
         await this.hasura.mutation({
@@ -61,6 +58,12 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
           },
         });
       }
+    }
+
+    if (match.options.type === "Competitive" && players.length < 10) {
+      return;
+    } else if (match.options.type === "Wingman" && players.length < 2) {
+      return;
     }
 
     // remove anyone not in the match
