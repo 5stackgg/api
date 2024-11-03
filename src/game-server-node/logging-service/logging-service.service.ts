@@ -91,7 +91,6 @@ export class LoggingServiceService {
         }
       });
 
-      let first = true;
       logStream.on("data", (chunk: Buffer) => {
         if (archive) {
           return;
@@ -103,20 +102,25 @@ export class LoggingServiceService {
           return;
         }
 
-        if (first) {
-          text = `[${pod.spec.nodeName}|${container.name}]${text}`;
-          first = false;
-        }
+        for (let log of text.split(/\n/)) {
+          const timestampMatch = log.match(
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z/,
+          );
+          const timestamp = timestampMatch ? timestampMatch[0] : "";
+          log = log.replace(
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/,
+            "",
+          );
 
-        stream.write(
-          text
-            .replace(
-              /\r?\n/g,
-              `\n${`[${pod.spec.nodeName}|${container.name}] `}`,
-            )
-            // remove ansi colors
-            .replace(/(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]/g, ""),
-        );
+          stream.write(
+            JSON.stringify({
+              node: pod.spec.nodeName,
+              container: container.name,
+              timestamp,
+              log,
+            }),
+          );
+        }
       });
 
       if (archive) {

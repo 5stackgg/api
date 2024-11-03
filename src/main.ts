@@ -19,7 +19,9 @@ import { SystemService } from "./system/system.service";
 /**
  * Increase the max listeners, based on load we may need to increase this
  */
-require('events').EventEmitter.defaultMaxListeners = Number(process.env.NODE_MAX_LISTENERS || "100");
+require("events").EventEmitter.defaultMaxListeners = Number(
+  process.env.NODE_MAX_LISTENERS || "100",
+);
 
 async function bootstrap() {
   // TODO - handle clustering, but need to move web sockets to redis
