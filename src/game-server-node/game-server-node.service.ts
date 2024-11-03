@@ -418,7 +418,6 @@ export class GameServerNodeService {
   }
 
   public async captureNodeStats(nodeId: string, stats: NodeStats) {
-    const oneHour = 3600;
     const baseKey = `node-stats:${nodeId}`;
 
     await this.redis.lpush(
@@ -430,7 +429,9 @@ export class GameServerNodeService {
         used: (BigInt(stats.metrics.usage.memory.replace('Ki', '')) * BigInt(1024)).toString(),
       })
     );
-    await this.redis.expire(`${baseKey}:memory`, oneHour);
+    
+    await this.redis.ltrim(`${baseKey}:memory`, 0, 3600);
+    await this.redis.ltrim(`${baseKey}:cpu`, 0, 3600);
 
     await this.redis.lpush(
       `${baseKey}:cpu`,
@@ -441,7 +442,6 @@ export class GameServerNodeService {
         used: BigInt(stats.metrics.usage.cpu.replace("n", "")).toString(),
       })
     );
-    await this.redis.expire(`${baseKey}:cpu`, oneHour);
   }   
 
   public async capturePodStats(nodeId: string, pods: Array<PodStats>) {
@@ -462,6 +462,7 @@ export class GameServerNodeService {
           value: totalMemory.toString(),
         })
       );
+      
       await this.redis.expire(`${baseKey}:memory`, oneHour);
 
       await this.redis.lpush(
@@ -471,7 +472,9 @@ export class GameServerNodeService {
           value: totalCpu.toString(),
         })
       );
-      await this.redis.expire(`${baseKey}:cpu`, oneHour);
+
+      await this.redis.ltrim(`${baseKey}:cpu`, 0, 3600);
+      await this.redis.ltrim(`${baseKey}:memory`, 0, 3600);
     }
   }
 }
