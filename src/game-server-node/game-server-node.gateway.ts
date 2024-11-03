@@ -7,6 +7,8 @@ import { GameServerQueues } from "./enums/GameServerQueues";
 import { GameServerNodeService } from "./game-server-node.service";
 import { SubscribeMessage, WebSocketGateway } from "@nestjs/websockets";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
+import { NodeStats } from "./jobs/NodeStats";
+import { PodStats } from "./jobs/PodStats";
 
 @WebSocketGateway(5586, {
   path: "/ws",
@@ -27,6 +29,8 @@ export class GameServerNodeGateway {
       lanIP: string;
       publicIP: string;
       csBuild: number;
+      nodeStats: NodeStats,
+      podStats: Array<PodStats>;
       labels: Record<string, string>;
     },
   ): Promise<void> {
@@ -41,6 +45,14 @@ export class GameServerNodeGateway {
       payload.csBuild,
       "Online",
     );
+
+    if(payload.nodeStats) { 
+      await this.gameServerNodeService.captureNodeStats(payload.node, payload.nodeStats);
+    }
+
+    if(payload.podStats) {
+      await this.gameServerNodeService.capturePodStats(payload.node, payload.podStats);
+    }
 
     const jobId = `node:${payload.node}`;
     await this.queue.remove(jobId);

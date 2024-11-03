@@ -17,6 +17,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
 import { MarkGameServerOffline } from "./jobs/MarkGameServerOffline";
 import { LoggingServiceService } from "./logging-service/logging-service.service";
+import { RedisModule } from "src/redis/redis.module";
 
 @Module({
   providers: [
@@ -30,6 +31,7 @@ import { LoggingServiceService } from "./logging-service/logging-service.service
     LoggingServiceService,
   ],
   imports: [
+    RedisModule,
     TailscaleModule,
     HasuraModule,
     CacheModule,

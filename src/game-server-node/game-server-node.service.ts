@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
 import {
@@ -10,21 +9,26 @@ import {
 } from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
-
+import { NodeStats } from "./jobs/NodeStats";
+import { PodStats } from "./jobs/PodStats";
+import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { Redis } from "ioredis";
 @Injectable()
 export class GameServerNodeService {
+  private redis: Redis; 
   private readonly namespace: string;
   private gameServerConfig: GameServersConfig;
 
   constructor(
     protected readonly logger: Logger,
-    protected readonly cache: CacheService,
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
+    redisManager: RedisManagerService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
 
     this.namespace = this.gameServerConfig.namespace;
+    this.redis = redisManager.getConnection();
   }
 
   public async create(
@@ -385,6 +389,89 @@ export class GameServerNodeService {
         );
         throw error;
       }
+    }
+  }
+
+  public async getNodeStats() {
+    const keys = await this.redis.keys('node-stats:*:cpu');
+    const nodeIds = keys.map(key => key.split(':')[1]);
+    
+    const nodes = await Promise.all(nodeIds.map(async (nodeId) => {
+      const cpuStats = await this.redis.lrange(`node-stats:${nodeId}:cpu`, 0, -1);
+      const memoryStats = await this.redis.lrange(`node-stats:${nodeId}:memory`, 0, -1);
+
+      return {
+        node: nodeId,
+        cpu: cpuStats.map(stat => JSON.parse(stat)).reverse(),
+        memory: memoryStats.map(stat => JSON.parse(stat)).reverse()
+      };
+    }));
+
+    return nodes;
+  }
+  
+  public async getPodStats(nodeId: string, podName: string) {
+    const baseKey = `pod-stats:${nodeId}:${podName}`;
+    const cpu = await this.redis.get(`${baseKey}:cpu`);
+    const memory = await this.redis.get(`${baseKey}:memory`);
+    return { cpu, memory };
+  }
+
+  public async captureNodeStats(nodeId: string, stats: NodeStats) {
+    const oneHour = 3600;
+    const baseKey = `node-stats:${nodeId}`;
+
+    await this.redis.lpush(
+      `${baseKey}:memory`,
+      JSON.stringify({
+        time: new Date(),
+        total: (BigInt(stats.memoryCapacity.replace('Ki', '')) * BigInt(1024)).toString(),
+        available: (BigInt(stats.memoryAllocatable.replace('Ki', '')) * BigInt(1024)).toString(),
+        used: (BigInt(stats.metrics.usage.memory.replace('Ki', '')) * BigInt(1024)).toString(),
+      })
+    );
+    await this.redis.expire(`${baseKey}:memory`, oneHour);
+
+    await this.redis.lpush(
+      `${baseKey}:cpu`,
+      JSON.stringify({
+        time: new Date(),
+        total: parseInt(stats.cpuCapacity),
+        available: parseInt(stats.cpuAllocatable),
+        used: BigInt(stats.metrics.usage.cpu.replace("n", "")).toString(),
+      })
+    );
+    await this.redis.expire(`${baseKey}:cpu`, oneHour);
+  }   
+
+  public async capturePodStats(nodeId: string, pods: Array<PodStats>) {
+    for(const pod of pods) {
+      let totalCpu = BigInt(0);
+      let totalMemory = BigInt(0);
+      for(const container of pod.metrics.containers) {
+        totalMemory += BigInt(container.usage.memory.replace('Ki', '')) * BigInt(1024);
+        totalCpu += container.usage.cpu ? BigInt(container.usage.cpu.replace('n', '')) : BigInt(0);
+      }
+      const oneHour = 3600;
+      const baseKey = `pod-stats:${nodeId}:${pod.name}`;
+
+      await this.redis.lpush(
+        `${baseKey}:memory`,
+        JSON.stringify({
+          time: new Date(),
+          value: totalMemory.toString(),
+        })
+      );
+      await this.redis.expire(`${baseKey}:memory`, oneHour);
+
+      await this.redis.lpush(
+        `${baseKey}:cpu`, 
+        JSON.stringify({
+          time: new Date(),
+          value: totalCpu.toString(),
+        })
+      );
+      await this.redis.expire(`${baseKey}:cpu`, oneHour);
     }
   }
 }

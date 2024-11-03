@@ -37,6 +37,10 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Query {
+  getNodeStats: [NodeStats]!
+}
+
 type Mutation {
   joinLineup(
     match_id: String!
@@ -135,5 +139,25 @@ type SetupGameServeOutput {
 
 type SampleOutput {
   accessToken: String!
+}
+
+type CpuStat {
+  time: timestamp
+  available: bigint
+  used: bigint
+  total: bigint
+}
+
+type MemoryStat {
+  time: timestamp
+  available: bigint
+  used: bigint
+  total: bigint
+}
+
+type NodeStats {
+  node: String!
+  cpu: CpuStat
+  memory: MemoryStat
 }
 

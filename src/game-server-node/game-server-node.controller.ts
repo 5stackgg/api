@@ -97,6 +97,16 @@ export class GameServerNodeController {
     response.end();
   }
 
+  @HasuraAction() 
+  public async getNodeStats() {
+    return await this.gameServerNodeService.getNodeStats();
+  }
+
+  @HasuraAction() 
+  public async getPodStats(data: { nodeId: string, podName: string }) {
+    // return this.gameServerNodeService.gegettNodeStats(data.nodeId);
+  }
+
   @HasuraAction()
   public async setupGameServer(data: { user: User }) {
     const gameServer = await this.gameServerNodeService.create(
