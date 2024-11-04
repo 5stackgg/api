@@ -29,7 +29,7 @@ export class GameServerNodeGateway {
       lanIP: string;
       publicIP: string;
       csBuild: number;
-      nodeStats: NodeStats,
+      nodeStats: NodeStats;
       podStats: Array<PodStats>;
       labels: Record<string, string>;
     },
@@ -46,12 +46,18 @@ export class GameServerNodeGateway {
       "Online",
     );
 
-    if(payload.nodeStats) { 
-      await this.gameServerNodeService.captureNodeStats(payload.node, payload.nodeStats);
-    }
+    if (payload.nodeStats && payload.podStats) {
+      await this.gameServerNodeService.captureNodeStats(
+        payload.node,
+        payload.nodeStats,
+      );
 
-    if(payload.podStats) {
-      await this.gameServerNodeService.capturePodStats(payload.node, payload.podStats);
+      await this.gameServerNodeService.capturePodStats(
+        payload.node,
+        payload.nodeStats.cpuCapacity,
+        payload.nodeStats.memoryCapacity,
+        payload.podStats,
+      );
     }
 
     const jobId = `node:${payload.node}`;

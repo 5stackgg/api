@@ -14,8 +14,17 @@ export type Scalars = {
     json: any,
     jsonb: any,
     numeric: any,
+    timestamp: any,
     timestamptz: any,
     uuid: any,
+}
+
+export interface CpuStat {
+    available: (Scalars['bigint'] | null)
+    time: (Scalars['timestamp'] | null)
+    total: (Scalars['bigint'] | null)
+    used: (Scalars['bigint'] | null)
+    __typename: 'CpuStat'
 }
 
 export interface MeResponse {
@@ -28,6 +37,29 @@ export interface MeResponse {
     role: Scalars['String']
     steam_id: Scalars['String']
     __typename: 'MeResponse'
+}
+
+export interface MemoryStat {
+    available: (Scalars['bigint'] | null)
+    time: (Scalars['timestamp'] | null)
+    total: (Scalars['bigint'] | null)
+    used: (Scalars['bigint'] | null)
+    __typename: 'MemoryStat'
+}
+
+export interface NodeStats {
+    cpu: (CpuStat | null)
+    memory: (MemoryStat | null)
+    node: Scalars['String']
+    __typename: 'NodeStats'
+}
+
+export interface PodStats {
+    cpu: (CpuStat | null)
+    memory: (MemoryStat | null)
+    name: Scalars['String']
+    node: Scalars['String']
+    __typename: 'PodStats'
 }
 
 export interface SetupGameServeOutput {
@@ -6236,6 +6268,8 @@ export interface query_root {
     game_server_nodes_aggregate: game_server_nodes_aggregate
     /** fetch data from the table: "game_server_nodes" using primary key columns */
     game_server_nodes_by_pk: (game_server_nodes | null)
+    getNodeStats: (NodeStats | null)[]
+    getServiceStats: (PodStats | null)[]
     /** fetch data from the table: "map_pools" */
     map_pools: map_pools[]
     /** fetch aggregated fields from the table: "map_pools" */
@@ -6652,7 +6686,7 @@ export interface servers_variance_fields {
 /** columns and relationships of "settings" */
 export interface settings {
     name: Scalars['String']
-    value: Scalars['String']
+    value: (Scalars['String'] | null)
     __typename: 'settings'
 }
 
@@ -9741,6 +9775,15 @@ export type Subscription = subscription_root
 /** Boolean expression to compare columns of type "Boolean". All fields are combined with logical 'AND'. */
 export interface Boolean_comparison_exp {_eq?: (Scalars['Boolean'] | null),_gt?: (Scalars['Boolean'] | null),_gte?: (Scalars['Boolean'] | null),_in?: (Scalars['Boolean'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Boolean'] | null),_lte?: (Scalars['Boolean'] | null),_neq?: (Scalars['Boolean'] | null),_nin?: (Scalars['Boolean'][] | null)}
 
+export interface CpuStatGenqlSelection{
+    available?: boolean | number
+    time?: boolean | number
+    total?: boolean | number
+    used?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 
 /** Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'. */
 export interface Int_comparison_exp {_eq?: (Scalars['Int'] | null),_gt?: (Scalars['Int'] | null),_gte?: (Scalars['Int'] | null),_in?: (Scalars['Int'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Int'] | null),_lte?: (Scalars['Int'] | null),_neq?: (Scalars['Int'] | null),_nin?: (Scalars['Int'][] | null)}
@@ -9754,6 +9797,32 @@ export interface MeResponseGenqlSelection{
     profile_url?: boolean | number
     role?: boolean | number
     steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface MemoryStatGenqlSelection{
+    available?: boolean | number
+    time?: boolean | number
+    total?: boolean | number
+    used?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NodeStatsGenqlSelection{
+    cpu?: CpuStatGenqlSelection
+    memory?: MemoryStatGenqlSelection
+    node?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface PodStatsGenqlSelection{
+    cpu?: CpuStatGenqlSelection
+    memory?: MemoryStatGenqlSelection
+    name?: boolean | number
+    node?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -21663,6 +21732,8 @@ export interface query_rootGenqlSelection{
     where?: (game_server_nodes_bool_exp | null)} })
     /** fetch data from the table: "game_server_nodes" using primary key columns */
     game_server_nodes_by_pk?: (game_server_nodesGenqlSelection & { __args: {id: Scalars['String']} })
+    getNodeStats?: NodeStatsGenqlSelection
+    getServiceStats?: PodStatsGenqlSelection
     /** fetch data from the table: "map_pools" */
     map_pools?: (map_poolsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -29403,10 +29474,42 @@ export type MutationGenqlSelection = mutation_rootGenqlSelection
 export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
 
 
+    const CpuStat_possibleTypes: string[] = ['CpuStat']
+    export const isCpuStat = (obj?: { __typename?: any } | null): obj is CpuStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isCpuStat"')
+      return CpuStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const MeResponse_possibleTypes: string[] = ['MeResponse']
     export const isMeResponse = (obj?: { __typename?: any } | null): obj is MeResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isMeResponse"')
       return MeResponse_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const MemoryStat_possibleTypes: string[] = ['MemoryStat']
+    export const isMemoryStat = (obj?: { __typename?: any } | null): obj is MemoryStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isMemoryStat"')
+      return MemoryStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NodeStats_possibleTypes: string[] = ['NodeStats']
+    export const isNodeStats = (obj?: { __typename?: any } | null): obj is NodeStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNodeStats"')
+      return NodeStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const PodStats_possibleTypes: string[] = ['PodStats']
+    export const isPodStats = (obj?: { __typename?: any } | null): obj is PodStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isPodStats"')
+      return PodStats_possibleTypes.includes(obj.__typename)
     }
     
 

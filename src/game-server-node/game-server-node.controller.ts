@@ -97,14 +97,14 @@ export class GameServerNodeController {
     response.end();
   }
 
-  @HasuraAction() 
+  @HasuraAction()
   public async getNodeStats() {
     return await this.gameServerNodeService.getNodeStats();
   }
 
-  @HasuraAction() 
-  public async getPodStats(data: { nodeId: string, podName: string }) {
-    // return this.gameServerNodeService.gegettNodeStats(data.nodeId);
+  @HasuraAction()
+  public async getServiceStats() {
+    return await this.gameServerNodeService.getAllPodStats();
   }
 
   @HasuraAction()

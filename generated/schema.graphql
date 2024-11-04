@@ -28,6 +28,13 @@ input Boolean_comparison_exp {
   _nin: [Boolean!]
 }
 
+type CpuStat {
+  available: bigint
+  time: timestamp
+  total: bigint
+  used: bigint
+}
+
 """
 Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'.
 """
@@ -52,6 +59,26 @@ type MeResponse {
   profile_url: String
   role: String!
   steam_id: String!
+}
+
+type MemoryStat {
+  available: bigint
+  time: timestamp
+  total: bigint
+  used: bigint
+}
+
+type NodeStats {
+  cpu: CpuStat
+  memory: MemoryStat
+  node: String!
+}
+
+type PodStats {
+  cpu: CpuStat
+  memory: MemoryStat
+  name: String!
+  node: String!
 }
 
 type SetupGameServeOutput {
@@ -21961,6 +21988,8 @@ type query_root {
   fetch data from the table: "game_server_nodes" using primary key columns
   """
   game_server_nodes_by_pk(id: String!): game_server_nodes
+  getNodeStats: [NodeStats]!
+  getServiceStats: [PodStats]!
 
   """
   fetch data from the table: "map_pools"
@@ -24261,7 +24290,7 @@ columns and relationships of "settings"
 """
 type settings {
   name: String!
-  value: String!
+  value: String
 }
 
 """
@@ -29159,6 +29188,8 @@ order by variance() on columns of table "teams"
 input teams_variance_order_by {
   owner_steam_id: order_by
 }
+
+scalar timestamp
 
 scalar timestamptz
 

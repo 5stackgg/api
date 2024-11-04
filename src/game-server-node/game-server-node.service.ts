@@ -15,8 +15,9 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { Redis } from "ioredis";
 @Injectable()
 export class GameServerNodeService {
-  private redis: Redis; 
+  private redis: Redis;
   private readonly namespace: string;
+  private maxStatsHistory: number = 60 * 3;
   private gameServerConfig: GameServersConfig;
 
   constructor(
@@ -393,23 +394,70 @@ export class GameServerNodeService {
   }
 
   public async getNodeStats() {
-    const keys = await this.redis.keys('node-stats:*:cpu');
-    const nodeIds = keys.map(key => key.split(':')[1]);
-    
-    const nodes = await Promise.all(nodeIds.map(async (nodeId) => {
-      const cpuStats = await this.redis.lrange(`node-stats:${nodeId}:cpu`, 0, -1);
-      const memoryStats = await this.redis.lrange(`node-stats:${nodeId}:memory`, 0, -1);
+    const nodes = await this.redis.smembers("stat-nodes");
 
-      return {
-        node: nodeId,
-        cpu: cpuStats.map(stat => JSON.parse(stat)).reverse(),
-        memory: memoryStats.map(stat => JSON.parse(stat)).reverse()
-      };
-    }));
+    return await Promise.all(
+      nodes.map(async (node) => {
+        const cpuStats = await this.redis.lrange(
+          `node-stats:${node}:cpu`,
+          0,
+          -1,
+        );
+        const memoryStats = await this.redis.lrange(
+          `node-stats:${node}:memory`,
+          0,
+          -1,
+        );
 
-    return nodes;
+        return {
+          node,
+          cpu: cpuStats.map((stat) => JSON.parse(stat)).reverse(),
+          memory: memoryStats.map((stat) => JSON.parse(stat)).reverse(),
+        };
+      }),
+    );
   }
-  
+
+  public async getAllPodStats() {
+    const nodes = await this.redis.smembers("stat-nodes");
+    const services = await this.redis.smembers("stat-services");
+
+    return (
+      await Promise.all(
+        nodes.map(async (node) => {
+          return (
+            await Promise.all(
+              services.map(async (service) => {
+                const cpuStats = await this.redis.lrange(
+                  `pod-stats:${node}:${service}:cpu`,
+                  0,
+                  -1,
+                );
+
+                const memoryStats = await this.redis.lrange(
+                  `pod-stats:${node}:${service}:memory`,
+                  0,
+                  -1,
+                );
+
+                if (cpuStats.length === 0 || memoryStats.length === 0) {
+                  return;
+                }
+
+                return {
+                  node: node,
+                  name: service,
+                  cpu: cpuStats.map((stat) => JSON.parse(stat)).reverse(),
+                  memory: memoryStats.map((stat) => JSON.parse(stat)).reverse(),
+                };
+              }),
+            )
+          ).filter(Boolean);
+        }),
+      )
+    ).flat();
+  }
+
   public async getPodStats(nodeId: string, podName: string) {
     const baseKey = `pod-stats:${nodeId}:${podName}`;
     const cpu = await this.redis.get(`${baseKey}:cpu`);
@@ -420,37 +468,52 @@ export class GameServerNodeService {
   public async captureNodeStats(nodeId: string, stats: NodeStats) {
     const baseKey = `node-stats:${nodeId}`;
 
+    await this.redis.sadd("stat-nodes", nodeId);
+
     await this.redis.lpush(
       `${baseKey}:memory`,
       JSON.stringify({
         time: new Date(),
-        total: (BigInt(stats.memoryCapacity.replace('Ki', '')) * BigInt(1024)).toString(),
-        available: (BigInt(stats.memoryAllocatable.replace('Ki', '')) * BigInt(1024)).toString(),
-        used: (BigInt(stats.metrics.usage.memory.replace('Ki', '')) * BigInt(1024)).toString(),
-      })
+        total: (
+          BigInt(stats.memoryCapacity.replace("Ki", "")) * BigInt(1024)
+        ).toString(),
+        used: (
+          BigInt(stats.metrics.usage.memory.replace("Ki", "")) * BigInt(1024)
+        ).toString(),
+      }),
     );
-    
-    await this.redis.ltrim(`${baseKey}:memory`, 0, 3600);
-    await this.redis.ltrim(`${baseKey}:cpu`, 0, 3600);
+
+    await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
+    await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
 
     await this.redis.lpush(
       `${baseKey}:cpu`,
       JSON.stringify({
         time: new Date(),
-        total: parseInt(stats.cpuCapacity),
-        available: parseInt(stats.cpuAllocatable),
+        total: stats.cpuCapacity,
+        window: stats.metrics.window,
         used: BigInt(stats.metrics.usage.cpu.replace("n", "")).toString(),
-      })
+      }),
     );
-  }   
+  }
 
-  public async capturePodStats(nodeId: string, pods: Array<PodStats>) {
-    for(const pod of pods) {
+  public async capturePodStats(
+    nodeId: string,
+    cpuCount: number,
+    memoryCapacity: string,
+    pods: Array<PodStats>,
+  ) {
+    for (const pod of pods) {
+      await this.redis.sadd("stat-services", pod.name);
+
       let totalCpu = BigInt(0);
       let totalMemory = BigInt(0);
-      for(const container of pod.metrics.containers) {
-        totalMemory += BigInt(container.usage.memory.replace('Ki', '')) * BigInt(1024);
-        totalCpu += container.usage.cpu ? BigInt(container.usage.cpu.replace('n', '')) : BigInt(0);
+      for (const container of pod.metrics.containers) {
+        totalMemory +=
+          BigInt(container.usage.memory.replace("Ki", "")) * BigInt(1024);
+        totalCpu += container.usage.cpu
+          ? BigInt(container.usage.cpu.replace("n", ""))
+          : BigInt(0);
       }
       const oneHour = 3600;
       const baseKey = `pod-stats:${nodeId}:${pod.name}`;
@@ -459,22 +522,27 @@ export class GameServerNodeService {
         `${baseKey}:memory`,
         JSON.stringify({
           time: new Date(),
-          value: totalMemory.toString(),
-        })
+          used: totalMemory.toString(),
+          total: (
+            BigInt(memoryCapacity.replace("Ki", "")) * BigInt(1024)
+          ).toString(),
+        }),
       );
-      
+
       await this.redis.expire(`${baseKey}:memory`, oneHour);
 
       await this.redis.lpush(
-        `${baseKey}:cpu`, 
+        `${baseKey}:cpu`,
         JSON.stringify({
           time: new Date(),
-          value: totalCpu.toString(),
-        })
+          used: totalCpu.toString(),
+          total: cpuCount.toString(),
+          window: pod.metrics.window,
+        }),
       );
 
-      await this.redis.ltrim(`${baseKey}:cpu`, 0, 3600);
-      await this.redis.ltrim(`${baseKey}:memory`, 0, 3600);
+      await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
+      await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
     }
   }
 }
