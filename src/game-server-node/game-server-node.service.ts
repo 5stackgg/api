@@ -474,11 +474,11 @@ export class GameServerNodeService {
       `${baseKey}:memory`,
       JSON.stringify({
         time: new Date(),
-        total: (
-          BigInt(stats.memoryCapacity.replace("Ki", "")) * BigInt(1024)
+        total: this.convertMemoryFromTypeToBytes(
+          stats.memoryCapacity,
         ).toString(),
-        used: (
-          BigInt(stats.metrics.usage.memory.replace("Ki", "")) * BigInt(1024)
+        used: this.convertMemoryFromTypeToBytes(
+          stats.metrics.usage.memory,
         ).toString(),
       }),
     );
@@ -509,8 +509,9 @@ export class GameServerNodeService {
       let totalCpu = BigInt(0);
       let totalMemory = BigInt(0);
       for (const container of pod.metrics.containers) {
-        totalMemory +=
-          BigInt(container.usage.memory.replace("Ki", "")) * BigInt(1024);
+        totalMemory += this.convertMemoryFromTypeToBytes(
+          container.usage.memory,
+        );
         totalCpu += container.usage.cpu
           ? BigInt(container.usage.cpu.replace("n", ""))
           : BigInt(0);
@@ -523,9 +524,7 @@ export class GameServerNodeService {
         JSON.stringify({
           time: new Date(),
           used: totalMemory.toString(),
-          total: (
-            BigInt(memoryCapacity.replace("Ki", "")) * BigInt(1024)
-          ).toString(),
+          total: this.convertMemoryFromTypeToBytes(memoryCapacity).toString(),
         }),
       );
 
@@ -544,5 +543,19 @@ export class GameServerNodeService {
       await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
       await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
     }
+  }
+
+  private convertMemoryFromTypeToBytes(memory: string): bigint {
+    if (memory.endsWith("Ki")) {
+      return BigInt(memory.replace("Ki", "")) * BigInt(1024);
+    }
+
+    if (memory.endsWith("Mi")) {
+      return BigInt(memory.replace("Mi", "")) * BigInt(1024) * BigInt(1024);
+    }
+
+    this.logger.error(`Unknown memory type ${memory}`);
+
+    return BigInt(0);
   }
 }
