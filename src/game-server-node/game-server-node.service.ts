@@ -491,7 +491,7 @@ export class GameServerNodeService {
       JSON.stringify({
         time: new Date(),
         total: stats.cpuCapacity,
-        window: stats.metrics.window,
+        window: parseFloat(stats.metrics.window),
         used: BigInt(stats.metrics.usage.cpu.replace("n", "")).toString(),
       }),
     );
@@ -536,8 +536,8 @@ export class GameServerNodeService {
         JSON.stringify({
           time: new Date(),
           used: totalCpu.toString(),
-          total: cpuCount.toString(),
-          window: pod.metrics.window,
+          total: cpuCount,
+          window: parseFloat(pod.metrics.window),
         }),
       );
 
