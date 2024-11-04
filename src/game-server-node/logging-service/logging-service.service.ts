@@ -137,7 +137,7 @@ export class LoggingServiceService {
         container.name,
         logStream,
         {
-          tailLines: 1000,
+          tailLines: 250,
           previous,
           pretty: false,
           timestamps: true,
