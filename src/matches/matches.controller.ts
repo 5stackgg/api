@@ -152,7 +152,7 @@ export class MatchesController {
   public async match_events(data: HasuraEventData<matches_set_input>) {
     const matchId = (data.new.id || data.old.id) as string;
 
-    const status = data.new.status || data.old.status;
+    const status = data.new.status;
 
     /**
      * Match was canceled or finished
