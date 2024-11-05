@@ -1,5 +1,5 @@
-import { Controller, Get, Logger, Req } from "@nestjs/common";
-import { Request } from "express";
+import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
+import { Request, Response } from "express";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
@@ -41,7 +41,10 @@ export class MatchesController {
   }
 
   @Get("current-match/:serverId")
-  public async getMatchDetails(@Req() request: Request) {
+  public async getMatchDetails(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
     const serverId = request.params.serverId;
 
     const { servers_by_pk: server } = await this.hasura.query({
@@ -61,7 +64,8 @@ export class MatchesController {
         serverId,
         ip: request.headers["cf-connecting-ip"],
       });
-      throw Error("unable to find match");
+      response.status(409);
+      return;
     }
 
     const { matches_by_pk } = await this.hasura.query({
@@ -138,8 +142,9 @@ export class MatchesController {
     ) {
       throw Error("match has been canceled");
     }
+    const data = JSON.parse(safeJsonStringify(matches_by_pk));
 
-    return JSON.parse(safeJsonStringify(matches_by_pk));
+    response.status(200).json(data);
   }
 
   @HasuraEvent()

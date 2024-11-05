@@ -512,9 +512,18 @@ export class GameServerNodeService {
         totalMemory += this.convertMemoryFromTypeToBytes(
           container.usage.memory,
         );
-        totalCpu += container.usage.cpu
-          ? BigInt(container.usage.cpu.replace("n", ""))
-          : BigInt(0);
+
+        let cpuUsage = BigInt(0);
+
+        if (container.usage.cpu?.includes("u")) {
+          cpuUsage = BigInt(container.usage.cpu.replace("u", ""));
+        }
+
+        if (container.usage.cpu?.includes("n")) {
+          cpuUsage = BigInt(container.usage.cpu.replace("n", ""));
+        }
+
+        totalCpu += cpuUsage;
       }
       const oneHour = 3600;
       const baseKey = `pod-stats:${nodeId}:${pod.name}`;

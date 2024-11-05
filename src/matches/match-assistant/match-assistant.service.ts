@@ -486,9 +486,14 @@ export class MatchAssistantService {
                         name: `demos-${gameServerNodeId}`,
                         mountPath: "/opt/demos",
                       },
+                      {
+                        name: `custom-plugins-${gameServerNodeId}`,
+                        mountPath: "/opt/custom-plugins",
+                      },
                     ],
                   },
                 ],
+                // TODO - mabye we should use host paths, why do we want volumes?
                 volumes: [
                   {
                     name: `steamcmd-${gameServerNodeId}`,
@@ -506,6 +511,12 @@ export class MatchAssistantService {
                     name: `demos-${gameServerNodeId}`,
                     persistentVolumeClaim: {
                       claimName: `demos-${gameServerNodeId}-claim`,
+                    },
+                  },
+                  {
+                    name: `custom-plugins-${gameServerNodeId}`,
+                    hostPath: {
+                      path: `/opt/5stack/custom-plugins`,
                     },
                   },
                 ],
