@@ -140,7 +140,8 @@ export class MatchesController {
       matches_by_pk.status === "Forfeit" ||
       matches_by_pk.status === "Finished"
     ) {
-      throw Error("match has been canceled");
+      response.status(409);
+      return;
     }
     const data = JSON.parse(safeJsonStringify(matches_by_pk));
 
