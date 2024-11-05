@@ -688,10 +688,24 @@ export class MatchAssistantService {
     );
   }
 
-  public async restartServer(serverId: string) {
+  public async restartDedicatedServer(serverId: string) {
     this.logger.log(`[${serverId}] restarting server`);
     const rcon = await this.rcon.connect(serverId);
     await rcon.send("sv_cheats 1; quit");
+
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: {
+            id: serverId,
+          },
+          _set: {
+            reserved_by_match_id: null,
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   public async stopOnDemandServer(matchId: string, serverId: string) {

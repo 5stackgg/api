@@ -94,7 +94,11 @@ export class HasuraController {
         new: event.data.new || {},
       })();
     } catch (error) {
-      this.logger.error(`unable to complete event ${trigger.name}`, error);
+      this.logger.error(`unable to complete event ${trigger.name}`, {
+        error,
+        event,
+        trigger,
+      });
     }
   }
 

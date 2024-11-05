@@ -167,7 +167,7 @@ export class MatchesController {
       await this.removeDiscordIntegration(matchId);
       await this.matchMaking.cancelMatchMakingByMatchId(matchId);
 
-      const serverId = data.new.server_id || data.old.server_id;
+      const serverId = data.new.server_id;
 
       if (!serverId) {
         return;
@@ -183,7 +183,7 @@ export class MatchesController {
       });
 
       if (server.is_dedicated) {
-        await this.matchAssistant.restartServer(serverId);
+        await this.matchAssistant.restartDedicatedServer(serverId);
       } else {
         await this.matchAssistant.stopOnDemandServer(matchId, serverId);
       }
