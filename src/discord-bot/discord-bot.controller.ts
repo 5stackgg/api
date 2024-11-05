@@ -1,10 +1,19 @@
 import { Controller, Get, Req, Res } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Request, Response } from "express";
+import { DiscordConfig } from "src/configs/types/DiscordConfig";
 import { HasuraService } from "src/hasura/hasura.service";
 
 @Controller("/")
 export class DiscordBotController {
-  constructor(private readonly hasura: HasuraService) {}
+  private discordConfig: DiscordConfig;
+
+  constructor(
+    private readonly hasura: HasuraService,
+    private readonly config: ConfigService,
+  ) {
+    this.discordConfig = this.config.get<DiscordConfig>("discord");
+  }
 
   @Get("/discord-bot")
   public async bot(@Req() request: Request, @Res() response: Response) {
@@ -18,7 +27,7 @@ export class DiscordBotController {
 
     return response.redirect(
       302,
-      `https://discord.com/oauth2/authorize?client_id=1168695390502141982&permissions=${permissions}&scope=bot%20applications.commands`,
+      `https://discord.com/oauth2/authorize?client_id=${this.discordConfig.clientId}&permissions=${permissions}&scope=bot%20applications.commands`,
     );
   }
 
