@@ -8,6 +8,10 @@ export class DiscordBotController {
 
   @Get("/discord-bot")
   public async bot(@Req() request: Request, @Res() response: Response) {
+    if (request.user.role !== "administrator") {
+      throw Error("not authorized");
+    }
+
     // https://discordapi.com/permissions.html
     // https://discordlookup.com/permissions-calculator/326434581584
     const permissions = `326434581584`;
