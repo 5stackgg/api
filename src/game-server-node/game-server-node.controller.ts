@@ -90,6 +90,7 @@ export class GameServerNodeController {
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
         mkdir -p /opt/5stack/serverfiles
+        mkdir -p /opt/5stack/custom-plugins
     `;
 
     response.setHeader("Content-Length", Buffer.byteLength(scriptContent));
