@@ -572,7 +572,16 @@ export class MatchesController {
       },
     );
 
-    const message = `Organaizer need for match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`;
+    const { settings_by_pk: discord_role_id } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name: "discord_support_role_id",
+        },
+        value: true,
+      },
+    });
+
+    const message = `${discord_role_id ? ` <@&${discord_role_id.value}>,` : ""} Organizer needed for match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`;
     await this.hasura.mutation({
       insert_notifications_one: {
         __args: {
