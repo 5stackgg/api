@@ -70,6 +70,7 @@ export class MatchesController {
           id: server.current_match.id,
         },
         id: true,
+        status: true,
         password: true,
         lineup_1_id: true,
         lineup_2_id: true,
@@ -127,6 +128,15 @@ export class MatchesController {
 
     if (!matches_by_pk) {
       throw Error("unable to find match");
+    }
+
+    if (
+      matches_by_pk.status === "Tie" ||
+      matches_by_pk.status === "Canceled" ||
+      matches_by_pk.status === "Forfeit" ||
+      matches_by_pk.status === "Finished"
+    ) {
+      throw Error("match has been canceled");
     }
 
     return JSON.parse(safeJsonStringify(matches_by_pk));
