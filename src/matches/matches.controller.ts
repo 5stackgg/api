@@ -64,7 +64,7 @@ export class MatchesController {
         serverId,
         ip: request.headers["cf-connecting-ip"],
       });
-      response.status(409);
+      response.status(204).end();
       return;
     }
 
@@ -140,7 +140,7 @@ export class MatchesController {
       matches_by_pk.status === "Forfeit" ||
       matches_by_pk.status === "Finished"
     ) {
-      response.status(409);
+      response.status(204).end();
       return;
     }
     const data = JSON.parse(safeJsonStringify(matches_by_pk));
