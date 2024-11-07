@@ -163,23 +163,23 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const usersInChannel = await this.getUsersInChannel(teamSelectionChannel);
 
-    // if (usersInChannel.length < ExpectedPlayers[matchType]) {
-    //   const notEnoughUsersMessage = `Not enough players for ${matchType}`;
-    //   if (interaction.replied) {
-    //     await interaction.followUp({
-    //       ephemeral: true,
-    //       content: notEnoughUsersMessage,
-    //     });
-    //     return;
-    //   }
+    if (usersInChannel.length < ExpectedPlayers[matchType]) {
+      const notEnoughUsersMessage = `Not enough players for ${matchType}`;
+      if (interaction.replied) {
+        await interaction.followUp({
+          ephemeral: true,
+          content: notEnoughUsersMessage,
+        });
+        return;
+      }
 
-    //   await interaction.reply({
-    //     ephemeral: true,
-    //     content: notEnoughUsersMessage,
-    //   });
+      await interaction.reply({
+        ephemeral: true,
+        content: notEnoughUsersMessage,
+      });
 
-    //   return;
-    // }
+      return;
+    }
 
     const match = await this.matchAssistant.createMatchBasedOnType(
       matchType,
