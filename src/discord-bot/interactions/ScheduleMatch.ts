@@ -224,9 +224,16 @@ export default class ScheduleMatch extends DiscordInteraction {
     }
 
     for (const user of usersInChannel) {
-      user.send({
-        content: `Join Match: ${matchThread}`,
-      });
+      try {
+        user.send({
+          content: `Join Match: ${matchThread}`,
+        });
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] unable to send message to user ${user.id}`,
+          error,
+        );
+      }
     }
 
     await this.createVoiceChannelsForMatch(
