@@ -184,6 +184,7 @@ export class DiscordBotService {
     const { maps } = await this.hasura.query({
       maps: {
         __args: {
+          limit: 25,
           where: {
             type: {
               _eq: type,
