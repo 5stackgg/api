@@ -211,10 +211,17 @@ export default class ScheduleMatch extends DiscordInteraction {
       usersInChannel,
     );
 
-    await interaction.reply({
-      ephemeral: true,
-      content: `Match Created: ${channel}`,
-    });
+    if (interaction.replied) {
+      await interaction.followUp({
+        ephemeral: true,
+        content: `Match Created: ${channel}`,
+      });
+    } else {
+      await interaction.reply({
+        ephemeral: true,
+        content: `Match Created: ${channel}`,
+      });
+    }
 
     await this.createVoiceChannelsForMatch(
       teamSelectionChannel.id,
