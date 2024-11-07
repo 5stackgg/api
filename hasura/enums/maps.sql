@@ -26,6 +26,10 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_basalt', 'Competitive', 'false',  '3329258290', '/img/maps/screenshots/de_basalt.webp', null),
     ('de_edin', 'Competitive', 'false',  '3328169568', '/img/maps/screenshots/de_edin.webp', null),
     ('de_aztec', 'Competitive', 'false',  '3079692971', '/img/maps/screenshots/de_aztec.webp', null),
+    ('de_contra', 'Competitive', 'false',  '3301642476', '/img/maps/screenshots/de_contra.webp', null),
+    ('de_cpl_mill', 'Competitive', 'false',  '3073499287', '/img/maps/screenshots/de_cpl_mill.webp', null),
+    ('de_prodigy', 'Competitive', 'false',  '3195849330', '/img/maps/screenshots/de_prodigy.webp', null),
+    
 
     -- Night Maps
     ('de_dust2_night', 'Competitive', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', null),
@@ -48,7 +52,9 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
     ('de_overpass_night', 'Wingman', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', null),
     ('de_inferno_night', 'Wingman', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null),
-    ('de_train', 'Wingman', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null)
+    ('de_train', 'Wingman', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null),
+    ('de_palais', 'Wingman', 'false',  '3257582863', '/img/maps/screenshots/de_palais.webp', null)
+    
 
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
