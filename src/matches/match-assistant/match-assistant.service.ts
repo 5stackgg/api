@@ -690,8 +690,13 @@ export class MatchAssistantService {
 
   public async restartDedicatedServer(serverId: string) {
     this.logger.log(`[${serverId}] restarting server`);
-    const rcon = await this.rcon.connect(serverId);
-    await rcon.send("sv_cheats 1; quit");
+
+    try {
+      const rcon = await this.rcon.connect(serverId);
+      await rcon.send("sv_cheats 1; quit");
+    } catch (error) {
+      this.logger.warn(`[${serverId}] unable to restart server`, error);
+    }
 
     await this.hasura.mutation({
       update_servers_by_pk: {
