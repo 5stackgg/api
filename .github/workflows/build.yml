@@ -11,7 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64]
+        platform: [
+          linux/amd64,
+          #  linux/arm64
+        ]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -50,7 +53,7 @@ jobs:
         run: |
           docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/api:latest \
             ghcr.io/${{ github.repository_owner }}/api:latest-amd64 \
-            ghcr.io/${{ github.repository_owner }}/api:latest-arm64
+            # ghcr.io/${{ github.repository_owner }}/api:latest-arm64
           docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }} \
             ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}-amd64 \
-            ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}-arm64
+            # ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}-arm64

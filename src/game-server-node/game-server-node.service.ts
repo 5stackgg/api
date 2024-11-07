@@ -492,7 +492,9 @@ export class GameServerNodeService {
         time: new Date(),
         total: stats.cpuCapacity,
         window: parseFloat(stats.metrics.window),
-        used: BigInt(stats.metrics.usage.cpu.replace("n", "")).toString(),
+        used: this.convertCpuFromTypeToMilliCores(
+          stats.metrics.usage.cpu,
+        ).toString(),
       }),
     );
   }
@@ -513,15 +515,7 @@ export class GameServerNodeService {
           container.usage.memory,
         );
 
-        let cpuUsage = BigInt(0);
-
-        if (container.usage.cpu?.includes("u")) {
-          cpuUsage = BigInt(container.usage.cpu.replace("u", ""));
-        }
-
-        if (container.usage.cpu?.includes("n")) {
-          cpuUsage = BigInt(container.usage.cpu.replace("n", ""));
-        }
+        let cpuUsage = this.convertCpuFromTypeToMilliCores(container.usage.cpu);
 
         totalCpu += cpuUsage;
       }
@@ -552,6 +546,20 @@ export class GameServerNodeService {
       await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
       await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
     }
+  }
+
+  private convertCpuFromTypeToMilliCores(cpu: string): bigint {
+    if (cpu.endsWith("u")) {
+      const uCores = BigInt(cpu.replace("u", ""));
+
+      return uCores * BigInt(1000);
+    }
+
+    if (cpu.endsWith("n")) {
+      return BigInt(cpu.replace("n", ""));
+    }
+
+    return BigInt(0);
   }
 
   private convertMemoryFromTypeToBytes(memory: string): bigint {
