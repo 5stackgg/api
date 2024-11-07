@@ -8,5 +8,5 @@ export type DiscordMatchOptions = {
   ["captain-1"]?: string;
   ["captain-2"]?: string;
   ["team-selection"]?: string;
-  ["custom-map-pool"]?: boolean;
+  ["custom-map-pool"]?: Array<string>;
 };

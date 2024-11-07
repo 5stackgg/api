@@ -9,6 +9,8 @@ import {
   PermissionsBitField,
   StringSelectMenuBuilder,
   ActionRowBuilder,
+  ButtonStyle,
+  ButtonBuilder,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -43,25 +45,53 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const options = this.getMatchOptions(interaction.options.data, matchType);
 
-    let customMapPool: string[];
+    const customMapPools: { custom_maps: string[]; active_duty: string[] } = {
+      custom_maps: [],
+      active_duty: [],
+    };
 
     if (options["custom-map-pool"]) {
       const maps = await this.getMapChoices(matchType);
 
-      const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId("multi_select")
-        .setPlaceholder("Choose custom map pool")
-        .setMinValues(1)
-        .setMaxValues(maps.length)
-        .addOptions(maps);
+      const activeDutyMaps = maps
+        .filter((map) => !map.workshop_map_id)
+        .map((map) => ({ label: map.name, value: map.id }))
+        .slice(0, 25);
+      const customMaps = maps
+        .filter((map) => map.workshop_map_id)
+        .map((map) => ({ label: map.name, value: map.id }))
+        .slice(0, 25);
 
-      const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-        selectMenu,
-      );
+      const activeDutySelectMenu = new StringSelectMenuBuilder()
+        .setCustomId("active_duty")
+        .setPlaceholder("Active Duty Maps")
+        .setMinValues(0)
+        .setMaxValues(activeDutyMaps.length)
+        .addOptions(activeDutyMaps);
+
+      const nonActiveDutySelectMenu = new StringSelectMenuBuilder()
+        .setCustomId("custom_maps")
+        .setPlaceholder("Custom Maps")
+        .setMinValues(0)
+        .setMaxValues(customMaps.length)
+        .addOptions(customMaps);
+
+      const confirmButton = new ButtonBuilder()
+        .setCustomId("confirm_map_pool")
+        .setLabel("Confirm Map Pool")
+        .setStyle(ButtonStyle.Primary);
 
       const customMapPoolReply = await interaction.reply({
         content: "Create your custom map pool:",
-        components: [row],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            activeDutySelectMenu,
+          ),
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            nonActiveDutySelectMenu,
+          ),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(confirmButton),
+        ],
         fetchReply: true,
       });
 
@@ -72,7 +102,13 @@ export default class ScheduleMatch extends DiscordInteraction {
 
         collector.on("collect", async (selections) => {
           if (selections.isStringSelectMenu()) {
-            customMapPool = selections.values;
+            customMapPools[
+              selections.customId as "custom_maps" | "active_duty"
+            ] = selections.values;
+            selections.deferUpdate();
+          }
+
+          if (selections.isButton()) {
             collector.stop();
           }
         });
@@ -82,15 +118,18 @@ export default class ScheduleMatch extends DiscordInteraction {
         });
       });
 
-      if (customMapPool.length === 0) {
+      await customMapPoolReply.delete();
+
+      if (
+        customMapPools["custom_maps"].length === 0 &&
+        customMapPools["active_duty"].length === 0
+      ) {
         await interaction.followUp({
           ephemeral: true,
           content: "Custom map pool selection timed out.",
         });
         return;
       }
-
-      await customMapPoolReply.delete();
     }
 
     const guild = await this.bot.client.guilds.fetch(interaction.guildId);
@@ -106,11 +145,19 @@ export default class ScheduleMatch extends DiscordInteraction {
     }
 
     if (!teamSelectionChannel) {
-      await interaction.reply({
-        ephemeral: true,
-        content:
-          "You need to be in a voice channel to use this command without specifying a channel.",
-      });
+      if (interaction.replied) {
+        await interaction.followUp({
+          ephemeral: true,
+          content:
+            "You need to be in a voice channel to use this command without specifying a channel.",
+        });
+      } else {
+        await interaction.reply({
+          ephemeral: true,
+          content:
+            "You need to be in a voice channel to use this command without specifying a channel.",
+        });
+      }
       return;
     }
 
@@ -143,7 +190,10 @@ export default class ScheduleMatch extends DiscordInteraction {
         knife: options.knife,
         map: options.map,
         overtime: options.overtime,
-        maps: customMapPool,
+        maps: [
+          ...customMapPools["active_duty"],
+          ...customMapPools["custom_maps"],
+        ],
       },
     );
     const matchId = match.id;
@@ -421,12 +471,11 @@ export default class ScheduleMatch extends DiscordInteraction {
         },
         id: true,
         name: true,
+        active_pool: true,
+        workshop_map_id: true,
       },
     });
 
-    return maps.map((map) => ({
-      label: map.name,
-      value: map.id,
-    }));
+    return maps;
   }
 }

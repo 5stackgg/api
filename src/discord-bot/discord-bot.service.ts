@@ -1,9 +1,11 @@
 import { ModuleRef } from "@nestjs/core";
 import { Logger, Injectable } from "@nestjs/common";
 import {
+  AutocompleteInteraction,
   ButtonInteraction,
   ChannelType,
   Client,
+  Events,
   GatewayIntentBits,
   REST,
   Routes,
@@ -17,6 +19,7 @@ import { e_match_types_enum } from "../../generated";
 import { interactions } from "./interactions/interactions";
 import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 import { Type } from "@nestjs/common";
+import MiniSearch from "minisearch";
 
 let client: Client;
 
@@ -24,6 +27,17 @@ let client: Client;
 export class DiscordBotService {
   public client: Client;
   private discordConfig: DiscordConfig;
+
+  private mapChoices: Record<
+    e_match_types_enum,
+    {
+      search: MiniSearch;
+      maps: { name: string; id: string }[];
+    }
+  > = {
+    Competitive: undefined,
+    Wingman: undefined,
+  };
 
   constructor(
     readonly config: ConfigService,
@@ -41,10 +55,50 @@ export class DiscordBotService {
     });
 
     this.client
-      .on("ready", () => {
+      .on(Events.ClientReady, () => {
         this.logger.log(`logged in as ${this.client.user.tag}!`);
       })
-      .on("interactionCreate", async (interaction) => {
+      .on(Events.InteractionCreate, async (interaction) => {
+        if (interaction.isAutocomplete()) {
+          const autocompleteInteraction =
+            interaction as AutocompleteInteraction;
+
+          const { name, value: query } =
+            autocompleteInteraction.options.getFocused(true);
+
+          switch (name) {
+            case "map":
+              const matchType = (autocompleteInteraction.commandName
+                .charAt(0)
+                .toUpperCase() +
+                autocompleteInteraction.commandName.slice(
+                  1,
+                )) as e_match_types_enum;
+              const { maps, search } = await this.getMapChoices(matchType);
+
+              let mapChoices = maps;
+              if (query) {
+                // @ts-ignore
+                mapChoices = await search.search(query);
+              }
+
+              await autocompleteInteraction.respond(
+                mapChoices
+                  .map((map) => {
+                    return {
+                      name: map.name,
+                      value: map.id,
+                    };
+                  })
+                  .slice(0, 25),
+              );
+
+              break;
+          }
+
+          return;
+        }
+
         if (interaction.isChatInputCommand()) {
           const DiscordInteraction =
             interactions.chat[
@@ -60,7 +114,11 @@ export class DiscordBotService {
         }
 
         if (interaction.isButton()) {
-          const [type] = (interaction as ButtonInteraction).customId.split(":");
+          if (interaction.customId === "confirm_map_pool") {
+            return;
+          }
+
+          const [type] = interaction.customId.split(":");
           const DiscordInteraction =
             interactions.buttons[type as keyof typeof interactions.buttons];
 
@@ -72,7 +130,8 @@ export class DiscordBotService {
           return await discordInteraction.handler(interaction);
         }
       })
-      .on("error", (error) => {
+      .on(Events.Error, (error) => {
+        console.info(error);
         this.logger.warn("unhandled error", error);
       });
 
@@ -94,13 +153,11 @@ export class DiscordBotService {
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleComp)
               .setDescription("Creates a Competitive Match"),
-            "Competitive",
           ),
           await this.addBaseOptions(
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleWingMan)
               .setDescription("Creates a Wingman Match"),
-            "Wingman",
           ),
           new SlashCommandBuilder()
             .setName(ChatCommands.LinkDiscord)
@@ -118,12 +175,7 @@ export class DiscordBotService {
     }
   }
 
-  private async addBaseOptions(
-    builder: SlashCommandBuilder,
-    type: e_match_types_enum,
-  ) {
-    const mapChoices = await this.getMapChoices(type);
-
+  private async addBaseOptions(builder: SlashCommandBuilder) {
     return builder
       .addChannelOption((option) =>
         option
@@ -147,7 +199,7 @@ export class DiscordBotService {
         option
           .setName("map")
           .setDescription("Map Selection")
-          .addChoices(...mapChoices),
+          .setAutocomplete(true),
       )
       .addBooleanOption((option) =>
         option
@@ -181,6 +233,10 @@ export class DiscordBotService {
   }
 
   private async getMapChoices(type: e_match_types_enum) {
+    if (this.mapChoices[type]) {
+      return this.mapChoices[type];
+    }
+
     const { maps } = await this.hasura.query({
       maps: {
         __args: {
@@ -196,11 +252,27 @@ export class DiscordBotService {
       },
     });
 
-    return maps.map((map) => {
-      return {
-        name: map.name,
-        value: map.id,
-      };
+    const miniSearch = new MiniSearch({
+      fields: ["name"],
+      storeFields: ["name"],
+      searchOptions: {
+        fuzzy: 0.2,
+        prefix: true,
+      },
+    });
+
+    miniSearch.addAll(
+      maps.map((map) => {
+        return {
+          id: map.id,
+          name: map.name,
+        };
+      }),
+    );
+
+    return (this.mapChoices[type] = {
+      maps,
+      search: miniSearch,
     });
   }
 }
