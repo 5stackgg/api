@@ -15,6 +15,7 @@ import {
   e_match_status_enum,
   e_match_types_enum,
   e_timeout_settings_enum,
+  ise_objective_types_mutation_response,
 } from "../../../generated";
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
@@ -925,28 +926,12 @@ export class MatchAssistantService {
     },
   ) {
     let map_pool_id;
-    if (options.maps) {
-      const { insert_map_pools_one } = await this.hasura.mutation({
-        insert_map_pools_one: {
-          __args: {
-            object: {
-              type: "Custom",
-              maps: {
-                data: options.maps.map((map_id) => {
-                  return {
-                    id: map_id,
-                  };
-                }),
-              },
-            },
-          },
-          id: true,
-        },
-      });
-      map_pool_id = insert_map_pools_one.id;
+
+    if (options.map) {
+      options.maps = [options.map];
     }
 
-    if (!map_pool_id) {
+    if (!map_pool_id && options.maps.length === 0) {
       const { map_pools } = await this.hasura.query({
         map_pools: {
           __args: {
@@ -967,12 +952,29 @@ export class MatchAssistantService {
       insert_matches_one: {
         __args: {
           object: {
-            map: options.map,
             region: options.region,
             options: {
               data: {
-                map_pool_id,
-                map_veto: true,
+                ...(map_pool_id
+                  ? {
+                      map_pool_id: map_pool_id,
+                    }
+                  : {}),
+                map_pool: !map_pool_id
+                  ? {
+                      data: {
+                        type: "Custom",
+                        maps: {
+                          data: options.maps?.map((map_id) => {
+                            return {
+                              id: map_id,
+                            };
+                          }),
+                        },
+                      },
+                    }
+                  : null,
+                map_veto: options.maps.length > 1,
                 mr: options.mr,
                 type: matchType,
                 best_of: options.best_of,

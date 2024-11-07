@@ -104,7 +104,7 @@ export class DiscordPickPlayerService {
 
     if (availableUsers.length === 0) {
       if (process.env.DEV) {
-        await this.startVeto(matchId);
+        await this.startMatch(matchId);
 
         return;
       }
@@ -215,7 +215,7 @@ export class DiscordPickPlayerService {
       await captain.send(mapVotingLink);
       await otherCaptainDiscordUser.send(mapVotingLink);
 
-      await this.startVeto(matchId);
+      await this.startMatch(matchId);
 
       return;
     }
@@ -276,10 +276,26 @@ export class DiscordPickPlayerService {
     );
   }
 
-  public async startVeto(matchId: string) {
+  public async startMatch(matchId: string) {
     await this.cache.forget(this.getAvailableUsersCacheKey(matchId));
 
-    await this.matchAssistant.updateMatchStatus(matchId, "Veto");
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        id: true,
+        options: {
+          map_veto: true,
+        },
+      },
+    });
+
+    if (match.options.map_veto) {
+      await this.matchAssistant.updateMatchStatus(matchId, "Veto");
+    } else {
+      await this.matchAssistant.updateMatchStatus(matchId, "Live");
+    }
   }
 
   private getAvailableUsersCacheKey(matchId: string) {

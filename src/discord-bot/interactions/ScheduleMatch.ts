@@ -163,23 +163,23 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const usersInChannel = await this.getUsersInChannel(teamSelectionChannel);
 
-    if (usersInChannel.length < ExpectedPlayers[matchType]) {
-      const notEnoughUsersMessage = `Not enough players for ${matchType}`;
-      if (interaction.replied) {
-        await interaction.followUp({
-          ephemeral: true,
-          content: notEnoughUsersMessage,
-        });
-        return;
-      }
+    // if (usersInChannel.length < ExpectedPlayers[matchType]) {
+    //   const notEnoughUsersMessage = `Not enough players for ${matchType}`;
+    //   if (interaction.replied) {
+    //     await interaction.followUp({
+    //       ephemeral: true,
+    //       content: notEnoughUsersMessage,
+    //     });
+    //     return;
+    //   }
 
-      await interaction.reply({
-        ephemeral: true,
-        content: notEnoughUsersMessage,
-      });
+    //   await interaction.reply({
+    //     ephemeral: true,
+    //     content: notEnoughUsersMessage,
+    //   });
 
-      return;
-    }
+    //   return;
+    // }
 
     const match = await this.matchAssistant.createMatchBasedOnType(
       matchType,
@@ -205,7 +205,7 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     const categoryChannel = await this.createMatchesCategory(interaction);
 
-    const channel = await this.createMatchThread(
+    const matchThread = await this.createMatchThread(
       categoryChannel,
       matchId,
       usersInChannel,
@@ -214,12 +214,18 @@ export default class ScheduleMatch extends DiscordInteraction {
     if (interaction.replied) {
       await interaction.followUp({
         ephemeral: true,
-        content: `Match Created: ${channel}`,
+        content: `Match Created: ${matchThread}`,
       });
     } else {
       await interaction.reply({
         ephemeral: true,
-        content: `Match Created: ${channel}`,
+        content: `Match Created: ${matchThread}`,
+      });
+    }
+
+    for (const user of usersInChannel) {
+      user.send({
+        content: `Join Match: ${matchThread}`,
       });
     }
 
@@ -270,7 +276,7 @@ export default class ScheduleMatch extends DiscordInteraction {
       }
     }
 
-    await this.discordPickPlayer.startVeto(matchId);
+    await this.discordPickPlayer.startMatch(matchId);
   }
 
   private async getUsersInChannel(channel: GuildChannel) {
