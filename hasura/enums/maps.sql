@@ -21,7 +21,6 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_train', 'Competitive', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null),
     ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.webp', null),
     ('de_biome', 'Competitive', 'false',  '3075706807', '/img/maps/screenshots/de_biome.webp', null),
-    ('drawbridge', 'Competitive', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
     ('de_all_in_one', 'Competitive', 'false',  '3114174859', '/img/maps/screenshots/de_all_in_one.webp', null),
     ('de_basalt', 'Competitive', 'false',  '3329258290', '/img/maps/screenshots/de_basalt.webp', null),
     ('de_edin', 'Competitive', 'false',  '3328169568', '/img/maps/screenshots/de_edin.webp', null),
@@ -58,6 +57,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
 
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
+
+delete from maps where type = 'Competitive' and name = 'drawbridge';
 
 insert into e_map_pool_types ("value", "description") values
     ('Competitive', '5 vs 5 match using active map pool'),
