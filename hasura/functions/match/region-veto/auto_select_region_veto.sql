@@ -10,8 +10,8 @@ BEGIN
     select array_agg(sr.value) INTO available_regions from e_server_regions sr
         INNER JOIN game_server_nodes gsn on gsn.region = sr.value and gsn.enabled = true
         LEFT JOIN match_region_veto_picks mvp on mvp.region = sr.value and mvp.match_id = match_region_veto_pick.match_id
-        where mvp.region is null
-            and gsn.region != 'Lan';
+        where mvp.region is null;
+            -- and gsn.region != 'Lan';
 
   IF array_length(available_regions, 1) = 1 THEN
     SELECT * INTO _match FROM matches WHERE id = match_region_veto_pick.match_id LIMIT 1;

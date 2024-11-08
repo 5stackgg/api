@@ -18,8 +18,8 @@ lan_count int;
 region_count int;
 BEGIN
     SELECT COUNT(DISTINCT region) INTO region_count
-        FROM servers
-        WHERE region != 'Lan';
+        FROM servers;
+        -- WHERE region != 'Lan';
 
     IF region_count = 1 THEN
         NEW.region_veto = false;

@@ -30,8 +30,8 @@ BEGIN
     ELSE
         SELECT array_agg(sr.value) INTO available_regions 
         FROM e_server_regions sr
-        WHERE available_region_server_count(sr) > 0
-        AND sr.value != 'Lan';
+        WHERE available_region_server_count(sr) > 0;
+        -- AND sr.value != 'Lan';
     END IF;
 
     IF array_length(available_regions, 1) = 1 THEN
