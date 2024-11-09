@@ -81,10 +81,7 @@ export class DiscordBotVetoService {
       return availableMaps[parseInt(mapIndex.toString())];
     });
 
-    let pickedMap =
-      pickedMaps.length > 0
-        ? pickedMaps[getRandomNumber(0, pickedMaps.length - 1)]
-        : pickedMaps.at(0);
+    let pickedMap = pickedMaps.at(0);
 
     if (!pickedMap) {
       pickedMap = availableMaps[getRandomNumber(0, availableMaps.length - 1)];
