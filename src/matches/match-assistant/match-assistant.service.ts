@@ -960,21 +960,21 @@ export class MatchAssistantService {
                       map_pool_id: map_pool_id,
                     }
                   : {}),
-                map_pool: !map_pool_id
-                  ? {
-                      data: {
-                        type: "Custom",
-                        maps: {
-                          data: options.maps?.map((map_id) => {
-                            return {
-                              id: map_id,
-                            };
-                          }),
-                        },
+                ...(map_pool_id ? {} : {
+                  map_pool: {
+                    data: {
+                      type: "Custom",
+                      maps: {
+                        data: options.maps?.map((map_id) => {
+                          return {
+                            id: map_id,
+                          };
+                        }),
                       },
-                    }
-                  : null,
-                map_veto: options.maps.length > 1,
+                    },
+                  }
+                }),
+                map_veto: map_pool_id !== null || options.maps.length > 1,
                 mr: options.mr,
                 type: matchType,
                 best_of: options.best_of,
