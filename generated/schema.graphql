@@ -29,10 +29,10 @@ input Boolean_comparison_exp {
 }
 
 type CpuStat {
-  available: bigint
   time: timestamp
   total: bigint
   used: bigint
+  window: Float
 }
 
 """
@@ -62,7 +62,6 @@ type MeResponse {
 }
 
 type MemoryStat {
-  available: bigint
   time: timestamp
   total: bigint
   used: bigint
@@ -4518,6 +4517,7 @@ type game_server_nodes {
   end_port_range: Int
   id: String!
   lan_ip: inet
+  node_ip: inet
   public_ip: inet
   region: e_server_regions_enum
 
@@ -4685,6 +4685,7 @@ input game_server_nodes_bool_exp {
   end_port_range: Int_comparison_exp
   id: String_comparison_exp
   lan_ip: inet_comparison_exp
+  node_ip: inet_comparison_exp
   public_ip: inet_comparison_exp
   region: e_server_regions_enum_comparison_exp
   servers: servers_bool_exp
@@ -4725,6 +4726,7 @@ input game_server_nodes_insert_input {
   end_port_range: Int
   id: String
   lan_ip: inet
+  node_ip: inet
   public_ip: inet
   region: e_server_regions_enum
   servers: servers_arr_rel_insert_input
@@ -4831,6 +4833,7 @@ input game_server_nodes_order_by {
   end_port_range: order_by
   id: order_by
   lan_ip: order_by
+  node_ip: order_by
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by
@@ -4863,6 +4866,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   lan_ip
+
+  """column name"""
+  node_ip
 
   """column name"""
   public_ip
@@ -4905,6 +4911,7 @@ input game_server_nodes_set_input {
   end_port_range: Int
   id: String
   lan_ip: inet
+  node_ip: inet
   public_ip: inet
   region: e_server_regions_enum
   start_port_range: Int
@@ -5005,6 +5012,7 @@ input game_server_nodes_stream_cursor_value_input {
   end_port_range: Int
   id: String
   lan_ip: inet
+  node_ip: inet
   public_ip: inet
   region: e_server_regions_enum
   start_port_range: Int
@@ -5055,6 +5063,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   lan_ip
+
+  """column name"""
+  node_ip
 
   """column name"""
   public_ip

@@ -57,6 +57,7 @@ export class GameServerNodeService {
 
   public async updateStatus(
     node: string,
+    nodeIP: string,
     lanIP: string,
     publicIP: string,
     csBulid: number,
@@ -70,6 +71,7 @@ export class GameServerNodeService {
         token: true,
         status: true,
         lan_ip: true,
+        node_ip: true,
         build_id: true,
         public_ip: true,
       },
@@ -96,6 +98,7 @@ export class GameServerNodeService {
             _set: {
               status,
               lan_ip: lanIP,
+              node_ip: nodeIP,
               public_ip: publicIP,
               ...(csBulid ? { build_id: csBulid } : {}),
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),

@@ -444,6 +444,11 @@ select_permissions:
                   - Invite
           - is_in_lineup:
               _eq: true
+          - status:
+              _in:
+                - Finished
+                - Forfeit
+                - Tie
       allow_aggregations: true
     comment: ""
 update_permissions:

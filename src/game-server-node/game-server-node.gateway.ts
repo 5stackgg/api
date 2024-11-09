@@ -27,6 +27,7 @@ export class GameServerNodeGateway {
     payload: {
       node: string;
       lanIP: string;
+      nodeIP: string;
       publicIP: string;
       csBuild: number;
       nodeStats: NodeStats;
@@ -40,6 +41,7 @@ export class GameServerNodeGateway {
 
     await this.gameServerNodeService.updateStatus(
       payload.node,
+      payload.nodeIP,
       payload.lanIP,
       payload.publicIP,
       payload.csBuild,

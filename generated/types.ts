@@ -253,9 +253,6 @@ export default {
             ]
         },
         "CpuStat": {
-            "available": [
-                74
-            ],
             "time": [
                 1447
             ],
@@ -264,6 +261,9 @@ export default {
             ],
             "used": [
                 74
+            ],
+            "window": [
+                3
             ],
             "__typename": [
                 11
@@ -333,9 +333,6 @@ export default {
             ]
         },
         "MemoryStat": {
-            "available": [
-                74
-            ],
             "time": [
                 1447
             ],
@@ -5813,6 +5810,9 @@ export default {
             "lan_ip": [
                 482
             ],
+            "node_ip": [
+                482
+            ],
             "public_ip": [
                 482
             ],
@@ -6119,6 +6119,9 @@ export default {
             "lan_ip": [
                 483
             ],
+            "node_ip": [
+                483
+            ],
             "public_ip": [
                 483
             ],
@@ -6182,6 +6185,9 @@ export default {
                 11
             ],
             "lan_ip": [
+                482
+            ],
+            "node_ip": [
                 482
             ],
             "public_ip": [
@@ -6359,6 +6365,9 @@ export default {
             "lan_ip": [
                 931
             ],
+            "node_ip": [
+                931
+            ],
             "public_ip": [
                 931
             ],
@@ -6409,6 +6418,9 @@ export default {
                 11
             ],
             "lan_ip": [
+                482
+            ],
+            "node_ip": [
                 482
             ],
             "public_ip": [
@@ -6557,6 +6569,9 @@ export default {
                 11
             ],
             "lan_ip": [
+                482
+            ],
+            "node_ip": [
                 482
             ],
             "public_ip": [

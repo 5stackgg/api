@@ -29,7 +29,11 @@ export class RconService {
         },
         host: true,
         port: true,
+        region: true,
         rcon_password: true,
+        game_server_node: {
+          node_ip: true,
+        }
       },
     });
 
@@ -38,7 +42,7 @@ export class RconService {
     }
 
     const rcon = new RconClient({
-      host: server.host,
+      host: server.game_server_node?.node_ip ? server.game_server_node.node_ip : server.host,
       port: server.port,
       password: await this.encryption.decrypt(
         server.rcon_password as unknown as string,
