@@ -109,11 +109,6 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`,
     );
 
-    if (statsRound !== 0 && match_map_rounds.length === 0) {
-      this.logger.warn("unable to reset round , stats are gone.");
-      return;
-    }
-
     await this.matchAssistant.restoreMatchRound(this.matchId, statsRound);
   }
 }
