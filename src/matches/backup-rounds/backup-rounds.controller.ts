@@ -96,7 +96,9 @@ export class BackupRoundsController {
   ) {
     const { matchId, mapId, round } = request.params;
 
-    console.log( `uploading backup rounds ${matchId}/${mapId}/backup-rounds/${file.originalname}`);
+    console.log(
+      `uploading backup rounds ${matchId}/${mapId}/backup-rounds/${file.originalname}`,
+    );
     await this.hasura.mutation({
       update_match_map_rounds: {
         __args: {

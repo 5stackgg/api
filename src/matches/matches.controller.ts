@@ -348,36 +348,7 @@ export class MatchesController {
       );
     }
 
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: match_id,
-        },
-        server_id: true,
-        region: true,
-        options: {
-          map_veto: true,
-          region_veto: true,
-          best_of: true,
-        },
-        match_maps: {
-          id: true,
-        },
-      },
-    });
-
-    if (!match || !match.options) {
-      throw Error("unable to find match");
-    }
-
-    let nextPhase: e_match_status_enum = "Live";
-    if (
-      (match.options.map_veto &&
-        match.match_maps.length !== match.options.best_of) ||
-      (!match.region && match.options.region_veto)
-    ) {
-      nextPhase = "Veto";
-    }
+    const nextPhase = await this.matchAssistant.getNextPhase(match_id);
 
     const { update_matches_by_pk: updated_match } = await this.hasura.mutation({
       update_matches_by_pk: {
@@ -387,7 +358,7 @@ export class MatchesController {
           },
           _set: {
             status: nextPhase,
-            server_id: server_id || match.server_id,
+            ...(server_id && { server_id }),
           },
         },
         id: true,
@@ -662,11 +633,13 @@ export class MatchesController {
       },
     });
 
+    const nextPhase = await this.matchAssistant.getNextPhase(data.match_id);
+
     await this.hasura.mutation({
       update_matches: {
         __args: {
           _set: {
-            status: "Live",
+            status: nextPhase,
           },
           where: {
             _and: [

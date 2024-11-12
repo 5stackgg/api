@@ -340,7 +340,7 @@ export class MatchAssistantService {
                 order: "asc",
               },
             ],
-          },  
+          },
           map: {
             name: true,
             workshop_map_id: true,
@@ -461,7 +461,9 @@ export class MatchAssistantService {
                       { containerPort: server.tv_port, protocol: "UDP" },
                     ],
                     env: [
-                      ...(!map.workshop_map_id ? [{ name: "DEFAULT_MAP", value: map.name }] : []),
+                      ...(!map.workshop_map_id
+                        ? [{ name: "DEFAULT_MAP", value: map.name }]
+                        : []),
                       { name: "SERVER_PORT", value: server.port.toString() },
                       { name: "TV_PORT", value: server.tv_port.toString() },
                       {
@@ -977,20 +979,22 @@ export class MatchAssistantService {
                       map_pool_id: map_pool_id,
                     }
                   : {}),
-                ...(map_pool_id ? {} : {
-                  map_pool: {
-                    data: {
-                      type: "Custom",
-                      maps: {
-                        data: options.maps?.map((map_id) => {
-                          return {
-                            id: map_id,
-                          };
-                        }),
+                ...(map_pool_id
+                  ? {}
+                  : {
+                      map_pool: {
+                        data: {
+                          type: "Custom",
+                          maps: {
+                            data: options.maps?.map((map_id) => {
+                              return {
+                                id: map_id,
+                              };
+                            }),
+                          },
+                        },
                       },
-                    },
-                  }
-                }),
+                    }),
                 map_veto: map_pool_id !== null || options.maps.length > 1,
                 mr: options.mr,
                 type: matchType,
@@ -1029,5 +1033,40 @@ export class MatchAssistantService {
 
   public async removeCancelMatchMakingDueToReadyCheck(confirmationId: string) {
     await this.queue.remove(`match-making:cancel:${confirmationId}`);
+  }
+
+  public async getNextPhase(matchId: string) {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        server_id: true,
+        region: true,
+        options: {
+          map_veto: true,
+          region_veto: true,
+          best_of: true,
+        },
+        match_maps: {
+          id: true,
+        },
+      },
+    });
+
+    if (!match || !match.options) {
+      throw Error("unable to find match");
+    }
+
+    let nextPhase: e_match_status_enum = "Live";
+    if (
+      (match.options.map_veto &&
+        match.match_maps.length !== match.options.best_of) ||
+      (!match.region && match.options.region_veto)
+    ) {
+      nextPhase = "Veto";
+    }
+
+    return nextPhase;
   }
 }

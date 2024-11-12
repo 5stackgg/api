@@ -124,7 +124,6 @@ export class GameServerNodeController {
     const map = request.query.map;
     const serverId = request.params.serverId;
 
-
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
         __args: {
@@ -144,22 +143,22 @@ export class GameServerNodeController {
       },
     });
 
-    if(!server) {
+    if (!server) {
       throw Error("server not found");
     }
 
-    if(server.current_match && !server.is_dedicated) {
+    if (server.current_match && !server.is_dedicated) {
       const currentMap = server.current_match?.match_maps.find((match_map) => {
         return match_map.id === server.current_match.current_match_map_id;
       });
 
-      if(map !== currentMap?.map.name) {
+      if (map !== currentMap?.map.name) {
         this.logger.warn(`server is still loading the map`);
         return;
       }
     }
-    
-    if(!server.connected) {
+
+    if (!server.connected) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -174,7 +173,7 @@ export class GameServerNodeController {
         },
       });
     }
-    
+
     await this.queue.remove(`server-offline:${serverId}`);
 
     await this.queue.add(
