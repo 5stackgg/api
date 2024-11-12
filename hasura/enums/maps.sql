@@ -24,9 +24,9 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_all_in_one', 'Competitive', 'false',  '3114174859', '/img/maps/screenshots/de_all_in_one.webp', null),
     ('de_basalt', 'Competitive', 'false',  '3329258290', '/img/maps/screenshots/de_basalt.webp', null),
     ('de_edin', 'Competitive', 'false',  '3328169568', '/img/maps/screenshots/de_edin.webp', null),
-    ('de_aztec', 'Competitive', 'false',  '3079692971', '/img/maps/screenshots/de_aztec.webp', null),
+    ('de_aztec_hr', 'Competitive', 'false',  '3079692971', '/img/maps/screenshots/de_aztec.webp', null),
     ('de_contra', 'Competitive', 'false',  '3301642476', '/img/maps/screenshots/de_contra.webp', null),
-    ('de_cpl_mill', 'Competitive', 'false',  '3073499287', '/img/maps/screenshots/de_cpl_mill.webp', null),
+    ('de_prob_mill', 'Competitive', 'false',  '3073499287', '/img/maps/screenshots/de_cpl_mill.webp', null),
     ('de_prodigy', 'Competitive', 'false',  '3195849330', '/img/maps/screenshots/de_prodigy.webp', null),
     
 
@@ -58,6 +58,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
 
+delete from maps where type = 'Competitive' and name = 'de_aztec';
+delete from maps where type = 'Competitive' and name = 'de_cpl_mill';
 delete from maps where type = 'Competitive' and name = 'drawbridge';
 
 insert into e_map_pool_types ("value", "description") values
