@@ -121,21 +121,60 @@ export class GameServerNodeController {
 
   @Get("/ping/:serverId")
   public async ping(@Req() request: Request) {
+    const map = request.query.map;
     const serverId = request.params.serverId;
-    await this.hasura.mutation({
-      update_servers_by_pk: {
+
+
+    const { servers_by_pk: server } = await this.hasura.query({
+      servers_by_pk: {
         __args: {
-          pk_columns: {
-            id: serverId,
-          },
-          _set: {
-            connected: true,
+          id: serverId,
+        },
+        connected: true,
+        is_dedicated: true,
+        current_match: {
+          current_match_map_id: true,
+          match_maps: {
+            id: true,
+            map: {
+              name: true,
+            },
           },
         },
-        __typename: true,
       },
     });
 
+    if(!server) {
+      throw Error("server not found");
+    }
+
+    if(server.current_match && !server.is_dedicated) {
+      const currentMap = server.current_match?.match_maps.find((match_map) => {
+        return match_map.id === server.current_match.current_match_map_id;
+      });
+
+      if(map !== currentMap?.map.name) {
+        this.logger.warn(`server is still loading the map`);
+        return;
+      }
+    }
+    
+    if(!server.connected) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: {
+              id: serverId,
+            },
+            _set: {
+              connected: true,
+            },
+          },
+          __typename: true,
+        },
+      });
+    }
+    
     await this.queue.remove(`server-offline:${serverId}`);
 
     await this.queue.add(

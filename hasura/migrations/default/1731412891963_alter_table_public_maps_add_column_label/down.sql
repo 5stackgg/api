@@ -1,0 +1,1 @@
+alter table "public"."maps" drop column if exists "label"

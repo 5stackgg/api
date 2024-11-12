@@ -26,6 +26,7 @@ select_permissions:
       columns:
         - active_pool
         - id
+        - label
         - name
         - patch
         - poster

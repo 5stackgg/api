@@ -333,12 +333,28 @@ export class MatchAssistantService {
         region: true,
         password: true,
         server_id: true,
+        match_maps: {
+          __args: {
+            order_by: [
+              {
+                order: "asc",
+              },
+            ],
+          },  
+          map: {
+            name: true,
+            workshop_map_id: true,
+          },
+          order: true,
+        },
       },
     });
 
     if (!match) {
       throw Error("unable to find match");
     }
+
+    const map = match.match_maps.at(0).map;
 
     return this.cache.lock(`get-on-demand-server:${match.region}`, async () => {
       if (match.server_id) {
@@ -445,6 +461,7 @@ export class MatchAssistantService {
                       { containerPort: server.tv_port, protocol: "UDP" },
                     ],
                     env: [
+                      ...(!map.workshop_map_id ? [{ name: "DEFAULT_MAP", value: map.name }] : []),
                       { name: "SERVER_PORT", value: server.port.toString() },
                       { name: "TV_PORT", value: server.tv_port.toString() },
                       {
