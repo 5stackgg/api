@@ -166,10 +166,25 @@ array_relationships:
           name: player_utility
           schema: public
 computed_fields:
+  - name: is_banned
+    definition:
+      function:
+        name: is_banned
+        schema: public
+  - name: is_gagged
+    definition:
+      function:
+        name: is_gagged
+        schema: public
   - name: is_in_another_match
     definition:
       function:
         name: is_in_another_match
+        schema: public
+  - name: is_muted
+    definition:
+      function:
+        name: is_muted
         schema: public
   - name: matches
     definition:
@@ -203,7 +218,10 @@ select_permissions:
         - role
         - steam_id
       computed_fields:
+        - is_banned
+        - is_gagged
         - is_in_another_match
+        - is_muted
         - matchmaking_cooldown
         - total_matches
       filter: {}

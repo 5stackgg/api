@@ -2508,6 +2508,193 @@ input e_player_roles_updates {
 }
 
 """
+columns and relationships of "e_sanction_types"
+"""
+type e_sanction_types {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_sanction_types"
+"""
+type e_sanction_types_aggregate {
+  aggregate: e_sanction_types_aggregate_fields
+  nodes: [e_sanction_types!]!
+}
+
+"""
+aggregate fields of "e_sanction_types"
+"""
+type e_sanction_types_aggregate_fields {
+  count(columns: [e_sanction_types_select_column!], distinct: Boolean): Int!
+  max: e_sanction_types_max_fields
+  min: e_sanction_types_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_sanction_types". All fields are combined with a logical 'AND'.
+"""
+input e_sanction_types_bool_exp {
+  _and: [e_sanction_types_bool_exp!]
+  _not: e_sanction_types_bool_exp
+  _or: [e_sanction_types_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_sanction_types"
+"""
+enum e_sanction_types_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_sanction_types_pkey
+}
+
+enum e_sanction_types_enum {
+  """Player is not able to participate in any activity"""
+  ban
+
+  """Player cannot use text chat in game"""
+  gag
+
+  """Player cannot use voice chat in game"""
+  mute
+
+  """Player muted and gagged"""
+  silence
+}
+
+"""
+Boolean expression to compare columns of type "e_sanction_types_enum". All fields are combined with logical 'AND'.
+"""
+input e_sanction_types_enum_comparison_exp {
+  _eq: e_sanction_types_enum
+  _in: [e_sanction_types_enum!]
+  _is_null: Boolean
+  _neq: e_sanction_types_enum
+  _nin: [e_sanction_types_enum!]
+}
+
+"""
+input type for inserting data into table "e_sanction_types"
+"""
+input e_sanction_types_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_sanction_types_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_sanction_types_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_sanction_types"
+"""
+type e_sanction_types_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_sanction_types!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_sanction_types"
+"""
+input e_sanction_types_obj_rel_insert_input {
+  data: e_sanction_types_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_sanction_types_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_sanction_types"
+"""
+input e_sanction_types_on_conflict {
+  constraint: e_sanction_types_constraint!
+  update_columns: [e_sanction_types_update_column!]! = []
+  where: e_sanction_types_bool_exp
+}
+
+"""Ordering options when selecting data from "e_sanction_types"."""
+input e_sanction_types_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_sanction_types"""
+input e_sanction_types_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_sanction_types"
+"""
+enum e_sanction_types_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_sanction_types"
+"""
+input e_sanction_types_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_sanction_types"
+"""
+input e_sanction_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_sanction_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_sanction_types_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_sanction_types"
+"""
+enum e_sanction_types_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_sanction_types_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_sanction_types_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_sanction_types_bool_exp!
+}
+
+"""
 columns and relationships of "e_server_regions"
 """
 type e_server_regions {
@@ -5478,6 +5665,7 @@ type maps {
   """An object relationship"""
   e_match_type: e_match_types!
   id: uuid!
+  label: String
 
   """An array relationship"""
   match_maps(
@@ -5630,6 +5818,7 @@ input maps_bool_exp {
   active_pool: Boolean_comparison_exp
   e_match_type: e_match_types_bool_exp
   id: uuid_comparison_exp
+  label: String_comparison_exp
   match_maps: match_maps_bool_exp
   match_maps_aggregate: match_maps_aggregate_bool_exp
   match_veto_picks: match_map_veto_picks_bool_exp
@@ -5663,6 +5852,7 @@ input maps_insert_input {
   active_pool: Boolean
   e_match_type: e_match_types_obj_rel_insert_input
   id: uuid
+  label: String
   match_maps: match_maps_arr_rel_insert_input
   match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   name: String
@@ -5675,6 +5865,7 @@ input maps_insert_input {
 """aggregate max on columns"""
 type maps_max_fields {
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -5686,6 +5877,7 @@ order by max() on columns of table "maps"
 """
 input maps_max_order_by {
   id: order_by
+  label: order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -5695,6 +5887,7 @@ input maps_max_order_by {
 """aggregate min on columns"""
 type maps_min_fields {
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -5706,6 +5899,7 @@ order by min() on columns of table "maps"
 """
 input maps_min_order_by {
   id: order_by
+  label: order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -5747,6 +5941,7 @@ input maps_order_by {
   active_pool: order_by
   e_match_type: e_match_types_order_by
   id: order_by
+  label: order_by
   match_maps_aggregate: match_maps_aggregate_order_by
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
@@ -5770,6 +5965,9 @@ enum maps_select_column {
 
   """column name"""
   id
+
+  """column name"""
+  label
 
   """column name"""
   name
@@ -5809,6 +6007,7 @@ input type for updating data in table "maps"
 input maps_set_input {
   active_pool: Boolean
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -5831,6 +6030,7 @@ input maps_stream_cursor_input {
 input maps_stream_cursor_value_input {
   active_pool: Boolean
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -5847,6 +6047,9 @@ enum maps_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  label
 
   """column name"""
   name
@@ -11885,6 +12088,19 @@ type mutation_root {
   delete_e_player_roles_by_pk(value: String!): e_player_roles
 
   """
+  delete data from the table: "e_sanction_types"
+  """
+  delete_e_sanction_types(
+    """filter the rows which have to be deleted"""
+    where: e_sanction_types_bool_exp!
+  ): e_sanction_types_mutation_response
+
+  """
+  delete single row from the table: "e_sanction_types"
+  """
+  delete_e_sanction_types_by_pk(value: String!): e_sanction_types
+
+  """
   delete data from the table: "e_server_regions"
   """
   delete_e_server_regions(
@@ -12234,6 +12450,19 @@ type mutation_root {
   delete single row from the table: "player_objectives"
   """
   delete_player_objectives_by_pk(id: uuid!): player_objectives
+
+  """
+  delete data from the table: "player_sanctions"
+  """
+  delete_player_sanctions(
+    """filter the rows which have to be deleted"""
+    where: player_sanctions_bool_exp!
+  ): player_sanctions_mutation_response
+
+  """
+  delete single row from the table: "player_sanctions"
+  """
+  delete_player_sanctions_by_pk(id: uuid!): player_sanctions
 
   """
   delete data from the table: "player_unused_utility"
@@ -12689,6 +12918,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_player_roles_on_conflict
   ): e_player_roles
+
+  """
+  insert data into the table: "e_sanction_types"
+  """
+  insert_e_sanction_types(
+    """the rows to be inserted"""
+    objects: [e_sanction_types_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_sanction_types_on_conflict
+  ): e_sanction_types_mutation_response
+
+  """
+  insert a single row into the table: "e_sanction_types"
+  """
+  insert_e_sanction_types_one(
+    """the row to be inserted"""
+    object: e_sanction_types_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_sanction_types_on_conflict
+  ): e_sanction_types
 
   """
   insert data into the table: "e_server_regions"
@@ -13283,6 +13534,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: player_objectives_on_conflict
   ): player_objectives
+
+  """
+  insert data into the table: "player_sanctions"
+  """
+  insert_player_sanctions(
+    """the rows to be inserted"""
+    objects: [player_sanctions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_sanctions_on_conflict
+  ): player_sanctions_mutation_response
+
+  """
+  insert a single row into the table: "player_sanctions"
+  """
+  insert_player_sanctions_one(
+    """the row to be inserted"""
+    object: player_sanctions_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_sanctions_on_conflict
+  ): player_sanctions
 
   """
   insert data into the table: "player_unused_utility"
@@ -13979,6 +14252,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_player_roles_updates!]!
   ): [e_player_roles_mutation_response]
+
+  """
+  update data of the table: "e_sanction_types"
+  """
+  update_e_sanction_types(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_sanction_types_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_sanction_types_bool_exp!
+  ): e_sanction_types_mutation_response
+
+  """
+  update single row of the table: "e_sanction_types"
+  """
+  update_e_sanction_types_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_sanction_types_set_input
+    pk_columns: e_sanction_types_pk_columns_input!
+  ): e_sanction_types
+
+  """
+  update multiples rows of table: "e_sanction_types"
+  """
+  update_e_sanction_types_many(
+    """updates to execute, in order"""
+    updates: [e_sanction_types_updates!]!
+  ): [e_sanction_types_mutation_response]
 
   """
   update data of the table: "e_server_regions"
@@ -14819,6 +15120,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_objectives_updates!]!
   ): [player_objectives_mutation_response]
+
+  """
+  update data of the table: "player_sanctions"
+  """
+  update_player_sanctions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_sanctions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_sanctions_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_sanctions_bool_exp!
+  ): player_sanctions_mutation_response
+
+  """
+  update single row of the table: "player_sanctions"
+  """
+  update_player_sanctions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_sanctions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_sanctions_set_input
+    pk_columns: player_sanctions_pk_columns_input!
+  ): player_sanctions
+
+  """
+  update multiples rows of table: "player_sanctions"
+  """
+  update_player_sanctions_many(
+    """updates to execute, in order"""
+    updates: [player_sanctions_updates!]!
+  ): [player_sanctions_mutation_response]
 
   """
   update data of the table: "player_unused_utility"
@@ -18885,6 +19220,311 @@ input player_objectives_variance_order_by {
 }
 
 """
+columns and relationships of "player_sanctions"
+"""
+type player_sanctions {
+  created_at: timestamptz!
+
+  """An object relationship"""
+  e_sanction_type: e_sanction_types!
+  id: uuid!
+
+  """An object relationship"""
+  player: players!
+  player_steam_id: bigint!
+  reason: String
+  remove_sanction_date: timestamptz
+
+  """An object relationship"""
+  sanctioned_by: players!
+  sanctioned_by_steam_id: bigint!
+  type: e_sanction_types_enum!
+}
+
+"""
+aggregated selection of "player_sanctions"
+"""
+type player_sanctions_aggregate {
+  aggregate: player_sanctions_aggregate_fields
+  nodes: [player_sanctions!]!
+}
+
+"""
+aggregate fields of "player_sanctions"
+"""
+type player_sanctions_aggregate_fields {
+  avg: player_sanctions_avg_fields
+  count(columns: [player_sanctions_select_column!], distinct: Boolean): Int!
+  max: player_sanctions_max_fields
+  min: player_sanctions_min_fields
+  stddev: player_sanctions_stddev_fields
+  stddev_pop: player_sanctions_stddev_pop_fields
+  stddev_samp: player_sanctions_stddev_samp_fields
+  sum: player_sanctions_sum_fields
+  var_pop: player_sanctions_var_pop_fields
+  var_samp: player_sanctions_var_samp_fields
+  variance: player_sanctions_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_sanctions_avg_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_sanctions". All fields are combined with a logical 'AND'.
+"""
+input player_sanctions_bool_exp {
+  _and: [player_sanctions_bool_exp!]
+  _not: player_sanctions_bool_exp
+  _or: [player_sanctions_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  e_sanction_type: e_sanction_types_bool_exp
+  id: uuid_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  reason: String_comparison_exp
+  remove_sanction_date: timestamptz_comparison_exp
+  sanctioned_by: players_bool_exp
+  sanctioned_by_steam_id: bigint_comparison_exp
+  type: e_sanction_types_enum_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_sanctions"
+"""
+enum player_sanctions_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  player_sanctions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_sanctions"
+"""
+input player_sanctions_inc_input {
+  player_steam_id: bigint
+  sanctioned_by_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_sanctions"
+"""
+input player_sanctions_insert_input {
+  created_at: timestamptz
+  e_sanction_type: e_sanction_types_obj_rel_insert_input
+  id: uuid
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+  reason: String
+  remove_sanction_date: timestamptz
+  sanctioned_by: players_obj_rel_insert_input
+  sanctioned_by_steam_id: bigint
+  type: e_sanction_types_enum
+}
+
+"""aggregate max on columns"""
+type player_sanctions_max_fields {
+  created_at: timestamptz
+  id: uuid
+  player_steam_id: bigint
+  reason: String
+  remove_sanction_date: timestamptz
+  sanctioned_by_steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type player_sanctions_min_fields {
+  created_at: timestamptz
+  id: uuid
+  player_steam_id: bigint
+  reason: String
+  remove_sanction_date: timestamptz
+  sanctioned_by_steam_id: bigint
+}
+
+"""
+response of any mutation on the table "player_sanctions"
+"""
+type player_sanctions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_sanctions!]!
+}
+
+"""
+on_conflict condition type for table "player_sanctions"
+"""
+input player_sanctions_on_conflict {
+  constraint: player_sanctions_constraint!
+  update_columns: [player_sanctions_update_column!]! = []
+  where: player_sanctions_bool_exp
+}
+
+"""Ordering options when selecting data from "player_sanctions"."""
+input player_sanctions_order_by {
+  created_at: order_by
+  e_sanction_type: e_sanction_types_order_by
+  id: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  reason: order_by
+  remove_sanction_date: order_by
+  sanctioned_by: players_order_by
+  sanctioned_by_steam_id: order_by
+  type: order_by
+}
+
+"""primary key columns input for table: player_sanctions"""
+input player_sanctions_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "player_sanctions"
+"""
+enum player_sanctions_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  reason
+
+  """column name"""
+  remove_sanction_date
+
+  """column name"""
+  sanctioned_by_steam_id
+
+  """column name"""
+  type
+}
+
+"""
+input type for updating data in table "player_sanctions"
+"""
+input player_sanctions_set_input {
+  created_at: timestamptz
+  id: uuid
+  player_steam_id: bigint
+  reason: String
+  remove_sanction_date: timestamptz
+  sanctioned_by_steam_id: bigint
+  type: e_sanction_types_enum
+}
+
+"""aggregate stddev on columns"""
+type player_sanctions_stddev_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_sanctions_stddev_pop_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_sanctions_stddev_samp_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "player_sanctions"
+"""
+input player_sanctions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_sanctions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_sanctions_stream_cursor_value_input {
+  created_at: timestamptz
+  id: uuid
+  player_steam_id: bigint
+  reason: String
+  remove_sanction_date: timestamptz
+  sanctioned_by_steam_id: bigint
+  type: e_sanction_types_enum
+}
+
+"""aggregate sum on columns"""
+type player_sanctions_sum_fields {
+  player_steam_id: bigint
+  sanctioned_by_steam_id: bigint
+}
+
+"""
+update columns of table "player_sanctions"
+"""
+enum player_sanctions_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  reason
+
+  """column name"""
+  remove_sanction_date
+
+  """column name"""
+  sanctioned_by_steam_id
+
+  """column name"""
+  type
+}
+
+input player_sanctions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_sanctions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_sanctions_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_sanctions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_sanctions_var_pop_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_sanctions_var_samp_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type player_sanctions_variance_fields {
+  player_steam_id: Float
+  sanctioned_by_steam_id: Float
+}
+
+"""
 columns and relationships of "player_unused_utility"
 """
 type player_unused_utility {
@@ -20136,9 +20776,24 @@ type players {
   ): team_invites_aggregate!
 
   """
+  A computed field, executes function "is_banned"
+  """
+  is_banned: Boolean
+
+  """
+  A computed field, executes function "is_gagged"
+  """
+  is_gagged: Boolean
+
+  """
   A computed field, executes function "is_in_another_match"
   """
   is_in_another_match: Boolean
+
+  """
+  A computed field, executes function "is_muted"
+  """
+  is_muted: Boolean
 
   """An array relationship"""
   kills(
@@ -20729,7 +21384,10 @@ input players_bool_exp {
   flashed_players_aggregate: player_flashes_aggregate_bool_exp
   invited_players: team_invites_bool_exp
   invited_players_aggregate: team_invites_aggregate_bool_exp
+  is_banned: Boolean_comparison_exp
+  is_gagged: Boolean_comparison_exp
   is_in_another_match: Boolean_comparison_exp
+  is_muted: Boolean_comparison_exp
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
   matches: matches_bool_exp
@@ -20918,7 +21576,10 @@ input players_order_by {
   flashed_by_players_aggregate: player_flashes_aggregate_order_by
   flashed_players_aggregate: player_flashes_aggregate_order_by
   invited_players_aggregate: team_invites_aggregate_order_by
+  is_banned: order_by
+  is_gagged: order_by
   is_in_another_match: order_by
+  is_muted: order_by
   kills_aggregate: player_kills_aggregate_order_by
   matches_aggregate: matches_aggregate_order_by
   matchmaking_cooldown: order_by
@@ -21604,6 +22265,51 @@ type query_root {
 
   """fetch data from the table: "e_player_roles" using primary key columns"""
   e_player_roles_by_pk(value: String!): e_player_roles
+
+  """
+  fetch data from the table: "e_sanction_types"
+  """
+  e_sanction_types(
+    """distinct select on columns"""
+    distinct_on: [e_sanction_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_sanction_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_sanction_types_bool_exp
+  ): [e_sanction_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_sanction_types"
+  """
+  e_sanction_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_sanction_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_sanction_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_sanction_types_bool_exp
+  ): e_sanction_types_aggregate!
+
+  """
+  fetch data from the table: "e_sanction_types" using primary key columns
+  """
+  e_sanction_types_by_pk(value: String!): e_sanction_types
 
   """
   fetch data from the table: "e_server_regions"
@@ -22750,6 +23456,51 @@ type query_root {
   fetch data from the table: "player_objectives" using primary key columns
   """
   player_objectives_by_pk(id: uuid!): player_objectives
+
+  """
+  fetch data from the table: "player_sanctions"
+  """
+  player_sanctions(
+    """distinct select on columns"""
+    distinct_on: [player_sanctions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_sanctions_order_by!]
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): [player_sanctions!]!
+
+  """
+  fetch aggregated fields from the table: "player_sanctions"
+  """
+  player_sanctions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_sanctions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_sanctions_order_by!]
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): player_sanctions_aggregate!
+
+  """
+  fetch data from the table: "player_sanctions" using primary key columns
+  """
+  player_sanctions_by_pk(id: uuid!): player_sanctions
 
   """
   fetch data from the table: "player_unused_utility"
@@ -25085,6 +25836,65 @@ type subscription_root {
   ): [e_player_roles!]!
 
   """
+  fetch data from the table: "e_sanction_types"
+  """
+  e_sanction_types(
+    """distinct select on columns"""
+    distinct_on: [e_sanction_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_sanction_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_sanction_types_bool_exp
+  ): [e_sanction_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_sanction_types"
+  """
+  e_sanction_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_sanction_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_sanction_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_sanction_types_bool_exp
+  ): e_sanction_types_aggregate!
+
+  """
+  fetch data from the table: "e_sanction_types" using primary key columns
+  """
+  e_sanction_types_by_pk(value: String!): e_sanction_types
+
+  """
+  fetch data from the table in a streaming manner: "e_sanction_types"
+  """
+  e_sanction_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_sanction_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_sanction_types_bool_exp
+  ): [e_sanction_types!]!
+
+  """
   fetch data from the table: "e_server_regions"
   """
   e_server_regions(
@@ -26602,6 +27412,65 @@ type subscription_root {
     """filter the rows returned"""
     where: player_objectives_bool_exp
   ): [player_objectives!]!
+
+  """
+  fetch data from the table: "player_sanctions"
+  """
+  player_sanctions(
+    """distinct select on columns"""
+    distinct_on: [player_sanctions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_sanctions_order_by!]
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): [player_sanctions!]!
+
+  """
+  fetch aggregated fields from the table: "player_sanctions"
+  """
+  player_sanctions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_sanctions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_sanctions_order_by!]
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): player_sanctions_aggregate!
+
+  """
+  fetch data from the table: "player_sanctions" using primary key columns
+  """
+  player_sanctions_by_pk(id: uuid!): player_sanctions
+
+  """
+  fetch data from the table in a streaming manner: "player_sanctions"
+  """
+  player_sanctions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_sanctions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): [player_sanctions!]!
 
   """
   fetch data from the table: "player_unused_utility"

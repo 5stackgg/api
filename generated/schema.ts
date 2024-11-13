@@ -870,6 +870,71 @@ export type e_player_roles_select_column = 'description' | 'value'
 export type e_player_roles_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_sanction_types" */
+export interface e_sanction_types {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_sanction_types'
+}
+
+
+/** aggregated selection of "e_sanction_types" */
+export interface e_sanction_types_aggregate {
+    aggregate: (e_sanction_types_aggregate_fields | null)
+    nodes: e_sanction_types[]
+    __typename: 'e_sanction_types_aggregate'
+}
+
+
+/** aggregate fields of "e_sanction_types" */
+export interface e_sanction_types_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_sanction_types_max_fields | null)
+    min: (e_sanction_types_min_fields | null)
+    __typename: 'e_sanction_types_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_sanction_types" */
+export type e_sanction_types_constraint = 'e_sanction_types_pkey'
+
+export type e_sanction_types_enum = 'ban' | 'gag' | 'mute' | 'silence'
+
+
+/** aggregate max on columns */
+export interface e_sanction_types_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_sanction_types_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_sanction_types_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_sanction_types_min_fields'
+}
+
+
+/** response of any mutation on the table "e_sanction_types" */
+export interface e_sanction_types_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_sanction_types[]
+    __typename: 'e_sanction_types_mutation_response'
+}
+
+
+/** select columns of table "e_sanction_types" */
+export type e_sanction_types_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_sanction_types" */
+export type e_sanction_types_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_server_regions" */
 export interface e_server_regions {
     /** A computed field, executes function "available_region_server_count" */
@@ -1825,6 +1890,7 @@ export interface maps {
     /** An object relationship */
     e_match_type: e_match_types
     id: Scalars['uuid']
+    label: (Scalars['String'] | null)
     /** An array relationship */
     match_maps: match_maps[]
     /** An aggregate relationship */
@@ -1866,6 +1932,7 @@ export type maps_constraint = 'maps_name_type_key' | 'maps_pkey'
 /** aggregate max on columns */
 export interface maps_max_fields {
     id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     patch: (Scalars['String'] | null)
     poster: (Scalars['String'] | null)
@@ -1877,6 +1944,7 @@ export interface maps_max_fields {
 /** aggregate min on columns */
 export interface maps_min_fields {
     id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     patch: (Scalars['String'] | null)
     poster: (Scalars['String'] | null)
@@ -1896,7 +1964,7 @@ export interface maps_mutation_response {
 
 
 /** select columns of table "maps" */
-export type maps_select_column = 'active_pool' | 'id' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type maps_select_column = 'active_pool' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
 /** select "maps_aggregate_bool_exp_bool_and_arguments_columns" columns of table "maps" */
@@ -1908,7 +1976,7 @@ export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns
 
 
 /** update columns of table "maps" */
-export type maps_update_column = 'active_pool' | 'id' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type maps_update_column = 'active_pool' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
 /** relational table for assigning a players to a match and lineup */
@@ -3698,6 +3766,10 @@ export interface mutation_root {
     delete_e_player_roles: (e_player_roles_mutation_response | null)
     /** delete single row from the table: "e_player_roles" */
     delete_e_player_roles_by_pk: (e_player_roles | null)
+    /** delete data from the table: "e_sanction_types" */
+    delete_e_sanction_types: (e_sanction_types_mutation_response | null)
+    /** delete single row from the table: "e_sanction_types" */
+    delete_e_sanction_types_by_pk: (e_sanction_types | null)
     /** delete data from the table: "e_server_regions" */
     delete_e_server_regions: (e_server_regions_mutation_response | null)
     /** delete single row from the table: "e_server_regions" */
@@ -3806,6 +3878,10 @@ export interface mutation_root {
     delete_player_objectives: (player_objectives_mutation_response | null)
     /** delete single row from the table: "player_objectives" */
     delete_player_objectives_by_pk: (player_objectives | null)
+    /** delete data from the table: "player_sanctions" */
+    delete_player_sanctions: (player_sanctions_mutation_response | null)
+    /** delete single row from the table: "player_sanctions" */
+    delete_player_sanctions_by_pk: (player_sanctions | null)
     /** delete data from the table: "player_unused_utility" */
     delete_player_unused_utility: (player_unused_utility_mutation_response | null)
     /** delete single row from the table: "player_unused_utility" */
@@ -3916,6 +3992,10 @@ export interface mutation_root {
     insert_e_player_roles: (e_player_roles_mutation_response | null)
     /** insert a single row into the table: "e_player_roles" */
     insert_e_player_roles_one: (e_player_roles | null)
+    /** insert data into the table: "e_sanction_types" */
+    insert_e_sanction_types: (e_sanction_types_mutation_response | null)
+    /** insert a single row into the table: "e_sanction_types" */
+    insert_e_sanction_types_one: (e_sanction_types | null)
     /** insert data into the table: "e_server_regions" */
     insert_e_server_regions: (e_server_regions_mutation_response | null)
     /** insert a single row into the table: "e_server_regions" */
@@ -4024,6 +4104,10 @@ export interface mutation_root {
     insert_player_objectives: (player_objectives_mutation_response | null)
     /** insert a single row into the table: "player_objectives" */
     insert_player_objectives_one: (player_objectives | null)
+    /** insert data into the table: "player_sanctions" */
+    insert_player_sanctions: (player_sanctions_mutation_response | null)
+    /** insert a single row into the table: "player_sanctions" */
+    insert_player_sanctions_one: (player_sanctions | null)
     /** insert data into the table: "player_unused_utility" */
     insert_player_unused_utility: (player_unused_utility_mutation_response | null)
     /** insert a single row into the table: "player_unused_utility" */
@@ -4174,6 +4258,12 @@ export interface mutation_root {
     update_e_player_roles_by_pk: (e_player_roles | null)
     /** update multiples rows of table: "e_player_roles" */
     update_e_player_roles_many: ((e_player_roles_mutation_response | null)[] | null)
+    /** update data of the table: "e_sanction_types" */
+    update_e_sanction_types: (e_sanction_types_mutation_response | null)
+    /** update single row of the table: "e_sanction_types" */
+    update_e_sanction_types_by_pk: (e_sanction_types | null)
+    /** update multiples rows of table: "e_sanction_types" */
+    update_e_sanction_types_many: ((e_sanction_types_mutation_response | null)[] | null)
     /** update data of the table: "e_server_regions" */
     update_e_server_regions: (e_server_regions_mutation_response | null)
     /** update single row of the table: "e_server_regions" */
@@ -4336,6 +4426,12 @@ export interface mutation_root {
     update_player_objectives_by_pk: (player_objectives | null)
     /** update multiples rows of table: "player_objectives" */
     update_player_objectives_many: ((player_objectives_mutation_response | null)[] | null)
+    /** update data of the table: "player_sanctions" */
+    update_player_sanctions: (player_sanctions_mutation_response | null)
+    /** update single row of the table: "player_sanctions" */
+    update_player_sanctions_by_pk: (player_sanctions | null)
+    /** update multiples rows of table: "player_sanctions" */
+    update_player_sanctions_many: ((player_sanctions_mutation_response | null)[] | null)
     /** update data of the table: "player_unused_utility" */
     update_player_unused_utility: (player_unused_utility_mutation_response | null)
     /** update single row of the table: "player_unused_utility" */
@@ -5561,6 +5657,160 @@ export interface player_objectives_variance_fields {
 }
 
 
+/** columns and relationships of "player_sanctions" */
+export interface player_sanctions {
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    e_sanction_type: e_sanction_types
+    id: Scalars['uuid']
+    /** An object relationship */
+    player: players
+    player_steam_id: Scalars['bigint']
+    reason: (Scalars['String'] | null)
+    remove_sanction_date: (Scalars['timestamptz'] | null)
+    /** An object relationship */
+    sanctioned_by: players
+    sanctioned_by_steam_id: Scalars['bigint']
+    type: e_sanction_types_enum
+    __typename: 'player_sanctions'
+}
+
+
+/** aggregated selection of "player_sanctions" */
+export interface player_sanctions_aggregate {
+    aggregate: (player_sanctions_aggregate_fields | null)
+    nodes: player_sanctions[]
+    __typename: 'player_sanctions_aggregate'
+}
+
+
+/** aggregate fields of "player_sanctions" */
+export interface player_sanctions_aggregate_fields {
+    avg: (player_sanctions_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_sanctions_max_fields | null)
+    min: (player_sanctions_min_fields | null)
+    stddev: (player_sanctions_stddev_fields | null)
+    stddev_pop: (player_sanctions_stddev_pop_fields | null)
+    stddev_samp: (player_sanctions_stddev_samp_fields | null)
+    sum: (player_sanctions_sum_fields | null)
+    var_pop: (player_sanctions_var_pop_fields | null)
+    var_samp: (player_sanctions_var_samp_fields | null)
+    variance: (player_sanctions_variance_fields | null)
+    __typename: 'player_sanctions_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_sanctions_avg_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "player_sanctions" */
+export type player_sanctions_constraint = 'player_sanctions_pkey'
+
+
+/** aggregate max on columns */
+export interface player_sanctions_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    reason: (Scalars['String'] | null)
+    remove_sanction_date: (Scalars['timestamptz'] | null)
+    sanctioned_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_sanctions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_sanctions_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    reason: (Scalars['String'] | null)
+    remove_sanction_date: (Scalars['timestamptz'] | null)
+    sanctioned_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_sanctions_min_fields'
+}
+
+
+/** response of any mutation on the table "player_sanctions" */
+export interface player_sanctions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_sanctions[]
+    __typename: 'player_sanctions_mutation_response'
+}
+
+
+/** select columns of table "player_sanctions" */
+export type player_sanctions_select_column = 'created_at' | 'id' | 'player_steam_id' | 'reason' | 'remove_sanction_date' | 'sanctioned_by_steam_id' | 'type'
+
+
+/** aggregate stddev on columns */
+export interface player_sanctions_stddev_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_sanctions_stddev_pop_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_sanctions_stddev_samp_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_sanctions_sum_fields {
+    player_steam_id: (Scalars['bigint'] | null)
+    sanctioned_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_sanctions_sum_fields'
+}
+
+
+/** update columns of table "player_sanctions" */
+export type player_sanctions_update_column = 'created_at' | 'id' | 'player_steam_id' | 'reason' | 'remove_sanction_date' | 'sanctioned_by_steam_id' | 'type'
+
+
+/** aggregate var_pop on columns */
+export interface player_sanctions_var_pop_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_sanctions_var_samp_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_sanctions_variance_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    sanctioned_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_sanctions_variance_fields'
+}
+
+
 /** columns and relationships of "player_unused_utility" */
 export interface player_unused_utility {
     id: Scalars['uuid']
@@ -5925,8 +6175,14 @@ export interface players {
     invited_players: team_invites[]
     /** An aggregate relationship */
     invited_players_aggregate: team_invites_aggregate
+    /** A computed field, executes function "is_banned" */
+    is_banned: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "is_gagged" */
+    is_gagged: (Scalars['Boolean'] | null)
     /** A computed field, executes function "is_in_another_match" */
     is_in_another_match: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "is_muted" */
+    is_muted: (Scalars['Boolean'] | null)
     /** An array relationship */
     kills: player_kills[]
     /** An aggregate relationship */
@@ -6214,6 +6470,12 @@ export interface query_root {
     e_player_roles_aggregate: e_player_roles_aggregate
     /** fetch data from the table: "e_player_roles" using primary key columns */
     e_player_roles_by_pk: (e_player_roles | null)
+    /** fetch data from the table: "e_sanction_types" */
+    e_sanction_types: e_sanction_types[]
+    /** fetch aggregated fields from the table: "e_sanction_types" */
+    e_sanction_types_aggregate: e_sanction_types_aggregate
+    /** fetch data from the table: "e_sanction_types" using primary key columns */
+    e_sanction_types_by_pk: (e_sanction_types | null)
     /** fetch data from the table: "e_server_regions" */
     e_server_regions: e_server_regions[]
     /** fetch aggregated fields from the table: "e_server_regions" */
@@ -6380,6 +6642,12 @@ export interface query_root {
     player_objectives_aggregate: player_objectives_aggregate
     /** fetch data from the table: "player_objectives" using primary key columns */
     player_objectives_by_pk: (player_objectives | null)
+    /** fetch data from the table: "player_sanctions" */
+    player_sanctions: player_sanctions[]
+    /** fetch aggregated fields from the table: "player_sanctions" */
+    player_sanctions_aggregate: player_sanctions_aggregate
+    /** fetch data from the table: "player_sanctions" using primary key columns */
+    player_sanctions_by_pk: (player_sanctions | null)
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility: player_unused_utility[]
     /** fetch aggregated fields from the table: "player_unused_utility" */
@@ -6834,6 +7102,14 @@ export interface subscription_root {
     e_player_roles_by_pk: (e_player_roles | null)
     /** fetch data from the table in a streaming manner: "e_player_roles" */
     e_player_roles_stream: e_player_roles[]
+    /** fetch data from the table: "e_sanction_types" */
+    e_sanction_types: e_sanction_types[]
+    /** fetch aggregated fields from the table: "e_sanction_types" */
+    e_sanction_types_aggregate: e_sanction_types_aggregate
+    /** fetch data from the table: "e_sanction_types" using primary key columns */
+    e_sanction_types_by_pk: (e_sanction_types | null)
+    /** fetch data from the table in a streaming manner: "e_sanction_types" */
+    e_sanction_types_stream: e_sanction_types[]
     /** fetch data from the table: "e_server_regions" */
     e_server_regions: e_server_regions[]
     /** fetch aggregated fields from the table: "e_server_regions" */
@@ -7050,6 +7326,14 @@ export interface subscription_root {
     player_objectives_by_pk: (player_objectives | null)
     /** fetch data from the table in a streaming manner: "player_objectives" */
     player_objectives_stream: player_objectives[]
+    /** fetch data from the table: "player_sanctions" */
+    player_sanctions: player_sanctions[]
+    /** fetch aggregated fields from the table: "player_sanctions" */
+    player_sanctions_aggregate: player_sanctions_aggregate
+    /** fetch data from the table: "player_sanctions" using primary key columns */
+    player_sanctions_by_pk: (player_sanctions | null)
+    /** fetch data from the table in a streaming manner: "player_sanctions" */
+    player_sanctions_stream: player_sanctions[]
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility: player_unused_utility[]
     /** fetch aggregated fields from the table: "player_unused_utility" */
@@ -11265,6 +11549,115 @@ _set?: (e_player_roles_set_input | null),
 where: e_player_roles_bool_exp}
 
 
+/** columns and relationships of "e_sanction_types" */
+export interface e_sanction_typesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_sanction_types" */
+export interface e_sanction_types_aggregateGenqlSelection{
+    aggregate?: e_sanction_types_aggregate_fieldsGenqlSelection
+    nodes?: e_sanction_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_sanction_types" */
+export interface e_sanction_types_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_sanction_types_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_sanction_types_max_fieldsGenqlSelection
+    min?: e_sanction_types_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_sanction_types". All fields are combined with a logical 'AND'. */
+export interface e_sanction_types_bool_exp {_and?: (e_sanction_types_bool_exp[] | null),_not?: (e_sanction_types_bool_exp | null),_or?: (e_sanction_types_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_sanction_types_enum". All fields are combined with logical 'AND'. */
+export interface e_sanction_types_enum_comparison_exp {_eq?: (e_sanction_types_enum | null),_in?: (e_sanction_types_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_sanction_types_enum | null),_nin?: (e_sanction_types_enum[] | null)}
+
+
+/** input type for inserting data into table "e_sanction_types" */
+export interface e_sanction_types_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_sanction_types_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_sanction_types_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_sanction_types" */
+export interface e_sanction_types_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_sanction_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "e_sanction_types" */
+export interface e_sanction_types_obj_rel_insert_input {data: e_sanction_types_insert_input,
+/** upsert condition */
+on_conflict?: (e_sanction_types_on_conflict | null)}
+
+
+/** on_conflict condition type for table "e_sanction_types" */
+export interface e_sanction_types_on_conflict {constraint: e_sanction_types_constraint,update_columns?: e_sanction_types_update_column[],where?: (e_sanction_types_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_sanction_types". */
+export interface e_sanction_types_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_sanction_types */
+export interface e_sanction_types_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_sanction_types" */
+export interface e_sanction_types_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_sanction_types" */
+export interface e_sanction_types_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_sanction_types_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_sanction_types_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_sanction_types_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_sanction_types_set_input | null),
+/** filter the rows which have to be updated */
+where: e_sanction_types_bool_exp}
+
+
 /** columns and relationships of "e_server_regions" */
 export interface e_server_regionsGenqlSelection{
     /** A computed field, executes function "available_region_server_count" */
@@ -12948,6 +13341,7 @@ export interface mapsGenqlSelection{
     /** An object relationship */
     e_match_type?: e_match_typesGenqlSelection
     id?: boolean | number
+    label?: boolean | number
     /** An array relationship */
     match_maps?: (match_mapsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -13044,16 +13438,17 @@ on_conflict?: (maps_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "maps". All fields are combined with a logical 'AND'. */
-export interface maps_bool_exp {_and?: (maps_bool_exp[] | null),_not?: (maps_bool_exp | null),_or?: (maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),id?: (uuid_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+export interface maps_bool_exp {_and?: (maps_bool_exp[] | null),_not?: (maps_bool_exp | null),_or?: (maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "maps" */
-export interface maps_insert_input {active_pool?: (Scalars['Boolean'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_insert_input {active_pool?: (Scalars['Boolean'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface maps_max_fieldsGenqlSelection{
     id?: boolean | number
+    label?: boolean | number
     name?: boolean | number
     patch?: boolean | number
     poster?: boolean | number
@@ -13064,12 +13459,13 @@ export interface maps_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "maps" */
-export interface maps_max_order_by {id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_max_order_by {id?: (order_by | null),label?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface maps_min_fieldsGenqlSelection{
     id?: boolean | number
+    label?: boolean | number
     name?: boolean | number
     patch?: boolean | number
     poster?: boolean | number
@@ -13080,7 +13476,7 @@ export interface maps_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "maps" */
-export interface maps_min_order_by {id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_min_order_by {id?: (order_by | null),label?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "maps" */
@@ -13105,7 +13501,7 @@ export interface maps_on_conflict {constraint: maps_constraint,update_columns?: 
 
 
 /** Ordering options when selecting data from "maps". */
-export interface maps_order_by {active_pool?: (order_by | null),e_match_type?: (e_match_types_order_by | null),id?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_order_by {active_pool?: (order_by | null),e_match_type?: (e_match_types_order_by | null),id?: (order_by | null),label?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** primary key columns input for table: maps */
@@ -13113,7 +13509,7 @@ export interface maps_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "maps" */
-export interface maps_set_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_set_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "maps" */
@@ -13125,7 +13521,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 export interface maps_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -16321,6 +16717,12 @@ export interface mutation_rootGenqlSelection{
     where: e_player_roles_bool_exp} })
     /** delete single row from the table: "e_player_roles" */
     delete_e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_sanction_types" */
+    delete_e_sanction_types?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_sanction_types_bool_exp} })
+    /** delete single row from the table: "e_sanction_types" */
+    delete_e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_server_regions" */
     delete_e_server_regions?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -16483,6 +16885,12 @@ export interface mutation_rootGenqlSelection{
     where: player_objectives_bool_exp} })
     /** delete single row from the table: "player_objectives" */
     delete_player_objectives_by_pk?: (player_objectivesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "player_sanctions" */
+    delete_player_sanctions?: (player_sanctions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_sanctions_bool_exp} })
+    /** delete single row from the table: "player_sanctions" */
+    delete_player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "player_unused_utility" */
     delete_player_unused_utility?: (player_unused_utility_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -16715,6 +17123,18 @@ export interface mutation_rootGenqlSelection{
     object: e_player_roles_insert_input, 
     /** upsert condition */
     on_conflict?: (e_player_roles_on_conflict | null)} })
+    /** insert data into the table: "e_sanction_types" */
+    insert_e_sanction_types?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_sanction_types_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_sanction_types_on_conflict | null)} })
+    /** insert a single row into the table: "e_sanction_types" */
+    insert_e_sanction_types_one?: (e_sanction_typesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_sanction_types_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_sanction_types_on_conflict | null)} })
     /** insert data into the table: "e_server_regions" */
     insert_e_server_regions?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -17039,6 +17459,18 @@ export interface mutation_rootGenqlSelection{
     object: player_objectives_insert_input, 
     /** upsert condition */
     on_conflict?: (player_objectives_on_conflict | null)} })
+    /** insert data into the table: "player_sanctions" */
+    insert_player_sanctions?: (player_sanctions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_sanctions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (player_sanctions_on_conflict | null)} })
+    /** insert a single row into the table: "player_sanctions" */
+    insert_player_sanctions_one?: (player_sanctionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_sanctions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (player_sanctions_on_conflict | null)} })
     /** insert data into the table: "player_unused_utility" */
     insert_player_unused_utility?: (player_unused_utility_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -17409,6 +17841,20 @@ export interface mutation_rootGenqlSelection{
     update_e_player_roles_many?: (e_player_roles_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_player_roles_updates[]} })
+    /** update data of the table: "e_sanction_types" */
+    update_e_sanction_types?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_sanction_types_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_sanction_types_bool_exp} })
+    /** update single row of the table: "e_sanction_types" */
+    update_e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_sanction_types_set_input | null), pk_columns: e_sanction_types_pk_columns_input} })
+    /** update multiples rows of table: "e_sanction_types" */
+    update_e_sanction_types_many?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_sanction_types_updates[]} })
     /** update data of the table: "e_server_regions" */
     update_e_server_regions?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -17843,6 +18289,24 @@ export interface mutation_rootGenqlSelection{
     update_player_objectives_many?: (player_objectives_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_objectives_updates[]} })
+    /** update data of the table: "player_sanctions" */
+    update_player_sanctions?: (player_sanctions_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_sanctions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_sanctions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_sanctions_bool_exp} })
+    /** update single row of the table: "player_sanctions" */
+    update_player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_sanctions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_sanctions_set_input | null), pk_columns: player_sanctions_pk_columns_input} })
+    /** update multiples rows of table: "player_sanctions" */
+    update_player_sanctions_many?: (player_sanctions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_sanctions_updates[]} })
     /** update data of the table: "player_unused_utility" */
     update_player_unused_utility?: (player_unused_utility_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -19881,6 +20345,210 @@ export interface player_objectives_variance_fieldsGenqlSelection{
 export interface player_objectives_variance_order_by {player_steam_id?: (order_by | null),round?: (order_by | null)}
 
 
+/** columns and relationships of "player_sanctions" */
+export interface player_sanctionsGenqlSelection{
+    created_at?: boolean | number
+    /** An object relationship */
+    e_sanction_type?: e_sanction_typesGenqlSelection
+    id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    player_steam_id?: boolean | number
+    reason?: boolean | number
+    remove_sanction_date?: boolean | number
+    /** An object relationship */
+    sanctioned_by?: playersGenqlSelection
+    sanctioned_by_steam_id?: boolean | number
+    type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_sanctions" */
+export interface player_sanctions_aggregateGenqlSelection{
+    aggregate?: player_sanctions_aggregate_fieldsGenqlSelection
+    nodes?: player_sanctionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_sanctions" */
+export interface player_sanctions_aggregate_fieldsGenqlSelection{
+    avg?: player_sanctions_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_sanctions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_sanctions_max_fieldsGenqlSelection
+    min?: player_sanctions_min_fieldsGenqlSelection
+    stddev?: player_sanctions_stddev_fieldsGenqlSelection
+    stddev_pop?: player_sanctions_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_sanctions_stddev_samp_fieldsGenqlSelection
+    sum?: player_sanctions_sum_fieldsGenqlSelection
+    var_pop?: player_sanctions_var_pop_fieldsGenqlSelection
+    var_samp?: player_sanctions_var_samp_fieldsGenqlSelection
+    variance?: player_sanctions_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_sanctions_avg_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_sanctions". All fields are combined with a logical 'AND'. */
+export interface player_sanctions_bool_exp {_and?: (player_sanctions_bool_exp[] | null),_not?: (player_sanctions_bool_exp | null),_or?: (player_sanctions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),e_sanction_type?: (e_sanction_types_bool_exp | null),id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),reason?: (String_comparison_exp | null),remove_sanction_date?: (timestamptz_comparison_exp | null),sanctioned_by?: (players_bool_exp | null),sanctioned_by_steam_id?: (bigint_comparison_exp | null),type?: (e_sanction_types_enum_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_sanctions" */
+export interface player_sanctions_inc_input {player_steam_id?: (Scalars['bigint'] | null),sanctioned_by_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "player_sanctions" */
+export interface player_sanctions_insert_input {created_at?: (Scalars['timestamptz'] | null),e_sanction_type?: (e_sanction_types_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),reason?: (Scalars['String'] | null),remove_sanction_date?: (Scalars['timestamptz'] | null),sanctioned_by?: (players_obj_rel_insert_input | null),sanctioned_by_steam_id?: (Scalars['bigint'] | null),type?: (e_sanction_types_enum | null)}
+
+
+/** aggregate max on columns */
+export interface player_sanctions_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    player_steam_id?: boolean | number
+    reason?: boolean | number
+    remove_sanction_date?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_sanctions_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    player_steam_id?: boolean | number
+    reason?: boolean | number
+    remove_sanction_date?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "player_sanctions" */
+export interface player_sanctions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_sanctionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "player_sanctions" */
+export interface player_sanctions_on_conflict {constraint: player_sanctions_constraint,update_columns?: player_sanctions_update_column[],where?: (player_sanctions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "player_sanctions". */
+export interface player_sanctions_order_by {created_at?: (order_by | null),e_sanction_type?: (e_sanction_types_order_by | null),id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),reason?: (order_by | null),remove_sanction_date?: (order_by | null),sanctioned_by?: (players_order_by | null),sanctioned_by_steam_id?: (order_by | null),type?: (order_by | null)}
+
+
+/** primary key columns input for table: player_sanctions */
+export interface player_sanctions_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "player_sanctions" */
+export interface player_sanctions_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),reason?: (Scalars['String'] | null),remove_sanction_date?: (Scalars['timestamptz'] | null),sanctioned_by_steam_id?: (Scalars['bigint'] | null),type?: (e_sanction_types_enum | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_sanctions_stddev_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_sanctions_stddev_pop_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_sanctions_stddev_samp_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_sanctions" */
+export interface player_sanctions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_sanctions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_sanctions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),reason?: (Scalars['String'] | null),remove_sanction_date?: (Scalars['timestamptz'] | null),sanctioned_by_steam_id?: (Scalars['bigint'] | null),type?: (e_sanction_types_enum | null)}
+
+
+/** aggregate sum on columns */
+export interface player_sanctions_sum_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_sanctions_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_sanctions_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_sanctions_set_input | null),
+/** filter the rows which have to be updated */
+where: player_sanctions_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_sanctions_var_pop_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_sanctions_var_samp_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_sanctions_variance_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    sanctioned_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "player_unused_utility" */
 export interface player_unused_utilityGenqlSelection{
     id?: boolean | number
@@ -20653,8 +21321,14 @@ export interface playersGenqlSelection{
     order_by?: (team_invites_order_by[] | null), 
     /** filter the rows returned */
     where?: (team_invites_bool_exp | null)} })
+    /** A computed field, executes function "is_banned" */
+    is_banned?: boolean | number
+    /** A computed field, executes function "is_gagged" */
+    is_gagged?: boolean | number
     /** A computed field, executes function "is_in_another_match" */
     is_in_another_match?: boolean | number
+    /** A computed field, executes function "is_muted" */
+    is_muted?: boolean | number
     /** An array relationship */
     kills?: (player_killsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -21042,7 +21716,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -21111,7 +21785,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_in_another_match?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -21498,6 +22172,32 @@ export interface query_rootGenqlSelection{
     where?: (e_player_roles_bool_exp | null)} })
     /** fetch data from the table: "e_player_roles" using primary key columns */
     e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_sanction_types" */
+    e_sanction_types?: (e_sanction_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_sanction_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_sanction_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_sanction_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_sanction_types" */
+    e_sanction_types_aggregate?: (e_sanction_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_sanction_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_sanction_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_sanction_types_bool_exp | null)} })
+    /** fetch data from the table: "e_sanction_types" using primary key columns */
+    e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_server_regions" */
     e_server_regions?: (e_server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -22204,6 +22904,32 @@ export interface query_rootGenqlSelection{
     where?: (player_objectives_bool_exp | null)} })
     /** fetch data from the table: "player_objectives" using primary key columns */
     player_objectives_by_pk?: (player_objectivesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "player_sanctions" */
+    player_sanctions?: (player_sanctionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_sanctions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_sanctions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_sanctions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_sanctions" */
+    player_sanctions_aggregate?: (player_sanctions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_sanctions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_sanctions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_sanctions_bool_exp | null)} })
+    /** fetch data from the table: "player_sanctions" using primary key columns */
+    player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility?: (player_unused_utilityGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -23567,6 +24293,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_player_roles_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_player_roles_bool_exp | null)} })
+    /** fetch data from the table: "e_sanction_types" */
+    e_sanction_types?: (e_sanction_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_sanction_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_sanction_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_sanction_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_sanction_types" */
+    e_sanction_types_aggregate?: (e_sanction_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_sanction_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_sanction_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_sanction_types_bool_exp | null)} })
+    /** fetch data from the table: "e_sanction_types" using primary key columns */
+    e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_sanction_types" */
+    e_sanction_types_stream?: (e_sanction_typesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_sanction_types_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_sanction_types_bool_exp | null)} })
     /** fetch data from the table: "e_server_regions" */
     e_server_regions?: (e_server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -24485,6 +25245,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_objectives_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_objectives_bool_exp | null)} })
+    /** fetch data from the table: "player_sanctions" */
+    player_sanctions?: (player_sanctionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_sanctions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_sanctions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_sanctions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_sanctions" */
+    player_sanctions_aggregate?: (player_sanctions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_sanctions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_sanctions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_sanctions_bool_exp | null)} })
+    /** fetch data from the table: "player_sanctions" using primary key columns */
+    player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "player_sanctions" */
+    player_sanctions_stream?: (player_sanctionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_sanctions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_sanctions_bool_exp | null)} })
     /** fetch data from the table: "player_unused_utility" */
     player_unused_utility?: (player_unused_utilityGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -30122,6 +30916,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_sanction_types_possibleTypes: string[] = ['e_sanction_types']
+    export const ise_sanction_types = (obj?: { __typename?: any } | null): obj is e_sanction_types => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types"')
+      return e_sanction_types_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_sanction_types_aggregate_possibleTypes: string[] = ['e_sanction_types_aggregate']
+    export const ise_sanction_types_aggregate = (obj?: { __typename?: any } | null): obj is e_sanction_types_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types_aggregate"')
+      return e_sanction_types_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_sanction_types_aggregate_fields_possibleTypes: string[] = ['e_sanction_types_aggregate_fields']
+    export const ise_sanction_types_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_sanction_types_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types_aggregate_fields"')
+      return e_sanction_types_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_sanction_types_max_fields_possibleTypes: string[] = ['e_sanction_types_max_fields']
+    export const ise_sanction_types_max_fields = (obj?: { __typename?: any } | null): obj is e_sanction_types_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types_max_fields"')
+      return e_sanction_types_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_sanction_types_min_fields_possibleTypes: string[] = ['e_sanction_types_min_fields']
+    export const ise_sanction_types_min_fields = (obj?: { __typename?: any } | null): obj is e_sanction_types_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types_min_fields"')
+      return e_sanction_types_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_sanction_types_mutation_response_possibleTypes: string[] = ['e_sanction_types_mutation_response']
+    export const ise_sanction_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_sanction_types_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types_mutation_response"')
+      return e_sanction_types_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_server_regions_possibleTypes: string[] = ['e_server_regions']
     export const ise_server_regions = (obj?: { __typename?: any } | null): obj is e_server_regions => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions"')
@@ -32382,6 +33224,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isplayer_objectives_variance_fields = (obj?: { __typename?: any } | null): obj is player_objectives_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_objectives_variance_fields"')
       return player_objectives_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_possibleTypes: string[] = ['player_sanctions']
+    export const isplayer_sanctions = (obj?: { __typename?: any } | null): obj is player_sanctions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions"')
+      return player_sanctions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_aggregate_possibleTypes: string[] = ['player_sanctions_aggregate']
+    export const isplayer_sanctions_aggregate = (obj?: { __typename?: any } | null): obj is player_sanctions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_aggregate"')
+      return player_sanctions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_aggregate_fields_possibleTypes: string[] = ['player_sanctions_aggregate_fields']
+    export const isplayer_sanctions_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_aggregate_fields"')
+      return player_sanctions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_avg_fields_possibleTypes: string[] = ['player_sanctions_avg_fields']
+    export const isplayer_sanctions_avg_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_avg_fields"')
+      return player_sanctions_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_max_fields_possibleTypes: string[] = ['player_sanctions_max_fields']
+    export const isplayer_sanctions_max_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_max_fields"')
+      return player_sanctions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_min_fields_possibleTypes: string[] = ['player_sanctions_min_fields']
+    export const isplayer_sanctions_min_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_min_fields"')
+      return player_sanctions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_mutation_response_possibleTypes: string[] = ['player_sanctions_mutation_response']
+    export const isplayer_sanctions_mutation_response = (obj?: { __typename?: any } | null): obj is player_sanctions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_mutation_response"')
+      return player_sanctions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_stddev_fields_possibleTypes: string[] = ['player_sanctions_stddev_fields']
+    export const isplayer_sanctions_stddev_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_stddev_fields"')
+      return player_sanctions_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_stddev_pop_fields_possibleTypes: string[] = ['player_sanctions_stddev_pop_fields']
+    export const isplayer_sanctions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_stddev_pop_fields"')
+      return player_sanctions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_stddev_samp_fields_possibleTypes: string[] = ['player_sanctions_stddev_samp_fields']
+    export const isplayer_sanctions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_stddev_samp_fields"')
+      return player_sanctions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_sum_fields_possibleTypes: string[] = ['player_sanctions_sum_fields']
+    export const isplayer_sanctions_sum_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_sum_fields"')
+      return player_sanctions_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_var_pop_fields_possibleTypes: string[] = ['player_sanctions_var_pop_fields']
+    export const isplayer_sanctions_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_var_pop_fields"')
+      return player_sanctions_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_var_samp_fields_possibleTypes: string[] = ['player_sanctions_var_samp_fields']
+    export const isplayer_sanctions_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_var_samp_fields"')
+      return player_sanctions_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_sanctions_variance_fields_possibleTypes: string[] = ['player_sanctions_variance_fields']
+    export const isplayer_sanctions_variance_fields = (obj?: { __typename?: any } | null): obj is player_sanctions_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_sanctions_variance_fields"')
+      return player_sanctions_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -35028,6 +35982,27 @@ export const enumEPlayerRolesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumESanctionTypesConstraint = {
+   e_sanction_types_pkey: 'e_sanction_types_pkey' as const
+}
+
+export const enumESanctionTypesEnum = {
+   ban: 'ban' as const,
+   gag: 'gag' as const,
+   mute: 'mute' as const,
+   silence: 'silence' as const
+}
+
+export const enumESanctionTypesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumESanctionTypesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumEServerRegionsConstraint = {
    e_server_regions_pkey: 'e_server_regions_pkey' as const
 }
@@ -35267,6 +36242,7 @@ export const enumMapsConstraint = {
 export const enumMapsSelectColumn = {
    active_pool: 'active_pool' as const,
    id: 'id' as const,
+   label: 'label' as const,
    name: 'name' as const,
    patch: 'patch' as const,
    poster: 'poster' as const,
@@ -35285,6 +36261,7 @@ export const enumMapsSelectColumnMapsAggregateBoolExpBoolOrArgumentsColumns = {
 export const enumMapsUpdateColumn = {
    active_pool: 'active_pool' as const,
    id: 'id' as const,
+   label: 'label' as const,
    name: 'name' as const,
    patch: 'patch' as const,
    poster: 'poster' as const,
@@ -35856,6 +36833,30 @@ export const enumPlayerObjectivesUpdateColumn = {
    player_steam_id: 'player_steam_id' as const,
    round: 'round' as const,
    time: 'time' as const,
+   type: 'type' as const
+}
+
+export const enumPlayerSanctionsConstraint = {
+   player_sanctions_pkey: 'player_sanctions_pkey' as const
+}
+
+export const enumPlayerSanctionsSelectColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   player_steam_id: 'player_steam_id' as const,
+   reason: 'reason' as const,
+   remove_sanction_date: 'remove_sanction_date' as const,
+   sanctioned_by_steam_id: 'sanctioned_by_steam_id' as const,
+   type: 'type' as const
+}
+
+export const enumPlayerSanctionsUpdateColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   player_steam_id: 'player_steam_id' as const,
+   reason: 'reason' as const,
+   remove_sanction_date: 'remove_sanction_date' as const,
+   sanctioned_by_steam_id: 'sanctioned_by_steam_id' as const,
    type: 'type' as const
 }
 

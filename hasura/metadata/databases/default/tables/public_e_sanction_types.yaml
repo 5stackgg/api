@@ -1,0 +1,12 @@
+table:
+  name: e_sanction_types
+  schema: public
+is_enum: true
+select_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

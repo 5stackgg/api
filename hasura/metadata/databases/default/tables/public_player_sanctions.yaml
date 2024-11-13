@@ -1,0 +1,46 @@
+table:
+  name: player_sanctions
+  schema: public
+object_relationships:
+  - name: e_sanction_type
+    using:
+      foreign_key_constraint_on: type
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: sanctioned_by
+    using:
+      foreign_key_constraint_on: sanctioned_by_steam_id
+insert_permissions:
+  - role: match_organizer
+    permission:
+      check: {}
+      set:
+        sanctioned_by_steam_id: x-hasura-user-id
+      columns:
+        - player_steam_id
+        - reason
+        - remove_sanction_date
+        - type
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - player_steam_id
+        - sanctioned_by_steam_id
+        - reason
+        - type
+        - created_at
+        - remove_sanction_date
+        - id
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - remove_sanction_date
+      filter: {}
+      check: null
+    comment: ""
