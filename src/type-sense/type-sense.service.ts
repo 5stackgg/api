@@ -3,6 +3,7 @@ import { Client } from "typesense";
 import { HasuraService } from "../hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TypeSenseConfig } from "../configs/types/TypeSenseConfig";
+import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 
 @Injectable()
 export class TypeSenseService {
@@ -11,6 +12,7 @@ export class TypeSenseService {
   constructor(
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    private readonly matchAssistant: MatchAssistantService,
   ) {
     this.client = new Client({
       nodes: [
@@ -70,6 +72,38 @@ export class TypeSenseService {
 
     if (!player) {
       throw Error("unable to find player");
+    }
+
+    const { match_lineup_players } = await this.hasura.query({
+      match_lineup_players: {
+        __args: {
+          where: {
+            steam_id: {
+              _eq: steamId,
+            },
+            lineup: {
+              v_match_lineup: {
+                match: {
+                  status: {
+                    _eq: "Live",
+                  },
+                },
+              },
+            },
+          },
+        },
+        lineup: {
+          v_match_lineup: {
+            match_id: true,
+          },
+        },
+      },
+    });
+
+    for (const matchLineupPlayer of match_lineup_players) {
+      await this.matchAssistant.sendServerMatchId(
+        matchLineupPlayer.lineup.v_match_lineup.match_id,
+      );
     }
 
     return await this.client
