@@ -53,6 +53,12 @@ BEGIN
         RAISE EXCEPTION 'Cannot add players: not in picking players status' USING ERRCODE = '22000';
     END IF;
 
+    IF TG_OP = 'INSERT' THEN
+        IF is_banned((SELECT p FROM players p WHERE steam_id = NEW.steam_id)) THEN
+            RAISE EXCEPTION 'Player is Currently Banned' USING ERRCODE = '22000';
+        END IF;
+    END IF;
+
     IF TG_OP = 'DELETE' THEN
         RETURN OLD;
     ELSE
