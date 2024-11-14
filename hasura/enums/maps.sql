@@ -15,15 +15,15 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_dust2', 'Competitive', 'true',  null, '/img/maps/screenshots/de_dust2.webp', '/img/maps/icons/de_dust2.svg'),
     ('de_thera', 'Competitive', 'false',  null, '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg'),
     ('de_mills', 'Competitive', 'false',  null, '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg'),
+    ('de_train', 'Competitive', 'false',  null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg'),
+    ('de_edin', 'Competitive', 'false',  null, '/img/maps/screenshots/de_edin.webp', '/img/maps/icons/de_edin.svg'),
+    ('de_basalt', 'Competitive', 'false',  null, '/img/maps/screenshots/de_basalt.webp', '/img/maps/icons/de_basalt.svg'),
 
     -- Workshop Competitive
     ('de_cache', 'Competitive', 'false',  '3070596702', '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg'),
-    ('de_train', 'Competitive', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null),
     ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.webp', null),
     ('de_biome', 'Competitive', 'false',  '3075706807', '/img/maps/screenshots/de_biome.webp', null),
     ('de_all_in_one', 'Competitive', 'false',  '3114174859', '/img/maps/screenshots/de_all_in_one.webp', null),
-    ('de_basalt', 'Competitive', 'false',  '3329258290', '/img/maps/screenshots/de_basalt.webp', null),
-    ('de_edin', 'Competitive', 'false',  '3328169568', '/img/maps/screenshots/de_edin.webp', null),
     ('de_aztec_hr', 'Competitive', 'false',  '3079692971', '/img/maps/screenshots/de_aztec.webp', null),
     ('de_contra', 'Competitive', 'false',  '3301642476', '/img/maps/screenshots/de_contra.webp', null),
     ('de_prob_mill', 'Competitive', 'false',  '3073499287', '/img/maps/screenshots/de_cpl_mill.webp', null),
@@ -44,15 +44,15 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_vertigo', 'Wingman', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
     ('de_assembly', 'Wingman', 'true',  null, '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
     ('de_memento', 'Wingman', 'true',  null, '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
+    ('de_palais', 'Wingman', 'false',  null, '/img/maps/screenshots/de_palais.webp', '/img/maps/icons/de_palais.svg'),
+    ('de_whistle', 'Wingman', 'false',  null, '/img/maps/screenshots/de_whistle.webp', '/img/maps/icons/de_whistle.svg'),
 
     --  Workshop Wingman
     ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
     ('drawbridge', 'Wingman', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
     ('de_foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
     ('de_overpass_night', 'Wingman', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', null),
-    ('de_inferno_night', 'Wingman', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null),
-    ('de_train', 'Wingman', 'false',  '3070284539', '/img/maps/screenshots/de_train.webp', null),
-    ('de_palais', 'Wingman', 'false',  '3257582863', '/img/maps/screenshots/de_palais.webp', null)
+    ('de_inferno_night', 'Wingman', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null)
     
 
 
@@ -61,6 +61,7 @@ on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "w
 delete from maps where type = 'Competitive' and name = 'de_aztec';
 delete from maps where type = 'Competitive' and name = 'de_cpl_mill';
 delete from maps where type = 'Competitive' and name = 'drawbridge';
+delete from maps where type = 'Wingman' and name = 'de_train';
 
 insert into e_map_pool_types ("value", "description") values
     ('Competitive', '5 vs 5 match using active map pool'),

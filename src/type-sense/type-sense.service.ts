@@ -59,6 +59,9 @@ export class TypeSenseService {
         name: true,
         country: true,
         avatar_url: true,
+        is_banned: true,
+        is_gagged: true,
+        is_muted: true,
         teams: {
           id: true,
         },
@@ -76,7 +79,6 @@ export class TypeSenseService {
         Object.assign({}, player, {
           id: steamId,
           steam_id: steamId,
-          country: player.country,
           teams: player.teams?.map(({ id }) => {
             return id;
           }),

@@ -2,7 +2,7 @@ import { Controller } from "@nestjs/common";
 import { TypeSenseService } from "./type-sense.service";
 import { HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
-import { players_set_input, team_roster_set_input } from "../../generated";
+import { player_sanctions_set_input, players_set_input, team_roster_set_input } from "../../generated";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 
@@ -27,6 +27,11 @@ export class TypeSenseController {
     }
 
     await this.typeSense.updatePlayer(data.new.steam_id as string);
+  }
+
+  @HasuraEvent()
+  public async player_sanctions(data: HasuraEventData<player_sanctions_set_input>) {
+    await this.typeSense.updatePlayer(data.new.player_steam_id as string);
   }
 
   @HasuraEvent()

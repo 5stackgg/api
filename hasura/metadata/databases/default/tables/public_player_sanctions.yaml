@@ -44,3 +44,19 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
+event_triggers:
+  - name: player_sanctions
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - player_steam_id
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
