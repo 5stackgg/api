@@ -13,11 +13,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_overpass', 'Competitive', 'false',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
     ('de_vertigo', 'Competitive', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
     ('de_dust2', 'Competitive', 'true',  null, '/img/maps/screenshots/de_dust2.webp', '/img/maps/icons/de_dust2.svg'),
-    ('de_thera', 'Competitive', 'false',  null, '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg'),
-    ('de_mills', 'Competitive', 'false',  null, '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg'),
     ('de_train', 'Competitive', 'false',  null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg'),
-    ('de_edin', 'Competitive', 'false',  null, '/img/maps/screenshots/de_edin.webp', '/img/maps/icons/de_edin.svg'),
-    ('de_basalt', 'Competitive', 'false',  null, '/img/maps/screenshots/de_basalt.webp', '/img/maps/icons/de_basalt.svg'),
 
     -- Workshop Competitive
     ('de_cache', 'Competitive', 'false',  '3070596702', '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg'),
@@ -28,7 +24,10 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_contra', 'Competitive', 'false',  '3301642476', '/img/maps/screenshots/de_contra.webp', null),
     ('de_prob_mill', 'Competitive', 'false',  '3073499287', '/img/maps/screenshots/de_cpl_mill.webp', null),
     ('de_prodigy', 'Competitive', 'false',  '3195849330', '/img/maps/screenshots/de_prodigy.webp', null),
-    
+    ('de_thera', 'Competitive', 'false',  '3121217565', '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg'),
+    ('de_mills', 'Competitive', 'false',  '3152430710', '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg'),    
+    ('de_edin', 'Competitive', 'false',  null, '/img/maps/screenshots/de_edin.webp', '/img/maps/icons/de_edin.svg'),
+    ('de_basalt', 'Competitive', 'false',  '3152430710', '/img/maps/screenshots/de_basalt.webp', '/img/maps/icons/de_basalt.svg'),
 
     -- Night Maps
     ('de_dust2_night', 'Competitive', 'false', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', null),
@@ -42,8 +41,8 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_nuke', 'Wingman', 'true',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
     ('de_overpass', 'Wingman', 'true',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
     ('de_vertigo', 'Wingman', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
-    ('de_assembly', 'Wingman', 'true',  null, '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
-    ('de_memento', 'Wingman', 'true',  null, '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
+    ('de_assembly', 'Wingman', 'true',  '3071005299', '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
+    ('de_memento', 'Wingman', 'true',  '3165559377', '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
     ('de_palais', 'Wingman', 'false',  null, '/img/maps/screenshots/de_palais.webp', '/img/maps/icons/de_palais.svg'),
     ('de_whistle', 'Wingman', 'false',  null, '/img/maps/screenshots/de_whistle.webp', '/img/maps/icons/de_whistle.svg'),
 
