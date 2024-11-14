@@ -13,7 +13,8 @@ type Modules =
   | "DiscordBot"
   | "Postgres"
   | "System"
-  | "Sockets";
+  | "Sockets"
+  | "TypeSense";
 
 export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
   return (target) => {

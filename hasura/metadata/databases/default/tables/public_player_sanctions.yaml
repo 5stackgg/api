@@ -55,6 +55,8 @@ event_triggers:
       update:
         columns:
           - player_steam_id
+          - remove_sanction_date
+          - type
     retry_conf:
       interval_sec: 10
       num_retries: 0
