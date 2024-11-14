@@ -59,11 +59,16 @@ export class MatchesController {
       },
     });
 
-    if (!server?.current_match?.id) {
+    if (!server) {
       this.logger.warn(`server tried to get match`, {
         serverId,
         ip: request.headers["cf-connecting-ip"],
       });
+      response.status(404).end();
+      return;
+    }
+
+    if (!server.current_match?.id) {
       response.status(204).end();
       return;
     }
