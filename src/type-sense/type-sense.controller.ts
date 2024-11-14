@@ -13,12 +13,15 @@ import { RefreshPlayerJob } from "./jobs/RefreshPlayer";
 import { Queue } from "bullmq";
 import { TypesenseQueues } from "./enums/TypesenseQueues";
 import { InjectQueue } from "@nestjs/bullmq";
+import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 
 @Controller("type-sense")
 export class TypeSenseController {
   constructor(
     private readonly cache: CacheService,
+    private readonly hasura: HasuraService,
     private readonly typeSense: TypeSenseService,
+    private readonly matchAssistant: MatchAssistantService,
     @InjectQueue(TypesenseQueues.TypeSense) private queue: Queue,
   ) {}
 
@@ -58,6 +61,38 @@ export class TypeSenseController {
           // Add a second to ensure sanction date is passed
           delay: new Date(endOfSanction).getTime() - Date.now() + 1000,
         },
+      );
+    }
+
+    const { match_lineup_players } = await this.hasura.query({
+      match_lineup_players: {
+        __args: {
+          where: {
+            steam_id: {
+              _eq: data.new.player_steam_id,
+            },
+            lineup: {
+              v_match_lineup: {
+                match: {
+                  status: {
+                    _eq: "Live",
+                  },
+                },
+              },
+            },
+          },
+        },
+        lineup: {
+          v_match_lineup: {
+            match_id: true,
+          },
+        },
+      },
+    });
+
+    for (const matchLineupPlayer of match_lineup_players) {
+      await this.matchAssistant.sendServerMatchId(
+        matchLineupPlayer.lineup.v_match_lineup.match_id,
       );
     }
 

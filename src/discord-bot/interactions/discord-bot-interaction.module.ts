@@ -14,7 +14,7 @@ import LinkDiscord from "./LinkDiscord";
   imports: [
     forwardRef(() => DiscordBotModule),
     HasuraModule,
-    MatchesModule,
+    forwardRef(() => MatchesModule),
     CacheModule,
   ],
   exports: [

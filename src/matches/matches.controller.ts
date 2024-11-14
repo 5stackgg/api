@@ -119,6 +119,11 @@ export class MatchesController {
             steam_id: true,
             match_lineup_id: true,
             placeholder_name: true,
+            player: {
+              is_banned: true,
+              is_gagged: true,
+              is_muted: true,
+            },
           },
         },
         lineup_2: {
@@ -130,6 +135,11 @@ export class MatchesController {
             steam_id: true,
             match_lineup_id: true,
             placeholder_name: true,
+            player: {
+              is_banned: true,
+              is_gagged: true,
+              is_muted: true,
+            },
           },
         },
       },
@@ -148,7 +158,30 @@ export class MatchesController {
       response.status(204).end();
       return;
     }
-    const data = JSON.parse(safeJsonStringify(matches_by_pk));
+
+    const match = matches_by_pk;
+
+    match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
+      (player) => ({
+        ...player,
+        is_banned: player.player.is_banned,
+        is_gagged: player.player.is_gagged,
+        is_muted: player.player.is_muted,
+        player: undefined,
+      }),
+    );
+
+    match.lineup_2.lineup_players = match.lineup_2.lineup_players.map(
+      (player) => ({
+        ...player,
+        is_banned: player.player.is_banned,
+        is_gagged: player.player.is_gagged,
+        is_muted: player.player.is_muted,
+        player: undefined,
+      }),
+    );
+
+    const data = JSON.parse(safeJsonStringify(match));
 
     response.status(200).json(data);
   }
