@@ -613,7 +613,9 @@ export class MatchesController {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          content: new TurndownService().turndown(`${discord_role_id ? ` <@&${discord_role_id.value}>,` : ""} ${message}`),
+          content: new TurndownService().turndown(
+            `${discord_role_id ? ` <@&${discord_role_id.value}>,` : ""} ${message}`,
+          ),
           username: "5stack Support",
         }),
       });

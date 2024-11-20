@@ -207,9 +207,11 @@ export class MatchLobbyService {
       return;
     }
 
-    userData.sessions = userData.sessions.filter((_client) => {
-      return _client !== client;
-    });
+    userData.sessions = userData.sessions
+      ? userData.sessions.filter((_client) => {
+          return _client !== client;
+        })
+      : [];
 
     if (userData.inGame) {
       this.to(matchId, "lobby:joined", {
