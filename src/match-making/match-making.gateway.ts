@@ -59,6 +59,29 @@ export class MatchMakingGateway {
       return;
     }
 
+    const { player_sanctions } = await this.hasura.query({
+      player_sanctions: {
+        __args: {
+          where: {
+            player_steam_id: {
+              _eq: user.steam_id,
+            },
+            type: {
+              _eq: "ban",
+            },
+            remove_sanction_date: {
+              _gt: new Date().toISOString(),
+            },
+          },
+        },
+        id: true,
+      },
+    });
+
+    if (player_sanctions.length > 0) {
+      return;
+    }
+
     const { type, regions } = data;
 
     if (!type || !regions || regions.length === 0) {
