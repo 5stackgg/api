@@ -590,7 +590,7 @@ export class MatchesController {
       },
     });
 
-    const message = `${discord_role_id ? ` <@&${discord_role_id.value}>,` : ""} Organizer needed for match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`;
+    const message = `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`;
     await this.hasura.mutation({
       insert_notifications_one: {
         __args: {
@@ -613,7 +613,7 @@ export class MatchesController {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          content: new TurndownService().turndown(message),
+          content: new TurndownService().turndown(`${discord_role_id ? ` <@&${discord_role_id.value}>,` : ""} ${message}`),
           username: "5stack Support",
         }),
       });
