@@ -28,6 +28,7 @@ import { TailscaleModule } from "./tailscale/tailscale.module";
 import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
 import { MatchMakingModule } from "./match-making/match-making.module";
 import { SystemModule } from "./system/system.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { SystemModule } from "./system/system.module";
     }),
     GameServerNodeModule,
     SystemModule,
+    NotificationsModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

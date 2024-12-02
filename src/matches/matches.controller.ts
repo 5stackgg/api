@@ -10,17 +10,15 @@ import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/d
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
 import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice-channels/discord-bot-voice-channels.service";
 import {
-  e_match_status_enum,
   match_map_veto_picks_set_input,
   matches_set_input,
   servers_set_input,
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
-import fetch from "node-fetch";
-import TurndownService from "turndown";
 import { MatchMakingGateway } from "src/match-making/match-making.gateway";
 import { PostgresService } from "src/postgres/postgres.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -36,6 +34,7 @@ export class MatchesController {
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,
     private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
+    private readonly notifications: NotificationsService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -570,56 +569,12 @@ export class MatchesController {
       };
     }
 
-    const { settings_by_pk: discord_support_webhook } = await this.hasura.query(
-      {
-        settings_by_pk: {
-          __args: {
-            name: "discord_support_webhook",
-          },
-          value: true,
-        },
-      },
-    );
-
-    const { settings_by_pk: discord_role_id } = await this.hasura.query({
-      settings_by_pk: {
-        __args: {
-          name: "discord_support_role_id",
-        },
-        value: true,
-      },
+    this.notifications.send("MatchSupport", {
+      message: `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
+      title: "Match Assistanced Required",
+      role: "match_organizer",
+      entity_id: data.match_id,
     });
-
-    const message = `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`;
-    await this.hasura.mutation({
-      insert_notifications_one: {
-        __args: {
-          object: {
-            message,
-            title: "Match Assistanced Required",
-            role: "match_organizer",
-            type: "MatchSupport",
-            entity_id: data.match_id,
-          },
-        },
-        id: true,
-      },
-    });
-
-    if (discord_support_webhook) {
-      await fetch(discord_support_webhook.value, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: new TurndownService().turndown(
-            `${discord_role_id ? ` <@&${discord_role_id.value}>,` : ""} ${message}`,
-          ),
-          username: "5stack Support",
-        }),
-      });
-    }
 
     return {
       success: true,

@@ -6,6 +6,13 @@ type Mutation {
 }
 
 type Mutation {
+  approveNameChange(
+    steam_id: bigint!
+    name: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   callForOrganizer(
     match_id: String!
   ): SuccessOutput
@@ -70,6 +77,19 @@ type Query {
 type Mutation {
   randomizeTeams(
     match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  registerName(
+    name: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  requestNameChange(
+    steam_id: bigint!
+    name: String!
   ): SuccessOutput
 }
 

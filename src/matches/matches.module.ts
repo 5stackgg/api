@@ -42,7 +42,7 @@ import { MatchMakingModule } from "src/match-making/match-making.module";
 import { MatchEventsGateway } from "./match-events.gateway";
 import { MatchLobbyGateway } from "./match-lobby.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
-
+import { NotificationsModule } from "../notifications/notifications.module";
 @Module({
   imports: [
     HasuraModule,
@@ -53,6 +53,7 @@ import { PostgresModule } from "src/postgres/postgres.module";
     EncryptionModule,
     SocketsModule,
     PostgresModule,
+    NotificationsModule,
     forwardRef(() => DiscordBotModule),
     MatchMakingModule,
     BullModule.registerQueue(

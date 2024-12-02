@@ -131,7 +131,6 @@ export class DiscordBotService {
         }
       })
       .on(Events.Error, (error) => {
-        console.info(error);
         this.logger.warn("unhandled error", error);
       });
 

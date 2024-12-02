@@ -9,6 +9,7 @@ select_permissions:
   - role: administrator
     permission:
       columns:
+        - actions
         - created_at
         - deleted_at
         - entity_id
@@ -29,6 +30,7 @@ select_permissions:
   - role: match_organizer
     permission:
       columns:
+        - actions
         - created_at
         - deleted_at
         - entity_id
@@ -49,6 +51,7 @@ select_permissions:
   - role: tournament_organizer
     permission:
       columns:
+        - actions
         - created_at
         - deleted_at
         - entity_id
@@ -71,6 +74,7 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - actions
         - created_at
         - deleted_at
         - entity_id

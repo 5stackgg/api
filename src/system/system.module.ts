@@ -13,12 +13,13 @@ import { CacheModule } from "src/cache/cache.module";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { SystemGateway } from "./system.gateway.ts";
 import { GameServerNodeModule } from "src/game-server-node/game-server-node.module";
-
+import { NotificationsModule } from "src/notifications/notifications.module";
 @Module({
   imports: [
     CacheModule,
     HasuraModule,
     GameServerNodeModule,
+    NotificationsModule,
     BullModule.registerQueue({
       name: SystemQueues.Version,
     }),

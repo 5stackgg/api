@@ -1997,6 +1997,9 @@ enum e_notification_types_constraint {
 enum e_notification_types_enum {
   """MatchSupport"""
   MatchSupport
+
+  """NameChangeRequest"""
+  NameChangeRequest
 }
 
 """
@@ -11934,6 +11937,7 @@ input migration_hashes_hashes_updates {
 type mutation_root {
   """accept team invite"""
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
+  approveNameChange(name: String!, steam_id: bigint!): SuccessOutput
 
   """callForOrganizer"""
   callForOrganizer(match_id: String!): SuccessOutput
@@ -13924,6 +13928,8 @@ type mutation_root {
   """logout"""
   logout: SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
+  registerName(name: String!): SuccessOutput
+  requestNameChange(name: String!, steam_id: bigint!): SuccessOutput
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
@@ -14921,8 +14927,29 @@ type mutation_root {
   update data of the table: "notifications"
   """
   update_notifications(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: notifications_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: notifications_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: notifications_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: notifications_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: notifications_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: notifications_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: notifications_set_input
@@ -14935,8 +14962,29 @@ type mutation_root {
   update single row of the table: "notifications"
   """
   update_notifications_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: notifications_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: notifications_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: notifications_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: notifications_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: notifications_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: notifications_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: notifications_set_input
@@ -15728,6 +15776,10 @@ type mutation_root {
 columns and relationships of "notifications"
 """
 type notifications {
+  actions(
+    """JSON select path"""
+    path: String
+  ): jsonb
   created_at: timestamptz!
   deleted_at: timestamptz
   entity_id: String!
@@ -15812,6 +15864,11 @@ input notifications_aggregate_order_by {
   variance: notifications_variance_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input notifications_append_input {
+  actions: jsonb
+}
+
 """
 input type for inserting array relation for remote table "notifications"
 """
@@ -15841,6 +15898,7 @@ input notifications_bool_exp {
   _and: [notifications_bool_exp!]
   _not: notifications_bool_exp
   _or: [notifications_bool_exp!]
+  actions: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
   deleted_at: timestamptz_comparison_exp
   entity_id: String_comparison_exp
@@ -15865,6 +15923,27 @@ enum notifications_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input notifications_delete_at_path_input {
+  actions: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input notifications_delete_elem_input {
+  actions: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input notifications_delete_key_input {
+  actions: String
+}
+
+"""
 input type for incrementing numeric columns in table "notifications"
 """
 input notifications_inc_input {
@@ -15875,6 +15954,7 @@ input notifications_inc_input {
 input type for inserting data into table "notifications"
 """
 input notifications_insert_input {
+  actions: jsonb
   created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
@@ -15958,6 +16038,7 @@ input notifications_on_conflict {
 
 """Ordering options when selecting data from "notifications"."""
 input notifications_order_by {
+  actions: order_by
   created_at: order_by
   deleted_at: order_by
   entity_id: order_by
@@ -15976,10 +16057,18 @@ input notifications_pk_columns_input {
   id: uuid!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input notifications_prepend_input {
+  actions: jsonb
+}
+
 """
 select columns of table "notifications"
 """
 enum notifications_select_column {
+  """column name"""
+  actions
+
   """column name"""
   created_at
 
@@ -16031,6 +16120,7 @@ enum notifications_select_column_notifications_aggregate_bool_exp_bool_or_argume
 input type for updating data in table "notifications"
 """
 input notifications_set_input {
+  actions: jsonb
   created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
@@ -16092,6 +16182,7 @@ input notifications_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input notifications_stream_cursor_value_input {
+  actions: jsonb
   created_at: timestamptz
   deleted_at: timestamptz
   entity_id: String
@@ -16120,6 +16211,9 @@ input notifications_sum_order_by {
 update columns of table "notifications"
 """
 enum notifications_update_column {
+  """column name"""
+  actions
+
   """column name"""
   created_at
 
@@ -16152,8 +16246,29 @@ enum notifications_update_column {
 }
 
 input notifications_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: notifications_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: notifications_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: notifications_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: notifications_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: notifications_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: notifications_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: notifications_set_input
@@ -20892,6 +21007,7 @@ type players {
     where: v_player_multi_kills_bool_exp
   ): v_player_multi_kills_aggregate!
   name: String!
+  name_registered: Boolean!
 
   """An array relationship"""
   notifications(
@@ -21395,6 +21511,7 @@ input players_bool_exp {
   multi_kills: v_player_multi_kills_bool_exp
   multi_kills_aggregate: v_player_multi_kills_aggregate_bool_exp
   name: String_comparison_exp
+  name_registered: Boolean_comparison_exp
   notifications: notifications_bool_exp
   notifications_aggregate: notifications_aggregate_bool_exp
   objectives: player_objectives_bool_exp
@@ -21472,6 +21589,7 @@ input players_insert_input {
   kills: player_kills_arr_rel_insert_input
   multi_kills: v_player_multi_kills_arr_rel_insert_input
   name: String
+  name_registered: Boolean
   notifications: notifications_arr_rel_insert_input
   objectives: player_objectives_arr_rel_insert_input
   owned_teams: teams_arr_rel_insert_input
@@ -21585,6 +21703,7 @@ input players_order_by {
   matchmaking_cooldown: order_by
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
   name: order_by
+  name_registered: order_by
   notifications_aggregate: notifications_aggregate_order_by
   objectives_aggregate: player_objectives_aggregate_order_by
   owned_teams_aggregate: teams_aggregate_order_by
@@ -21628,6 +21747,9 @@ enum players_select_column {
   name
 
   """column name"""
+  name_registered
+
+  """column name"""
   profile_url
 
   """column name"""
@@ -21646,6 +21768,7 @@ input players_set_input {
   created_at: timestamptz
   discord_id: String
   name: String
+  name_registered: Boolean
   profile_url: String
   role: e_player_roles_enum
   steam_id: bigint
@@ -21699,6 +21822,7 @@ input players_stream_cursor_value_input {
   created_at: timestamptz
   discord_id: String
   name: String
+  name_registered: Boolean
   profile_url: String
   role: e_player_roles_enum
   steam_id: bigint
@@ -21732,6 +21856,9 @@ enum players_update_column {
 
   """column name"""
   name
+
+  """column name"""
+  name_registered
 
   """column name"""
   profile_url

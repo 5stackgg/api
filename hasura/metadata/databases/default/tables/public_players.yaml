@@ -214,6 +214,7 @@ select_permissions:
         - avatar_url
         - country
         - name
+        - name_registered
         - profile_url
         - role
         - steam_id
@@ -240,11 +241,34 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - discord_id
+        - name
+        - profile_url
+        - role
+      filter: {}
+      check: null
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - discord_id
+        - name
+        - profile_url
+        - role
+      filter: {}
+      check: null
+    comment: ""
   - role: user
     permission:
       columns:
         - country
-        - name
       filter:
         steam_id:
           _eq: X-Hasura-User-Id
@@ -254,6 +278,14 @@ update_permissions:
     comment: ""
 delete_permissions:
   - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
     permission:
       filter: {}
     comment: ""

@@ -1,0 +1,1 @@
+alter table "public"."players" drop column if exists "name_registered"
