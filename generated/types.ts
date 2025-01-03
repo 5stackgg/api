@@ -5600,9 +5600,6 @@ export default {
             "id": [
                 11
             ],
-            "is_lan": [
-                0
-            ],
             "lan_ip": [
                 474
             ],
@@ -5670,9 +5667,6 @@ export default {
             ],
             "total_server_count": [
                 4
-            ],
-            "use_lan_ip": [
-                0
             ],
             "__typename": [
                 11
@@ -5915,9 +5909,6 @@ export default {
             "id": [
                 13
             ],
-            "is_lan": [
-                1
-            ],
             "lan_ip": [
                 475
             ],
@@ -5947,9 +5938,6 @@ export default {
             ],
             "total_server_count": [
                 5
-            ],
-            "use_lan_ip": [
-                1
             ],
             "__typename": [
                 11
@@ -5989,9 +5977,6 @@ export default {
             "id": [
                 11
             ],
-            "is_lan": [
-                0
-            ],
             "lan_ip": [
                 474
             ],
@@ -6015,9 +6000,6 @@ export default {
             ],
             "token": [
                 11
-            ],
-            "use_lan_ip": [
-                0
             ],
             "__typename": [
                 11
@@ -6185,9 +6167,6 @@ export default {
             "id": [
                 928
             ],
-            "is_lan": [
-                928
-            ],
             "lan_ip": [
                 928
             ],
@@ -6213,9 +6192,6 @@ export default {
                 928
             ],
             "total_server_count": [
-                928
-            ],
-            "use_lan_ip": [
                 928
             ],
             "__typename": [
@@ -6246,9 +6222,6 @@ export default {
             "id": [
                 11
             ],
-            "is_lan": [
-                0
-            ],
             "lan_ip": [
                 474
             ],
@@ -6269,9 +6242,6 @@ export default {
             ],
             "token": [
                 11
-            ],
-            "use_lan_ip": [
-                0
             ],
             "__typename": [
                 11
@@ -6403,9 +6373,6 @@ export default {
             "id": [
                 11
             ],
-            "is_lan": [
-                0
-            ],
             "lan_ip": [
                 474
             ],
@@ -6426,9 +6393,6 @@ export default {
             ],
             "token": [
                 11
-            ],
-            "use_lan_ip": [
-                0
             ],
             "__typename": [
                 11
@@ -26078,9 +26042,6 @@ export default {
             "is_dedicated": [
                 0
             ],
-            "is_lan": [
-                0
-            ],
             "label": [
                 11
             ],
@@ -26378,9 +26339,6 @@ export default {
             "is_dedicated": [
                 1
             ],
-            "is_lan": [
-                1
-            ],
             "label": [
                 13
             ],
@@ -26445,9 +26403,6 @@ export default {
             ],
             "id": [
                 1796
-            ],
-            "is_lan": [
-                0
             ],
             "label": [
                 11
@@ -26666,9 +26621,6 @@ export default {
             "is_dedicated": [
                 928
             ],
-            "is_lan": [
-                928
-            ],
             "label": [
                 928
             ],
@@ -26723,9 +26675,6 @@ export default {
             ],
             "id": [
                 1796
-            ],
-            "is_lan": [
-                0
             ],
             "label": [
                 11
@@ -26844,9 +26793,6 @@ export default {
             ],
             "id": [
                 1796
-            ],
-            "is_lan": [
-                0
             ],
             "label": [
                 11

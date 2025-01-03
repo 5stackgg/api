@@ -41,7 +41,6 @@ select_permissions:
         - region
         - start_port_range
         - status
-        - is_lan
       computed_fields:
         - available_server_count
         - total_server_count
@@ -56,7 +55,6 @@ update_permissions:
         - end_port_range
         - region
         - start_port_range
-        - is_lan
       filter: {}
       check: null
     comment: ""

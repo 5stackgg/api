@@ -1434,7 +1434,6 @@ export interface game_server_nodes {
     enabled: Scalars['Boolean']
     end_port_range: (Scalars['Int'] | null)
     id: Scalars['String']
-    is_lan: Scalars['Boolean']
     lan_ip: (Scalars['inet'] | null)
     node_ip: (Scalars['inet'] | null)
     public_ip: (Scalars['inet'] | null)
@@ -1448,7 +1447,6 @@ export interface game_server_nodes {
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
-    use_lan_ip: Scalars['Boolean']
     __typename: 'game_server_nodes'
 }
 
@@ -1538,15 +1536,15 @@ export interface game_server_nodes_mutation_response {
 
 
 /** select columns of table "game_server_nodes" */
-export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'is_lan' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token' | 'use_lan_ip'
+export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
-export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled' | 'is_lan' | 'use_lan_ip'
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_server_nodes" */
-export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled' | 'is_lan' | 'use_lan_ip'
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled'
 
 
 /** aggregate stddev on columns */
@@ -1602,7 +1600,7 @@ export interface game_server_nodes_sum_fields {
 
 
 /** update columns of table "game_server_nodes" */
-export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'is_lan' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token' | 'use_lan_ip'
+export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token'
 
 
 /** aggregate var_pop on columns */
@@ -6800,7 +6798,6 @@ export interface servers {
     id: Scalars['uuid']
     /** A computed field, executes function "is_dedicated_server" */
     is_dedicated: (Scalars['Boolean'] | null)
-    is_lan: Scalars['Boolean']
     label: Scalars['String']
     /** An array relationship */
     matches: matches[]
@@ -6893,15 +6890,15 @@ export interface servers_mutation_response {
 
 
 /** select columns of table "servers" */
-export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'is_lan' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
+export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
 
 
 /** select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled' | 'is_lan'
+export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled'
 
 
 /** select "servers_aggregate_bool_exp_bool_or_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled' | 'is_lan'
+export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled'
 
 
 /** aggregate stddev on columns */
@@ -6937,7 +6934,7 @@ export interface servers_sum_fields {
 
 
 /** update columns of table "servers" */
-export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'is_lan' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
+export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
 
 
 /** aggregate var_pop on columns */
@@ -12614,7 +12611,6 @@ export interface game_server_nodesGenqlSelection{
     enabled?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
-    is_lan?: boolean | number
     lan_ip?: boolean | number
     node_ip?: boolean | number
     public_ip?: boolean | number
@@ -12648,7 +12644,6 @@ export interface game_server_nodesGenqlSelection{
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
-    use_lan_ip?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -12718,7 +12713,7 @@ export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),en
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),is_lan?: (Boolean_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),use_lan_ip?: (Boolean_comparison_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "game_server_nodes" */
@@ -12726,7 +12721,7 @@ export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null)
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null),use_lan_ip?: (Scalars['Boolean'] | null)}
+export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -12793,7 +12788,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),is_lan?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),use_lan_ip?: (order_by | null)}
+export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -12801,7 +12796,7 @@ export interface game_server_nodes_pk_columns_input {id: Scalars['String']}
 
 
 /** input type for updating data in table "game_server_nodes" */
-export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null),use_lan_ip?: (Scalars['Boolean'] | null)}
+export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -12867,7 +12862,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null),use_lan_ip?: (Scalars['Boolean'] | null)}
+export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -23606,7 +23601,6 @@ export interface serversGenqlSelection{
     id?: boolean | number
     /** A computed field, executes function "is_dedicated_server" */
     is_dedicated?: boolean | number
-    is_lan?: boolean | number
     label?: boolean | number
     /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
@@ -23701,7 +23695,7 @@ export interface servers_avg_order_by {port?: (order_by | null),tv_port?: (order
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),is_lan?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
@@ -23709,7 +23703,7 @@ export interface servers_inc_input {port?: (Scalars['Int'] | null),tv_port?: (Sc
 
 
 /** input type for inserting data into table "servers" */
-export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_lan?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -23774,7 +23768,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),is_lan?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */
@@ -23782,7 +23776,7 @@ export interface servers_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "servers" */
-export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_lan?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23833,7 +23827,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_lan?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -36235,27 +36229,21 @@ export const enumGameServerNodesSelectColumn = {
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
    id: 'id' as const,
-   is_lan: 'is_lan' as const,
    lan_ip: 'lan_ip' as const,
    node_ip: 'node_ip' as const,
    public_ip: 'public_ip' as const,
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
    status: 'status' as const,
-   token: 'token' as const,
-   use_lan_ip: 'use_lan_ip' as const
+   token: 'token' as const
 }
 
 export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolAndArgumentsColumns = {
-   enabled: 'enabled' as const,
-   is_lan: 'is_lan' as const,
-   use_lan_ip: 'use_lan_ip' as const
+   enabled: 'enabled' as const
 }
 
 export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolOrArgumentsColumns = {
-   enabled: 'enabled' as const,
-   is_lan: 'is_lan' as const,
-   use_lan_ip: 'use_lan_ip' as const
+   enabled: 'enabled' as const
 }
 
 export const enumGameServerNodesUpdateColumn = {
@@ -36263,15 +36251,13 @@ export const enumGameServerNodesUpdateColumn = {
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
    id: 'id' as const,
-   is_lan: 'is_lan' as const,
    lan_ip: 'lan_ip' as const,
    node_ip: 'node_ip' as const,
    public_ip: 'public_ip' as const,
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
    status: 'status' as const,
-   token: 'token' as const,
-   use_lan_ip: 'use_lan_ip' as const
+   token: 'token' as const
 }
 
 export const enumMapPoolsConstraint = {
@@ -37026,7 +37012,6 @@ export const enumServersSelectColumn = {
    game_server_node_id: 'game_server_node_id' as const,
    host: 'host' as const,
    id: 'id' as const,
-   is_lan: 'is_lan' as const,
    label: 'label' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,
@@ -37037,14 +37022,12 @@ export const enumServersSelectColumn = {
 
 export const enumServersSelectColumnServersAggregateBoolExpBoolAndArgumentsColumns = {
    connected: 'connected' as const,
-   enabled: 'enabled' as const,
-   is_lan: 'is_lan' as const
+   enabled: 'enabled' as const
 }
 
 export const enumServersSelectColumnServersAggregateBoolExpBoolOrArgumentsColumns = {
    connected: 'connected' as const,
-   enabled: 'enabled' as const,
-   is_lan: 'is_lan' as const
+   enabled: 'enabled' as const
 }
 
 export const enumServersUpdateColumn = {
@@ -37054,7 +37037,6 @@ export const enumServersUpdateColumn = {
    game_server_node_id: 'game_server_node_id' as const,
    host: 'host' as const,
    id: 'id' as const,
-   is_lan: 'is_lan' as const,
    label: 'label' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,

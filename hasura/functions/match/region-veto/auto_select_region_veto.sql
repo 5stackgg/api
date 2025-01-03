@@ -11,7 +11,7 @@ BEGIN
         INNER JOIN game_server_nodes gsn on gsn.region = sr.value and gsn.enabled = true
         LEFT JOIN match_region_veto_picks mvp on mvp.region = sr.value and mvp.match_id = match_region_veto_pick.match_id
         where mvp.region is null
-        and gsn.is_lan = false;
+        and sr.is_lan = false;
 
   IF array_length(available_regions, 1) = 1 THEN
     SELECT * INTO _match FROM matches WHERE id = match_region_veto_pick.match_id LIMIT 1;

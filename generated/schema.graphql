@@ -4301,7 +4301,6 @@ type game_server_nodes {
   enabled: Boolean!
   end_port_range: Int
   id: String!
-  is_lan: Boolean!
   lan_ip: inet
   node_ip: inet
   public_ip: inet
@@ -4350,7 +4349,6 @@ type game_server_nodes {
   A computed field, executes function "total_node_server_count"
   """
   total_server_count: Int
-  use_lan_ip: Boolean!
 }
 
 """
@@ -4471,7 +4469,6 @@ input game_server_nodes_bool_exp {
   enabled: Boolean_comparison_exp
   end_port_range: Int_comparison_exp
   id: String_comparison_exp
-  is_lan: Boolean_comparison_exp
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
   public_ip: inet_comparison_exp
@@ -4482,7 +4479,6 @@ input game_server_nodes_bool_exp {
   status: e_game_server_node_statuses_enum_comparison_exp
   token: String_comparison_exp
   total_server_count: Int_comparison_exp
-  use_lan_ip: Boolean_comparison_exp
 }
 
 """
@@ -4514,7 +4510,6 @@ input game_server_nodes_insert_input {
   enabled: Boolean
   end_port_range: Int
   id: String
-  is_lan: Boolean
   lan_ip: inet
   node_ip: inet
   public_ip: inet
@@ -4523,7 +4518,6 @@ input game_server_nodes_insert_input {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   token: String
-  use_lan_ip: Boolean
 }
 
 """aggregate max on columns"""
@@ -4627,7 +4621,6 @@ input game_server_nodes_order_by {
   enabled: order_by
   end_port_range: order_by
   id: order_by
-  is_lan: order_by
   lan_ip: order_by
   node_ip: order_by
   public_ip: order_by
@@ -4637,7 +4630,6 @@ input game_server_nodes_order_by {
   status: order_by
   token: order_by
   total_server_count: order_by
-  use_lan_ip: order_by
 }
 
 """primary key columns input for table: game_server_nodes"""
@@ -4662,9 +4654,6 @@ enum game_server_nodes_select_column {
   id
 
   """column name"""
-  is_lan
-
-  """column name"""
   lan_ip
 
   """column name"""
@@ -4684,9 +4673,6 @@ enum game_server_nodes_select_column {
 
   """column name"""
   token
-
-  """column name"""
-  use_lan_ip
 }
 
 """
@@ -4695,12 +4681,6 @@ select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   enabled
-
-  """column name"""
-  is_lan
-
-  """column name"""
-  use_lan_ip
 }
 
 """
@@ -4709,12 +4689,6 @@ select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns 
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   enabled
-
-  """column name"""
-  is_lan
-
-  """column name"""
-  use_lan_ip
 }
 
 """
@@ -4725,7 +4699,6 @@ input game_server_nodes_set_input {
   enabled: Boolean
   end_port_range: Int
   id: String
-  is_lan: Boolean
   lan_ip: inet
   node_ip: inet
   public_ip: inet
@@ -4733,7 +4706,6 @@ input game_server_nodes_set_input {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   token: String
-  use_lan_ip: Boolean
 }
 
 """aggregate stddev on columns"""
@@ -4828,7 +4800,6 @@ input game_server_nodes_stream_cursor_value_input {
   enabled: Boolean
   end_port_range: Int
   id: String
-  is_lan: Boolean
   lan_ip: inet
   node_ip: inet
   public_ip: inet
@@ -4836,7 +4807,6 @@ input game_server_nodes_stream_cursor_value_input {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   token: String
-  use_lan_ip: Boolean
 }
 
 """aggregate sum on columns"""
@@ -4881,9 +4851,6 @@ enum game_server_nodes_update_column {
   id
 
   """column name"""
-  is_lan
-
-  """column name"""
   lan_ip
 
   """column name"""
@@ -4903,9 +4870,6 @@ enum game_server_nodes_update_column {
 
   """column name"""
   token
-
-  """column name"""
-  use_lan_ip
 }
 
 input game_server_nodes_updates {
@@ -24613,7 +24577,6 @@ type servers {
   A computed field, executes function "is_dedicated_server"
   """
   is_dedicated: Boolean
-  is_lan: Boolean!
   label: String!
 
   """An array relationship"""
@@ -24767,7 +24730,6 @@ input servers_bool_exp {
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
-  is_lan: Boolean_comparison_exp
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
@@ -24813,7 +24775,6 @@ input servers_insert_input {
   game_server_node_id: String
   host: String
   id: uuid
-  is_lan: Boolean
   label: String
   matches: matches_arr_rel_insert_input
   port: Int
@@ -24920,7 +24881,6 @@ input servers_order_by {
   host: order_by
   id: order_by
   is_dedicated: order_by
-  is_lan: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
   port: order_by
@@ -24958,9 +24918,6 @@ enum servers_select_column {
   id
 
   """column name"""
-  is_lan
-
-  """column name"""
   label
 
   """column name"""
@@ -24988,9 +24945,6 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
 
   """column name"""
   enabled
-
-  """column name"""
-  is_lan
 }
 
 """
@@ -25002,9 +24956,6 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
 
   """column name"""
   enabled
-
-  """column name"""
-  is_lan
 }
 
 """
@@ -25017,7 +24968,6 @@ input servers_set_input {
   game_server_node_id: String
   host: String
   id: uuid
-  is_lan: Boolean
   label: String
   port: Int
   rcon_password: bytea
@@ -25087,7 +25037,6 @@ input servers_stream_cursor_value_input {
   game_server_node_id: String
   host: String
   id: uuid
-  is_lan: Boolean
   label: String
   port: Int
   rcon_password: bytea
@@ -25131,9 +25080,6 @@ enum servers_update_column {
 
   """column name"""
   id
-
-  """column name"""
-  is_lan
 
   """column name"""
   label
