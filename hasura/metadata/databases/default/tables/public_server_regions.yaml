@@ -42,6 +42,7 @@ select_permissions:
         - is_lan
         - value
       filter: {}
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: administrator

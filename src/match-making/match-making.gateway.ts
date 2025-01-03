@@ -344,10 +344,7 @@ export class MatchMakingGateway {
     await this.matchAssistant.updateMatchStatus(match.id, "Veto");
   }
 
-  public async getQueueLength(
-    type: e_match_types_enum,
-    region: string,
-  ) {
+  public async getQueueLength(type: e_match_types_enum, region: string) {
     return await this.redis.zcard(
       MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
     );
@@ -380,14 +377,8 @@ export class MatchMakingGateway {
 
     for (const region of regions.server_regions) {
       regionStats[region.value] = {
-        Wingman: await this.getQueueLength(
-          "Wingman",
-          region.value,
-        ),
-        Competitive: await this.getQueueLength(
-          "Competitive",
-          region.value,
-        ),
+        Wingman: await this.getQueueLength("Wingman", region.value),
+        Competitive: await this.getQueueLength("Competitive", region.value),
       };
     }
 

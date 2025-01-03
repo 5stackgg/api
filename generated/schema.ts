@@ -6616,7 +6616,7 @@ export interface query_root {
 export interface server_regions {
     /** A computed field, executes function "available_region_server_count" */
     available_server_count: (Scalars['Int'] | null)
-    description: Scalars['String']
+    description: (Scalars['String'] | null)
     /** An array relationship */
     game_server_nodes: game_server_nodes[]
     /** An aggregate relationship */

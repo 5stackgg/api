@@ -24226,7 +24226,7 @@ type server_regions {
   A computed field, executes function "available_region_server_count"
   """
   available_server_count: Int
-  description: String!
+  description: String
 
   """An array relationship"""
   game_server_nodes(
