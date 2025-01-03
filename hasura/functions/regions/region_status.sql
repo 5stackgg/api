@@ -19,7 +19,7 @@ BEGIN
     WHERE region = server_region.value AND enabled = true AND game_server_node_id IS NULL;
 
     IF total_count + node_total_count = 0 THEN
-        RETURN 'N/A';
+        RETURN 'Disabled';
     END IF;
 
     IF (node_online_count + online_count) = (total_count + node_total_count) THEN

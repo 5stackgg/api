@@ -41,6 +41,10 @@ select_permissions:
         - description
         - is_lan
         - value
+      computed_fields:
+        - available_server_count
+        - status
+        - total_server_count
       filter: {}
       allow_aggregations: true
     comment: ""

@@ -37,6 +37,38 @@ export class GameServerNodeService {
     node?: string,
     status: e_game_server_node_statuses_enum = "Setup",
   ) {
+    const regions = await this.hasura.query({
+      server_regions: {
+        __args: {
+          where: {
+            is_lan: {
+              _eq: true,
+            },
+          },
+        },
+        value: true,
+      },
+    });
+
+    let lanRegion = regions.server_regions.at(0).value;
+
+    if (!lanRegion) {
+      const createdLanRegion = await this.hasura.mutation({
+        insert_server_regions_one: {
+          __args: {
+            object: {
+              name: "LAN",
+              description: "LAN",
+              is_lan: true,
+            },
+          },
+          value: true,
+        },
+      });
+
+      lanRegion = createdLanRegion.insert_server_regions_one.value;
+    }
+
     const { insert_game_server_nodes_one } = await this.hasura.mutation({
       insert_game_server_nodes_one: {
         __args: {
@@ -44,7 +76,7 @@ export class GameServerNodeService {
             id: node,
             token,
             status,
-            region: "Lan",
+            region: lanRegion,
           },
         },
         id: true,
