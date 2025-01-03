@@ -9,7 +9,7 @@ DECLARE
     server_ip inet;
     is_region_lan boolean;
 BEGIN
-    select is_lan into is_region_lan from server_regions where id = NEW.region;
+    select is_lan into is_region_lan from server_regions where value = NEW.region;
 
     if(is_region_lan) then
         server_ip = NEW.lan_ip;
