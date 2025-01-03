@@ -24,14 +24,14 @@ BEGIN
 
     IF array_length(_regions, 1) != 0 THEN
         SELECT array_agg(sr.value) INTO available_regions 
-        FROM e_server_regions sr
+        FROM server_regions sr
         WHERE sr.value = ANY(_regions)
         AND available_region_server_count(sr) > 0;
     ELSE
         SELECT array_agg(sr.value) INTO available_regions 
-        FROM e_server_regions sr
-        WHERE available_region_server_count(sr) > 0;
-        -- AND sr.value != 'Lan';
+        FROM server_regions sr
+        WHERE available_region_server_count(sr) > 0
+        and sr.is_lan = false;
     END IF;
 
     IF array_length(available_regions, 1) = 1 THEN

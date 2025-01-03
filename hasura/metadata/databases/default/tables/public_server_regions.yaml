@@ -1,7 +1,6 @@
 table:
-  name: e_server_regions
+  name: server_regions
   schema: public
-is_enum: true
 array_relationships:
   - name: game_server_nodes
     using:
@@ -26,15 +25,41 @@ computed_fields:
       function:
         name: total_region_server_count
         schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - description
+        - is_lan
+        - value
+    comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
         - description
+        - is_lan
         - value
       computed_fields:
         - available_server_count
         - status
         - total_server_count
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - description
+        - is_lan
+        - value
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
       filter: {}
     comment: ""

@@ -1,4 +1,5 @@
-CREATE OR REPLACE FUNCTION public.region_status(e_server_region public.e_server_regions) RETURNS TEXT
+drop function if exists public.region_status(e_server_region public.server_regions);
+CREATE OR REPLACE FUNCTION public.region_status(server_region public.server_regions) RETURNS TEXT
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -10,15 +11,15 @@ BEGIN
     SELECT COUNT(*), COUNT(*) FILTER (WHERE status = 'Online')
     INTO node_total_count, node_online_count
     FROM game_server_nodes
-    WHERE region = e_server_region.value and enabled = true;
+    WHERE region = server_region.value and enabled = true;
 
     SELECT COUNT(*), COUNT(*) FILTER (WHERE connected = true)
     INTO total_count, online_count
     FROM servers
-    WHERE region = e_server_region.value AND enabled = true AND game_server_node_id IS NULL;
+    WHERE region = server_region.value AND enabled = true AND game_server_node_id IS NULL;
 
     IF total_count + node_total_count = 0 THEN
-        RETURN 'N/A';
+        RETURN 'Disabled';
     END IF;
 
     IF (node_online_count + online_count) = (total_count + node_total_count) THEN

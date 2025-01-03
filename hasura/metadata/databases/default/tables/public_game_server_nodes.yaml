@@ -36,11 +36,11 @@ select_permissions:
         - end_port_range
         - id
         - lan_ip
+        - node_ip
         - public_ip
         - region
         - start_port_range
         - status
-        - node_ip
       computed_fields:
         - available_server_count
         - total_server_count

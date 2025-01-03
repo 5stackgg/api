@@ -1,7 +1,7 @@
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
-import { e_server_regions_enum, e_match_types_enum } from "generated";
+import { e_match_types_enum } from "generated";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import { v4 as uuidv4 } from "uuid";
 import { HasuraService } from "src/hasura/hasura.service";
@@ -31,7 +31,7 @@ export class MatchMakingGateway {
 
   protected static MATCH_MAKING_QUEUE_KEY(
     type: e_match_types_enum,
-    region: e_server_regions_enum,
+    region: string,
   ) {
     return `match-making:v29:${region}:${type}`;
   }
@@ -49,7 +49,7 @@ export class MatchMakingGateway {
     @MessageBody()
     data: {
       type: e_match_types_enum;
-      regions: Array<e_server_regions_enum>;
+      regions: Array<string>;
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
@@ -285,7 +285,7 @@ export class MatchMakingGateway {
         knife: true,
         overtime: true,
         timeout_setting: "Admin",
-        region: region as e_server_regions_enum,
+        region,
       },
     );
 
@@ -344,10 +344,7 @@ export class MatchMakingGateway {
     await this.matchAssistant.updateMatchStatus(match.id, "Veto");
   }
 
-  public async getQueueLength(
-    type: e_match_types_enum,
-    region: e_server_regions_enum,
-  ) {
+  public async getQueueLength(type: e_match_types_enum, region: string) {
     return await this.redis.zcard(
       MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
     );
@@ -355,7 +352,7 @@ export class MatchMakingGateway {
 
   public async sendRegionStats(user?: User) {
     const regions = await this.hasura.query({
-      e_server_regions: {
+      server_regions: {
         __args: {
           where: {
             _and: [
@@ -363,8 +360,8 @@ export class MatchMakingGateway {
                 total_server_count: {
                   _gt: 0,
                 },
-                value: {
-                  _neq: "Lan",
+                is_lan: {
+                  _eq: false,
                 },
               },
             ],
@@ -375,19 +372,13 @@ export class MatchMakingGateway {
     });
 
     const regionStats: Partial<
-      Record<e_server_regions_enum, Partial<Record<e_match_types_enum, number>>>
+      Record<string, Partial<Record<e_match_types_enum, number>>>
     > = {};
 
-    for (const region of regions.e_server_regions) {
-      regionStats[region.value as e_server_regions_enum] = {
-        Wingman: await this.getQueueLength(
-          "Wingman",
-          region.value as e_server_regions_enum,
-        ),
-        Competitive: await this.getQueueLength(
-          "Competitive",
-          region.value as e_server_regions_enum,
-        ),
+    for (const region of regions.server_regions) {
+      regionStats[region.value] = {
+        Wingman: await this.getQueueLength("Wingman", region.value),
+        Competitive: await this.getQueueLength("Competitive", region.value),
       };
     }
 
@@ -456,7 +447,7 @@ export class MatchMakingGateway {
 
   public async sendQueueDetailsToAllUsers(
     type: e_match_types_enum,
-    region: e_server_regions_enum,
+    region: string,
   ) {
     const steamIds = await this.redis.zrange(
       MatchMakingGateway.MATCH_MAKING_QUEUE_KEY(type, region),
@@ -539,7 +530,7 @@ export class MatchMakingGateway {
 
   private async matchmake(
     type: e_match_types_enum,
-    region: e_server_regions_enum,
+    region: string,
     lock = true,
   ) {
     if (lock) {
@@ -632,7 +623,7 @@ export class MatchMakingGateway {
       players: JSON.parse(steamIds || "[]"),
       confirmed: parseInt(confirmed || "0"),
       type: type as e_match_types_enum,
-      region: region as e_server_regions_enum,
+      region,
     };
   }
 }
