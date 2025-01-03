@@ -7,15 +7,30 @@ DECLARE
     game_port int;
     tv_port int;
     server_ip inet;
+    is_region_lan boolean;
 BEGIN
+    select is_lan into is_region_lan from server_regions where id = NEW.region;
+
+    if(is_region_lan) then
+        server_ip = NEW.lan_ip;
+    else
+        server_ip = NEW.public_ip;
+    end if;
+
+    IF TG_OP = 'UPDATE' AND (
+        OLD.lan_ip != NEW.lan_ip OR
+        OLD.public_ip != NEW.public_ip 
+    ) THEN
+        UPDATE servers SET host = host(server_ip) WHERE game_server_node_id = NEW.id;
+    END IF;
+
     IF TG_OP = 'UPDATE' AND (
         NEW.enabled = true AND
         (
-            OLD.public_ip = NEW.public_ip AND
-            OLD.start_port_range = NEW.start_port_range AND
-            OLD.end_port_range = NEW.end_port_range AND
+            OLD.enabled = NEW.enabled AND
             OLD.region = NEW.region AND
-            OLD.enabled = NEW.enabled
+            OLD.start_port_range = NEW.start_port_range AND
+            OLD.end_port_range = NEW.end_port_range
         )
     ) THEN
         RETURN NEW;
@@ -39,11 +54,6 @@ BEGIN
       
 
     game_port = NEW.start_port_range;
-    server_ip = 
-        CASE 
-            WHEN NEW.region = 'Lan' THEN NEW.lan_ip
-            ELSE NEW.public_ip
-        END;
 
     WHILE game_port < NEW.end_port_range LOOP
         serverCount = serverCount + 1;
