@@ -50,6 +50,7 @@ select_permissions:
         - enabled
         - host
         - id
+        - is_lan
         - label
         - port
         - region
@@ -68,6 +69,7 @@ select_permissions:
         - enabled
         - host
         - id
+        - is_lan
         - label
         - port
         - region
@@ -87,6 +89,7 @@ select_permissions:
         - enabled
         - host
         - id
+        - is_lan
         - label
         - port
         - region
@@ -105,6 +108,7 @@ update_permissions:
       columns:
         - enabled
         - host
+        - is_lan
         - label
         - port
         - rcon_password

@@ -935,181 +935,6 @@ export type e_sanction_types_select_column = 'description' | 'value'
 export type e_sanction_types_update_column = 'description' | 'value'
 
 
-/** columns and relationships of "e_server_regions" */
-export interface e_server_regions {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    description: Scalars['String']
-    /** An array relationship */
-    game_server_nodes: game_server_nodes[]
-    /** An aggregate relationship */
-    game_server_nodes_aggregate: game_server_nodes_aggregate
-    /** A computed field, executes function "region_status" */
-    status: (Scalars['String'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    value: Scalars['String']
-    __typename: 'e_server_regions'
-}
-
-
-/** aggregated selection of "e_server_regions" */
-export interface e_server_regions_aggregate {
-    aggregate: (e_server_regions_aggregate_fields | null)
-    nodes: e_server_regions[]
-    __typename: 'e_server_regions_aggregate'
-}
-
-
-/** aggregate fields of "e_server_regions" */
-export interface e_server_regions_aggregate_fields {
-    avg: (e_server_regions_avg_fields | null)
-    count: Scalars['Int']
-    max: (e_server_regions_max_fields | null)
-    min: (e_server_regions_min_fields | null)
-    stddev: (e_server_regions_stddev_fields | null)
-    stddev_pop: (e_server_regions_stddev_pop_fields | null)
-    stddev_samp: (e_server_regions_stddev_samp_fields | null)
-    sum: (e_server_regions_sum_fields | null)
-    var_pop: (e_server_regions_var_pop_fields | null)
-    var_samp: (e_server_regions_var_samp_fields | null)
-    variance: (e_server_regions_variance_fields | null)
-    __typename: 'e_server_regions_aggregate_fields'
-}
-
-
-/** aggregate avg on columns */
-export interface e_server_regions_avg_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_avg_fields'
-}
-
-
-/** unique or primary key constraints on table "e_server_regions" */
-export type e_server_regions_constraint = 'e_server_regions_pkey'
-
-export type e_server_regions_enum = 'Africa' | 'Asia' | 'Australia' | 'Europe' | 'Lan' | 'MiddleEast' | 'SouthAmerica' | 'USCentral' | 'USEast' | 'USWest'
-
-
-/** aggregate max on columns */
-export interface e_server_regions_max_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    description: (Scalars['String'] | null)
-    /** A computed field, executes function "region_status" */
-    status: (Scalars['String'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    value: (Scalars['String'] | null)
-    __typename: 'e_server_regions_max_fields'
-}
-
-
-/** aggregate min on columns */
-export interface e_server_regions_min_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    description: (Scalars['String'] | null)
-    /** A computed field, executes function "region_status" */
-    status: (Scalars['String'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    value: (Scalars['String'] | null)
-    __typename: 'e_server_regions_min_fields'
-}
-
-
-/** response of any mutation on the table "e_server_regions" */
-export interface e_server_regions_mutation_response {
-    /** number of rows affected by the mutation */
-    affected_rows: Scalars['Int']
-    /** data from the rows affected by the mutation */
-    returning: e_server_regions[]
-    __typename: 'e_server_regions_mutation_response'
-}
-
-
-/** select columns of table "e_server_regions" */
-export type e_server_regions_select_column = 'description' | 'value'
-
-
-/** aggregate stddev on columns */
-export interface e_server_regions_stddev_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_stddev_fields'
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface e_server_regions_stddev_pop_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_stddev_pop_fields'
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface e_server_regions_stddev_samp_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_stddev_samp_fields'
-}
-
-
-/** aggregate sum on columns */
-export interface e_server_regions_sum_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_sum_fields'
-}
-
-
-/** update columns of table "e_server_regions" */
-export type e_server_regions_update_column = 'description' | 'value'
-
-
-/** aggregate var_pop on columns */
-export interface e_server_regions_var_pop_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_var_pop_fields'
-}
-
-
-/** aggregate var_samp on columns */
-export interface e_server_regions_var_samp_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_var_samp_fields'
-}
-
-
-/** aggregate variance on columns */
-export interface e_server_regions_variance_fields {
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count: (Scalars['Int'] | null)
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count: (Scalars['Int'] | null)
-    __typename: 'e_server_regions_variance_fields'
-}
-
-
 /** columns and relationships of "e_sides" */
 export interface e_sides {
     description: Scalars['String']
@@ -1603,16 +1428,17 @@ export interface game_server_nodes {
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Int'] | null)
     /** An object relationship */
-    e_region: (e_server_regions | null)
+    e_region: (server_regions | null)
     /** An object relationship */
     e_status: (e_game_server_node_statuses | null)
     enabled: Scalars['Boolean']
     end_port_range: (Scalars['Int'] | null)
     id: Scalars['String']
+    is_lan: Scalars['Boolean']
     lan_ip: (Scalars['inet'] | null)
     node_ip: (Scalars['inet'] | null)
     public_ip: (Scalars['inet'] | null)
-    region: (e_server_regions_enum | null)
+    region: (Scalars['String'] | null)
     /** An array relationship */
     servers: servers[]
     /** An aggregate relationship */
@@ -1622,6 +1448,7 @@ export interface game_server_nodes {
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
+    use_lan_ip: Scalars['Boolean']
     __typename: 'game_server_nodes'
 }
 
@@ -1675,6 +1502,7 @@ export interface game_server_nodes_max_fields {
     build_id: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     id: (Scalars['String'] | null)
+    region: (Scalars['String'] | null)
     start_port_range: (Scalars['Int'] | null)
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
@@ -1690,6 +1518,7 @@ export interface game_server_nodes_min_fields {
     build_id: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     id: (Scalars['String'] | null)
+    region: (Scalars['String'] | null)
     start_port_range: (Scalars['Int'] | null)
     token: (Scalars['String'] | null)
     /** A computed field, executes function "total_node_server_count" */
@@ -1709,15 +1538,15 @@ export interface game_server_nodes_mutation_response {
 
 
 /** select columns of table "game_server_nodes" */
-export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token'
+export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'is_lan' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token' | 'use_lan_ip'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
-export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled'
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled' | 'is_lan' | 'use_lan_ip'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_server_nodes" */
-export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled'
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled' | 'is_lan' | 'use_lan_ip'
 
 
 /** aggregate stddev on columns */
@@ -1773,7 +1602,7 @@ export interface game_server_nodes_sum_fields {
 
 
 /** update columns of table "game_server_nodes" */
-export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token'
+export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'is_lan' | 'lan_ip' | 'node_ip' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'token' | 'use_lan_ip'
 
 
 /** aggregate var_pop on columns */
@@ -3215,7 +3044,7 @@ export interface match_region_veto_picks {
     /** An object relationship */
     match_lineup: match_lineups
     match_lineup_id: Scalars['uuid']
-    region: e_server_regions_enum
+    region: Scalars['String']
     type: e_veto_pick_types_enum
     __typename: 'match_region_veto_picks'
 }
@@ -3248,6 +3077,7 @@ export interface match_region_veto_picks_max_fields {
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_lineup_id: (Scalars['uuid'] | null)
+    region: (Scalars['String'] | null)
     __typename: 'match_region_veto_picks_max_fields'
 }
 
@@ -3258,6 +3088,7 @@ export interface match_region_veto_picks_min_fields {
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_lineup_id: (Scalars['uuid'] | null)
+    region: (Scalars['String'] | null)
     __typename: 'match_region_veto_picks_min_fields'
 }
 
@@ -3307,7 +3138,7 @@ export interface matches {
     /** An object relationship */
     e_match_status: e_match_status
     /** An object relationship */
-    e_region: (e_server_regions | null)
+    e_region: (server_regions | null)
     ended_at: (Scalars['timestamptz'] | null)
     id: Scalars['uuid']
     /** A computed field, executes function "match_invite_code" */
@@ -3386,7 +3217,7 @@ export interface matches {
     player_utility: player_utility[]
     /** An aggregate relationship */
     player_utility_aggregate: player_utility_aggregate
-    region: (e_server_regions_enum | null)
+    region: (Scalars['String'] | null)
     /** A computed field, executes function "get_region_veto_picking_lineup_id" */
     region_veto_picking_lineup_id: (Scalars['uuid'] | null)
     /** An array relationship */
@@ -3490,6 +3321,7 @@ export interface matches_max_fields {
     min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     password: (Scalars['String'] | null)
+    region: (Scalars['String'] | null)
     /** A computed field, executes function "get_region_veto_picking_lineup_id" */
     region_veto_picking_lineup_id: (Scalars['uuid'] | null)
     scheduled_at: (Scalars['timestamptz'] | null)
@@ -3536,6 +3368,7 @@ export interface matches_min_fields {
     min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     password: (Scalars['String'] | null)
+    region: (Scalars['String'] | null)
     /** A computed field, executes function "get_region_veto_picking_lineup_id" */
     region_veto_picking_lineup_id: (Scalars['uuid'] | null)
     scheduled_at: (Scalars['timestamptz'] | null)
@@ -3771,10 +3604,6 @@ export interface mutation_root {
     delete_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** delete single row from the table: "e_sanction_types" */
     delete_e_sanction_types_by_pk: (e_sanction_types | null)
-    /** delete data from the table: "e_server_regions" */
-    delete_e_server_regions: (e_server_regions_mutation_response | null)
-    /** delete single row from the table: "e_server_regions" */
-    delete_e_server_regions_by_pk: (e_server_regions | null)
     /** delete data from the table: "e_sides" */
     delete_e_sides: (e_sides_mutation_response | null)
     /** delete single row from the table: "e_sides" */
@@ -3895,6 +3724,10 @@ export interface mutation_root {
     delete_players: (players_mutation_response | null)
     /** delete single row from the table: "players" */
     delete_players_by_pk: (players | null)
+    /** delete data from the table: "server_regions" */
+    delete_server_regions: (server_regions_mutation_response | null)
+    /** delete single row from the table: "server_regions" */
+    delete_server_regions_by_pk: (server_regions | null)
     /** delete data from the table: "servers" */
     delete_servers: (servers_mutation_response | null)
     /** delete single row from the table: "servers" */
@@ -3997,10 +3830,6 @@ export interface mutation_root {
     insert_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** insert a single row into the table: "e_sanction_types" */
     insert_e_sanction_types_one: (e_sanction_types | null)
-    /** insert data into the table: "e_server_regions" */
-    insert_e_server_regions: (e_server_regions_mutation_response | null)
-    /** insert a single row into the table: "e_server_regions" */
-    insert_e_server_regions_one: (e_server_regions | null)
     /** insert data into the table: "e_sides" */
     insert_e_sides: (e_sides_mutation_response | null)
     /** insert a single row into the table: "e_sides" */
@@ -4121,6 +3950,10 @@ export interface mutation_root {
     insert_players: (players_mutation_response | null)
     /** insert a single row into the table: "players" */
     insert_players_one: (players | null)
+    /** insert data into the table: "server_regions" */
+    insert_server_regions: (server_regions_mutation_response | null)
+    /** insert a single row into the table: "server_regions" */
+    insert_server_regions_one: (server_regions | null)
     /** insert data into the table: "servers" */
     insert_servers: (servers_mutation_response | null)
     /** insert a single row into the table: "servers" */
@@ -4267,12 +4100,6 @@ export interface mutation_root {
     update_e_sanction_types_by_pk: (e_sanction_types | null)
     /** update multiples rows of table: "e_sanction_types" */
     update_e_sanction_types_many: ((e_sanction_types_mutation_response | null)[] | null)
-    /** update data of the table: "e_server_regions" */
-    update_e_server_regions: (e_server_regions_mutation_response | null)
-    /** update single row of the table: "e_server_regions" */
-    update_e_server_regions_by_pk: (e_server_regions | null)
-    /** update multiples rows of table: "e_server_regions" */
-    update_e_server_regions_many: ((e_server_regions_mutation_response | null)[] | null)
     /** update data of the table: "e_sides" */
     update_e_sides: (e_sides_mutation_response | null)
     /** update single row of the table: "e_sides" */
@@ -4453,6 +4280,12 @@ export interface mutation_root {
     update_players_by_pk: (players | null)
     /** update multiples rows of table: "players" */
     update_players_many: ((players_mutation_response | null)[] | null)
+    /** update data of the table: "server_regions" */
+    update_server_regions: (server_regions_mutation_response | null)
+    /** update single row of the table: "server_regions" */
+    update_server_regions_by_pk: (server_regions | null)
+    /** update multiples rows of table: "server_regions" */
+    update_server_regions_many: ((server_regions_mutation_response | null)[] | null)
     /** update data of the table: "servers" */
     update_servers: (servers_mutation_response | null)
     /** update single row of the table: "servers" */
@@ -6481,12 +6314,6 @@ export interface query_root {
     e_sanction_types_aggregate: e_sanction_types_aggregate
     /** fetch data from the table: "e_sanction_types" using primary key columns */
     e_sanction_types_by_pk: (e_sanction_types | null)
-    /** fetch data from the table: "e_server_regions" */
-    e_server_regions: e_server_regions[]
-    /** fetch aggregated fields from the table: "e_server_regions" */
-    e_server_regions_aggregate: e_server_regions_aggregate
-    /** fetch data from the table: "e_server_regions" using primary key columns */
-    e_server_regions_by_pk: (e_server_regions | null)
     /** fetch data from the table: "e_sides" */
     e_sides: e_sides[]
     /** fetch aggregated fields from the table: "e_sides" */
@@ -6671,6 +6498,12 @@ export interface query_root {
     players_aggregate: players_aggregate
     /** fetch data from the table: "players" using primary key columns */
     players_by_pk: (players | null)
+    /** fetch data from the table: "server_regions" */
+    server_regions: server_regions[]
+    /** fetch aggregated fields from the table: "server_regions" */
+    server_regions_aggregate: server_regions_aggregate
+    /** fetch data from the table: "server_regions" using primary key columns */
+    server_regions_by_pk: (server_regions | null)
     /** An array relationship */
     servers: servers[]
     /** An aggregate relationship */
@@ -6779,6 +6612,180 @@ export interface query_root {
 }
 
 
+/** columns and relationships of "server_regions" */
+export interface server_regions {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    description: Scalars['String']
+    /** An array relationship */
+    game_server_nodes: game_server_nodes[]
+    /** An aggregate relationship */
+    game_server_nodes_aggregate: game_server_nodes_aggregate
+    is_lan: Scalars['Boolean']
+    /** A computed field, executes function "region_status" */
+    status: (Scalars['String'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    value: Scalars['String']
+    __typename: 'server_regions'
+}
+
+
+/** aggregated selection of "server_regions" */
+export interface server_regions_aggregate {
+    aggregate: (server_regions_aggregate_fields | null)
+    nodes: server_regions[]
+    __typename: 'server_regions_aggregate'
+}
+
+
+/** aggregate fields of "server_regions" */
+export interface server_regions_aggregate_fields {
+    avg: (server_regions_avg_fields | null)
+    count: Scalars['Int']
+    max: (server_regions_max_fields | null)
+    min: (server_regions_min_fields | null)
+    stddev: (server_regions_stddev_fields | null)
+    stddev_pop: (server_regions_stddev_pop_fields | null)
+    stddev_samp: (server_regions_stddev_samp_fields | null)
+    sum: (server_regions_sum_fields | null)
+    var_pop: (server_regions_var_pop_fields | null)
+    var_samp: (server_regions_var_samp_fields | null)
+    variance: (server_regions_variance_fields | null)
+    __typename: 'server_regions_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface server_regions_avg_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "server_regions" */
+export type server_regions_constraint = 'e_server_regions_pkey'
+
+
+/** aggregate max on columns */
+export interface server_regions_max_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    description: (Scalars['String'] | null)
+    /** A computed field, executes function "region_status" */
+    status: (Scalars['String'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'server_regions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface server_regions_min_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    description: (Scalars['String'] | null)
+    /** A computed field, executes function "region_status" */
+    status: (Scalars['String'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'server_regions_min_fields'
+}
+
+
+/** response of any mutation on the table "server_regions" */
+export interface server_regions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: server_regions[]
+    __typename: 'server_regions_mutation_response'
+}
+
+
+/** select columns of table "server_regions" */
+export type server_regions_select_column = 'description' | 'is_lan' | 'value'
+
+
+/** aggregate stddev on columns */
+export interface server_regions_stddev_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface server_regions_stddev_pop_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface server_regions_stddev_samp_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface server_regions_sum_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_sum_fields'
+}
+
+
+/** update columns of table "server_regions" */
+export type server_regions_update_column = 'description' | 'is_lan' | 'value'
+
+
+/** aggregate var_pop on columns */
+export interface server_regions_var_pop_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface server_regions_var_samp_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface server_regions_variance_fields {
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count: (Scalars['Int'] | null)
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count: (Scalars['Int'] | null)
+    __typename: 'server_regions_variance_fields'
+}
+
+
 /** columns and relationships of "servers" */
 export interface servers {
     api_password: Scalars['uuid']
@@ -6793,6 +6800,7 @@ export interface servers {
     id: Scalars['uuid']
     /** A computed field, executes function "is_dedicated_server" */
     is_dedicated: (Scalars['Boolean'] | null)
+    is_lan: Scalars['Boolean']
     label: Scalars['String']
     /** An array relationship */
     matches: matches[]
@@ -6885,15 +6893,15 @@ export interface servers_mutation_response {
 
 
 /** select columns of table "servers" */
-export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
+export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'is_lan' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
 
 
 /** select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled'
+export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled' | 'is_lan'
 
 
 /** select "servers_aggregate_bool_exp_bool_or_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled'
+export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled' | 'is_lan'
 
 
 /** aggregate stddev on columns */
@@ -6929,7 +6937,7 @@ export interface servers_sum_fields {
 
 
 /** update columns of table "servers" */
-export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
+export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'is_lan' | 'label' | 'port' | 'rcon_password' | 'region' | 'reserved_by_match_id' | 'tv_port'
 
 
 /** aggregate var_pop on columns */
@@ -7115,14 +7123,6 @@ export interface subscription_root {
     e_sanction_types_by_pk: (e_sanction_types | null)
     /** fetch data from the table in a streaming manner: "e_sanction_types" */
     e_sanction_types_stream: e_sanction_types[]
-    /** fetch data from the table: "e_server_regions" */
-    e_server_regions: e_server_regions[]
-    /** fetch aggregated fields from the table: "e_server_regions" */
-    e_server_regions_aggregate: e_server_regions_aggregate
-    /** fetch data from the table: "e_server_regions" using primary key columns */
-    e_server_regions_by_pk: (e_server_regions | null)
-    /** fetch data from the table in a streaming manner: "e_server_regions" */
-    e_server_regions_stream: e_server_regions[]
     /** fetch data from the table: "e_sides" */
     e_sides: e_sides[]
     /** fetch aggregated fields from the table: "e_sides" */
@@ -7363,6 +7363,14 @@ export interface subscription_root {
     players_by_pk: (players | null)
     /** fetch data from the table in a streaming manner: "players" */
     players_stream: players[]
+    /** fetch data from the table: "server_regions" */
+    server_regions: server_regions[]
+    /** fetch aggregated fields from the table: "server_regions" */
+    server_regions_aggregate: server_regions_aggregate
+    /** fetch data from the table: "server_regions" using primary key columns */
+    server_regions_by_pk: (server_regions | null)
+    /** fetch data from the table in a streaming manner: "server_regions" */
+    server_regions_stream: server_regions[]
     /** An array relationship */
     servers: servers[]
     /** An aggregate relationship */
@@ -11663,253 +11671,6 @@ _set?: (e_sanction_types_set_input | null),
 where: e_sanction_types_bool_exp}
 
 
-/** columns and relationships of "e_server_regions" */
-export interface e_server_regionsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    description?: boolean | number
-    /** An array relationship */
-    game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (game_server_nodes_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (game_server_nodes_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (game_server_nodes_bool_exp | null)} })
-    /** An aggregate relationship */
-    game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (game_server_nodes_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (game_server_nodes_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (game_server_nodes_bool_exp | null)} })
-    /** A computed field, executes function "region_status" */
-    status?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    value?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregated selection of "e_server_regions" */
-export interface e_server_regions_aggregateGenqlSelection{
-    aggregate?: e_server_regions_aggregate_fieldsGenqlSelection
-    nodes?: e_server_regionsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate fields of "e_server_regions" */
-export interface e_server_regions_aggregate_fieldsGenqlSelection{
-    avg?: e_server_regions_avg_fieldsGenqlSelection
-    count?: { __args: {columns?: (e_server_regions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
-    max?: e_server_regions_max_fieldsGenqlSelection
-    min?: e_server_regions_min_fieldsGenqlSelection
-    stddev?: e_server_regions_stddev_fieldsGenqlSelection
-    stddev_pop?: e_server_regions_stddev_pop_fieldsGenqlSelection
-    stddev_samp?: e_server_regions_stddev_samp_fieldsGenqlSelection
-    sum?: e_server_regions_sum_fieldsGenqlSelection
-    var_pop?: e_server_regions_var_pop_fieldsGenqlSelection
-    var_samp?: e_server_regions_var_samp_fieldsGenqlSelection
-    variance?: e_server_regions_variance_fieldsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate avg on columns */
-export interface e_server_regions_avg_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** Boolean expression to filter rows from the table "e_server_regions". All fields are combined with a logical 'AND'. */
-export interface e_server_regions_bool_exp {_and?: (e_server_regions_bool_exp[] | null),_not?: (e_server_regions_bool_exp | null),_or?: (e_server_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),status?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
-
-
-/** Boolean expression to compare columns of type "e_server_regions_enum". All fields are combined with logical 'AND'. */
-export interface e_server_regions_enum_comparison_exp {_eq?: (e_server_regions_enum | null),_in?: (e_server_regions_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_server_regions_enum | null),_nin?: (e_server_regions_enum[] | null)}
-
-
-/** input type for inserting data into table "e_server_regions" */
-export interface e_server_regions_insert_input {description?: (Scalars['String'] | null),game_server_nodes?: (game_server_nodes_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
-
-
-/** aggregate max on columns */
-export interface e_server_regions_max_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    description?: boolean | number
-    /** A computed field, executes function "region_status" */
-    status?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    value?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate min on columns */
-export interface e_server_regions_min_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    description?: boolean | number
-    /** A computed field, executes function "region_status" */
-    status?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    value?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** response of any mutation on the table "e_server_regions" */
-export interface e_server_regions_mutation_responseGenqlSelection{
-    /** number of rows affected by the mutation */
-    affected_rows?: boolean | number
-    /** data from the rows affected by the mutation */
-    returning?: e_server_regionsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** input type for inserting object relation for remote table "e_server_regions" */
-export interface e_server_regions_obj_rel_insert_input {data: e_server_regions_insert_input,
-/** upsert condition */
-on_conflict?: (e_server_regions_on_conflict | null)}
-
-
-/** on_conflict condition type for table "e_server_regions" */
-export interface e_server_regions_on_conflict {constraint: e_server_regions_constraint,update_columns?: e_server_regions_update_column[],where?: (e_server_regions_bool_exp | null)}
-
-
-/** Ordering options when selecting data from "e_server_regions". */
-export interface e_server_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),status?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
-
-
-/** primary key columns input for table: e_server_regions */
-export interface e_server_regions_pk_columns_input {value: Scalars['String']}
-
-
-/** input type for updating data in table "e_server_regions" */
-export interface e_server_regions_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
-
-
-/** aggregate stddev on columns */
-export interface e_server_regions_stddev_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface e_server_regions_stddev_pop_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface e_server_regions_stddev_samp_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** Streaming cursor of the table "e_server_regions" */
-export interface e_server_regions_stream_cursor_input {
-/** Stream column input with initial value */
-initial_value: e_server_regions_stream_cursor_value_input,
-/** cursor ordering */
-ordering?: (cursor_ordering | null)}
-
-
-/** Initial value of the column from where the streaming should start */
-export interface e_server_regions_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
-
-
-/** aggregate sum on columns */
-export interface e_server_regions_sum_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-export interface e_server_regions_updates {
-/** sets the columns of the filtered rows to the given values */
-_set?: (e_server_regions_set_input | null),
-/** filter the rows which have to be updated */
-where: e_server_regions_bool_exp}
-
-
-/** aggregate var_pop on columns */
-export interface e_server_regions_var_pop_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate var_samp on columns */
-export interface e_server_regions_var_samp_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate variance on columns */
-export interface e_server_regions_variance_fieldsGenqlSelection{
-    /** A computed field, executes function "available_region_server_count" */
-    available_server_count?: boolean | number
-    /** A computed field, executes function "total_region_server_count" */
-    total_server_count?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
 /** columns and relationships of "e_sides" */
 export interface e_sidesGenqlSelection{
     description?: boolean | number
@@ -12847,12 +12608,13 @@ export interface game_server_nodesGenqlSelection{
     available_server_count?: boolean | number
     build_id?: boolean | number
     /** An object relationship */
-    e_region?: e_server_regionsGenqlSelection
+    e_region?: server_regionsGenqlSelection
     /** An object relationship */
     e_status?: e_game_server_node_statusesGenqlSelection
     enabled?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
+    is_lan?: boolean | number
     lan_ip?: boolean | number
     node_ip?: boolean | number
     public_ip?: boolean | number
@@ -12886,6 +12648,7 @@ export interface game_server_nodesGenqlSelection{
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
+    use_lan_ip?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -12955,7 +12718,7 @@ export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),en
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (e_server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (e_server_regions_enum_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),is_lan?: (Boolean_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),use_lan_ip?: (Boolean_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "game_server_nodes" */
@@ -12963,7 +12726,7 @@ export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null)
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (e_server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (e_server_regions_enum | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null)}
+export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null),use_lan_ip?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate max on columns */
@@ -12973,6 +12736,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
+    region?: boolean | number
     start_port_range?: boolean | number
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
@@ -12983,7 +12747,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "game_server_nodes" */
-export interface game_server_nodes_max_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null)}
+export interface game_server_nodes_max_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -12993,6 +12757,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
+    region?: boolean | number
     start_port_range?: boolean | number
     token?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
@@ -13003,7 +12768,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "game_server_nodes" */
-export interface game_server_nodes_min_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null)}
+export interface game_server_nodes_min_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_nodes" */
@@ -13028,7 +12793,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (e_server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null)}
+export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),is_lan?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),use_lan_ip?: (order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -13036,7 +12801,7 @@ export interface game_server_nodes_pk_columns_input {id: Scalars['String']}
 
 
 /** input type for updating data in table "game_server_nodes" */
-export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (e_server_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null)}
+export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null),use_lan_ip?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -13102,7 +12867,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (e_server_regions_enum | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null)}
+export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),token?: (Scalars['String'] | null),use_lan_ip?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate sum on columns */
@@ -15734,11 +15499,11 @@ on_conflict?: (match_region_veto_picks_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "match_region_veto_picks". All fields are combined with a logical 'AND'. */
-export interface match_region_veto_picks_bool_exp {_and?: (match_region_veto_picks_bool_exp[] | null),_not?: (match_region_veto_picks_bool_exp | null),_or?: (match_region_veto_picks_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_lineup?: (match_lineups_bool_exp | null),match_lineup_id?: (uuid_comparison_exp | null),region?: (e_server_regions_enum_comparison_exp | null),type?: (e_veto_pick_types_enum_comparison_exp | null)}
+export interface match_region_veto_picks_bool_exp {_and?: (match_region_veto_picks_bool_exp[] | null),_not?: (match_region_veto_picks_bool_exp | null),_or?: (match_region_veto_picks_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_lineup?: (match_lineups_bool_exp | null),match_lineup_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),type?: (e_veto_pick_types_enum_comparison_exp | null)}
 
 
 /** input type for inserting data into table "match_region_veto_picks" */
-export interface match_region_veto_picks_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_lineup?: (match_lineups_obj_rel_insert_input | null),match_lineup_id?: (Scalars['uuid'] | null),region?: (e_server_regions_enum | null),type?: (e_veto_pick_types_enum | null)}
+export interface match_region_veto_picks_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_lineup?: (match_lineups_obj_rel_insert_input | null),match_lineup_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),type?: (e_veto_pick_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -15747,13 +15512,14 @@ export interface match_region_veto_picks_max_fieldsGenqlSelection{
     id?: boolean | number
     match_id?: boolean | number
     match_lineup_id?: boolean | number
+    region?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by max() on columns of table "match_region_veto_picks" */
-export interface match_region_veto_picks_max_order_by {created_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_lineup_id?: (order_by | null)}
+export interface match_region_veto_picks_max_order_by {created_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_lineup_id?: (order_by | null),region?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -15762,13 +15528,14 @@ export interface match_region_veto_picks_min_fieldsGenqlSelection{
     id?: boolean | number
     match_id?: boolean | number
     match_lineup_id?: boolean | number
+    region?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by min() on columns of table "match_region_veto_picks" */
-export interface match_region_veto_picks_min_order_by {created_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_lineup_id?: (order_by | null)}
+export interface match_region_veto_picks_min_order_by {created_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_lineup_id?: (order_by | null),region?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_region_veto_picks" */
@@ -15795,7 +15562,7 @@ export interface match_region_veto_picks_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_region_veto_picks" */
-export interface match_region_veto_picks_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_lineup_id?: (Scalars['uuid'] | null),region?: (e_server_regions_enum | null),type?: (e_veto_pick_types_enum | null)}
+export interface match_region_veto_picks_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_lineup_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),type?: (e_veto_pick_types_enum | null)}
 
 
 /** Streaming cursor of the table "match_region_veto_picks" */
@@ -15807,7 +15574,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_region_veto_picks_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_lineup_id?: (Scalars['uuid'] | null),region?: (e_server_regions_enum | null),type?: (e_veto_pick_types_enum | null)}
+export interface match_region_veto_picks_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_lineup_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),type?: (e_veto_pick_types_enum | null)}
 
 export interface match_region_veto_picks_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -15863,7 +15630,7 @@ export interface matchesGenqlSelection{
     /** An object relationship */
     e_match_status?: e_match_statusGenqlSelection
     /** An object relationship */
-    e_region?: e_server_regionsGenqlSelection
+    e_region?: server_regionsGenqlSelection
     ended_at?: boolean | number
     id?: boolean | number
     /** A computed field, executes function "match_invite_code" */
@@ -16269,7 +16036,7 @@ export interface matches_avg_order_by {organizer_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "matches". All fields are combined with a logical 'AND'. */
-export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (e_server_regions_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),lineup_counts?: (json_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (e_server_regions_enum_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_id?: (uuid_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_link?: (String_comparison_exp | null),tv_connection_string?: (String_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
+export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (server_regions_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),lineup_counts?: (json_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (String_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_id?: (uuid_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_link?: (String_comparison_exp | null),tv_connection_string?: (String_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "matches" */
@@ -16277,7 +16044,7 @@ export interface matches_inc_input {organizer_steam_id?: (Scalars['bigint'] | nu
 
 
 /** input type for inserting data into table "matches" */
-export interface matches_insert_input {cancels_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_status?: (e_match_status_obj_rel_insert_input | null),e_region?: (e_server_regions_obj_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1?: (match_lineups_obj_rel_insert_input | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2?: (match_lineups_obj_rel_insert_input | null),lineup_2_id?: (Scalars['uuid'] | null),map_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_options_id?: (Scalars['uuid'] | null),options?: (match_options_obj_rel_insert_input | null),organizer?: (players_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_flashes?: (player_flashes_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_objectives?: (player_objectives_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),player_utility?: (player_utility_arr_rel_insert_input | null),region?: (e_server_regions_enum | null),region_veto_picks?: (match_region_veto_picks_arr_rel_insert_input | null),scheduled_at?: (Scalars['timestamptz'] | null),server?: (servers_obj_rel_insert_input | null),server_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),tournament_brackets?: (tournament_brackets_arr_rel_insert_input | null),winner?: (match_lineups_obj_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface matches_insert_input {cancels_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_status?: (e_match_status_obj_rel_insert_input | null),e_region?: (server_regions_obj_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1?: (match_lineups_obj_rel_insert_input | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2?: (match_lineups_obj_rel_insert_input | null),lineup_2_id?: (Scalars['uuid'] | null),map_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_options_id?: (Scalars['uuid'] | null),options?: (match_options_obj_rel_insert_input | null),organizer?: (players_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_flashes?: (player_flashes_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_objectives?: (player_objectives_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),player_utility?: (player_utility_arr_rel_insert_input | null),region?: (Scalars['String'] | null),region_veto_picks?: (match_region_veto_picks_arr_rel_insert_input | null),scheduled_at?: (Scalars['timestamptz'] | null),server?: (servers_obj_rel_insert_input | null),server_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),tournament_brackets?: (tournament_brackets_arr_rel_insert_input | null),winner?: (match_lineups_obj_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -16308,6 +16075,7 @@ export interface matches_max_fieldsGenqlSelection{
     min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     password?: boolean | number
+    region?: boolean | number
     /** A computed field, executes function "get_region_veto_picking_lineup_id" */
     region_veto_picking_lineup_id?: boolean | number
     scheduled_at?: boolean | number
@@ -16328,7 +16096,7 @@ export interface matches_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "matches" */
-export interface matches_max_order_by {cancels_at?: (order_by | null),created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lineup_1_id?: (order_by | null),lineup_2_id?: (order_by | null),match_options_id?: (order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),scheduled_at?: (order_by | null),server_id?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
+export interface matches_max_order_by {cancels_at?: (order_by | null),created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lineup_1_id?: (order_by | null),lineup_2_id?: (order_by | null),match_options_id?: (order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),region?: (order_by | null),scheduled_at?: (order_by | null),server_id?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -16359,6 +16127,7 @@ export interface matches_min_fieldsGenqlSelection{
     min_players_per_lineup?: boolean | number
     organizer_steam_id?: boolean | number
     password?: boolean | number
+    region?: boolean | number
     /** A computed field, executes function "get_region_veto_picking_lineup_id" */
     region_veto_picking_lineup_id?: boolean | number
     scheduled_at?: boolean | number
@@ -16379,7 +16148,7 @@ export interface matches_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "matches" */
-export interface matches_min_order_by {cancels_at?: (order_by | null),created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lineup_1_id?: (order_by | null),lineup_2_id?: (order_by | null),match_options_id?: (order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),scheduled_at?: (order_by | null),server_id?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
+export interface matches_min_order_by {cancels_at?: (order_by | null),created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lineup_1_id?: (order_by | null),lineup_2_id?: (order_by | null),match_options_id?: (order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),region?: (order_by | null),scheduled_at?: (order_by | null),server_id?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "matches" */
@@ -16404,7 +16173,7 @@ export interface matches_on_conflict {constraint: matches_constraint,update_colu
 
 
 /** Ordering options when selecting data from "matches". */
-export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),cancels_at?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (e_server_regions_order_by | null),ended_at?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),lineup_counts?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_id?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_link?: (order_by | null),tv_connection_string?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
+export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),cancels_at?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (server_regions_order_by | null),ended_at?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),lineup_counts?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_id?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_link?: (order_by | null),tv_connection_string?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** primary key columns input for table: matches */
@@ -16412,7 +16181,7 @@ export interface matches_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "matches" */
-export interface matches_set_input {cancels_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2_id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),region?: (e_server_regions_enum | null),scheduled_at?: (Scalars['timestamptz'] | null),server_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface matches_set_input {cancels_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2_id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),region?: (Scalars['String'] | null),scheduled_at?: (Scalars['timestamptz'] | null),server_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -16472,7 +16241,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface matches_stream_cursor_value_input {cancels_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2_id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),region?: (e_server_regions_enum | null),scheduled_at?: (Scalars['timestamptz'] | null),server_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface matches_stream_cursor_value_input {cancels_at?: (Scalars['timestamptz'] | null),created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),lineup_1_id?: (Scalars['uuid'] | null),lineup_2_id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),organizer_steam_id?: (Scalars['bigint'] | null),password?: (Scalars['String'] | null),region?: (Scalars['String'] | null),scheduled_at?: (Scalars['timestamptz'] | null),server_id?: (Scalars['uuid'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -16729,12 +16498,6 @@ export interface mutation_rootGenqlSelection{
     where: e_sanction_types_bool_exp} })
     /** delete single row from the table: "e_sanction_types" */
     delete_e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
-    /** delete data from the table: "e_server_regions" */
-    delete_e_server_regions?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
-    /** filter the rows which have to be deleted */
-    where: e_server_regions_bool_exp} })
-    /** delete single row from the table: "e_server_regions" */
-    delete_e_server_regions_by_pk?: (e_server_regionsGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_sides" */
     delete_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -16915,6 +16678,12 @@ export interface mutation_rootGenqlSelection{
     where: players_bool_exp} })
     /** delete single row from the table: "players" */
     delete_players_by_pk?: (playersGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
+    /** delete data from the table: "server_regions" */
+    delete_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: server_regions_bool_exp} })
+    /** delete single row from the table: "server_regions" */
+    delete_server_regions_by_pk?: (server_regionsGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "servers" */
     delete_servers?: (servers_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -17141,18 +16910,6 @@ export interface mutation_rootGenqlSelection{
     object: e_sanction_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_sanction_types_on_conflict | null)} })
-    /** insert data into the table: "e_server_regions" */
-    insert_e_server_regions?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
-    /** the rows to be inserted */
-    objects: e_server_regions_insert_input[], 
-    /** upsert condition */
-    on_conflict?: (e_server_regions_on_conflict | null)} })
-    /** insert a single row into the table: "e_server_regions" */
-    insert_e_server_regions_one?: (e_server_regionsGenqlSelection & { __args: {
-    /** the row to be inserted */
-    object: e_server_regions_insert_input, 
-    /** upsert condition */
-    on_conflict?: (e_server_regions_on_conflict | null)} })
     /** insert data into the table: "e_sides" */
     insert_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -17513,6 +17270,18 @@ export interface mutation_rootGenqlSelection{
     object: players_insert_input, 
     /** upsert condition */
     on_conflict?: (players_on_conflict | null)} })
+    /** insert data into the table: "server_regions" */
+    insert_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: server_regions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (server_regions_on_conflict | null)} })
+    /** insert a single row into the table: "server_regions" */
+    insert_server_regions_one?: (server_regionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: server_regions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (server_regions_on_conflict | null)} })
     /** insert data into the table: "servers" */
     insert_servers?: (servers_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -17863,20 +17632,6 @@ export interface mutation_rootGenqlSelection{
     update_e_sanction_types_many?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_sanction_types_updates[]} })
-    /** update data of the table: "e_server_regions" */
-    update_e_server_regions?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (e_server_regions_set_input | null), 
-    /** filter the rows which have to be updated */
-    where: e_server_regions_bool_exp} })
-    /** update single row of the table: "e_server_regions" */
-    update_e_server_regions_by_pk?: (e_server_regionsGenqlSelection & { __args: {
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (e_server_regions_set_input | null), pk_columns: e_server_regions_pk_columns_input} })
-    /** update multiples rows of table: "e_server_regions" */
-    update_e_server_regions_many?: (e_server_regions_mutation_responseGenqlSelection & { __args: {
-    /** updates to execute, in order */
-    updates: e_server_regions_updates[]} })
     /** update data of the table: "e_sides" */
     update_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -18389,6 +18144,20 @@ export interface mutation_rootGenqlSelection{
     update_players_many?: (players_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: players_updates[]} })
+    /** update data of the table: "server_regions" */
+    update_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (server_regions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: server_regions_bool_exp} })
+    /** update single row of the table: "server_regions" */
+    update_server_regions_by_pk?: (server_regionsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (server_regions_set_input | null), pk_columns: server_regions_pk_columns_input} })
+    /** update multiples rows of table: "server_regions" */
+    update_server_regions_many?: (server_regions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: server_regions_updates[]} })
     /** update data of the table: "servers" */
     update_servers?: (servers_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -22260,32 +22029,6 @@ export interface query_rootGenqlSelection{
     where?: (e_sanction_types_bool_exp | null)} })
     /** fetch data from the table: "e_sanction_types" using primary key columns */
     e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
-    /** fetch data from the table: "e_server_regions" */
-    e_server_regions?: (e_server_regionsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (e_server_regions_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (e_server_regions_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (e_server_regions_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "e_server_regions" */
-    e_server_regions_aggregate?: (e_server_regions_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (e_server_regions_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (e_server_regions_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (e_server_regions_bool_exp | null)} })
-    /** fetch data from the table: "e_server_regions" using primary key columns */
-    e_server_regions_by_pk?: (e_server_regionsGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_sides" */
     e_sides?: (e_sidesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -23070,6 +22813,32 @@ export interface query_rootGenqlSelection{
     where?: (players_bool_exp | null)} })
     /** fetch data from the table: "players" using primary key columns */
     players_by_pk?: (playersGenqlSelection & { __args: {steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "server_regions" */
+    server_regions?: (server_regionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_regions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "server_regions" */
+    server_regions_aggregate?: (server_regions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_regions_bool_exp | null)} })
+    /** fetch data from the table: "server_regions" using primary key columns */
+    server_regions_by_pk?: (server_regionsGenqlSelection & { __args: {value: Scalars['String']} })
     /** An array relationship */
     servers?: (serversGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -23579,6 +23348,250 @@ export interface query_rootGenqlSelection{
 }
 
 
+/** columns and relationships of "server_regions" */
+export interface server_regionsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    description?: boolean | number
+    /** An array relationship */
+    game_server_nodes?: (game_server_nodesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    /** An aggregate relationship */
+    game_server_nodes_aggregate?: (game_server_nodes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (game_server_nodes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (game_server_nodes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (game_server_nodes_bool_exp | null)} })
+    is_lan?: boolean | number
+    /** A computed field, executes function "region_status" */
+    status?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "server_regions" */
+export interface server_regions_aggregateGenqlSelection{
+    aggregate?: server_regions_aggregate_fieldsGenqlSelection
+    nodes?: server_regionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "server_regions" */
+export interface server_regions_aggregate_fieldsGenqlSelection{
+    avg?: server_regions_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (server_regions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: server_regions_max_fieldsGenqlSelection
+    min?: server_regions_min_fieldsGenqlSelection
+    stddev?: server_regions_stddev_fieldsGenqlSelection
+    stddev_pop?: server_regions_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: server_regions_stddev_samp_fieldsGenqlSelection
+    sum?: server_regions_sum_fieldsGenqlSelection
+    var_pop?: server_regions_var_pop_fieldsGenqlSelection
+    var_samp?: server_regions_var_samp_fieldsGenqlSelection
+    variance?: server_regions_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface server_regions_avg_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "server_regions". All fields are combined with a logical 'AND'. */
+export interface server_regions_bool_exp {_and?: (server_regions_bool_exp[] | null),_not?: (server_regions_bool_exp | null),_or?: (server_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),is_lan?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** input type for inserting data into table "server_regions" */
+export interface server_regions_insert_input {description?: (Scalars['String'] | null),game_server_nodes?: (game_server_nodes_arr_rel_insert_input | null),is_lan?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface server_regions_max_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    description?: boolean | number
+    /** A computed field, executes function "region_status" */
+    status?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface server_regions_min_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    description?: boolean | number
+    /** A computed field, executes function "region_status" */
+    status?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "server_regions" */
+export interface server_regions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: server_regionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "server_regions" */
+export interface server_regions_obj_rel_insert_input {data: server_regions_insert_input,
+/** upsert condition */
+on_conflict?: (server_regions_on_conflict | null)}
+
+
+/** on_conflict condition type for table "server_regions" */
+export interface server_regions_on_conflict {constraint: server_regions_constraint,update_columns?: server_regions_update_column[],where?: (server_regions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "server_regions". */
+export interface server_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),is_lan?: (order_by | null),status?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: server_regions */
+export interface server_regions_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "server_regions" */
+export interface server_regions_set_input {description?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface server_regions_stddev_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface server_regions_stddev_pop_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface server_regions_stddev_samp_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "server_regions" */
+export interface server_regions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: server_regions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface server_regions_stream_cursor_value_input {description?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface server_regions_sum_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface server_regions_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (server_regions_set_input | null),
+/** filter the rows which have to be updated */
+where: server_regions_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface server_regions_var_pop_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface server_regions_var_samp_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface server_regions_variance_fieldsGenqlSelection{
+    /** A computed field, executes function "available_region_server_count" */
+    available_server_count?: boolean | number
+    /** A computed field, executes function "total_region_server_count" */
+    total_server_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "servers" */
 export interface serversGenqlSelection{
     api_password?: boolean | number
@@ -23593,6 +23606,7 @@ export interface serversGenqlSelection{
     id?: boolean | number
     /** A computed field, executes function "is_dedicated_server" */
     is_dedicated?: boolean | number
+    is_lan?: boolean | number
     label?: boolean | number
     /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
@@ -23687,7 +23701,7 @@ export interface servers_avg_order_by {port?: (order_by | null),tv_port?: (order
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),is_lan?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
@@ -23695,7 +23709,7 @@ export interface servers_inc_input {port?: (Scalars['Int'] | null),tv_port?: (Sc
 
 
 /** input type for inserting data into table "servers" */
-export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_lan?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -23760,7 +23774,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),is_lan?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */
@@ -23768,7 +23782,7 @@ export interface servers_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "servers" */
-export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_lan?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23819,7 +23833,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_lan?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -24389,40 +24403,6 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_sanction_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_sanction_types_bool_exp | null)} })
-    /** fetch data from the table: "e_server_regions" */
-    e_server_regions?: (e_server_regionsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (e_server_regions_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (e_server_regions_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (e_server_regions_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "e_server_regions" */
-    e_server_regions_aggregate?: (e_server_regions_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (e_server_regions_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (e_server_regions_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (e_server_regions_bool_exp | null)} })
-    /** fetch data from the table: "e_server_regions" using primary key columns */
-    e_server_regions_by_pk?: (e_server_regionsGenqlSelection & { __args: {value: Scalars['String']} })
-    /** fetch data from the table in a streaming manner: "e_server_regions" */
-    e_server_regions_stream?: (e_server_regionsGenqlSelection & { __args: {
-    /** maximum number of rows returned in a single batch */
-    batch_size: Scalars['Int'], 
-    /** cursor to stream the results returned by the query */
-    cursor: (e_server_regions_stream_cursor_input | null)[], 
-    /** filter the rows returned */
-    where?: (e_server_regions_bool_exp | null)} })
     /** fetch data from the table: "e_sides" */
     e_sides?: (e_sidesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -25443,6 +25423,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (players_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (players_bool_exp | null)} })
+    /** fetch data from the table: "server_regions" */
+    server_regions?: (server_regionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_regions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "server_regions" */
+    server_regions_aggregate?: (server_regions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (server_regions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (server_regions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (server_regions_bool_exp | null)} })
+    /** fetch data from the table: "server_regions" using primary key columns */
+    server_regions_by_pk?: (server_regionsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "server_regions" */
+    server_regions_stream?: (server_regionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (server_regions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (server_regions_bool_exp | null)} })
     /** An array relationship */
     servers?: (serversGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -31026,118 +31040,6 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
-    const e_server_regions_possibleTypes: string[] = ['e_server_regions']
-    export const ise_server_regions = (obj?: { __typename?: any } | null): obj is e_server_regions => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions"')
-      return e_server_regions_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_aggregate_possibleTypes: string[] = ['e_server_regions_aggregate']
-    export const ise_server_regions_aggregate = (obj?: { __typename?: any } | null): obj is e_server_regions_aggregate => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_aggregate"')
-      return e_server_regions_aggregate_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_aggregate_fields_possibleTypes: string[] = ['e_server_regions_aggregate_fields']
-    export const ise_server_regions_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_aggregate_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_aggregate_fields"')
-      return e_server_regions_aggregate_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_avg_fields_possibleTypes: string[] = ['e_server_regions_avg_fields']
-    export const ise_server_regions_avg_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_avg_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_avg_fields"')
-      return e_server_regions_avg_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_max_fields_possibleTypes: string[] = ['e_server_regions_max_fields']
-    export const ise_server_regions_max_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_max_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_max_fields"')
-      return e_server_regions_max_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_min_fields_possibleTypes: string[] = ['e_server_regions_min_fields']
-    export const ise_server_regions_min_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_min_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_min_fields"')
-      return e_server_regions_min_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_mutation_response_possibleTypes: string[] = ['e_server_regions_mutation_response']
-    export const ise_server_regions_mutation_response = (obj?: { __typename?: any } | null): obj is e_server_regions_mutation_response => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_mutation_response"')
-      return e_server_regions_mutation_response_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_stddev_fields_possibleTypes: string[] = ['e_server_regions_stddev_fields']
-    export const ise_server_regions_stddev_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_stddev_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_stddev_fields"')
-      return e_server_regions_stddev_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_stddev_pop_fields_possibleTypes: string[] = ['e_server_regions_stddev_pop_fields']
-    export const ise_server_regions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_stddev_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_stddev_pop_fields"')
-      return e_server_regions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_stddev_samp_fields_possibleTypes: string[] = ['e_server_regions_stddev_samp_fields']
-    export const ise_server_regions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_stddev_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_stddev_samp_fields"')
-      return e_server_regions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_sum_fields_possibleTypes: string[] = ['e_server_regions_sum_fields']
-    export const ise_server_regions_sum_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_sum_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_sum_fields"')
-      return e_server_regions_sum_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_var_pop_fields_possibleTypes: string[] = ['e_server_regions_var_pop_fields']
-    export const ise_server_regions_var_pop_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_var_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_var_pop_fields"')
-      return e_server_regions_var_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_var_samp_fields_possibleTypes: string[] = ['e_server_regions_var_samp_fields']
-    export const ise_server_regions_var_samp_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_var_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_var_samp_fields"')
-      return e_server_regions_var_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const e_server_regions_variance_fields_possibleTypes: string[] = ['e_server_regions_variance_fields']
-    export const ise_server_regions_variance_fields = (obj?: { __typename?: any } | null): obj is e_server_regions_variance_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_regions_variance_fields"')
-      return e_server_regions_variance_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
     const e_sides_possibleTypes: string[] = ['e_sides']
     export const ise_sides = (obj?: { __typename?: any } | null): obj is e_sides => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_sides"')
@@ -33746,6 +33648,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const server_regions_possibleTypes: string[] = ['server_regions']
+    export const isserver_regions = (obj?: { __typename?: any } | null): obj is server_regions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions"')
+      return server_regions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_aggregate_possibleTypes: string[] = ['server_regions_aggregate']
+    export const isserver_regions_aggregate = (obj?: { __typename?: any } | null): obj is server_regions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_aggregate"')
+      return server_regions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_aggregate_fields_possibleTypes: string[] = ['server_regions_aggregate_fields']
+    export const isserver_regions_aggregate_fields = (obj?: { __typename?: any } | null): obj is server_regions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_aggregate_fields"')
+      return server_regions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_avg_fields_possibleTypes: string[] = ['server_regions_avg_fields']
+    export const isserver_regions_avg_fields = (obj?: { __typename?: any } | null): obj is server_regions_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_avg_fields"')
+      return server_regions_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_max_fields_possibleTypes: string[] = ['server_regions_max_fields']
+    export const isserver_regions_max_fields = (obj?: { __typename?: any } | null): obj is server_regions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_max_fields"')
+      return server_regions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_min_fields_possibleTypes: string[] = ['server_regions_min_fields']
+    export const isserver_regions_min_fields = (obj?: { __typename?: any } | null): obj is server_regions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_min_fields"')
+      return server_regions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_mutation_response_possibleTypes: string[] = ['server_regions_mutation_response']
+    export const isserver_regions_mutation_response = (obj?: { __typename?: any } | null): obj is server_regions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_mutation_response"')
+      return server_regions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_stddev_fields_possibleTypes: string[] = ['server_regions_stddev_fields']
+    export const isserver_regions_stddev_fields = (obj?: { __typename?: any } | null): obj is server_regions_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_stddev_fields"')
+      return server_regions_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_stddev_pop_fields_possibleTypes: string[] = ['server_regions_stddev_pop_fields']
+    export const isserver_regions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is server_regions_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_stddev_pop_fields"')
+      return server_regions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_stddev_samp_fields_possibleTypes: string[] = ['server_regions_stddev_samp_fields']
+    export const isserver_regions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is server_regions_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_stddev_samp_fields"')
+      return server_regions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_sum_fields_possibleTypes: string[] = ['server_regions_sum_fields']
+    export const isserver_regions_sum_fields = (obj?: { __typename?: any } | null): obj is server_regions_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_sum_fields"')
+      return server_regions_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_var_pop_fields_possibleTypes: string[] = ['server_regions_var_pop_fields']
+    export const isserver_regions_var_pop_fields = (obj?: { __typename?: any } | null): obj is server_regions_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_var_pop_fields"')
+      return server_regions_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_var_samp_fields_possibleTypes: string[] = ['server_regions_var_samp_fields']
+    export const isserver_regions_var_samp_fields = (obj?: { __typename?: any } | null): obj is server_regions_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_var_samp_fields"')
+      return server_regions_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const server_regions_variance_fields_possibleTypes: string[] = ['server_regions_variance_fields']
+    export const isserver_regions_variance_fields = (obj?: { __typename?: any } | null): obj is server_regions_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isserver_regions_variance_fields"')
+      return server_regions_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const servers_possibleTypes: string[] = ['servers']
     export const isservers = (obj?: { __typename?: any } | null): obj is servers => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isservers"')
@@ -36066,33 +36080,6 @@ export const enumESanctionTypesUpdateColumn = {
    value: 'value' as const
 }
 
-export const enumEServerRegionsConstraint = {
-   e_server_regions_pkey: 'e_server_regions_pkey' as const
-}
-
-export const enumEServerRegionsEnum = {
-   Africa: 'Africa' as const,
-   Asia: 'Asia' as const,
-   Australia: 'Australia' as const,
-   Europe: 'Europe' as const,
-   Lan: 'Lan' as const,
-   MiddleEast: 'MiddleEast' as const,
-   SouthAmerica: 'SouthAmerica' as const,
-   USCentral: 'USCentral' as const,
-   USEast: 'USEast' as const,
-   USWest: 'USWest' as const
-}
-
-export const enumEServerRegionsSelectColumn = {
-   description: 'description' as const,
-   value: 'value' as const
-}
-
-export const enumEServerRegionsUpdateColumn = {
-   description: 'description' as const,
-   value: 'value' as const
-}
-
 export const enumESidesConstraint = {
    e_teams_pkey: 'e_teams_pkey' as const
 }
@@ -36248,21 +36235,27 @@ export const enumGameServerNodesSelectColumn = {
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
    id: 'id' as const,
+   is_lan: 'is_lan' as const,
    lan_ip: 'lan_ip' as const,
    node_ip: 'node_ip' as const,
    public_ip: 'public_ip' as const,
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
    status: 'status' as const,
-   token: 'token' as const
+   token: 'token' as const,
+   use_lan_ip: 'use_lan_ip' as const
 }
 
 export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolAndArgumentsColumns = {
-   enabled: 'enabled' as const
+   enabled: 'enabled' as const,
+   is_lan: 'is_lan' as const,
+   use_lan_ip: 'use_lan_ip' as const
 }
 
 export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolOrArgumentsColumns = {
-   enabled: 'enabled' as const
+   enabled: 'enabled' as const,
+   is_lan: 'is_lan' as const,
+   use_lan_ip: 'use_lan_ip' as const
 }
 
 export const enumGameServerNodesUpdateColumn = {
@@ -36270,13 +36263,15 @@ export const enumGameServerNodesUpdateColumn = {
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
    id: 'id' as const,
+   is_lan: 'is_lan' as const,
    lan_ip: 'lan_ip' as const,
    node_ip: 'node_ip' as const,
    public_ip: 'public_ip' as const,
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
    status: 'status' as const,
-   token: 'token' as const
+   token: 'token' as const,
+   use_lan_ip: 'use_lan_ip' as const
 }
 
 export const enumMapPoolsConstraint = {
@@ -37003,6 +36998,22 @@ export const enumPlayersUpdateColumn = {
    steam_id: 'steam_id' as const
 }
 
+export const enumServerRegionsConstraint = {
+   e_server_regions_pkey: 'e_server_regions_pkey' as const
+}
+
+export const enumServerRegionsSelectColumn = {
+   description: 'description' as const,
+   is_lan: 'is_lan' as const,
+   value: 'value' as const
+}
+
+export const enumServerRegionsUpdateColumn = {
+   description: 'description' as const,
+   is_lan: 'is_lan' as const,
+   value: 'value' as const
+}
+
 export const enumServersConstraint = {
    servers_pkey: 'servers_pkey' as const,
    servers_reserved_by_match_id_key: 'servers_reserved_by_match_id_key' as const
@@ -37015,6 +37026,7 @@ export const enumServersSelectColumn = {
    game_server_node_id: 'game_server_node_id' as const,
    host: 'host' as const,
    id: 'id' as const,
+   is_lan: 'is_lan' as const,
    label: 'label' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,
@@ -37025,12 +37037,14 @@ export const enumServersSelectColumn = {
 
 export const enumServersSelectColumnServersAggregateBoolExpBoolAndArgumentsColumns = {
    connected: 'connected' as const,
-   enabled: 'enabled' as const
+   enabled: 'enabled' as const,
+   is_lan: 'is_lan' as const
 }
 
 export const enumServersSelectColumnServersAggregateBoolExpBoolOrArgumentsColumns = {
    connected: 'connected' as const,
-   enabled: 'enabled' as const
+   enabled: 'enabled' as const,
+   is_lan: 'is_lan' as const
 }
 
 export const enumServersUpdateColumn = {
@@ -37040,6 +37054,7 @@ export const enumServersUpdateColumn = {
    game_server_node_id: 'game_server_node_id' as const,
    host: 'host' as const,
    id: 'id' as const,
+   is_lan: 'is_lan' as const,
    label: 'label' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,

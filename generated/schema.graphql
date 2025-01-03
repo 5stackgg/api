@@ -2698,411 +2698,6 @@ input e_sanction_types_updates {
 }
 
 """
-columns and relationships of "e_server_regions"
-"""
-type e_server_regions {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-  description: String!
-
-  """An array relationship"""
-  game_server_nodes(
-    """distinct select on columns"""
-    distinct_on: [game_server_nodes_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [game_server_nodes_order_by!]
-
-    """filter the rows returned"""
-    where: game_server_nodes_bool_exp
-  ): [game_server_nodes!]!
-
-  """An aggregate relationship"""
-  game_server_nodes_aggregate(
-    """distinct select on columns"""
-    distinct_on: [game_server_nodes_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [game_server_nodes_order_by!]
-
-    """filter the rows returned"""
-    where: game_server_nodes_bool_exp
-  ): game_server_nodes_aggregate!
-
-  """
-  A computed field, executes function "region_status"
-  """
-  status: String
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-  value: String!
-}
-
-"""
-aggregated selection of "e_server_regions"
-"""
-type e_server_regions_aggregate {
-  aggregate: e_server_regions_aggregate_fields
-  nodes: [e_server_regions!]!
-}
-
-"""
-aggregate fields of "e_server_regions"
-"""
-type e_server_regions_aggregate_fields {
-  avg: e_server_regions_avg_fields
-  count(columns: [e_server_regions_select_column!], distinct: Boolean): Int!
-  max: e_server_regions_max_fields
-  min: e_server_regions_min_fields
-  stddev: e_server_regions_stddev_fields
-  stddev_pop: e_server_regions_stddev_pop_fields
-  stddev_samp: e_server_regions_stddev_samp_fields
-  sum: e_server_regions_sum_fields
-  var_pop: e_server_regions_var_pop_fields
-  var_samp: e_server_regions_var_samp_fields
-  variance: e_server_regions_variance_fields
-}
-
-"""aggregate avg on columns"""
-type e_server_regions_avg_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""
-Boolean expression to filter rows from the table "e_server_regions". All fields are combined with a logical 'AND'.
-"""
-input e_server_regions_bool_exp {
-  _and: [e_server_regions_bool_exp!]
-  _not: e_server_regions_bool_exp
-  _or: [e_server_regions_bool_exp!]
-  available_server_count: Int_comparison_exp
-  description: String_comparison_exp
-  game_server_nodes: game_server_nodes_bool_exp
-  game_server_nodes_aggregate: game_server_nodes_aggregate_bool_exp
-  status: String_comparison_exp
-  total_server_count: Int_comparison_exp
-  value: String_comparison_exp
-}
-
-"""
-unique or primary key constraints on table "e_server_regions"
-"""
-enum e_server_regions_constraint {
-  """
-  unique or primary key constraint on columns "value"
-  """
-  e_server_regions_pkey
-}
-
-enum e_server_regions_enum {
-  """Africa"""
-  Africa
-
-  """Asia"""
-  Asia
-
-  """Australia"""
-  Australia
-
-  """Europe"""
-  Europe
-
-  """Lan"""
-  Lan
-
-  """Middle East"""
-  MiddleEast
-
-  """South America"""
-  SouthAmerica
-
-  """US - Central"""
-  USCentral
-
-  """US - East"""
-  USEast
-
-  """US - West"""
-  USWest
-}
-
-"""
-Boolean expression to compare columns of type "e_server_regions_enum". All fields are combined with logical 'AND'.
-"""
-input e_server_regions_enum_comparison_exp {
-  _eq: e_server_regions_enum
-  _in: [e_server_regions_enum!]
-  _is_null: Boolean
-  _neq: e_server_regions_enum
-  _nin: [e_server_regions_enum!]
-}
-
-"""
-input type for inserting data into table "e_server_regions"
-"""
-input e_server_regions_insert_input {
-  description: String
-  game_server_nodes: game_server_nodes_arr_rel_insert_input
-  value: String
-}
-
-"""aggregate max on columns"""
-type e_server_regions_max_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-  description: String
-
-  """
-  A computed field, executes function "region_status"
-  """
-  status: String
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-  value: String
-}
-
-"""aggregate min on columns"""
-type e_server_regions_min_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-  description: String
-
-  """
-  A computed field, executes function "region_status"
-  """
-  status: String
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-  value: String
-}
-
-"""
-response of any mutation on the table "e_server_regions"
-"""
-type e_server_regions_mutation_response {
-  """number of rows affected by the mutation"""
-  affected_rows: Int!
-
-  """data from the rows affected by the mutation"""
-  returning: [e_server_regions!]!
-}
-
-"""
-input type for inserting object relation for remote table "e_server_regions"
-"""
-input e_server_regions_obj_rel_insert_input {
-  data: e_server_regions_insert_input!
-
-  """upsert condition"""
-  on_conflict: e_server_regions_on_conflict
-}
-
-"""
-on_conflict condition type for table "e_server_regions"
-"""
-input e_server_regions_on_conflict {
-  constraint: e_server_regions_constraint!
-  update_columns: [e_server_regions_update_column!]! = []
-  where: e_server_regions_bool_exp
-}
-
-"""Ordering options when selecting data from "e_server_regions"."""
-input e_server_regions_order_by {
-  available_server_count: order_by
-  description: order_by
-  game_server_nodes_aggregate: game_server_nodes_aggregate_order_by
-  status: order_by
-  total_server_count: order_by
-  value: order_by
-}
-
-"""primary key columns input for table: e_server_regions"""
-input e_server_regions_pk_columns_input {
-  value: String!
-}
-
-"""
-select columns of table "e_server_regions"
-"""
-enum e_server_regions_select_column {
-  """column name"""
-  description
-
-  """column name"""
-  value
-}
-
-"""
-input type for updating data in table "e_server_regions"
-"""
-input e_server_regions_set_input {
-  description: String
-  value: String
-}
-
-"""aggregate stddev on columns"""
-type e_server_regions_stddev_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""aggregate stddev_pop on columns"""
-type e_server_regions_stddev_pop_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""aggregate stddev_samp on columns"""
-type e_server_regions_stddev_samp_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""
-Streaming cursor of the table "e_server_regions"
-"""
-input e_server_regions_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: e_server_regions_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input e_server_regions_stream_cursor_value_input {
-  description: String
-  value: String
-}
-
-"""aggregate sum on columns"""
-type e_server_regions_sum_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""
-update columns of table "e_server_regions"
-"""
-enum e_server_regions_update_column {
-  """column name"""
-  description
-
-  """column name"""
-  value
-}
-
-input e_server_regions_updates {
-  """sets the columns of the filtered rows to the given values"""
-  _set: e_server_regions_set_input
-
-  """filter the rows which have to be updated"""
-  where: e_server_regions_bool_exp!
-}
-
-"""aggregate var_pop on columns"""
-type e_server_regions_var_pop_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""aggregate var_samp on columns"""
-type e_server_regions_var_samp_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""aggregate variance on columns"""
-type e_server_regions_variance_fields {
-  """
-  A computed field, executes function "available_region_server_count"
-  """
-  available_server_count: Int
-
-  """
-  A computed field, executes function "total_region_server_count"
-  """
-  total_server_count: Int
-}
-
-"""
 columns and relationships of "e_sides"
 """
 type e_sides {
@@ -4699,17 +4294,18 @@ type game_server_nodes {
   build_id: Int
 
   """An object relationship"""
-  e_region: e_server_regions
+  e_region: server_regions
 
   """An object relationship"""
   e_status: e_game_server_node_statuses
   enabled: Boolean!
   end_port_range: Int
   id: String!
+  is_lan: Boolean!
   lan_ip: inet
   node_ip: inet
   public_ip: inet
-  region: e_server_regions_enum
+  region: String
 
   """An array relationship"""
   servers(
@@ -4754,6 +4350,7 @@ type game_server_nodes {
   A computed field, executes function "total_node_server_count"
   """
   total_server_count: Int
+  use_lan_ip: Boolean!
 }
 
 """
@@ -4869,21 +4466,23 @@ input game_server_nodes_bool_exp {
   _or: [game_server_nodes_bool_exp!]
   available_server_count: Int_comparison_exp
   build_id: Int_comparison_exp
-  e_region: e_server_regions_bool_exp
+  e_region: server_regions_bool_exp
   e_status: e_game_server_node_statuses_bool_exp
   enabled: Boolean_comparison_exp
   end_port_range: Int_comparison_exp
   id: String_comparison_exp
+  is_lan: Boolean_comparison_exp
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
   public_ip: inet_comparison_exp
-  region: e_server_regions_enum_comparison_exp
+  region: String_comparison_exp
   servers: servers_bool_exp
   servers_aggregate: servers_aggregate_bool_exp
   start_port_range: Int_comparison_exp
   status: e_game_server_node_statuses_enum_comparison_exp
   token: String_comparison_exp
   total_server_count: Int_comparison_exp
+  use_lan_ip: Boolean_comparison_exp
 }
 
 """
@@ -4910,19 +4509,21 @@ input type for inserting data into table "game_server_nodes"
 """
 input game_server_nodes_insert_input {
   build_id: Int
-  e_region: e_server_regions_obj_rel_insert_input
+  e_region: server_regions_obj_rel_insert_input
   e_status: e_game_server_node_statuses_obj_rel_insert_input
   enabled: Boolean
   end_port_range: Int
   id: String
+  is_lan: Boolean
   lan_ip: inet
   node_ip: inet
   public_ip: inet
-  region: e_server_regions_enum
+  region: String
   servers: servers_arr_rel_insert_input
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   token: String
+  use_lan_ip: Boolean
 }
 
 """aggregate max on columns"""
@@ -4934,6 +4535,7 @@ type game_server_nodes_max_fields {
   build_id: Int
   end_port_range: Int
   id: String
+  region: String
   start_port_range: Int
   token: String
 
@@ -4950,6 +4552,7 @@ input game_server_nodes_max_order_by {
   build_id: order_by
   end_port_range: order_by
   id: order_by
+  region: order_by
   start_port_range: order_by
   token: order_by
 }
@@ -4963,6 +4566,7 @@ type game_server_nodes_min_fields {
   build_id: Int
   end_port_range: Int
   id: String
+  region: String
   start_port_range: Int
   token: String
 
@@ -4979,6 +4583,7 @@ input game_server_nodes_min_order_by {
   build_id: order_by
   end_port_range: order_by
   id: order_by
+  region: order_by
   start_port_range: order_by
   token: order_by
 }
@@ -5017,11 +4622,12 @@ input game_server_nodes_on_conflict {
 input game_server_nodes_order_by {
   available_server_count: order_by
   build_id: order_by
-  e_region: e_server_regions_order_by
+  e_region: server_regions_order_by
   e_status: e_game_server_node_statuses_order_by
   enabled: order_by
   end_port_range: order_by
   id: order_by
+  is_lan: order_by
   lan_ip: order_by
   node_ip: order_by
   public_ip: order_by
@@ -5031,6 +4637,7 @@ input game_server_nodes_order_by {
   status: order_by
   token: order_by
   total_server_count: order_by
+  use_lan_ip: order_by
 }
 
 """primary key columns input for table: game_server_nodes"""
@@ -5055,6 +4662,9 @@ enum game_server_nodes_select_column {
   id
 
   """column name"""
+  is_lan
+
+  """column name"""
   lan_ip
 
   """column name"""
@@ -5074,6 +4684,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   token
+
+  """column name"""
+  use_lan_ip
 }
 
 """
@@ -5082,6 +4695,12 @@ select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   enabled
+
+  """column name"""
+  is_lan
+
+  """column name"""
+  use_lan_ip
 }
 
 """
@@ -5090,6 +4709,12 @@ select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns 
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   enabled
+
+  """column name"""
+  is_lan
+
+  """column name"""
+  use_lan_ip
 }
 
 """
@@ -5100,13 +4725,15 @@ input game_server_nodes_set_input {
   enabled: Boolean
   end_port_range: Int
   id: String
+  is_lan: Boolean
   lan_ip: inet
   node_ip: inet
   public_ip: inet
-  region: e_server_regions_enum
+  region: String
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   token: String
+  use_lan_ip: Boolean
 }
 
 """aggregate stddev on columns"""
@@ -5201,13 +4828,15 @@ input game_server_nodes_stream_cursor_value_input {
   enabled: Boolean
   end_port_range: Int
   id: String
+  is_lan: Boolean
   lan_ip: inet
   node_ip: inet
   public_ip: inet
-  region: e_server_regions_enum
+  region: String
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   token: String
+  use_lan_ip: Boolean
 }
 
 """aggregate sum on columns"""
@@ -5252,6 +4881,9 @@ enum game_server_nodes_update_column {
   id
 
   """column name"""
+  is_lan
+
+  """column name"""
   lan_ip
 
   """column name"""
@@ -5271,6 +4903,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   token
+
+  """column name"""
+  use_lan_ip
 }
 
 input game_server_nodes_updates {
@@ -10025,7 +9660,7 @@ type match_region_veto_picks {
   """An object relationship"""
   match_lineup: match_lineups!
   match_lineup_id: uuid!
-  region: e_server_regions_enum!
+  region: String!
   type: e_veto_pick_types_enum!
 }
 
@@ -10089,7 +9724,7 @@ input match_region_veto_picks_bool_exp {
   match_id: uuid_comparison_exp
   match_lineup: match_lineups_bool_exp
   match_lineup_id: uuid_comparison_exp
-  region: e_server_regions_enum_comparison_exp
+  region: String_comparison_exp
   type: e_veto_pick_types_enum_comparison_exp
 }
 
@@ -10113,7 +9748,7 @@ input match_region_veto_picks_insert_input {
   match_id: uuid
   match_lineup: match_lineups_obj_rel_insert_input
   match_lineup_id: uuid
-  region: e_server_regions_enum
+  region: String
   type: e_veto_pick_types_enum
 }
 
@@ -10123,6 +9758,7 @@ type match_region_veto_picks_max_fields {
   id: uuid
   match_id: uuid
   match_lineup_id: uuid
+  region: String
 }
 
 """
@@ -10133,6 +9769,7 @@ input match_region_veto_picks_max_order_by {
   id: order_by
   match_id: order_by
   match_lineup_id: order_by
+  region: order_by
 }
 
 """aggregate min on columns"""
@@ -10141,6 +9778,7 @@ type match_region_veto_picks_min_fields {
   id: uuid
   match_id: uuid
   match_lineup_id: uuid
+  region: String
 }
 
 """
@@ -10151,6 +9789,7 @@ input match_region_veto_picks_min_order_by {
   id: order_by
   match_id: order_by
   match_lineup_id: order_by
+  region: order_by
 }
 
 """
@@ -10221,7 +9860,7 @@ input match_region_veto_picks_set_input {
   id: uuid
   match_id: uuid
   match_lineup_id: uuid
-  region: e_server_regions_enum
+  region: String
   type: e_veto_pick_types_enum
 }
 
@@ -10242,7 +9881,7 @@ input match_region_veto_picks_stream_cursor_value_input {
   id: uuid
   match_id: uuid
   match_lineup_id: uuid
-  region: e_server_regions_enum
+  region: String
   type: e_veto_pick_types_enum
 }
 
@@ -10363,7 +10002,7 @@ type matches {
   e_match_status: e_match_status!
 
   """An object relationship"""
-  e_region: e_server_regions
+  e_region: server_regions
   ended_at: timestamptz
   id: uuid!
 
@@ -10776,7 +10415,7 @@ type matches {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
-  region: e_server_regions_enum
+  region: String
 
   """
   A computed field, executes function "get_region_veto_picking_lineup_id"
@@ -11016,7 +10655,7 @@ input matches_bool_exp {
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
   e_match_status: e_match_status_bool_exp
-  e_region: e_server_regions_bool_exp
+  e_region: server_regions_bool_exp
   ended_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
@@ -11060,7 +10699,7 @@ input matches_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   player_utility: player_utility_bool_exp
   player_utility_aggregate: player_utility_aggregate_bool_exp
-  region: e_server_regions_enum_comparison_exp
+  region: String_comparison_exp
   region_veto_picking_lineup_id: uuid_comparison_exp
   region_veto_picks: match_region_veto_picks_bool_exp
   region_veto_picks_aggregate: match_region_veto_picks_aggregate_bool_exp
@@ -11121,7 +10760,7 @@ input matches_insert_input {
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_status: e_match_status_obj_rel_insert_input
-  e_region: e_server_regions_obj_rel_insert_input
+  e_region: server_regions_obj_rel_insert_input
   ended_at: timestamptz
   id: uuid
   label: String
@@ -11143,7 +10782,7 @@ input matches_insert_input {
   player_objectives: player_objectives_arr_rel_insert_input
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   player_utility: player_utility_arr_rel_insert_input
-  region: e_server_regions_enum
+  region: String
   region_veto_picks: match_region_veto_picks_arr_rel_insert_input
   scheduled_at: timestamptz
   server: servers_obj_rel_insert_input
@@ -11207,6 +10846,7 @@ type matches_max_fields {
   min_players_per_lineup: Int
   organizer_steam_id: bigint
   password: String
+  region: String
 
   """
   A computed field, executes function "get_region_veto_picking_lineup_id"
@@ -11252,6 +10892,7 @@ input matches_max_order_by {
   match_options_id: order_by
   organizer_steam_id: order_by
   password: order_by
+  region: order_by
   scheduled_at: order_by
   server_id: order_by
   started_at: order_by
@@ -11310,6 +10951,7 @@ type matches_min_fields {
   min_players_per_lineup: Int
   organizer_steam_id: bigint
   password: String
+  region: String
 
   """
   A computed field, executes function "get_region_veto_picking_lineup_id"
@@ -11355,6 +10997,7 @@ input matches_min_order_by {
   match_options_id: order_by
   organizer_steam_id: order_by
   password: order_by
+  region: order_by
   scheduled_at: order_by
   server_id: order_by
   started_at: order_by
@@ -11405,7 +11048,7 @@ input matches_order_by {
   current_match_map_id: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
   e_match_status: e_match_status_order_by
-  e_region: e_server_regions_order_by
+  e_region: server_regions_order_by
   ended_at: order_by
   id: order_by
   invite_code: order_by
@@ -11531,7 +11174,7 @@ input matches_set_input {
   match_options_id: uuid
   organizer_steam_id: bigint
   password: String
-  region: e_server_regions_enum
+  region: String
   scheduled_at: timestamptz
   server_id: uuid
   started_at: timestamptz
@@ -11625,7 +11268,7 @@ input matches_stream_cursor_value_input {
   match_options_id: uuid
   organizer_steam_id: bigint
   password: String
-  region: e_server_regions_enum
+  region: String
   scheduled_at: timestamptz
   server_id: uuid
   started_at: timestamptz
@@ -12105,19 +11748,6 @@ type mutation_root {
   delete_e_sanction_types_by_pk(value: String!): e_sanction_types
 
   """
-  delete data from the table: "e_server_regions"
-  """
-  delete_e_server_regions(
-    """filter the rows which have to be deleted"""
-    where: e_server_regions_bool_exp!
-  ): e_server_regions_mutation_response
-
-  """
-  delete single row from the table: "e_server_regions"
-  """
-  delete_e_server_regions_by_pk(value: String!): e_server_regions
-
-  """
   delete data from the table: "e_sides"
   """
   delete_e_sides(
@@ -12506,6 +12136,19 @@ type mutation_root {
   delete single row from the table: "players"
   """
   delete_players_by_pk(steam_id: bigint!): players
+
+  """
+  delete data from the table: "server_regions"
+  """
+  delete_server_regions(
+    """filter the rows which have to be deleted"""
+    where: server_regions_bool_exp!
+  ): server_regions_mutation_response
+
+  """
+  delete single row from the table: "server_regions"
+  """
+  delete_server_regions_by_pk(value: String!): server_regions
 
   """
   delete data from the table: "servers"
@@ -12944,28 +12587,6 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_sanction_types_on_conflict
   ): e_sanction_types
-
-  """
-  insert data into the table: "e_server_regions"
-  """
-  insert_e_server_regions(
-    """the rows to be inserted"""
-    objects: [e_server_regions_insert_input!]!
-
-    """upsert condition"""
-    on_conflict: e_server_regions_on_conflict
-  ): e_server_regions_mutation_response
-
-  """
-  insert a single row into the table: "e_server_regions"
-  """
-  insert_e_server_regions_one(
-    """the row to be inserted"""
-    object: e_server_regions_insert_input!
-
-    """upsert condition"""
-    on_conflict: e_server_regions_on_conflict
-  ): e_server_regions
 
   """
   insert data into the table: "e_sides"
@@ -13628,6 +13249,28 @@ type mutation_root {
   ): players
 
   """
+  insert data into the table: "server_regions"
+  """
+  insert_server_regions(
+    """the rows to be inserted"""
+    objects: [server_regions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: server_regions_on_conflict
+  ): server_regions_mutation_response
+
+  """
+  insert a single row into the table: "server_regions"
+  """
+  insert_server_regions_one(
+    """the row to be inserted"""
+    object: server_regions_insert_input!
+
+    """upsert condition"""
+    on_conflict: server_regions_on_conflict
+  ): server_regions
+
+  """
   insert data into the table: "servers"
   """
   insert_servers(
@@ -14286,34 +13929,6 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_sanction_types_updates!]!
   ): [e_sanction_types_mutation_response]
-
-  """
-  update data of the table: "e_server_regions"
-  """
-  update_e_server_regions(
-    """sets the columns of the filtered rows to the given values"""
-    _set: e_server_regions_set_input
-
-    """filter the rows which have to be updated"""
-    where: e_server_regions_bool_exp!
-  ): e_server_regions_mutation_response
-
-  """
-  update single row of the table: "e_server_regions"
-  """
-  update_e_server_regions_by_pk(
-    """sets the columns of the filtered rows to the given values"""
-    _set: e_server_regions_set_input
-    pk_columns: e_server_regions_pk_columns_input!
-  ): e_server_regions
-
-  """
-  update multiples rows of table: "e_server_regions"
-  """
-  update_e_server_regions_many(
-    """updates to execute, in order"""
-    updates: [e_server_regions_updates!]!
-  ): [e_server_regions_mutation_response]
 
   """
   update data of the table: "e_sides"
@@ -15304,6 +14919,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [players_updates!]!
   ): [players_mutation_response]
+
+  """
+  update data of the table: "server_regions"
+  """
+  update_server_regions(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_regions_set_input
+
+    """filter the rows which have to be updated"""
+    where: server_regions_bool_exp!
+  ): server_regions_mutation_response
+
+  """
+  update single row of the table: "server_regions"
+  """
+  update_server_regions_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: server_regions_set_input
+    pk_columns: server_regions_pk_columns_input!
+  ): server_regions
+
+  """
+  update multiples rows of table: "server_regions"
+  """
+  update_server_regions_many(
+    """updates to execute, in order"""
+    updates: [server_regions_updates!]!
+  ): [server_regions_mutation_response]
 
   """
   update data of the table: "servers"
@@ -22439,51 +22082,6 @@ type query_root {
   e_sanction_types_by_pk(value: String!): e_sanction_types
 
   """
-  fetch data from the table: "e_server_regions"
-  """
-  e_server_regions(
-    """distinct select on columns"""
-    distinct_on: [e_server_regions_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [e_server_regions_order_by!]
-
-    """filter the rows returned"""
-    where: e_server_regions_bool_exp
-  ): [e_server_regions!]!
-
-  """
-  fetch aggregated fields from the table: "e_server_regions"
-  """
-  e_server_regions_aggregate(
-    """distinct select on columns"""
-    distinct_on: [e_server_regions_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [e_server_regions_order_by!]
-
-    """filter the rows returned"""
-    where: e_server_regions_bool_exp
-  ): e_server_regions_aggregate!
-
-  """
-  fetch data from the table: "e_server_regions" using primary key columns
-  """
-  e_server_regions_by_pk(value: String!): e_server_regions
-
-  """
   fetch data from the table: "e_sides"
   """
   e_sides(
@@ -23756,6 +23354,49 @@ type query_root {
   """fetch data from the table: "players" using primary key columns"""
   players_by_pk(steam_id: bigint!): players
 
+  """
+  fetch data from the table: "server_regions"
+  """
+  server_regions(
+    """distinct select on columns"""
+    distinct_on: [server_regions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_regions_order_by!]
+
+    """filter the rows returned"""
+    where: server_regions_bool_exp
+  ): [server_regions!]!
+
+  """
+  fetch aggregated fields from the table: "server_regions"
+  """
+  server_regions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_regions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_regions_order_by!]
+
+    """filter the rows returned"""
+    where: server_regions_bool_exp
+  ): server_regions_aggregate!
+
+  """fetch data from the table: "server_regions" using primary key columns"""
+  server_regions_by_pk(value: String!): server_regions
+
   """An array relationship"""
   servers(
     """distinct select on columns"""
@@ -24578,6 +24219,380 @@ type query_root {
 }
 
 """
+columns and relationships of "server_regions"
+"""
+type server_regions {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+  description: String!
+
+  """An array relationship"""
+  game_server_nodes(
+    """distinct select on columns"""
+    distinct_on: [game_server_nodes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_nodes_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_nodes_bool_exp
+  ): [game_server_nodes!]!
+
+  """An aggregate relationship"""
+  game_server_nodes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_server_nodes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_nodes_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_nodes_bool_exp
+  ): game_server_nodes_aggregate!
+  is_lan: Boolean!
+
+  """
+  A computed field, executes function "region_status"
+  """
+  status: String
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+  value: String!
+}
+
+"""
+aggregated selection of "server_regions"
+"""
+type server_regions_aggregate {
+  aggregate: server_regions_aggregate_fields
+  nodes: [server_regions!]!
+}
+
+"""
+aggregate fields of "server_regions"
+"""
+type server_regions_aggregate_fields {
+  avg: server_regions_avg_fields
+  count(columns: [server_regions_select_column!], distinct: Boolean): Int!
+  max: server_regions_max_fields
+  min: server_regions_min_fields
+  stddev: server_regions_stddev_fields
+  stddev_pop: server_regions_stddev_pop_fields
+  stddev_samp: server_regions_stddev_samp_fields
+  sum: server_regions_sum_fields
+  var_pop: server_regions_var_pop_fields
+  var_samp: server_regions_var_samp_fields
+  variance: server_regions_variance_fields
+}
+
+"""aggregate avg on columns"""
+type server_regions_avg_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""
+Boolean expression to filter rows from the table "server_regions". All fields are combined with a logical 'AND'.
+"""
+input server_regions_bool_exp {
+  _and: [server_regions_bool_exp!]
+  _not: server_regions_bool_exp
+  _or: [server_regions_bool_exp!]
+  available_server_count: Int_comparison_exp
+  description: String_comparison_exp
+  game_server_nodes: game_server_nodes_bool_exp
+  game_server_nodes_aggregate: game_server_nodes_aggregate_bool_exp
+  is_lan: Boolean_comparison_exp
+  status: String_comparison_exp
+  total_server_count: Int_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "server_regions"
+"""
+enum server_regions_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_server_regions_pkey
+}
+
+"""
+input type for inserting data into table "server_regions"
+"""
+input server_regions_insert_input {
+  description: String
+  game_server_nodes: game_server_nodes_arr_rel_insert_input
+  is_lan: Boolean
+  value: String
+}
+
+"""aggregate max on columns"""
+type server_regions_max_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+  description: String
+
+  """
+  A computed field, executes function "region_status"
+  """
+  status: String
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+  value: String
+}
+
+"""aggregate min on columns"""
+type server_regions_min_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+  description: String
+
+  """
+  A computed field, executes function "region_status"
+  """
+  status: String
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+  value: String
+}
+
+"""
+response of any mutation on the table "server_regions"
+"""
+type server_regions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [server_regions!]!
+}
+
+"""
+input type for inserting object relation for remote table "server_regions"
+"""
+input server_regions_obj_rel_insert_input {
+  data: server_regions_insert_input!
+
+  """upsert condition"""
+  on_conflict: server_regions_on_conflict
+}
+
+"""
+on_conflict condition type for table "server_regions"
+"""
+input server_regions_on_conflict {
+  constraint: server_regions_constraint!
+  update_columns: [server_regions_update_column!]! = []
+  where: server_regions_bool_exp
+}
+
+"""Ordering options when selecting data from "server_regions"."""
+input server_regions_order_by {
+  available_server_count: order_by
+  description: order_by
+  game_server_nodes_aggregate: game_server_nodes_aggregate_order_by
+  is_lan: order_by
+  status: order_by
+  total_server_count: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: server_regions"""
+input server_regions_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "server_regions"
+"""
+enum server_regions_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  is_lan
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "server_regions"
+"""
+input server_regions_set_input {
+  description: String
+  is_lan: Boolean
+  value: String
+}
+
+"""aggregate stddev on columns"""
+type server_regions_stddev_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""aggregate stddev_pop on columns"""
+type server_regions_stddev_pop_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""aggregate stddev_samp on columns"""
+type server_regions_stddev_samp_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""
+Streaming cursor of the table "server_regions"
+"""
+input server_regions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: server_regions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input server_regions_stream_cursor_value_input {
+  description: String
+  is_lan: Boolean
+  value: String
+}
+
+"""aggregate sum on columns"""
+type server_regions_sum_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""
+update columns of table "server_regions"
+"""
+enum server_regions_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  is_lan
+
+  """column name"""
+  value
+}
+
+input server_regions_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: server_regions_set_input
+
+  """filter the rows which have to be updated"""
+  where: server_regions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type server_regions_var_pop_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""aggregate var_samp on columns"""
+type server_regions_var_samp_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""aggregate variance on columns"""
+type server_regions_variance_fields {
+  """
+  A computed field, executes function "available_region_server_count"
+  """
+  available_server_count: Int
+
+  """
+  A computed field, executes function "total_region_server_count"
+  """
+  total_server_count: Int
+}
+
+"""
 columns and relationships of "servers"
 """
 type servers {
@@ -24598,6 +24613,7 @@ type servers {
   A computed field, executes function "is_dedicated_server"
   """
   is_dedicated: Boolean
+  is_lan: Boolean!
   label: String!
 
   """An array relationship"""
@@ -24751,6 +24767,7 @@ input servers_bool_exp {
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
+  is_lan: Boolean_comparison_exp
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
@@ -24796,6 +24813,7 @@ input servers_insert_input {
   game_server_node_id: String
   host: String
   id: uuid
+  is_lan: Boolean
   label: String
   matches: matches_arr_rel_insert_input
   port: Int
@@ -24902,6 +24920,7 @@ input servers_order_by {
   host: order_by
   id: order_by
   is_dedicated: order_by
+  is_lan: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
   port: order_by
@@ -24939,6 +24958,9 @@ enum servers_select_column {
   id
 
   """column name"""
+  is_lan
+
+  """column name"""
   label
 
   """column name"""
@@ -24966,6 +24988,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
 
   """column name"""
   enabled
+
+  """column name"""
+  is_lan
 }
 
 """
@@ -24977,6 +25002,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
 
   """column name"""
   enabled
+
+  """column name"""
+  is_lan
 }
 
 """
@@ -24989,6 +25017,7 @@ input servers_set_input {
   game_server_node_id: String
   host: String
   id: uuid
+  is_lan: Boolean
   label: String
   port: Int
   rcon_password: bytea
@@ -25058,6 +25087,7 @@ input servers_stream_cursor_value_input {
   game_server_node_id: String
   host: String
   id: uuid
+  is_lan: Boolean
   label: String
   port: Int
   rcon_password: bytea
@@ -25101,6 +25131,9 @@ enum servers_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  is_lan
 
   """column name"""
   label
@@ -26020,65 +26053,6 @@ type subscription_root {
     """filter the rows returned"""
     where: e_sanction_types_bool_exp
   ): [e_sanction_types!]!
-
-  """
-  fetch data from the table: "e_server_regions"
-  """
-  e_server_regions(
-    """distinct select on columns"""
-    distinct_on: [e_server_regions_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [e_server_regions_order_by!]
-
-    """filter the rows returned"""
-    where: e_server_regions_bool_exp
-  ): [e_server_regions!]!
-
-  """
-  fetch aggregated fields from the table: "e_server_regions"
-  """
-  e_server_regions_aggregate(
-    """distinct select on columns"""
-    distinct_on: [e_server_regions_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [e_server_regions_order_by!]
-
-    """filter the rows returned"""
-    where: e_server_regions_bool_exp
-  ): e_server_regions_aggregate!
-
-  """
-  fetch data from the table: "e_server_regions" using primary key columns
-  """
-  e_server_regions_by_pk(value: String!): e_server_regions
-
-  """
-  fetch data from the table in a streaming manner: "e_server_regions"
-  """
-  e_server_regions_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [e_server_regions_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: e_server_regions_bool_exp
-  ): [e_server_regions!]!
 
   """
   fetch data from the table: "e_sides"
@@ -27767,6 +27741,63 @@ type subscription_root {
     """filter the rows returned"""
     where: players_bool_exp
   ): [players!]!
+
+  """
+  fetch data from the table: "server_regions"
+  """
+  server_regions(
+    """distinct select on columns"""
+    distinct_on: [server_regions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_regions_order_by!]
+
+    """filter the rows returned"""
+    where: server_regions_bool_exp
+  ): [server_regions!]!
+
+  """
+  fetch aggregated fields from the table: "server_regions"
+  """
+  server_regions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [server_regions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [server_regions_order_by!]
+
+    """filter the rows returned"""
+    where: server_regions_bool_exp
+  ): server_regions_aggregate!
+
+  """fetch data from the table: "server_regions" using primary key columns"""
+  server_regions_by_pk(value: String!): server_regions
+
+  """
+  fetch data from the table in a streaming manner: "server_regions"
+  """
+  server_regions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [server_regions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: server_regions_bool_exp
+  ): [server_regions!]!
 
   """An array relationship"""
   servers(

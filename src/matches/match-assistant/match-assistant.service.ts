@@ -10,12 +10,10 @@ import { MatchJobs } from "../enums/MatchJobs";
 import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import {
-  e_server_regions_enum,
   e_map_pool_types_enum,
   e_match_status_enum,
   e_match_types_enum,
   e_timeout_settings_enum,
-  ise_objective_types_mutation_response,
 } from "../../../generated";
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
@@ -940,7 +938,7 @@ export class MatchAssistantService {
       map?: string;
       overtime: boolean;
       timeout_setting?: e_timeout_settings_enum;
-      region?: e_server_regions_enum;
+      region?: string;
       maps?: Array<string>;
     },
   ) {
