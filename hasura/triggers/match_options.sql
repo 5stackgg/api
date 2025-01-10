@@ -24,6 +24,10 @@ BEGIN
         NEW.region_veto = false;
     END IF;
 
+    IF NEW.region_veto = false AND (NEW.regions IS NULL OR NEW.regions = '{}') THEN
+        RAISE EXCEPTION 'Region veto is disabled but no regions are selected' USING ERRCODE = '22000';
+    END IF;
+
     IF NEW.regions IS NOT NULL THEN
         SELECT count(*) INTO lan_count 
         FROM server_regions 
