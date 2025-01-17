@@ -1,0 +1,83 @@
+table:
+  name: lobby_players
+  schema: public
+object_relationships:
+  - name: lobby
+    using:
+      foreign_key_constraint_on: lobby_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        lobby:
+          players:
+            _and:
+              - status:
+                  _eq: Accepted
+              - steam_id:
+                  _eq: X-Hasura-User-Id
+      set:
+        invited_by_steam_id: x-hasura-user-id
+      columns:
+        - lobby_id
+        - steam_id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - captain
+        - invited_by_steam_id
+        - lobby_id
+        - status
+        - steam_id
+      filter:
+        _or:
+          - _and:
+              - lobby:
+                  _or:
+                    - players:
+                        steam_id:
+                          _eq: X-Hasura-User-Id
+                    - access:
+                        _eq: Open
+              - status:
+                  _neq: Invited
+          - invited_by_steam_id:
+              _eq: X-Hasura-User-Id
+            lobby:
+              _or:
+                - players:
+                    steam_id:
+                      _eq: X-Hasura-User-Id
+                - access:
+                    _eq: Open
+            status:
+              _eq: Invited
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - status
+      filter:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - status:
+              _eq: Invited
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - invited_by_steam_id:
+              _eq: X-Hasura-User-Id
+    comment: ""

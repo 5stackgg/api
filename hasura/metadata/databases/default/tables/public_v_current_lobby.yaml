@@ -1,0 +1,32 @@
+table:
+  name: v_current_lobby
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+      filter:
+        _or:
+          - access:
+              _eq: Open
+          - _and:
+              - access:
+                  _eq: Friends
+              - player:
+                  friends:
+                    friend_steam_id:
+                      _eq: X-Hasura-User-Id
+              - steam_id:
+                  _eq: X-Hasura-User-Id
+    comment: ""

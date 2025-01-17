@@ -13,7 +13,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { MatchMakingGateway } from "../match-making/match-making.gateway";
+import { MatchmakingGateway } from "../matchmaking/matchmaking.gateway";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 
 @WebSocketGateway({
@@ -55,7 +55,7 @@ export class SocketsGateway {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly matchMaking: MatchMakingGateway,
+    private readonly matchMaking: MatchmakingGateway,
     private readonly redisManager: RedisManagerService,
   ) {
     this.redis = this.redisManager.getConnection();

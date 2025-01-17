@@ -1,0 +1,64 @@
+table:
+  name: v_my_friends
+  schema: public
+configuration:
+  column_config: {}
+  custom_column_names: {}
+  custom_name: my_friends
+  custom_root_fields: {}
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - steam_id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - created_at
+        - discord_id
+        - invited_by_steam_id
+        - name
+        - name_registered
+        - profile_url
+        - role
+        - status
+        - steam_id
+      filter:
+        friend_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - status
+      filter:
+        _and:
+          - friend_steam_id:
+              _eq: X-Hasura-User-Id
+          - status:
+              _eq: Pending
+      check:
+        _and:
+          - friend_steam_id:
+              _eq: X-Hasura-User-Id
+          - status:
+              _eq: Pending
+      set:
+        friend_steam_id: x-hasura-user-id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        _or:
+          - friend_steam_id:
+              _eq: X-Hasura-User-Id
+          - steam_id:
+              _eq: X-Hasura-User-Id
+    comment: ""

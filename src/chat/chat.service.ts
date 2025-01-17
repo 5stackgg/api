@@ -57,6 +57,7 @@ export class ChatService {
         if (!matches_by_pk) {
           return;
         }
+
         if (
           matches_by_pk.is_coach === false &&
           matches_by_pk.is_in_lineup === false &&
@@ -65,22 +66,22 @@ export class ChatService {
           return;
         }
 
-        const userData = this.addUserToMatch(id, client.user, false);
-
-        if (userData.sessions.length === 0) {
-          this.to(ChatLobbyType.Match, id, "joined", {
-            user: {
-              ...userData.user,
-              inGame: userData.inGame,
+        break;
+      case ChatLobbyType.MatchMaking:
+        const { lobby_players_by_pk } = await this.hasuraService.query({
+          lobby_players_by_pk: {
+            __args: {
+              lobby_id: id,
+              steam_id: client.user.steam_id,
             },
-          });
-        }
+            status: true,
+          },
+        });
 
-        if (userData.sessions.includes(client)) {
+        if (lobby_players_by_pk?.status !== "Accepted") {
           return;
         }
 
-        userData.sessions.push(client);
         break;
       default:
         console.warn(`Unknown lobby type: ${type}`);
@@ -88,11 +89,27 @@ export class ChatService {
         break;
     }
 
+    const userData = this.addUserToLobby(id, client.user, false);
+
+    if (userData.sessions.length === 0) {
+      this.to(ChatLobbyType.Match, id, "joined", {
+        user: {
+          ...userData.user,
+          inGame: userData.inGame,
+        },
+      });
+    }
+
+    if (userData.sessions.includes(client)) {
+      return;
+    }
+
+    userData.sessions.push(client);
+
     client.send(
       JSON.stringify({
-        event: `lobby:${type}:list`,
+        event: `lobby:${type}:${id}:list`,
         data: {
-          id,
           lobby: Array.from(this.lobbies[id].values()).map(
             ({ user, inGame }) => {
               return {
@@ -113,7 +130,7 @@ export class ChatService {
 
     client.send(
       JSON.stringify({
-        event: `lobby:${type}:messages`,
+        event: `lobby:${type}:${id}:messages`,
         data: {
           id,
           messages: messages.sort((a, b) => {
@@ -196,9 +213,8 @@ export class ChatService {
 
         session.send(
           JSON.stringify({
-            event: `lobby:${type}:${event}`,
+            event: `lobby:${type}:${id}:${event}`,
             data: {
-              id,
               ...data,
             },
           }),
@@ -294,7 +310,7 @@ export class ChatService {
       },
     });
 
-    const userData = this.addUserToMatch(matchId, player, true);
+    const userData = this.addUserToLobby(matchId, player, true);
 
     this.to(ChatLobbyType.Match, matchId, "joined", {
       user: {
@@ -330,7 +346,7 @@ export class ChatService {
     });
   }
 
-  private addUserToMatch(matchId: string, user: User, game: boolean) {
+  private addUserToLobby(matchId: string, user: User, game: boolean) {
     if (!this.lobbies[matchId]) {
       this.lobbies[matchId] = new Map();
     }

@@ -1,0 +1,47 @@
+table:
+  name: lobbies
+  schema: public
+object_relationships:
+  - name: e_lobby_access
+    using:
+      foreign_key_constraint_on: access
+array_relationships:
+  - name: players
+    using:
+      foreign_key_constraint_on:
+        column: lobby_id
+        table:
+          name: lobby_players
+          schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        access: Invite
+      columns:
+        - access
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - access
+        - created_at
+        - id
+      filter:
+        _or:
+          - access:
+              _eq: Open
+          - _and:
+              - access:
+                  _eq: Friends
+              - players:
+                  player:
+                    friends:
+                      friend_steam_id:
+                        _eq: X-Hasura-User-Id
+          - players:
+              steam_id:
+                _eq: X-Hasura-User-Id
+    comment: ""

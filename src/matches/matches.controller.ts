@@ -16,7 +16,7 @@ import {
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
-import { MatchMakingGateway } from "src/match-making/match-making.gateway";
+import { MatchmakingGateway } from "src/matchmaking/matchmaking.gateway";
 import { PostgresService } from "src/postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
@@ -29,7 +29,7 @@ export class MatchesController {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
-    private readonly matchMaking: MatchMakingGateway,
+    private readonly matchmaking: MatchmakingGateway,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,
@@ -202,7 +202,7 @@ export class MatchesController {
       status === "Finished"
     ) {
       await this.removeDiscordIntegration(matchId);
-      await this.matchMaking.cancelMatchMakingByMatchId(matchId);
+      await this.matchmaking.cancelMatchMakingByMatchId(matchId);
 
       const serverId = data.new.server_id;
 

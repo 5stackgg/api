@@ -65,6 +65,15 @@ array_relationships:
         table:
           name: player_flashes
           schema: public
+  - name: friends
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: friend_steam_id
+        insertion_order: null
+        remote_table:
+          name: v_my_friends
+          schema: public
   - name: invited_players
     using:
       foreign_key_constraint_on:
@@ -166,6 +175,12 @@ array_relationships:
           name: player_utility
           schema: public
 computed_fields:
+  - name: current_lobby_id
+    definition:
+      function:
+        name: get_player_current_lobby_id
+        schema: public
+      session_argument: hasura_session
   - name: is_banned
     definition:
       function:
@@ -219,6 +234,7 @@ select_permissions:
         - role
         - steam_id
       computed_fields:
+        - current_lobby_id
         - is_banned
         - is_gagged
         - is_in_another_match
