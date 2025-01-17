@@ -1,3 +1,21 @@
+CREATE OR REPLACE FUNCTION public.taiu_lobby_players()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'Accepted' THEN
+        DELETE FROM lobby_players WHERE lobby_id != NEW.lobby_id and steam_id = NEW.steam_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS taiu_lobby_players ON public.lobby_players;
+CREATE TRIGGER taiu_lobby_players
+    AFTER INSERT OR UPDATE ON lobby_players
+    FOR EACH ROW
+    EXECUTE FUNCTION public.taiu_lobby_players();
+
+
 CREATE OR REPLACE FUNCTION public.tad_lobby_players()
 RETURNS TRIGGER AS $$
 DECLARE

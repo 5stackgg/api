@@ -57,6 +57,11 @@ select_permissions:
                     _eq: Open
             status:
               _eq: Invited
+          - _and:
+              - steam_id:
+                  _eq: X-Hasura-User-Id
+              - status:
+                  _eq: Invited
     comment: ""
 update_permissions:
   - role: user

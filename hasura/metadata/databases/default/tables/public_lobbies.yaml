@@ -45,3 +45,17 @@ select_permissions:
               steam_id:
                 _eq: X-Hasura-User-Id
     comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - access
+      filter: {}
+      check:
+        players:
+          _and:
+            - captain:
+                _eq: true
+            - steam_id:
+                _eq: X-Hasura-User-Id
+    comment: ""
