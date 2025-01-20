@@ -1028,13 +1028,13 @@ export class MatchAssistantService {
       },
       {
         delay: 30 * 1000,
-        jobId: `match-making:cancel:${confirmationId}`,
+        jobId: `matchmaking:cancel:${confirmationId}`,
       },
     );
   }
 
   public async removeCancelMatchMakingDueToReadyCheck(confirmationId: string) {
-    await this.queue.remove(`match-making:cancel:${confirmationId}`);
+    await this.queue.remove(`matchmaking:cancel:${confirmationId}`);
   }
 
   public async getNextPhase(matchId: string) {

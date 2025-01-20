@@ -37,7 +37,7 @@ import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
-import { MatchMakingModule } from "src/match-making/match-making.module";
+import { MatchMaking } from "src/matchmaking/matchmaking.module";
 import { MatchEventsGateway } from "./match-events.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { NotificationsModule } from "../notifications/notifications.module";
@@ -55,7 +55,7 @@ import { ChatModule } from "src/chat/chat.module";
     PostgresModule,
     NotificationsModule,
     forwardRef(() => DiscordBotModule),
-    MatchMakingModule,
+    MatchMaking,
     ChatModule,
     BullModule.registerQueue(
       {

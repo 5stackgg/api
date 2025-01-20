@@ -52,8 +52,11 @@ DECLARE
     _map_id UUID;
     _map_pool_id UUID;
     _best_of int;
+    _max_players_per_lineup int;
     available_regions text[];
     map_pool_count int;
+    _lobby_id UUID;
+    lobby_players bigint[];
 BEGIN
     SELECT map_pool_id, best_of INTO _map_pool_id, _best_of FROM match_options WHERE id = NEW.match_options_id;
 
@@ -74,10 +77,42 @@ BEGIN
             VALUES (NEW.id, _map_id, 1, 'CT', 'TERRORIST');
     END IF;
 
+   IF NOT is_tournament_match(NEW) THEN
+        SELECT l.id INTO _lobby_id
+            FROM lobbies l
+            INNER JOIN lobby_players lp ON lp.lobby_id = l.id
+            WHERE
+            lp.steam_id = (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint
+            AND lp.status = 'Accepted';  
 
-   IF NOT is_tournament_match(NEW) THEN 
-        IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' THEN
-            INSERT INTO match_lineup_players(match_lineup_id, steam_id) 
+        IF (_lobby_id IS NOT NULL) THEN
+            SELECT array_agg(lp.steam_id) INTO lobby_players 
+                FROM lobby_players lp
+                WHERE lp.lobby_id = _lobby_id
+                AND lp.status = 'Accepted';
+
+            SELECT match_max_players_per_lineup(NEW) INTO _max_players_per_lineup;
+
+            IF array_length(lobby_players, 1) > _max_players_per_lineup * 2 THEN
+                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Too many players in lobby - maximum ' || (_max_players_per_lineup * 2) || ' players allowed';
+            END IF;
+
+            WITH numbered_players AS (
+                SELECT steam_id, row_number() OVER () as rn, 
+                       count(*) OVER () as total
+                FROM unnest(lobby_players) as steam_id
+            )
+            INSERT INTO match_lineup_players(match_lineup_id, steam_id)
+            SELECT 
+                CASE 
+                    WHEN rn <= (total + 1) / 2 THEN NEW.lineup_1_id 
+                    ELSE NEW.lineup_2_id
+                END,
+                steam_id
+            FROM numbered_players;
+
+        ELSIF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' THEN
+            INSERT INTO match_lineup_players(match_lineup_id, steam_id)
             VALUES (NEW.lineup_1_id, (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint);
         END IF;
    END IF;

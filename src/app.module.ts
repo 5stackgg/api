@@ -26,10 +26,11 @@ import { loggerFactory } from "./utilities/LoggerFactory";
 import { SocketsModule } from "./sockets/sockets.module";
 import { TailscaleModule } from "./tailscale/tailscale.module";
 import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
-import { MatchMakingModule } from "./match-making/match-making.module";
+import { MatchMaking } from "./matchmaking/matchmaking.module";
 import { SystemModule } from "./system/system.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { ChatModule } from "./chat/chat.module";
+import { FriendsModule } from "./friends/friends.module";
 
 @Module({
   imports: [
@@ -40,7 +41,7 @@ import { ChatModule } from "./chat/chat.module";
     SocketsModule,
     TypeSenseModule,
     MatchesModule,
-    MatchMakingModule,
+    MatchMaking,
     TeamsModule,
     EncryptionModule,
     CacheModule,
@@ -79,6 +80,7 @@ import { ChatModule } from "./chat/chat.module";
     SystemModule,
     NotificationsModule,
     ChatModule,
+    FriendsModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

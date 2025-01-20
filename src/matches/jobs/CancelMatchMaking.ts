@@ -2,11 +2,11 @@ import { Job } from "bullmq";
 import { WorkerHost } from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
-import { MatchMakingGateway } from "src/match-making/match-making.gateway";
+import { MatchmakingGateway } from "src/matchmaking/matchmaking.gateway";
 
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CancelMatchMaking extends WorkerHost {
-  constructor(private readonly matchMakingGateway: MatchMakingGateway) {
+  constructor(private readonly matchmakingGateway: MatchmakingGateway) {
     super();
   }
 
@@ -16,6 +16,6 @@ export class CancelMatchMaking extends WorkerHost {
     }>,
   ): Promise<void> {
     const { confirmationId } = job.data;
-    this.matchMakingGateway.cancelMatchMaking(confirmationId, true);
+    this.matchmakingGateway.cancelMatchMaking(confirmationId, true);
   }
 }

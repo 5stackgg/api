@@ -13,8 +13,9 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { MatchMakingGateway } from "../match-making/match-making.gateway";
+import { MatchmakingGateway } from "../matchmaking/matchmaking.gateway";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
+import { HasuraService } from "src/hasura/hasura.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -55,7 +56,8 @@ export class SocketsGateway {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly matchMaking: MatchMakingGateway,
+    private readonly hasura: HasuraService,
+    private readonly matchMaking: MatchmakingGateway,
     private readonly redisManager: RedisManagerService,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -152,12 +154,30 @@ export class SocketsGateway {
           );
 
           if (clients.length === 0) {
-            this.matchMaking.leaveQueue(client);
+            // GIVE THEM A DELAY
+            // this.matchMaking.leaveQueue(client);
 
             await this.redis.del(
               SocketsGateway.GET_PLAYER_KEY(client.user.steam_id),
             );
+
             await this.sendPeopleOnline();
+
+            // await this.hasura.mutation({
+            //   delete_lobby_players: {
+            //     __args: {
+            //       where: {
+            //         steam_id: {
+            //           _eq: client.user.steam_id,
+            //         },
+            //         status: {
+            //           _eq: "Accepted",
+            //         },
+            //       },
+            //     },
+            //     __typename: true,
+            //   },
+            // });
           }
         });
       });

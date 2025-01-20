@@ -694,6 +694,187 @@ enum cursor_ordering {
 }
 
 """
+columns and relationships of "e_friend_status"
+"""
+type e_friend_status {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_friend_status"
+"""
+type e_friend_status_aggregate {
+  aggregate: e_friend_status_aggregate_fields
+  nodes: [e_friend_status!]!
+}
+
+"""
+aggregate fields of "e_friend_status"
+"""
+type e_friend_status_aggregate_fields {
+  count(columns: [e_friend_status_select_column!], distinct: Boolean): Int!
+  max: e_friend_status_max_fields
+  min: e_friend_status_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_friend_status". All fields are combined with a logical 'AND'.
+"""
+input e_friend_status_bool_exp {
+  _and: [e_friend_status_bool_exp!]
+  _not: e_friend_status_bool_exp
+  _or: [e_friend_status_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_friend_status"
+"""
+enum e_friend_status_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_friend_status_pkey
+}
+
+enum e_friend_status_enum {
+  """Accepted"""
+  Accepted
+
+  """Pending"""
+  Pending
+}
+
+"""
+Boolean expression to compare columns of type "e_friend_status_enum". All fields are combined with logical 'AND'.
+"""
+input e_friend_status_enum_comparison_exp {
+  _eq: e_friend_status_enum
+  _in: [e_friend_status_enum!]
+  _is_null: Boolean
+  _neq: e_friend_status_enum
+  _nin: [e_friend_status_enum!]
+}
+
+"""
+input type for inserting data into table "e_friend_status"
+"""
+input e_friend_status_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_friend_status_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_friend_status_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_friend_status"
+"""
+type e_friend_status_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_friend_status!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_friend_status"
+"""
+input e_friend_status_obj_rel_insert_input {
+  data: e_friend_status_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_friend_status_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_friend_status"
+"""
+input e_friend_status_on_conflict {
+  constraint: e_friend_status_constraint!
+  update_columns: [e_friend_status_update_column!]! = []
+  where: e_friend_status_bool_exp
+}
+
+"""Ordering options when selecting data from "e_friend_status"."""
+input e_friend_status_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_friend_status"""
+input e_friend_status_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_friend_status"
+"""
+enum e_friend_status_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_friend_status"
+"""
+input e_friend_status_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_friend_status"
+"""
+input e_friend_status_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_friend_status_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_friend_status_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_friend_status"
+"""
+enum e_friend_status_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_friend_status_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_friend_status_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_friend_status_bool_exp!
+}
+
+"""
 columns and relationships of "e_game_server_node_statuses"
 """
 type e_game_server_node_statuses {
@@ -929,10 +1110,13 @@ enum e_lobby_access_constraint {
 }
 
 enum e_lobby_access_enum {
+  """Friends Only"""
+  Friends
+
   """Invite Only"""
   Invite
 
-  """Open"""
+  """Public"""
   Open
 
   """Private"""
@@ -979,6 +1163,16 @@ type e_lobby_access_mutation_response {
 
   """data from the rows affected by the mutation"""
   returning: [e_lobby_access!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_lobby_access"
+"""
+input e_lobby_access_obj_rel_insert_input {
+  data: e_lobby_access_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_lobby_access_on_conflict
 }
 
 """
@@ -4284,6 +4478,243 @@ input e_veto_pick_types_updates {
 }
 
 """
+columns and relationships of "friends"
+"""
+type friends {
+  """An object relationship"""
+  e_status: e_friend_status!
+  other_player_steam_id: bigint!
+  player_steam_id: bigint!
+  status: e_friend_status_enum!
+}
+
+"""
+aggregated selection of "friends"
+"""
+type friends_aggregate {
+  aggregate: friends_aggregate_fields
+  nodes: [friends!]!
+}
+
+"""
+aggregate fields of "friends"
+"""
+type friends_aggregate_fields {
+  avg: friends_avg_fields
+  count(columns: [friends_select_column!], distinct: Boolean): Int!
+  max: friends_max_fields
+  min: friends_min_fields
+  stddev: friends_stddev_fields
+  stddev_pop: friends_stddev_pop_fields
+  stddev_samp: friends_stddev_samp_fields
+  sum: friends_sum_fields
+  var_pop: friends_var_pop_fields
+  var_samp: friends_var_samp_fields
+  variance: friends_variance_fields
+}
+
+"""aggregate avg on columns"""
+type friends_avg_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "friends". All fields are combined with a logical 'AND'.
+"""
+input friends_bool_exp {
+  _and: [friends_bool_exp!]
+  _not: friends_bool_exp
+  _or: [friends_bool_exp!]
+  e_status: e_friend_status_bool_exp
+  other_player_steam_id: bigint_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  status: e_friend_status_enum_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "friends"
+"""
+enum friends_constraint {
+  """
+  unique or primary key constraint on columns "player_steam_id", "other_player_steam_id"
+  """
+  friends_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "friends"
+"""
+input friends_inc_input {
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "friends"
+"""
+input friends_insert_input {
+  e_status: e_friend_status_obj_rel_insert_input
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+  status: e_friend_status_enum
+}
+
+"""aggregate max on columns"""
+type friends_max_fields {
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type friends_min_fields {
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+}
+
+"""
+response of any mutation on the table "friends"
+"""
+type friends_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [friends!]!
+}
+
+"""
+on_conflict condition type for table "friends"
+"""
+input friends_on_conflict {
+  constraint: friends_constraint!
+  update_columns: [friends_update_column!]! = []
+  where: friends_bool_exp
+}
+
+"""Ordering options when selecting data from "friends"."""
+input friends_order_by {
+  e_status: e_friend_status_order_by
+  other_player_steam_id: order_by
+  player_steam_id: order_by
+  status: order_by
+}
+
+"""primary key columns input for table: friends"""
+input friends_pk_columns_input {
+  other_player_steam_id: bigint!
+  player_steam_id: bigint!
+}
+
+"""
+select columns of table "friends"
+"""
+enum friends_select_column {
+  """column name"""
+  other_player_steam_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  status
+}
+
+"""
+input type for updating data in table "friends"
+"""
+input friends_set_input {
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+  status: e_friend_status_enum
+}
+
+"""aggregate stddev on columns"""
+type friends_stddev_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type friends_stddev_pop_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type friends_stddev_samp_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "friends"
+"""
+input friends_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: friends_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input friends_stream_cursor_value_input {
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+  status: e_friend_status_enum
+}
+
+"""aggregate sum on columns"""
+type friends_sum_fields {
+  other_player_steam_id: bigint
+  player_steam_id: bigint
+}
+
+"""
+update columns of table "friends"
+"""
+enum friends_update_column {
+  """column name"""
+  other_player_steam_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  status
+}
+
+input friends_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: friends_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: friends_set_input
+
+  """filter the rows which have to be updated"""
+  where: friends_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type friends_var_pop_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type friends_var_samp_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type friends_variance_fields {
+  other_player_steam_id: Float
+  player_steam_id: Float
+}
+
+"""
 columns and relationships of "game_server_nodes"
 """
 type game_server_nodes {
@@ -5027,6 +5458,652 @@ input jsonb_comparison_exp {
   _lte: jsonb
   _neq: jsonb
   _nin: [jsonb!]
+}
+
+"""
+columns and relationships of "lobbies"
+"""
+type lobbies {
+  access: e_lobby_access_enum!
+  created_at: timestamptz!
+
+  """An object relationship"""
+  e_lobby_access: e_lobby_access!
+  id: uuid!
+
+  """An array relationship"""
+  players(
+    """distinct select on columns"""
+    distinct_on: [lobby_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobby_players_order_by!]
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): [lobby_players!]!
+
+  """An aggregate relationship"""
+  players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [lobby_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobby_players_order_by!]
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): lobby_players_aggregate!
+}
+
+"""
+aggregated selection of "lobbies"
+"""
+type lobbies_aggregate {
+  aggregate: lobbies_aggregate_fields
+  nodes: [lobbies!]!
+}
+
+"""
+aggregate fields of "lobbies"
+"""
+type lobbies_aggregate_fields {
+  count(columns: [lobbies_select_column!], distinct: Boolean): Int!
+  max: lobbies_max_fields
+  min: lobbies_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "lobbies". All fields are combined with a logical 'AND'.
+"""
+input lobbies_bool_exp {
+  _and: [lobbies_bool_exp!]
+  _not: lobbies_bool_exp
+  _or: [lobbies_bool_exp!]
+  access: e_lobby_access_enum_comparison_exp
+  created_at: timestamptz_comparison_exp
+  e_lobby_access: e_lobby_access_bool_exp
+  id: uuid_comparison_exp
+  players: lobby_players_bool_exp
+  players_aggregate: lobby_players_aggregate_bool_exp
+}
+
+"""
+unique or primary key constraints on table "lobbies"
+"""
+enum lobbies_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  lobbies_pkey
+}
+
+"""
+input type for inserting data into table "lobbies"
+"""
+input lobbies_insert_input {
+  access: e_lobby_access_enum
+  created_at: timestamptz
+  e_lobby_access: e_lobby_access_obj_rel_insert_input
+  id: uuid
+  players: lobby_players_arr_rel_insert_input
+}
+
+"""aggregate max on columns"""
+type lobbies_max_fields {
+  created_at: timestamptz
+  id: uuid
+}
+
+"""aggregate min on columns"""
+type lobbies_min_fields {
+  created_at: timestamptz
+  id: uuid
+}
+
+"""
+response of any mutation on the table "lobbies"
+"""
+type lobbies_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [lobbies!]!
+}
+
+"""
+input type for inserting object relation for remote table "lobbies"
+"""
+input lobbies_obj_rel_insert_input {
+  data: lobbies_insert_input!
+
+  """upsert condition"""
+  on_conflict: lobbies_on_conflict
+}
+
+"""
+on_conflict condition type for table "lobbies"
+"""
+input lobbies_on_conflict {
+  constraint: lobbies_constraint!
+  update_columns: [lobbies_update_column!]! = []
+  where: lobbies_bool_exp
+}
+
+"""Ordering options when selecting data from "lobbies"."""
+input lobbies_order_by {
+  access: order_by
+  created_at: order_by
+  e_lobby_access: e_lobby_access_order_by
+  id: order_by
+  players_aggregate: lobby_players_aggregate_order_by
+}
+
+"""primary key columns input for table: lobbies"""
+input lobbies_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "lobbies"
+"""
+enum lobbies_select_column {
+  """column name"""
+  access
+
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+}
+
+"""
+input type for updating data in table "lobbies"
+"""
+input lobbies_set_input {
+  access: e_lobby_access_enum
+  created_at: timestamptz
+  id: uuid
+}
+
+"""
+Streaming cursor of the table "lobbies"
+"""
+input lobbies_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: lobbies_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input lobbies_stream_cursor_value_input {
+  access: e_lobby_access_enum
+  created_at: timestamptz
+  id: uuid
+}
+
+"""
+update columns of table "lobbies"
+"""
+enum lobbies_update_column {
+  """column name"""
+  access
+
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+}
+
+input lobbies_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: lobbies_set_input
+
+  """filter the rows which have to be updated"""
+  where: lobbies_bool_exp!
+}
+
+"""
+columns and relationships of "lobby_players"
+"""
+type lobby_players {
+  captain: Boolean!
+  invited_by_steam_id: bigint
+
+  """An object relationship"""
+  lobby: lobbies!
+  lobby_id: uuid!
+
+  """An object relationship"""
+  player: players!
+  status: String
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "lobby_players"
+"""
+type lobby_players_aggregate {
+  aggregate: lobby_players_aggregate_fields
+  nodes: [lobby_players!]!
+}
+
+input lobby_players_aggregate_bool_exp {
+  bool_and: lobby_players_aggregate_bool_exp_bool_and
+  bool_or: lobby_players_aggregate_bool_exp_bool_or
+  count: lobby_players_aggregate_bool_exp_count
+}
+
+input lobby_players_aggregate_bool_exp_bool_and {
+  arguments: lobby_players_select_column_lobby_players_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: lobby_players_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input lobby_players_aggregate_bool_exp_bool_or {
+  arguments: lobby_players_select_column_lobby_players_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: lobby_players_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input lobby_players_aggregate_bool_exp_count {
+  arguments: [lobby_players_select_column!]
+  distinct: Boolean
+  filter: lobby_players_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "lobby_players"
+"""
+type lobby_players_aggregate_fields {
+  avg: lobby_players_avg_fields
+  count(columns: [lobby_players_select_column!], distinct: Boolean): Int!
+  max: lobby_players_max_fields
+  min: lobby_players_min_fields
+  stddev: lobby_players_stddev_fields
+  stddev_pop: lobby_players_stddev_pop_fields
+  stddev_samp: lobby_players_stddev_samp_fields
+  sum: lobby_players_sum_fields
+  var_pop: lobby_players_var_pop_fields
+  var_samp: lobby_players_var_samp_fields
+  variance: lobby_players_variance_fields
+}
+
+"""
+order by aggregate values of table "lobby_players"
+"""
+input lobby_players_aggregate_order_by {
+  avg: lobby_players_avg_order_by
+  count: order_by
+  max: lobby_players_max_order_by
+  min: lobby_players_min_order_by
+  stddev: lobby_players_stddev_order_by
+  stddev_pop: lobby_players_stddev_pop_order_by
+  stddev_samp: lobby_players_stddev_samp_order_by
+  sum: lobby_players_sum_order_by
+  var_pop: lobby_players_var_pop_order_by
+  var_samp: lobby_players_var_samp_order_by
+  variance: lobby_players_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "lobby_players"
+"""
+input lobby_players_arr_rel_insert_input {
+  data: [lobby_players_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: lobby_players_on_conflict
+}
+
+"""aggregate avg on columns"""
+type lobby_players_avg_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "lobby_players"
+"""
+input lobby_players_avg_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "lobby_players". All fields are combined with a logical 'AND'.
+"""
+input lobby_players_bool_exp {
+  _and: [lobby_players_bool_exp!]
+  _not: lobby_players_bool_exp
+  _or: [lobby_players_bool_exp!]
+  captain: Boolean_comparison_exp
+  invited_by_steam_id: bigint_comparison_exp
+  lobby: lobbies_bool_exp
+  lobby_id: uuid_comparison_exp
+  player: players_bool_exp
+  status: String_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "lobby_players"
+"""
+enum lobby_players_constraint {
+  """
+  unique or primary key constraint on columns "lobby_id", "steam_id"
+  """
+  lobby_players_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "lobby_players"
+"""
+input lobby_players_inc_input {
+  invited_by_steam_id: bigint
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "lobby_players"
+"""
+input lobby_players_insert_input {
+  captain: Boolean
+  invited_by_steam_id: bigint
+  lobby: lobbies_obj_rel_insert_input
+  lobby_id: uuid
+  player: players_obj_rel_insert_input
+  status: String
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type lobby_players_max_fields {
+  invited_by_steam_id: bigint
+  lobby_id: uuid
+  status: String
+  steam_id: bigint
+}
+
+"""
+order by max() on columns of table "lobby_players"
+"""
+input lobby_players_max_order_by {
+  invited_by_steam_id: order_by
+  lobby_id: order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type lobby_players_min_fields {
+  invited_by_steam_id: bigint
+  lobby_id: uuid
+  status: String
+  steam_id: bigint
+}
+
+"""
+order by min() on columns of table "lobby_players"
+"""
+input lobby_players_min_order_by {
+  invited_by_steam_id: order_by
+  lobby_id: order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""
+response of any mutation on the table "lobby_players"
+"""
+type lobby_players_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [lobby_players!]!
+}
+
+"""
+on_conflict condition type for table "lobby_players"
+"""
+input lobby_players_on_conflict {
+  constraint: lobby_players_constraint!
+  update_columns: [lobby_players_update_column!]! = []
+  where: lobby_players_bool_exp
+}
+
+"""Ordering options when selecting data from "lobby_players"."""
+input lobby_players_order_by {
+  captain: order_by
+  invited_by_steam_id: order_by
+  lobby: lobbies_order_by
+  lobby_id: order_by
+  player: players_order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: lobby_players"""
+input lobby_players_pk_columns_input {
+  lobby_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "lobby_players"
+"""
+enum lobby_players_select_column {
+  """column name"""
+  captain
+
+  """column name"""
+  invited_by_steam_id
+
+  """column name"""
+  lobby_id
+
+  """column name"""
+  status
+
+  """column name"""
+  steam_id
+}
+
+"""
+select "lobby_players_aggregate_bool_exp_bool_and_arguments_columns" columns of table "lobby_players"
+"""
+enum lobby_players_select_column_lobby_players_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  captain
+}
+
+"""
+select "lobby_players_aggregate_bool_exp_bool_or_arguments_columns" columns of table "lobby_players"
+"""
+enum lobby_players_select_column_lobby_players_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  captain
+}
+
+"""
+input type for updating data in table "lobby_players"
+"""
+input lobby_players_set_input {
+  captain: Boolean
+  invited_by_steam_id: bigint
+  lobby_id: uuid
+  status: String
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type lobby_players_stddev_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "lobby_players"
+"""
+input lobby_players_stddev_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type lobby_players_stddev_pop_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "lobby_players"
+"""
+input lobby_players_stddev_pop_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type lobby_players_stddev_samp_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "lobby_players"
+"""
+input lobby_players_stddev_samp_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "lobby_players"
+"""
+input lobby_players_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: lobby_players_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input lobby_players_stream_cursor_value_input {
+  captain: Boolean
+  invited_by_steam_id: bigint
+  lobby_id: uuid
+  status: String
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type lobby_players_sum_fields {
+  invited_by_steam_id: bigint
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "lobby_players"
+"""
+input lobby_players_sum_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""
+update columns of table "lobby_players"
+"""
+enum lobby_players_update_column {
+  """column name"""
+  captain
+
+  """column name"""
+  invited_by_steam_id
+
+  """column name"""
+  lobby_id
+
+  """column name"""
+  status
+
+  """column name"""
+  steam_id
+}
+
+input lobby_players_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: lobby_players_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: lobby_players_set_input
+
+  """filter the rows which have to be updated"""
+  where: lobby_players_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type lobby_players_var_pop_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "lobby_players"
+"""
+input lobby_players_var_pop_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type lobby_players_var_samp_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "lobby_players"
+"""
+input lobby_players_var_samp_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type lobby_players_variance_fields {
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "lobby_players"
+"""
+input lobby_players_variance_order_by {
+  invited_by_steam_id: order_by
+  steam_id: order_by
 }
 
 """
@@ -11582,6 +12659,19 @@ type mutation_root {
   delete_abandoned_matches_by_pk(id: uuid!): abandoned_matches
 
   """
+  delete data from the table: "e_friend_status"
+  """
+  delete_e_friend_status(
+    """filter the rows which have to be deleted"""
+    where: e_friend_status_bool_exp!
+  ): e_friend_status_mutation_response
+
+  """
+  delete single row from the table: "e_friend_status"
+  """
+  delete_e_friend_status_by_pk(value: String!): e_friend_status
+
+  """
   delete data from the table: "e_game_server_node_statuses"
   """
   delete_e_game_server_node_statuses(
@@ -11803,6 +12893,19 @@ type mutation_root {
   delete_e_veto_pick_types_by_pk(value: String!): e_veto_pick_types
 
   """
+  delete data from the table: "friends"
+  """
+  delete_friends(
+    """filter the rows which have to be deleted"""
+    where: friends_bool_exp!
+  ): friends_mutation_response
+
+  """
+  delete single row from the table: "friends"
+  """
+  delete_friends_by_pk(other_player_steam_id: bigint!, player_steam_id: bigint!): friends
+
+  """
   delete data from the table: "game_server_nodes"
   """
   delete_game_server_nodes(
@@ -11814,6 +12917,32 @@ type mutation_root {
   delete single row from the table: "game_server_nodes"
   """
   delete_game_server_nodes_by_pk(id: String!): game_server_nodes
+
+  """
+  delete data from the table: "lobbies"
+  """
+  delete_lobbies(
+    """filter the rows which have to be deleted"""
+    where: lobbies_bool_exp!
+  ): lobbies_mutation_response
+
+  """
+  delete single row from the table: "lobbies"
+  """
+  delete_lobbies_by_pk(id: uuid!): lobbies
+
+  """
+  delete data from the table: "lobby_players"
+  """
+  delete_lobby_players(
+    """filter the rows which have to be deleted"""
+    where: lobby_players_bool_exp!
+  ): lobby_players_mutation_response
+
+  """
+  delete single row from the table: "lobby_players"
+  """
+  delete_lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
 
   """
   delete data from the table: "map_pools"
@@ -11972,6 +13101,14 @@ type mutation_root {
   delete_migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
 
   """
+  delete data from the table: "v_my_friends"
+  """
+  delete_my_friends(
+    """filter the rows which have to be deleted"""
+    where: my_friends_bool_exp!
+  ): my_friends_mutation_response
+
+  """
   delete data from the table: "notifications"
   """
   delete_notifications(
@@ -11995,7 +13132,7 @@ type mutation_root {
   """
   delete single row from the table: "player_assists"
   """
-  delete_player_assists_by_pk(id: uuid!): player_assists
+  delete_player_assists_by_pk(id: uuid!, time: timestamptz!): player_assists
 
   """
   delete data from the table: "player_damages"
@@ -12008,7 +13145,7 @@ type mutation_root {
   """
   delete single row from the table: "player_damages"
   """
-  delete_player_damages_by_pk(id: uuid!): player_damages
+  delete_player_damages_by_pk(id: uuid!, time: timestamptz!): player_damages
 
   """
   delete data from the table: "player_flashes"
@@ -12021,7 +13158,7 @@ type mutation_root {
   """
   delete single row from the table: "player_flashes"
   """
-  delete_player_flashes_by_pk(id: uuid!): player_flashes
+  delete_player_flashes_by_pk(id: uuid!, time: timestamptz!): player_flashes
 
   """
   delete data from the table: "player_kills"
@@ -12034,7 +13171,7 @@ type mutation_root {
   """
   delete single row from the table: "player_kills"
   """
-  delete_player_kills_by_pk(id: uuid!): player_kills
+  delete_player_kills_by_pk(id: uuid!, time: timestamptz!): player_kills
 
   """
   delete data from the table: "player_objectives"
@@ -12047,7 +13184,7 @@ type mutation_root {
   """
   delete single row from the table: "player_objectives"
   """
-  delete_player_objectives_by_pk(id: uuid!): player_objectives
+  delete_player_objectives_by_pk(id: uuid!, time: timestamptz!): player_objectives
 
   """
   delete data from the table: "player_sanctions"
@@ -12060,7 +13197,7 @@ type mutation_root {
   """
   delete single row from the table: "player_sanctions"
   """
-  delete_player_sanctions_by_pk(id: uuid!): player_sanctions
+  delete_player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
 
   """
   delete data from the table: "player_unused_utility"
@@ -12086,7 +13223,7 @@ type mutation_root {
   """
   delete single row from the table: "player_utility"
   """
-  delete_player_utility_by_pk(id: uuid!): player_utility
+  delete_player_utility_by_pk(id: uuid!, time: timestamptz!): player_utility
 
   """
   delete data from the table: "players"
@@ -12331,6 +13468,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: abandoned_matches_on_conflict
   ): abandoned_matches
+
+  """
+  insert data into the table: "e_friend_status"
+  """
+  insert_e_friend_status(
+    """the rows to be inserted"""
+    objects: [e_friend_status_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_friend_status_on_conflict
+  ): e_friend_status_mutation_response
+
+  """
+  insert a single row into the table: "e_friend_status"
+  """
+  insert_e_friend_status_one(
+    """the row to be inserted"""
+    object: e_friend_status_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_friend_status_on_conflict
+  ): e_friend_status
 
   """
   insert data into the table: "e_game_server_node_statuses"
@@ -12707,6 +13866,28 @@ type mutation_root {
   ): e_veto_pick_types
 
   """
+  insert data into the table: "friends"
+  """
+  insert_friends(
+    """the rows to be inserted"""
+    objects: [friends_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: friends_on_conflict
+  ): friends_mutation_response
+
+  """
+  insert a single row into the table: "friends"
+  """
+  insert_friends_one(
+    """the row to be inserted"""
+    object: friends_insert_input!
+
+    """upsert condition"""
+    on_conflict: friends_on_conflict
+  ): friends
+
+  """
   insert data into the table: "game_server_nodes"
   """
   insert_game_server_nodes(
@@ -12727,6 +13908,50 @@ type mutation_root {
     """upsert condition"""
     on_conflict: game_server_nodes_on_conflict
   ): game_server_nodes
+
+  """
+  insert data into the table: "lobbies"
+  """
+  insert_lobbies(
+    """the rows to be inserted"""
+    objects: [lobbies_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: lobbies_on_conflict
+  ): lobbies_mutation_response
+
+  """
+  insert a single row into the table: "lobbies"
+  """
+  insert_lobbies_one(
+    """the row to be inserted"""
+    object: lobbies_insert_input!
+
+    """upsert condition"""
+    on_conflict: lobbies_on_conflict
+  ): lobbies
+
+  """
+  insert data into the table: "lobby_players"
+  """
+  insert_lobby_players(
+    """the rows to be inserted"""
+    objects: [lobby_players_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: lobby_players_on_conflict
+  ): lobby_players_mutation_response
+
+  """
+  insert a single row into the table: "lobby_players"
+  """
+  insert_lobby_players_one(
+    """the row to be inserted"""
+    object: lobby_players_insert_input!
+
+    """upsert condition"""
+    on_conflict: lobby_players_on_conflict
+  ): lobby_players
 
   """
   insert data into the table: "map_pools"
@@ -12991,6 +14216,22 @@ type mutation_root {
     """upsert condition"""
     on_conflict: migration_hashes_hashes_on_conflict
   ): migration_hashes_hashes
+
+  """
+  insert data into the table: "v_my_friends"
+  """
+  insert_my_friends(
+    """the rows to be inserted"""
+    objects: [my_friends_insert_input!]!
+  ): my_friends_mutation_response
+
+  """
+  insert a single row into the table: "v_my_friends"
+  """
+  insert_my_friends_one(
+    """the row to be inserted"""
+    object: my_friends_insert_input!
+  ): my_friends
 
   """
   insert data into the table: "notifications"
@@ -13548,6 +14789,7 @@ type mutation_root {
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
+  syncSteamFriends: SuccessOutput
   unlinkDiscord: SuccessOutput
   updateCs(game_server_node_id: uuid): SuccessOutput
   updateServices: SuccessOutput
@@ -13613,6 +14855,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [abandoned_matches_updates!]!
   ): [abandoned_matches_mutation_response]
+
+  """
+  update data of the table: "e_friend_status"
+  """
+  update_e_friend_status(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_friend_status_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_friend_status_bool_exp!
+  ): e_friend_status_mutation_response
+
+  """
+  update single row of the table: "e_friend_status"
+  """
+  update_e_friend_status_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_friend_status_set_input
+    pk_columns: e_friend_status_pk_columns_input!
+  ): e_friend_status
+
+  """
+  update multiples rows of table: "e_friend_status"
+  """
+  update_e_friend_status_many(
+    """updates to execute, in order"""
+    updates: [e_friend_status_updates!]!
+  ): [e_friend_status_mutation_response]
 
   """
   update data of the table: "e_game_server_node_statuses"
@@ -14091,6 +15361,40 @@ type mutation_root {
   ): [e_veto_pick_types_mutation_response]
 
   """
+  update data of the table: "friends"
+  """
+  update_friends(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: friends_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: friends_set_input
+
+    """filter the rows which have to be updated"""
+    where: friends_bool_exp!
+  ): friends_mutation_response
+
+  """
+  update single row of the table: "friends"
+  """
+  update_friends_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: friends_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: friends_set_input
+    pk_columns: friends_pk_columns_input!
+  ): friends
+
+  """
+  update multiples rows of table: "friends"
+  """
+  update_friends_many(
+    """updates to execute, in order"""
+    updates: [friends_updates!]!
+  ): [friends_mutation_response]
+
+  """
   update data of the table: "game_server_nodes"
   """
   update_game_server_nodes(
@@ -14123,6 +15427,68 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [game_server_nodes_updates!]!
   ): [game_server_nodes_mutation_response]
+
+  """
+  update data of the table: "lobbies"
+  """
+  update_lobbies(
+    """sets the columns of the filtered rows to the given values"""
+    _set: lobbies_set_input
+
+    """filter the rows which have to be updated"""
+    where: lobbies_bool_exp!
+  ): lobbies_mutation_response
+
+  """
+  update single row of the table: "lobbies"
+  """
+  update_lobbies_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: lobbies_set_input
+    pk_columns: lobbies_pk_columns_input!
+  ): lobbies
+
+  """
+  update multiples rows of table: "lobbies"
+  """
+  update_lobbies_many(
+    """updates to execute, in order"""
+    updates: [lobbies_updates!]!
+  ): [lobbies_mutation_response]
+
+  """
+  update data of the table: "lobby_players"
+  """
+  update_lobby_players(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: lobby_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: lobby_players_set_input
+
+    """filter the rows which have to be updated"""
+    where: lobby_players_bool_exp!
+  ): lobby_players_mutation_response
+
+  """
+  update single row of the table: "lobby_players"
+  """
+  update_lobby_players_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: lobby_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: lobby_players_set_input
+    pk_columns: lobby_players_pk_columns_input!
+  ): lobby_players
+
+  """
+  update multiples rows of table: "lobby_players"
+  """
+  update_lobby_players_many(
+    """updates to execute, in order"""
+    updates: [lobby_players_updates!]!
+  ): [lobby_players_mutation_response]
 
   """
   update data of the table: "map_pools"
@@ -14501,6 +15867,28 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [migration_hashes_hashes_updates!]!
   ): [migration_hashes_hashes_mutation_response]
+
+  """
+  update data of the table: "v_my_friends"
+  """
+  update_my_friends(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: my_friends_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: my_friends_set_input
+
+    """filter the rows which have to be updated"""
+    where: my_friends_bool_exp!
+  ): my_friends_mutation_response
+
+  """
+  update multiples rows of table: "v_my_friends"
+  """
+  update_my_friends_many(
+    """updates to execute, in order"""
+    updates: [my_friends_updates!]!
+  ): [my_friends_mutation_response]
 
   """
   update data of the table: "notifications"
@@ -15380,6 +16768,480 @@ type mutation_root {
 }
 
 """
+columns and relationships of "v_my_friends"
+"""
+type my_friends {
+  avatar_url: String
+  country: String
+  created_at: timestamptz
+  discord_id: String
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  name: String
+  name_registered: Boolean
+  profile_url: String
+  role: String
+  status: String
+  steam_id: bigint
+}
+
+"""
+aggregated selection of "v_my_friends"
+"""
+type my_friends_aggregate {
+  aggregate: my_friends_aggregate_fields
+  nodes: [my_friends!]!
+}
+
+input my_friends_aggregate_bool_exp {
+  bool_and: my_friends_aggregate_bool_exp_bool_and
+  bool_or: my_friends_aggregate_bool_exp_bool_or
+  count: my_friends_aggregate_bool_exp_count
+}
+
+input my_friends_aggregate_bool_exp_bool_and {
+  arguments: my_friends_select_column_my_friends_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: my_friends_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input my_friends_aggregate_bool_exp_bool_or {
+  arguments: my_friends_select_column_my_friends_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: my_friends_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input my_friends_aggregate_bool_exp_count {
+  arguments: [my_friends_select_column!]
+  distinct: Boolean
+  filter: my_friends_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "v_my_friends"
+"""
+type my_friends_aggregate_fields {
+  avg: my_friends_avg_fields
+  count(columns: [my_friends_select_column!], distinct: Boolean): Int!
+  max: my_friends_max_fields
+  min: my_friends_min_fields
+  stddev: my_friends_stddev_fields
+  stddev_pop: my_friends_stddev_pop_fields
+  stddev_samp: my_friends_stddev_samp_fields
+  sum: my_friends_sum_fields
+  var_pop: my_friends_var_pop_fields
+  var_samp: my_friends_var_samp_fields
+  variance: my_friends_variance_fields
+}
+
+"""
+order by aggregate values of table "v_my_friends"
+"""
+input my_friends_aggregate_order_by {
+  avg: my_friends_avg_order_by
+  count: order_by
+  max: my_friends_max_order_by
+  min: my_friends_min_order_by
+  stddev: my_friends_stddev_order_by
+  stddev_pop: my_friends_stddev_pop_order_by
+  stddev_samp: my_friends_stddev_samp_order_by
+  sum: my_friends_sum_order_by
+  var_pop: my_friends_var_pop_order_by
+  var_samp: my_friends_var_samp_order_by
+  variance: my_friends_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "v_my_friends"
+"""
+input my_friends_arr_rel_insert_input {
+  data: [my_friends_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type my_friends_avg_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "v_my_friends"
+"""
+input my_friends_avg_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "v_my_friends". All fields are combined with a logical 'AND'.
+"""
+input my_friends_bool_exp {
+  _and: [my_friends_bool_exp!]
+  _not: my_friends_bool_exp
+  _or: [my_friends_bool_exp!]
+  avatar_url: String_comparison_exp
+  country: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  discord_id: String_comparison_exp
+  friend_steam_id: bigint_comparison_exp
+  invited_by_steam_id: bigint_comparison_exp
+  name: String_comparison_exp
+  name_registered: Boolean_comparison_exp
+  profile_url: String_comparison_exp
+  role: String_comparison_exp
+  status: String_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+input type for incrementing numeric columns in table "v_my_friends"
+"""
+input my_friends_inc_input {
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "v_my_friends"
+"""
+input my_friends_insert_input {
+  avatar_url: String
+  country: String
+  created_at: timestamptz
+  discord_id: String
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  name: String
+  name_registered: Boolean
+  profile_url: String
+  role: String
+  status: String
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type my_friends_max_fields {
+  avatar_url: String
+  country: String
+  created_at: timestamptz
+  discord_id: String
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  name: String
+  profile_url: String
+  role: String
+  status: String
+  steam_id: bigint
+}
+
+"""
+order by max() on columns of table "v_my_friends"
+"""
+input my_friends_max_order_by {
+  avatar_url: order_by
+  country: order_by
+  created_at: order_by
+  discord_id: order_by
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  name: order_by
+  profile_url: order_by
+  role: order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type my_friends_min_fields {
+  avatar_url: String
+  country: String
+  created_at: timestamptz
+  discord_id: String
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  name: String
+  profile_url: String
+  role: String
+  status: String
+  steam_id: bigint
+}
+
+"""
+order by min() on columns of table "v_my_friends"
+"""
+input my_friends_min_order_by {
+  avatar_url: order_by
+  country: order_by
+  created_at: order_by
+  discord_id: order_by
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  name: order_by
+  profile_url: order_by
+  role: order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""
+response of any mutation on the table "v_my_friends"
+"""
+type my_friends_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [my_friends!]!
+}
+
+"""Ordering options when selecting data from "v_my_friends"."""
+input my_friends_order_by {
+  avatar_url: order_by
+  country: order_by
+  created_at: order_by
+  discord_id: order_by
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  name: order_by
+  name_registered: order_by
+  profile_url: order_by
+  role: order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""
+select columns of table "v_my_friends"
+"""
+enum my_friends_select_column {
+  """column name"""
+  avatar_url
+
+  """column name"""
+  country
+
+  """column name"""
+  created_at
+
+  """column name"""
+  discord_id
+
+  """column name"""
+  friend_steam_id
+
+  """column name"""
+  invited_by_steam_id
+
+  """column name"""
+  name
+
+  """column name"""
+  name_registered
+
+  """column name"""
+  profile_url
+
+  """column name"""
+  role
+
+  """column name"""
+  status
+
+  """column name"""
+  steam_id
+}
+
+"""
+select "my_friends_aggregate_bool_exp_bool_and_arguments_columns" columns of table "v_my_friends"
+"""
+enum my_friends_select_column_my_friends_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  name_registered
+}
+
+"""
+select "my_friends_aggregate_bool_exp_bool_or_arguments_columns" columns of table "v_my_friends"
+"""
+enum my_friends_select_column_my_friends_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  name_registered
+}
+
+"""
+input type for updating data in table "v_my_friends"
+"""
+input my_friends_set_input {
+  avatar_url: String
+  country: String
+  created_at: timestamptz
+  discord_id: String
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  name: String
+  name_registered: Boolean
+  profile_url: String
+  role: String
+  status: String
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type my_friends_stddev_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "v_my_friends"
+"""
+input my_friends_stddev_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type my_friends_stddev_pop_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "v_my_friends"
+"""
+input my_friends_stddev_pop_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type my_friends_stddev_samp_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "v_my_friends"
+"""
+input my_friends_stddev_samp_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "my_friends"
+"""
+input my_friends_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: my_friends_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input my_friends_stream_cursor_value_input {
+  avatar_url: String
+  country: String
+  created_at: timestamptz
+  discord_id: String
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  name: String
+  name_registered: Boolean
+  profile_url: String
+  role: String
+  status: String
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type my_friends_sum_fields {
+  friend_steam_id: bigint
+  invited_by_steam_id: bigint
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "v_my_friends"
+"""
+input my_friends_sum_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+input my_friends_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: my_friends_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: my_friends_set_input
+
+  """filter the rows which have to be updated"""
+  where: my_friends_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type my_friends_var_pop_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "v_my_friends"
+"""
+input my_friends_var_pop_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type my_friends_var_samp_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "v_my_friends"
+"""
+input my_friends_var_samp_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type my_friends_variance_fields {
+  friend_steam_id: Float
+  invited_by_steam_id: Float
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "v_my_friends"
+"""
+input my_friends_variance_order_by {
+  friend_steam_id: order_by
+  invited_by_steam_id: order_by
+  steam_id: order_by
+}
+
+"""
 columns and relationships of "notifications"
 """
 type notifications {
@@ -16114,7 +17976,7 @@ unique or primary key constraints on table "player_assists"
 """
 enum player_assists_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "time"
   """
   player_assists_pkey
 }
@@ -16246,6 +18108,7 @@ input player_assists_order_by {
 """primary key columns input for table: player_assists"""
 input player_assists_pk_columns_input {
   id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -16665,7 +18528,7 @@ unique or primary key constraints on table "player_damages"
 """
 enum player_damages_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "time"
   """
   player_damages_pkey
 }
@@ -16859,6 +18722,7 @@ input player_damages_order_by {
 """primary key columns input for table: player_damages"""
 input player_damages_pk_columns_input {
   id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -17374,7 +19238,7 @@ unique or primary key constraints on table "player_flashes"
 """
 enum player_flashes_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "time"
   """
   player_flashes_pkey
 }
@@ -17500,6 +19364,7 @@ input player_flashes_order_by {
 """primary key columns input for table: player_flashes"""
 input player_flashes_pk_columns_input {
   id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -17945,7 +19810,7 @@ unique or primary key constraints on table "player_kills"
 """
 enum player_kills_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "time"
   """
   player_kills_pkey
 }
@@ -18126,6 +19991,7 @@ input player_kills_order_by {
 """primary key columns input for table: player_kills"""
 input player_kills_pk_columns_input {
   id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -18633,7 +20499,7 @@ unique or primary key constraints on table "player_objectives"
 """
 enum player_objectives_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "time"
   """
   player_objectives_pkey
 }
@@ -18743,6 +20609,7 @@ input player_objectives_order_by {
 """primary key columns input for table: player_objectives"""
 input player_objectives_pk_columns_input {
   id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -19018,7 +20885,7 @@ unique or primary key constraints on table "player_sanctions"
 """
 enum player_sanctions_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "created_at"
   """
   player_sanctions_pkey
 }
@@ -19103,6 +20970,7 @@ input player_sanctions_order_by {
 
 """primary key columns input for table: player_sanctions"""
 input player_sanctions_pk_columns_input {
+  created_at: timestamptz!
   id: uuid!
 }
 
@@ -19807,7 +21675,7 @@ unique or primary key constraints on table "player_utility"
 """
 enum player_utility_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "id", "time"
   """
   player_utility_pkey
 }
@@ -19923,6 +21791,7 @@ input player_utility_order_by {
 """primary key columns input for table: player_utility"""
 input player_utility_pk_columns_input {
   id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -20280,6 +22149,11 @@ type players {
   country: String
   created_at: timestamptz
 
+  """
+  A computed field, executes function "get_player_current_lobby_id"
+  """
+  current_lobby_id: uuid
+
   """An array relationship"""
   damage_dealt(
     """distinct select on columns"""
@@ -20460,6 +22334,42 @@ type players {
     """filter the rows returned"""
     where: player_flashes_bool_exp
   ): player_flashes_aggregate!
+
+  """An array relationship"""
+  friends(
+    """distinct select on columns"""
+    distinct_on: [my_friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [my_friends_order_by!]
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): [my_friends!]!
+
+  """An aggregate relationship"""
+  friends_aggregate(
+    """distinct select on columns"""
+    distinct_on: [my_friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [my_friends_order_by!]
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): my_friends_aggregate!
 
   """An array relationship"""
   invited_players(
@@ -21094,6 +23004,7 @@ input players_bool_exp {
   coach_lineups_aggregate: match_lineups_aggregate_bool_exp
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
+  current_lobby_id: uuid_comparison_exp
   damage_dealt: player_damages_bool_exp
   damage_dealt_aggregate: player_damages_aggregate_bool_exp
   damage_taken: player_damages_bool_exp
@@ -21105,6 +23016,8 @@ input players_bool_exp {
   flashed_by_players_aggregate: player_flashes_aggregate_bool_exp
   flashed_players: player_flashes_bool_exp
   flashed_players_aggregate: player_flashes_aggregate_bool_exp
+  friends: my_friends_bool_exp
+  friends_aggregate: my_friends_aggregate_bool_exp
   invited_players: team_invites_bool_exp
   invited_players_aggregate: team_invites_aggregate_bool_exp
   is_banned: Boolean_comparison_exp
@@ -21192,6 +23105,7 @@ input players_insert_input {
   discord_id: String
   flashed_by_players: player_flashes_arr_rel_insert_input
   flashed_players: player_flashes_arr_rel_insert_input
+  friends: my_friends_arr_rel_insert_input
   invited_players: team_invites_arr_rel_insert_input
   kills: player_kills_arr_rel_insert_input
   multi_kills: v_player_multi_kills_arr_rel_insert_input
@@ -21218,6 +23132,11 @@ type players_max_fields {
   avatar_url: String
   country: String
   created_at: timestamptz
+
+  """
+  A computed field, executes function "get_player_current_lobby_id"
+  """
+  current_lobby_id: uuid
   discord_id: String
 
   """
@@ -21239,6 +23158,11 @@ type players_min_fields {
   avatar_url: String
   country: String
   created_at: timestamptz
+
+  """
+  A computed field, executes function "get_player_current_lobby_id"
+  """
+  current_lobby_id: uuid
   discord_id: String
 
   """
@@ -21294,12 +23218,14 @@ input players_order_by {
   coach_lineups_aggregate: match_lineups_aggregate_order_by
   country: order_by
   created_at: order_by
+  current_lobby_id: order_by
   damage_dealt_aggregate: player_damages_aggregate_order_by
   damage_taken_aggregate: player_damages_aggregate_order_by
   deaths_aggregate: player_kills_aggregate_order_by
   discord_id: order_by
   flashed_by_players_aggregate: player_flashes_aggregate_order_by
   flashed_players_aggregate: player_flashes_aggregate_order_by
+  friends_aggregate: my_friends_aggregate_order_by
   invited_players_aggregate: team_invites_aggregate_order_by
   is_banned: order_by
   is_gagged: order_by
@@ -21602,6 +23528,49 @@ type query_root {
   fetch data from the table: "abandoned_matches" using primary key columns
   """
   abandoned_matches_by_pk(id: uuid!): abandoned_matches
+
+  """
+  fetch data from the table: "e_friend_status"
+  """
+  e_friend_status(
+    """distinct select on columns"""
+    distinct_on: [e_friend_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_friend_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_friend_status_bool_exp
+  ): [e_friend_status!]!
+
+  """
+  fetch aggregated fields from the table: "e_friend_status"
+  """
+  e_friend_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_friend_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_friend_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_friend_status_bool_exp
+  ): e_friend_status_aggregate!
+
+  """fetch data from the table: "e_friend_status" using primary key columns"""
+  e_friend_status_by_pk(value: String!): e_friend_status
 
   """
   fetch data from the table: "e_game_server_node_statuses"
@@ -22354,6 +24323,49 @@ type query_root {
   """
   e_veto_pick_types_by_pk(value: String!): e_veto_pick_types
 
+  """
+  fetch data from the table: "friends"
+  """
+  friends(
+    """distinct select on columns"""
+    distinct_on: [friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [friends_order_by!]
+
+    """filter the rows returned"""
+    where: friends_bool_exp
+  ): [friends!]!
+
+  """
+  fetch aggregated fields from the table: "friends"
+  """
+  friends_aggregate(
+    """distinct select on columns"""
+    distinct_on: [friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [friends_order_by!]
+
+    """filter the rows returned"""
+    where: friends_bool_exp
+  ): friends_aggregate!
+
+  """fetch data from the table: "friends" using primary key columns"""
+  friends_by_pk(other_player_steam_id: bigint!, player_steam_id: bigint!): friends
+
   """An array relationship"""
   game_server_nodes(
     """distinct select on columns"""
@@ -22396,6 +24408,92 @@ type query_root {
   game_server_nodes_by_pk(id: String!): game_server_nodes
   getNodeStats: [NodeStats]!
   getServiceStats: [PodStats]!
+
+  """
+  fetch data from the table: "lobbies"
+  """
+  lobbies(
+    """distinct select on columns"""
+    distinct_on: [lobbies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobbies_order_by!]
+
+    """filter the rows returned"""
+    where: lobbies_bool_exp
+  ): [lobbies!]!
+
+  """
+  fetch aggregated fields from the table: "lobbies"
+  """
+  lobbies_aggregate(
+    """distinct select on columns"""
+    distinct_on: [lobbies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobbies_order_by!]
+
+    """filter the rows returned"""
+    where: lobbies_bool_exp
+  ): lobbies_aggregate!
+
+  """fetch data from the table: "lobbies" using primary key columns"""
+  lobbies_by_pk(id: uuid!): lobbies
+
+  """
+  fetch data from the table: "lobby_players"
+  """
+  lobby_players(
+    """distinct select on columns"""
+    distinct_on: [lobby_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobby_players_order_by!]
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): [lobby_players!]!
+
+  """
+  fetch aggregated fields from the table: "lobby_players"
+  """
+  lobby_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [lobby_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobby_players_order_by!]
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): lobby_players_aggregate!
+
+  """fetch data from the table: "lobby_players" using primary key columns"""
+  lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
 
   """
   fetch data from the table: "map_pools"
@@ -22910,6 +25008,46 @@ type query_root {
   """
   migration_hashes_hashes_by_pk(name: String!): migration_hashes_hashes
 
+  """
+  fetch data from the table: "v_my_friends"
+  """
+  my_friends(
+    """distinct select on columns"""
+    distinct_on: [my_friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [my_friends_order_by!]
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): [my_friends!]!
+
+  """
+  fetch aggregated fields from the table: "v_my_friends"
+  """
+  my_friends_aggregate(
+    """distinct select on columns"""
+    distinct_on: [my_friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [my_friends_order_by!]
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): my_friends_aggregate!
+
   """An array relationship"""
   notifications(
     """distinct select on columns"""
@@ -22986,7 +25124,7 @@ type query_root {
   ): player_assists_aggregate!
 
   """fetch data from the table: "player_assists" using primary key columns"""
-  player_assists_by_pk(id: uuid!): player_assists
+  player_assists_by_pk(id: uuid!, time: timestamptz!): player_assists
 
   """An array relationship"""
   player_damages(
@@ -23025,7 +25163,7 @@ type query_root {
   ): player_damages_aggregate!
 
   """fetch data from the table: "player_damages" using primary key columns"""
-  player_damages_by_pk(id: uuid!): player_damages
+  player_damages_by_pk(id: uuid!, time: timestamptz!): player_damages
 
   """An array relationship"""
   player_flashes(
@@ -23064,7 +25202,7 @@ type query_root {
   ): player_flashes_aggregate!
 
   """fetch data from the table: "player_flashes" using primary key columns"""
-  player_flashes_by_pk(id: uuid!): player_flashes
+  player_flashes_by_pk(id: uuid!, time: timestamptz!): player_flashes
 
   """An array relationship"""
   player_kills(
@@ -23103,7 +25241,7 @@ type query_root {
   ): player_kills_aggregate!
 
   """fetch data from the table: "player_kills" using primary key columns"""
-  player_kills_by_pk(id: uuid!): player_kills
+  player_kills_by_pk(id: uuid!, time: timestamptz!): player_kills
 
   """An array relationship"""
   player_objectives(
@@ -23144,7 +25282,7 @@ type query_root {
   """
   fetch data from the table: "player_objectives" using primary key columns
   """
-  player_objectives_by_pk(id: uuid!): player_objectives
+  player_objectives_by_pk(id: uuid!, time: timestamptz!): player_objectives
 
   """
   fetch data from the table: "player_sanctions"
@@ -23189,7 +25327,7 @@ type query_root {
   """
   fetch data from the table: "player_sanctions" using primary key columns
   """
-  player_sanctions_by_pk(id: uuid!): player_sanctions
+  player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
 
   """
   fetch data from the table: "player_unused_utility"
@@ -23273,7 +25411,7 @@ type query_root {
   ): player_utility_aggregate!
 
   """fetch data from the table: "player_utility" using primary key columns"""
-  player_utility_by_pk(id: uuid!): player_utility
+  player_utility_by_pk(id: uuid!, time: timestamptz!): player_utility
 
   """
   fetch data from the table: "players"
@@ -25419,6 +27557,63 @@ type subscription_root {
   ): [abandoned_matches!]!
 
   """
+  fetch data from the table: "e_friend_status"
+  """
+  e_friend_status(
+    """distinct select on columns"""
+    distinct_on: [e_friend_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_friend_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_friend_status_bool_exp
+  ): [e_friend_status!]!
+
+  """
+  fetch aggregated fields from the table: "e_friend_status"
+  """
+  e_friend_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_friend_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_friend_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_friend_status_bool_exp
+  ): e_friend_status_aggregate!
+
+  """fetch data from the table: "e_friend_status" using primary key columns"""
+  e_friend_status_by_pk(value: String!): e_friend_status
+
+  """
+  fetch data from the table in a streaming manner: "e_friend_status"
+  """
+  e_friend_status_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_friend_status_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_friend_status_bool_exp
+  ): [e_friend_status!]!
+
+  """
   fetch data from the table: "e_game_server_node_statuses"
   """
   e_game_server_node_statuses(
@@ -26407,6 +28602,63 @@ type subscription_root {
     where: e_veto_pick_types_bool_exp
   ): [e_veto_pick_types!]!
 
+  """
+  fetch data from the table: "friends"
+  """
+  friends(
+    """distinct select on columns"""
+    distinct_on: [friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [friends_order_by!]
+
+    """filter the rows returned"""
+    where: friends_bool_exp
+  ): [friends!]!
+
+  """
+  fetch aggregated fields from the table: "friends"
+  """
+  friends_aggregate(
+    """distinct select on columns"""
+    distinct_on: [friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [friends_order_by!]
+
+    """filter the rows returned"""
+    where: friends_bool_exp
+  ): friends_aggregate!
+
+  """fetch data from the table: "friends" using primary key columns"""
+  friends_by_pk(other_player_steam_id: bigint!, player_steam_id: bigint!): friends
+
+  """
+  fetch data from the table in a streaming manner: "friends"
+  """
+  friends_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [friends_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: friends_bool_exp
+  ): [friends!]!
+
   """An array relationship"""
   game_server_nodes(
     """distinct select on columns"""
@@ -26461,6 +28713,120 @@ type subscription_root {
     """filter the rows returned"""
     where: game_server_nodes_bool_exp
   ): [game_server_nodes!]!
+
+  """
+  fetch data from the table: "lobbies"
+  """
+  lobbies(
+    """distinct select on columns"""
+    distinct_on: [lobbies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobbies_order_by!]
+
+    """filter the rows returned"""
+    where: lobbies_bool_exp
+  ): [lobbies!]!
+
+  """
+  fetch aggregated fields from the table: "lobbies"
+  """
+  lobbies_aggregate(
+    """distinct select on columns"""
+    distinct_on: [lobbies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobbies_order_by!]
+
+    """filter the rows returned"""
+    where: lobbies_bool_exp
+  ): lobbies_aggregate!
+
+  """fetch data from the table: "lobbies" using primary key columns"""
+  lobbies_by_pk(id: uuid!): lobbies
+
+  """
+  fetch data from the table in a streaming manner: "lobbies"
+  """
+  lobbies_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [lobbies_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: lobbies_bool_exp
+  ): [lobbies!]!
+
+  """
+  fetch data from the table: "lobby_players"
+  """
+  lobby_players(
+    """distinct select on columns"""
+    distinct_on: [lobby_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobby_players_order_by!]
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): [lobby_players!]!
+
+  """
+  fetch aggregated fields from the table: "lobby_players"
+  """
+  lobby_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [lobby_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [lobby_players_order_by!]
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): lobby_players_aggregate!
+
+  """fetch data from the table: "lobby_players" using primary key columns"""
+  lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
+
+  """
+  fetch data from the table in a streaming manner: "lobby_players"
+  """
+  lobby_players_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [lobby_players_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: lobby_players_bool_exp
+  ): [lobby_players!]!
 
   """
   fetch data from the table: "map_pools"
@@ -27140,6 +29506,60 @@ type subscription_root {
     where: migration_hashes_hashes_bool_exp
   ): [migration_hashes_hashes!]!
 
+  """
+  fetch data from the table: "v_my_friends"
+  """
+  my_friends(
+    """distinct select on columns"""
+    distinct_on: [my_friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [my_friends_order_by!]
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): [my_friends!]!
+
+  """
+  fetch aggregated fields from the table: "v_my_friends"
+  """
+  my_friends_aggregate(
+    """distinct select on columns"""
+    distinct_on: [my_friends_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [my_friends_order_by!]
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): my_friends_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_my_friends"
+  """
+  my_friends_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [my_friends_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: my_friends_bool_exp
+  ): [my_friends!]!
+
   """An array relationship"""
   notifications(
     """distinct select on columns"""
@@ -27230,7 +29650,7 @@ type subscription_root {
   ): player_assists_aggregate!
 
   """fetch data from the table: "player_assists" using primary key columns"""
-  player_assists_by_pk(id: uuid!): player_assists
+  player_assists_by_pk(id: uuid!, time: timestamptz!): player_assists
 
   """
   fetch data from the table in a streaming manner: "player_assists"
@@ -27283,7 +29703,7 @@ type subscription_root {
   ): player_damages_aggregate!
 
   """fetch data from the table: "player_damages" using primary key columns"""
-  player_damages_by_pk(id: uuid!): player_damages
+  player_damages_by_pk(id: uuid!, time: timestamptz!): player_damages
 
   """
   fetch data from the table in a streaming manner: "player_damages"
@@ -27336,7 +29756,7 @@ type subscription_root {
   ): player_flashes_aggregate!
 
   """fetch data from the table: "player_flashes" using primary key columns"""
-  player_flashes_by_pk(id: uuid!): player_flashes
+  player_flashes_by_pk(id: uuid!, time: timestamptz!): player_flashes
 
   """
   fetch data from the table in a streaming manner: "player_flashes"
@@ -27389,7 +29809,7 @@ type subscription_root {
   ): player_kills_aggregate!
 
   """fetch data from the table: "player_kills" using primary key columns"""
-  player_kills_by_pk(id: uuid!): player_kills
+  player_kills_by_pk(id: uuid!, time: timestamptz!): player_kills
 
   """
   fetch data from the table in a streaming manner: "player_kills"
@@ -27444,7 +29864,7 @@ type subscription_root {
   """
   fetch data from the table: "player_objectives" using primary key columns
   """
-  player_objectives_by_pk(id: uuid!): player_objectives
+  player_objectives_by_pk(id: uuid!, time: timestamptz!): player_objectives
 
   """
   fetch data from the table in a streaming manner: "player_objectives"
@@ -27503,7 +29923,7 @@ type subscription_root {
   """
   fetch data from the table: "player_sanctions" using primary key columns
   """
-  player_sanctions_by_pk(id: uuid!): player_sanctions
+  player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
 
   """
   fetch data from the table in a streaming manner: "player_sanctions"
@@ -27615,7 +30035,7 @@ type subscription_root {
   ): player_utility_aggregate!
 
   """fetch data from the table: "player_utility" using primary key columns"""
-  player_utility_by_pk(id: uuid!): player_utility
+  player_utility_by_pk(id: uuid!, time: timestamptz!): player_utility
 
   """
   fetch data from the table in a streaming manner: "player_utility"

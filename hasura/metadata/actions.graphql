@@ -125,6 +125,10 @@ type Mutation {
 }
 
 type Mutation {
+  syncSteamFriends: SuccessOutput
+}
+
+type Mutation {
   unlinkDiscord: SuccessOutput
 }
 

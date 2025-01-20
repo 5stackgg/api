@@ -215,15 +215,6 @@ CREATE TABLE public.e_veto_pick_types (
     value text NOT NULL,
     description text NOT NULL
 );
-CREATE TABLE public.events (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    description text NOT NULL,
-    invite_only boolean NOT NULL,
-    owner_steam_id bigint NOT NULL,
-    start date NOT NULL,
-    "end" date NOT NULL
-);
 CREATE TABLE public.map_pools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     type text NOT NULL,
@@ -385,8 +376,6 @@ ALTER TABLE ONLY public.e_utility_types
     ADD CONSTRAINT e_utility_types_pkey PRIMARY KEY (value);
 ALTER TABLE ONLY public.e_veto_pick_types
     ADD CONSTRAINT e_veto_pick_type_pkey PRIMARY KEY (value);
-ALTER TABLE ONLY public.events
-    ADD CONSTRAINT leagues_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public._map_pool
     ADD CONSTRAINT map_pool_pkey PRIMARY KEY (map_id, map_pool_id);
 ALTER TABLE ONLY public.map_pools
