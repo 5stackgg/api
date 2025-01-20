@@ -12,25 +12,24 @@ insert_permissions:
   - role: user
     permission:
       check:
-        _or:
-          - status:
-              _eq: Open
-          - lobby:
-              _or:
+        lobby:
+          _or:
+            - players:
+                _and:
+                  - steam_id:
+                      _eq: X-Hasura-User-Id
+                  - status:
+                      _eq: Accepted
+            - _and:
+                - access:
+                    _eq: Friends
                 - players:
-                    _and:
-                      - steam_id:
+                    player:
+                      friends:
+                        steam_id:
                           _eq: X-Hasura-User-Id
-                      - status:
-                          _eq: Accepted
-                - _and:
-                    - access:
-                        _eq: Friends
-                    - players:
-                        player:
-                          friends:
-                            steam_id:
-                              _eq: X-Hasura-User-Id
+            - access:
+                _eq: Open
       set:
         invited_by_steam_id: x-hasura-user-id
       columns:
