@@ -154,7 +154,8 @@ export class SocketsGateway {
           );
 
           if (clients.length === 0) {
-            this.matchMaking.leaveQueue(client);
+            // GIVE THEM A DELAY
+            // this.matchMaking.leaveQueue(client);
 
             await this.redis.del(
               SocketsGateway.GET_PLAYER_KEY(client.user.steam_id),
@@ -162,21 +163,21 @@ export class SocketsGateway {
 
             await this.sendPeopleOnline();
 
-            await this.hasura.mutation({
-              delete_lobby_players: {
-                __args: {
-                  where: {
-                    steam_id: {
-                      _eq: client.user.steam_id,
-                    },
-                    status: {
-                      _eq: "Accepted",
-                    },
-                  },
-                },
-                __typename: true,
-              },
-            });
+            // await this.hasura.mutation({
+            //   delete_lobby_players: {
+            //     __args: {
+            //       where: {
+            //         steam_id: {
+            //           _eq: client.user.steam_id,
+            //         },
+            //         status: {
+            //           _eq: "Accepted",
+            //         },
+            //       },
+            //     },
+            //     __typename: true,
+            //   },
+            // });
           }
         });
       });

@@ -6,6 +6,16 @@ configuration:
   custom_column_names: {}
   custom_name: my_friends
   custom_root_fields: {}
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
 insert_permissions:
   - role: user
     permission:

@@ -39,7 +39,7 @@ select_permissions:
               - players:
                   player:
                     friends:
-                      friend_steam_id:
+                      steam_id:
                         _eq: X-Hasura-User-Id
           - players:
               steam_id:
