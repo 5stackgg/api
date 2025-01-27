@@ -138,7 +138,7 @@ export class SocketsGateway {
 
         await this.sendPeopleOnline();
         await this.matchMaking.sendRegionStats(client.user);
-        await this.matchMaking.sendQueueDetailsToUser(client.user.steam_id);
+        await this.matchMaking.sendQueueDetailsToPlayer(client.user);
 
         client.on("close", async () => {
           await this.redis.del(

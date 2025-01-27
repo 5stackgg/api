@@ -154,93 +154,81 @@ export default {
         1072,
         1080,
         1082,
-        1095,
-        1106,
-        1107,
-        1108,
-        1120,
-        1138,
-        1149,
-        1161,
+        1103,
+        1104,
+        1105,
+        1142,
         1181,
-        1192,
-        1193,
-        1194,
-        1206,
+        1182,
+        1183,
+        1214,
+        1225,
         1226,
-        1237,
-        1238,
+        1227,
         1239,
-        1251,
-        1269,
-        1280,
-        1292,
-        1305,
-        1314,
-        1322,
-        1337,
-        1348,
-        1360,
-        1378,
-        1389,
-        1401,
-        1414,
-        1424,
-        1432,
-        1442,
-        1451,
-        1459,
-        1476,
-        1488,
-        1489,
+        1265,
+        1295,
+        1317,
+        1328,
+        1340,
+        1366,
+        1390,
+        1400,
+        1408,
+        1418,
+        1427,
+        1435,
+        1452,
+        1464,
+        1465,
+        1466,
+        1478,
         1490,
+        1498,
         1502,
         1514,
-        1522,
-        1526,
-        1538,
-        1549,
-        1561,
-        1579,
-        1590,
-        1602,
+        1525,
+        1537,
+        1555,
+        1566,
+        1578,
+        1596,
+        1608,
         1620,
-        1632,
-        1644,
+        1628,
+        1629,
+        1641,
         1652,
-        1653,
-        1665,
-        1676,
-        1688,
-        1706,
-        1717,
-        1729,
-        1748,
-        1764,
-        1776,
-        1794,
-        1805,
-        1817,
-        1835,
-        1846,
-        1858,
+        1664,
+        1682,
+        1693,
+        1705,
+        1724,
+        1740,
+        1752,
+        1770,
+        1781,
+        1793,
+        1811,
+        1822,
+        1834,
+        1852,
+        1864,
         1876,
-        1888,
-        1900,
+        1894,
+        1906,
         1918,
-        1930,
-        1942,
-        1950,
-        1964,
-        1986,
-        2004,
-        2022,
-        2040,
-        2058,
-        2084,
-        2118,
-        2119,
-        2120
+        1926,
+        1940,
+        1962,
+        1980,
+        1998,
+        2016,
+        2034,
+        2060,
+        2094,
+        2095,
+        2096
     ],
     "types": {
         "Boolean": {},
@@ -278,7 +266,7 @@ export default {
         },
         "CpuStat": {
             "time": [
-                1652
+                1628
             ],
             "total": [
                 74
@@ -341,7 +329,7 @@ export default {
                 11
             ],
             "player": [
-                1409
+                1385
             ],
             "profile_url": [
                 11
@@ -358,7 +346,7 @@ export default {
         },
         "MemoryStat": {
             "time": [
-                1652
+                1628
             ],
             "total": [
                 74
@@ -520,10 +508,10 @@ export default {
         },
         "_map_pool": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -574,10 +562,10 @@ export default {
                 18
             ],
             "map_id": [
-                1951
+                1927
             ],
             "map_pool_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -586,10 +574,10 @@ export default {
         "_map_pool_constraint": {},
         "_map_pool_insert_input": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -597,10 +585,10 @@ export default {
         },
         "_map_pool_max_fields": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -608,10 +596,10 @@ export default {
         },
         "_map_pool_min_fields": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -655,10 +643,10 @@ export default {
         },
         "_map_pool_pk_columns_input": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -667,10 +655,10 @@ export default {
         "_map_pool_select_column": {},
         "_map_pool_set_input": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -689,10 +677,10 @@ export default {
         },
         "_map_pool_stream_cursor_value_input": {
             "map_id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -712,10 +700,10 @@ export default {
         },
         "abandoned_matches": {
             "abandoned_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -883,10 +871,10 @@ export default {
                 42
             ],
             "abandoned_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "steam_id": [
                 75
@@ -906,10 +894,10 @@ export default {
         },
         "abandoned_matches_insert_input": {
             "abandoned_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -920,10 +908,10 @@ export default {
         },
         "abandoned_matches_max_fields": {
             "abandoned_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -948,10 +936,10 @@ export default {
         },
         "abandoned_matches_min_fields": {
             "abandoned_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -1015,7 +1003,7 @@ export default {
         },
         "abandoned_matches_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -1024,10 +1012,10 @@ export default {
         "abandoned_matches_select_column": {},
         "abandoned_matches_set_input": {
             "abandoned_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -1097,10 +1085,10 @@ export default {
         },
         "abandoned_matches_stream_cursor_value_input": {
             "abandoned_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -3185,10 +3173,10 @@ export default {
                 11
             ],
             "player_objectives": [
-                1259,
+                1247,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -3198,19 +3186,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "player_objectives_aggregate": [
-                1260,
+                1248,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -3220,11 +3208,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
@@ -3283,10 +3271,10 @@ export default {
                 13
             ],
             "player_objectives": [
-                1268
+                1256
             ],
             "player_objectives_aggregate": [
-                1261
+                1249
             ],
             "value": [
                 13
@@ -3322,7 +3310,7 @@ export default {
                 11
             ],
             "player_objectives": [
-                1265
+                1253
             ],
             "value": [
                 11
@@ -3383,7 +3371,7 @@ export default {
                 1082
             ],
             "player_objectives_aggregate": [
-                1264
+                1252
             ],
             "value": [
                 1082
@@ -4204,10 +4192,10 @@ export default {
                 11
             ],
             "team_rosters": [
-                1569,
+                1545,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -4217,19 +4205,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "team_rosters_aggregate": [
-                1570,
+                1546,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -4239,19 +4227,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "tournament_team_rosters": [
-                1825,
+                1801,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -4261,19 +4249,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_team_rosters_aggregate": [
-                1826,
+                1802,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -4283,11 +4271,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
@@ -4346,16 +4334,16 @@ export default {
                 13
             ],
             "team_rosters": [
-                1578
+                1554
             ],
             "team_rosters_aggregate": [
-                1571
+                1547
             ],
             "tournament_team_rosters": [
-                1834
+                1810
             ],
             "tournament_team_rosters_aggregate": [
-                1827
+                1803
             ],
             "value": [
                 13
@@ -4391,10 +4379,10 @@ export default {
                 11
             ],
             "team_rosters": [
-                1575
+                1551
             ],
             "tournament_team_rosters": [
-                1831
+                1807
             ],
             "value": [
                 11
@@ -4466,10 +4454,10 @@ export default {
                 1082
             ],
             "team_rosters_aggregate": [
-                1574
+                1550
             ],
             "tournament_team_rosters_aggregate": [
-                1830
+                1806
             ],
             "value": [
                 1082
@@ -4747,10 +4735,10 @@ export default {
                 11
             ],
             "tournament_stages": [
-                1737,
+                1713,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -4760,19 +4748,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "tournament_stages_aggregate": [
-                1738,
+                1714,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -4782,11 +4770,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
@@ -4845,10 +4833,10 @@ export default {
                 13
             ],
             "tournament_stages": [
-                1747
+                1723
             ],
             "tournament_stages_aggregate": [
-                1739
+                1715
             ],
             "value": [
                 13
@@ -4884,7 +4872,7 @@ export default {
                 11
             ],
             "tournament_stages": [
-                1744
+                1720
             ],
             "value": [
                 11
@@ -4956,7 +4944,7 @@ export default {
                 1082
             ],
             "tournament_stages_aggregate": [
-                1742
+                1718
             ],
             "value": [
                 1082
@@ -5024,10 +5012,10 @@ export default {
                 11
             ],
             "tournaments": [
-                1908,
+                1884,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -5037,19 +5025,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "tournaments_aggregate": [
-                1909,
+                1885,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -5059,11 +5047,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
@@ -5122,10 +5110,10 @@ export default {
                 13
             ],
             "tournaments": [
-                1917
+                1893
             ],
             "tournaments_aggregate": [
-                1910
+                1886
             ],
             "value": [
                 13
@@ -5161,7 +5149,7 @@ export default {
                 11
             ],
             "tournaments": [
-                1914
+                1890
             ],
             "value": [
                 11
@@ -5233,7 +5221,7 @@ export default {
                 1082
             ],
             "tournaments_aggregate": [
-                1913
+                1889
             ],
             "value": [
                 1082
@@ -5301,10 +5289,10 @@ export default {
                 11
             ],
             "player_utilities": [
-                1368,
+                1348,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -5314,19 +5302,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "player_utilities_aggregate": [
-                1369,
+                1349,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -5336,11 +5324,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
@@ -5399,10 +5387,10 @@ export default {
                 13
             ],
             "player_utilities": [
-                1377
+                1357
             ],
             "player_utilities_aggregate": [
-                1370
+                1350
             ],
             "value": [
                 13
@@ -5438,7 +5426,7 @@ export default {
                 11
             ],
             "player_utilities": [
-                1374
+                1354
             ],
             "value": [
                 11
@@ -5499,7 +5487,7 @@ export default {
                 1082
             ],
             "player_utilities_aggregate": [
-                1373
+                1353
             ],
             "value": [
                 1082
@@ -6184,7 +6172,7 @@ export default {
                 4
             ],
             "e_region": [
-                1437
+                1413
             ],
             "e_status": [
                 100
@@ -6211,10 +6199,10 @@ export default {
                 11
             ],
             "servers": [
-                1464,
+                1440,
                 {
                     "distinct_on": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "limit": [
@@ -6224,19 +6212,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1486,
+                        1462,
                         "[servers_order_by!]"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
             "servers_aggregate": [
-                1465,
+                1441,
                 {
                     "distinct_on": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "limit": [
@@ -6246,11 +6234,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1486,
+                        1462,
                         "[servers_order_by!]"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
@@ -6493,7 +6481,7 @@ export default {
                 5
             ],
             "e_region": [
-                1441
+                1417
             ],
             "e_status": [
                 103
@@ -6520,10 +6508,10 @@ export default {
                 13
             ],
             "servers": [
-                1475
+                1451
             ],
             "servers_aggregate": [
-                1466
+                1442
             ],
             "start_port_range": [
                 5
@@ -6561,7 +6549,7 @@ export default {
                 4
             ],
             "e_region": [
-                1447
+                1423
             ],
             "e_status": [
                 111
@@ -6588,7 +6576,7 @@ export default {
                 11
             ],
             "servers": [
-                1472
+                1448
             ],
             "start_port_range": [
                 4
@@ -6751,7 +6739,7 @@ export default {
                 1082
             ],
             "e_region": [
-                1449
+                1425
             ],
             "e_status": [
                 113
@@ -6778,7 +6766,7 @@ export default {
                 1082
             ],
             "servers_aggregate": [
-                1471
+                1447
             ],
             "start_port_range": [
                 1082
@@ -7277,13 +7265,13 @@ export default {
                 126
             ],
             "created_at": [
-                1653
+                1629
             ],
             "e_lobby_access": [
                 121
             ],
             "id": [
-                1950
+                1926
             ],
             "players": [
                 549,
@@ -7381,13 +7369,13 @@ export default {
                 127
             ],
             "created_at": [
-                1654
+                1630
             ],
             "e_lobby_access": [
                 124
             ],
             "id": [
-                1951
+                1927
             ],
             "players": [
                 560
@@ -7405,13 +7393,13 @@ export default {
                 126
             ],
             "created_at": [
-                1653
+                1629
             ],
             "e_lobby_access": [
                 132
             ],
             "id": [
-                1950
+                1926
             ],
             "players": [
                 557
@@ -7422,10 +7410,10 @@ export default {
         },
         "lobbies_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -7433,10 +7421,10 @@ export default {
         },
         "lobbies_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -7500,7 +7488,7 @@ export default {
         },
         "lobbies_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -7512,10 +7500,10 @@ export default {
                 126
             ],
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -7537,10 +7525,10 @@ export default {
                 126
             ],
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -7569,10 +7557,10 @@ export default {
                 530
             ],
             "lobby_id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "status": [
                 11
@@ -7798,10 +7786,10 @@ export default {
                 533
             ],
             "lobby_id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "status": [
                 13
@@ -7836,10 +7824,10 @@ export default {
                 539
             ],
             "lobby_id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "status": [
                 11
@@ -7856,7 +7844,7 @@ export default {
                 74
             ],
             "lobby_id": [
-                1950
+                1926
             ],
             "status": [
                 11
@@ -7890,7 +7878,7 @@ export default {
                 74
             ],
             "lobby_id": [
-                1950
+                1926
             ],
             "status": [
                 11
@@ -7958,7 +7946,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "status": [
                 1082
@@ -7972,7 +7960,7 @@ export default {
         },
         "lobby_players_pk_columns_input": {
             "lobby_id": [
-                1950
+                1926
             ],
             "steam_id": [
                 74
@@ -7992,7 +7980,7 @@ export default {
                 74
             ],
             "lobby_id": [
-                1950
+                1926
             ],
             "status": [
                 11
@@ -8089,7 +8077,7 @@ export default {
                 74
             ],
             "lobby_id": [
-                1950
+                1926
             ],
             "status": [
                 11
@@ -8212,13 +8200,13 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "maps": [
-                2101,
+                2077,
                 {
                     "distinct_on": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -8228,19 +8216,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2117,
+                        2093,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
             "maps_aggregate": [
-                2102,
+                2078,
                 {
                     "distinct_on": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -8250,11 +8238,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2117,
+                        2093,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
@@ -8319,13 +8307,13 @@ export default {
                 1
             ],
             "id": [
-                1951
+                1927
             ],
             "maps": [
-                2110
+                2086
             ],
             "maps_aggregate": [
-                2103
+                2079
             ],
             "seed": [
                 1
@@ -8346,10 +8334,10 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "maps": [
-                2109
+                2085
             ],
             "seed": [
                 0
@@ -8363,7 +8351,7 @@ export default {
         },
         "map_pools_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -8371,7 +8359,7 @@ export default {
         },
         "map_pools_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -8424,7 +8412,7 @@ export default {
                 1082
             ],
             "maps_aggregate": [
-                2108
+                2084
             ],
             "seed": [
                 1082
@@ -8438,7 +8426,7 @@ export default {
         },
         "map_pools_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -8450,7 +8438,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "seed": [
                 0
@@ -8478,7 +8466,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "seed": [
                 0
@@ -8510,7 +8498,7 @@ export default {
                 205
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -8763,7 +8751,7 @@ export default {
                 208
             ],
             "id": [
-                1951
+                1927
             ],
             "label": [
                 13
@@ -8808,7 +8796,7 @@ export default {
                 216
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -8840,7 +8828,7 @@ export default {
         },
         "maps_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -8886,7 +8874,7 @@ export default {
         },
         "maps_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -9006,7 +8994,7 @@ export default {
         },
         "maps_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -9020,7 +9008,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -9060,7 +9048,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -9107,19 +9095,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup": [
                 687
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
             ],
             "player": [
-                1409
+                1385
             ],
             "steam_id": [
                 74
@@ -9336,19 +9324,19 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "lineup": [
                 696
             ],
             "match_lineup_id": [
-                1951
+                1927
             ],
             "placeholder_name": [
                 13
             ],
             "player": [
-                1413
+                1389
             ],
             "steam_id": [
                 75
@@ -9377,19 +9365,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup": [
                 705
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
             ],
             "player": [
-                1420
+                1396
             ],
             "steam_id": [
                 74
@@ -9403,10 +9391,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -9443,10 +9431,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -9526,7 +9514,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "steam_id": [
                 1082
@@ -9537,7 +9525,7 @@ export default {
         },
         "match_lineup_players_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -9557,10 +9545,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -9642,10 +9630,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -9747,16 +9735,16 @@ export default {
                 0
             ],
             "captain": [
-                1952
+                1928
             ],
             "coach": [
-                1409
+                1385
             ],
             "coach_steam_id": [
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "is_on_lineup": [
                 0
@@ -9862,13 +9850,13 @@ export default {
                 11
             ],
             "team": [
-                1610
+                1586
             ],
             "team_id": [
-                1950
+                1926
             ],
             "v_match_lineup": [
-                1976
+                1952
             ],
             "__typename": [
                 11
@@ -10042,16 +10030,16 @@ export default {
                 1
             ],
             "captain": [
-                1956
+                1932
             ],
             "coach": [
-                1413
+                1389
             ],
             "coach_steam_id": [
                 75
             ],
             "id": [
-                1951
+                1927
             ],
             "is_on_lineup": [
                 1
@@ -10081,13 +10069,13 @@ export default {
                 13
             ],
             "team": [
-                1619
+                1595
             ],
             "team_id": [
-                1951
+                1927
             ],
             "v_match_lineup": [
-                1980
+                1956
             ],
             "__typename": [
                 11
@@ -10104,16 +10092,16 @@ export default {
         },
         "match_lineups_insert_input": {
             "captain": [
-                1962
+                1938
             ],
             "coach": [
-                1420
+                1396
             ],
             "coach_steam_id": [
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_players": [
                 650
@@ -10122,13 +10110,13 @@ export default {
                 817
             ],
             "team": [
-                1628
+                1604
             ],
             "team_id": [
-                1950
+                1926
             ],
             "v_match_lineup": [
-                1984
+                1960
             ],
             "__typename": [
                 11
@@ -10139,13 +10127,13 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -10170,13 +10158,13 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -10243,10 +10231,10 @@ export default {
                 1082
             ],
             "captain": [
-                1963
+                1939
             ],
             "coach": [
-                1422
+                1398
             ],
             "coach_steam_id": [
                 1082
@@ -10276,13 +10264,13 @@ export default {
                 1082
             ],
             "team": [
-                1630
+                1606
             ],
             "team_id": [
                 1082
             ],
             "v_match_lineup": [
-                1985
+                1961
             ],
             "__typename": [
                 11
@@ -10290,7 +10278,7 @@ export default {
         },
         "match_lineups_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -10302,10 +10290,10 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -10375,10 +10363,10 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -10468,13 +10456,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "size": [
                 4
@@ -10645,13 +10633,13 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "size": [
                 5
@@ -10674,13 +10662,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "size": [
                 4
@@ -10694,13 +10682,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "size": [
                 4
@@ -10734,13 +10722,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "size": [
                 4
@@ -10816,7 +10804,7 @@ export default {
         },
         "match_map_demos_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -10828,13 +10816,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "size": [
                 4
@@ -10907,13 +10895,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "size": [
                 4
@@ -11006,13 +10994,13 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "kills": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -11022,19 +11010,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "kills_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -11044,11 +11032,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
@@ -11080,13 +11068,13 @@ export default {
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "winning_side": [
                 11
@@ -11293,13 +11281,13 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "kills": [
-                1225
+                1213
             ],
             "kills_aggregate": [
-                1216
+                1204
             ],
             "lineup_1_money": [
                 5
@@ -11329,13 +11317,13 @@ export default {
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "round": [
                 5
             ],
             "time": [
-                1654
+                1630
             ],
             "winning_side": [
                 13
@@ -11376,10 +11364,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "kills": [
-                1222
+                1210
             ],
             "lineup_1_money": [
                 4
@@ -11409,13 +11397,13 @@ export default {
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "winning_side": [
                 11
@@ -11429,7 +11417,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_money": [
                 4
@@ -11450,13 +11438,13 @@ export default {
                 4
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "winning_side": [
                 11
@@ -11511,7 +11499,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_money": [
                 4
@@ -11532,13 +11520,13 @@ export default {
                 4
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "winning_side": [
                 11
@@ -11621,7 +11609,7 @@ export default {
                 1082
             ],
             "kills_aggregate": [
-                1221
+                1209
             ],
             "lineup_1_money": [
                 1082
@@ -11668,7 +11656,7 @@ export default {
         },
         "match_map_rounds_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -11680,7 +11668,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_money": [
                 4
@@ -11707,13 +11695,13 @@ export default {
                 4
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "winning_side": [
                 11
@@ -11894,7 +11882,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_money": [
                 4
@@ -11921,13 +11909,13 @@ export default {
                 4
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "winning_side": [
                 11
@@ -12161,28 +12149,28 @@ export default {
         },
         "match_map_veto_picks": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "map": [
                 613
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup": [
                 687
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "side": [
                 11
@@ -12289,28 +12277,28 @@ export default {
                 818
             ],
             "created_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "map": [
                 622
             ],
             "map_id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_lineup": [
                 696
             ],
             "match_lineup_id": [
-                1951
+                1927
             ],
             "side": [
                 13
@@ -12325,28 +12313,28 @@ export default {
         "match_map_veto_picks_constraint": {},
         "match_map_veto_picks_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "map": [
                 630
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup": [
                 705
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "side": [
                 11
@@ -12360,19 +12348,19 @@ export default {
         },
         "match_map_veto_picks_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "side": [
                 11
@@ -12406,19 +12394,19 @@ export default {
         },
         "match_map_veto_picks_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "side": [
                 11
@@ -12512,7 +12500,7 @@ export default {
         },
         "match_map_veto_picks_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -12521,19 +12509,19 @@ export default {
         "match_map_veto_picks_select_column": {},
         "match_map_veto_picks_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "side": [
                 11
@@ -12558,19 +12546,19 @@ export default {
         },
         "match_map_veto_picks_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "side": [
                 11
@@ -12596,7 +12584,7 @@ export default {
         },
         "match_maps": {
             "created_at": [
-                1653
+                1629
             ],
             "demos": [
                 729,
@@ -12652,13 +12640,13 @@ export default {
                 163
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "flashes": [
-                1169,
+                1161,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -12668,19 +12656,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "flashes_aggregate": [
-                1170,
+                1162,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -12690,16 +12678,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "id": [
-                1950
+                1926
             ],
             "is_current_map": [
                 0
@@ -12726,19 +12714,19 @@ export default {
                 613
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "objectives": [
-                1259,
+                1247,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -12748,19 +12736,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "objectives_aggregate": [
-                1260,
+                1248,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -12770,11 +12758,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
@@ -12785,7 +12773,7 @@ export default {
                 1083,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -12795,7 +12783,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -12807,7 +12795,7 @@ export default {
                 1084,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -12817,7 +12805,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -12826,10 +12814,10 @@ export default {
                 }
             ],
             "player_damages": [
-                1128,
+                1124,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -12839,19 +12827,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_damages_aggregate": [
-                1129,
+                1125,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -12861,19 +12849,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_kills": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -12883,19 +12871,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_kills_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -12905,19 +12893,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_unused_utilities": [
-                1327,
+                1307,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -12927,19 +12915,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utilities_aggregate": [
-                1328,
+                1308,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -12949,11 +12937,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
@@ -13002,16 +12990,16 @@ export default {
                 }
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 168
             ],
             "utility": [
-                1368,
+                1348,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -13021,19 +13009,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "utility_aggregate": [
-                1369,
+                1349,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -13043,11 +13031,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
@@ -13096,7 +13084,7 @@ export default {
                 }
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -13282,7 +13270,7 @@ export default {
                 844
             ],
             "created_at": [
-                1654
+                1630
             ],
             "demos": [
                 738
@@ -13300,16 +13288,16 @@ export default {
                 166
             ],
             "ended_at": [
-                1654
+                1630
             ],
             "flashes": [
-                1180
+                1172
             ],
             "flashes_aggregate": [
-                1171
+                1163
             ],
             "id": [
-                1951
+                1927
             ],
             "is_current_map": [
                 1
@@ -13336,19 +13324,19 @@ export default {
                 622
             ],
             "map_id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "objectives": [
-                1268
+                1256
             ],
             "objectives_aggregate": [
-                1261
+                1249
             ],
             "order": [
                 5
@@ -13360,22 +13348,22 @@ export default {
                 1085
             ],
             "player_damages": [
-                1137
+                1133
             ],
             "player_damages_aggregate": [
-                1130
+                1126
             ],
             "player_kills": [
-                1225
+                1213
             ],
             "player_kills_aggregate": [
-                1216
+                1204
             ],
             "player_unused_utilities": [
-                1336
+                1316
             ],
             "player_unused_utilities_aggregate": [
-                1329
+                1309
             ],
             "rounds": [
                 779
@@ -13384,16 +13372,16 @@ export default {
                 772
             ],
             "started_at": [
-                1654
+                1630
             ],
             "status": [
                 169
             ],
             "utility": [
-                1377
+                1357
             ],
             "utility_aggregate": [
-                1370
+                1350
             ],
             "vetos": [
                 818
@@ -13402,7 +13390,7 @@ export default {
                 813
             ],
             "winning_lineup_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -13425,7 +13413,7 @@ export default {
         },
         "match_maps_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "demos": [
                 735
@@ -13434,13 +13422,13 @@ export default {
                 174
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "flashes": [
-                1177
+                1169
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_side": [
                 312
@@ -13458,16 +13446,16 @@ export default {
                 630
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "objectives": [
-                1265
+                1253
             ],
             "order": [
                 4
@@ -13476,31 +13464,31 @@ export default {
                 1091
             ],
             "player_damages": [
-                1134
+                1130
             ],
             "player_kills": [
-                1222
+                1210
             ],
             "player_unused_utilities": [
-                1333
+                1313
             ],
             "rounds": [
                 776
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 168
             ],
             "utility": [
-                1374
+                1354
             ],
             "vetos": [
                 817
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -13508,7 +13496,7 @@ export default {
         },
         "match_maps_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "demos_download_url": [
                 11
@@ -13517,10 +13505,10 @@ export default {
                 4
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_score": [
                 4
@@ -13535,19 +13523,19 @@ export default {
                 4
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "order": [
                 4
             ],
             "started_at": [
-                1653
+                1629
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -13590,7 +13578,7 @@ export default {
         },
         "match_maps_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "demos_download_url": [
                 11
@@ -13599,10 +13587,10 @@ export default {
                 4
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_score": [
                 4
@@ -13617,19 +13605,19 @@ export default {
                 4
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "order": [
                 4
             ],
             "started_at": [
-                1653
+                1629
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -13726,7 +13714,7 @@ export default {
                 1082
             ],
             "flashes_aggregate": [
-                1176
+                1168
             ],
             "id": [
                 1082
@@ -13765,7 +13753,7 @@ export default {
                 1082
             ],
             "objectives_aggregate": [
-                1264
+                1252
             ],
             "order": [
                 1082
@@ -13774,13 +13762,13 @@ export default {
                 1090
             ],
             "player_damages_aggregate": [
-                1133
+                1129
             ],
             "player_kills_aggregate": [
-                1221
+                1209
             ],
             "player_unused_utilities_aggregate": [
-                1332
+                1312
             ],
             "rounds_aggregate": [
                 775
@@ -13792,7 +13780,7 @@ export default {
                 1082
             ],
             "utility_aggregate": [
-                1373
+                1353
             ],
             "vetos_aggregate": [
                 816
@@ -13806,7 +13794,7 @@ export default {
         },
         "match_maps_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -13815,13 +13803,13 @@ export default {
         "match_maps_select_column": {},
         "match_maps_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_side": [
                 312
@@ -13836,22 +13824,22 @@ export default {
                 4
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "order": [
                 4
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 168
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -13981,13 +13969,13 @@ export default {
         },
         "match_maps_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup_1_side": [
                 312
@@ -14002,22 +13990,22 @@ export default {
                 4
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "order": [
                 4
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 168
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -14197,7 +14185,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -14212,7 +14200,7 @@ export default {
                 594
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "map_veto": [
                 0
@@ -14286,7 +14274,7 @@ export default {
                 353
             ],
             "tournament": [
-                1908
+                1884
             ],
             "tv_delay": [
                 4
@@ -14393,7 +14381,7 @@ export default {
                 1
             ],
             "id": [
-                1951
+                1927
             ],
             "invite_code": [
                 13
@@ -14408,7 +14396,7 @@ export default {
                 597
             ],
             "map_pool_id": [
-                1951
+                1927
             ],
             "map_veto": [
                 1
@@ -14444,7 +14432,7 @@ export default {
                 354
             ],
             "tournament": [
-                1917
+                1893
             ],
             "tv_delay": [
                 5
@@ -14482,7 +14470,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -14497,7 +14485,7 @@ export default {
                 603
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "map_veto": [
                 0
@@ -14530,7 +14518,7 @@ export default {
                 353
             ],
             "tournament": [
-                1926
+                1902
             ],
             "tv_delay": [
                 4
@@ -14547,13 +14535,13 @@ export default {
                 4
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "mr": [
                 4
@@ -14576,13 +14564,13 @@ export default {
                 4
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "mr": [
                 4
@@ -14695,7 +14683,7 @@ export default {
                 1082
             ],
             "tournament": [
-                1928
+                1904
             ],
             "tv_delay": [
                 1082
@@ -14709,7 +14697,7 @@ export default {
         },
         "match_options_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -14724,7 +14712,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -14736,7 +14724,7 @@ export default {
                 126
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "map_veto": [
                 0
@@ -14845,7 +14833,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -14857,7 +14845,7 @@ export default {
                 126
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "map_veto": [
                 0
@@ -14981,22 +14969,22 @@ export default {
         },
         "match_region_veto_picks": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup": [
                 687
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "region": [
                 11
@@ -15103,22 +15091,22 @@ export default {
                 912
             ],
             "created_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_lineup": [
                 696
             ],
             "match_lineup_id": [
-                1951
+                1927
             ],
             "region": [
                 13
@@ -15133,22 +15121,22 @@ export default {
         "match_region_veto_picks_constraint": {},
         "match_region_veto_picks_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup": [
                 705
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "region": [
                 11
@@ -15162,16 +15150,16 @@ export default {
         },
         "match_region_veto_picks_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "region": [
                 11
@@ -15202,16 +15190,16 @@ export default {
         },
         "match_region_veto_picks_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "region": [
                 11
@@ -15296,7 +15284,7 @@ export default {
         },
         "match_region_veto_picks_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -15305,16 +15293,16 @@ export default {
         "match_region_veto_picks_select_column": {},
         "match_region_veto_picks_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "region": [
                 11
@@ -15339,16 +15327,16 @@ export default {
         },
         "match_region_veto_picks_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "region": [
                 11
@@ -15389,7 +15377,7 @@ export default {
                 0
             ],
             "cancels_at": [
-                1653
+                1629
             ],
             "connection_link": [
                 11
@@ -15398,10 +15386,10 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "current_match_map_id": [
-                1950
+                1926
             ],
             "demos": [
                 729,
@@ -15451,13 +15439,13 @@ export default {
                 184
             ],
             "e_region": [
-                1437
+                1413
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -15490,13 +15478,13 @@ export default {
                 687
             ],
             "lineup_1_id": [
-                1950
+                1926
             ],
             "lineup_2": [
                 687
             ],
             "lineup_2_id": [
-                1950
+                1926
             ],
             "lineup_counts": [
                 525,
@@ -15507,7 +15495,7 @@ export default {
                 }
             ],
             "map_veto_picking_lineup_id": [
-                1950
+                1926
             ],
             "map_veto_picks": [
                 811,
@@ -15601,7 +15589,7 @@ export default {
                 }
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "max_players_per_lineup": [
                 4
@@ -15613,7 +15601,7 @@ export default {
                 877
             ],
             "organizer": [
-                1409
+                1385
             ],
             "organizer_steam_id": [
                 74
@@ -15625,7 +15613,7 @@ export default {
                 1083,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -15635,7 +15623,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -15647,7 +15635,7 @@ export default {
                 1084,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -15657,7 +15645,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -15666,10 +15654,10 @@ export default {
                 }
             ],
             "player_damages": [
-                1128,
+                1124,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -15679,19 +15667,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_damages_aggregate": [
-                1129,
+                1125,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -15701,19 +15689,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_flashes": [
-                1169,
+                1161,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -15723,19 +15711,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "player_flashes_aggregate": [
-                1170,
+                1162,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -15745,19 +15733,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "player_kills": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -15767,19 +15755,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_kills_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -15789,19 +15777,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_objectives": [
-                1259,
+                1247,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -15811,19 +15799,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "player_objectives_aggregate": [
-                1260,
+                1248,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -15833,19 +15821,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "player_unused_utilities": [
-                1327,
+                1307,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -15855,19 +15843,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utilities_aggregate": [
-                1328,
+                1308,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -15877,19 +15865,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_utility": [
-                1368,
+                1348,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -15899,19 +15887,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "player_utility_aggregate": [
-                1369,
+                1349,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -15921,11 +15909,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
@@ -15933,7 +15921,7 @@ export default {
                 11
             ],
             "region_veto_picking_lineup_id": [
-                1950
+                1926
             ],
             "region_veto_picks": [
                 905,
@@ -15983,13 +15971,13 @@ export default {
                 0
             ],
             "scheduled_at": [
-                1653
+                1629
             ],
             "server": [
-                1464
+                1440
             ],
             "server_id": [
-                1950
+                1926
             ],
             "server_region": [
                 11
@@ -15998,16 +15986,16 @@ export default {
                 11
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 189
             ],
             "teams": [
-                1610,
+                1586,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -16017,19 +16005,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "tournament_brackets": [
-                1655,
+                1631,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -16039,19 +16027,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "tournament_brackets_aggregate": [
-                1656,
+                1632,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -16061,11 +16049,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
@@ -16079,7 +16067,7 @@ export default {
                 687
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -16265,7 +16253,7 @@ export default {
                 1
             ],
             "cancels_at": [
-                1654
+                1630
             ],
             "connection_link": [
                 13
@@ -16274,10 +16262,10 @@ export default {
                 13
             ],
             "created_at": [
-                1654
+                1630
             ],
             "current_match_map_id": [
-                1951
+                1927
             ],
             "demos": [
                 738
@@ -16289,13 +16277,13 @@ export default {
                 187
             ],
             "e_region": [
-                1441
+                1417
             ],
             "ended_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "invite_code": [
                 13
@@ -16328,19 +16316,19 @@ export default {
                 696
             ],
             "lineup_1_id": [
-                1951
+                1927
             ],
             "lineup_2": [
                 696
             ],
             "lineup_2_id": [
-                1951
+                1927
             ],
             "lineup_counts": [
                 526
             ],
             "map_veto_picking_lineup_id": [
-                1951
+                1927
             ],
             "map_veto_picks": [
                 818
@@ -16358,7 +16346,7 @@ export default {
                 837
             ],
             "match_options_id": [
-                1951
+                1927
             ],
             "max_players_per_lineup": [
                 5
@@ -16370,7 +16358,7 @@ export default {
                 881
             ],
             "organizer": [
-                1413
+                1389
             ],
             "organizer_steam_id": [
                 75
@@ -16385,46 +16373,46 @@ export default {
                 1085
             ],
             "player_damages": [
-                1137
+                1133
             ],
             "player_damages_aggregate": [
-                1130
+                1126
             ],
             "player_flashes": [
-                1180
+                1172
             ],
             "player_flashes_aggregate": [
-                1171
+                1163
             ],
             "player_kills": [
-                1225
+                1213
             ],
             "player_kills_aggregate": [
-                1216
+                1204
             ],
             "player_objectives": [
-                1268
+                1256
             ],
             "player_objectives_aggregate": [
-                1261
+                1249
             ],
             "player_unused_utilities": [
-                1336
+                1316
             ],
             "player_unused_utilities_aggregate": [
-                1329
+                1309
             ],
             "player_utility": [
-                1377
+                1357
             ],
             "player_utility_aggregate": [
-                1370
+                1350
             ],
             "region": [
                 13
             ],
             "region_veto_picking_lineup_id": [
-                1951
+                1927
             ],
             "region_veto_picks": [
                 912
@@ -16436,13 +16424,13 @@ export default {
                 1
             ],
             "scheduled_at": [
-                1654
+                1630
             ],
             "server": [
-                1475
+                1451
             ],
             "server_id": [
-                1951
+                1927
             ],
             "server_region": [
                 13
@@ -16451,19 +16439,19 @@ export default {
                 13
             ],
             "started_at": [
-                1654
+                1630
             ],
             "status": [
                 190
             ],
             "teams": [
-                1619
+                1595
             ],
             "tournament_brackets": [
-                1664
+                1640
             ],
             "tournament_brackets_aggregate": [
-                1657
+                1633
             ],
             "tv_connection_link": [
                 13
@@ -16475,7 +16463,7 @@ export default {
                 696
             ],
             "winning_lineup_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -16492,10 +16480,10 @@ export default {
         },
         "matches_insert_input": {
             "cancels_at": [
-                1653
+                1629
             ],
             "created_at": [
-                1653
+                1629
             ],
             "demos": [
                 735
@@ -16504,13 +16492,13 @@ export default {
                 195
             ],
             "e_region": [
-                1447
+                1423
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -16519,13 +16507,13 @@ export default {
                 705
             ],
             "lineup_1_id": [
-                1950
+                1926
             ],
             "lineup_2": [
                 705
             ],
             "lineup_2_id": [
-                1950
+                1926
             ],
             "map_veto_picks": [
                 817
@@ -16534,13 +16522,13 @@ export default {
                 841
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "options": [
                 888
             ],
             "organizer": [
-                1420
+                1396
             ],
             "organizer_steam_id": [
                 74
@@ -16552,22 +16540,22 @@ export default {
                 1091
             ],
             "player_damages": [
-                1134
+                1130
             ],
             "player_flashes": [
-                1177
+                1169
             ],
             "player_kills": [
-                1222
+                1210
             ],
             "player_objectives": [
-                1265
+                1253
             ],
             "player_unused_utilities": [
-                1333
+                1313
             ],
             "player_utility": [
-                1374
+                1354
             ],
             "region": [
                 11
@@ -16576,28 +16564,28 @@ export default {
                 911
             ],
             "scheduled_at": [
-                1653
+                1629
             ],
             "server": [
-                1484
+                1460
             ],
             "server_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 189
             ],
             "tournament_brackets": [
-                1661
+                1637
             ],
             "winner": [
                 705
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -16605,7 +16593,7 @@ export default {
         },
         "matches_max_fields": {
             "cancels_at": [
-                1653
+                1629
             ],
             "connection_link": [
                 11
@@ -16614,16 +16602,16 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "current_match_map_id": [
-                1950
+                1926
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -16632,19 +16620,19 @@ export default {
                 11
             ],
             "lineup_1_id": [
-                1950
+                1926
             ],
             "lineup_2_id": [
-                1950
+                1926
             ],
             "map_veto_picking_lineup_id": [
-                1950
+                1926
             ],
             "map_veto_type": [
                 11
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "max_players_per_lineup": [
                 4
@@ -16662,13 +16650,13 @@ export default {
                 11
             ],
             "region_veto_picking_lineup_id": [
-                1950
+                1926
             ],
             "scheduled_at": [
-                1653
+                1629
             ],
             "server_id": [
-                1950
+                1926
             ],
             "server_region": [
                 11
@@ -16677,7 +16665,7 @@ export default {
                 11
             ],
             "started_at": [
-                1653
+                1629
             ],
             "tv_connection_link": [
                 11
@@ -16686,7 +16674,7 @@ export default {
                 11
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -16744,7 +16732,7 @@ export default {
         },
         "matches_min_fields": {
             "cancels_at": [
-                1653
+                1629
             ],
             "connection_link": [
                 11
@@ -16753,16 +16741,16 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "current_match_map_id": [
-                1950
+                1926
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invite_code": [
                 11
@@ -16771,19 +16759,19 @@ export default {
                 11
             ],
             "lineup_1_id": [
-                1950
+                1926
             ],
             "lineup_2_id": [
-                1950
+                1926
             ],
             "map_veto_picking_lineup_id": [
-                1950
+                1926
             ],
             "map_veto_type": [
                 11
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "max_players_per_lineup": [
                 4
@@ -16801,13 +16789,13 @@ export default {
                 11
             ],
             "region_veto_picking_lineup_id": [
-                1950
+                1926
             ],
             "scheduled_at": [
-                1653
+                1629
             ],
             "server_id": [
-                1950
+                1926
             ],
             "server_region": [
                 11
@@ -16816,7 +16804,7 @@ export default {
                 11
             ],
             "started_at": [
-                1653
+                1629
             ],
             "tv_connection_link": [
                 11
@@ -16825,7 +16813,7 @@ export default {
                 11
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -16955,7 +16943,7 @@ export default {
                 197
             ],
             "e_region": [
-                1449
+                1425
             ],
             "ended_at": [
                 1082
@@ -17030,7 +17018,7 @@ export default {
                 890
             ],
             "organizer": [
-                1422
+                1398
             ],
             "organizer_steam_id": [
                 1082
@@ -17042,22 +17030,22 @@ export default {
                 1090
             ],
             "player_damages_aggregate": [
-                1133
+                1129
             ],
             "player_flashes_aggregate": [
-                1176
+                1168
             ],
             "player_kills_aggregate": [
-                1221
+                1209
             ],
             "player_objectives_aggregate": [
-                1264
+                1252
             ],
             "player_unused_utilities_aggregate": [
-                1332
+                1312
             ],
             "player_utility_aggregate": [
-                1373
+                1353
             ],
             "region": [
                 1082
@@ -17075,7 +17063,7 @@ export default {
                 1082
             ],
             "server": [
-                1486
+                1462
             ],
             "server_id": [
                 1082
@@ -17093,10 +17081,10 @@ export default {
                 1082
             ],
             "teams_aggregate": [
-                1615
+                1591
             ],
             "tournament_brackets_aggregate": [
-                1660
+                1636
             ],
             "tv_connection_link": [
                 1082
@@ -17116,7 +17104,7 @@ export default {
         },
         "matches_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -17125,28 +17113,28 @@ export default {
         "matches_select_column": {},
         "matches_set_input": {
             "cancels_at": [
-                1653
+                1629
             ],
             "created_at": [
-                1653
+                1629
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
             ],
             "lineup_1_id": [
-                1950
+                1926
             ],
             "lineup_2_id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "organizer_steam_id": [
                 74
@@ -17158,19 +17146,19 @@ export default {
                 11
             ],
             "scheduled_at": [
-                1653
+                1629
             ],
             "server_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 189
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -17255,28 +17243,28 @@ export default {
         },
         "matches_stream_cursor_value_input": {
             "cancels_at": [
-                1653
+                1629
             ],
             "created_at": [
-                1653
+                1629
             ],
             "ended_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
             ],
             "lineup_1_id": [
-                1950
+                1926
             ],
             "lineup_2_id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "organizer_steam_id": [
                 74
@@ -17288,19 +17276,19 @@ export default {
                 11
             ],
             "scheduled_at": [
-                1653
+                1629
             ],
             "server_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "status": [
                 189
             ],
             "winning_lineup_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -17606,7 +17594,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -17622,6 +17610,9 @@ export default {
             ],
             "name_registered": [
                 0
+            ],
+            "player": [
+                1385
             ],
             "profile_url": [
                 11
@@ -17853,7 +17844,7 @@ export default {
                 13
             ],
             "created_at": [
-                1654
+                1630
             ],
             "discord_id": [
                 13
@@ -17869,6 +17860,9 @@ export default {
             ],
             "name_registered": [
                 1
+            ],
+            "player": [
+                1389
             ],
             "profile_url": [
                 13
@@ -17908,7 +17902,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -17924,6 +17918,9 @@ export default {
             ],
             "name_registered": [
                 0
+            ],
+            "player": [
+                1396
             ],
             "profile_url": [
                 11
@@ -17949,7 +17946,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -18025,7 +18022,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -18129,6 +18126,9 @@ export default {
             "name_registered": [
                 1082
             ],
+            "player": [
+                1398
+            ],
             "profile_url": [
                 1082
             ],
@@ -18156,7 +18156,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -18292,7 +18292,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -18461,16 +18461,16 @@ export default {
                 }
             ],
             "created_at": [
-                1653
+                1629
             ],
             "deleted_at": [
-                1653
+                1629
             ],
             "entity_id": [
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "is_read": [
                 0
@@ -18479,7 +18479,7 @@ export default {
                 11
             ],
             "player": [
-                1409
+                1385
             ],
             "role": [
                 271
@@ -18707,16 +18707,16 @@ export default {
                 529
             ],
             "created_at": [
-                1654
+                1630
             ],
             "deleted_at": [
-                1654
+                1630
             ],
             "entity_id": [
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "is_read": [
                 1
@@ -18725,7 +18725,7 @@ export default {
                 13
             ],
             "player": [
-                1413
+                1389
             ],
             "role": [
                 272
@@ -18781,16 +18781,16 @@ export default {
                 527
             ],
             "created_at": [
-                1653
+                1629
             ],
             "deleted_at": [
-                1653
+                1629
             ],
             "entity_id": [
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "is_read": [
                 0
@@ -18799,7 +18799,7 @@ export default {
                 11
             ],
             "player": [
-                1420
+                1396
             ],
             "role": [
                 271
@@ -18819,16 +18819,16 @@ export default {
         },
         "notifications_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "deleted_at": [
-                1653
+                1629
             ],
             "entity_id": [
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "message": [
                 11
@@ -18871,16 +18871,16 @@ export default {
         },
         "notifications_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "deleted_at": [
-                1653
+                1629
             ],
             "entity_id": [
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "message": [
                 11
@@ -18969,7 +18969,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "role": [
                 1082
@@ -18989,7 +18989,7 @@ export default {
         },
         "notifications_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -19011,16 +19011,16 @@ export default {
                 527
             ],
             "created_at": [
-                1653
+                1629
             ],
             "deleted_at": [
-                1653
+                1629
             ],
             "entity_id": [
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "is_read": [
                 0
@@ -19108,16 +19108,16 @@ export default {
                 527
             ],
             "created_at": [
-                1653
+                1629
             ],
             "deleted_at": [
-                1653
+                1629
             ],
             "entity_id": [
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "is_read": [
                 0
@@ -19271,7 +19271,7 @@ export default {
         "order_by": {},
         "player_assists": {
             "attacked_player": [
-                1409
+                1385
             ],
             "attacked_steam_id": [
                 74
@@ -19289,7 +19289,7 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "is_team_assist": [
                 0
@@ -19298,22 +19298,22 @@ export default {
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -19346,7 +19346,7 @@ export default {
         },
         "player_assists_aggregate_bool_exp_bool_and": {
             "arguments": [
-                1107
+                1104
             ],
             "distinct": [
                 0
@@ -19363,7 +19363,7 @@ export default {
         },
         "player_assists_aggregate_bool_exp_bool_or": {
             "arguments": [
-                1108
+                1105
             ],
             "distinct": [
                 0
@@ -19380,7 +19380,7 @@ export default {
         },
         "player_assists_aggregate_bool_exp_count": {
             "arguments": [
-                1106
+                1103
             ],
             "distinct": [
                 0
@@ -19403,7 +19403,7 @@ export default {
                 4,
                 {
                     "columns": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "distinct": [
@@ -19412,31 +19412,31 @@ export default {
                 }
             ],
             "max": [
-                1098
+                1097
             ],
             "min": [
-                1100
+                1099
             ],
             "stddev": [
-                1110
+                1107
             ],
             "stddev_pop": [
-                1112
+                1109
             ],
             "stddev_samp": [
-                1114
+                1111
             ],
             "sum": [
-                1118
+                1115
             ],
             "var_pop": [
-                1122
+                1118
             ],
             "var_samp": [
-                1124
+                1120
             ],
             "variance": [
-                1126
+                1122
             ],
             "__typename": [
                 11
@@ -19450,31 +19450,31 @@ export default {
                 1082
             ],
             "max": [
-                1099
+                1098
             ],
             "min": [
-                1101
+                1100
             ],
             "stddev": [
-                1111
+                1108
             ],
             "stddev_pop": [
-                1113
+                1110
             ],
             "stddev_samp": [
-                1115
+                1112
             ],
             "sum": [
-                1119
+                1116
             ],
             "var_pop": [
-                1123
+                1119
             ],
             "var_samp": [
-                1125
+                1121
             ],
             "variance": [
-                1127
+                1123
             ],
             "__typename": [
                 11
@@ -19482,10 +19482,7 @@ export default {
         },
         "player_assists_arr_rel_insert_input": {
             "data": [
-                1097
-            ],
-            "on_conflict": [
-                1103
+                1096
             ],
             "__typename": [
                 11
@@ -19530,7 +19527,7 @@ export default {
                 1094
             ],
             "attacked_player": [
-                1413
+                1389
             ],
             "attacked_steam_id": [
                 75
@@ -19548,7 +19545,7 @@ export default {
                 1
             ],
             "id": [
-                1951
+                1927
             ],
             "is_team_assist": [
                 1
@@ -19557,28 +19554,27 @@ export default {
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "round": [
                 5
             ],
             "time": [
-                1654
+                1630
             ],
             "__typename": [
                 11
             ]
         },
-        "player_assists_constraint": {},
         "player_assists_inc_input": {
             "attacked_steam_id": [
                 74
@@ -19595,7 +19591,7 @@ export default {
         },
         "player_assists_insert_input": {
             "attacked_player": [
-                1420
+                1396
             ],
             "attacked_steam_id": [
                 74
@@ -19613,28 +19609,28 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -19654,19 +19650,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -19718,19 +19714,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -19779,23 +19775,9 @@ export default {
                 11
             ]
         },
-        "player_assists_on_conflict": {
-            "constraint": [
-                1095
-            ],
-            "update_columns": [
-                1120
-            ],
-            "where": [
-                1094
-            ],
-            "__typename": [
-                11
-            ]
-        },
         "player_assists_order_by": {
             "attacked_player": [
-                1422
+                1398
             ],
             "attacked_steam_id": [
                 1082
@@ -19831,24 +19813,13 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "round": [
                 1082
             ],
             "time": [
                 1082
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_assists_pk_columns_input": {
-            "id": [
-                1950
-            ],
-            "time": [
-                1653
             ],
             "__typename": [
                 11
@@ -19874,19 +19845,19 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -19978,7 +19949,7 @@ export default {
         },
         "player_assists_stream_cursor_input": {
             "initial_value": [
-                1117
+                1114
             ],
             "ordering": [
                 78
@@ -20004,19 +19975,19 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -20050,13 +20021,12 @@ export default {
                 11
             ]
         },
-        "player_assists_update_column": {},
         "player_assists_updates": {
             "_inc": [
-                1096
+                1095
             ],
             "_set": [
-                1109
+                1106
             ],
             "where": [
                 1094
@@ -20160,7 +20130,7 @@ export default {
                 11
             ],
             "attacked_player": [
-                1409
+                1385
             ],
             "attacked_steam_id": [
                 74
@@ -20193,22 +20163,22 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "round": [
                 1080
@@ -20217,7 +20187,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -20228,10 +20198,10 @@ export default {
         },
         "player_damages_aggregate": {
             "aggregate": [
-                1132
+                1128
             ],
             "nodes": [
-                1128
+                1124
             ],
             "__typename": [
                 11
@@ -20239,7 +20209,7 @@ export default {
         },
         "player_damages_aggregate_bool_exp": {
             "count": [
-                1131
+                1127
             ],
             "__typename": [
                 11
@@ -20247,13 +20217,13 @@ export default {
         },
         "player_damages_aggregate_bool_exp_count": {
             "arguments": [
-                1149
+                1142
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1137
+                1133
             ],
             "predicate": [
                 5
@@ -20264,13 +20234,13 @@ export default {
         },
         "player_damages_aggregate_fields": {
             "avg": [
-                1135
+                1131
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "distinct": [
@@ -20279,31 +20249,31 @@ export default {
                 }
             ],
             "max": [
-                1141
+                1136
             ],
             "min": [
-                1143
+                1138
             ],
             "stddev": [
-                1151
+                1144
             ],
             "stddev_pop": [
-                1153
+                1146
             ],
             "stddev_samp": [
-                1155
+                1148
             ],
             "sum": [
-                1159
+                1152
             ],
             "var_pop": [
-                1163
+                1155
             ],
             "var_samp": [
-                1165
+                1157
             ],
             "variance": [
-                1167
+                1159
             ],
             "__typename": [
                 11
@@ -20311,37 +20281,37 @@ export default {
         },
         "player_damages_aggregate_order_by": {
             "avg": [
-                1136
+                1132
             ],
             "count": [
                 1082
             ],
             "max": [
-                1142
+                1137
             ],
             "min": [
-                1144
+                1139
             ],
             "stddev": [
-                1152
+                1145
             ],
             "stddev_pop": [
-                1154
+                1147
             ],
             "stddev_samp": [
-                1156
+                1149
             ],
             "sum": [
-                1160
+                1153
             ],
             "var_pop": [
-                1164
+                1156
             ],
             "var_samp": [
-                1166
+                1158
             ],
             "variance": [
-                1168
+                1160
             ],
             "__typename": [
                 11
@@ -20349,10 +20319,7 @@ export default {
         },
         "player_damages_arr_rel_insert_input": {
             "data": [
-                1140
-            ],
-            "on_conflict": [
-                1146
+                1135
             ],
             "__typename": [
                 11
@@ -20412,13 +20379,13 @@ export default {
         },
         "player_damages_bool_exp": {
             "_and": [
-                1137
+                1133
             ],
             "_not": [
-                1137
+                1133
             ],
             "_or": [
-                1137
+                1133
             ],
             "armor": [
                 5
@@ -20430,7 +20397,7 @@ export default {
                 13
             ],
             "attacked_player": [
-                1413
+                1389
             ],
             "attacked_steam_id": [
                 75
@@ -20463,22 +20430,22 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "round": [
                 1081
@@ -20487,7 +20454,7 @@ export default {
                 1
             ],
             "time": [
-                1654
+                1630
             ],
             "with": [
                 13
@@ -20496,7 +20463,6 @@ export default {
                 11
             ]
         },
-        "player_damages_constraint": {},
         "player_damages_inc_input": {
             "armor": [
                 4
@@ -20534,7 +20500,7 @@ export default {
                 11
             ],
             "attacked_player": [
-                1420
+                1396
             ],
             "attacked_steam_id": [
                 74
@@ -20567,28 +20533,28 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "round": [
                 1080
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -20638,19 +20604,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 1080
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -20762,19 +20728,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 1080
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -20850,21 +20816,7 @@ export default {
                 4
             ],
             "returning": [
-                1128
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_damages_on_conflict": {
-            "constraint": [
-                1138
-            ],
-            "update_columns": [
-                1161
-            ],
-            "where": [
-                1137
+                1124
             ],
             "__typename": [
                 11
@@ -20881,7 +20833,7 @@ export default {
                 1082
             ],
             "attacked_player": [
-                1422
+                1398
             ],
             "attacked_steam_id": [
                 1082
@@ -20929,7 +20881,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "round": [
                 1082
@@ -20942,17 +20894,6 @@ export default {
             ],
             "with": [
                 1082
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_damages_pk_columns_input": {
-            "id": [
-                1950
-            ],
-            "time": [
-                1653
             ],
             "__typename": [
                 11
@@ -21000,19 +20941,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 1080
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -21179,7 +21120,7 @@ export default {
         },
         "player_damages_stream_cursor_input": {
             "initial_value": [
-                1158
+                1151
             ],
             "ordering": [
                 78
@@ -21229,19 +21170,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 1080
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -21302,16 +21243,15 @@ export default {
                 11
             ]
         },
-        "player_damages_update_column": {},
         "player_damages_updates": {
             "_inc": [
-                1139
+                1134
             ],
             "_set": [
-                1150
+                1143
             ],
             "where": [
-                1137
+                1133
             ],
             "__typename": [
                 11
@@ -21481,25 +21421,25 @@ export default {
                 74
             ],
             "blinded": [
-                1409
+                1385
             ],
             "duration": [
                 1080
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -21508,10 +21448,10 @@ export default {
                 0
             ],
             "thrown_by": [
-                1409
+                1385
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -21519,10 +21459,10 @@ export default {
         },
         "player_flashes_aggregate": {
             "aggregate": [
-                1175
+                1167
             ],
             "nodes": [
-                1169
+                1161
             ],
             "__typename": [
                 11
@@ -21530,13 +21470,13 @@ export default {
         },
         "player_flashes_aggregate_bool_exp": {
             "bool_and": [
-                1172
+                1164
             ],
             "bool_or": [
-                1173
+                1165
             ],
             "count": [
-                1174
+                1166
             ],
             "__typename": [
                 11
@@ -21544,13 +21484,13 @@ export default {
         },
         "player_flashes_aggregate_bool_exp_bool_and": {
             "arguments": [
-                1193
+                1182
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1180
+                1172
             ],
             "predicate": [
                 1
@@ -21561,13 +21501,13 @@ export default {
         },
         "player_flashes_aggregate_bool_exp_bool_or": {
             "arguments": [
-                1194
+                1183
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1180
+                1172
             ],
             "predicate": [
                 1
@@ -21578,13 +21518,13 @@ export default {
         },
         "player_flashes_aggregate_bool_exp_count": {
             "arguments": [
-                1192
+                1181
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1180
+                1172
             ],
             "predicate": [
                 5
@@ -21595,13 +21535,13 @@ export default {
         },
         "player_flashes_aggregate_fields": {
             "avg": [
-                1178
+                1170
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "distinct": [
@@ -21610,31 +21550,31 @@ export default {
                 }
             ],
             "max": [
-                1184
+                1175
             ],
             "min": [
-                1186
+                1177
             ],
             "stddev": [
-                1196
+                1185
             ],
             "stddev_pop": [
-                1198
+                1187
             ],
             "stddev_samp": [
-                1200
+                1189
             ],
             "sum": [
-                1204
+                1193
             ],
             "var_pop": [
-                1208
+                1196
             ],
             "var_samp": [
-                1210
+                1198
             ],
             "variance": [
-                1212
+                1200
             ],
             "__typename": [
                 11
@@ -21642,37 +21582,37 @@ export default {
         },
         "player_flashes_aggregate_order_by": {
             "avg": [
-                1179
+                1171
             ],
             "count": [
                 1082
             ],
             "max": [
-                1185
+                1176
             ],
             "min": [
-                1187
+                1178
             ],
             "stddev": [
-                1197
+                1186
             ],
             "stddev_pop": [
-                1199
+                1188
             ],
             "stddev_samp": [
-                1201
+                1190
             ],
             "sum": [
-                1205
+                1194
             ],
             "var_pop": [
-                1209
+                1197
             ],
             "var_samp": [
-                1211
+                1199
             ],
             "variance": [
-                1213
+                1201
             ],
             "__typename": [
                 11
@@ -21680,10 +21620,7 @@ export default {
         },
         "player_flashes_arr_rel_insert_input": {
             "data": [
-                1183
-            ],
-            "on_conflict": [
-                1189
+                1174
             ],
             "__typename": [
                 11
@@ -21725,13 +21662,13 @@ export default {
         },
         "player_flashes_bool_exp": {
             "_and": [
-                1180
+                1172
             ],
             "_not": [
-                1180
+                1172
             ],
             "_or": [
-                1180
+                1172
             ],
             "attacked_steam_id": [
                 75
@@ -21740,25 +21677,25 @@ export default {
                 75
             ],
             "blinded": [
-                1413
+                1389
             ],
             "duration": [
                 1081
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "round": [
                 5
@@ -21767,16 +21704,15 @@ export default {
                 1
             ],
             "thrown_by": [
-                1413
+                1389
             ],
             "time": [
-                1654
+                1630
             ],
             "__typename": [
                 11
             ]
         },
-        "player_flashes_constraint": {},
         "player_flashes_inc_input": {
             "attacked_steam_id": [
                 74
@@ -21802,25 +21738,25 @@ export default {
                 74
             ],
             "blinded": [
-                1420
+                1396
             ],
             "duration": [
                 1080
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -21829,10 +21765,10 @@ export default {
                 0
             ],
             "thrown_by": [
-                1420
+                1396
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -21849,19 +21785,19 @@ export default {
                 1080
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -21907,19 +21843,19 @@ export default {
                 1080
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -21959,21 +21895,7 @@ export default {
                 4
             ],
             "returning": [
-                1169
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_flashes_on_conflict": {
-            "constraint": [
-                1181
-            ],
-            "update_columns": [
-                1206
-            ],
-            "where": [
-                1180
+                1161
             ],
             "__typename": [
                 11
@@ -21987,7 +21909,7 @@ export default {
                 1082
             ],
             "blinded": [
-                1422
+                1398
             ],
             "duration": [
                 1082
@@ -22014,21 +21936,10 @@ export default {
                 1082
             ],
             "thrown_by": [
-                1422
+                1398
             ],
             "time": [
                 1082
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_flashes_pk_columns_input": {
-            "id": [
-                1950
-            ],
-            "time": [
-                1653
             ],
             "__typename": [
                 11
@@ -22048,13 +21959,13 @@ export default {
                 1080
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -22063,7 +21974,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -22173,7 +22084,7 @@ export default {
         },
         "player_flashes_stream_cursor_input": {
             "initial_value": [
-                1203
+                1192
             ],
             "ordering": [
                 78
@@ -22193,13 +22104,13 @@ export default {
                 1080
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -22208,7 +22119,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -22248,16 +22159,15 @@ export default {
                 11
             ]
         },
-        "player_flashes_update_column": {},
         "player_flashes_updates": {
             "_inc": [
-                1182
+                1173
             ],
             "_set": [
-                1195
+                1184
             ],
             "where": [
-                1180
+                1172
             ],
             "__typename": [
                 11
@@ -22376,7 +22286,7 @@ export default {
                 11
             ],
             "attacked_player": [
-                1409
+                1385
             ],
             "attacked_steam_id": [
                 74
@@ -22406,7 +22316,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "in_air": [
                 0
@@ -22418,19 +22328,19 @@ export default {
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "no_scope": [
                 0
             ],
             "player": [
-                1409
+                1385
             ],
             "round": [
                 4
@@ -22445,7 +22355,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -22456,10 +22366,10 @@ export default {
         },
         "player_kills_aggregate": {
             "aggregate": [
-                1220
+                1208
             ],
             "nodes": [
-                1214
+                1202
             ],
             "__typename": [
                 11
@@ -22467,13 +22377,13 @@ export default {
         },
         "player_kills_aggregate_bool_exp": {
             "bool_and": [
-                1217
+                1205
             ],
             "bool_or": [
-                1218
+                1206
             ],
             "count": [
-                1219
+                1207
             ],
             "__typename": [
                 11
@@ -22481,13 +22391,13 @@ export default {
         },
         "player_kills_aggregate_bool_exp_bool_and": {
             "arguments": [
-                1238
+                1226
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1225
+                1213
             ],
             "predicate": [
                 1
@@ -22498,13 +22408,13 @@ export default {
         },
         "player_kills_aggregate_bool_exp_bool_or": {
             "arguments": [
-                1239
+                1227
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1225
+                1213
             ],
             "predicate": [
                 1
@@ -22515,13 +22425,13 @@ export default {
         },
         "player_kills_aggregate_bool_exp_count": {
             "arguments": [
-                1237
+                1225
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1225
+                1213
             ],
             "predicate": [
                 5
@@ -22532,13 +22442,13 @@ export default {
         },
         "player_kills_aggregate_fields": {
             "avg": [
-                1223
+                1211
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "distinct": [
@@ -22547,31 +22457,31 @@ export default {
                 }
             ],
             "max": [
-                1229
+                1217
             ],
             "min": [
-                1231
+                1219
             ],
             "stddev": [
-                1241
+                1229
             ],
             "stddev_pop": [
-                1243
+                1231
             ],
             "stddev_samp": [
-                1245
+                1233
             ],
             "sum": [
-                1249
+                1237
             ],
             "var_pop": [
-                1253
+                1241
             ],
             "var_samp": [
-                1255
+                1243
             ],
             "variance": [
-                1257
+                1245
             ],
             "__typename": [
                 11
@@ -22579,37 +22489,37 @@ export default {
         },
         "player_kills_aggregate_order_by": {
             "avg": [
-                1224
+                1212
             ],
             "count": [
                 1082
             ],
             "max": [
-                1230
+                1218
             ],
             "min": [
-                1232
+                1220
             ],
             "stddev": [
-                1242
+                1230
             ],
             "stddev_pop": [
-                1244
+                1232
             ],
             "stddev_samp": [
-                1246
+                1234
             ],
             "sum": [
-                1250
+                1238
             ],
             "var_pop": [
-                1254
+                1242
             ],
             "var_samp": [
-                1256
+                1244
             ],
             "variance": [
-                1258
+                1246
             ],
             "__typename": [
                 11
@@ -22617,10 +22527,10 @@ export default {
         },
         "player_kills_arr_rel_insert_input": {
             "data": [
-                1228
+                1216
             ],
             "on_conflict": [
-                1234
+                1222
             ],
             "__typename": [
                 11
@@ -22656,13 +22566,13 @@ export default {
         },
         "player_kills_bool_exp": {
             "_and": [
-                1225
+                1213
             ],
             "_not": [
-                1225
+                1213
             ],
             "_or": [
-                1225
+                1213
             ],
             "assisted": [
                 1
@@ -22674,7 +22584,7 @@ export default {
                 13
             ],
             "attacked_player": [
-                1413
+                1389
             ],
             "attacked_steam_id": [
                 75
@@ -22704,7 +22614,7 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "in_air": [
                 1
@@ -22716,19 +22626,19 @@ export default {
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "no_scope": [
                 1
             ],
             "player": [
-                1413
+                1389
             ],
             "round": [
                 5
@@ -22743,7 +22653,7 @@ export default {
                 1
             ],
             "time": [
-                1654
+                1630
             ],
             "with": [
                 13
@@ -22778,7 +22688,7 @@ export default {
                 11
             ],
             "attacked_player": [
-                1420
+                1396
             ],
             "attacked_steam_id": [
                 74
@@ -22808,7 +22718,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "in_air": [
                 0
@@ -22817,19 +22727,19 @@ export default {
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "no_scope": [
                 0
             ],
             "player": [
-                1420
+                1396
             ],
             "round": [
                 4
@@ -22841,7 +22751,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -22879,19 +22789,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -22979,19 +22889,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -23055,7 +22965,7 @@ export default {
                 4
             ],
             "returning": [
-                1214
+                1202
             ],
             "__typename": [
                 11
@@ -23063,13 +22973,13 @@ export default {
         },
         "player_kills_on_conflict": {
             "constraint": [
-                1226
+                1214
             ],
             "update_columns": [
-                1251
+                1239
             ],
             "where": [
-                1225
+                1213
             ],
             "__typename": [
                 11
@@ -23086,7 +22996,7 @@ export default {
                 1082
             ],
             "attacked_player": [
-                1422
+                1398
             ],
             "attacked_steam_id": [
                 1082
@@ -23140,7 +23050,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "round": [
                 1082
@@ -23166,10 +23076,16 @@ export default {
         },
         "player_kills_pk_columns_input": {
             "id": [
-                1950
+                1926
+            ],
+            "match_id": [
+                1926
+            ],
+            "match_map_id": [
+                1926
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -23216,16 +23132,16 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "in_air": [
                 0
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "no_scope": [
                 0
@@ -23240,7 +23156,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -23335,7 +23251,7 @@ export default {
         },
         "player_kills_stream_cursor_input": {
             "initial_value": [
-                1248
+                1236
             ],
             "ordering": [
                 78
@@ -23382,16 +23298,16 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "in_air": [
                 0
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "no_scope": [
                 0
@@ -23406,7 +23322,7 @@ export default {
                 0
             ],
             "time": [
-                1653
+                1629
             ],
             "with": [
                 11
@@ -23446,13 +23362,13 @@ export default {
         "player_kills_update_column": {},
         "player_kills_updates": {
             "_inc": [
-                1227
+                1215
             ],
             "_set": [
-                1240
+                1228
             ],
             "where": [
-                1225
+                1213
             ],
             "__typename": [
                 11
@@ -23544,22 +23460,22 @@ export default {
         },
         "player_objectives": {
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "player_steam_id": [
                 74
@@ -23568,7 +23484,7 @@ export default {
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 251
@@ -23579,10 +23495,10 @@ export default {
         },
         "player_objectives_aggregate": {
             "aggregate": [
-                1263
+                1251
             ],
             "nodes": [
-                1259
+                1247
             ],
             "__typename": [
                 11
@@ -23590,7 +23506,7 @@ export default {
         },
         "player_objectives_aggregate_bool_exp": {
             "count": [
-                1262
+                1250
             ],
             "__typename": [
                 11
@@ -23598,13 +23514,13 @@ export default {
         },
         "player_objectives_aggregate_bool_exp_count": {
             "arguments": [
-                1280
+                1265
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1268
+                1256
             ],
             "predicate": [
                 5
@@ -23615,13 +23531,13 @@ export default {
         },
         "player_objectives_aggregate_fields": {
             "avg": [
-                1266
+                1254
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "distinct": [
@@ -23630,31 +23546,31 @@ export default {
                 }
             ],
             "max": [
-                1272
+                1259
             ],
             "min": [
-                1274
+                1261
             ],
             "stddev": [
-                1282
+                1267
             ],
             "stddev_pop": [
-                1284
+                1269
             ],
             "stddev_samp": [
-                1286
+                1271
             ],
             "sum": [
-                1290
+                1275
             ],
             "var_pop": [
-                1294
+                1278
             ],
             "var_samp": [
-                1296
+                1280
             ],
             "variance": [
-                1298
+                1282
             ],
             "__typename": [
                 11
@@ -23662,37 +23578,37 @@ export default {
         },
         "player_objectives_aggregate_order_by": {
             "avg": [
-                1267
+                1255
             ],
             "count": [
                 1082
             ],
             "max": [
-                1273
+                1260
             ],
             "min": [
-                1275
+                1262
             ],
             "stddev": [
-                1283
+                1268
             ],
             "stddev_pop": [
-                1285
+                1270
             ],
             "stddev_samp": [
-                1287
+                1272
             ],
             "sum": [
-                1291
+                1276
             ],
             "var_pop": [
-                1295
+                1279
             ],
             "var_samp": [
-                1297
+                1281
             ],
             "variance": [
-                1299
+                1283
             ],
             "__typename": [
                 11
@@ -23700,10 +23616,7 @@ export default {
         },
         "player_objectives_arr_rel_insert_input": {
             "data": [
-                1271
-            ],
-            "on_conflict": [
-                1277
+                1258
             ],
             "__typename": [
                 11
@@ -23733,31 +23646,31 @@ export default {
         },
         "player_objectives_bool_exp": {
             "_and": [
-                1268
+                1256
             ],
             "_not": [
-                1268
+                1256
             ],
             "_or": [
-                1268
+                1256
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "player_steam_id": [
                 75
@@ -23766,7 +23679,7 @@ export default {
                 5
             ],
             "time": [
-                1654
+                1630
             ],
             "type": [
                 252
@@ -23775,7 +23688,6 @@ export default {
                 11
             ]
         },
-        "player_objectives_constraint": {},
         "player_objectives_inc_input": {
             "player_steam_id": [
                 74
@@ -23789,22 +23701,22 @@ export default {
         },
         "player_objectives_insert_input": {
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "player_steam_id": [
                 74
@@ -23813,7 +23725,7 @@ export default {
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 251
@@ -23824,13 +23736,13 @@ export default {
         },
         "player_objectives_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -23839,7 +23751,7 @@ export default {
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -23870,13 +23782,13 @@ export default {
         },
         "player_objectives_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -23885,7 +23797,7 @@ export default {
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -23919,21 +23831,7 @@ export default {
                 4
             ],
             "returning": [
-                1259
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_objectives_on_conflict": {
-            "constraint": [
-                1269
-            ],
-            "update_columns": [
-                1292
-            ],
-            "where": [
-                1268
+                1247
             ],
             "__typename": [
                 11
@@ -23956,7 +23854,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "player_steam_id": [
                 1082
@@ -23974,27 +23872,16 @@ export default {
                 11
             ]
         },
-        "player_objectives_pk_columns_input": {
-            "id": [
-                1950
-            ],
-            "time": [
-                1653
-            ],
-            "__typename": [
-                11
-            ]
-        },
         "player_objectives_select_column": {},
         "player_objectives_set_input": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -24003,7 +23890,7 @@ export default {
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 251
@@ -24080,7 +23967,7 @@ export default {
         },
         "player_objectives_stream_cursor_input": {
             "initial_value": [
-                1289
+                1274
             ],
             "ordering": [
                 78
@@ -24091,13 +23978,13 @@ export default {
         },
         "player_objectives_stream_cursor_value_input": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -24106,7 +23993,7 @@ export default {
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 251
@@ -24137,16 +24024,15 @@ export default {
                 11
             ]
         },
-        "player_objectives_update_column": {},
         "player_objectives_updates": {
             "_inc": [
-                1270
+                1257
             ],
             "_set": [
-                1281
+                1266
             ],
             "where": [
-                1268
+                1256
             ],
             "__typename": [
                 11
@@ -24220,16 +24106,16 @@ export default {
         },
         "player_sanctions": {
             "created_at": [
-                1653
+                1629
             ],
             "e_sanction_type": [
                 286
             ],
             "id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "player_steam_id": [
                 74
@@ -24238,10 +24124,10 @@ export default {
                 11
             ],
             "remove_sanction_date": [
-                1653
+                1629
             ],
             "sanctioned_by": [
-                1409
+                1385
             ],
             "sanctioned_by_steam_id": [
                 74
@@ -24255,10 +24141,10 @@ export default {
         },
         "player_sanctions_aggregate": {
             "aggregate": [
-                1302
+                1286
             ],
             "nodes": [
-                1300
+                1284
             ],
             "__typename": [
                 11
@@ -24266,13 +24152,13 @@ export default {
         },
         "player_sanctions_aggregate_fields": {
             "avg": [
-                1303
+                1287
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1314,
+                        1295,
                         "[player_sanctions_select_column!]"
                     ],
                     "distinct": [
@@ -24281,31 +24167,31 @@ export default {
                 }
             ],
             "max": [
-                1308
+                1291
             ],
             "min": [
-                1309
+                1292
             ],
             "stddev": [
-                1316
+                1297
             ],
             "stddev_pop": [
-                1317
+                1298
             ],
             "stddev_samp": [
-                1318
+                1299
             ],
             "sum": [
-                1321
+                1302
             ],
             "var_pop": [
-                1324
+                1304
             ],
             "var_samp": [
-                1325
+                1305
             ],
             "variance": [
-                1326
+                1306
             ],
             "__typename": [
                 11
@@ -24324,25 +24210,25 @@ export default {
         },
         "player_sanctions_bool_exp": {
             "_and": [
-                1304
+                1288
             ],
             "_not": [
-                1304
+                1288
             ],
             "_or": [
-                1304
+                1288
             ],
             "created_at": [
-                1654
+                1630
             ],
             "e_sanction_type": [
                 289
             ],
             "id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "player_steam_id": [
                 75
@@ -24351,10 +24237,10 @@ export default {
                 13
             ],
             "remove_sanction_date": [
-                1654
+                1630
             ],
             "sanctioned_by": [
-                1413
+                1389
             ],
             "sanctioned_by_steam_id": [
                 75
@@ -24366,7 +24252,6 @@ export default {
                 11
             ]
         },
-        "player_sanctions_constraint": {},
         "player_sanctions_inc_input": {
             "player_steam_id": [
                 74
@@ -24380,16 +24265,16 @@ export default {
         },
         "player_sanctions_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "e_sanction_type": [
                 297
             ],
             "id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "player_steam_id": [
                 74
@@ -24398,10 +24283,10 @@ export default {
                 11
             ],
             "remove_sanction_date": [
-                1653
+                1629
             ],
             "sanctioned_by": [
-                1420
+                1396
             ],
             "sanctioned_by_steam_id": [
                 74
@@ -24415,10 +24300,10 @@ export default {
         },
         "player_sanctions_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -24427,7 +24312,7 @@ export default {
                 11
             ],
             "remove_sanction_date": [
-                1653
+                1629
             ],
             "sanctioned_by_steam_id": [
                 74
@@ -24438,10 +24323,10 @@ export default {
         },
         "player_sanctions_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -24450,7 +24335,7 @@ export default {
                 11
             ],
             "remove_sanction_date": [
-                1653
+                1629
             ],
             "sanctioned_by_steam_id": [
                 74
@@ -24464,21 +24349,7 @@ export default {
                 4
             ],
             "returning": [
-                1300
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_sanctions_on_conflict": {
-            "constraint": [
-                1305
-            ],
-            "update_columns": [
-                1322
-            ],
-            "where": [
-                1304
+                1284
             ],
             "__typename": [
                 11
@@ -24495,7 +24366,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "player_steam_id": [
                 1082
@@ -24507,7 +24378,7 @@ export default {
                 1082
             ],
             "sanctioned_by": [
-                1422
+                1398
             ],
             "sanctioned_by_steam_id": [
                 1082
@@ -24519,24 +24390,13 @@ export default {
                 11
             ]
         },
-        "player_sanctions_pk_columns_input": {
-            "created_at": [
-                1653
-            ],
-            "id": [
-                1950
-            ],
-            "__typename": [
-                11
-            ]
-        },
         "player_sanctions_select_column": {},
         "player_sanctions_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -24545,7 +24405,7 @@ export default {
                 11
             ],
             "remove_sanction_date": [
-                1653
+                1629
             ],
             "sanctioned_by_steam_id": [
                 74
@@ -24592,7 +24452,7 @@ export default {
         },
         "player_sanctions_stream_cursor_input": {
             "initial_value": [
-                1320
+                1301
             ],
             "ordering": [
                 78
@@ -24603,10 +24463,10 @@ export default {
         },
         "player_sanctions_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -24615,7 +24475,7 @@ export default {
                 11
             ],
             "remove_sanction_date": [
-                1653
+                1629
             ],
             "sanctioned_by_steam_id": [
                 74
@@ -24638,16 +24498,15 @@ export default {
                 11
             ]
         },
-        "player_sanctions_update_column": {},
         "player_sanctions_updates": {
             "_inc": [
-                1306
+                1289
             ],
             "_set": [
-                1315
+                1296
             ],
             "where": [
-                1304
+                1288
             ],
             "__typename": [
                 11
@@ -24688,22 +24547,22 @@ export default {
         },
         "player_unused_utility": {
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "player_steam_id": [
                 74
@@ -24720,10 +24579,10 @@ export default {
         },
         "player_unused_utility_aggregate": {
             "aggregate": [
-                1331
+                1311
             ],
             "nodes": [
-                1327
+                1307
             ],
             "__typename": [
                 11
@@ -24731,7 +24590,7 @@ export default {
         },
         "player_unused_utility_aggregate_bool_exp": {
             "count": [
-                1330
+                1310
             ],
             "__typename": [
                 11
@@ -24739,13 +24598,13 @@ export default {
         },
         "player_unused_utility_aggregate_bool_exp_count": {
             "arguments": [
-                1348
+                1328
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1336
+                1316
             ],
             "predicate": [
                 5
@@ -24756,13 +24615,13 @@ export default {
         },
         "player_unused_utility_aggregate_fields": {
             "avg": [
-                1334
+                1314
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "distinct": [
@@ -24771,31 +24630,31 @@ export default {
                 }
             ],
             "max": [
-                1340
+                1320
             ],
             "min": [
-                1342
+                1322
             ],
             "stddev": [
-                1350
+                1330
             ],
             "stddev_pop": [
-                1352
+                1332
             ],
             "stddev_samp": [
-                1354
+                1334
             ],
             "sum": [
-                1358
+                1338
             ],
             "var_pop": [
-                1362
+                1342
             ],
             "var_samp": [
-                1364
+                1344
             ],
             "variance": [
-                1366
+                1346
             ],
             "__typename": [
                 11
@@ -24803,37 +24662,37 @@ export default {
         },
         "player_unused_utility_aggregate_order_by": {
             "avg": [
-                1335
+                1315
             ],
             "count": [
                 1082
             ],
             "max": [
-                1341
+                1321
             ],
             "min": [
-                1343
+                1323
             ],
             "stddev": [
-                1351
+                1331
             ],
             "stddev_pop": [
-                1353
+                1333
             ],
             "stddev_samp": [
-                1355
+                1335
             ],
             "sum": [
-                1359
+                1339
             ],
             "var_pop": [
-                1363
+                1343
             ],
             "var_samp": [
-                1365
+                1345
             ],
             "variance": [
-                1367
+                1347
             ],
             "__typename": [
                 11
@@ -24841,10 +24700,10 @@ export default {
         },
         "player_unused_utility_arr_rel_insert_input": {
             "data": [
-                1339
+                1319
             ],
             "on_conflict": [
-                1345
+                1325
             ],
             "__typename": [
                 11
@@ -24880,31 +24739,31 @@ export default {
         },
         "player_unused_utility_bool_exp": {
             "_and": [
-                1336
+                1316
             ],
             "_not": [
-                1336
+                1316
             ],
             "_or": [
-                1336
+                1316
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "player_steam_id": [
                 75
@@ -24936,22 +24795,22 @@ export default {
         },
         "player_unused_utility_insert_input": {
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "player_steam_id": [
                 74
@@ -24968,13 +24827,13 @@ export default {
         },
         "player_unused_utility_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -25014,13 +24873,13 @@ export default {
         },
         "player_unused_utility_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -25063,7 +24922,7 @@ export default {
                 4
             ],
             "returning": [
-                1327
+                1307
             ],
             "__typename": [
                 11
@@ -25071,13 +24930,13 @@ export default {
         },
         "player_unused_utility_on_conflict": {
             "constraint": [
-                1337
+                1317
             ],
             "update_columns": [
-                1360
+                1340
             ],
             "where": [
-                1336
+                1316
             ],
             "__typename": [
                 11
@@ -25100,7 +24959,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "player_steam_id": [
                 1082
@@ -25117,7 +24976,7 @@ export default {
         },
         "player_unused_utility_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -25126,13 +24985,13 @@ export default {
         "player_unused_utility_select_column": {},
         "player_unused_utility_set_input": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -25233,7 +25092,7 @@ export default {
         },
         "player_unused_utility_stream_cursor_input": {
             "initial_value": [
-                1357
+                1337
             ],
             "ordering": [
                 78
@@ -25244,13 +25103,13 @@ export default {
         },
         "player_unused_utility_stream_cursor_value_input": {
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player_steam_id": [
                 74
@@ -25296,13 +25155,13 @@ export default {
         "player_unused_utility_update_column": {},
         "player_unused_utility_updates": {
             "_inc": [
-                1338
+                1318
             ],
             "_set": [
-                1349
+                1329
             ],
             "where": [
-                1336
+                1316
             ],
             "__typename": [
                 11
@@ -25400,28 +25259,28 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 835
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1409
+                1385
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 415
@@ -25432,10 +25291,10 @@ export default {
         },
         "player_utility_aggregate": {
             "aggregate": [
-                1372
+                1352
             ],
             "nodes": [
-                1368
+                1348
             ],
             "__typename": [
                 11
@@ -25443,7 +25302,7 @@ export default {
         },
         "player_utility_aggregate_bool_exp": {
             "count": [
-                1371
+                1351
             ],
             "__typename": [
                 11
@@ -25451,13 +25310,13 @@ export default {
         },
         "player_utility_aggregate_bool_exp_count": {
             "arguments": [
-                1389
+                1366
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1377
+                1357
             ],
             "predicate": [
                 5
@@ -25468,13 +25327,13 @@ export default {
         },
         "player_utility_aggregate_fields": {
             "avg": [
-                1375
+                1355
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "distinct": [
@@ -25483,31 +25342,31 @@ export default {
                 }
             ],
             "max": [
-                1381
+                1360
             ],
             "min": [
-                1383
+                1362
             ],
             "stddev": [
-                1391
+                1368
             ],
             "stddev_pop": [
-                1393
+                1370
             ],
             "stddev_samp": [
-                1395
+                1372
             ],
             "sum": [
-                1399
+                1376
             ],
             "var_pop": [
-                1403
+                1379
             ],
             "var_samp": [
-                1405
+                1381
             ],
             "variance": [
-                1407
+                1383
             ],
             "__typename": [
                 11
@@ -25515,37 +25374,37 @@ export default {
         },
         "player_utility_aggregate_order_by": {
             "avg": [
-                1376
+                1356
             ],
             "count": [
                 1082
             ],
             "max": [
-                1382
+                1361
             ],
             "min": [
-                1384
+                1363
             ],
             "stddev": [
-                1392
+                1369
             ],
             "stddev_pop": [
-                1394
+                1371
             ],
             "stddev_samp": [
-                1396
+                1373
             ],
             "sum": [
-                1400
+                1377
             ],
             "var_pop": [
-                1404
+                1380
             ],
             "var_samp": [
-                1406
+                1382
             ],
             "variance": [
-                1408
+                1384
             ],
             "__typename": [
                 11
@@ -25553,10 +25412,7 @@ export default {
         },
         "player_utility_arr_rel_insert_input": {
             "data": [
-                1380
-            ],
-            "on_conflict": [
-                1386
+                1359
             ],
             "__typename": [
                 11
@@ -25586,13 +25442,13 @@ export default {
         },
         "player_utility_bool_exp": {
             "_and": [
-                1377
+                1357
             ],
             "_not": [
-                1377
+                1357
             ],
             "_or": [
-                1377
+                1357
             ],
             "attacker_location_coordinates": [
                 13
@@ -25601,28 +25457,28 @@ export default {
                 75
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_map": [
                 844
             ],
             "match_map_id": [
-                1951
+                1927
             ],
             "player": [
-                1413
+                1389
             ],
             "round": [
                 5
             ],
             "time": [
-                1654
+                1630
             ],
             "type": [
                 416
@@ -25631,7 +25487,6 @@ export default {
                 11
             ]
         },
-        "player_utility_constraint": {},
         "player_utility_inc_input": {
             "attacker_steam_id": [
                 74
@@ -25651,28 +25506,28 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map": [
                 853
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "player": [
-                1420
+                1396
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 415
@@ -25689,19 +25544,19 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -25741,19 +25596,19 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -25790,21 +25645,7 @@ export default {
                 4
             ],
             "returning": [
-                1368
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "player_utility_on_conflict": {
-            "constraint": [
-                1378
-            ],
-            "update_columns": [
-                1401
-            ],
-            "where": [
-                1377
+                1348
             ],
             "__typename": [
                 11
@@ -25833,7 +25674,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "round": [
                 1082
@@ -25848,17 +25689,6 @@ export default {
                 11
             ]
         },
-        "player_utility_pk_columns_input": {
-            "id": [
-                1950
-            ],
-            "time": [
-                1653
-            ],
-            "__typename": [
-                11
-            ]
-        },
         "player_utility_select_column": {},
         "player_utility_set_input": {
             "attacker_location_coordinates": [
@@ -25868,19 +25698,19 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 415
@@ -25957,7 +25787,7 @@ export default {
         },
         "player_utility_stream_cursor_input": {
             "initial_value": [
-                1398
+                1375
             ],
             "ordering": [
                 78
@@ -25974,19 +25804,19 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_map_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "time": [
-                1653
+                1629
             ],
             "type": [
                 415
@@ -26017,16 +25847,15 @@ export default {
                 11
             ]
         },
-        "player_utility_update_column": {},
         "player_utility_updates": {
             "_inc": [
-                1379
+                1358
             ],
             "_set": [
-                1390
+                1367
             ],
             "where": [
-                1377
+                1357
             ],
             "__typename": [
                 11
@@ -26147,7 +25976,7 @@ export default {
                 1083,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -26157,7 +25986,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -26169,7 +25998,7 @@ export default {
                 1084,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -26179,7 +26008,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -26191,7 +26020,7 @@ export default {
                 1083,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -26201,7 +26030,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -26213,7 +26042,7 @@ export default {
                 1084,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -26223,7 +26052,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -26282,16 +26111,16 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "current_lobby_id": [
-                1950
+                1926
             ],
             "damage_dealt": [
-                1128,
+                1124,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -26301,19 +26130,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "damage_dealt_aggregate": [
-                1129,
+                1125,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -26323,19 +26152,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "damage_taken": [
-                1128,
+                1124,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -26345,19 +26174,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "damage_taken_aggregate": [
-                1129,
+                1125,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -26367,19 +26196,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "deaths": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -26389,19 +26218,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "deaths_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -26411,11 +26240,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
@@ -26423,10 +26252,10 @@ export default {
                 11
             ],
             "flashed_by_players": [
-                1169,
+                1161,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -26436,19 +26265,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "flashed_by_players_aggregate": [
-                1170,
+                1162,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -26458,19 +26287,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "flashed_players": [
-                1169,
+                1161,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -26480,19 +26309,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "flashed_players_aggregate": [
-                1170,
+                1162,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -26502,11 +26331,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
@@ -26555,10 +26384,10 @@ export default {
                 }
             ],
             "invited_players": [
-                1528,
+                1504,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -26568,19 +26397,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "invited_players_aggregate": [
-                1529,
+                1505,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -26590,11 +26419,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
@@ -26611,10 +26440,10 @@ export default {
                 0
             ],
             "kills": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -26624,19 +26453,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "kills_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -26646,11 +26475,55 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
+                    ]
+                }
+            ],
+            "lobby_players": [
+                549,
+                {
+                    "distinct_on": [
+                        572,
+                        "[lobby_players_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        570,
+                        "[lobby_players_order_by!]"
+                    ],
+                    "where": [
+                        560
+                    ]
+                }
+            ],
+            "lobby_players_aggregate": [
+                550,
+                {
+                    "distinct_on": [
+                        572,
+                        "[lobby_players_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        570,
+                        "[lobby_players_order_by!]"
+                    ],
+                    "where": [
+                        560
                     ]
                 }
             ],
@@ -26677,13 +26550,13 @@ export default {
                 }
             ],
             "matchmaking_cooldown": [
-                1653
+                1629
             ],
             "multi_kills": [
-                2068,
+                2044,
                 {
                     "distinct_on": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -26693,19 +26566,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2083,
+                        2059,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
             "multi_kills_aggregate": [
-                2069,
+                2045,
                 {
                     "distinct_on": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -26715,11 +26588,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2083,
+                        2059,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
@@ -26774,10 +26647,10 @@ export default {
                 }
             ],
             "objectives": [
-                1259,
+                1247,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -26787,19 +26660,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "objectives_aggregate": [
-                1260,
+                1248,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -26809,19 +26682,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "owned_teams": [
-                1610,
+                1586,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -26831,19 +26704,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "owned_teams_aggregate": [
-                1611,
+                1587,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -26853,11 +26726,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
@@ -26906,10 +26779,10 @@ export default {
                 }
             ],
             "player_unused_utilities": [
-                1327,
+                1307,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -26919,19 +26792,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utilities_aggregate": [
-                1328,
+                1308,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -26941,11 +26814,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
@@ -26959,10 +26832,10 @@ export default {
                 74
             ],
             "team_invites": [
-                1528,
+                1504,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -26972,19 +26845,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "team_invites_aggregate": [
-                1529,
+                1505,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -26994,19 +26867,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "team_members": [
-                1569,
+                1545,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -27016,19 +26889,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "team_members_aggregate": [
-                1570,
+                1546,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -27038,19 +26911,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "teams": [
-                1610,
+                1586,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -27060,11 +26933,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
@@ -27072,10 +26945,10 @@ export default {
                 4
             ],
             "tournament_organizers": [
-                1696,
+                1672,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -27085,19 +26958,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_organizers_aggregate": [
-                1697,
+                1673,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -27107,19 +26980,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_rosters": [
-                1825,
+                1801,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -27129,19 +27002,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_rosters_aggregate": [
-                1826,
+                1802,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -27151,19 +27024,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournaments": [
-                1908,
+                1884,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -27173,19 +27046,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "tournaments_aggregate": [
-                1909,
+                1885,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -27195,19 +27068,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "utility_thrown": [
-                1368,
+                1348,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -27217,19 +27090,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "utility_thrown_aggregate": [
-                1369,
+                1349,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -27239,11 +27112,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
@@ -27253,10 +27126,10 @@ export default {
         },
         "players_aggregate": {
             "aggregate": [
-                1411
+                1387
             ],
             "nodes": [
-                1409
+                1385
             ],
             "__typename": [
                 11
@@ -27264,13 +27137,13 @@ export default {
         },
         "players_aggregate_fields": {
             "avg": [
-                1412
+                1388
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1424,
+                        1400,
                         "[players_select_column!]"
                     ],
                     "distinct": [
@@ -27279,31 +27152,31 @@ export default {
                 }
             ],
             "max": [
-                1417
+                1393
             ],
             "min": [
-                1418
+                1394
             ],
             "stddev": [
-                1426
+                1402
             ],
             "stddev_pop": [
-                1427
+                1403
             ],
             "stddev_samp": [
-                1428
+                1404
             ],
             "sum": [
-                1431
+                1407
             ],
             "var_pop": [
-                1434
+                1410
             ],
             "var_samp": [
-                1435
+                1411
             ],
             "variance": [
-                1436
+                1412
             ],
             "__typename": [
                 11
@@ -27322,13 +27195,13 @@ export default {
         },
         "players_bool_exp": {
             "_and": [
-                1413
+                1389
             ],
             "_not": [
-                1413
+                1389
             ],
             "_or": [
-                1413
+                1389
             ],
             "abandoned_matches": [
                 42
@@ -27361,43 +27234,43 @@ export default {
                 13
             ],
             "created_at": [
-                1654
+                1630
             ],
             "current_lobby_id": [
-                1951
+                1927
             ],
             "damage_dealt": [
-                1137
+                1133
             ],
             "damage_dealt_aggregate": [
-                1130
+                1126
             ],
             "damage_taken": [
-                1137
+                1133
             ],
             "damage_taken_aggregate": [
-                1130
+                1126
             ],
             "deaths": [
-                1225
+                1213
             ],
             "deaths_aggregate": [
-                1216
+                1204
             ],
             "discord_id": [
                 13
             ],
             "flashed_by_players": [
-                1180
+                1172
             ],
             "flashed_by_players_aggregate": [
-                1171
+                1163
             ],
             "flashed_players": [
-                1180
+                1172
             ],
             "flashed_players_aggregate": [
-                1171
+                1163
             ],
             "friends": [
                 1000
@@ -27406,10 +27279,10 @@ export default {
                 991
             ],
             "invited_players": [
-                1537
+                1513
             ],
             "invited_players_aggregate": [
-                1530
+                1506
             ],
             "is_banned": [
                 1
@@ -27424,22 +27297,28 @@ export default {
                 1
             ],
             "kills": [
-                1225
+                1213
             ],
             "kills_aggregate": [
-                1216
+                1204
+            ],
+            "lobby_players": [
+                560
+            ],
+            "lobby_players_aggregate": [
+                551
             ],
             "matches": [
                 938
             ],
             "matchmaking_cooldown": [
-                1654
+                1630
             ],
             "multi_kills": [
-                2077
+                2053
             ],
             "multi_kills_aggregate": [
-                2070
+                2046
             ],
             "name": [
                 13
@@ -27454,16 +27333,16 @@ export default {
                 1032
             ],
             "objectives": [
-                1268
+                1256
             ],
             "objectives_aggregate": [
-                1261
+                1249
             ],
             "owned_teams": [
-                1619
+                1595
             ],
             "owned_teams_aggregate": [
-                1612
+                1588
             ],
             "player_lineup": [
                 653
@@ -27472,10 +27351,10 @@ export default {
                 644
             ],
             "player_unused_utilities": [
-                1336
+                1316
             ],
             "player_unused_utilities_aggregate": [
-                1329
+                1309
             ],
             "profile_url": [
                 13
@@ -27487,46 +27366,46 @@ export default {
                 75
             ],
             "team_invites": [
-                1537
+                1513
             ],
             "team_invites_aggregate": [
-                1530
+                1506
             ],
             "team_members": [
-                1578
+                1554
             ],
             "team_members_aggregate": [
-                1571
+                1547
             ],
             "teams": [
-                1619
+                1595
             ],
             "total_matches": [
                 5
             ],
             "tournament_organizers": [
-                1705
+                1681
             ],
             "tournament_organizers_aggregate": [
-                1698
+                1674
             ],
             "tournament_rosters": [
-                1834
+                1810
             ],
             "tournament_rosters_aggregate": [
-                1827
+                1803
             ],
             "tournaments": [
-                1917
+                1893
             ],
             "tournaments_aggregate": [
-                1910
+                1886
             ],
             "utility_thrown": [
-                1377
+                1357
             ],
             "utility_thrown_aggregate": [
-                1370
+                1350
             ],
             "__typename": [
                 11
@@ -27561,37 +27440,40 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "damage_dealt": [
-                1134
+                1130
             ],
             "damage_taken": [
-                1134
+                1130
             ],
             "deaths": [
-                1222
+                1210
             ],
             "discord_id": [
                 11
             ],
             "flashed_by_players": [
-                1177
+                1169
             ],
             "flashed_players": [
-                1177
+                1169
             ],
             "friends": [
                 997
             ],
             "invited_players": [
-                1534
+                1510
             ],
             "kills": [
-                1222
+                1210
+            ],
+            "lobby_players": [
+                557
             ],
             "multi_kills": [
-                2074
+                2050
             ],
             "name": [
                 11
@@ -27603,16 +27485,16 @@ export default {
                 1039
             ],
             "objectives": [
-                1265
+                1253
             ],
             "owned_teams": [
-                1616
+                1592
             ],
             "player_lineup": [
                 650
             ],
             "player_unused_utilities": [
-                1333
+                1313
             ],
             "profile_url": [
                 11
@@ -27624,22 +27506,22 @@ export default {
                 74
             ],
             "team_invites": [
-                1534
+                1510
             ],
             "team_members": [
-                1575
+                1551
             ],
             "tournament_organizers": [
-                1702
+                1678
             ],
             "tournament_rosters": [
-                1831
+                1807
             ],
             "tournaments": [
-                1914
+                1890
             ],
             "utility_thrown": [
-                1374
+                1354
             ],
             "__typename": [
                 11
@@ -27653,16 +27535,16 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "current_lobby_id": [
-                1950
+                1926
             ],
             "discord_id": [
                 11
             ],
             "matchmaking_cooldown": [
-                1653
+                1629
             ],
             "name": [
                 11
@@ -27688,16 +27570,16 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "current_lobby_id": [
-                1950
+                1926
             ],
             "discord_id": [
                 11
             ],
             "matchmaking_cooldown": [
-                1653
+                1629
             ],
             "name": [
                 11
@@ -27720,7 +27602,7 @@ export default {
                 4
             ],
             "returning": [
-                1409
+                1385
             ],
             "__typename": [
                 11
@@ -27728,10 +27610,10 @@ export default {
         },
         "players_obj_rel_insert_input": {
             "data": [
-                1416
+                1392
             ],
             "on_conflict": [
-                1421
+                1397
             ],
             "__typename": [
                 11
@@ -27739,13 +27621,13 @@ export default {
         },
         "players_on_conflict": {
             "constraint": [
-                1414
+                1390
             ],
             "update_columns": [
-                1432
+                1408
             ],
             "where": [
-                1413
+                1389
             ],
             "__typename": [
                 11
@@ -27777,28 +27659,28 @@ export default {
                 1082
             ],
             "damage_dealt_aggregate": [
-                1133
+                1129
             ],
             "damage_taken_aggregate": [
-                1133
+                1129
             ],
             "deaths_aggregate": [
-                1221
+                1209
             ],
             "discord_id": [
                 1082
             ],
             "flashed_by_players_aggregate": [
-                1176
+                1168
             ],
             "flashed_players_aggregate": [
-                1176
+                1168
             ],
             "friends_aggregate": [
                 996
             ],
             "invited_players_aggregate": [
-                1533
+                1509
             ],
             "is_banned": [
                 1082
@@ -27813,7 +27695,10 @@ export default {
                 1082
             ],
             "kills_aggregate": [
-                1221
+                1209
+            ],
+            "lobby_players_aggregate": [
+                556
             ],
             "matches_aggregate": [
                 934
@@ -27822,7 +27707,7 @@ export default {
                 1082
             ],
             "multi_kills_aggregate": [
-                2073
+                2049
             ],
             "name": [
                 1082
@@ -27834,16 +27719,16 @@ export default {
                 1037
             ],
             "objectives_aggregate": [
-                1264
+                1252
             ],
             "owned_teams_aggregate": [
-                1615
+                1591
             ],
             "player_lineup_aggregate": [
                 649
             ],
             "player_unused_utilities_aggregate": [
-                1332
+                1312
             ],
             "profile_url": [
                 1082
@@ -27855,28 +27740,28 @@ export default {
                 1082
             ],
             "team_invites_aggregate": [
-                1533
+                1509
             ],
             "team_members_aggregate": [
-                1574
+                1550
             ],
             "teams_aggregate": [
-                1615
+                1591
             ],
             "total_matches": [
                 1082
             ],
             "tournament_organizers_aggregate": [
-                1701
+                1677
             ],
             "tournament_rosters_aggregate": [
-                1830
+                1806
             ],
             "tournaments_aggregate": [
-                1913
+                1889
             ],
             "utility_thrown_aggregate": [
-                1373
+                1353
             ],
             "__typename": [
                 11
@@ -27899,7 +27784,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -27958,7 +27843,7 @@ export default {
         },
         "players_stream_cursor_input": {
             "initial_value": [
-                1430
+                1406
             ],
             "ordering": [
                 78
@@ -27975,7 +27860,7 @@ export default {
                 11
             ],
             "created_at": [
-                1653
+                1629
             ],
             "discord_id": [
                 11
@@ -28013,13 +27898,13 @@ export default {
         "players_update_column": {},
         "players_updates": {
             "_inc": [
-                1415
+                1391
             ],
             "_set": [
-                1425
+                1401
             ],
             "where": [
-                1413
+                1389
             ],
             "__typename": [
                 11
@@ -28127,10 +28012,10 @@ export default {
         },
         "server_regions_aggregate": {
             "aggregate": [
-                1439
+                1415
             ],
             "nodes": [
-                1437
+                1413
             ],
             "__typename": [
                 11
@@ -28138,13 +28023,13 @@ export default {
         },
         "server_regions_aggregate_fields": {
             "avg": [
-                1440
+                1416
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1451,
+                        1427,
                         "[server_regions_select_column!]"
                     ],
                     "distinct": [
@@ -28153,31 +28038,31 @@ export default {
                 }
             ],
             "max": [
-                1444
+                1420
             ],
             "min": [
-                1445
+                1421
             ],
             "stddev": [
-                1453
+                1429
             ],
             "stddev_pop": [
-                1454
+                1430
             ],
             "stddev_samp": [
-                1455
+                1431
             ],
             "sum": [
-                1458
+                1434
             ],
             "var_pop": [
-                1461
+                1437
             ],
             "var_samp": [
-                1462
+                1438
             ],
             "variance": [
-                1463
+                1439
             ],
             "__typename": [
                 11
@@ -28196,13 +28081,13 @@ export default {
         },
         "server_regions_bool_exp": {
             "_and": [
-                1441
+                1417
             ],
             "_not": [
-                1441
+                1417
             ],
             "_or": [
-                1441
+                1417
             ],
             "available_server_count": [
                 5
@@ -28295,7 +28180,7 @@ export default {
                 4
             ],
             "returning": [
-                1437
+                1413
             ],
             "__typename": [
                 11
@@ -28303,10 +28188,10 @@ export default {
         },
         "server_regions_obj_rel_insert_input": {
             "data": [
-                1443
+                1419
             ],
             "on_conflict": [
-                1448
+                1424
             ],
             "__typename": [
                 11
@@ -28314,13 +28199,13 @@ export default {
         },
         "server_regions_on_conflict": {
             "constraint": [
-                1442
+                1418
             ],
             "update_columns": [
-                1459
+                1435
             ],
             "where": [
-                1441
+                1417
             ],
             "__typename": [
                 11
@@ -28410,7 +28295,7 @@ export default {
         },
         "server_regions_stream_cursor_input": {
             "initial_value": [
-                1457
+                1433
             ],
             "ordering": [
                 78
@@ -28447,10 +28332,10 @@ export default {
         "server_regions_update_column": {},
         "server_regions_updates": {
             "_set": [
-                1452
+                1428
             ],
             "where": [
-                1441
+                1417
             ],
             "__typename": [
                 11
@@ -28491,7 +28376,7 @@ export default {
         },
         "servers": {
             "api_password": [
-                1950
+                1926
             ],
             "connected": [
                 0
@@ -28512,7 +28397,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "is_dedicated": [
                 0
@@ -28574,7 +28459,7 @@ export default {
                 11
             ],
             "reserved_by_match_id": [
-                1950
+                1926
             ],
             "tv_port": [
                 4
@@ -28585,10 +28470,10 @@ export default {
         },
         "servers_aggregate": {
             "aggregate": [
-                1470
+                1446
             ],
             "nodes": [
-                1464
+                1440
             ],
             "__typename": [
                 11
@@ -28596,13 +28481,13 @@ export default {
         },
         "servers_aggregate_bool_exp": {
             "bool_and": [
-                1467
+                1443
             ],
             "bool_or": [
-                1468
+                1444
             ],
             "count": [
-                1469
+                1445
             ],
             "__typename": [
                 11
@@ -28610,13 +28495,13 @@ export default {
         },
         "servers_aggregate_bool_exp_bool_and": {
             "arguments": [
-                1489
+                1465
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1475
+                1451
             ],
             "predicate": [
                 1
@@ -28627,13 +28512,13 @@ export default {
         },
         "servers_aggregate_bool_exp_bool_or": {
             "arguments": [
-                1490
+                1466
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1475
+                1451
             ],
             "predicate": [
                 1
@@ -28644,13 +28529,13 @@ export default {
         },
         "servers_aggregate_bool_exp_count": {
             "arguments": [
-                1488
+                1464
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1475
+                1451
             ],
             "predicate": [
                 5
@@ -28661,13 +28546,13 @@ export default {
         },
         "servers_aggregate_fields": {
             "avg": [
-                1473
+                1449
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "distinct": [
@@ -28676,31 +28561,31 @@ export default {
                 }
             ],
             "max": [
-                1479
+                1455
             ],
             "min": [
-                1481
+                1457
             ],
             "stddev": [
-                1492
+                1468
             ],
             "stddev_pop": [
-                1494
+                1470
             ],
             "stddev_samp": [
-                1496
+                1472
             ],
             "sum": [
-                1500
+                1476
             ],
             "var_pop": [
-                1504
+                1480
             ],
             "var_samp": [
-                1506
+                1482
             ],
             "variance": [
-                1508
+                1484
             ],
             "__typename": [
                 11
@@ -28708,37 +28593,37 @@ export default {
         },
         "servers_aggregate_order_by": {
             "avg": [
-                1474
+                1450
             ],
             "count": [
                 1082
             ],
             "max": [
-                1480
+                1456
             ],
             "min": [
-                1482
+                1458
             ],
             "stddev": [
-                1493
+                1469
             ],
             "stddev_pop": [
-                1495
+                1471
             ],
             "stddev_samp": [
-                1497
+                1473
             ],
             "sum": [
-                1501
+                1477
             ],
             "var_pop": [
-                1505
+                1481
             ],
             "var_samp": [
-                1507
+                1483
             ],
             "variance": [
-                1509
+                1485
             ],
             "__typename": [
                 11
@@ -28746,10 +28631,10 @@ export default {
         },
         "servers_arr_rel_insert_input": {
             "data": [
-                1478
+                1454
             ],
             "on_conflict": [
-                1485
+                1461
             ],
             "__typename": [
                 11
@@ -28779,16 +28664,16 @@ export default {
         },
         "servers_bool_exp": {
             "_and": [
-                1475
+                1451
             ],
             "_not": [
-                1475
+                1451
             ],
             "_or": [
-                1475
+                1451
             ],
             "api_password": [
-                1951
+                1927
             ],
             "connected": [
                 1
@@ -28809,7 +28694,7 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "is_dedicated": [
                 1
@@ -28833,7 +28718,7 @@ export default {
                 13
             ],
             "reserved_by_match_id": [
-                1951
+                1927
             ],
             "tv_port": [
                 5
@@ -28856,7 +28741,7 @@ export default {
         },
         "servers_insert_input": {
             "api_password": [
-                1950
+                1926
             ],
             "connected": [
                 0
@@ -28877,7 +28762,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -28895,7 +28780,7 @@ export default {
                 11
             ],
             "reserved_by_match_id": [
-                1950
+                1926
             ],
             "tv_port": [
                 4
@@ -28906,7 +28791,7 @@ export default {
         },
         "servers_max_fields": {
             "api_password": [
-                1950
+                1926
             ],
             "game_server_node_id": [
                 11
@@ -28915,7 +28800,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -28927,7 +28812,7 @@ export default {
                 11
             ],
             "reserved_by_match_id": [
-                1950
+                1926
             ],
             "tv_port": [
                 4
@@ -28970,7 +28855,7 @@ export default {
         },
         "servers_min_fields": {
             "api_password": [
-                1950
+                1926
             ],
             "game_server_node_id": [
                 11
@@ -28979,7 +28864,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -28991,7 +28876,7 @@ export default {
                 11
             ],
             "reserved_by_match_id": [
-                1950
+                1926
             ],
             "tv_port": [
                 4
@@ -29037,7 +28922,7 @@ export default {
                 4
             ],
             "returning": [
-                1464
+                1440
             ],
             "__typename": [
                 11
@@ -29045,10 +28930,10 @@ export default {
         },
         "servers_obj_rel_insert_input": {
             "data": [
-                1478
+                1454
             ],
             "on_conflict": [
-                1485
+                1461
             ],
             "__typename": [
                 11
@@ -29056,13 +28941,13 @@ export default {
         },
         "servers_on_conflict": {
             "constraint": [
-                1476
+                1452
             ],
             "update_columns": [
-                1502
+                1478
             ],
             "where": [
-                1475
+                1451
             ],
             "__typename": [
                 11
@@ -29123,7 +29008,7 @@ export default {
         },
         "servers_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -29134,7 +29019,7 @@ export default {
         "servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns": {},
         "servers_set_input": {
             "api_password": [
-                1950
+                1926
             ],
             "connected": [
                 0
@@ -29149,7 +29034,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -29164,7 +29049,7 @@ export default {
                 11
             ],
             "reserved_by_match_id": [
-                1950
+                1926
             ],
             "tv_port": [
                 4
@@ -29241,7 +29126,7 @@ export default {
         },
         "servers_stream_cursor_input": {
             "initial_value": [
-                1499
+                1475
             ],
             "ordering": [
                 78
@@ -29252,7 +29137,7 @@ export default {
         },
         "servers_stream_cursor_value_input": {
             "api_password": [
-                1950
+                1926
             ],
             "connected": [
                 0
@@ -29267,7 +29152,7 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "label": [
                 11
@@ -29282,7 +29167,7 @@ export default {
                 11
             ],
             "reserved_by_match_id": [
-                1950
+                1926
             ],
             "tv_port": [
                 4
@@ -29316,13 +29201,13 @@ export default {
         "servers_update_column": {},
         "servers_updates": {
             "_inc": [
-                1477
+                1453
             ],
             "_set": [
-                1491
+                1467
             ],
             "where": [
-                1475
+                1451
             ],
             "__typename": [
                 11
@@ -29407,10 +29292,10 @@ export default {
         },
         "settings_aggregate": {
             "aggregate": [
-                1512
+                1488
             ],
             "nodes": [
-                1510
+                1486
             ],
             "__typename": [
                 11
@@ -29421,7 +29306,7 @@ export default {
                 4,
                 {
                     "columns": [
-                        1522,
+                        1498,
                         "[settings_select_column!]"
                     ],
                     "distinct": [
@@ -29430,10 +29315,10 @@ export default {
                 }
             ],
             "max": [
-                1516
+                1492
             ],
             "min": [
-                1517
+                1493
             ],
             "__typename": [
                 11
@@ -29441,13 +29326,13 @@ export default {
         },
         "settings_bool_exp": {
             "_and": [
-                1513
+                1489
             ],
             "_not": [
-                1513
+                1489
             ],
             "_or": [
-                1513
+                1489
             ],
             "name": [
                 13
@@ -29498,7 +29383,7 @@ export default {
                 4
             ],
             "returning": [
-                1510
+                1486
             ],
             "__typename": [
                 11
@@ -29506,13 +29391,13 @@ export default {
         },
         "settings_on_conflict": {
             "constraint": [
-                1514
+                1490
             ],
             "update_columns": [
-                1526
+                1502
             ],
             "where": [
-                1513
+                1489
             ],
             "__typename": [
                 11
@@ -29551,7 +29436,7 @@ export default {
         },
         "settings_stream_cursor_input": {
             "initial_value": [
-                1525
+                1501
             ],
             "ordering": [
                 78
@@ -29574,10 +29459,10 @@ export default {
         "settings_update_column": {},
         "settings_updates": {
             "_set": [
-                1523
+                1499
             ],
             "where": [
-                1513
+                1489
             ],
             "__typename": [
                 11
@@ -29585,28 +29470,28 @@ export default {
         },
         "team_invites": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by": [
-                1409
+                1385
             ],
             "invited_by_player_steam_id": [
                 74
             ],
             "player": [
-                1409
+                1385
             ],
             "steam_id": [
                 74
             ],
             "team": [
-                1610
+                1586
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -29614,10 +29499,10 @@ export default {
         },
         "team_invites_aggregate": {
             "aggregate": [
-                1532
+                1508
             ],
             "nodes": [
-                1528
+                1504
             ],
             "__typename": [
                 11
@@ -29625,7 +29510,7 @@ export default {
         },
         "team_invites_aggregate_bool_exp": {
             "count": [
-                1531
+                1507
             ],
             "__typename": [
                 11
@@ -29633,13 +29518,13 @@ export default {
         },
         "team_invites_aggregate_bool_exp_count": {
             "arguments": [
-                1549
+                1525
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1537
+                1513
             ],
             "predicate": [
                 5
@@ -29650,13 +29535,13 @@ export default {
         },
         "team_invites_aggregate_fields": {
             "avg": [
-                1535
+                1511
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "distinct": [
@@ -29665,31 +29550,31 @@ export default {
                 }
             ],
             "max": [
-                1541
+                1517
             ],
             "min": [
-                1543
+                1519
             ],
             "stddev": [
-                1551
+                1527
             ],
             "stddev_pop": [
-                1553
+                1529
             ],
             "stddev_samp": [
-                1555
+                1531
             ],
             "sum": [
-                1559
+                1535
             ],
             "var_pop": [
-                1563
+                1539
             ],
             "var_samp": [
-                1565
+                1541
             ],
             "variance": [
-                1567
+                1543
             ],
             "__typename": [
                 11
@@ -29697,37 +29582,37 @@ export default {
         },
         "team_invites_aggregate_order_by": {
             "avg": [
-                1536
+                1512
             ],
             "count": [
                 1082
             ],
             "max": [
-                1542
+                1518
             ],
             "min": [
-                1544
+                1520
             ],
             "stddev": [
-                1552
+                1528
             ],
             "stddev_pop": [
-                1554
+                1530
             ],
             "stddev_samp": [
-                1556
+                1532
             ],
             "sum": [
-                1560
+                1536
             ],
             "var_pop": [
-                1564
+                1540
             ],
             "var_samp": [
-                1566
+                1542
             ],
             "variance": [
-                1568
+                1544
             ],
             "__typename": [
                 11
@@ -29735,10 +29620,10 @@ export default {
         },
         "team_invites_arr_rel_insert_input": {
             "data": [
-                1540
+                1516
             ],
             "on_conflict": [
-                1546
+                1522
             ],
             "__typename": [
                 11
@@ -29768,37 +29653,37 @@ export default {
         },
         "team_invites_bool_exp": {
             "_and": [
-                1537
+                1513
             ],
             "_not": [
-                1537
+                1513
             ],
             "_or": [
-                1537
+                1513
             ],
             "created_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "invited_by": [
-                1413
+                1389
             ],
             "invited_by_player_steam_id": [
                 75
             ],
             "player": [
-                1413
+                1389
             ],
             "steam_id": [
                 75
             ],
             "team": [
-                1619
+                1595
             ],
             "team_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -29818,28 +29703,28 @@ export default {
         },
         "team_invites_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by": [
-                1420
+                1396
             ],
             "invited_by_player_steam_id": [
                 74
             ],
             "player": [
-                1420
+                1396
             ],
             "steam_id": [
                 74
             ],
             "team": [
-                1628
+                1604
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -29847,10 +29732,10 @@ export default {
         },
         "team_invites_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -29859,7 +29744,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -29887,10 +29772,10 @@ export default {
         },
         "team_invites_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -29899,7 +29784,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -29930,7 +29815,7 @@ export default {
                 4
             ],
             "returning": [
-                1528
+                1504
             ],
             "__typename": [
                 11
@@ -29938,13 +29823,13 @@ export default {
         },
         "team_invites_on_conflict": {
             "constraint": [
-                1538
+                1514
             ],
             "update_columns": [
-                1561
+                1537
             ],
             "where": [
-                1537
+                1513
             ],
             "__typename": [
                 11
@@ -29958,19 +29843,19 @@ export default {
                 1082
             ],
             "invited_by": [
-                1422
+                1398
             ],
             "invited_by_player_steam_id": [
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "steam_id": [
                 1082
             ],
             "team": [
-                1630
+                1606
             ],
             "team_id": [
                 1082
@@ -29981,7 +29866,7 @@ export default {
         },
         "team_invites_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -29990,10 +29875,10 @@ export default {
         "team_invites_select_column": {},
         "team_invites_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -30002,7 +29887,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30076,7 +29961,7 @@ export default {
         },
         "team_invites_stream_cursor_input": {
             "initial_value": [
-                1558
+                1534
             ],
             "ordering": [
                 78
@@ -30087,10 +29972,10 @@ export default {
         },
         "team_invites_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -30099,7 +29984,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30130,13 +30015,13 @@ export default {
         "team_invites_update_column": {},
         "team_invites_updates": {
             "_inc": [
-                1539
+                1515
             ],
             "_set": [
-                1550
+                1526
             ],
             "where": [
-                1537
+                1513
             ],
             "__typename": [
                 11
@@ -30210,7 +30095,7 @@ export default {
         },
         "team_roster": {
             "player": [
-                1409
+                1385
             ],
             "player_steam_id": [
                 74
@@ -30219,10 +30104,10 @@ export default {
                 332
             ],
             "team": [
-                1610
+                1586
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30230,10 +30115,10 @@ export default {
         },
         "team_roster_aggregate": {
             "aggregate": [
-                1573
+                1549
             ],
             "nodes": [
-                1569
+                1545
             ],
             "__typename": [
                 11
@@ -30241,7 +30126,7 @@ export default {
         },
         "team_roster_aggregate_bool_exp": {
             "count": [
-                1572
+                1548
             ],
             "__typename": [
                 11
@@ -30249,13 +30134,13 @@ export default {
         },
         "team_roster_aggregate_bool_exp_count": {
             "arguments": [
-                1590
+                1566
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1578
+                1554
             ],
             "predicate": [
                 5
@@ -30266,13 +30151,13 @@ export default {
         },
         "team_roster_aggregate_fields": {
             "avg": [
-                1576
+                1552
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "distinct": [
@@ -30281,31 +30166,31 @@ export default {
                 }
             ],
             "max": [
-                1582
+                1558
             ],
             "min": [
-                1584
+                1560
             ],
             "stddev": [
-                1592
+                1568
             ],
             "stddev_pop": [
-                1594
+                1570
             ],
             "stddev_samp": [
-                1596
+                1572
             ],
             "sum": [
-                1600
+                1576
             ],
             "var_pop": [
-                1604
+                1580
             ],
             "var_samp": [
-                1606
+                1582
             ],
             "variance": [
-                1608
+                1584
             ],
             "__typename": [
                 11
@@ -30313,37 +30198,37 @@ export default {
         },
         "team_roster_aggregate_order_by": {
             "avg": [
-                1577
+                1553
             ],
             "count": [
                 1082
             ],
             "max": [
-                1583
+                1559
             ],
             "min": [
-                1585
+                1561
             ],
             "stddev": [
-                1593
+                1569
             ],
             "stddev_pop": [
-                1595
+                1571
             ],
             "stddev_samp": [
-                1597
+                1573
             ],
             "sum": [
-                1601
+                1577
             ],
             "var_pop": [
-                1605
+                1581
             ],
             "var_samp": [
-                1607
+                1583
             ],
             "variance": [
-                1609
+                1585
             ],
             "__typename": [
                 11
@@ -30351,10 +30236,10 @@ export default {
         },
         "team_roster_arr_rel_insert_input": {
             "data": [
-                1581
+                1557
             ],
             "on_conflict": [
-                1587
+                1563
             ],
             "__typename": [
                 11
@@ -30378,16 +30263,16 @@ export default {
         },
         "team_roster_bool_exp": {
             "_and": [
-                1578
+                1554
             ],
             "_not": [
-                1578
+                1554
             ],
             "_or": [
-                1578
+                1554
             ],
             "player": [
-                1413
+                1389
             ],
             "player_steam_id": [
                 75
@@ -30396,10 +30281,10 @@ export default {
                 333
             ],
             "team": [
-                1619
+                1595
             ],
             "team_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -30416,7 +30301,7 @@ export default {
         },
         "team_roster_insert_input": {
             "player": [
-                1420
+                1396
             ],
             "player_steam_id": [
                 74
@@ -30425,10 +30310,10 @@ export default {
                 332
             ],
             "team": [
-                1628
+                1604
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30439,7 +30324,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30461,7 +30346,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30483,7 +30368,7 @@ export default {
                 4
             ],
             "returning": [
-                1569
+                1545
             ],
             "__typename": [
                 11
@@ -30491,13 +30376,13 @@ export default {
         },
         "team_roster_on_conflict": {
             "constraint": [
-                1579
+                1555
             ],
             "update_columns": [
-                1602
+                1578
             ],
             "where": [
-                1578
+                1554
             ],
             "__typename": [
                 11
@@ -30505,7 +30390,7 @@ export default {
         },
         "team_roster_order_by": {
             "player": [
-                1422
+                1398
             ],
             "player_steam_id": [
                 1082
@@ -30514,7 +30399,7 @@ export default {
                 1082
             ],
             "team": [
-                1630
+                1606
             ],
             "team_id": [
                 1082
@@ -30528,7 +30413,7 @@ export default {
                 74
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30543,7 +30428,7 @@ export default {
                 332
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30599,7 +30484,7 @@ export default {
         },
         "team_roster_stream_cursor_input": {
             "initial_value": [
-                1599
+                1575
             ],
             "ordering": [
                 78
@@ -30616,7 +30501,7 @@ export default {
                 332
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -30641,13 +30526,13 @@ export default {
         "team_roster_update_column": {},
         "team_roster_updates": {
             "_inc": [
-                1580
+                1556
             ],
             "_set": [
-                1591
+                1567
             ],
             "where": [
-                1578
+                1554
             ],
             "__typename": [
                 11
@@ -30712,13 +30597,13 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "invites": [
-                1528,
+                1504,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -30728,19 +30613,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "invites_aggregate": [
-                1529,
+                1505,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -30750,11 +30635,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
@@ -30828,16 +30713,16 @@ export default {
                 11
             ],
             "owner": [
-                1409
+                1385
             ],
             "owner_steam_id": [
                 74
             ],
             "roster": [
-                1569,
+                1545,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -30847,19 +30732,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "roster_aggregate": [
-                1570,
+                1546,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -30869,11 +30754,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
@@ -30881,10 +30766,10 @@ export default {
                 11
             ],
             "tournament_teams": [
-                1866,
+                1842,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -30894,19 +30779,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "tournament_teams_aggregate": [
-                1867,
+                1843,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -30916,11 +30801,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
@@ -30930,10 +30815,10 @@ export default {
         },
         "teams_aggregate": {
             "aggregate": [
-                1614
+                1590
             ],
             "nodes": [
-                1610
+                1586
             ],
             "__typename": [
                 11
@@ -30941,7 +30826,7 @@ export default {
         },
         "teams_aggregate_bool_exp": {
             "count": [
-                1613
+                1589
             ],
             "__typename": [
                 11
@@ -30949,13 +30834,13 @@ export default {
         },
         "teams_aggregate_bool_exp_count": {
             "arguments": [
-                1632
+                1608
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1619
+                1595
             ],
             "predicate": [
                 5
@@ -30966,13 +30851,13 @@ export default {
         },
         "teams_aggregate_fields": {
             "avg": [
-                1617
+                1593
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "distinct": [
@@ -30981,31 +30866,31 @@ export default {
                 }
             ],
             "max": [
-                1623
+                1599
             ],
             "min": [
-                1625
+                1601
             ],
             "stddev": [
-                1634
+                1610
             ],
             "stddev_pop": [
-                1636
+                1612
             ],
             "stddev_samp": [
-                1638
+                1614
             ],
             "sum": [
-                1642
+                1618
             ],
             "var_pop": [
-                1646
+                1622
             ],
             "var_samp": [
-                1648
+                1624
             ],
             "variance": [
-                1650
+                1626
             ],
             "__typename": [
                 11
@@ -31013,37 +30898,37 @@ export default {
         },
         "teams_aggregate_order_by": {
             "avg": [
-                1618
+                1594
             ],
             "count": [
                 1082
             ],
             "max": [
-                1624
+                1600
             ],
             "min": [
-                1626
+                1602
             ],
             "stddev": [
-                1635
+                1611
             ],
             "stddev_pop": [
-                1637
+                1613
             ],
             "stddev_samp": [
-                1639
+                1615
             ],
             "sum": [
-                1643
+                1619
             ],
             "var_pop": [
-                1647
+                1623
             ],
             "var_samp": [
-                1649
+                1625
             ],
             "variance": [
-                1651
+                1627
             ],
             "__typename": [
                 11
@@ -31051,10 +30936,10 @@ export default {
         },
         "teams_arr_rel_insert_input": {
             "data": [
-                1622
+                1598
             ],
             "on_conflict": [
-                1629
+                1605
             ],
             "__typename": [
                 11
@@ -31078,13 +30963,13 @@ export default {
         },
         "teams_bool_exp": {
             "_and": [
-                1619
+                1595
             ],
             "_not": [
-                1619
+                1595
             ],
             "_or": [
-                1619
+                1595
             ],
             "can_change_role": [
                 1
@@ -31096,13 +30981,13 @@ export default {
                 1
             ],
             "id": [
-                1951
+                1927
             ],
             "invites": [
-                1537
+                1513
             ],
             "invites_aggregate": [
-                1530
+                1506
             ],
             "match_lineups": [
                 696
@@ -31117,25 +31002,25 @@ export default {
                 13
             ],
             "owner": [
-                1413
+                1389
             ],
             "owner_steam_id": [
                 75
             ],
             "roster": [
-                1578
+                1554
             ],
             "roster_aggregate": [
-                1571
+                1547
             ],
             "short_name": [
                 13
             ],
             "tournament_teams": [
-                1875
+                1851
             ],
             "tournament_teams_aggregate": [
-                1868
+                1844
             ],
             "__typename": [
                 11
@@ -31152,10 +31037,10 @@ export default {
         },
         "teams_insert_input": {
             "id": [
-                1950
+                1926
             ],
             "invites": [
-                1534
+                1510
             ],
             "match_lineups": [
                 693
@@ -31164,19 +31049,19 @@ export default {
                 11
             ],
             "owner": [
-                1420
+                1396
             ],
             "owner_steam_id": [
                 74
             ],
             "roster": [
-                1575
+                1551
             ],
             "short_name": [
                 11
             ],
             "tournament_teams": [
-                1872
+                1848
             ],
             "__typename": [
                 11
@@ -31184,7 +31069,7 @@ export default {
         },
         "teams_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -31218,7 +31103,7 @@ export default {
         },
         "teams_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -31255,7 +31140,7 @@ export default {
                 4
             ],
             "returning": [
-                1610
+                1586
             ],
             "__typename": [
                 11
@@ -31263,10 +31148,10 @@ export default {
         },
         "teams_obj_rel_insert_input": {
             "data": [
-                1622
+                1598
             ],
             "on_conflict": [
-                1629
+                1605
             ],
             "__typename": [
                 11
@@ -31274,13 +31159,13 @@ export default {
         },
         "teams_on_conflict": {
             "constraint": [
-                1620
+                1596
             ],
             "update_columns": [
-                1644
+                1620
             ],
             "where": [
-                1619
+                1595
             ],
             "__typename": [
                 11
@@ -31300,7 +31185,7 @@ export default {
                 1082
             ],
             "invites_aggregate": [
-                1533
+                1509
             ],
             "match_lineups_aggregate": [
                 692
@@ -31312,19 +31197,19 @@ export default {
                 1082
             ],
             "owner": [
-                1422
+                1398
             ],
             "owner_steam_id": [
                 1082
             ],
             "roster_aggregate": [
-                1574
+                1550
             ],
             "short_name": [
                 1082
             ],
             "tournament_teams_aggregate": [
-                1871
+                1847
             ],
             "__typename": [
                 11
@@ -31332,7 +31217,7 @@ export default {
         },
         "teams_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -31341,7 +31226,7 @@ export default {
         "teams_select_column": {},
         "teams_set_input": {
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -31406,7 +31291,7 @@ export default {
         },
         "teams_stream_cursor_input": {
             "initial_value": [
-                1641
+                1617
             ],
             "ordering": [
                 78
@@ -31417,7 +31302,7 @@ export default {
         },
         "teams_stream_cursor_value_input": {
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -31451,13 +31336,13 @@ export default {
         "teams_update_column": {},
         "teams_updates": {
             "_inc": [
-                1621
+                1597
             ],
             "_set": [
-                1633
+                1609
             ],
             "where": [
-                1619
+                1595
             ],
             "__typename": [
                 11
@@ -31515,31 +31400,31 @@ export default {
         "timestamptz": {},
         "timestamptz_comparison_exp": {
             "_eq": [
-                1653
+                1629
             ],
             "_gt": [
-                1653
+                1629
             ],
             "_gte": [
-                1653
+                1629
             ],
             "_in": [
-                1653
+                1629
             ],
             "_is_null": [
                 0
             ],
             "_lt": [
-                1653
+                1629
             ],
             "_lte": [
-                1653
+                1629
             ],
             "_neq": [
-                1653
+                1629
             ],
             "_nin": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -31547,43 +31432,43 @@ export default {
         },
         "tournament_brackets": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_number": [
                 4
             ],
             "parent_bracket_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "stage": [
-                1737
+                1713
             ],
             "team_1": [
-                1866
+                1842
             ],
             "team_2": [
-                1866
+                1842
             ],
             "tournament_stage_id": [
-                1950
+                1926
             ],
             "tournament_team_id_1": [
-                1950
+                1926
             ],
             "tournament_team_id_2": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -31591,10 +31476,10 @@ export default {
         },
         "tournament_brackets_aggregate": {
             "aggregate": [
-                1659
+                1635
             ],
             "nodes": [
-                1655
+                1631
             ],
             "__typename": [
                 11
@@ -31602,7 +31487,7 @@ export default {
         },
         "tournament_brackets_aggregate_bool_exp": {
             "count": [
-                1658
+                1634
             ],
             "__typename": [
                 11
@@ -31610,13 +31495,13 @@ export default {
         },
         "tournament_brackets_aggregate_bool_exp_count": {
             "arguments": [
-                1676
+                1652
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1664
+                1640
             ],
             "predicate": [
                 5
@@ -31627,13 +31512,13 @@ export default {
         },
         "tournament_brackets_aggregate_fields": {
             "avg": [
-                1662
+                1638
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "distinct": [
@@ -31642,31 +31527,31 @@ export default {
                 }
             ],
             "max": [
-                1668
+                1644
             ],
             "min": [
-                1670
+                1646
             ],
             "stddev": [
-                1678
+                1654
             ],
             "stddev_pop": [
-                1680
+                1656
             ],
             "stddev_samp": [
-                1682
+                1658
             ],
             "sum": [
-                1686
+                1662
             ],
             "var_pop": [
-                1690
+                1666
             ],
             "var_samp": [
-                1692
+                1668
             ],
             "variance": [
-                1694
+                1670
             ],
             "__typename": [
                 11
@@ -31674,37 +31559,37 @@ export default {
         },
         "tournament_brackets_aggregate_order_by": {
             "avg": [
-                1663
+                1639
             ],
             "count": [
                 1082
             ],
             "max": [
-                1669
+                1645
             ],
             "min": [
-                1671
+                1647
             ],
             "stddev": [
-                1679
+                1655
             ],
             "stddev_pop": [
-                1681
+                1657
             ],
             "stddev_samp": [
-                1683
+                1659
             ],
             "sum": [
-                1687
+                1663
             ],
             "var_pop": [
-                1691
+                1667
             ],
             "var_samp": [
-                1693
+                1669
             ],
             "variance": [
-                1695
+                1671
             ],
             "__typename": [
                 11
@@ -31712,10 +31597,10 @@ export default {
         },
         "tournament_brackets_arr_rel_insert_input": {
             "data": [
-                1667
+                1643
             ],
             "on_conflict": [
-                1673
+                1649
             ],
             "__typename": [
                 11
@@ -31745,52 +31630,52 @@ export default {
         },
         "tournament_brackets_bool_exp": {
             "_and": [
-                1664
+                1640
             ],
             "_not": [
-                1664
+                1640
             ],
             "_or": [
-                1664
+                1640
             ],
             "created_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "match_number": [
                 5
             ],
             "parent_bracket_id": [
-                1951
+                1927
             ],
             "round": [
                 5
             ],
             "stage": [
-                1747
+                1723
             ],
             "team_1": [
-                1875
+                1851
             ],
             "team_2": [
-                1875
+                1851
             ],
             "tournament_stage_id": [
-                1951
+                1927
             ],
             "tournament_team_id_1": [
-                1951
+                1927
             ],
             "tournament_team_id_2": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -31810,43 +31695,43 @@ export default {
         },
         "tournament_brackets_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match": [
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_number": [
                 4
             ],
             "parent_bracket_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "stage": [
-                1759
+                1735
             ],
             "team_1": [
-                1884
+                1860
             ],
             "team_2": [
-                1884
+                1860
             ],
             "tournament_stage_id": [
-                1950
+                1926
             ],
             "tournament_team_id_1": [
-                1950
+                1926
             ],
             "tournament_team_id_2": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -31854,31 +31739,31 @@ export default {
         },
         "tournament_brackets_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_number": [
                 4
             ],
             "parent_bracket_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "tournament_stage_id": [
-                1950
+                1926
             ],
             "tournament_team_id_1": [
-                1950
+                1926
             ],
             "tournament_team_id_2": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -31918,31 +31803,31 @@ export default {
         },
         "tournament_brackets_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_number": [
                 4
             ],
             "parent_bracket_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "tournament_stage_id": [
-                1950
+                1926
             ],
             "tournament_team_id_1": [
-                1950
+                1926
             ],
             "tournament_team_id_2": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -31985,7 +31870,7 @@ export default {
                 4
             ],
             "returning": [
-                1655
+                1631
             ],
             "__typename": [
                 11
@@ -31993,13 +31878,13 @@ export default {
         },
         "tournament_brackets_on_conflict": {
             "constraint": [
-                1665
+                1641
             ],
             "update_columns": [
-                1688
+                1664
             ],
             "where": [
-                1664
+                1640
             ],
             "__typename": [
                 11
@@ -32028,13 +31913,13 @@ export default {
                 1082
             ],
             "stage": [
-                1761
+                1737
             ],
             "team_1": [
-                1886
+                1862
             ],
             "team_2": [
-                1886
+                1862
             ],
             "tournament_stage_id": [
                 1082
@@ -32051,7 +31936,7 @@ export default {
         },
         "tournament_brackets_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32060,31 +31945,31 @@ export default {
         "tournament_brackets_select_column": {},
         "tournament_brackets_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_number": [
                 4
             ],
             "parent_bracket_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "tournament_stage_id": [
-                1950
+                1926
             ],
             "tournament_team_id_1": [
-                1950
+                1926
             ],
             "tournament_team_id_2": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32158,7 +32043,7 @@ export default {
         },
         "tournament_brackets_stream_cursor_input": {
             "initial_value": [
-                1685
+                1661
             ],
             "ordering": [
                 78
@@ -32169,31 +32054,31 @@ export default {
         },
         "tournament_brackets_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "match_number": [
                 4
             ],
             "parent_bracket_id": [
-                1950
+                1926
             ],
             "round": [
                 4
             ],
             "tournament_stage_id": [
-                1950
+                1926
             ],
             "tournament_team_id_1": [
-                1950
+                1926
             ],
             "tournament_team_id_2": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32224,13 +32109,13 @@ export default {
         "tournament_brackets_update_column": {},
         "tournament_brackets_updates": {
             "_inc": [
-                1666
+                1642
             ],
             "_set": [
-                1677
+                1653
             ],
             "where": [
-                1664
+                1640
             ],
             "__typename": [
                 11
@@ -32304,16 +32189,16 @@ export default {
         },
         "tournament_organizers": {
             "organizer": [
-                1409
+                1385
             ],
             "steam_id": [
                 74
             ],
             "tournament": [
-                1908
+                1884
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32321,10 +32206,10 @@ export default {
         },
         "tournament_organizers_aggregate": {
             "aggregate": [
-                1700
+                1676
             ],
             "nodes": [
-                1696
+                1672
             ],
             "__typename": [
                 11
@@ -32332,7 +32217,7 @@ export default {
         },
         "tournament_organizers_aggregate_bool_exp": {
             "count": [
-                1699
+                1675
             ],
             "__typename": [
                 11
@@ -32340,13 +32225,13 @@ export default {
         },
         "tournament_organizers_aggregate_bool_exp_count": {
             "arguments": [
-                1717
+                1693
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1705
+                1681
             ],
             "predicate": [
                 5
@@ -32357,13 +32242,13 @@ export default {
         },
         "tournament_organizers_aggregate_fields": {
             "avg": [
-                1703
+                1679
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "distinct": [
@@ -32372,31 +32257,31 @@ export default {
                 }
             ],
             "max": [
-                1709
+                1685
             ],
             "min": [
-                1711
+                1687
             ],
             "stddev": [
-                1719
+                1695
             ],
             "stddev_pop": [
-                1721
+                1697
             ],
             "stddev_samp": [
-                1723
+                1699
             ],
             "sum": [
-                1727
+                1703
             ],
             "var_pop": [
-                1731
+                1707
             ],
             "var_samp": [
-                1733
+                1709
             ],
             "variance": [
-                1735
+                1711
             ],
             "__typename": [
                 11
@@ -32404,37 +32289,37 @@ export default {
         },
         "tournament_organizers_aggregate_order_by": {
             "avg": [
-                1704
+                1680
             ],
             "count": [
                 1082
             ],
             "max": [
-                1710
+                1686
             ],
             "min": [
-                1712
+                1688
             ],
             "stddev": [
-                1720
+                1696
             ],
             "stddev_pop": [
-                1722
+                1698
             ],
             "stddev_samp": [
-                1724
+                1700
             ],
             "sum": [
-                1728
+                1704
             ],
             "var_pop": [
-                1732
+                1708
             ],
             "var_samp": [
-                1734
+                1710
             ],
             "variance": [
-                1736
+                1712
             ],
             "__typename": [
                 11
@@ -32442,10 +32327,10 @@ export default {
         },
         "tournament_organizers_arr_rel_insert_input": {
             "data": [
-                1708
+                1684
             ],
             "on_conflict": [
-                1714
+                1690
             ],
             "__typename": [
                 11
@@ -32469,25 +32354,25 @@ export default {
         },
         "tournament_organizers_bool_exp": {
             "_and": [
-                1705
+                1681
             ],
             "_not": [
-                1705
+                1681
             ],
             "_or": [
-                1705
+                1681
             ],
             "organizer": [
-                1413
+                1389
             ],
             "steam_id": [
                 75
             ],
             "tournament": [
-                1917
+                1893
             ],
             "tournament_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -32504,16 +32389,16 @@ export default {
         },
         "tournament_organizers_insert_input": {
             "organizer": [
-                1420
+                1396
             ],
             "steam_id": [
                 74
             ],
             "tournament": [
-                1926
+                1902
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32524,7 +32409,7 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32546,7 +32431,7 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32568,7 +32453,7 @@ export default {
                 4
             ],
             "returning": [
-                1696
+                1672
             ],
             "__typename": [
                 11
@@ -32576,13 +32461,13 @@ export default {
         },
         "tournament_organizers_on_conflict": {
             "constraint": [
-                1706
+                1682
             ],
             "update_columns": [
-                1729
+                1705
             ],
             "where": [
-                1705
+                1681
             ],
             "__typename": [
                 11
@@ -32590,13 +32475,13 @@ export default {
         },
         "tournament_organizers_order_by": {
             "organizer": [
-                1422
+                1398
             ],
             "steam_id": [
                 1082
             ],
             "tournament": [
-                1928
+                1904
             ],
             "tournament_id": [
                 1082
@@ -32610,7 +32495,7 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32622,7 +32507,7 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32678,7 +32563,7 @@ export default {
         },
         "tournament_organizers_stream_cursor_input": {
             "initial_value": [
-                1726
+                1702
             ],
             "ordering": [
                 78
@@ -32692,7 +32577,7 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -32717,13 +32602,13 @@ export default {
         "tournament_organizers_update_column": {},
         "tournament_organizers_updates": {
             "_inc": [
-                1707
+                1683
             ],
             "_set": [
-                1718
+                1694
             ],
             "where": [
-                1705
+                1681
             ],
             "__typename": [
                 11
@@ -32779,10 +32664,10 @@ export default {
         },
         "tournament_stages": {
             "brackets": [
-                1655,
+                1631,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -32792,19 +32677,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "brackets_aggregate": [
-                1656,
+                1632,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -32814,11 +32699,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
@@ -32826,7 +32711,7 @@ export default {
                 368
             ],
             "id": [
-                1950
+                1926
             ],
             "max_teams": [
                 4
@@ -32846,10 +32731,10 @@ export default {
                 }
             ],
             "tournament": [
-                1908
+                1884
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "type": [
                 373
@@ -32860,10 +32745,10 @@ export default {
         },
         "tournament_stages_aggregate": {
             "aggregate": [
-                1741
+                1717
             ],
             "nodes": [
-                1737
+                1713
             ],
             "__typename": [
                 11
@@ -32871,7 +32756,7 @@ export default {
         },
         "tournament_stages_aggregate_bool_exp": {
             "count": [
-                1740
+                1716
             ],
             "__typename": [
                 11
@@ -32879,13 +32764,13 @@ export default {
         },
         "tournament_stages_aggregate_bool_exp_count": {
             "arguments": [
-                1764
+                1740
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1747
+                1723
             ],
             "predicate": [
                 5
@@ -32896,13 +32781,13 @@ export default {
         },
         "tournament_stages_aggregate_fields": {
             "avg": [
-                1745
+                1721
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "distinct": [
@@ -32911,31 +32796,31 @@ export default {
                 }
             ],
             "max": [
-                1754
+                1730
             ],
             "min": [
-                1756
+                1732
             ],
             "stddev": [
-                1766
+                1742
             ],
             "stddev_pop": [
-                1768
+                1744
             ],
             "stddev_samp": [
-                1770
+                1746
             ],
             "sum": [
-                1774
+                1750
             ],
             "var_pop": [
-                1778
+                1754
             ],
             "var_samp": [
-                1780
+                1756
             ],
             "variance": [
-                1782
+                1758
             ],
             "__typename": [
                 11
@@ -32943,37 +32828,37 @@ export default {
         },
         "tournament_stages_aggregate_order_by": {
             "avg": [
-                1746
+                1722
             ],
             "count": [
                 1082
             ],
             "max": [
-                1755
+                1731
             ],
             "min": [
-                1757
+                1733
             ],
             "stddev": [
-                1767
+                1743
             ],
             "stddev_pop": [
-                1769
+                1745
             ],
             "stddev_samp": [
-                1771
+                1747
             ],
             "sum": [
-                1775
+                1751
             ],
             "var_pop": [
-                1779
+                1755
             ],
             "var_samp": [
-                1781
+                1757
             ],
             "variance": [
-                1783
+                1759
             ],
             "__typename": [
                 11
@@ -32989,10 +32874,10 @@ export default {
         },
         "tournament_stages_arr_rel_insert_input": {
             "data": [
-                1753
+                1729
             ],
             "on_conflict": [
-                1760
+                1736
             ],
             "__typename": [
                 11
@@ -33028,25 +32913,25 @@ export default {
         },
         "tournament_stages_bool_exp": {
             "_and": [
-                1747
+                1723
             ],
             "_not": [
-                1747
+                1723
             ],
             "_or": [
-                1747
+                1723
             ],
             "brackets": [
-                1664
+                1640
             ],
             "brackets_aggregate": [
-                1657
+                1633
             ],
             "e_tournament_stage_type": [
                 371
             ],
             "id": [
-                1951
+                1927
             ],
             "max_teams": [
                 5
@@ -33061,10 +32946,10 @@ export default {
                 529
             ],
             "tournament": [
-                1917
+                1893
             ],
             "tournament_id": [
-                1951
+                1927
             ],
             "type": [
                 374
@@ -33114,13 +32999,13 @@ export default {
         },
         "tournament_stages_insert_input": {
             "brackets": [
-                1661
+                1637
             ],
             "e_tournament_stage_type": [
                 379
             ],
             "id": [
-                1950
+                1926
             ],
             "max_teams": [
                 4
@@ -33135,10 +33020,10 @@ export default {
                 527
             ],
             "tournament": [
-                1926
+                1902
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "type": [
                 373
@@ -33149,7 +33034,7 @@ export default {
         },
         "tournament_stages_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "max_teams": [
                 4
@@ -33161,7 +33046,7 @@ export default {
                 4
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33189,7 +33074,7 @@ export default {
         },
         "tournament_stages_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "max_teams": [
                 4
@@ -33201,7 +33086,7 @@ export default {
                 4
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33232,7 +33117,7 @@ export default {
                 4
             ],
             "returning": [
-                1737
+                1713
             ],
             "__typename": [
                 11
@@ -33240,10 +33125,10 @@ export default {
         },
         "tournament_stages_obj_rel_insert_input": {
             "data": [
-                1753
+                1729
             ],
             "on_conflict": [
-                1760
+                1736
             ],
             "__typename": [
                 11
@@ -33251,13 +33136,13 @@ export default {
         },
         "tournament_stages_on_conflict": {
             "constraint": [
-                1748
+                1724
             ],
             "update_columns": [
-                1776
+                1752
             ],
             "where": [
-                1747
+                1723
             ],
             "__typename": [
                 11
@@ -33265,7 +33150,7 @@ export default {
         },
         "tournament_stages_order_by": {
             "brackets_aggregate": [
-                1660
+                1636
             ],
             "e_tournament_stage_type": [
                 381
@@ -33286,7 +33171,7 @@ export default {
                 1082
             ],
             "tournament": [
-                1928
+                1904
             ],
             "tournament_id": [
                 1082
@@ -33300,7 +33185,7 @@ export default {
         },
         "tournament_stages_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33317,7 +33202,7 @@ export default {
         "tournament_stages_select_column": {},
         "tournament_stages_set_input": {
             "id": [
-                1950
+                1926
             ],
             "max_teams": [
                 4
@@ -33332,7 +33217,7 @@ export default {
                 527
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "type": [
                 373
@@ -33427,7 +33312,7 @@ export default {
         },
         "tournament_stages_stream_cursor_input": {
             "initial_value": [
-                1773
+                1749
             ],
             "ordering": [
                 78
@@ -33438,7 +33323,7 @@ export default {
         },
         "tournament_stages_stream_cursor_value_input": {
             "id": [
-                1950
+                1926
             ],
             "max_teams": [
                 4
@@ -33453,7 +33338,7 @@ export default {
                 527
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "type": [
                 373
@@ -33493,28 +33378,28 @@ export default {
         "tournament_stages_update_column": {},
         "tournament_stages_updates": {
             "_append": [
-                1743
+                1719
             ],
             "_delete_at_path": [
-                1749
+                1725
             ],
             "_delete_elem": [
-                1750
+                1726
             ],
             "_delete_key": [
-                1751
+                1727
             ],
             "_inc": [
-                1752
+                1728
             ],
             "_prepend": [
-                1763
+                1739
             ],
             "_set": [
-                1765
+                1741
             ],
             "where": [
-                1747
+                1723
             ],
             "__typename": [
                 11
@@ -33606,28 +33491,28 @@ export default {
         },
         "tournament_team_invites": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by": [
-                1409
+                1385
             ],
             "invited_by_player_steam_id": [
                 74
             ],
             "player": [
-                1409
+                1385
             ],
             "steam_id": [
                 74
             ],
             "team": [
-                1866
+                1842
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33635,10 +33520,10 @@ export default {
         },
         "tournament_team_invites_aggregate": {
             "aggregate": [
-                1788
+                1764
             ],
             "nodes": [
-                1784
+                1760
             ],
             "__typename": [
                 11
@@ -33646,7 +33531,7 @@ export default {
         },
         "tournament_team_invites_aggregate_bool_exp": {
             "count": [
-                1787
+                1763
             ],
             "__typename": [
                 11
@@ -33654,13 +33539,13 @@ export default {
         },
         "tournament_team_invites_aggregate_bool_exp_count": {
             "arguments": [
-                1805
+                1781
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1793
+                1769
             ],
             "predicate": [
                 5
@@ -33671,13 +33556,13 @@ export default {
         },
         "tournament_team_invites_aggregate_fields": {
             "avg": [
-                1791
+                1767
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "distinct": [
@@ -33686,31 +33571,31 @@ export default {
                 }
             ],
             "max": [
-                1797
+                1773
             ],
             "min": [
-                1799
+                1775
             ],
             "stddev": [
-                1807
+                1783
             ],
             "stddev_pop": [
-                1809
+                1785
             ],
             "stddev_samp": [
-                1811
+                1787
             ],
             "sum": [
-                1815
+                1791
             ],
             "var_pop": [
-                1819
+                1795
             ],
             "var_samp": [
-                1821
+                1797
             ],
             "variance": [
-                1823
+                1799
             ],
             "__typename": [
                 11
@@ -33718,37 +33603,37 @@ export default {
         },
         "tournament_team_invites_aggregate_order_by": {
             "avg": [
-                1792
+                1768
             ],
             "count": [
                 1082
             ],
             "max": [
-                1798
+                1774
             ],
             "min": [
-                1800
+                1776
             ],
             "stddev": [
-                1808
+                1784
             ],
             "stddev_pop": [
-                1810
+                1786
             ],
             "stddev_samp": [
-                1812
+                1788
             ],
             "sum": [
-                1816
+                1792
             ],
             "var_pop": [
-                1820
+                1796
             ],
             "var_samp": [
-                1822
+                1798
             ],
             "variance": [
-                1824
+                1800
             ],
             "__typename": [
                 11
@@ -33756,10 +33641,10 @@ export default {
         },
         "tournament_team_invites_arr_rel_insert_input": {
             "data": [
-                1796
+                1772
             ],
             "on_conflict": [
-                1802
+                1778
             ],
             "__typename": [
                 11
@@ -33789,37 +33674,37 @@ export default {
         },
         "tournament_team_invites_bool_exp": {
             "_and": [
-                1793
+                1769
             ],
             "_not": [
-                1793
+                1769
             ],
             "_or": [
-                1793
+                1769
             ],
             "created_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "invited_by": [
-                1413
+                1389
             ],
             "invited_by_player_steam_id": [
                 75
             ],
             "player": [
-                1413
+                1389
             ],
             "steam_id": [
                 75
             ],
             "team": [
-                1875
+                1851
             ],
             "tournament_team_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -33839,28 +33724,28 @@ export default {
         },
         "tournament_team_invites_insert_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by": [
-                1420
+                1396
             ],
             "invited_by_player_steam_id": [
                 74
             ],
             "player": [
-                1420
+                1396
             ],
             "steam_id": [
                 74
             ],
             "team": [
-                1884
+                1860
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33868,10 +33753,10 @@ export default {
         },
         "tournament_team_invites_max_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -33880,7 +33765,7 @@ export default {
                 74
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33908,10 +33793,10 @@ export default {
         },
         "tournament_team_invites_min_fields": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -33920,7 +33805,7 @@ export default {
                 74
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -33951,7 +33836,7 @@ export default {
                 4
             ],
             "returning": [
-                1784
+                1760
             ],
             "__typename": [
                 11
@@ -33959,13 +33844,13 @@ export default {
         },
         "tournament_team_invites_on_conflict": {
             "constraint": [
-                1794
+                1770
             ],
             "update_columns": [
-                1817
+                1793
             ],
             "where": [
-                1793
+                1769
             ],
             "__typename": [
                 11
@@ -33979,19 +33864,19 @@ export default {
                 1082
             ],
             "invited_by": [
-                1422
+                1398
             ],
             "invited_by_player_steam_id": [
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "steam_id": [
                 1082
             ],
             "team": [
-                1886
+                1862
             ],
             "tournament_team_id": [
                 1082
@@ -34002,7 +33887,7 @@ export default {
         },
         "tournament_team_invites_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34011,10 +33896,10 @@ export default {
         "tournament_team_invites_select_column": {},
         "tournament_team_invites_set_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -34023,7 +33908,7 @@ export default {
                 74
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34097,7 +33982,7 @@ export default {
         },
         "tournament_team_invites_stream_cursor_input": {
             "initial_value": [
-                1814
+                1790
             ],
             "ordering": [
                 78
@@ -34108,10 +33993,10 @@ export default {
         },
         "tournament_team_invites_stream_cursor_value_input": {
             "created_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invited_by_player_steam_id": [
                 74
@@ -34120,7 +34005,7 @@ export default {
                 74
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34151,13 +34036,13 @@ export default {
         "tournament_team_invites_update_column": {},
         "tournament_team_invites_updates": {
             "_inc": [
-                1795
+                1771
             ],
             "_set": [
-                1806
+                1782
             ],
             "where": [
-                1793
+                1769
             ],
             "__typename": [
                 11
@@ -34234,7 +34119,7 @@ export default {
                 327
             ],
             "player": [
-                1409
+                1385
             ],
             "player_steam_id": [
                 74
@@ -34243,16 +34128,16 @@ export default {
                 332
             ],
             "tournament": [
-                1908
+                1884
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "tournament_team": [
-                1866
+                1842
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34260,10 +34145,10 @@ export default {
         },
         "tournament_team_roster_aggregate": {
             "aggregate": [
-                1829
+                1805
             ],
             "nodes": [
-                1825
+                1801
             ],
             "__typename": [
                 11
@@ -34271,7 +34156,7 @@ export default {
         },
         "tournament_team_roster_aggregate_bool_exp": {
             "count": [
-                1828
+                1804
             ],
             "__typename": [
                 11
@@ -34279,13 +34164,13 @@ export default {
         },
         "tournament_team_roster_aggregate_bool_exp_count": {
             "arguments": [
-                1846
+                1822
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1834
+                1810
             ],
             "predicate": [
                 5
@@ -34296,13 +34181,13 @@ export default {
         },
         "tournament_team_roster_aggregate_fields": {
             "avg": [
-                1832
+                1808
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "distinct": [
@@ -34311,31 +34196,31 @@ export default {
                 }
             ],
             "max": [
-                1838
+                1814
             ],
             "min": [
-                1840
+                1816
             ],
             "stddev": [
-                1848
+                1824
             ],
             "stddev_pop": [
-                1850
+                1826
             ],
             "stddev_samp": [
-                1852
+                1828
             ],
             "sum": [
-                1856
+                1832
             ],
             "var_pop": [
-                1860
+                1836
             ],
             "var_samp": [
-                1862
+                1838
             ],
             "variance": [
-                1864
+                1840
             ],
             "__typename": [
                 11
@@ -34343,37 +34228,37 @@ export default {
         },
         "tournament_team_roster_aggregate_order_by": {
             "avg": [
-                1833
+                1809
             ],
             "count": [
                 1082
             ],
             "max": [
-                1839
+                1815
             ],
             "min": [
-                1841
+                1817
             ],
             "stddev": [
-                1849
+                1825
             ],
             "stddev_pop": [
-                1851
+                1827
             ],
             "stddev_samp": [
-                1853
+                1829
             ],
             "sum": [
-                1857
+                1833
             ],
             "var_pop": [
-                1861
+                1837
             ],
             "var_samp": [
-                1863
+                1839
             ],
             "variance": [
-                1865
+                1841
             ],
             "__typename": [
                 11
@@ -34381,10 +34266,10 @@ export default {
         },
         "tournament_team_roster_arr_rel_insert_input": {
             "data": [
-                1837
+                1813
             ],
             "on_conflict": [
-                1843
+                1819
             ],
             "__typename": [
                 11
@@ -34408,19 +34293,19 @@ export default {
         },
         "tournament_team_roster_bool_exp": {
             "_and": [
-                1834
+                1810
             ],
             "_not": [
-                1834
+                1810
             ],
             "_or": [
-                1834
+                1810
             ],
             "e_team_role": [
                 330
             ],
             "player": [
-                1413
+                1389
             ],
             "player_steam_id": [
                 75
@@ -34429,16 +34314,16 @@ export default {
                 333
             ],
             "tournament": [
-                1917
+                1893
             ],
             "tournament_id": [
-                1951
+                1927
             ],
             "tournament_team": [
-                1875
+                1851
             ],
             "tournament_team_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -34458,7 +34343,7 @@ export default {
                 338
             ],
             "player": [
-                1420
+                1396
             ],
             "player_steam_id": [
                 74
@@ -34467,16 +34352,16 @@ export default {
                 332
             ],
             "tournament": [
-                1926
+                1902
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "tournament_team": [
-                1884
+                1860
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34487,10 +34372,10 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34515,10 +34400,10 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34543,7 +34428,7 @@ export default {
                 4
             ],
             "returning": [
-                1825
+                1801
             ],
             "__typename": [
                 11
@@ -34551,13 +34436,13 @@ export default {
         },
         "tournament_team_roster_on_conflict": {
             "constraint": [
-                1835
+                1811
             ],
             "update_columns": [
-                1858
+                1834
             ],
             "where": [
-                1834
+                1810
             ],
             "__typename": [
                 11
@@ -34568,7 +34453,7 @@ export default {
                 340
             ],
             "player": [
-                1422
+                1398
             ],
             "player_steam_id": [
                 1082
@@ -34577,13 +34462,13 @@ export default {
                 1082
             ],
             "tournament": [
-                1928
+                1904
             ],
             "tournament_id": [
                 1082
             ],
             "tournament_team": [
-                1886
+                1862
             ],
             "tournament_team_id": [
                 1082
@@ -34597,7 +34482,7 @@ export default {
                 74
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34612,10 +34497,10 @@ export default {
                 332
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34671,7 +34556,7 @@ export default {
         },
         "tournament_team_roster_stream_cursor_input": {
             "initial_value": [
-                1855
+                1831
             ],
             "ordering": [
                 78
@@ -34688,10 +34573,10 @@ export default {
                 332
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "tournament_team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34716,13 +34601,13 @@ export default {
         "tournament_team_roster_update_column": {},
         "tournament_team_roster_updates": {
             "_inc": [
-                1836
+                1812
             ],
             "_set": [
-                1847
+                1823
             ],
             "where": [
-                1834
+                1810
             ],
             "__typename": [
                 11
@@ -34781,19 +34666,19 @@ export default {
                 0
             ],
             "creator": [
-                1409
+                1385
             ],
             "eligible_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invites": [
-                1784,
+                1760,
                 {
                     "distinct_on": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "limit": [
@@ -34803,19 +34688,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1803,
+                        1779,
                         "[tournament_team_invites_order_by!]"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
             "invites_aggregate": [
-                1785,
+                1761,
                 {
                     "distinct_on": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "limit": [
@@ -34825,11 +34710,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1803,
+                        1779,
                         "[tournament_team_invites_order_by!]"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
@@ -34840,10 +34725,10 @@ export default {
                 74
             ],
             "roster": [
-                1825,
+                1801,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -34853,19 +34738,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "roster_aggregate": [
-                1826,
+                1802,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -34875,11 +34760,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
@@ -34887,16 +34772,16 @@ export default {
                 4
             ],
             "team": [
-                1610
+                1586
             ],
             "team_id": [
-                1950
+                1926
             ],
             "tournament": [
-                1908
+                1884
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -34904,10 +34789,10 @@ export default {
         },
         "tournament_teams_aggregate": {
             "aggregate": [
-                1870
+                1846
             ],
             "nodes": [
-                1866
+                1842
             ],
             "__typename": [
                 11
@@ -34915,7 +34800,7 @@ export default {
         },
         "tournament_teams_aggregate_bool_exp": {
             "count": [
-                1869
+                1845
             ],
             "__typename": [
                 11
@@ -34923,13 +34808,13 @@ export default {
         },
         "tournament_teams_aggregate_bool_exp_count": {
             "arguments": [
-                1888
+                1864
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1875
+                1851
             ],
             "predicate": [
                 5
@@ -34940,13 +34825,13 @@ export default {
         },
         "tournament_teams_aggregate_fields": {
             "avg": [
-                1873
+                1849
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "distinct": [
@@ -34955,31 +34840,31 @@ export default {
                 }
             ],
             "max": [
-                1879
+                1855
             ],
             "min": [
-                1881
+                1857
             ],
             "stddev": [
-                1890
+                1866
             ],
             "stddev_pop": [
-                1892
+                1868
             ],
             "stddev_samp": [
-                1894
+                1870
             ],
             "sum": [
-                1898
+                1874
             ],
             "var_pop": [
-                1902
+                1878
             ],
             "var_samp": [
-                1904
+                1880
             ],
             "variance": [
-                1906
+                1882
             ],
             "__typename": [
                 11
@@ -34987,37 +34872,37 @@ export default {
         },
         "tournament_teams_aggregate_order_by": {
             "avg": [
-                1874
+                1850
             ],
             "count": [
                 1082
             ],
             "max": [
-                1880
+                1856
             ],
             "min": [
-                1882
+                1858
             ],
             "stddev": [
-                1891
+                1867
             ],
             "stddev_pop": [
-                1893
+                1869
             ],
             "stddev_samp": [
-                1895
+                1871
             ],
             "sum": [
-                1899
+                1875
             ],
             "var_pop": [
-                1903
+                1879
             ],
             "var_samp": [
-                1905
+                1881
             ],
             "variance": [
-                1907
+                1883
             ],
             "__typename": [
                 11
@@ -35025,10 +34910,10 @@ export default {
         },
         "tournament_teams_arr_rel_insert_input": {
             "data": [
-                1878
+                1854
             ],
             "on_conflict": [
-                1885
+                1861
             ],
             "__typename": [
                 11
@@ -35058,31 +34943,31 @@ export default {
         },
         "tournament_teams_bool_exp": {
             "_and": [
-                1875
+                1851
             ],
             "_not": [
-                1875
+                1851
             ],
             "_or": [
-                1875
+                1851
             ],
             "can_manage": [
                 1
             ],
             "creator": [
-                1413
+                1389
             ],
             "eligible_at": [
-                1654
+                1630
             ],
             "id": [
-                1951
+                1927
             ],
             "invites": [
-                1793
+                1769
             ],
             "invites_aggregate": [
-                1786
+                1762
             ],
             "name": [
                 13
@@ -35091,25 +34976,25 @@ export default {
                 75
             ],
             "roster": [
-                1834
+                1810
             ],
             "roster_aggregate": [
-                1827
+                1803
             ],
             "seed": [
                 5
             ],
             "team": [
-                1619
+                1595
             ],
             "team_id": [
-                1951
+                1927
             ],
             "tournament": [
-                1917
+                1893
             ],
             "tournament_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -35129,16 +35014,16 @@ export default {
         },
         "tournament_teams_insert_input": {
             "creator": [
-                1420
+                1396
             ],
             "eligible_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "invites": [
-                1790
+                1766
             ],
             "name": [
                 11
@@ -35147,22 +35032,22 @@ export default {
                 74
             ],
             "roster": [
-                1831
+                1807
             ],
             "seed": [
                 4
             ],
             "team": [
-                1628
+                1604
             ],
             "team_id": [
-                1950
-            ],
-            "tournament": [
                 1926
             ],
+            "tournament": [
+                1902
+            ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -35170,10 +35055,10 @@ export default {
         },
         "tournament_teams_max_fields": {
             "eligible_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -35185,10 +35070,10 @@ export default {
                 4
             ],
             "team_id": [
-                1950
+                1926
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -35222,10 +35107,10 @@ export default {
         },
         "tournament_teams_min_fields": {
             "eligible_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -35237,10 +35122,10 @@ export default {
                 4
             ],
             "team_id": [
-                1950
+                1926
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -35277,7 +35162,7 @@ export default {
                 4
             ],
             "returning": [
-                1866
+                1842
             ],
             "__typename": [
                 11
@@ -35285,10 +35170,10 @@ export default {
         },
         "tournament_teams_obj_rel_insert_input": {
             "data": [
-                1878
+                1854
             ],
             "on_conflict": [
-                1885
+                1861
             ],
             "__typename": [
                 11
@@ -35296,13 +35181,13 @@ export default {
         },
         "tournament_teams_on_conflict": {
             "constraint": [
-                1876
+                1852
             ],
             "update_columns": [
-                1900
+                1876
             ],
             "where": [
-                1875
+                1851
             ],
             "__typename": [
                 11
@@ -35313,7 +35198,7 @@ export default {
                 1082
             ],
             "creator": [
-                1422
+                1398
             ],
             "eligible_at": [
                 1082
@@ -35322,7 +35207,7 @@ export default {
                 1082
             ],
             "invites_aggregate": [
-                1789
+                1765
             ],
             "name": [
                 1082
@@ -35331,19 +35216,19 @@ export default {
                 1082
             ],
             "roster_aggregate": [
-                1830
+                1806
             ],
             "seed": [
                 1082
             ],
             "team": [
-                1630
+                1606
             ],
             "team_id": [
                 1082
             ],
             "tournament": [
-                1928
+                1904
             ],
             "tournament_id": [
                 1082
@@ -35354,7 +35239,7 @@ export default {
         },
         "tournament_teams_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -35363,10 +35248,10 @@ export default {
         "tournament_teams_select_column": {},
         "tournament_teams_set_input": {
             "eligible_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -35378,10 +35263,10 @@ export default {
                 4
             ],
             "team_id": [
-                1950
+                1926
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -35455,7 +35340,7 @@ export default {
         },
         "tournament_teams_stream_cursor_input": {
             "initial_value": [
-                1897
+                1873
             ],
             "ordering": [
                 78
@@ -35466,10 +35351,10 @@ export default {
         },
         "tournament_teams_stream_cursor_value_input": {
             "eligible_at": [
-                1653
+                1629
             ],
             "id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -35481,10 +35366,10 @@ export default {
                 4
             ],
             "team_id": [
-                1950
+                1926
             ],
             "tournament_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -35515,13 +35400,13 @@ export default {
         "tournament_teams_update_column": {},
         "tournament_teams_updates": {
             "_inc": [
-                1877
+                1853
             ],
             "_set": [
-                1889
+                1865
             ],
             "where": [
-                1875
+                1851
             ],
             "__typename": [
                 11
@@ -35595,7 +35480,7 @@ export default {
         },
         "tournaments": {
             "admin": [
-                1409
+                1385
             ],
             "can_cancel": [
                 0
@@ -35619,13 +35504,13 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "is_organizer": [
                 0
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "max_players_per_lineup": [
                 4
@@ -35643,10 +35528,10 @@ export default {
                 74
             ],
             "organizers": [
-                1696,
+                1672,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -35656,19 +35541,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "organizers_aggregate": [
-                1697,
+                1673,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -35678,19 +35563,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "rosters": [
-                1825,
+                1801,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -35700,19 +35585,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "rosters_aggregate": [
-                1826,
+                1802,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -35722,19 +35607,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "stages": [
-                1737,
+                1713,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -35744,19 +35629,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "stages_aggregate": [
-                1738,
+                1714,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -35766,25 +35651,25 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "start": [
-                1653
+                1629
             ],
             "status": [
                 394
             ],
             "teams": [
-                1866,
+                1842,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -35794,19 +35679,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "teams_aggregate": [
-                1867,
+                1843,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -35816,11 +35701,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
@@ -35830,10 +35715,10 @@ export default {
         },
         "tournaments_aggregate": {
             "aggregate": [
-                1912
+                1888
             ],
             "nodes": [
-                1908
+                1884
             ],
             "__typename": [
                 11
@@ -35841,7 +35726,7 @@ export default {
         },
         "tournaments_aggregate_bool_exp": {
             "count": [
-                1911
+                1887
             ],
             "__typename": [
                 11
@@ -35849,13 +35734,13 @@ export default {
         },
         "tournaments_aggregate_bool_exp_count": {
             "arguments": [
-                1930
+                1906
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                1917
+                1893
             ],
             "predicate": [
                 5
@@ -35866,13 +35751,13 @@ export default {
         },
         "tournaments_aggregate_fields": {
             "avg": [
-                1915
+                1891
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "distinct": [
@@ -35881,31 +35766,31 @@ export default {
                 }
             ],
             "max": [
-                1921
+                1897
             ],
             "min": [
-                1923
+                1899
             ],
             "stddev": [
-                1932
+                1908
             ],
             "stddev_pop": [
-                1934
+                1910
             ],
             "stddev_samp": [
-                1936
+                1912
             ],
             "sum": [
-                1940
+                1916
             ],
             "var_pop": [
-                1944
+                1920
             ],
             "var_samp": [
-                1946
+                1922
             ],
             "variance": [
-                1948
+                1924
             ],
             "__typename": [
                 11
@@ -35913,37 +35798,37 @@ export default {
         },
         "tournaments_aggregate_order_by": {
             "avg": [
-                1916
+                1892
             ],
             "count": [
                 1082
             ],
             "max": [
-                1922
+                1898
             ],
             "min": [
-                1924
+                1900
             ],
             "stddev": [
-                1933
+                1909
             ],
             "stddev_pop": [
-                1935
+                1911
             ],
             "stddev_samp": [
-                1937
+                1913
             ],
             "sum": [
-                1941
+                1917
             ],
             "var_pop": [
-                1945
+                1921
             ],
             "var_samp": [
-                1947
+                1923
             ],
             "variance": [
-                1949
+                1925
             ],
             "__typename": [
                 11
@@ -35951,10 +35836,10 @@ export default {
         },
         "tournaments_arr_rel_insert_input": {
             "data": [
-                1920
+                1896
             ],
             "on_conflict": [
-                1927
+                1903
             ],
             "__typename": [
                 11
@@ -35984,16 +35869,16 @@ export default {
         },
         "tournaments_bool_exp": {
             "_and": [
-                1917
+                1893
             ],
             "_not": [
-                1917
+                1893
             ],
             "_or": [
-                1917
+                1893
             ],
             "admin": [
-                1413
+                1389
             ],
             "can_cancel": [
                 1
@@ -36017,13 +35902,13 @@ export default {
                 1
             ],
             "id": [
-                1951
+                1927
             ],
             "is_organizer": [
                 1
             ],
             "match_options_id": [
-                1951
+                1927
             ],
             "max_players_per_lineup": [
                 5
@@ -36041,34 +35926,34 @@ export default {
                 75
             ],
             "organizers": [
-                1705
+                1681
             ],
             "organizers_aggregate": [
-                1698
+                1674
             ],
             "rosters": [
-                1834
+                1810
             ],
             "rosters_aggregate": [
-                1827
+                1803
             ],
             "stages": [
-                1747
+                1723
             ],
             "stages_aggregate": [
-                1739
+                1715
             ],
             "start": [
-                1654
+                1630
             ],
             "status": [
                 395
             ],
             "teams": [
-                1875
+                1851
             ],
             "teams_aggregate": [
-                1868
+                1844
             ],
             "__typename": [
                 11
@@ -36085,7 +35970,7 @@ export default {
         },
         "tournaments_insert_input": {
             "admin": [
-                1420
+                1396
             ],
             "description": [
                 11
@@ -36094,10 +35979,10 @@ export default {
                 400
             ],
             "id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -36109,22 +35994,22 @@ export default {
                 74
             ],
             "organizers": [
-                1702
+                1678
             ],
             "rosters": [
-                1831
+                1807
             ],
             "stages": [
-                1744
+                1720
             ],
             "start": [
-                1653
+                1629
             ],
             "status": [
                 394
             ],
             "teams": [
-                1872
+                1848
             ],
             "__typename": [
                 11
@@ -36135,10 +36020,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "max_players_per_lineup": [
                 4
@@ -36153,7 +36038,7 @@ export default {
                 74
             ],
             "start": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -36187,10 +36072,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "max_players_per_lineup": [
                 4
@@ -36205,7 +36090,7 @@ export default {
                 74
             ],
             "start": [
-                1653
+                1629
             ],
             "__typename": [
                 11
@@ -36239,7 +36124,7 @@ export default {
                 4
             ],
             "returning": [
-                1908
+                1884
             ],
             "__typename": [
                 11
@@ -36247,10 +36132,10 @@ export default {
         },
         "tournaments_obj_rel_insert_input": {
             "data": [
-                1920
+                1896
             ],
             "on_conflict": [
-                1927
+                1903
             ],
             "__typename": [
                 11
@@ -36258,13 +36143,13 @@ export default {
         },
         "tournaments_on_conflict": {
             "constraint": [
-                1918
+                1894
             ],
             "update_columns": [
-                1942
+                1918
             ],
             "where": [
-                1917
+                1893
             ],
             "__typename": [
                 11
@@ -36272,7 +36157,7 @@ export default {
         },
         "tournaments_order_by": {
             "admin": [
-                1422
+                1398
             ],
             "can_cancel": [
                 1082
@@ -36320,13 +36205,13 @@ export default {
                 1082
             ],
             "organizers_aggregate": [
-                1701
+                1677
             ],
             "rosters_aggregate": [
-                1830
+                1806
             ],
             "stages_aggregate": [
-                1742
+                1718
             ],
             "start": [
                 1082
@@ -36335,7 +36220,7 @@ export default {
                 1082
             ],
             "teams_aggregate": [
-                1871
+                1847
             ],
             "__typename": [
                 11
@@ -36343,7 +36228,7 @@ export default {
         },
         "tournaments_pk_columns_input": {
             "id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -36355,10 +36240,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -36367,7 +36252,7 @@ export default {
                 74
             ],
             "start": [
-                1653
+                1629
             ],
             "status": [
                 394
@@ -36444,7 +36329,7 @@ export default {
         },
         "tournaments_stream_cursor_input": {
             "initial_value": [
-                1939
+                1915
             ],
             "ordering": [
                 78
@@ -36458,10 +36343,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_options_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -36470,7 +36355,7 @@ export default {
                 74
             ],
             "start": [
-                1653
+                1629
             ],
             "status": [
                 394
@@ -36504,13 +36389,13 @@ export default {
         "tournaments_update_column": {},
         "tournaments_updates": {
             "_inc": [
-                1919
+                1895
             ],
             "_set": [
-                1931
+                1907
             ],
             "where": [
-                1917
+                1893
             ],
             "__typename": [
                 11
@@ -36585,31 +36470,31 @@ export default {
         "uuid": {},
         "uuid_comparison_exp": {
             "_eq": [
-                1950
+                1926
             ],
             "_gt": [
-                1950
+                1926
             ],
             "_gte": [
-                1950
+                1926
             ],
             "_in": [
-                1950
+                1926
             ],
             "_is_null": [
                 0
             ],
             "_lt": [
-                1950
+                1926
             ],
             "_lte": [
-                1950
+                1926
             ],
             "_neq": [
-                1950
+                1926
             ],
             "_nin": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -36623,19 +36508,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup": [
                 687
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
             ],
             "player": [
-                1409
+                1385
             ],
             "steam_id": [
                 74
@@ -36646,10 +36531,10 @@ export default {
         },
         "v_match_captains_aggregate": {
             "aggregate": [
-                1954
+                1930
             ],
             "nodes": [
-                1952
+                1928
             ],
             "__typename": [
                 11
@@ -36657,13 +36542,13 @@ export default {
         },
         "v_match_captains_aggregate_fields": {
             "avg": [
-                1955
+                1931
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1964,
+                        1940,
                         "[v_match_captains_select_column!]"
                     ],
                     "distinct": [
@@ -36672,31 +36557,31 @@ export default {
                 }
             ],
             "max": [
-                1959
+                1935
             ],
             "min": [
-                1960
+                1936
             ],
             "stddev": [
-                1966
+                1942
             ],
             "stddev_pop": [
-                1967
+                1943
             ],
             "stddev_samp": [
-                1968
+                1944
             ],
             "sum": [
-                1971
+                1947
             ],
             "var_pop": [
-                1973
+                1949
             ],
             "var_samp": [
-                1974
+                1950
             ],
             "variance": [
-                1975
+                1951
             ],
             "__typename": [
                 11
@@ -36712,13 +36597,13 @@ export default {
         },
         "v_match_captains_bool_exp": {
             "_and": [
-                1956
+                1932
             ],
             "_not": [
-                1956
+                1932
             ],
             "_or": [
-                1956
+                1932
             ],
             "captain": [
                 1
@@ -36727,19 +36612,19 @@ export default {
                 13
             ],
             "id": [
-                1951
+                1927
             ],
             "lineup": [
                 696
             ],
             "match_lineup_id": [
-                1951
+                1927
             ],
             "placeholder_name": [
                 13
             ],
             "player": [
-                1413
+                1389
             ],
             "steam_id": [
                 75
@@ -36764,19 +36649,19 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup": [
                 705
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
             ],
             "player": [
-                1420
+                1396
             ],
             "steam_id": [
                 74
@@ -36790,10 +36675,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -36810,10 +36695,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -36830,7 +36715,7 @@ export default {
                 4
             ],
             "returning": [
-                1952
+                1928
             ],
             "__typename": [
                 11
@@ -36838,7 +36723,7 @@ export default {
         },
         "v_match_captains_obj_rel_insert_input": {
             "data": [
-                1958
+                1934
             ],
             "__typename": [
                 11
@@ -36864,7 +36749,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "steam_id": [
                 1082
@@ -36882,10 +36767,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -36923,7 +36808,7 @@ export default {
         },
         "v_match_captains_stream_cursor_input": {
             "initial_value": [
-                1970
+                1946
             ],
             "ordering": [
                 78
@@ -36940,10 +36825,10 @@ export default {
                 11
             ],
             "id": [
-                1950
+                1926
             ],
             "match_lineup_id": [
-                1950
+                1926
             ],
             "placeholder_name": [
                 11
@@ -36965,13 +36850,13 @@ export default {
         },
         "v_match_captains_updates": {
             "_inc": [
-                1957
+                1933
             ],
             "_set": [
-                1965
+                1941
             ],
             "where": [
-                1956
+                1932
             ],
             "__typename": [
                 11
@@ -37006,7 +36891,7 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup": [
                 687
@@ -37015,10 +36900,10 @@ export default {
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -37026,10 +36911,10 @@ export default {
         },
         "v_match_lineups_aggregate": {
             "aggregate": [
-                1978
+                1954
             ],
             "nodes": [
-                1976
+                1952
             ],
             "__typename": [
                 11
@@ -37037,13 +36922,13 @@ export default {
         },
         "v_match_lineups_aggregate_fields": {
             "avg": [
-                1979
+                1955
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        1986,
+                        1962,
                         "[v_match_lineups_select_column!]"
                     ],
                     "distinct": [
@@ -37052,31 +36937,31 @@ export default {
                 }
             ],
             "max": [
-                1982
+                1958
             ],
             "min": [
-                1983
+                1959
             ],
             "stddev": [
-                1987
+                1963
             ],
             "stddev_pop": [
-                1988
+                1964
             ],
             "stddev_samp": [
-                1989
+                1965
             ],
             "sum": [
-                1992
+                1968
             ],
             "var_pop": [
-                1993
+                1969
             ],
             "var_samp": [
-                1994
+                1970
             ],
             "variance": [
-                1995
+                1971
             ],
             "__typename": [
                 11
@@ -37092,19 +36977,19 @@ export default {
         },
         "v_match_lineups_bool_exp": {
             "_and": [
-                1980
+                1956
             ],
             "_not": [
-                1980
+                1956
             ],
             "_or": [
-                1980
+                1956
             ],
             "coach_steam_id": [
                 75
             ],
             "id": [
-                1951
+                1927
             ],
             "lineup": [
                 696
@@ -37113,10 +36998,10 @@ export default {
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "team_id": [
-                1951
+                1927
             ],
             "__typename": [
                 11
@@ -37127,7 +37012,7 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "lineup": [
                 705
@@ -37136,10 +37021,10 @@ export default {
                 947
             ],
             "match_id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -37150,13 +37035,13 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -37167,13 +37052,13 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -37181,7 +37066,7 @@ export default {
         },
         "v_match_lineups_obj_rel_insert_input": {
             "data": [
-                1981
+                1957
             ],
             "__typename": [
                 11
@@ -37237,7 +37122,7 @@ export default {
         },
         "v_match_lineups_stream_cursor_input": {
             "initial_value": [
-                1991
+                1967
             ],
             "ordering": [
                 78
@@ -37251,13 +37136,13 @@ export default {
                 74
             ],
             "id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "team_id": [
-                1950
+                1926
             ],
             "__typename": [
                 11
@@ -37303,10 +37188,10 @@ export default {
                 74
             ],
             "nemsis": [
-                1409
+                1385
             ],
             "player": [
-                1409
+                1385
             ],
             "victim_id": [
                 74
@@ -37317,10 +37202,10 @@ export default {
         },
         "v_player_arch_nemesis_aggregate": {
             "aggregate": [
-                1998
+                1974
             ],
             "nodes": [
-                1996
+                1972
             ],
             "__typename": [
                 11
@@ -37328,13 +37213,13 @@ export default {
         },
         "v_player_arch_nemesis_aggregate_fields": {
             "avg": [
-                1999
+                1975
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2004,
+                        1980,
                         "[v_player_arch_nemesis_select_column!]"
                     ],
                     "distinct": [
@@ -37343,31 +37228,31 @@ export default {
                 }
             ],
             "max": [
-                2001
+                1977
             ],
             "min": [
-                2002
+                1978
             ],
             "stddev": [
-                2005
+                1981
             ],
             "stddev_pop": [
-                2006
+                1982
             ],
             "stddev_samp": [
-                2007
+                1983
             ],
             "sum": [
-                2010
+                1986
             ],
             "var_pop": [
-                2011
+                1987
             ],
             "var_samp": [
-                2012
+                1988
             ],
             "variance": [
-                2013
+                1989
             ],
             "__typename": [
                 11
@@ -37389,13 +37274,13 @@ export default {
         },
         "v_player_arch_nemesis_bool_exp": {
             "_and": [
-                2000
+                1976
             ],
             "_not": [
-                2000
+                1976
             ],
             "_or": [
-                2000
+                1976
             ],
             "attacker_id": [
                 75
@@ -37404,10 +37289,10 @@ export default {
                 75
             ],
             "nemsis": [
-                1413
+                1389
             ],
             "player": [
-                1413
+                1389
             ],
             "victim_id": [
                 75
@@ -37452,10 +37337,10 @@ export default {
                 1082
             ],
             "nemsis": [
-                1422
+                1398
             ],
             "player": [
-                1422
+                1398
             ],
             "victim_id": [
                 1082
@@ -37509,7 +37394,7 @@ export default {
         },
         "v_player_arch_nemesis_stream_cursor_input": {
             "initial_value": [
-                2009
+                1985
             ],
             "ordering": [
                 78
@@ -37593,7 +37478,7 @@ export default {
                 74
             ],
             "player": [
-                1409
+                1385
             ],
             "player_steam_id": [
                 74
@@ -37610,10 +37495,10 @@ export default {
         },
         "v_player_damage_aggregate": {
             "aggregate": [
-                2016
+                1992
             ],
             "nodes": [
-                2014
+                1990
             ],
             "__typename": [
                 11
@@ -37621,13 +37506,13 @@ export default {
         },
         "v_player_damage_aggregate_fields": {
             "avg": [
-                2017
+                1993
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2022,
+                        1998,
                         "[v_player_damage_select_column!]"
                     ],
                     "distinct": [
@@ -37636,31 +37521,31 @@ export default {
                 }
             ],
             "max": [
-                2019
+                1995
             ],
             "min": [
-                2020
+                1996
             ],
             "stddev": [
-                2023
+                1999
             ],
             "stddev_pop": [
-                2024
+                2000
             ],
             "stddev_samp": [
-                2025
+                2001
             ],
             "sum": [
-                2028
+                2004
             ],
             "var_pop": [
-                2029
+                2005
             ],
             "var_samp": [
-                2030
+                2006
             ],
             "variance": [
-                2031
+                2007
             ],
             "__typename": [
                 11
@@ -37685,19 +37570,19 @@ export default {
         },
         "v_player_damage_bool_exp": {
             "_and": [
-                2018
+                1994
             ],
             "_not": [
-                2018
+                1994
             ],
             "_or": [
-                2018
+                1994
             ],
             "avg_damage_per_round": [
                 75
             ],
             "player": [
-                1413
+                1389
             ],
             "player_steam_id": [
                 75
@@ -37751,7 +37636,7 @@ export default {
                 1082
             ],
             "player": [
-                1422
+                1398
             ],
             "player_steam_id": [
                 1082
@@ -37820,7 +37705,7 @@ export default {
         },
         "v_player_damage_stream_cursor_input": {
             "initial_value": [
-                2027
+                2003
             ],
             "ordering": [
                 78
@@ -37919,16 +37804,16 @@ export default {
                 613
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -37939,10 +37824,10 @@ export default {
         },
         "v_player_map_losses_aggregate": {
             "aggregate": [
-                2034
+                2010
             ],
             "nodes": [
-                2032
+                2008
             ],
             "__typename": [
                 11
@@ -37950,13 +37835,13 @@ export default {
         },
         "v_player_map_losses_aggregate_fields": {
             "avg": [
-                2035
+                2011
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2040,
+                        2016,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "distinct": [
@@ -37965,31 +37850,31 @@ export default {
                 }
             ],
             "max": [
-                2037
+                2013
             ],
             "min": [
-                2038
+                2014
             ],
             "stddev": [
-                2041
+                2017
             ],
             "stddev_pop": [
-                2042
+                2018
             ],
             "stddev_samp": [
-                2043
+                2019
             ],
             "sum": [
-                2046
+                2022
             ],
             "var_pop": [
-                2047
+                2023
             ],
             "var_samp": [
-                2048
+                2024
             ],
             "variance": [
-                2049
+                2025
             ],
             "__typename": [
                 11
@@ -38005,28 +37890,28 @@ export default {
         },
         "v_player_map_losses_bool_exp": {
             "_and": [
-                2036
+                2012
             ],
             "_not": [
-                2036
+                2012
             ],
             "_or": [
-                2036
+                2012
             ],
             "map": [
                 622
             ],
             "map_id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "started_at": [
-                1654
+                1630
             ],
             "steam_id": [
                 75
@@ -38037,13 +37922,13 @@ export default {
         },
         "v_player_map_losses_max_fields": {
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38054,13 +37939,13 @@ export default {
         },
         "v_player_map_losses_min_fields": {
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38119,7 +38004,7 @@ export default {
         },
         "v_player_map_losses_stream_cursor_input": {
             "initial_value": [
-                2045
+                2021
             ],
             "ordering": [
                 78
@@ -38130,13 +38015,13 @@ export default {
         },
         "v_player_map_losses_stream_cursor_value_input": {
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38182,16 +38067,16 @@ export default {
                 613
             ],
             "map_id": [
-                1950
+                1926
             ],
             "match": [
                 929
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38202,10 +38087,10 @@ export default {
         },
         "v_player_map_wins_aggregate": {
             "aggregate": [
-                2052
+                2028
             ],
             "nodes": [
-                2050
+                2026
             ],
             "__typename": [
                 11
@@ -38213,13 +38098,13 @@ export default {
         },
         "v_player_map_wins_aggregate_fields": {
             "avg": [
-                2053
+                2029
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2058,
+                        2034,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "distinct": [
@@ -38228,31 +38113,31 @@ export default {
                 }
             ],
             "max": [
-                2055
+                2031
             ],
             "min": [
-                2056
+                2032
             ],
             "stddev": [
-                2059
+                2035
             ],
             "stddev_pop": [
-                2060
+                2036
             ],
             "stddev_samp": [
-                2061
+                2037
             ],
             "sum": [
-                2064
+                2040
             ],
             "var_pop": [
-                2065
+                2041
             ],
             "var_samp": [
-                2066
+                2042
             ],
             "variance": [
-                2067
+                2043
             ],
             "__typename": [
                 11
@@ -38268,28 +38153,28 @@ export default {
         },
         "v_player_map_wins_bool_exp": {
             "_and": [
-                2054
+                2030
             ],
             "_not": [
-                2054
+                2030
             ],
             "_or": [
-                2054
+                2030
             ],
             "map": [
                 622
             ],
             "map_id": [
-                1951
+                1927
             ],
             "match": [
                 938
             ],
             "match_id": [
-                1951
+                1927
             ],
             "started_at": [
-                1654
+                1630
             ],
             "steam_id": [
                 75
@@ -38300,13 +38185,13 @@ export default {
         },
         "v_player_map_wins_max_fields": {
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38317,13 +38202,13 @@ export default {
         },
         "v_player_map_wins_min_fields": {
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38382,7 +38267,7 @@ export default {
         },
         "v_player_map_wins_stream_cursor_input": {
             "initial_value": [
-                2063
+                2039
             ],
             "ordering": [
                 78
@@ -38393,13 +38278,13 @@ export default {
         },
         "v_player_map_wins_stream_cursor_value_input": {
             "map_id": [
-                1950
+                1926
             ],
             "match_id": [
-                1950
+                1926
             ],
             "started_at": [
-                1653
+                1629
             ],
             "steam_id": [
                 74
@@ -38448,7 +38333,7 @@ export default {
                 74
             ],
             "match_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -38459,10 +38344,10 @@ export default {
         },
         "v_player_multi_kills_aggregate": {
             "aggregate": [
-                2072
+                2048
             ],
             "nodes": [
-                2068
+                2044
             ],
             "__typename": [
                 11
@@ -38470,7 +38355,7 @@ export default {
         },
         "v_player_multi_kills_aggregate_bool_exp": {
             "count": [
-                2071
+                2047
             ],
             "__typename": [
                 11
@@ -38478,13 +38363,13 @@ export default {
         },
         "v_player_multi_kills_aggregate_bool_exp_count": {
             "arguments": [
-                2084
+                2060
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2077
+                2053
             ],
             "predicate": [
                 5
@@ -38495,13 +38380,13 @@ export default {
         },
         "v_player_multi_kills_aggregate_fields": {
             "avg": [
-                2075
+                2051
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "distinct": [
@@ -38510,31 +38395,31 @@ export default {
                 }
             ],
             "max": [
-                2079
+                2055
             ],
             "min": [
-                2081
+                2057
             ],
             "stddev": [
-                2085
+                2061
             ],
             "stddev_pop": [
-                2087
+                2063
             ],
             "stddev_samp": [
-                2089
+                2065
             ],
             "sum": [
-                2093
+                2069
             ],
             "var_pop": [
-                2095
+                2071
             ],
             "var_samp": [
-                2097
+                2073
             ],
             "variance": [
-                2099
+                2075
             ],
             "__typename": [
                 11
@@ -38542,37 +38427,37 @@ export default {
         },
         "v_player_multi_kills_aggregate_order_by": {
             "avg": [
-                2076
+                2052
             ],
             "count": [
                 1082
             ],
             "max": [
-                2080
+                2056
             ],
             "min": [
-                2082
+                2058
             ],
             "stddev": [
-                2086
+                2062
             ],
             "stddev_pop": [
-                2088
+                2064
             ],
             "stddev_samp": [
-                2090
+                2066
             ],
             "sum": [
-                2094
+                2070
             ],
             "var_pop": [
-                2096
+                2072
             ],
             "var_samp": [
-                2098
+                2074
             ],
             "variance": [
-                2100
+                2076
             ],
             "__typename": [
                 11
@@ -38580,7 +38465,7 @@ export default {
         },
         "v_player_multi_kills_arr_rel_insert_input": {
             "data": [
-                2078
+                2054
             ],
             "__typename": [
                 11
@@ -38616,13 +38501,13 @@ export default {
         },
         "v_player_multi_kills_bool_exp": {
             "_and": [
-                2077
+                2053
             ],
             "_not": [
-                2077
+                2053
             ],
             "_or": [
-                2077
+                2053
             ],
             "attacker_steam_id": [
                 75
@@ -38631,7 +38516,7 @@ export default {
                 75
             ],
             "match_id": [
-                1951
+                1927
             ],
             "round": [
                 5
@@ -38648,7 +38533,7 @@ export default {
                 74
             ],
             "match_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -38665,7 +38550,7 @@ export default {
                 74
             ],
             "match_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -38699,7 +38584,7 @@ export default {
                 74
             ],
             "match_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -38829,7 +38714,7 @@ export default {
         },
         "v_player_multi_kills_stream_cursor_input": {
             "initial_value": [
-                2092
+                2068
             ],
             "ordering": [
                 78
@@ -38846,7 +38731,7 @@ export default {
                 74
             ],
             "match_id": [
-                1950
+                1926
             ],
             "round": [
                 4
@@ -38972,13 +38857,13 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "map_pool": [
                 594
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -39001,10 +38886,10 @@ export default {
         },
         "v_pool_maps_aggregate": {
             "aggregate": [
-                2107
+                2083
             ],
             "nodes": [
-                2101
+                2077
             ],
             "__typename": [
                 11
@@ -39012,13 +38897,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp": {
             "bool_and": [
-                2104
+                2080
             ],
             "bool_or": [
-                2105
+                2081
             ],
             "count": [
-                2106
+                2082
             ],
             "__typename": [
                 11
@@ -39026,13 +38911,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp_bool_and": {
             "arguments": [
-                2119
+                2095
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2110
+                2086
             ],
             "predicate": [
                 1
@@ -39043,13 +38928,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp_bool_or": {
             "arguments": [
-                2120
+                2096
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2110
+                2086
             ],
             "predicate": [
                 1
@@ -39060,13 +38945,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp_count": {
             "arguments": [
-                2118
+                2094
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2110
+                2086
             ],
             "predicate": [
                 5
@@ -39080,7 +38965,7 @@ export default {
                 4,
                 {
                     "columns": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "distinct": [
@@ -39089,10 +38974,10 @@ export default {
                 }
             ],
             "max": [
-                2112
+                2088
             ],
             "min": [
-                2114
+                2090
             ],
             "__typename": [
                 11
@@ -39103,10 +38988,10 @@ export default {
                 1082
             ],
             "max": [
-                2113
+                2089
             ],
             "min": [
-                2115
+                2091
             ],
             "__typename": [
                 11
@@ -39114,7 +38999,7 @@ export default {
         },
         "v_pool_maps_arr_rel_insert_input": {
             "data": [
-                2111
+                2087
             ],
             "__typename": [
                 11
@@ -39122,25 +39007,25 @@ export default {
         },
         "v_pool_maps_bool_exp": {
             "_and": [
-                2110
+                2086
             ],
             "_not": [
-                2110
+                2086
             ],
             "_or": [
-                2110
+                2086
             ],
             "active_pool": [
                 1
             ],
             "id": [
-                1951
+                1927
             ],
             "map_pool": [
                 597
             ],
             "map_pool_id": [
-                1951
+                1927
             ],
             "name": [
                 13
@@ -39166,13 +39051,13 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "map_pool": [
                 603
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -39195,10 +39080,10 @@ export default {
         },
         "v_pool_maps_max_fields": {
             "id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -39247,10 +39132,10 @@ export default {
         },
         "v_pool_maps_min_fields": {
             "id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -39302,7 +39187,7 @@ export default {
                 4
             ],
             "returning": [
-                2101
+                2077
             ],
             "__typename": [
                 11
@@ -39345,7 +39230,7 @@ export default {
         "v_pool_maps_select_column_v_pool_maps_aggregate_bool_exp_bool_or_arguments_columns": {},
         "v_pool_maps_stream_cursor_input": {
             "initial_value": [
-                2122
+                2098
             ],
             "ordering": [
                 78
@@ -39359,10 +39244,10 @@ export default {
                 0
             ],
             "id": [
-                1950
+                1926
             ],
             "map_pool_id": [
-                1950
+                1926
             ],
             "name": [
                 11
@@ -39432,11 +39317,11 @@ export default {
                 15,
                 {
                     "map_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "map_pool_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -39489,7 +39374,7 @@ export default {
                 33,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40612,7 +40497,7 @@ export default {
                 530,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40665,7 +40550,7 @@ export default {
                 549,
                 {
                     "lobby_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "steam_id": [
@@ -40722,7 +40607,7 @@ export default {
                 594,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40775,7 +40660,7 @@ export default {
                 613,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40828,7 +40713,7 @@ export default {
                 642,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40881,7 +40766,7 @@ export default {
                 687,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40934,7 +40819,7 @@ export default {
                 729,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -40987,7 +40872,7 @@ export default {
                 770,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41040,7 +40925,7 @@ export default {
                 811,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41093,7 +40978,7 @@ export default {
                 835,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41146,7 +41031,7 @@ export default {
                 877,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41199,7 +41084,7 @@ export default {
                 905,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41252,7 +41137,7 @@ export default {
                 929,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41405,7 +41290,7 @@ export default {
                 1030,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -41414,7 +41299,7 @@ export default {
                 1083,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -41424,7 +41309,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -41436,7 +41321,7 @@ export default {
                 1084,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -41446,7 +41331,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -41454,24 +41339,11 @@ export default {
                     ]
                 }
             ],
-            "player_assists_by_pk": [
-                1083,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
-                    ]
-                }
-            ],
             "player_damages": [
-                1128,
+                1124,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -41481,19 +41353,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_damages_aggregate": [
-                1129,
+                1125,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -41503,32 +41375,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
-                    ]
-                }
-            ],
-            "player_damages_by_pk": [
-                1128,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1133
                     ]
                 }
             ],
             "player_flashes": [
-                1169,
+                1161,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -41538,19 +41397,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "player_flashes_aggregate": [
-                1170,
+                1162,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -41560,32 +41419,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
-                    ]
-                }
-            ],
-            "player_flashes_by_pk": [
-                1169,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1172
                     ]
                 }
             ],
             "player_kills": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -41595,19 +41441,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_kills_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -41617,32 +41463,40 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_kills_by_pk": [
-                1214,
+                1202,
                 {
                     "id": [
-                        1950,
+                        1926,
+                        "uuid!"
+                    ],
+                    "match_id": [
+                        1926,
+                        "uuid!"
+                    ],
+                    "match_map_id": [
+                        1926,
                         "uuid!"
                     ],
                     "time": [
-                        1653,
+                        1629,
                         "timestamptz!"
                     ]
                 }
             ],
             "player_objectives": [
-                1259,
+                1247,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -41652,19 +41506,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "player_objectives_aggregate": [
-                1260,
+                1248,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -41674,32 +41528,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
-                    ]
-                }
-            ],
-            "player_objectives_by_pk": [
-                1259,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1256
                     ]
                 }
             ],
             "player_sanctions": [
-                1300,
+                1284,
                 {
                     "distinct_on": [
-                        1314,
+                        1295,
                         "[player_sanctions_select_column!]"
                     ],
                     "limit": [
@@ -41709,19 +41550,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1312,
+                        1294,
                         "[player_sanctions_order_by!]"
                     ],
                     "where": [
-                        1304
+                        1288
                     ]
                 }
             ],
             "player_sanctions_aggregate": [
-                1301,
+                1285,
                 {
                     "distinct_on": [
-                        1314,
+                        1295,
                         "[player_sanctions_select_column!]"
                     ],
                     "limit": [
@@ -41731,32 +41572,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1312,
+                        1294,
                         "[player_sanctions_order_by!]"
                     ],
                     "where": [
-                        1304
-                    ]
-                }
-            ],
-            "player_sanctions_by_pk": [
-                1300,
-                {
-                    "created_at": [
-                        1653,
-                        "timestamptz!"
-                    ],
-                    "id": [
-                        1950,
-                        "uuid!"
+                        1288
                     ]
                 }
             ],
             "player_unused_utility": [
-                1327,
+                1307,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -41766,19 +41594,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utility_aggregate": [
-                1328,
+                1308,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -41788,28 +41616,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utility_by_pk": [
-                1327,
+                1307,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "player_utility": [
-                1368,
+                1348,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -41819,19 +41647,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "player_utility_aggregate": [
-                1369,
+                1349,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -41841,32 +41669,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
-                    ]
-                }
-            ],
-            "player_utility_by_pk": [
-                1368,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1357
                     ]
                 }
             ],
             "players": [
-                1409,
+                1385,
                 {
                     "distinct_on": [
-                        1424,
+                        1400,
                         "[players_select_column!]"
                     ],
                     "limit": [
@@ -41876,19 +41691,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1422,
+                        1398,
                         "[players_order_by!]"
                     ],
                     "where": [
-                        1413
+                        1389
                     ]
                 }
             ],
             "players_aggregate": [
-                1410,
+                1386,
                 {
                     "distinct_on": [
-                        1424,
+                        1400,
                         "[players_select_column!]"
                     ],
                     "limit": [
@@ -41898,16 +41713,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1422,
+                        1398,
                         "[players_order_by!]"
                     ],
                     "where": [
-                        1413
+                        1389
                     ]
                 }
             ],
             "players_by_pk": [
-                1409,
+                1385,
                 {
                     "steam_id": [
                         74,
@@ -41916,10 +41731,10 @@ export default {
                 }
             ],
             "server_regions": [
-                1437,
+                1413,
                 {
                     "distinct_on": [
-                        1451,
+                        1427,
                         "[server_regions_select_column!]"
                     ],
                     "limit": [
@@ -41929,19 +41744,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1449,
+                        1425,
                         "[server_regions_order_by!]"
                     ],
                     "where": [
-                        1441
+                        1417
                     ]
                 }
             ],
             "server_regions_aggregate": [
-                1438,
+                1414,
                 {
                     "distinct_on": [
-                        1451,
+                        1427,
                         "[server_regions_select_column!]"
                     ],
                     "limit": [
@@ -41951,16 +41766,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1449,
+                        1425,
                         "[server_regions_order_by!]"
                     ],
                     "where": [
-                        1441
+                        1417
                     ]
                 }
             ],
             "server_regions_by_pk": [
-                1437,
+                1413,
                 {
                     "value": [
                         11,
@@ -41969,10 +41784,10 @@ export default {
                 }
             ],
             "servers": [
-                1464,
+                1440,
                 {
                     "distinct_on": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "limit": [
@@ -41982,19 +41797,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1486,
+                        1462,
                         "[servers_order_by!]"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
             "servers_aggregate": [
-                1465,
+                1441,
                 {
                     "distinct_on": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "limit": [
@@ -42004,28 +41819,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1486,
+                        1462,
                         "[servers_order_by!]"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
             "servers_by_pk": [
-                1464,
+                1440,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "settings": [
-                1510,
+                1486,
                 {
                     "distinct_on": [
-                        1522,
+                        1498,
                         "[settings_select_column!]"
                     ],
                     "limit": [
@@ -42035,19 +41850,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1520,
+                        1496,
                         "[settings_order_by!]"
                     ],
                     "where": [
-                        1513
+                        1489
                     ]
                 }
             ],
             "settings_aggregate": [
-                1511,
+                1487,
                 {
                     "distinct_on": [
-                        1522,
+                        1498,
                         "[settings_select_column!]"
                     ],
                     "limit": [
@@ -42057,16 +41872,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1520,
+                        1496,
                         "[settings_order_by!]"
                     ],
                     "where": [
-                        1513
+                        1489
                     ]
                 }
             ],
             "settings_by_pk": [
-                1510,
+                1486,
                 {
                     "name": [
                         11,
@@ -42075,10 +41890,10 @@ export default {
                 }
             ],
             "team_invites": [
-                1528,
+                1504,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -42088,19 +41903,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "team_invites_aggregate": [
-                1529,
+                1505,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -42110,28 +41925,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "team_invites_by_pk": [
-                1528,
+                1504,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "team_roster": [
-                1569,
+                1545,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -42141,19 +41956,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "team_roster_aggregate": [
-                1570,
+                1546,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -42163,32 +41978,32 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "team_roster_by_pk": [
-                1569,
+                1545,
                 {
                     "player_steam_id": [
                         74,
                         "bigint!"
                     ],
                     "team_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "teams": [
-                1610,
+                1586,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -42198,19 +42013,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "teams_aggregate": [
-                1611,
+                1587,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -42220,28 +42035,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "teams_by_pk": [
-                1610,
+                1586,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_brackets": [
-                1655,
+                1631,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -42251,19 +42066,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "tournament_brackets_aggregate": [
-                1656,
+                1632,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -42273,28 +42088,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "tournament_brackets_by_pk": [
-                1655,
+                1631,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_organizers": [
-                1696,
+                1672,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -42304,19 +42119,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_organizers_aggregate": [
-                1697,
+                1673,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -42326,32 +42141,32 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_organizers_by_pk": [
-                1696,
+                1672,
                 {
                     "steam_id": [
                         74,
                         "bigint!"
                     ],
                     "tournament_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_stages": [
-                1737,
+                1713,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -42361,19 +42176,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "tournament_stages_aggregate": [
-                1738,
+                1714,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -42383,28 +42198,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "tournament_stages_by_pk": [
-                1737,
+                1713,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_team_invites": [
-                1784,
+                1760,
                 {
                     "distinct_on": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "limit": [
@@ -42414,19 +42229,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1803,
+                        1779,
                         "[tournament_team_invites_order_by!]"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
             "tournament_team_invites_aggregate": [
-                1785,
+                1761,
                 {
                     "distinct_on": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "limit": [
@@ -42436,28 +42251,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1803,
+                        1779,
                         "[tournament_team_invites_order_by!]"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
             "tournament_team_invites_by_pk": [
-                1784,
+                1760,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_team_roster": [
-                1825,
+                1801,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -42467,19 +42282,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_team_roster_aggregate": [
-                1826,
+                1802,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -42489,32 +42304,32 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_team_roster_by_pk": [
-                1825,
+                1801,
                 {
                     "player_steam_id": [
                         74,
                         "bigint!"
                     ],
                     "tournament_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_teams": [
-                1866,
+                1842,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -42524,19 +42339,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "tournament_teams_aggregate": [
-                1867,
+                1843,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -42546,28 +42361,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "tournament_teams_by_pk": [
-                1866,
+                1842,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournaments": [
-                1908,
+                1884,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -42577,19 +42392,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "tournaments_aggregate": [
-                1909,
+                1885,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -42599,28 +42414,28 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "tournaments_by_pk": [
-                1908,
+                1884,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "v_match_captains": [
-                1952,
+                1928,
                 {
                     "distinct_on": [
-                        1964,
+                        1940,
                         "[v_match_captains_select_column!]"
                     ],
                     "limit": [
@@ -42630,19 +42445,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1963,
+                        1939,
                         "[v_match_captains_order_by!]"
                     ],
                     "where": [
-                        1956
+                        1932
                     ]
                 }
             ],
             "v_match_captains_aggregate": [
-                1953,
+                1929,
                 {
                     "distinct_on": [
-                        1964,
+                        1940,
                         "[v_match_captains_select_column!]"
                     ],
                     "limit": [
@@ -42652,41 +42467,41 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1963,
+                        1939,
                         "[v_match_captains_order_by!]"
+                    ],
+                    "where": [
+                        1932
+                    ]
+                }
+            ],
+            "v_match_lineups": [
+                1952,
+                {
+                    "distinct_on": [
+                        1962,
+                        "[v_match_lineups_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        1961,
+                        "[v_match_lineups_order_by!]"
                     ],
                     "where": [
                         1956
                     ]
                 }
             ],
-            "v_match_lineups": [
-                1976,
-                {
-                    "distinct_on": [
-                        1986,
-                        "[v_match_lineups_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        1985,
-                        "[v_match_lineups_order_by!]"
-                    ],
-                    "where": [
-                        1980
-                    ]
-                }
-            ],
             "v_match_lineups_aggregate": [
-                1977,
+                1953,
                 {
                     "distinct_on": [
-                        1986,
+                        1962,
                         "[v_match_lineups_select_column!]"
                     ],
                     "limit": [
@@ -42696,19 +42511,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1985,
+                        1961,
                         "[v_match_lineups_order_by!]"
                     ],
                     "where": [
-                        1980
+                        1956
                     ]
                 }
             ],
             "v_player_arch_nemesis": [
-                1996,
+                1972,
                 {
                     "distinct_on": [
-                        2004,
+                        1980,
                         "[v_player_arch_nemesis_select_column!]"
                     ],
                     "limit": [
@@ -42718,19 +42533,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2003,
+                        1979,
                         "[v_player_arch_nemesis_order_by!]"
                     ],
                     "where": [
-                        2000
+                        1976
                     ]
                 }
             ],
             "v_player_arch_nemesis_aggregate": [
-                1997,
+                1973,
                 {
                     "distinct_on": [
-                        2004,
+                        1980,
                         "[v_player_arch_nemesis_select_column!]"
                     ],
                     "limit": [
@@ -42740,19 +42555,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2003,
+                        1979,
                         "[v_player_arch_nemesis_order_by!]"
                     ],
                     "where": [
-                        2000
+                        1976
                     ]
                 }
             ],
             "v_player_damage": [
-                2014,
+                1990,
                 {
                     "distinct_on": [
-                        2022,
+                        1998,
                         "[v_player_damage_select_column!]"
                     ],
                     "limit": [
@@ -42762,19 +42577,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2021,
+                        1997,
                         "[v_player_damage_order_by!]"
                     ],
                     "where": [
-                        2018
+                        1994
                     ]
                 }
             ],
             "v_player_damage_aggregate": [
-                2015,
+                1991,
                 {
                     "distinct_on": [
-                        2022,
+                        1998,
                         "[v_player_damage_select_column!]"
                     ],
                     "limit": [
@@ -42784,19 +42599,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2021,
+                        1997,
                         "[v_player_damage_order_by!]"
                     ],
                     "where": [
-                        2018
+                        1994
                     ]
                 }
             ],
             "v_player_map_losses": [
-                2032,
+                2008,
                 {
                     "distinct_on": [
-                        2040,
+                        2016,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -42806,19 +42621,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2039,
+                        2015,
                         "[v_player_map_losses_order_by!]"
                     ],
                     "where": [
-                        2036
+                        2012
                     ]
                 }
             ],
             "v_player_map_losses_aggregate": [
-                2033,
+                2009,
                 {
                     "distinct_on": [
-                        2040,
+                        2016,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -42828,19 +42643,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2039,
+                        2015,
                         "[v_player_map_losses_order_by!]"
                     ],
                     "where": [
-                        2036
+                        2012
                     ]
                 }
             ],
             "v_player_map_wins": [
-                2050,
+                2026,
                 {
                     "distinct_on": [
-                        2058,
+                        2034,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "limit": [
@@ -42850,19 +42665,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2057,
+                        2033,
                         "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
-                        2054
+                        2030
                     ]
                 }
             ],
             "v_player_map_wins_aggregate": [
-                2051,
+                2027,
                 {
                     "distinct_on": [
-                        2058,
+                        2034,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "limit": [
@@ -42872,19 +42687,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2057,
+                        2033,
                         "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
-                        2054
+                        2030
                     ]
                 }
             ],
             "v_player_multi_kills": [
-                2068,
+                2044,
                 {
                     "distinct_on": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -42894,19 +42709,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2083,
+                        2059,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
             "v_player_multi_kills_aggregate": [
-                2069,
+                2045,
                 {
                     "distinct_on": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -42916,19 +42731,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2083,
+                        2059,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
             "v_pool_maps": [
-                2101,
+                2077,
                 {
                     "distinct_on": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -42938,19 +42753,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2117,
+                        2093,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
             "v_pool_maps_aggregate": [
-                2102,
+                2078,
                 {
                     "distinct_on": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -42960,11 +42775,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2117,
+                        2093,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
@@ -42977,7 +42792,7 @@ export default {
                 14,
                 {
                     "invite_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "type": [
@@ -43012,7 +42827,7 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43021,7 +42836,7 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43039,11 +42854,11 @@ export default {
                 15,
                 {
                     "map_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "map_pool_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43061,7 +42876,7 @@ export default {
                 33,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43443,7 +43258,7 @@ export default {
                 530,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43461,7 +43276,7 @@ export default {
                 549,
                 {
                     "lobby_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "steam_id": [
@@ -43483,7 +43298,7 @@ export default {
                 594,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43501,7 +43316,7 @@ export default {
                 613,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43519,7 +43334,7 @@ export default {
                 642,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43537,7 +43352,7 @@ export default {
                 687,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43555,7 +43370,7 @@ export default {
                 729,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43573,7 +43388,7 @@ export default {
                 770,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43591,7 +43406,7 @@ export default {
                 811,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43609,7 +43424,7 @@ export default {
                 835,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43627,7 +43442,7 @@ export default {
                 877,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43645,7 +43460,7 @@ export default {
                 905,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43663,7 +43478,7 @@ export default {
                 929,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -43708,13 +43523,13 @@ export default {
                 1030,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_player_assists": [
-                1102,
+                1101,
                 {
                     "where": [
                         1094,
@@ -43722,180 +43537,110 @@ export default {
                     ]
                 }
             ],
-            "delete_player_assists_by_pk": [
-                1083,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
-                    ]
-                }
-            ],
             "delete_player_damages": [
-                1145,
+                1140,
                 {
                     "where": [
-                        1137,
+                        1133,
                         "player_damages_bool_exp!"
                     ]
                 }
             ],
-            "delete_player_damages_by_pk": [
-                1128,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
-                    ]
-                }
-            ],
             "delete_player_flashes": [
-                1188,
+                1179,
                 {
                     "where": [
-                        1180,
+                        1172,
                         "player_flashes_bool_exp!"
                     ]
                 }
             ],
-            "delete_player_flashes_by_pk": [
-                1169,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
-                    ]
-                }
-            ],
             "delete_player_kills": [
-                1233,
+                1221,
                 {
                     "where": [
-                        1225,
+                        1213,
                         "player_kills_bool_exp!"
                     ]
                 }
             ],
             "delete_player_kills_by_pk": [
-                1214,
+                1202,
                 {
                     "id": [
-                        1950,
+                        1926,
+                        "uuid!"
+                    ],
+                    "match_id": [
+                        1926,
+                        "uuid!"
+                    ],
+                    "match_map_id": [
+                        1926,
                         "uuid!"
                     ],
                     "time": [
-                        1653,
+                        1629,
                         "timestamptz!"
                     ]
                 }
             ],
             "delete_player_objectives": [
-                1276,
+                1263,
                 {
                     "where": [
-                        1268,
+                        1256,
                         "player_objectives_bool_exp!"
                     ]
                 }
             ],
-            "delete_player_objectives_by_pk": [
-                1259,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
-                    ]
-                }
-            ],
             "delete_player_sanctions": [
-                1310,
+                1293,
                 {
                     "where": [
-                        1304,
+                        1288,
                         "player_sanctions_bool_exp!"
                     ]
                 }
             ],
-            "delete_player_sanctions_by_pk": [
-                1300,
-                {
-                    "created_at": [
-                        1653,
-                        "timestamptz!"
-                    ],
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ]
-                }
-            ],
             "delete_player_unused_utility": [
-                1344,
+                1324,
                 {
                     "where": [
-                        1336,
+                        1316,
                         "player_unused_utility_bool_exp!"
                     ]
                 }
             ],
             "delete_player_unused_utility_by_pk": [
-                1327,
+                1307,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_player_utility": [
-                1385,
+                1364,
                 {
                     "where": [
-                        1377,
+                        1357,
                         "player_utility_bool_exp!"
                     ]
                 }
             ],
-            "delete_player_utility_by_pk": [
-                1368,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
-                    ]
-                }
-            ],
             "delete_players": [
-                1419,
+                1395,
                 {
                     "where": [
-                        1413,
+                        1389,
                         "players_bool_exp!"
                     ]
                 }
             ],
             "delete_players_by_pk": [
-                1409,
+                1385,
                 {
                     "steam_id": [
                         74,
@@ -43904,16 +43649,16 @@ export default {
                 }
             ],
             "delete_server_regions": [
-                1446,
+                1422,
                 {
                     "where": [
-                        1441,
+                        1417,
                         "server_regions_bool_exp!"
                     ]
                 }
             ],
             "delete_server_regions_by_pk": [
-                1437,
+                1413,
                 {
                     "value": [
                         11,
@@ -43922,34 +43667,34 @@ export default {
                 }
             ],
             "delete_servers": [
-                1483,
+                1459,
                 {
                     "where": [
-                        1475,
+                        1451,
                         "servers_bool_exp!"
                     ]
                 }
             ],
             "delete_servers_by_pk": [
-                1464,
+                1440,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_settings": [
-                1518,
+                1494,
                 {
                     "where": [
-                        1513,
+                        1489,
                         "settings_bool_exp!"
                     ]
                 }
             ],
             "delete_settings_by_pk": [
-                1510,
+                1486,
                 {
                     "name": [
                         11,
@@ -43958,211 +43703,211 @@ export default {
                 }
             ],
             "delete_team_invites": [
-                1545,
+                1521,
                 {
                     "where": [
-                        1537,
+                        1513,
                         "team_invites_bool_exp!"
                     ]
                 }
             ],
             "delete_team_invites_by_pk": [
-                1528,
+                1504,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_team_roster": [
-                1586,
+                1562,
                 {
                     "where": [
-                        1578,
+                        1554,
                         "team_roster_bool_exp!"
                     ]
                 }
             ],
             "delete_team_roster_by_pk": [
-                1569,
+                1545,
                 {
                     "player_steam_id": [
                         74,
                         "bigint!"
                     ],
                     "team_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_teams": [
-                1627,
+                1603,
                 {
                     "where": [
-                        1619,
+                        1595,
                         "teams_bool_exp!"
                     ]
                 }
             ],
             "delete_teams_by_pk": [
-                1610,
+                1586,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournament_brackets": [
-                1672,
+                1648,
                 {
                     "where": [
-                        1664,
+                        1640,
                         "tournament_brackets_bool_exp!"
                     ]
                 }
             ],
             "delete_tournament_brackets_by_pk": [
-                1655,
+                1631,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournament_organizers": [
-                1713,
+                1689,
                 {
                     "where": [
-                        1705,
+                        1681,
                         "tournament_organizers_bool_exp!"
                     ]
                 }
             ],
             "delete_tournament_organizers_by_pk": [
-                1696,
+                1672,
                 {
                     "steam_id": [
                         74,
                         "bigint!"
                     ],
                     "tournament_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournament_stages": [
-                1758,
+                1734,
                 {
                     "where": [
-                        1747,
+                        1723,
                         "tournament_stages_bool_exp!"
                     ]
                 }
             ],
             "delete_tournament_stages_by_pk": [
-                1737,
+                1713,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournament_team_invites": [
-                1801,
+                1777,
                 {
                     "where": [
-                        1793,
+                        1769,
                         "tournament_team_invites_bool_exp!"
                     ]
                 }
             ],
             "delete_tournament_team_invites_by_pk": [
-                1784,
+                1760,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournament_team_roster": [
-                1842,
+                1818,
                 {
                     "where": [
-                        1834,
+                        1810,
                         "tournament_team_roster_bool_exp!"
                     ]
                 }
             ],
             "delete_tournament_team_roster_by_pk": [
-                1825,
+                1801,
                 {
                     "player_steam_id": [
                         74,
                         "bigint!"
                     ],
                     "tournament_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournament_teams": [
-                1883,
+                1859,
                 {
                     "where": [
-                        1875,
+                        1851,
                         "tournament_teams_bool_exp!"
                     ]
                 }
             ],
             "delete_tournament_teams_by_pk": [
-                1866,
+                1842,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_tournaments": [
-                1925,
+                1901,
                 {
                     "where": [
-                        1917,
+                        1893,
                         "tournaments_bool_exp!"
                     ]
                 }
             ],
             "delete_tournaments_by_pk": [
-                1908,
+                1884,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "delete_v_match_captains": [
-                1961,
+                1937,
                 {
                     "where": [
-                        1956,
+                        1932,
                         "v_match_captains_bool_exp!"
                     ]
                 }
             ],
             "delete_v_pool_maps": [
-                2116,
+                2092,
                 {
                     "where": [
-                        2110,
+                        2086,
                         "v_pool_maps_bool_exp!"
                     ]
                 }
@@ -44171,7 +43916,7 @@ export default {
                 14,
                 {
                     "invite_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "type": [
@@ -44184,11 +43929,11 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "winning_lineup_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -45100,14 +44845,11 @@ export default {
                 }
             ],
             "insert_player_assists": [
-                1102,
+                1101,
                 {
                     "objects": [
-                        1097,
+                        1096,
                         "[player_assists_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        1103
                     ]
                 }
             ],
@@ -45115,550 +44857,517 @@ export default {
                 1083,
                 {
                     "object": [
-                        1097,
+                        1096,
                         "player_assists_insert_input!"
-                    ],
-                    "on_conflict": [
-                        1103
                     ]
                 }
             ],
             "insert_player_damages": [
-                1145,
+                1140,
                 {
                     "objects": [
-                        1140,
+                        1135,
                         "[player_damages_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        1146
                     ]
                 }
             ],
             "insert_player_damages_one": [
-                1128,
+                1124,
                 {
                     "object": [
-                        1140,
+                        1135,
                         "player_damages_insert_input!"
-                    ],
-                    "on_conflict": [
-                        1146
                     ]
                 }
             ],
             "insert_player_flashes": [
-                1188,
+                1179,
                 {
                     "objects": [
-                        1183,
+                        1174,
                         "[player_flashes_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        1189
                     ]
                 }
             ],
             "insert_player_flashes_one": [
-                1169,
+                1161,
                 {
                     "object": [
-                        1183,
+                        1174,
                         "player_flashes_insert_input!"
-                    ],
-                    "on_conflict": [
-                        1189
                     ]
                 }
             ],
             "insert_player_kills": [
-                1233,
+                1221,
                 {
                     "objects": [
-                        1228,
+                        1216,
                         "[player_kills_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1234
+                        1222
                     ]
                 }
             ],
             "insert_player_kills_one": [
-                1214,
+                1202,
                 {
                     "object": [
-                        1228,
+                        1216,
                         "player_kills_insert_input!"
                     ],
                     "on_conflict": [
-                        1234
+                        1222
                     ]
                 }
             ],
             "insert_player_objectives": [
-                1276,
+                1263,
                 {
                     "objects": [
-                        1271,
+                        1258,
                         "[player_objectives_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        1277
                     ]
                 }
             ],
             "insert_player_objectives_one": [
-                1259,
+                1247,
                 {
                     "object": [
-                        1271,
+                        1258,
                         "player_objectives_insert_input!"
-                    ],
-                    "on_conflict": [
-                        1277
                     ]
                 }
             ],
             "insert_player_sanctions": [
-                1310,
+                1293,
                 {
                     "objects": [
-                        1307,
+                        1290,
                         "[player_sanctions_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        1311
                     ]
                 }
             ],
             "insert_player_sanctions_one": [
-                1300,
+                1284,
                 {
                     "object": [
-                        1307,
+                        1290,
                         "player_sanctions_insert_input!"
-                    ],
-                    "on_conflict": [
-                        1311
                     ]
                 }
             ],
             "insert_player_unused_utility": [
-                1344,
+                1324,
                 {
                     "objects": [
-                        1339,
+                        1319,
                         "[player_unused_utility_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1345
+                        1325
                     ]
                 }
             ],
             "insert_player_unused_utility_one": [
-                1327,
+                1307,
                 {
                     "object": [
-                        1339,
+                        1319,
                         "player_unused_utility_insert_input!"
                     ],
                     "on_conflict": [
-                        1345
+                        1325
                     ]
                 }
             ],
             "insert_player_utility": [
-                1385,
+                1364,
                 {
                     "objects": [
-                        1380,
+                        1359,
                         "[player_utility_insert_input!]!"
-                    ],
-                    "on_conflict": [
-                        1386
                     ]
                 }
             ],
             "insert_player_utility_one": [
-                1368,
+                1348,
                 {
                     "object": [
-                        1380,
+                        1359,
                         "player_utility_insert_input!"
-                    ],
-                    "on_conflict": [
-                        1386
                     ]
                 }
             ],
             "insert_players": [
-                1419,
+                1395,
                 {
                     "objects": [
-                        1416,
+                        1392,
                         "[players_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1421
+                        1397
                     ]
                 }
             ],
             "insert_players_one": [
-                1409,
+                1385,
                 {
                     "object": [
-                        1416,
+                        1392,
                         "players_insert_input!"
                     ],
                     "on_conflict": [
-                        1421
+                        1397
                     ]
                 }
             ],
             "insert_server_regions": [
-                1446,
+                1422,
                 {
                     "objects": [
-                        1443,
+                        1419,
                         "[server_regions_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1448
+                        1424
                     ]
                 }
             ],
             "insert_server_regions_one": [
-                1437,
+                1413,
                 {
                     "object": [
-                        1443,
+                        1419,
                         "server_regions_insert_input!"
                     ],
                     "on_conflict": [
-                        1448
+                        1424
                     ]
                 }
             ],
             "insert_servers": [
-                1483,
+                1459,
                 {
                     "objects": [
-                        1478,
+                        1454,
                         "[servers_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1485
+                        1461
                     ]
                 }
             ],
             "insert_servers_one": [
-                1464,
+                1440,
                 {
                     "object": [
-                        1478,
+                        1454,
                         "servers_insert_input!"
                     ],
                     "on_conflict": [
-                        1485
+                        1461
                     ]
                 }
             ],
             "insert_settings": [
-                1518,
+                1494,
                 {
                     "objects": [
-                        1515,
+                        1491,
                         "[settings_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1519
+                        1495
                     ]
                 }
             ],
             "insert_settings_one": [
-                1510,
+                1486,
                 {
                     "object": [
-                        1515,
+                        1491,
                         "settings_insert_input!"
                     ],
                     "on_conflict": [
-                        1519
+                        1495
                     ]
                 }
             ],
             "insert_team_invites": [
-                1545,
+                1521,
                 {
                     "objects": [
-                        1540,
+                        1516,
                         "[team_invites_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1546
+                        1522
                     ]
                 }
             ],
             "insert_team_invites_one": [
-                1528,
+                1504,
                 {
                     "object": [
-                        1540,
+                        1516,
                         "team_invites_insert_input!"
                     ],
                     "on_conflict": [
-                        1546
+                        1522
                     ]
                 }
             ],
             "insert_team_roster": [
-                1586,
+                1562,
                 {
                     "objects": [
-                        1581,
+                        1557,
                         "[team_roster_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1587
+                        1563
                     ]
                 }
             ],
             "insert_team_roster_one": [
-                1569,
+                1545,
                 {
                     "object": [
-                        1581,
+                        1557,
                         "team_roster_insert_input!"
                     ],
                     "on_conflict": [
-                        1587
+                        1563
                     ]
                 }
             ],
             "insert_teams": [
-                1627,
+                1603,
                 {
                     "objects": [
-                        1622,
+                        1598,
                         "[teams_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1629
+                        1605
                     ]
                 }
             ],
             "insert_teams_one": [
-                1610,
+                1586,
                 {
                     "object": [
-                        1622,
+                        1598,
                         "teams_insert_input!"
                     ],
                     "on_conflict": [
-                        1629
+                        1605
                     ]
                 }
             ],
             "insert_tournament_brackets": [
-                1672,
+                1648,
                 {
                     "objects": [
-                        1667,
+                        1643,
                         "[tournament_brackets_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1673
+                        1649
                     ]
                 }
             ],
             "insert_tournament_brackets_one": [
-                1655,
+                1631,
                 {
                     "object": [
-                        1667,
+                        1643,
                         "tournament_brackets_insert_input!"
                     ],
                     "on_conflict": [
-                        1673
+                        1649
                     ]
                 }
             ],
             "insert_tournament_organizers": [
-                1713,
+                1689,
                 {
                     "objects": [
-                        1708,
+                        1684,
                         "[tournament_organizers_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1714
+                        1690
                     ]
                 }
             ],
             "insert_tournament_organizers_one": [
-                1696,
+                1672,
                 {
                     "object": [
-                        1708,
+                        1684,
                         "tournament_organizers_insert_input!"
                     ],
                     "on_conflict": [
-                        1714
+                        1690
                     ]
                 }
             ],
             "insert_tournament_stages": [
-                1758,
+                1734,
                 {
                     "objects": [
-                        1753,
+                        1729,
                         "[tournament_stages_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1760
+                        1736
                     ]
                 }
             ],
             "insert_tournament_stages_one": [
-                1737,
+                1713,
                 {
                     "object": [
-                        1753,
+                        1729,
                         "tournament_stages_insert_input!"
                     ],
                     "on_conflict": [
-                        1760
+                        1736
                     ]
                 }
             ],
             "insert_tournament_team_invites": [
-                1801,
+                1777,
                 {
                     "objects": [
-                        1796,
+                        1772,
                         "[tournament_team_invites_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1802
+                        1778
                     ]
                 }
             ],
             "insert_tournament_team_invites_one": [
-                1784,
+                1760,
                 {
                     "object": [
-                        1796,
+                        1772,
                         "tournament_team_invites_insert_input!"
                     ],
                     "on_conflict": [
-                        1802
+                        1778
                     ]
                 }
             ],
             "insert_tournament_team_roster": [
-                1842,
+                1818,
                 {
                     "objects": [
-                        1837,
+                        1813,
                         "[tournament_team_roster_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1843
+                        1819
                     ]
                 }
             ],
             "insert_tournament_team_roster_one": [
-                1825,
+                1801,
                 {
                     "object": [
-                        1837,
+                        1813,
                         "tournament_team_roster_insert_input!"
                     ],
                     "on_conflict": [
-                        1843
+                        1819
                     ]
                 }
             ],
             "insert_tournament_teams": [
-                1883,
+                1859,
                 {
                     "objects": [
-                        1878,
+                        1854,
                         "[tournament_teams_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1885
+                        1861
                     ]
                 }
             ],
             "insert_tournament_teams_one": [
-                1866,
+                1842,
                 {
                     "object": [
-                        1878,
+                        1854,
                         "tournament_teams_insert_input!"
                     ],
                     "on_conflict": [
-                        1885
+                        1861
                     ]
                 }
             ],
             "insert_tournaments": [
-                1925,
+                1901,
                 {
                     "objects": [
-                        1920,
+                        1896,
                         "[tournaments_insert_input!]!"
                     ],
                     "on_conflict": [
-                        1927
+                        1903
                     ]
                 }
             ],
             "insert_tournaments_one": [
-                1908,
+                1884,
                 {
                     "object": [
-                        1920,
+                        1896,
                         "tournaments_insert_input!"
                     ],
                     "on_conflict": [
-                        1927
+                        1903
                     ]
                 }
             ],
             "insert_v_match_captains": [
-                1961,
+                1937,
                 {
                     "objects": [
-                        1958,
+                        1934,
                         "[v_match_captains_insert_input!]!"
                     ]
                 }
             ],
             "insert_v_match_captains_one": [
-                1952,
+                1928,
                 {
                     "object": [
-                        1958,
+                        1934,
                         "v_match_captains_insert_input!"
                     ]
                 }
             ],
             "insert_v_pool_maps": [
-                2116,
+                2092,
                 {
                     "objects": [
-                        2111,
+                        2087,
                         "[v_pool_maps_insert_input!]!"
                     ]
                 }
             ],
             "insert_v_pool_maps_one": [
-                2101,
+                2077,
                 {
                     "object": [
-                        2111,
+                        2087,
                         "v_pool_maps_insert_input!"
                     ]
                 }
@@ -45695,7 +45404,7 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -45726,11 +45435,11 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "time": [
-                        1653
+                        1629
                     ]
                 }
             ],
@@ -45738,11 +45447,11 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "winning_lineup_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -45754,11 +45463,11 @@ export default {
                 14,
                 {
                     "match_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "server_id": [
-                        1950
+                        1926
                     ]
                 }
             ],
@@ -45781,7 +45490,7 @@ export default {
                 14,
                 {
                     "game_server_node_id": [
-                        1950
+                        1926
                     ]
                 }
             ],
@@ -47136,13 +46845,13 @@ export default {
                 }
             ],
             "update_player_assists": [
-                1102,
+                1101,
                 {
                     "_inc": [
-                        1096
+                        1095
                     ],
                     "_set": [
-                        1109
+                        1106
                     ],
                     "where": [
                         1094,
@@ -47150,887 +46859,797 @@ export default {
                     ]
                 }
             ],
-            "update_player_assists_by_pk": [
-                1083,
-                {
-                    "_inc": [
-                        1096
-                    ],
-                    "_set": [
-                        1109
-                    ],
-                    "pk_columns": [
-                        1105,
-                        "player_assists_pk_columns_input!"
-                    ]
-                }
-            ],
             "update_player_assists_many": [
-                1102,
+                1101,
                 {
                     "updates": [
-                        1121,
+                        1117,
                         "[player_assists_updates!]!"
                     ]
                 }
             ],
             "update_player_damages": [
-                1145,
+                1140,
                 {
                     "_inc": [
-                        1139
+                        1134
                     ],
                     "_set": [
-                        1150
+                        1143
                     ],
                     "where": [
-                        1137,
+                        1133,
                         "player_damages_bool_exp!"
                     ]
                 }
             ],
-            "update_player_damages_by_pk": [
-                1128,
-                {
-                    "_inc": [
-                        1139
-                    ],
-                    "_set": [
-                        1150
-                    ],
-                    "pk_columns": [
-                        1148,
-                        "player_damages_pk_columns_input!"
-                    ]
-                }
-            ],
             "update_player_damages_many": [
-                1145,
+                1140,
                 {
                     "updates": [
-                        1162,
+                        1154,
                         "[player_damages_updates!]!"
                     ]
                 }
             ],
             "update_player_flashes": [
-                1188,
+                1179,
                 {
                     "_inc": [
-                        1182
+                        1173
                     ],
                     "_set": [
-                        1195
+                        1184
                     ],
                     "where": [
-                        1180,
+                        1172,
                         "player_flashes_bool_exp!"
                     ]
                 }
             ],
-            "update_player_flashes_by_pk": [
-                1169,
-                {
-                    "_inc": [
-                        1182
-                    ],
-                    "_set": [
-                        1195
-                    ],
-                    "pk_columns": [
-                        1191,
-                        "player_flashes_pk_columns_input!"
-                    ]
-                }
-            ],
             "update_player_flashes_many": [
-                1188,
+                1179,
                 {
                     "updates": [
-                        1207,
+                        1195,
                         "[player_flashes_updates!]!"
                     ]
                 }
             ],
             "update_player_kills": [
-                1233,
+                1221,
                 {
                     "_inc": [
-                        1227
+                        1215
                     ],
                     "_set": [
-                        1240
+                        1228
                     ],
                     "where": [
-                        1225,
+                        1213,
                         "player_kills_bool_exp!"
                     ]
                 }
             ],
             "update_player_kills_by_pk": [
-                1214,
+                1202,
                 {
                     "_inc": [
-                        1227
+                        1215
                     ],
                     "_set": [
-                        1240
+                        1228
                     ],
                     "pk_columns": [
-                        1236,
+                        1224,
                         "player_kills_pk_columns_input!"
                     ]
                 }
             ],
             "update_player_kills_many": [
-                1233,
+                1221,
                 {
                     "updates": [
-                        1252,
+                        1240,
                         "[player_kills_updates!]!"
                     ]
                 }
             ],
             "update_player_objectives": [
-                1276,
+                1263,
                 {
                     "_inc": [
-                        1270
+                        1257
                     ],
                     "_set": [
-                        1281
+                        1266
                     ],
                     "where": [
-                        1268,
+                        1256,
                         "player_objectives_bool_exp!"
                     ]
                 }
             ],
-            "update_player_objectives_by_pk": [
-                1259,
-                {
-                    "_inc": [
-                        1270
-                    ],
-                    "_set": [
-                        1281
-                    ],
-                    "pk_columns": [
-                        1279,
-                        "player_objectives_pk_columns_input!"
-                    ]
-                }
-            ],
             "update_player_objectives_many": [
-                1276,
+                1263,
                 {
                     "updates": [
-                        1293,
+                        1277,
                         "[player_objectives_updates!]!"
                     ]
                 }
             ],
             "update_player_sanctions": [
-                1310,
+                1293,
                 {
                     "_inc": [
-                        1306
+                        1289
                     ],
                     "_set": [
-                        1315
+                        1296
                     ],
                     "where": [
-                        1304,
+                        1288,
                         "player_sanctions_bool_exp!"
                     ]
                 }
             ],
-            "update_player_sanctions_by_pk": [
-                1300,
-                {
-                    "_inc": [
-                        1306
-                    ],
-                    "_set": [
-                        1315
-                    ],
-                    "pk_columns": [
-                        1313,
-                        "player_sanctions_pk_columns_input!"
-                    ]
-                }
-            ],
             "update_player_sanctions_many": [
-                1310,
+                1293,
                 {
                     "updates": [
-                        1323,
+                        1303,
                         "[player_sanctions_updates!]!"
                     ]
                 }
             ],
             "update_player_unused_utility": [
-                1344,
+                1324,
                 {
                     "_inc": [
-                        1338
+                        1318
                     ],
                     "_set": [
-                        1349
+                        1329
                     ],
                     "where": [
-                        1336,
+                        1316,
                         "player_unused_utility_bool_exp!"
                     ]
                 }
             ],
             "update_player_unused_utility_by_pk": [
-                1327,
+                1307,
                 {
                     "_inc": [
-                        1338
+                        1318
                     ],
                     "_set": [
-                        1349
+                        1329
                     ],
                     "pk_columns": [
-                        1347,
+                        1327,
                         "player_unused_utility_pk_columns_input!"
                     ]
                 }
             ],
             "update_player_unused_utility_many": [
-                1344,
+                1324,
                 {
                     "updates": [
-                        1361,
+                        1341,
                         "[player_unused_utility_updates!]!"
                     ]
                 }
             ],
             "update_player_utility": [
-                1385,
+                1364,
                 {
                     "_inc": [
-                        1379
+                        1358
                     ],
                     "_set": [
-                        1390
+                        1367
                     ],
                     "where": [
-                        1377,
+                        1357,
                         "player_utility_bool_exp!"
                     ]
                 }
             ],
-            "update_player_utility_by_pk": [
-                1368,
-                {
-                    "_inc": [
-                        1379
-                    ],
-                    "_set": [
-                        1390
-                    ],
-                    "pk_columns": [
-                        1388,
-                        "player_utility_pk_columns_input!"
-                    ]
-                }
-            ],
             "update_player_utility_many": [
-                1385,
+                1364,
                 {
                     "updates": [
-                        1402,
+                        1378,
                         "[player_utility_updates!]!"
                     ]
                 }
             ],
             "update_players": [
-                1419,
+                1395,
                 {
                     "_inc": [
-                        1415
+                        1391
                     ],
                     "_set": [
-                        1425
+                        1401
                     ],
                     "where": [
-                        1413,
+                        1389,
                         "players_bool_exp!"
                     ]
                 }
             ],
             "update_players_by_pk": [
-                1409,
+                1385,
                 {
                     "_inc": [
-                        1415
+                        1391
                     ],
                     "_set": [
-                        1425
+                        1401
                     ],
                     "pk_columns": [
-                        1423,
+                        1399,
                         "players_pk_columns_input!"
                     ]
                 }
             ],
             "update_players_many": [
-                1419,
+                1395,
                 {
                     "updates": [
-                        1433,
+                        1409,
                         "[players_updates!]!"
                     ]
                 }
             ],
             "update_server_regions": [
-                1446,
+                1422,
                 {
                     "_set": [
-                        1452
+                        1428
                     ],
                     "where": [
-                        1441,
+                        1417,
                         "server_regions_bool_exp!"
                     ]
                 }
             ],
             "update_server_regions_by_pk": [
-                1437,
+                1413,
                 {
                     "_set": [
-                        1452
+                        1428
                     ],
                     "pk_columns": [
-                        1450,
+                        1426,
                         "server_regions_pk_columns_input!"
                     ]
                 }
             ],
             "update_server_regions_many": [
-                1446,
+                1422,
                 {
                     "updates": [
-                        1460,
+                        1436,
                         "[server_regions_updates!]!"
                     ]
                 }
             ],
             "update_servers": [
-                1483,
+                1459,
                 {
                     "_inc": [
-                        1477
+                        1453
                     ],
                     "_set": [
-                        1491
+                        1467
                     ],
                     "where": [
-                        1475,
+                        1451,
                         "servers_bool_exp!"
                     ]
                 }
             ],
             "update_servers_by_pk": [
-                1464,
+                1440,
                 {
                     "_inc": [
-                        1477
+                        1453
                     ],
                     "_set": [
-                        1491
+                        1467
                     ],
                     "pk_columns": [
-                        1487,
+                        1463,
                         "servers_pk_columns_input!"
                     ]
                 }
             ],
             "update_servers_many": [
-                1483,
+                1459,
                 {
                     "updates": [
-                        1503,
+                        1479,
                         "[servers_updates!]!"
                     ]
                 }
             ],
             "update_settings": [
-                1518,
+                1494,
                 {
                     "_set": [
-                        1523
+                        1499
                     ],
                     "where": [
-                        1513,
+                        1489,
                         "settings_bool_exp!"
                     ]
                 }
             ],
             "update_settings_by_pk": [
-                1510,
+                1486,
                 {
                     "_set": [
-                        1523
+                        1499
                     ],
                     "pk_columns": [
-                        1521,
+                        1497,
                         "settings_pk_columns_input!"
                     ]
                 }
             ],
             "update_settings_many": [
-                1518,
+                1494,
                 {
                     "updates": [
-                        1527,
+                        1503,
                         "[settings_updates!]!"
                     ]
                 }
             ],
             "update_team_invites": [
-                1545,
+                1521,
                 {
                     "_inc": [
-                        1539
+                        1515
                     ],
                     "_set": [
-                        1550
+                        1526
                     ],
                     "where": [
-                        1537,
+                        1513,
                         "team_invites_bool_exp!"
                     ]
                 }
             ],
             "update_team_invites_by_pk": [
-                1528,
+                1504,
                 {
                     "_inc": [
-                        1539
+                        1515
                     ],
                     "_set": [
-                        1550
+                        1526
                     ],
                     "pk_columns": [
-                        1548,
+                        1524,
                         "team_invites_pk_columns_input!"
                     ]
                 }
             ],
             "update_team_invites_many": [
-                1545,
+                1521,
                 {
                     "updates": [
-                        1562,
+                        1538,
                         "[team_invites_updates!]!"
                     ]
                 }
             ],
             "update_team_roster": [
-                1586,
+                1562,
                 {
                     "_inc": [
-                        1580
+                        1556
                     ],
                     "_set": [
-                        1591
+                        1567
                     ],
                     "where": [
-                        1578,
+                        1554,
                         "team_roster_bool_exp!"
                     ]
                 }
             ],
             "update_team_roster_by_pk": [
-                1569,
+                1545,
                 {
                     "_inc": [
-                        1580
+                        1556
                     ],
                     "_set": [
-                        1591
+                        1567
                     ],
                     "pk_columns": [
-                        1589,
+                        1565,
                         "team_roster_pk_columns_input!"
                     ]
                 }
             ],
             "update_team_roster_many": [
-                1586,
+                1562,
                 {
                     "updates": [
-                        1603,
+                        1579,
                         "[team_roster_updates!]!"
                     ]
                 }
             ],
             "update_teams": [
-                1627,
+                1603,
                 {
                     "_inc": [
-                        1621
+                        1597
                     ],
                     "_set": [
-                        1633
+                        1609
                     ],
                     "where": [
-                        1619,
+                        1595,
                         "teams_bool_exp!"
                     ]
                 }
             ],
             "update_teams_by_pk": [
-                1610,
+                1586,
                 {
                     "_inc": [
-                        1621
+                        1597
                     ],
                     "_set": [
-                        1633
+                        1609
                     ],
                     "pk_columns": [
-                        1631,
+                        1607,
                         "teams_pk_columns_input!"
                     ]
                 }
             ],
             "update_teams_many": [
-                1627,
+                1603,
                 {
                     "updates": [
-                        1645,
+                        1621,
                         "[teams_updates!]!"
                     ]
                 }
             ],
             "update_tournament_brackets": [
-                1672,
+                1648,
                 {
                     "_inc": [
-                        1666
+                        1642
                     ],
                     "_set": [
-                        1677
+                        1653
                     ],
                     "where": [
-                        1664,
+                        1640,
                         "tournament_brackets_bool_exp!"
                     ]
                 }
             ],
             "update_tournament_brackets_by_pk": [
-                1655,
+                1631,
                 {
                     "_inc": [
-                        1666
+                        1642
                     ],
                     "_set": [
-                        1677
+                        1653
                     ],
                     "pk_columns": [
-                        1675,
+                        1651,
                         "tournament_brackets_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournament_brackets_many": [
-                1672,
+                1648,
                 {
                     "updates": [
-                        1689,
+                        1665,
                         "[tournament_brackets_updates!]!"
                     ]
                 }
             ],
             "update_tournament_organizers": [
-                1713,
+                1689,
                 {
                     "_inc": [
-                        1707
+                        1683
                     ],
                     "_set": [
-                        1718
+                        1694
                     ],
                     "where": [
-                        1705,
+                        1681,
                         "tournament_organizers_bool_exp!"
                     ]
                 }
             ],
             "update_tournament_organizers_by_pk": [
-                1696,
+                1672,
                 {
                     "_inc": [
-                        1707
+                        1683
                     ],
                     "_set": [
-                        1718
+                        1694
                     ],
                     "pk_columns": [
-                        1716,
+                        1692,
                         "tournament_organizers_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournament_organizers_many": [
-                1713,
+                1689,
                 {
                     "updates": [
-                        1730,
+                        1706,
                         "[tournament_organizers_updates!]!"
                     ]
                 }
             ],
             "update_tournament_stages": [
-                1758,
+                1734,
                 {
                     "_append": [
-                        1743
+                        1719
                     ],
                     "_delete_at_path": [
-                        1749
+                        1725
                     ],
                     "_delete_elem": [
-                        1750
+                        1726
                     ],
                     "_delete_key": [
-                        1751
+                        1727
                     ],
                     "_inc": [
-                        1752
+                        1728
                     ],
                     "_prepend": [
-                        1763
+                        1739
                     ],
                     "_set": [
-                        1765
+                        1741
                     ],
                     "where": [
-                        1747,
+                        1723,
                         "tournament_stages_bool_exp!"
                     ]
                 }
             ],
             "update_tournament_stages_by_pk": [
-                1737,
+                1713,
                 {
                     "_append": [
-                        1743
+                        1719
                     ],
                     "_delete_at_path": [
-                        1749
+                        1725
                     ],
                     "_delete_elem": [
-                        1750
+                        1726
                     ],
                     "_delete_key": [
-                        1751
+                        1727
                     ],
                     "_inc": [
-                        1752
+                        1728
                     ],
                     "_prepend": [
-                        1763
+                        1739
                     ],
                     "_set": [
-                        1765
+                        1741
                     ],
                     "pk_columns": [
-                        1762,
+                        1738,
                         "tournament_stages_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournament_stages_many": [
-                1758,
+                1734,
                 {
                     "updates": [
-                        1777,
+                        1753,
                         "[tournament_stages_updates!]!"
                     ]
                 }
             ],
             "update_tournament_team_invites": [
-                1801,
+                1777,
                 {
                     "_inc": [
-                        1795
+                        1771
                     ],
                     "_set": [
-                        1806
+                        1782
                     ],
                     "where": [
-                        1793,
+                        1769,
                         "tournament_team_invites_bool_exp!"
                     ]
                 }
             ],
             "update_tournament_team_invites_by_pk": [
-                1784,
+                1760,
                 {
                     "_inc": [
-                        1795
+                        1771
                     ],
                     "_set": [
-                        1806
+                        1782
                     ],
                     "pk_columns": [
-                        1804,
+                        1780,
                         "tournament_team_invites_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournament_team_invites_many": [
-                1801,
+                1777,
                 {
                     "updates": [
-                        1818,
+                        1794,
                         "[tournament_team_invites_updates!]!"
                     ]
                 }
             ],
             "update_tournament_team_roster": [
-                1842,
+                1818,
                 {
                     "_inc": [
-                        1836
+                        1812
                     ],
                     "_set": [
-                        1847
+                        1823
                     ],
                     "where": [
-                        1834,
+                        1810,
                         "tournament_team_roster_bool_exp!"
                     ]
                 }
             ],
             "update_tournament_team_roster_by_pk": [
-                1825,
+                1801,
                 {
                     "_inc": [
-                        1836
+                        1812
                     ],
                     "_set": [
-                        1847
+                        1823
                     ],
                     "pk_columns": [
-                        1845,
+                        1821,
                         "tournament_team_roster_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournament_team_roster_many": [
-                1842,
+                1818,
                 {
                     "updates": [
-                        1859,
+                        1835,
                         "[tournament_team_roster_updates!]!"
                     ]
                 }
             ],
             "update_tournament_teams": [
-                1883,
+                1859,
                 {
                     "_inc": [
-                        1877
+                        1853
                     ],
                     "_set": [
-                        1889
+                        1865
                     ],
                     "where": [
-                        1875,
+                        1851,
                         "tournament_teams_bool_exp!"
                     ]
                 }
             ],
             "update_tournament_teams_by_pk": [
-                1866,
+                1842,
                 {
                     "_inc": [
-                        1877
+                        1853
                     ],
                     "_set": [
-                        1889
+                        1865
                     ],
                     "pk_columns": [
-                        1887,
+                        1863,
                         "tournament_teams_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournament_teams_many": [
-                1883,
+                1859,
                 {
                     "updates": [
-                        1901,
+                        1877,
                         "[tournament_teams_updates!]!"
                     ]
                 }
             ],
             "update_tournaments": [
-                1925,
+                1901,
                 {
                     "_inc": [
-                        1919
+                        1895
                     ],
                     "_set": [
-                        1931
+                        1907
                     ],
                     "where": [
-                        1917,
+                        1893,
                         "tournaments_bool_exp!"
                     ]
                 }
             ],
             "update_tournaments_by_pk": [
-                1908,
+                1884,
                 {
                     "_inc": [
-                        1919
+                        1895
                     ],
                     "_set": [
-                        1931
+                        1907
                     ],
                     "pk_columns": [
-                        1929,
+                        1905,
                         "tournaments_pk_columns_input!"
                     ]
                 }
             ],
             "update_tournaments_many": [
-                1925,
+                1901,
                 {
                     "updates": [
-                        1943,
+                        1919,
                         "[tournaments_updates!]!"
                     ]
                 }
             ],
             "update_v_match_captains": [
-                1961,
+                1937,
                 {
                     "_inc": [
-                        1957
+                        1933
                     ],
                     "_set": [
-                        1965
+                        1941
                     ],
                     "where": [
-                        1956,
+                        1932,
                         "v_match_captains_bool_exp!"
                     ]
                 }
             ],
             "update_v_match_captains_many": [
-                1961,
+                1937,
                 {
                     "updates": [
-                        1972,
+                        1948,
                         "[v_match_captains_updates!]!"
                     ]
                 }
@@ -48088,11 +47707,11 @@ export default {
                 15,
                 {
                     "map_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "map_pool_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -48161,7 +47780,7 @@ export default {
                 33,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -49614,7 +49233,7 @@ export default {
                 530,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -49683,7 +49302,7 @@ export default {
                 549,
                 {
                     "lobby_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ],
                     "steam_id": [
@@ -49756,7 +49375,7 @@ export default {
                 594,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -49825,7 +49444,7 @@ export default {
                 613,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -49894,7 +49513,7 @@ export default {
                 642,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -49963,7 +49582,7 @@ export default {
                 687,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50032,7 +49651,7 @@ export default {
                 729,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50101,7 +49720,7 @@ export default {
                 770,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50170,7 +49789,7 @@ export default {
                 811,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50239,7 +49858,7 @@ export default {
                 835,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50308,7 +49927,7 @@ export default {
                 877,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50377,7 +49996,7 @@ export default {
                 905,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50446,7 +50065,7 @@ export default {
                 929,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50644,7 +50263,7 @@ export default {
                 1030,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
@@ -50669,7 +50288,7 @@ export default {
                 1083,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -50679,7 +50298,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
@@ -50691,7 +50310,7 @@ export default {
                 1084,
                 {
                     "distinct_on": [
-                        1106,
+                        1103,
                         "[player_assists_select_column!]"
                     ],
                     "limit": [
@@ -50701,24 +50320,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1104,
+                        1102,
                         "[player_assists_order_by!]"
                     ],
                     "where": [
                         1094
-                    ]
-                }
-            ],
-            "player_assists_by_pk": [
-                1083,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
                     ]
                 }
             ],
@@ -50730,7 +50336,7 @@ export default {
                         "Int!"
                     ],
                     "cursor": [
-                        1116,
+                        1113,
                         "[player_assists_stream_cursor_input]!"
                     ],
                     "where": [
@@ -50739,10 +50345,10 @@ export default {
                 }
             ],
             "player_damages": [
-                1128,
+                1124,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -50752,19 +50358,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_damages_aggregate": [
-                1129,
+                1125,
                 {
                     "distinct_on": [
-                        1149,
+                        1142,
                         "[player_damages_select_column!]"
                     ],
                     "limit": [
@@ -50774,48 +50380,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1147,
+                        1141,
                         "[player_damages_order_by!]"
                     ],
                     "where": [
-                        1137
-                    ]
-                }
-            ],
-            "player_damages_by_pk": [
-                1128,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1133
                     ]
                 }
             ],
             "player_damages_stream": [
-                1128,
+                1124,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1157,
+                        1150,
                         "[player_damages_stream_cursor_input]!"
                     ],
                     "where": [
-                        1137
+                        1133
                     ]
                 }
             ],
             "player_flashes": [
-                1169,
+                1161,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -50825,19 +50418,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "player_flashes_aggregate": [
-                1170,
+                1162,
                 {
                     "distinct_on": [
-                        1192,
+                        1181,
                         "[player_flashes_select_column!]"
                     ],
                     "limit": [
@@ -50847,48 +50440,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1190,
+                        1180,
                         "[player_flashes_order_by!]"
                     ],
                     "where": [
-                        1180
-                    ]
-                }
-            ],
-            "player_flashes_by_pk": [
-                1169,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1172
                     ]
                 }
             ],
             "player_flashes_stream": [
-                1169,
+                1161,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1202,
+                        1191,
                         "[player_flashes_stream_cursor_input]!"
                     ],
                     "where": [
-                        1180
+                        1172
                     ]
                 }
             ],
             "player_kills": [
-                1214,
+                1202,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -50898,19 +50478,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_kills_aggregate": [
-                1215,
+                1203,
                 {
                     "distinct_on": [
-                        1237,
+                        1225,
                         "[player_kills_select_column!]"
                     ],
                     "limit": [
@@ -50920,48 +50500,56 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1235,
+                        1223,
                         "[player_kills_order_by!]"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_kills_by_pk": [
-                1214,
+                1202,
                 {
                     "id": [
-                        1950,
+                        1926,
+                        "uuid!"
+                    ],
+                    "match_id": [
+                        1926,
+                        "uuid!"
+                    ],
+                    "match_map_id": [
+                        1926,
                         "uuid!"
                     ],
                     "time": [
-                        1653,
+                        1629,
                         "timestamptz!"
                     ]
                 }
             ],
             "player_kills_stream": [
-                1214,
+                1202,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1247,
+                        1235,
                         "[player_kills_stream_cursor_input]!"
                     ],
                     "where": [
-                        1225
+                        1213
                     ]
                 }
             ],
             "player_objectives": [
-                1259,
+                1247,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -50971,19 +50559,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "player_objectives_aggregate": [
-                1260,
+                1248,
                 {
                     "distinct_on": [
-                        1280,
+                        1265,
                         "[player_objectives_select_column!]"
                     ],
                     "limit": [
@@ -50993,48 +50581,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1278,
+                        1264,
                         "[player_objectives_order_by!]"
                     ],
                     "where": [
-                        1268
-                    ]
-                }
-            ],
-            "player_objectives_by_pk": [
-                1259,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1256
                     ]
                 }
             ],
             "player_objectives_stream": [
-                1259,
+                1247,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1288,
+                        1273,
                         "[player_objectives_stream_cursor_input]!"
                     ],
                     "where": [
-                        1268
+                        1256
                     ]
                 }
             ],
             "player_sanctions": [
-                1300,
+                1284,
                 {
                     "distinct_on": [
-                        1314,
+                        1295,
                         "[player_sanctions_select_column!]"
                     ],
                     "limit": [
@@ -51044,19 +50619,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1312,
+                        1294,
                         "[player_sanctions_order_by!]"
                     ],
                     "where": [
-                        1304
+                        1288
                     ]
                 }
             ],
             "player_sanctions_aggregate": [
-                1301,
+                1285,
                 {
                     "distinct_on": [
-                        1314,
+                        1295,
                         "[player_sanctions_select_column!]"
                     ],
                     "limit": [
@@ -51066,48 +50641,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1312,
+                        1294,
                         "[player_sanctions_order_by!]"
                     ],
                     "where": [
-                        1304
-                    ]
-                }
-            ],
-            "player_sanctions_by_pk": [
-                1300,
-                {
-                    "created_at": [
-                        1653,
-                        "timestamptz!"
-                    ],
-                    "id": [
-                        1950,
-                        "uuid!"
+                        1288
                     ]
                 }
             ],
             "player_sanctions_stream": [
-                1300,
+                1284,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1319,
+                        1300,
                         "[player_sanctions_stream_cursor_input]!"
                     ],
                     "where": [
-                        1304
+                        1288
                     ]
                 }
             ],
             "player_unused_utility": [
-                1327,
+                1307,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -51117,19 +50679,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utility_aggregate": [
-                1328,
+                1308,
                 {
                     "distinct_on": [
-                        1348,
+                        1328,
                         "[player_unused_utility_select_column!]"
                     ],
                     "limit": [
@@ -51139,44 +50701,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1346,
+                        1326,
                         "[player_unused_utility_order_by!]"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_unused_utility_by_pk": [
-                1327,
+                1307,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "player_unused_utility_stream": [
-                1327,
+                1307,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1356,
+                        1336,
                         "[player_unused_utility_stream_cursor_input]!"
                     ],
                     "where": [
-                        1336
+                        1316
                     ]
                 }
             ],
             "player_utility": [
-                1368,
+                1348,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -51186,19 +50748,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "player_utility_aggregate": [
-                1369,
+                1349,
                 {
                     "distinct_on": [
-                        1389,
+                        1366,
                         "[player_utility_select_column!]"
                     ],
                     "limit": [
@@ -51208,48 +50770,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1387,
+                        1365,
                         "[player_utility_order_by!]"
                     ],
                     "where": [
-                        1377
-                    ]
-                }
-            ],
-            "player_utility_by_pk": [
-                1368,
-                {
-                    "id": [
-                        1950,
-                        "uuid!"
-                    ],
-                    "time": [
-                        1653,
-                        "timestamptz!"
+                        1357
                     ]
                 }
             ],
             "player_utility_stream": [
-                1368,
+                1348,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1397,
+                        1374,
                         "[player_utility_stream_cursor_input]!"
                     ],
                     "where": [
-                        1377
+                        1357
                     ]
                 }
             ],
             "players": [
-                1409,
+                1385,
                 {
                     "distinct_on": [
-                        1424,
+                        1400,
                         "[players_select_column!]"
                     ],
                     "limit": [
@@ -51259,19 +50808,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1422,
+                        1398,
                         "[players_order_by!]"
                     ],
                     "where": [
-                        1413
+                        1389
                     ]
                 }
             ],
             "players_aggregate": [
-                1410,
+                1386,
                 {
                     "distinct_on": [
-                        1424,
+                        1400,
                         "[players_select_column!]"
                     ],
                     "limit": [
@@ -51281,16 +50830,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1422,
+                        1398,
                         "[players_order_by!]"
                     ],
                     "where": [
-                        1413
+                        1389
                     ]
                 }
             ],
             "players_by_pk": [
-                1409,
+                1385,
                 {
                     "steam_id": [
                         74,
@@ -51299,26 +50848,26 @@ export default {
                 }
             ],
             "players_stream": [
-                1409,
+                1385,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1429,
+                        1405,
                         "[players_stream_cursor_input]!"
                     ],
                     "where": [
-                        1413
+                        1389
                     ]
                 }
             ],
             "server_regions": [
-                1437,
+                1413,
                 {
                     "distinct_on": [
-                        1451,
+                        1427,
                         "[server_regions_select_column!]"
                     ],
                     "limit": [
@@ -51328,19 +50877,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1449,
+                        1425,
                         "[server_regions_order_by!]"
                     ],
                     "where": [
-                        1441
+                        1417
                     ]
                 }
             ],
             "server_regions_aggregate": [
-                1438,
+                1414,
                 {
                     "distinct_on": [
-                        1451,
+                        1427,
                         "[server_regions_select_column!]"
                     ],
                     "limit": [
@@ -51350,16 +50899,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1449,
+                        1425,
                         "[server_regions_order_by!]"
                     ],
                     "where": [
-                        1441
+                        1417
                     ]
                 }
             ],
             "server_regions_by_pk": [
-                1437,
+                1413,
                 {
                     "value": [
                         11,
@@ -51368,26 +50917,26 @@ export default {
                 }
             ],
             "server_regions_stream": [
-                1437,
+                1413,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1456,
+                        1432,
                         "[server_regions_stream_cursor_input]!"
                     ],
                     "where": [
-                        1441
+                        1417
                     ]
                 }
             ],
             "servers": [
-                1464,
+                1440,
                 {
                     "distinct_on": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "limit": [
@@ -51397,19 +50946,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1486,
+                        1462,
                         "[servers_order_by!]"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
             "servers_aggregate": [
-                1465,
+                1441,
                 {
                     "distinct_on": [
-                        1488,
+                        1464,
                         "[servers_select_column!]"
                     ],
                     "limit": [
@@ -51419,44 +50968,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1486,
+                        1462,
                         "[servers_order_by!]"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
             "servers_by_pk": [
-                1464,
+                1440,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "servers_stream": [
-                1464,
+                1440,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1498,
+                        1474,
                         "[servers_stream_cursor_input]!"
                     ],
                     "where": [
-                        1475
+                        1451
                     ]
                 }
             ],
             "settings": [
-                1510,
+                1486,
                 {
                     "distinct_on": [
-                        1522,
+                        1498,
                         "[settings_select_column!]"
                     ],
                     "limit": [
@@ -51466,19 +51015,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1520,
+                        1496,
                         "[settings_order_by!]"
                     ],
                     "where": [
-                        1513
+                        1489
                     ]
                 }
             ],
             "settings_aggregate": [
-                1511,
+                1487,
                 {
                     "distinct_on": [
-                        1522,
+                        1498,
                         "[settings_select_column!]"
                     ],
                     "limit": [
@@ -51488,16 +51037,16 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1520,
+                        1496,
                         "[settings_order_by!]"
                     ],
                     "where": [
-                        1513
+                        1489
                     ]
                 }
             ],
             "settings_by_pk": [
-                1510,
+                1486,
                 {
                     "name": [
                         11,
@@ -51506,48 +51055,48 @@ export default {
                 }
             ],
             "settings_stream": [
-                1510,
+                1486,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1524,
+                        1500,
                         "[settings_stream_cursor_input]!"
+                    ],
+                    "where": [
+                        1489
+                    ]
+                }
+            ],
+            "team_invites": [
+                1504,
+                {
+                    "distinct_on": [
+                        1525,
+                        "[team_invites_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        1523,
+                        "[team_invites_order_by!]"
                     ],
                     "where": [
                         1513
                     ]
                 }
             ],
-            "team_invites": [
-                1528,
-                {
-                    "distinct_on": [
-                        1549,
-                        "[team_invites_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        1547,
-                        "[team_invites_order_by!]"
-                    ],
-                    "where": [
-                        1537
-                    ]
-                }
-            ],
             "team_invites_aggregate": [
-                1529,
+                1505,
                 {
                     "distinct_on": [
-                        1549,
+                        1525,
                         "[team_invites_select_column!]"
                     ],
                     "limit": [
@@ -51557,44 +51106,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1547,
+                        1523,
                         "[team_invites_order_by!]"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "team_invites_by_pk": [
-                1528,
+                1504,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "team_invites_stream": [
-                1528,
+                1504,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1557,
+                        1533,
                         "[team_invites_stream_cursor_input]!"
                     ],
                     "where": [
-                        1537
+                        1513
                     ]
                 }
             ],
             "team_roster": [
-                1569,
+                1545,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -51604,19 +51153,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "team_roster_aggregate": [
-                1570,
+                1546,
                 {
                     "distinct_on": [
-                        1590,
+                        1566,
                         "[team_roster_select_column!]"
                     ],
                     "limit": [
@@ -51626,48 +51175,48 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1588,
+                        1564,
                         "[team_roster_order_by!]"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "team_roster_by_pk": [
-                1569,
+                1545,
                 {
                     "player_steam_id": [
                         74,
                         "bigint!"
                     ],
                     "team_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "team_roster_stream": [
-                1569,
+                1545,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1598,
+                        1574,
                         "[team_roster_stream_cursor_input]!"
                     ],
                     "where": [
-                        1578
+                        1554
                     ]
                 }
             ],
             "teams": [
-                1610,
+                1586,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -51677,19 +51226,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "teams_aggregate": [
-                1611,
+                1587,
                 {
                     "distinct_on": [
-                        1632,
+                        1608,
                         "[teams_select_column!]"
                     ],
                     "limit": [
@@ -51699,44 +51248,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1630,
+                        1606,
                         "[teams_order_by!]"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "teams_by_pk": [
-                1610,
+                1586,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "teams_stream": [
-                1610,
+                1586,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1640,
+                        1616,
                         "[teams_stream_cursor_input]!"
                     ],
                     "where": [
-                        1619
+                        1595
                     ]
                 }
             ],
             "tournament_brackets": [
-                1655,
+                1631,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -51746,19 +51295,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "tournament_brackets_aggregate": [
-                1656,
+                1632,
                 {
                     "distinct_on": [
-                        1676,
+                        1652,
                         "[tournament_brackets_select_column!]"
                     ],
                     "limit": [
@@ -51768,44 +51317,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1674,
+                        1650,
                         "[tournament_brackets_order_by!]"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "tournament_brackets_by_pk": [
-                1655,
+                1631,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_brackets_stream": [
-                1655,
+                1631,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1684,
+                        1660,
                         "[tournament_brackets_stream_cursor_input]!"
                     ],
                     "where": [
-                        1664
+                        1640
                     ]
                 }
             ],
             "tournament_organizers": [
-                1696,
+                1672,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -51815,19 +51364,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_organizers_aggregate": [
-                1697,
+                1673,
                 {
                     "distinct_on": [
-                        1717,
+                        1693,
                         "[tournament_organizers_select_column!]"
                     ],
                     "limit": [
@@ -51837,48 +51386,48 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1715,
+                        1691,
                         "[tournament_organizers_order_by!]"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_organizers_by_pk": [
-                1696,
+                1672,
                 {
                     "steam_id": [
                         74,
                         "bigint!"
                     ],
                     "tournament_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_organizers_stream": [
-                1696,
+                1672,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1725,
+                        1701,
                         "[tournament_organizers_stream_cursor_input]!"
                     ],
                     "where": [
-                        1705
+                        1681
                     ]
                 }
             ],
             "tournament_stages": [
-                1737,
+                1713,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -51888,19 +51437,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "tournament_stages_aggregate": [
-                1738,
+                1714,
                 {
                     "distinct_on": [
-                        1764,
+                        1740,
                         "[tournament_stages_select_column!]"
                     ],
                     "limit": [
@@ -51910,44 +51459,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1761,
+                        1737,
                         "[tournament_stages_order_by!]"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "tournament_stages_by_pk": [
-                1737,
+                1713,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_stages_stream": [
-                1737,
+                1713,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1772,
+                        1748,
                         "[tournament_stages_stream_cursor_input]!"
                     ],
                     "where": [
-                        1747
+                        1723
                     ]
                 }
             ],
             "tournament_team_invites": [
-                1784,
+                1760,
                 {
                     "distinct_on": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "limit": [
@@ -51957,19 +51506,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1803,
+                        1779,
                         "[tournament_team_invites_order_by!]"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
             "tournament_team_invites_aggregate": [
-                1785,
+                1761,
                 {
                     "distinct_on": [
-                        1805,
+                        1781,
                         "[tournament_team_invites_select_column!]"
                     ],
                     "limit": [
@@ -51979,44 +51528,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1803,
+                        1779,
                         "[tournament_team_invites_order_by!]"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
             "tournament_team_invites_by_pk": [
-                1784,
+                1760,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_team_invites_stream": [
-                1784,
+                1760,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1813,
+                        1789,
                         "[tournament_team_invites_stream_cursor_input]!"
                     ],
                     "where": [
-                        1793
+                        1769
                     ]
                 }
             ],
             "tournament_team_roster": [
-                1825,
+                1801,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -52026,19 +51575,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_team_roster_aggregate": [
-                1826,
+                1802,
                 {
                     "distinct_on": [
-                        1846,
+                        1822,
                         "[tournament_team_roster_select_column!]"
                     ],
                     "limit": [
@@ -52048,48 +51597,48 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1844,
+                        1820,
                         "[tournament_team_roster_order_by!]"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_team_roster_by_pk": [
-                1825,
+                1801,
                 {
                     "player_steam_id": [
                         74,
                         "bigint!"
                     ],
                     "tournament_id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_team_roster_stream": [
-                1825,
+                1801,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1854,
+                        1830,
                         "[tournament_team_roster_stream_cursor_input]!"
                     ],
                     "where": [
-                        1834
+                        1810
                     ]
                 }
             ],
             "tournament_teams": [
-                1866,
+                1842,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -52099,19 +51648,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "tournament_teams_aggregate": [
-                1867,
+                1843,
                 {
                     "distinct_on": [
-                        1888,
+                        1864,
                         "[tournament_teams_select_column!]"
                     ],
                     "limit": [
@@ -52121,44 +51670,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1886,
+                        1862,
                         "[tournament_teams_order_by!]"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "tournament_teams_by_pk": [
-                1866,
+                1842,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournament_teams_stream": [
-                1866,
+                1842,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1896,
+                        1872,
                         "[tournament_teams_stream_cursor_input]!"
                     ],
                     "where": [
-                        1875
+                        1851
                     ]
                 }
             ],
             "tournaments": [
-                1908,
+                1884,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -52168,19 +51717,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "tournaments_aggregate": [
-                1909,
+                1885,
                 {
                     "distinct_on": [
-                        1930,
+                        1906,
                         "[tournaments_select_column!]"
                     ],
                     "limit": [
@@ -52190,44 +51739,44 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1928,
+                        1904,
                         "[tournaments_order_by!]"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "tournaments_by_pk": [
-                1908,
+                1884,
                 {
                     "id": [
-                        1950,
+                        1926,
                         "uuid!"
                     ]
                 }
             ],
             "tournaments_stream": [
-                1908,
+                1884,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        1938,
+                        1914,
                         "[tournaments_stream_cursor_input]!"
                     ],
                     "where": [
-                        1917
+                        1893
                     ]
                 }
             ],
             "v_match_captains": [
-                1952,
+                1928,
                 {
                     "distinct_on": [
-                        1964,
+                        1940,
                         "[v_match_captains_select_column!]"
                     ],
                     "limit": [
@@ -52237,19 +51786,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1963,
+                        1939,
                         "[v_match_captains_order_by!]"
                     ],
                     "where": [
-                        1956
+                        1932
                     ]
                 }
             ],
             "v_match_captains_aggregate": [
-                1953,
+                1929,
                 {
                     "distinct_on": [
-                        1964,
+                        1940,
                         "[v_match_captains_select_column!]"
                     ],
                     "limit": [
@@ -52259,15 +51808,75 @@ export default {
                         4
                     ],
                     "order_by": [
-                        1963,
+                        1939,
                         "[v_match_captains_order_by!]"
+                    ],
+                    "where": [
+                        1932
+                    ]
+                }
+            ],
+            "v_match_captains_stream": [
+                1928,
+                {
+                    "batch_size": [
+                        4,
+                        "Int!"
+                    ],
+                    "cursor": [
+                        1945,
+                        "[v_match_captains_stream_cursor_input]!"
+                    ],
+                    "where": [
+                        1932
+                    ]
+                }
+            ],
+            "v_match_lineups": [
+                1952,
+                {
+                    "distinct_on": [
+                        1962,
+                        "[v_match_lineups_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        1961,
+                        "[v_match_lineups_order_by!]"
                     ],
                     "where": [
                         1956
                     ]
                 }
             ],
-            "v_match_captains_stream": [
+            "v_match_lineups_aggregate": [
+                1953,
+                {
+                    "distinct_on": [
+                        1962,
+                        "[v_match_lineups_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        1961,
+                        "[v_match_lineups_order_by!]"
+                    ],
+                    "where": [
+                        1956
+                    ]
+                }
+            ],
+            "v_match_lineups_stream": [
                 1952,
                 {
                     "batch_size": [
@@ -52275,79 +51884,19 @@ export default {
                         "Int!"
                     ],
                     "cursor": [
-                        1969,
-                        "[v_match_captains_stream_cursor_input]!"
+                        1966,
+                        "[v_match_lineups_stream_cursor_input]!"
                     ],
                     "where": [
                         1956
                     ]
                 }
             ],
-            "v_match_lineups": [
-                1976,
-                {
-                    "distinct_on": [
-                        1986,
-                        "[v_match_lineups_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        1985,
-                        "[v_match_lineups_order_by!]"
-                    ],
-                    "where": [
-                        1980
-                    ]
-                }
-            ],
-            "v_match_lineups_aggregate": [
-                1977,
-                {
-                    "distinct_on": [
-                        1986,
-                        "[v_match_lineups_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        1985,
-                        "[v_match_lineups_order_by!]"
-                    ],
-                    "where": [
-                        1980
-                    ]
-                }
-            ],
-            "v_match_lineups_stream": [
-                1976,
-                {
-                    "batch_size": [
-                        4,
-                        "Int!"
-                    ],
-                    "cursor": [
-                        1990,
-                        "[v_match_lineups_stream_cursor_input]!"
-                    ],
-                    "where": [
-                        1980
-                    ]
-                }
-            ],
             "v_player_arch_nemesis": [
-                1996,
+                1972,
                 {
                     "distinct_on": [
-                        2004,
+                        1980,
                         "[v_player_arch_nemesis_select_column!]"
                     ],
                     "limit": [
@@ -52357,19 +51906,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2003,
+                        1979,
                         "[v_player_arch_nemesis_order_by!]"
                     ],
                     "where": [
-                        2000
+                        1976
                     ]
                 }
             ],
             "v_player_arch_nemesis_aggregate": [
-                1997,
+                1973,
                 {
                     "distinct_on": [
-                        2004,
+                        1980,
                         "[v_player_arch_nemesis_select_column!]"
                     ],
                     "limit": [
@@ -52379,35 +51928,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2003,
+                        1979,
                         "[v_player_arch_nemesis_order_by!]"
                     ],
                     "where": [
-                        2000
+                        1976
                     ]
                 }
             ],
             "v_player_arch_nemesis_stream": [
-                1996,
+                1972,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2008,
+                        1984,
                         "[v_player_arch_nemesis_stream_cursor_input]!"
                     ],
                     "where": [
-                        2000
+                        1976
                     ]
                 }
             ],
             "v_player_damage": [
-                2014,
+                1990,
                 {
                     "distinct_on": [
-                        2022,
+                        1998,
                         "[v_player_damage_select_column!]"
                     ],
                     "limit": [
@@ -52417,19 +51966,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2021,
+                        1997,
                         "[v_player_damage_order_by!]"
                     ],
                     "where": [
-                        2018
+                        1994
                     ]
                 }
             ],
             "v_player_damage_aggregate": [
-                2015,
+                1991,
                 {
                     "distinct_on": [
-                        2022,
+                        1998,
                         "[v_player_damage_select_column!]"
                     ],
                     "limit": [
@@ -52439,35 +51988,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2021,
+                        1997,
                         "[v_player_damage_order_by!]"
                     ],
                     "where": [
-                        2018
+                        1994
                     ]
                 }
             ],
             "v_player_damage_stream": [
-                2014,
+                1990,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2026,
+                        2002,
                         "[v_player_damage_stream_cursor_input]!"
                     ],
                     "where": [
-                        2018
+                        1994
                     ]
                 }
             ],
             "v_player_map_losses": [
-                2032,
+                2008,
                 {
                     "distinct_on": [
-                        2040,
+                        2016,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -52477,19 +52026,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2039,
+                        2015,
                         "[v_player_map_losses_order_by!]"
                     ],
                     "where": [
-                        2036
+                        2012
                     ]
                 }
             ],
             "v_player_map_losses_aggregate": [
-                2033,
+                2009,
                 {
                     "distinct_on": [
-                        2040,
+                        2016,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -52499,35 +52048,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2039,
+                        2015,
                         "[v_player_map_losses_order_by!]"
                     ],
                     "where": [
-                        2036
+                        2012
                     ]
                 }
             ],
             "v_player_map_losses_stream": [
-                2032,
+                2008,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2044,
+                        2020,
                         "[v_player_map_losses_stream_cursor_input]!"
                     ],
                     "where": [
-                        2036
+                        2012
                     ]
                 }
             ],
             "v_player_map_wins": [
-                2050,
+                2026,
                 {
                     "distinct_on": [
-                        2058,
+                        2034,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "limit": [
@@ -52537,19 +52086,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2057,
+                        2033,
                         "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
-                        2054
+                        2030
                     ]
                 }
             ],
             "v_player_map_wins_aggregate": [
-                2051,
+                2027,
                 {
                     "distinct_on": [
-                        2058,
+                        2034,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "limit": [
@@ -52559,35 +52108,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2057,
+                        2033,
                         "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
-                        2054
+                        2030
                     ]
                 }
             ],
             "v_player_map_wins_stream": [
-                2050,
+                2026,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2062,
+                        2038,
                         "[v_player_map_wins_stream_cursor_input]!"
                     ],
                     "where": [
-                        2054
+                        2030
                     ]
                 }
             ],
             "v_player_multi_kills": [
-                2068,
+                2044,
                 {
                     "distinct_on": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -52597,19 +52146,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2083,
+                        2059,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
             "v_player_multi_kills_aggregate": [
-                2069,
+                2045,
                 {
                     "distinct_on": [
-                        2084,
+                        2060,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -52619,35 +52168,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2083,
+                        2059,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
             "v_player_multi_kills_stream": [
-                2068,
+                2044,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2091,
+                        2067,
                         "[v_player_multi_kills_stream_cursor_input]!"
                     ],
                     "where": [
-                        2077
+                        2053
                     ]
                 }
             ],
             "v_pool_maps": [
-                2101,
+                2077,
                 {
                     "distinct_on": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -52657,19 +52206,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2117,
+                        2093,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
             "v_pool_maps_aggregate": [
-                2102,
+                2078,
                 {
                     "distinct_on": [
-                        2118,
+                        2094,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -52679,27 +52228,27 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2117,
+                        2093,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
             "v_pool_maps_stream": [
-                2101,
+                2077,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2121,
+                        2097,
                         "[v_pool_maps_stream_cursor_input]!"
                     ],
                     "where": [
-                        2110
+                        2086
                     ]
                 }
             ],
