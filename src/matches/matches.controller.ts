@@ -16,9 +16,9 @@ import {
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
-import { MatchmakingGateway } from "src/matchmaking/matchmaking.gateway";
 import { PostgresService } from "src/postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { MatchmakeService } from "src/matchmaking/matchmake.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -29,7 +29,7 @@ export class MatchesController {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
-    private readonly matchmaking: MatchmakingGateway,
+    private readonly matchmaking: MatchmakeService,
     private readonly matchAssistant: MatchAssistantService,
     private readonly discordBotMessaging: DiscordBotMessagingService,
     private readonly discordMatchOverview: DiscordBotOverviewService,

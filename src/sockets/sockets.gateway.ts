@@ -13,9 +13,8 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { AppConfig } from "src/configs/types/AppConfig";
 import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
-import { MatchmakingGateway } from "../matchmaking/matchmaking.gateway";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
-import { HasuraService } from "src/hasura/hasura.service";
+import { MatchmakeService } from "src/matchmaking/matchmake.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -56,8 +55,7 @@ export class SocketsGateway {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly hasura: HasuraService,
-    private readonly matchMaking: MatchmakingGateway,
+    private readonly matchmaking: MatchmakeService,
     private readonly redisManager: RedisManagerService,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -137,8 +135,8 @@ export class SocketsGateway {
         await this.updateClient(client.user.steam_id, client.id);
 
         await this.sendPeopleOnline();
-        await this.matchMaking.sendRegionStats(client.user);
-        await this.matchMaking.sendQueueDetailsToPlayer(client.user);
+        await this.matchmaking.sendRegionStats(client.user);
+        await this.matchmaking.sendQueueDetailsToPlayer(client.user);
 
         client.on("close", async () => {
           await this.redis.del(
