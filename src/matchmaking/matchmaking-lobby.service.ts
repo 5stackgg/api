@@ -19,6 +19,15 @@ type VerifyPlayerStatus = {
   matchmaking_cooldown: boolean;
 };
 
+type MatchmakingLobby = {
+  id: string;
+  players: Array<{
+    steam_id: string;
+    is_banned: boolean;
+    matchmaking_cooldown: boolean;
+  }>;
+};
+
 @Injectable()
 export class MatchmakingLobbyService {
   public redis: Redis;
@@ -33,26 +42,7 @@ export class MatchmakingLobbyService {
     this.redis = this.redisManager.getConnection();
   }
 
-  public async getCurrentLobbyId(steamId: string) {
-    const { players_by_pk } = await this.hasura.query({
-      players_by_pk: {
-        __args: {
-          steam_id: steamId,
-        },
-        current_lobby_id: true,
-      },
-    });
-
-    return players_by_pk.current_lobby_id || steamId;
-  }
-
-  // TODO - seperate to get lobby in one and another to verify isntead of doing in 1 step
-  public async getPlayerLobby(user: User): Promise<{
-    id: string;
-    players: Array<{
-      steam_id: string;
-    }>;
-  }> {
+  public async getPlayerLobby(user: User): Promise<MatchmakingLobby> {
     let lobbyId = await this.getCurrentLobbyId(user.steam_id);
 
     let lobby;
@@ -96,21 +86,13 @@ export class MatchmakingLobbyService {
         },
       });
 
-      if (
-        !(await this.verifyPlayer({
-          steam_id: players_by_pk.steam_id,
-          is_banned: players_by_pk.is_banned,
-          matchmaking_cooldown: players_by_pk.matchmaking_cooldown,
-        }))
-      ) {
-        return;
-      }
-
       return {
         id: lobbyId,
         players: [
           {
             steam_id: players_by_pk.steam_id,
+            is_banned: players_by_pk.is_banned,
+            matchmaking_cooldown: players_by_pk.matchmaking_cooldown,
           },
         ],
       };
@@ -125,7 +107,20 @@ export class MatchmakingLobbyService {
       return;
     }
 
-    for (const { player } of lobby.players) {
+    return {
+      id: lobbyId,
+      players: lobby.players.map(({ steam_id, player }) => {
+        return {
+          steam_id: steam_id,
+          is_banned: player.is_banned,
+          matchmaking_cooldown: player.matchmaking_cooldown,
+        };
+      }),
+    };
+  }
+
+  public async verifyLobby(lobby: MatchmakingLobby) {
+    for (const player of lobby.players) {
       if (
         !(await this.verifyPlayer({
           steam_id: player.steam_id,
@@ -133,14 +128,12 @@ export class MatchmakingLobbyService {
           matchmaking_cooldown: player.matchmaking_cooldown,
         }))
       ) {
-        return;
+        this.logger.warn(`${player.steam_id} is not able to join the queue`);
+        return false;
       }
     }
 
-    return {
-      id: lobbyId,
-      players: lobby.players,
-    };
+    return true;
   }
 
   public async setQueuedDetails(
@@ -192,7 +185,6 @@ export class MatchmakingLobbyService {
       return;
     }
 
-    // Use pipeline for multiple Redis operations
     const pipeline = this.redis.pipeline();
 
     for (const region of queueDetails.regions) {
@@ -208,7 +200,7 @@ export class MatchmakingLobbyService {
 
     pipeline.del(getMatchmakingDetailsCacheKey(lobbyId));
 
-    // Notify players
+    // notify players in the lobby that they have been removed from the queue
     for (const player of queueDetails.players) {
       pipeline.publish(
         "send-message-to-steam-id",
@@ -224,8 +216,21 @@ export class MatchmakingLobbyService {
     await this.matchmaking.sendRegionStats();
   }
 
-  public async verifyPlayer(status: VerifyPlayerStatus): Promise<boolean> {
-    // TDOO - use SET to check if they are already in queue
+  private async getCurrentLobbyId(steamId: string) {
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: {
+          steam_id: steamId,
+        },
+        current_lobby_id: true,
+      },
+    });
+
+    return players_by_pk.current_lobby_id || steamId;
+  }
+
+  private async verifyPlayer(status: VerifyPlayerStatus): Promise<boolean> {
+    // TODO - use a redis SET to see if they are in the queue already
     const existingUserInQueue = await this.getLobbyDetails(status.steam_id);
 
     if (existingUserInQueue) {

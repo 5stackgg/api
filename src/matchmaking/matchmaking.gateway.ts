@@ -63,6 +63,11 @@ export class MatchmakingGateway {
       return;
     }
 
+    if (!(await this.matchmakingLobbyService.verifyLobby(lobby))) {
+      // TODO - return an errror wny they cant join the queue
+      return;
+    }
+
     const joinedAt = new Date();
 
     await this.matchmakingLobbyService.setQueuedDetails(lobby.id, {
@@ -84,11 +89,9 @@ export class MatchmakingGateway {
       );
     }
 
-    /**
-     * for each region add lobby into the queue
-     */
+    // for each region add lobby into the queue
     for (const region of regions) {
-      // TODO - and speicic maps or map pool id
+      // TODO - and speicic maps
       await this.redis.zadd(
         getMatchmakingQueueCacheKey(type, region),
         joinedAt.getTime(),
