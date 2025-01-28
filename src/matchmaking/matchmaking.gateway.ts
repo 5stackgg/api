@@ -97,7 +97,7 @@ export class MatchmakingGateway {
       );
     }
 
-    await this.matchmakeService.sendQueueDetailsToLobby(lobby.id);
+    await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobby.id);
     await this.matchmakeService.sendRegionStats();
 
     for (const region of regions) {

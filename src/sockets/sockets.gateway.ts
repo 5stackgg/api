@@ -15,6 +15,7 @@ import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
+import { MatchmakingLobbyService } from "src/matchmaking/matchmaking-lobby.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -57,6 +58,7 @@ export class SocketsGateway {
     private readonly config: ConfigService,
     private readonly matchmaking: MatchmakeService,
     private readonly redisManager: RedisManagerService,
+    private readonly matchmakingLobbyService: MatchmakingLobbyService,
   ) {
     this.redis = this.redisManager.getConnection();
     this.appConfig = this.config.get<AppConfig>("app");
@@ -136,7 +138,7 @@ export class SocketsGateway {
 
         await this.sendPeopleOnline();
         await this.matchmaking.sendRegionStats(client.user);
-        await this.matchmaking.sendQueueDetailsToPlayer(client.user);
+        await this.matchmakingLobbyService.sendQueueDetailsToPlayer(client.user);
 
         client.on("close", async () => {
           await this.redis.del(
