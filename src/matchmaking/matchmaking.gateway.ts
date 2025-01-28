@@ -31,8 +31,6 @@ export class MatchmakingGateway {
     this.redis = this.redisManager.getConnection();
   }
 
-  // TODO - make a SET for each player that bleongs to a lobb
-
   // TODO - send reason why they cant join the queue
   @SubscribeMessage("matchmaking:join-queue")
   async joinQueue(
@@ -80,7 +78,7 @@ export class MatchmakingGateway {
 
     const avgRank = await this.matchmakeService.getAverageLobbyRank(lobby.id);
 
-    // Store the lobby's rank in a separate sorted set for quick rank matching
+    // store the lobby's rank in a separate sorted set for quick rank matching
     for (const region of regions) {
       await this.redis.zadd(
         getMatchmakingRankCacheKey(type, region),
@@ -89,7 +87,7 @@ export class MatchmakingGateway {
       );
     }
 
-    // for each region add lobby into the queue
+    // go through each region and add the lobby into the queue
     for (const region of regions) {
       // TODO - and speicic maps
       await this.redis.zadd(

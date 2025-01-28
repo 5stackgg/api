@@ -12,6 +12,7 @@ import {
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
 import { MatchmakeService } from "./matchmake.service";
+import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
 
 type VerifyPlayerStatus = {
   steam_id: string;
@@ -214,6 +215,83 @@ export class MatchmakingLobbyService {
 
     await pipeline.exec();
     await this.matchmaking.sendRegionStats();
+  }
+
+  // TODO - extermly inefficient
+  public async sendQueueDetailsToPlayer(user: User) {
+    const lobby = await this.getPlayerLobby(user);
+
+    if (!lobby) {
+      return;
+    }
+
+    await this.sendQueueDetailsToLobby(lobby.id);
+  }
+
+  public async sendQueueDetailsToLobby(lobbyId: string) {
+    let confirmationDetails;
+    const confirmationId = await this.redis.hget(
+      getMatchmakingDetailsCacheKey(lobbyId),
+      "confirmationId",
+    );
+
+    if (confirmationId) {
+      const { matchId, confirmed, type, region, players, expiresAt } =
+        await this.matchmaking.getMatchConfirmationDetails(confirmationId);
+
+      confirmationDetails = {
+        type,
+        region,
+        matchId,
+        expiresAt,
+        confirmed,
+        confirmationId,
+        players: players.length,
+      };
+    }
+
+    const lobbyQueueDetails = await this.getLobbyDetails(lobbyId);
+    if (!lobbyQueueDetails) {
+      console.warn(`Lobby ${lobbyId} not found in queue`);
+      return;
+    }
+
+    for (const player of lobbyQueueDetails.players) {
+      await this.redis.publish(
+        `send-message-to-steam-id`,
+        JSON.stringify({
+          steamId: player,
+          event: "matchmaking:details",
+          data: {
+            details: await this.getLobbyDetails(lobbyId),
+            confirmation: confirmationId && {
+              ...confirmationDetails,
+              isReady:
+                confirmationId &&
+                (await this.redis.hget(
+                  getMatchmakingConformationCacheKey(confirmationId),
+                  player,
+                )),
+            },
+          },
+        }),
+      );
+    }
+  }
+
+  public async sendQueueDetailsToAllUsers(
+    type: e_match_types_enum,
+    region: string,
+  ) {
+    const lobbies = await this.redis.zrange(
+      getMatchmakingQueueCacheKey(type, region),
+      0,
+      -1,
+    );
+
+    for (const lobbyId of lobbies) {
+      await this.sendQueueDetailsToLobby(lobbyId);
+    }
   }
 
   private async getCurrentLobbyId(steamId: string) {

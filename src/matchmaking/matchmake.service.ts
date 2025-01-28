@@ -96,157 +96,6 @@ export class MatchmakeService {
     );
   }
 
-  // TODO - extermly inefficient
-  public async sendQueueDetailsToPlayer(user: User) {
-    const lobby = await this.matchmakingLobbyService.getPlayerLobby(user);
-
-    if (!lobby) {
-      return;
-    }
-
-    await this.sendQueueDetailsToLobby(lobby.id);
-  }
-
-  public async sendQueueDetailsToLobby(lobbyId: string) {
-    let confirmationDetails;
-    const confirmationId = await this.redis.hget(
-      getMatchmakingDetailsCacheKey(lobbyId),
-      "confirmationId",
-    );
-
-    if (confirmationId) {
-      const { matchId, confirmed, type, region, players, expiresAt } =
-        await this.getMatchConfirmationDetails(confirmationId);
-
-      confirmationDetails = {
-        type,
-        region,
-        matchId,
-        expiresAt,
-        confirmed,
-        confirmationId,
-        players: players.length,
-      };
-    }
-
-    const lobbyQueueDetails =
-      await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
-    if (!lobbyQueueDetails) {
-      console.warn(`Lobby ${lobbyId} not found in queue`);
-      return;
-    }
-
-    for (const player of lobbyQueueDetails.players) {
-      await this.redis.publish(
-        `send-message-to-steam-id`,
-        JSON.stringify({
-          steamId: player,
-          event: "matchmaking:details",
-          data: {
-            details:
-              await this.matchmakingLobbyService.getLobbyDetails(lobbyId),
-            confirmation: confirmationId && {
-              ...confirmationDetails,
-              isReady:
-                confirmationId &&
-                (await this.redis.hget(
-                  getMatchmakingConformationCacheKey(confirmationId),
-                  player,
-                )),
-            },
-          },
-        }),
-      );
-    }
-  }
-
-  public async sendQueueDetailsToAllUsers(
-    type: e_match_types_enum,
-    region: string,
-  ) {
-    const lobbies = await this.redis.zrange(
-      getMatchmakingQueueCacheKey(type, region),
-      0,
-      -1,
-    );
-
-    for (const lobbyId of lobbies) {
-      await this.sendQueueDetailsToLobby(lobbyId);
-    }
-  }
-
-  public async cancelMatchMakingByMatchId(matchId: string) {
-    const confirmationId = await this.redis.get(
-      `matches:confirmation:${matchId}`,
-    );
-
-    if (confirmationId) {
-      await this.cancelMatchMaking(confirmationId);
-    }
-  }
-
-  // TODO
-  public async cancelMatchMaking(
-    confirmationId: string,
-    readyCheckFailed: boolean = false,
-  ) {
-    console.info("CANCEL MATCH MAKING REODO");
-    // const { players, type, region } =
-    //   await this.getMatchConfirmationDetails(confirmationId);
-
-    // for (const steamId of players) {
-    //   if (readyCheckFailed) {
-    //     const wasReady = await this.redis.hget(
-    //       getMatchmakingConformationCacheKey(confirmationId),
-    //       steamId,
-    //     );
-
-    //     if (wasReady) {
-    //       /**
-    //        * if they wre ready, we want to requeue them into the queue
-    //        */
-    //       // I thin this was to remove the confirmation ID from the match?
-    //       // await this.redis.hdel(
-    //       //   getmatchMakingDetailsCacheKey(steamId),
-    //       //   "confirmationId",
-    //       // );
-
-    //       const { regions, joinedAt } = await this.getLobbyDetails(steamId);
-    //       for (const region of regions) {
-    //         // TODO - re-add them to the queue
-    //         // await this.redis.zadd(
-    //         //   getMatchMakingQueueCacheKey(type, region),
-    //         //   new Date(joinedAt).getTime(),
-    //         //   steamId,
-    //         // );
-    //       }
-
-    //       this.sendQueueDetailsToLobby(steamId);
-    //       continue;
-    //     }
-    //   }
-
-    //   await this.removeLobbyFromQueue(steamId);
-
-    //   this.sendQueueDetailsToLobby(steamId);
-    // }
-
-    // /**
-    //  * remove the confirmation details
-    //  */
-    // await this.redis.del(
-    //   getMatchmakingConformationCacheKey(confirmationId),
-    // );
-
-    // await this.sendRegionStats();
-
-    // if (!readyCheckFailed) {
-    //   return;
-    // }
-
-    // this.matchmake(type, region);
-  }
-
   public async matchmake(
     type: e_match_types_enum,
     region: string,
@@ -832,5 +681,77 @@ export class MatchmakeService {
     // Implement the logic to calculate the average rank of the players in the lobby
     // This is a placeholder and should be replaced with the actual implementation
     return 0; // Placeholder return, actual implementation needed
+  }
+
+  public async cancelMatchMakingByMatchId(matchId: string) {
+    const confirmationId = await this.redis.get(
+      `matches:confirmation:${matchId}`,
+    );
+
+    if (confirmationId) {
+      await this.cancelMatchMaking(confirmationId);
+    }
+  }
+
+  // TODO
+  public async cancelMatchMaking(
+    confirmationId: string,
+    readyCheckFailed: boolean = false,
+  ) {
+    console.info("CANCEL MATCH MAKING REODO");
+    // const { players, type, region } =
+    //   await this.getMatchConfirmationDetails(confirmationId);
+
+    // for (const steamId of players) {
+    //   if (readyCheckFailed) {
+    //     const wasReady = await this.redis.hget(
+    //       getMatchmakingConformationCacheKey(confirmationId),
+    //       steamId,
+    //     );
+
+    //     if (wasReady) {
+    //       /**
+    //        * if they wre ready, we want to requeue them into the queue
+    //        */
+    //       // I thin this was to remove the confirmation ID from the match?
+    //       // await this.redis.hdel(
+    //       //   getmatchMakingDetailsCacheKey(steamId),
+    //       //   "confirmationId",
+    //       // );
+
+    //       const { regions, joinedAt } = await this.getLobbyDetails(steamId);
+    //       for (const region of regions) {
+    //         // TODO - re-add them to the queue
+    //         // await this.redis.zadd(
+    //         //   getMatchMakingQueueCacheKey(type, region),
+    //         //   new Date(joinedAt).getTime(),
+    //         //   steamId,
+    //         // );
+    //       }
+
+    //       this.sendQueueDetailsToLobby(steamId);
+    //       continue;
+    //     }
+    //   }
+
+    //   await this.removeLobbyFromQueue(steamId);
+
+    //   this.sendQueueDetailsToLobby(steamId);
+    // }
+
+    // /**
+    //  * remove the confirmation details
+    //  */
+    // await this.redis.del(
+    //   getMatchmakingConformationCacheKey(confirmationId),
+    // );
+
+    // await this.sendRegionStats();
+
+    // if (!readyCheckFailed) {
+    //   return;
+    // }
+
+    // this.matchmake(type, region);
   }
 }
