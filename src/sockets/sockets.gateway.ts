@@ -138,7 +138,9 @@ export class SocketsGateway {
 
         await this.sendPeopleOnline();
         await this.matchmaking.sendRegionStats(client.user);
-        await this.matchmakingLobbyService.sendQueueDetailsToPlayer(client.user);
+        await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
+          client.user,
+        );
 
         client.on("close", async () => {
           await this.redis.del(

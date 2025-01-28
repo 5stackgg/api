@@ -96,138 +96,28 @@ export class MatchmakeService {
     );
   }
 
-  public async matchmake(
-    type: e_match_types_enum,
-    region: string,
-    lock = true,
-  ) {
-    const queueKey = getMatchmakingQueueCacheKey(type, region);
-    const queueSize = await this.redis.zcard(queueKey);
-    const requiredPlayers = type === "Wingman" ? 4 : 10;
-    const playersPerTeam = requiredPlayers / 2;
+  public async matchmake(type: e_match_types_enum, region: string) {
+    const queueSize = await this.redis.zcard(
+      getMatchmakingQueueCacheKey(type, region),
+    );
 
     if (queueSize < 2) {
       return;
     }
 
-    if (queueSize > 1000) {
-      await this.parallelMatchmaking(type, region, playersPerTeam);
-    } else {
-      if (lock) {
-        await this._handleMatchmakingLock(type, region);
-        return;
-      }
+    const aquiredLock = await this.acuireLock(type, region);
 
-      await this._processSmallQueueMatchmaking(type, region, playersPerTeam);
-    }
-  }
-
-  public async parallelMatchmaking(
-    type: e_match_types_enum,
-    region: string,
-    playersPerTeam: number,
-  ) {
-    const queueKey = getMatchmakingQueueCacheKey(type, region);
-    const rankKey = getMatchmakingRankCacheKey(type, region);
-    const batchSize = 50; // Number of lobbies to process in each parallel batch
-
-    // Get total number of lobbies to process
-    const totalLobbies = await this.redis.zcard(queueKey);
-    const numberOfBatches = Math.ceil(totalLobbies / batchSize);
-
-    this.logger.debug(
-      `Starting parallel matchmaking with ${numberOfBatches} batches`,
-    );
-
-    // Process multiple starting points in parallel
-    const matchPromises = [];
-
-    for (let i = 0; i < numberOfBatches; i++) {
-      matchPromises.push(
-        this.processMatchmakingBatch(
-          type,
-          region,
-          i * batchSize,
-          batchSize,
-          playersPerTeam,
-        ),
-      );
+    if (!aquiredLock) {
+      this.logger.warn("Unable to acquire lock");
+      return;
     }
 
-    // Wait for all batches to complete and collect results
-    const batchResults = await Promise.all(matchPromises);
+    const requiredPlayers = type === "Wingman" ? 4 : 10;
 
-    // Process valid matches found
-    for (const match of batchResults.filter(Boolean)) {
-      const { team1, team2 } = match;
-
-      // Try to acquire match lock
-      const matchLockKey = `match-lock:${team1.lobbies.join(",")}:${team2.lobbies.join(",")}`;
-      const lockAcquired = await this.redis.set(
-        matchLockKey,
-        "1",
-        "EX",
-        5,
-        "NX",
-      );
-
-      if (!lockAcquired) {
-        continue; // Another process already handling this match
-      }
-
-      try {
-        // Verify all lobbies are still available
-        const lobbiesExist = await this.verifyLobbiesStillAvailable(
-          [...team1.lobbies, ...team2.lobbies],
-          queueKey,
-        );
-
-        if (!lobbiesExist) {
-          continue; // Some lobbies no longer available
-        }
-
-        // Create the match
-        const allPlayers = [...team1.players, ...team2.players];
-        await this.confirmMatchMaking(type, region, allPlayers);
-
-        // Remove matched lobbies atomically
-        const cleanupSuccess = await this.redis.eval(
-          `
-          local queueKey = KEYS[1]
-          local rankKey = KEYS[2]
-          local lobbies = cjson.decode(ARGV[1])
-          
-          -- Check all lobbies still exist
-          for _, lobbyId in ipairs(lobbies) do
-            if redis.call('ZSCORE', queueKey, lobbyId) == false then
-              return false
-            end
-          end
-          
-          -- Remove from both sets
-          for _, lobbyId in ipairs(lobbies) do
-            redis.call('ZREM', queueKey, lobbyId)
-            redis.call('ZREM', rankKey, lobbyId)
-            redis.call('DEL', 'matchmaking:v1:details:' .. lobbyId)
-          end
-          
-          return true
-        `,
-          2,
-          queueKey,
-          rankKey,
-          JSON.stringify([...team1.lobbies, ...team2.lobbies]),
-        );
-
-        if (cleanupSuccess) {
-          this.logger.debug(
-            `Successfully matched teams: ${team1.lobbies.join(",")} vs ${team2.lobbies.join(",")}`,
-          );
-          break; // Successfully processed one match, exit loop
-        }
-      } finally {
-        await this.redis.del(matchLockKey);
-      }
+    try {
+      await this.searchForMatches(type, region, requiredPlayers / 2);
+    } finally {
+      await this.releaseLock(type, region);
     }
   }
 
@@ -569,33 +459,21 @@ export class MatchmakeService {
     // this.matchmake(type, region);
   }
 
-  private async _handleMatchmakingLock(
-    type: e_match_types_enum,
-    region: string,
-  ) {
+  private async acuireLock(type: e_match_types_enum, region: string) {
     const lockKey = `matchmaking-lock:${type}:${region}`;
     const lockValue = Date.now().toString();
-    const acquireLock = !!(await this.redis.set(
+    return !!(await this.redis.set(
       lockKey,
       lockValue,
       "EX",
       10,
       "NX",
     ));
-
-    if (!acquireLock) {
-      this.logger.warn("Unable to acquire lock");
-      return;
-    }
-
-    try {
-      await this.matchmake(type, region, false);
-    } finally {
-      await this._releaseLock(lockKey, lockValue);
-    }
   }
 
-  private async _releaseLock(lockKey: string, lockValue: string) {
+  private async releaseLock(type: e_match_types_enum, region: string) {
+    const lockKey = `matchmaking-lock:${type}:${region}`;
+    const lockValue = Date.now().toString();
     await this.redis.eval(
       `
       if redis.call("get",KEYS[1]) == ARGV[1]
@@ -611,7 +489,7 @@ export class MatchmakeService {
     );
   }
 
-  private async _processSmallQueueMatchmaking(
+  private async searchForMatches(
     type: e_match_types_enum,
     region: string,
     playersPerTeam: number,
@@ -630,10 +508,17 @@ export class MatchmakeService {
     if (!oldestLobbyDetails) return;
 
     const baseRank = parseFloat(rankStr);
-    const waitTimePriority = Math.floor((Date.now() - parseInt(joinTime)) / 10000);
+    const waitTimePriority = Math.floor(
+      (Date.now() - parseInt(joinTime)) / 10000,
+    );
     const rankRange = Math.min(50 + waitTimePriority * 10, 500);
 
-    const lobbyDetails = await this._getLobbiesInRange(queueKey, rankKey, baseRank, rankRange);
+    const lobbyDetails = await this._getLobbiesInRange(
+      queueKey,
+      rankKey,
+      baseRank,
+      rankRange,
+    );
     if (lobbyDetails.length === 0) return;
 
     const match = await this.findValidTeams(
@@ -674,7 +559,8 @@ export class MatchmakeService {
   }
 
   private async _validateOldestLobby(oldestLobbyId: string) {
-    const oldestLobbyDetails = await this.matchmakingLobbyService.getLobbyDetails(oldestLobbyId);
+    const oldestLobbyDetails =
+      await this.matchmakingLobbyService.getLobbyDetails(oldestLobbyId);
     if (!oldestLobbyDetails) {
       this.logger.warn(`Invalid oldest lobby found: ${oldestLobbyId}`);
       await this.matchmakingLobbyService.removeLobbyFromQueue(oldestLobbyId);
@@ -731,7 +617,9 @@ export class MatchmakeService {
 
     const lobbyDetails = [];
     for (let i = 0; i < lobbiesInRange.length; i += 3) {
-      const details = await this.matchmakingLobbyService.getLobbyDetails(lobbiesInRange[i]);
+      const details = await this.matchmakingLobbyService.getLobbyDetails(
+        lobbiesInRange[i],
+      );
       if (details) {
         lobbyDetails.push({
           id: lobbiesInRange[i],
