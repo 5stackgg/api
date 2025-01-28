@@ -102,9 +102,6 @@ export class MatchmakeService {
     lock = true,
   ) {
     const queueKey = getMatchmakingQueueCacheKey(type, region);
-    const rankKey = getMatchmakingRankCacheKey(type, region);
-
-    // Check queue size first
     const queueSize = await this.redis.zcard(queueKey);
     const requiredPlayers = type === "Wingman" ? 4 : 10;
     const playersPerTeam = requiredPlayers / 2;
@@ -113,198 +110,15 @@ export class MatchmakeService {
       return;
     }
 
-    // Different strategies based on queue size
     if (queueSize > 1000) {
       await this.parallelMatchmaking(type, region, playersPerTeam);
     } else {
-      // Use original matchmaking for smaller queues
       if (lock) {
-        const lockKey = `matchmaking-lock:${type}:${region}`;
-        const lockValue = Date.now().toString();
-        const acquireLock = !!(await this.redis.set(
-          lockKey,
-          lockValue,
-          "EX",
-          10,
-          "NX",
-        ));
-
-        if (!acquireLock) {
-          this.logger.warn("Unable to acquire lock");
-          return;
-        }
-
-        try {
-          await this.matchmake(type, region, false);
-        } finally {
-          await this.redis.eval(
-            `
-            if redis.call("get",KEYS[1]) == ARGV[1]
-            then
-                return redis.call("del",KEYS[1])
-            else
-                return 0
-            end
-          `,
-            1,
-            lockKey,
-            lockValue,
-          );
-        }
+        await this._handleMatchmakingLock(type, region);
         return;
       }
 
-      // Original matchmaking logic for smaller queues
-      // Get oldest lobby first to determine rank range
-      const oldestLobby = (await this.redis.eval(
-        `
-        local queueKey = KEYS[1]
-        local rankKey = KEYS[2]
-        
-        local oldest = redis.call('ZRANGE', queueKey, 0, 0, 'WITHSCORES')
-        if #oldest == 0 then
-          return nil
-        end
-        
-        local lobbyId = oldest[1]
-        local joinTime = oldest[2]
-        local rank = redis.call('ZSCORE', rankKey, lobbyId)
-        
-        return {lobbyId, joinTime, rank}
-      `,
-        2,
-        queueKey,
-        rankKey,
-      )) as [string, string, string] | null;
-
-      if (!oldestLobby) {
-        this.logger.debug("No lobbies in queue");
-        return;
-      }
-
-      const [oldestLobbyId, joinTime, rankStr] = oldestLobby;
-      const oldestLobbyDetails =
-        await this.matchmakingLobbyService.getLobbyDetails(oldestLobbyId);
-
-      if (!oldestLobbyDetails) {
-        this.logger.warn(`Invalid oldest lobby found: ${oldestLobbyId}`);
-        await this.matchmakingLobbyService.removeLobbyFromQueue(oldestLobbyId);
-        return;
-      }
-
-      const baseRank = parseFloat(rankStr);
-      const waitTimePriority = Math.floor(
-        (Date.now() - parseInt(joinTime)) / 10000,
-      );
-      const rankRange = Math.min(50 + waitTimePriority * 10, 500);
-
-      // Get lobbies within rank range
-      const lobbiesInRange = (await this.redis.eval(
-        `
-        local rankKey = KEYS[1]
-        local queueKey = KEYS[2]
-        local baseRank = tonumber(ARGV[1])
-        local rankRange = tonumber(ARGV[2])
-        local maxLobbies = tonumber(ARGV[3])
-        
-        local minRank = baseRank - rankRange
-        local maxRank = baseRank + rankRange
-        
-        -- Get lobbies within rank range, ordered by join time
-        local lobbies = redis.call('ZRANGEBYSCORE', rankKey, minRank, maxRank, 'WITHSCORES')
-        local result = {}
-        local count = 0
-        
-        for i = 1, #lobbies, 2 do
-          if count >= maxLobbies then
-            break
-          end
-          
-          local lobbyId = lobbies[i]
-          local rank = tonumber(lobbies[i + 1])
-          local joinTime = redis.call('ZSCORE', queueKey, lobbyId)
-          
-          if joinTime then
-            table.insert(result, lobbyId)
-            table.insert(result, joinTime)
-            table.insert(result, rank)
-            count = count + 1
-          end
-        end
-        
-        return result
-      `,
-        2,
-        rankKey,
-        queueKey,
-        baseRank,
-        rankRange,
-        50,
-      )) as string[];
-
-      // Convert to structured data
-      const lobbyDetails: Array<{
-        id: string;
-        players: string[];
-        avgRank: number;
-        joinTime: number;
-      }> = [];
-
-      for (let i = 0; i < lobbiesInRange.length; i += 3) {
-        const details = await this.matchmakingLobbyService.getLobbyDetails(
-          lobbiesInRange[i],
-        );
-        if (details) {
-          lobbyDetails.push({
-            id: lobbiesInRange[i],
-            players: details.players,
-            avgRank: parseFloat(lobbiesInRange[i + 2]),
-            joinTime: parseInt(lobbiesInRange[i + 1]),
-          });
-        }
-      }
-
-      // Sort by join time (oldest first)
-      lobbyDetails.sort((a, b) => a.joinTime - b.joinTime);
-
-      this.logger.debug(
-        `Found ${lobbyDetails.length} lobbies within rank range ${baseRank}±${rankRange}`,
-      );
-
-      // Try to find valid team combinations
-      const match = await this.findValidTeams(
-        lobbyDetails[0], // Start with oldest lobby
-        lobbyDetails,
-        playersPerTeam,
-        rankRange,
-      );
-
-      if (match) {
-        const { team1, team2 } = match;
-        this.logger.debug(
-          `Found match! Team1: ${team1.lobbies.join(",")} vs Team2: ${team2.lobbies.join(",")}`,
-        );
-
-        // Create the match
-        const allPlayers = [...team1.players, ...team2.players];
-        await this.confirmMatchMaking(type, region, allPlayers);
-
-        // Cleanup all matched lobbies
-        const allLobbies = [...team1.lobbies, ...team2.lobbies];
-        const cleanupPipeline = this.redis.pipeline();
-
-        cleanupPipeline.zrem(queueKey, ...allLobbies);
-        cleanupPipeline.zrem(rankKey, ...allLobbies);
-
-        for (const lobbyId of allLobbies) {
-          cleanupPipeline.del(getMatchmakingDetailsCacheKey(lobbyId));
-        }
-
-        await cleanupPipeline.exec();
-        return;
-      }
-
-      this.logger.debug("No suitable match found in this iteration");
+      await this._processSmallQueueMatchmaking(type, region, playersPerTeam);
     }
   }
 
@@ -753,5 +567,209 @@ export class MatchmakeService {
     // }
 
     // this.matchmake(type, region);
+  }
+
+  private async _handleMatchmakingLock(
+    type: e_match_types_enum,
+    region: string,
+  ) {
+    const lockKey = `matchmaking-lock:${type}:${region}`;
+    const lockValue = Date.now().toString();
+    const acquireLock = !!(await this.redis.set(
+      lockKey,
+      lockValue,
+      "EX",
+      10,
+      "NX",
+    ));
+
+    if (!acquireLock) {
+      this.logger.warn("Unable to acquire lock");
+      return;
+    }
+
+    try {
+      await this.matchmake(type, region, false);
+    } finally {
+      await this._releaseLock(lockKey, lockValue);
+    }
+  }
+
+  private async _releaseLock(lockKey: string, lockValue: string) {
+    await this.redis.eval(
+      `
+      if redis.call("get",KEYS[1]) == ARGV[1]
+      then
+          return redis.call("del",KEYS[1])
+      else
+          return 0
+      end
+    `,
+      1,
+      lockKey,
+      lockValue,
+    );
+  }
+
+  private async _processSmallQueueMatchmaking(
+    type: e_match_types_enum,
+    region: string,
+    playersPerTeam: number,
+  ) {
+    const queueKey = getMatchmakingQueueCacheKey(type, region);
+    const rankKey = getMatchmakingRankCacheKey(type, region);
+
+    const oldestLobby = await this._getOldestLobby(queueKey, rankKey);
+    if (!oldestLobby) {
+      this.logger.debug("No lobbies in queue");
+      return;
+    }
+
+    const [oldestLobbyId, joinTime, rankStr] = oldestLobby;
+    const oldestLobbyDetails = await this._validateOldestLobby(oldestLobbyId);
+    if (!oldestLobbyDetails) return;
+
+    const baseRank = parseFloat(rankStr);
+    const waitTimePriority = Math.floor((Date.now() - parseInt(joinTime)) / 10000);
+    const rankRange = Math.min(50 + waitTimePriority * 10, 500);
+
+    const lobbyDetails = await this._getLobbiesInRange(queueKey, rankKey, baseRank, rankRange);
+    if (lobbyDetails.length === 0) return;
+
+    const match = await this.findValidTeams(
+      lobbyDetails[0],
+      lobbyDetails,
+      playersPerTeam,
+      rankRange,
+    );
+
+    if (match) {
+      await this._handleMatchFound(match, type, region, queueKey, rankKey);
+    } else {
+      this.logger.debug("No suitable match found in this iteration");
+    }
+  }
+
+  private async _getOldestLobby(queueKey: string, rankKey: string) {
+    return (await this.redis.eval(
+      `
+      local queueKey = KEYS[1]
+      local rankKey = KEYS[2]
+      
+      local oldest = redis.call('ZRANGE', queueKey, 0, 0, 'WITHSCORES')
+      if #oldest == 0 then
+        return nil
+      end
+      
+      local lobbyId = oldest[1]
+      local joinTime = oldest[2]
+      local rank = redis.call('ZSCORE', rankKey, lobbyId)
+      
+      return {lobbyId, joinTime, rank}
+    `,
+      2,
+      queueKey,
+      rankKey,
+    )) as [string, string, string] | null;
+  }
+
+  private async _validateOldestLobby(oldestLobbyId: string) {
+    const oldestLobbyDetails = await this.matchmakingLobbyService.getLobbyDetails(oldestLobbyId);
+    if (!oldestLobbyDetails) {
+      this.logger.warn(`Invalid oldest lobby found: ${oldestLobbyId}`);
+      await this.matchmakingLobbyService.removeLobbyFromQueue(oldestLobbyId);
+      return null;
+    }
+    return oldestLobbyDetails;
+  }
+
+  private async _getLobbiesInRange(
+    queueKey: string,
+    rankKey: string,
+    baseRank: number,
+    rankRange: number,
+  ) {
+    const lobbiesInRange = (await this.redis.eval(
+      `
+      local rankKey = KEYS[1]
+      local queueKey = KEYS[2]
+      local baseRank = tonumber(ARGV[1])
+      local rankRange = tonumber(ARGV[2])
+      local maxLobbies = tonumber(ARGV[3])
+      
+      local minRank = baseRank - rankRange
+      local maxRank = baseRank + rankRange
+      
+      local lobbies = redis.call('ZRANGEBYSCORE', rankKey, minRank, maxRank, 'WITHSCORES')
+      local result = {}
+      local count = 0
+      
+      for i = 1, #lobbies, 2 do
+        if count >= maxLobbies then break end
+        
+        local lobbyId = lobbies[i]
+        local rank = tonumber(lobbies[i + 1])
+        local joinTime = redis.call('ZSCORE', queueKey, lobbyId)
+        
+        if joinTime then
+          table.insert(result, lobbyId)
+          table.insert(result, joinTime)
+          table.insert(result, rank)
+          count = count + 1
+        end
+      end
+      
+      return result
+    `,
+      2,
+      rankKey,
+      queueKey,
+      baseRank,
+      rankRange,
+      50,
+    )) as string[];
+
+    const lobbyDetails = [];
+    for (let i = 0; i < lobbiesInRange.length; i += 3) {
+      const details = await this.matchmakingLobbyService.getLobbyDetails(lobbiesInRange[i]);
+      if (details) {
+        lobbyDetails.push({
+          id: lobbiesInRange[i],
+          players: details.players,
+          avgRank: parseFloat(lobbiesInRange[i + 2]),
+          joinTime: parseInt(lobbiesInRange[i + 1]),
+        });
+      }
+    }
+
+    return lobbyDetails.sort((a, b) => a.joinTime - b.joinTime);
+  }
+
+  private async _handleMatchFound(
+    match: { team1: TeamCombination; team2: TeamCombination },
+    type: e_match_types_enum,
+    region: string,
+    queueKey: string,
+    rankKey: string,
+  ) {
+    const { team1, team2 } = match;
+    this.logger.debug(
+      `Found match! Team1: ${team1.lobbies.join(",")} vs Team2: ${team2.lobbies.join(",")}`,
+    );
+
+    const allPlayers = [...team1.players, ...team2.players];
+    await this.confirmMatchMaking(type, region, allPlayers);
+
+    const allLobbies = [...team1.lobbies, ...team2.lobbies];
+    const cleanupPipeline = this.redis.pipeline();
+
+    cleanupPipeline.zrem(queueKey, ...allLobbies);
+    cleanupPipeline.zrem(rankKey, ...allLobbies);
+
+    for (const lobbyId of allLobbies) {
+      cleanupPipeline.del(getMatchmakingDetailsCacheKey(lobbyId));
+    }
+
+    await cleanupPipeline.exec();
   }
 }
