@@ -112,10 +112,8 @@ export class MatchmakeService {
       return;
     }
 
-    const requiredPlayers = type === "Wingman" ? 4 : 10;
-
     try {
-      await this.searchForMatches(type, region, requiredPlayers / 2);
+      await this.searchForMatches(type, region);
     } finally {
       await this.releaseLock(type, region);
     }
@@ -156,12 +154,9 @@ export class MatchmakeService {
   public async createMatches(
     type: e_match_types_enum,
     lobbies: Array<{ id: string; players: string[]; avgRank: number }>,
-    playersPerTeam: number,
   ): Promise<void> {
-    const requiredPlayers = type === "Wingman" ? 4 : 10;
-
+    const playersPerTeam = type === "Wingman" ? 2 : 5;
     const matches: Array<{ team1: Team; team2: Team }> = [];
-    const usedLobbies = new Set<string>();
 
     // Try to make as many valid matches as possible
     while (true) {
@@ -384,11 +379,7 @@ export class MatchmakeService {
     );
   }
 
-  private async searchForMatches(
-    type: e_match_types_enum,
-    region: string,
-    playersPerTeam: number,
-  ) {
+  private async searchForMatches(type: e_match_types_enum, region: string) {
     const queueKey = getMatchmakingQueueCacheKey(type, region);
 
     // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
@@ -462,7 +453,7 @@ export class MatchmakeService {
     }
 
     for (const group of groupedLobbies) {
-      await this.createMatches(type, group, playersPerTeam);
+      await this.createMatches(type, group);
     }
   }
 
