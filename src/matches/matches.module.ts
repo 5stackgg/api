@@ -35,7 +35,6 @@ import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
-import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
 import { MatchEventsGateway } from "./match-events.gateway";
@@ -89,7 +88,6 @@ import { ChatModule } from "src/chat/chat.module";
     RemoveCancelledMatches,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
-    CancelMatchMaking,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),

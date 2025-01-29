@@ -1020,23 +1020,6 @@ export class MatchAssistantService {
     return insert_matches_one;
   }
 
-  public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
-    await this.queue.add(
-      "CancelMatchMaking",
-      {
-        confirmationId,
-      },
-      {
-        delay: 30 * 1000,
-        jobId: `matchmaking:cancel:${confirmationId}`,
-      },
-    );
-  }
-
-  public async removeCancelMatchMakingDueToReadyCheck(confirmationId: string) {
-    await this.queue.remove(`matchmaking:cancel:${confirmationId}`);
-  }
-
   public async getNextPhase(matchId: string) {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {

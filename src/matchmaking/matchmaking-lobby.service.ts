@@ -9,7 +9,6 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { MatchmakingLobby } from "./types/MatchmakingLobby";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { VerifyPlayerStatus } from "./types/VerifyPlayerStatus";
-import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import {
   getMatchmakingRankCacheKey,

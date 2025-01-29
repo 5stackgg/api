@@ -1,10 +1,10 @@
 import { Job } from "bullmq";
 import { WorkerHost } from "@nestjs/bullmq";
-import { MatchQueues } from "../enums/MatchQueues";
+import { MatchmakingQueues } from "../enums/MatchmakingQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matchmaking", MatchmakingQueues.Matchmaking)
 export class CancelMatchMaking extends WorkerHost {
   constructor(private readonly matchmaking: MatchmakeService) {
     super();

@@ -11,7 +11,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
-import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -57,7 +56,6 @@ export class MatchmakingGateway {
     }
 
     if (!(await this.matchmakingLobbyService.verifyLobby(lobby))) {
-      // TODO - return an errror wny they cant join the queue
       return;
     }
 
@@ -89,7 +87,6 @@ export class MatchmakingGateway {
     await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
   }
 
-  // TODO
   @SubscribeMessage("matchmaking:confirm")
   async playerConfirmation(
     @MessageBody()

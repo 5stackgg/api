@@ -1,12 +1,15 @@
 import Redis from "ioredis";
+import { Queue } from "bullmq";
 import { v4 as uuidv4 } from "uuid";
 import { Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import { Injectable } from "@nestjs/common";
 import { e_match_types_enum } from "generated";
+import { InjectQueue } from "@nestjs/bullmq";
 import { MatchmakingTeam } from "./types/MatchmakingTeam";
 import { HasuraService } from "src/hasura/hasura.service";
 import { MatchmakingLobby } from "./types/MatchmakingLobby";
+import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
@@ -26,6 +29,7 @@ export class MatchmakeService {
     public readonly redisManager: RedisManagerService,
     public readonly matchAssistant: MatchAssistantService,
     private matchmakingLobbyService: MatchmakingLobbyService,
+    @InjectQueue(MatchmakingQueues.Matchmaking) private queue: Queue,
   ) {
     this.redis = this.redisManager.getConnection();
   }
@@ -347,7 +351,25 @@ export class MatchmakeService {
       await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
     }
 
-    this.matchAssistant.cancelMatchMakingDueToReadyCheck(confirmationId);
+    // TODO - move this to here since were adding queues
+    this.cancelMatchMakingDueToReadyCheck(confirmationId);
+  }
+
+  public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
+    await this.queue.add(
+      "CancelMatchMaking",
+      {
+        confirmationId,
+      },
+      {
+        delay: 30 * 1000,
+        jobId: `matchmaking:cancel:${confirmationId}`,
+      },
+    );
+  }
+
+  public async removeCancelMatchMakingDueToReadyCheck(confirmationId: string) {
+    await this.queue.remove(`matchmaking:cancel:${confirmationId}`);
   }
 
   private async setConfirmationDetails(

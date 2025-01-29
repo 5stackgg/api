@@ -156,14 +156,14 @@ export class SocketsGateway {
           );
 
           if (clients.length === 0) {
-            // GIVE THEM A DELAY
-            // this.matchMaking.leaveQueue(client);
-
             await this.redis.del(
               SocketsGateway.GET_PLAYER_KEY(client.user.steam_id),
             );
 
             await this.sendPeopleOnline();
+
+            // GIVE THEM A DELAY
+            // this.matchMaking.leaveQueue(client);
 
             // await this.hasura.mutation({
             //   delete_lobby_players: {
