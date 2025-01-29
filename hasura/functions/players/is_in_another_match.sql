@@ -7,7 +7,14 @@ BEGIN
     RETURN EXISTS (
         SELECT 1
         FROM get_player_matches(player) AS pm
-        WHERE pm.status = 'Live'
+        WHERE 
+        pm.status = 'Live'
+        or 
+        pm.status = 'Veto'
+        or 
+        pm.status = 'WaitingForCheckIn'
+        or 
+        pm.status = 'WaitingForServer'
     );
 END;
 $$

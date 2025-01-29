@@ -114,7 +114,7 @@ export class MatchmakingLobbyService {
     }
 
     for (const player of lobby.players) {
-      await this.verifyPlayer(lobby.id, player);
+      await this.verifyPlayer(lobby.id, player.steam_id);
     }
 
     return true;
@@ -324,12 +324,30 @@ export class MatchmakingLobbyService {
 
   private async verifyPlayer(
     lobbyId: string,
-    player: PlayerLobby["players"][0],
+    steamId: string,
   ): Promise<boolean> {
-    // TODO - this is a bad check
-    const existingUserInQueue = await this.getLobbyDetails(player.steam_id);
+    const { players_by_pk: player } = await this.hasura.query({
+      players_by_pk: {
+        __args: {
+          steam_id: steamId,
+        },
+        name: true,
+        steam_id: true,
+        is_banned: true,
+        matchmaking_cooldown: true,
+        current_lobby_id: true,
+        is_in_another_match: true,
+      },
+    });
 
-    if (existingUserInQueue) {
+    if (player.is_in_another_match) {
+      throw new JoinQueueError(
+        `${player.name} player is already in a match`,
+        lobbyId,
+      );
+    }
+
+    if (player.current_lobby_id !== lobbyId) {
       throw new JoinQueueError(
         `${player.name} player already in queue`,
         lobbyId,
