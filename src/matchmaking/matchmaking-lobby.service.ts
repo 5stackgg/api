@@ -328,6 +328,7 @@ export class MatchmakingLobbyService {
     lobbyId: string,
     player: PlayerLobby["players"][0],
   ): Promise<boolean> {
+    // TODO - this is a bad check
     const existingUserInQueue = await this.getLobbyDetails(player.steam_id);
 
     if (existingUserInQueue) {
