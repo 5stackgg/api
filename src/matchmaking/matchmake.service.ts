@@ -110,93 +110,79 @@ export class MatchmakeService {
   }
 
   public async matchmake(type: e_match_types_enum, region: string) {
-    if (!(await this.acuireLock(type, region))) {
-      this.logger.warn("Unable to acquire lock");
+    const queueKey = getMatchmakingRankCacheKey(type, region);
+
+    // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
+    const lobbiesData = await this.redis.zrange(queueKey, 0, -1, "WITHSCORES");
+
+    let lobbies = await this.processLobbyData(lobbiesData);
+
+    if (lobbies.length === 0) {
+      this.logger.warn("Not enough lobbies");
       return;
     }
 
-    try {
-      const queueKey = getMatchmakingRankCacheKey(type, region);
+    // sort lobbies by a weighted score combining rank difference and wait time
+    lobbies = lobbies.sort((a, b) => {
+      // normalize wait times to 0-1 range (longer wait = higher priority)
+      const aWaitTime = (Date.now() - a.joinedAt.getTime()) / 1000;
+      const bWaitTime = (Date.now() - b.joinedAt.getTime()) / 1000;
 
-      // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
-      const lobbiesData = await this.redis.zrange(
-        queueKey,
-        0,
-        -1,
-        "WITHSCORES",
+      const maxWaitTime = Math.max(aWaitTime, bWaitTime);
+
+      const normalizedAWait = aWaitTime / maxWaitTime;
+      const normalizedBWait = bWaitTime / maxWaitTime;
+
+      // weight rank differences more heavily (0.7) than wait time (0.3)
+      const rankWeight = 0.7;
+      const waitWeight = 0.3;
+
+      return (
+        rankWeight * b.avgRank +
+        waitWeight * normalizedBWait -
+        rankWeight * a.avgRank +
+        waitWeight * normalizedAWait
+      );
+    });
+
+    // group lobbies based on rank differences that expand with wait time
+    const groupedLobbies = [];
+    let currentGroup = [lobbies.at(0)];
+
+    for (const currentLobby of lobbies.slice(1)) {
+      const firstLobbyInGroup = currentGroup.at(0);
+
+      // calculate wait time in minutes
+      const waitTimeMinutes = Math.floor(
+        (Date.now() - firstLobbyInGroup.joinedAt.getTime()) / (1000 * 60),
       );
 
-      let lobbies = await this.processLobbyData(lobbiesData);
+      // maximum allowed rank difference increases by 100 for each minute waited
+      const maxRankDiff = 100 * (waitTimeMinutes + 1);
 
-      if (lobbies.length === 0) {
-        this.logger.warn("Not enough lobbies");
-        return;
+      // check if current lobby's rank is within acceptable range
+      if (
+        Math.abs(currentLobby.avgRank - firstLobbyInGroup.avgRank) <=
+        maxRankDiff
+      ) {
+        currentGroup.push(currentLobby);
+        continue;
       }
 
-      // sort lobbies by a weighted score combining rank difference and wait time
-      lobbies = lobbies.sort((a, b) => {
-        // normalize wait times to 0-1 range (longer wait = higher priority)
-        const aWaitTime = (Date.now() - a.joinedAt.getTime()) / 1000;
-        const bWaitTime = (Date.now() - b.joinedAt.getTime()) / 1000;
-
-        const maxWaitTime = Math.max(aWaitTime, bWaitTime);
-
-        const normalizedAWait = aWaitTime / maxWaitTime;
-        const normalizedBWait = bWaitTime / maxWaitTime;
-
-        // weight rank differences more heavily (0.7) than wait time (0.3)
-        const rankWeight = 0.7;
-        const waitWeight = 0.3;
-
-        return (
-          rankWeight * b.avgRank +
-          waitWeight * normalizedBWait -
-          rankWeight * a.avgRank +
-          waitWeight * normalizedAWait
-        );
-      });
-
-      // group lobbies based on rank differences that expand with wait time
-      const groupedLobbies = [];
-      let currentGroup = [lobbies.at(0)];
-
-      for (const currentLobby of lobbies.slice(1)) {
-        const firstLobbyInGroup = currentGroup.at(0);
-
-        // calculate wait time in minutes
-        const waitTimeMinutes = Math.floor(
-          (Date.now() - firstLobbyInGroup.joinedAt.getTime()) / (1000 * 60),
-        );
-
-        // maximum allowed rank difference increases by 100 for each minute waited
-        const maxRankDiff = 100 * (waitTimeMinutes + 1);
-
-        // check if current lobby's rank is within acceptable range
-        if (
-          Math.abs(currentLobby.avgRank - firstLobbyInGroup.avgRank) <=
-          maxRankDiff
-        ) {
-          currentGroup.push(currentLobby);
-          continue;
-        }
-
-        // start new group if rank difference is too high
-        if (currentGroup.length > 0) {
-          groupedLobbies.push([...currentGroup]);
-        }
-        currentGroup = [currentLobby];
-      }
-
-      // add final group
+      // start new group if rank difference is too high
       if (currentGroup.length > 0) {
-        groupedLobbies.push(currentGroup);
+        groupedLobbies.push([...currentGroup]);
       }
+      currentGroup = [currentLobby];
+    }
 
-      for (const group of groupedLobbies) {
-        this.createMatches(region, type, group);
-      }
-    } finally {
-      await this.releaseLock(type, region);
+    // add final group
+    if (currentGroup.length > 0) {
+      groupedLobbies.push(currentGroup);
+    }
+
+    for (const group of groupedLobbies) {
+      this.createMatches(region, type, group);
     }
   }
 
@@ -374,7 +360,7 @@ export class MatchmakeService {
     await this.redis.hset(getMatchmakingConformationCacheKey(confirmationId), {
       type,
       region,
-      expiresAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 30 * 1000).toISOString(),
       lobbyIds: JSON.stringify([...team1.lobbies, ...team2.lobbies]),
       steamIds: JSON.stringify([...team1.players, ...team2.players]),
     });
@@ -412,10 +398,7 @@ export class MatchmakeService {
   }
 
   public async cancelMatchMaking(confirmationId: string) {
-    await this.removeConfirmationDetails(confirmationId);
-
-    const { steamIds, lobbyIds } =
-      await this.getMatchConfirmationDetails(confirmationId);
+    const { lobbyIds } = await this.getMatchConfirmationDetails(confirmationId);
 
     for (const lobbyId of lobbyIds) {
       const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
@@ -427,41 +410,25 @@ export class MatchmakeService {
           steamId,
         );
 
+        console.log("wasReady", wasReady);
+
         if (!wasReady) {
+          console.log("remove from queue lobby", lobbyId);
           requeue = false;
           await this.matchmakingLobbyService.removeLobbyFromQueue(steamId);
           break;
         }
       }
+
       if (requeue) {
+        console.log("add to queue lobby", lobbyId);
         await this.addLobbyToQueue(lobbyId);
       }
     }
 
+    console.info("remove confirmation details", confirmationId);
+    await this.removeConfirmationDetails(confirmationId);
+
     await this.sendRegionStats();
-  }
-
-  private async acuireLock(type: e_match_types_enum, region: string) {
-    const lockKey = `matchmaking-lock:${type}:${region}`;
-    const lockValue = Date.now().toString();
-    return !!(await this.redis.set(lockKey, lockValue, "EX", 10, "NX"));
-  }
-
-  private async releaseLock(type: e_match_types_enum, region: string) {
-    const lockKey = `matchmaking-lock:${type}:${region}`;
-    const lockValue = Date.now().toString();
-    await this.redis.eval(
-      `
-      if redis.call("get",KEYS[1]) == ARGV[1]
-      then
-          return redis.call("del",KEYS[1])
-      else
-          return 0
-      end
-    `,
-      1,
-      lockKey,
-      lockValue,
-    );
   }
 }
