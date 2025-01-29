@@ -1,33 +1,21 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { User } from "../auth/types/User";
 import Redis from "ioredis";
-import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { Logger } from "@nestjs/common";
+import { User } from "../auth/types/User";
 import { e_match_types_enum } from "generated";
 import { validate as validateUUID } from "uuid";
+import { PlayerLobby } from "./types/PlayerLobby";
+import { MatchmakeService } from "./matchmake.service";
 import { HasuraService } from "src/hasura/hasura.service";
-import { Logger } from "@nestjs/common";
+import { MatchmakingLobby } from "./types/MatchmakingLobby";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { VerifyPlayerStatus } from "./types/VerifyPlayerStatus";
+import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import {
   getMatchmakingQueueCacheKey,
   getMatchmakingDetailsCacheKey,
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
-import { MatchmakeService } from "./matchmake.service";
-import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
-
-type VerifyPlayerStatus = {
-  steam_id: string;
-  is_banned: boolean;
-  matchmaking_cooldown: boolean;
-};
-
-type MatchmakingLobby = {
-  id: string;
-  players: Array<{
-    steam_id: string;
-    is_banned: boolean;
-    matchmaking_cooldown: boolean;
-  }>;
-};
 
 @Injectable()
 export class MatchmakingLobbyService {
@@ -43,7 +31,7 @@ export class MatchmakingLobbyService {
     this.redis = this.redisManager.getConnection();
   }
 
-  public async getPlayerLobby(user: User): Promise<MatchmakingLobby> {
+  public async getPlayerLobby(user: User): Promise<PlayerLobby> {
     let lobbyId = await this.getCurrentLobbyId(user.steam_id);
 
     let lobby;
@@ -120,13 +108,22 @@ export class MatchmakingLobbyService {
     };
   }
 
-  public async verifyLobby(lobby: MatchmakingLobby) {
+  public async verifyLobby(lobby: PlayerLobby) {
     for (const player of lobby.players) {
+      const { players_by_pk } = await this.hasura.query({
+        players_by_pk: {
+          __args: {
+            steam_id: player.steam_id,
+          },
+          is_banned: true,
+          matchmaking_cooldown: true,
+        },
+      });
       if (
         !(await this.verifyPlayer({
           steam_id: player.steam_id,
-          is_banned: player.is_banned,
-          matchmaking_cooldown: player.matchmaking_cooldown,
+          is_banned: players_by_pk.is_banned,
+          matchmaking_cooldown: players_by_pk.matchmaking_cooldown,
         }))
       ) {
         this.logger.warn(`${player.steam_id} is not able to join the queue`);
@@ -138,23 +135,31 @@ export class MatchmakingLobbyService {
   }
 
   public async setQueuedDetails(
-    lobbyId: string,
-    details: {
-      lobbyId: string;
-      type: e_match_types_enum;
-      regions: Array<string>;
-      joinedAt: Date;
-      players: Array<string>;
+    regions: Array<string>,
+    type: e_match_types_enum,
+    lobby: {
+      id: string;
+      players: Array<{
+        steam_id: string;
+        is_banned: boolean;
+        matchmaking_cooldown: boolean;
+      }>;
     },
   ) {
     await this.redis.hset(
-      getMatchmakingDetailsCacheKey(lobbyId),
+      getMatchmakingDetailsCacheKey(lobby.id),
       "details",
-      JSON.stringify(details),
+      JSON.stringify({
+        type,
+        regions,
+        joinedAt: new Date(),
+        lobbyId: lobby.id,
+        players: lobby.players.map(({ steam_id }) => steam_id),
+      }),
     );
   }
 
-  public async getLobbyDetails(lobbyId: string) {
+  public async getLobbyDetails(lobbyId: string): Promise<MatchmakingLobby> {
     const data = await this.redis.hget(
       getMatchmakingDetailsCacheKey(lobbyId),
       "details",

@@ -1,20 +1,16 @@
 import Redis from "ioredis";
-import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { Logger } from "@nestjs/common";
 import { e_match_types_enum } from "generated";
+import { MatchmakeService } from "./matchmake.service";
+import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import {
   ConnectedSocket,
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
-import { Logger } from "@nestjs/common";
-import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
-import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
-import {
-  getMatchmakingQueueCacheKey,
-  getMatchmakingRankCacheKey,
-} from "./utilities/cacheKeys";
-import { MatchmakeService } from "./matchmake.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -64,24 +60,17 @@ export class MatchmakingGateway {
       return;
     }
 
-    const joinedAt = new Date();
-
-    await this.matchmakingLobbyService.setQueuedDetails(lobby.id, {
-      type,
-      regions,
-      joinedAt,
-      lobbyId: lobby.id,
-      players: lobby.players.map(({ steam_id }) => steam_id),
-    });
+    await this.matchmakingLobbyService.setQueuedDetails(regions, type, lobby);
 
     const avgRank = await this.matchmakeService.getAverageLobbyRank(lobby.id);
 
     // store the lobby's rank in a separate sorted set for quick rank matching
     for (const region of regions) {
-      await this.redis.zadd(
-        getMatchmakingRankCacheKey(type, region),
-        avgRank,
+      await this.matchmakeService.addLobbyToQueue(
+        region,
+        type,
         lobby.id,
+        avgRank,
       );
     }
 

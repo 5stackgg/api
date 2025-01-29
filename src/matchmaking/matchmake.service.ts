@@ -4,32 +4,17 @@ import { Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import { Injectable } from "@nestjs/common";
 import { e_match_types_enum } from "generated";
+import { MatchmakingTeam } from "./types/MatchmakingTeam";
 import { HasuraService } from "src/hasura/hasura.service";
+import { MatchmakingLobby } from "./types/MatchmakingLobby";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import {
   getMatchmakingQueueCacheKey,
-  getMatchmakingDetailsCacheKey,
   getMatchmakingConformationCacheKey,
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
-
-interface Team {
-  lobbies: string[];
-  players: string[];
-  avgRank: number;
-}
-
-interface Lobby {
-  type: e_match_types_enum;
-  regions: string[];
-  joinedAt: Date;
-  lobbyId: string;
-  players: string[];
-  regionPositions: Record<string, number>;
-  avgRank: number;
-}
 
 @Injectable()
 export class MatchmakeService {
@@ -43,6 +28,19 @@ export class MatchmakeService {
     private matchmakingLobbyService: MatchmakingLobbyService,
   ) {
     this.redis = this.redisManager.getConnection();
+  }
+
+  public async addLobbyToQueue(
+    region: string,
+    type: e_match_types_enum,
+    lobbyId: string,
+    avgRank: number,
+  ) {
+    await this.redis.zadd(
+      getMatchmakingRankCacheKey(type, region),
+      avgRank,
+      lobbyId,
+    );
   }
 
   public async getNumberOfPlayersInQueue(
@@ -136,8 +134,8 @@ export class MatchmakeService {
       // sort lobbies by a weighted score combining rank difference and wait time
       lobbies = lobbies.sort((a, b) => {
         // normalize wait times to 0-1 range (longer wait = higher priority)
-        const aWaitTime = (Date.now() - a.joinedAt) / 1000;
-        const bWaitTime = (Date.now() - b.joinedAt) / 1000;
+        const aWaitTime = (Date.now() - a.joinedAt.getTime()) / 1000;
+        const bWaitTime = (Date.now() - b.joinedAt.getTime()) / 1000;
 
         const maxWaitTime = Math.max(aWaitTime, bWaitTime);
 
@@ -212,7 +210,9 @@ export class MatchmakeService {
     return results.every(([err, score]) => !err && score !== null);
   }
 
-  public async processLobbyData(lobbiesData: string[]) {
+  public async processLobbyData(
+    lobbiesData: string[],
+  ): Promise<MatchmakingLobby[]> {
     const lobbyDetails = [];
 
     for (let i = 0; i < lobbiesData.length; i += 2) {
@@ -222,7 +222,7 @@ export class MatchmakeService {
       if (details) {
         lobbyDetails.push({
           ...details,
-          avgRank: lobbiesData[i + 1],
+          avgRank: parseInt(lobbiesData[i + 1]),
           joinedAt: new Date(details.joinedAt),
         });
       }
@@ -234,7 +234,7 @@ export class MatchmakeService {
   public createMatches(
     region: string,
     type: e_match_types_enum,
-    lobbies: Array<Lobby>,
+    lobbies: Array<MatchmakingLobby>,
   ): Promise<void> {
     const requiredPlayers = type === "Wingman" ? 4 : 10;
     const totalPlayers = lobbies.reduce(
@@ -247,12 +247,12 @@ export class MatchmakeService {
     }
 
     // try to make as many valid matches as possible
-    const team1: Team = {
+    const team1: MatchmakingTeam = {
       players: [],
       lobbies: [],
       avgRank: 0,
     };
-    const team2: Team = {
+    const team2: MatchmakingTeam = {
       players: [],
       lobbies: [],
       avgRank: 0,
@@ -309,7 +309,7 @@ export class MatchmakeService {
   public async createMatchConfirmation(
     region: string,
     type: e_match_types_enum,
-    players: { team1: Team; team2: Team },
+    players: { team1: MatchmakingTeam; team2: MatchmakingTeam },
   ) {
     // -create lock per lobby
     // -verify lobbies still available
@@ -366,8 +366,8 @@ export class MatchmakeService {
     region: string,
     type: e_match_types_enum,
     confirmationId: string,
-    team1: Team,
-    team2: Team,
+    team1: MatchmakingTeam,
+    team2: MatchmakingTeam,
   ) {
     await this.redis.hset(getMatchmakingConformationCacheKey(confirmationId), {
       type,
