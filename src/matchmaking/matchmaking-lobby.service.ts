@@ -12,9 +12,9 @@ import { VerifyPlayerStatus } from "./types/VerifyPlayerStatus";
 import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import {
-  getMatchmakingQueueCacheKey,
-  getMatchmakingDetailsCacheKey,
   getMatchmakingRankCacheKey,
+  getMatchmakingQueueCacheKey,
+  getMatchmakingLobbyDetailsCacheKey,
 } from "./utilities/cacheKeys";
 
 @Injectable()
@@ -134,7 +134,7 @@ export class MatchmakingLobbyService {
     return true;
   }
 
-  public async setQueuedDetails(
+  public async setLobbyDetails(
     regions: Array<string>,
     type: e_match_types_enum,
     lobby: {
@@ -147,7 +147,7 @@ export class MatchmakingLobbyService {
     },
   ) {
     await this.redis.hset(
-      getMatchmakingDetailsCacheKey(lobby.id),
+      getMatchmakingLobbyDetailsCacheKey(lobby.id),
       "details",
       JSON.stringify({
         type,
@@ -155,13 +155,18 @@ export class MatchmakingLobbyService {
         joinedAt: new Date(),
         lobbyId: lobby.id,
         players: lobby.players.map(({ steam_id }) => steam_id),
+        avgRank: await this.getAverageLobbyRank(lobby.players),
       }),
     );
   }
 
+  public async getAverageLobbyRank(players: Array<{ steam_id: string }>) {
+    return 0;
+  }
+
   public async getLobbyDetails(lobbyId: string): Promise<MatchmakingLobby> {
     const data = await this.redis.hget(
-      getMatchmakingDetailsCacheKey(lobbyId),
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "details",
     );
 
@@ -204,7 +209,7 @@ export class MatchmakingLobbyService {
       );
     }
 
-    pipeline.del(getMatchmakingDetailsCacheKey(lobbyId));
+    pipeline.del(getMatchmakingLobbyDetailsCacheKey(lobbyId));
 
     // notify players in the lobby that they have been removed from the queue
     for (const player of queueDetails.players) {
@@ -219,6 +224,7 @@ export class MatchmakingLobbyService {
     }
 
     await pipeline.exec();
+
     await this.matchmaking.sendRegionStats();
   }
 
@@ -236,12 +242,12 @@ export class MatchmakingLobbyService {
   public async sendQueueDetailsToLobby(lobbyId: string) {
     let confirmationDetails;
     const confirmationId = await this.redis.hget(
-      getMatchmakingDetailsCacheKey(lobbyId),
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "confirmationId",
     );
 
     if (confirmationId) {
-      const { matchId, confirmed, type, region, players, expiresAt } =
+      const { matchId, confirmed, type, region, steamIds, expiresAt } =
         await this.matchmaking.getMatchConfirmationDetails(confirmationId);
 
       confirmationDetails = {
@@ -251,7 +257,7 @@ export class MatchmakingLobbyService {
         expiresAt,
         confirmed,
         confirmationId,
-        players: players.length,
+        players: steamIds.length,
       };
     }
 
@@ -289,7 +295,7 @@ export class MatchmakingLobbyService {
     confirmationId: string,
   ) {
     await this.redis.hset(
-      getMatchmakingDetailsCacheKey(lobbyId),
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "confirmationId",
       confirmationId,
     );

@@ -30,17 +30,19 @@ export class MatchmakeService {
     this.redis = this.redisManager.getConnection();
   }
 
-  public async addLobbyToQueue(
-    region: string,
-    type: e_match_types_enum,
-    lobbyId: string,
-    avgRank: number,
-  ) {
-    await this.redis.zadd(
-      getMatchmakingRankCacheKey(type, region),
-      avgRank,
-      lobbyId,
-    );
+  public async addLobbyToQueue(lobbyId: string) {
+    const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+
+    // store the lobby's rank in a separate sorted set for quick rank matching
+    for (const region of lobby.regions) {
+      await this.redis.zadd(
+        getMatchmakingRankCacheKey(lobby.type, region),
+        lobby.avgRank,
+        lobbyId,
+      );
+    }
+
+    await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
   }
 
   public async getNumberOfPlayersInQueue(
@@ -373,30 +375,30 @@ export class MatchmakeService {
       type,
       region,
       expiresAt: new Date().toISOString(),
+      lobbyIds: JSON.stringify([...team1.lobbies, ...team2.lobbies]),
       steamIds: JSON.stringify([...team1.players, ...team2.players]),
     });
   }
 
+  private async removeConfirmationDetails(confirmationId: string) {
+    await this.redis.del(getMatchmakingConformationCacheKey(confirmationId));
+  }
+
   public async getMatchConfirmationDetails(confirmationId: string) {
-    const { type, region, steamIds, confirmed, matchId, expiresAt } =
+    const { type, region, lobbyIds, steamIds, confirmed, matchId, expiresAt } =
       await this.redis.hgetall(
         getMatchmakingConformationCacheKey(confirmationId),
       );
 
     return {
+      region,
       matchId,
       expiresAt,
-      players: JSON.parse(steamIds || "[]"),
-      confirmed: parseInt(confirmed || "0"),
       type: type as e_match_types_enum,
-      region,
+      steamIds: JSON.parse(steamIds || "[]"),
+      lobbyIds: JSON.parse(lobbyIds || "[]"),
+      confirmed: parseInt(confirmed || "0"),
     };
-  }
-
-  public async getAverageLobbyRank(lobbyId: string) {
-    // Implement the logic to calculate the average rank of the players in the lobby
-    // This is a placeholder and should be replaced with the actual implementation
-    return 0; // Placeholder return, actual implementation needed
   }
 
   public async cancelMatchMakingByMatchId(matchId: string) {
@@ -409,66 +411,34 @@ export class MatchmakeService {
     }
   }
 
-  // TODO
-  public async cancelMatchMaking(
-    confirmationId: string,
-    readyCheckFailed: boolean = false,
-  ) {
-    console.info("CANCEL MATCH MAKING REODO");
-    // const { players, type, region } =
-    //   await this.getMatchConfirmationDetails(confirmationId);
+  public async cancelMatchMaking(confirmationId: string) {
+    await this.removeConfirmationDetails(confirmationId);
 
-    // for (const steamId of players) {
-    //   if (readyCheckFailed) {
-    //     const wasReady = await this.redis.hget(
-    //       getMatchmakingConformationCacheKey(confirmationId),
-    //       steamId,
-    //     );
+    const { steamIds, lobbyIds } =
+      await this.getMatchConfirmationDetails(confirmationId);
 
-    //     if (wasReady) {
-    //       /**
-    //        * if they wre ready, we want to requeue them into the queue
-    //        */
-    //       // I thin this was to remove the confirmation ID from the match?
-    //       // await this.redis.hdel(
-    //       //   getmatchMakingDetailsCacheKey(steamId),
-    //       //   "confirmationId",
-    //       // );
+    for (const lobbyId of lobbyIds) {
+      const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
 
-    //       const { regions, joinedAt } = await this.getLobbyDetails(steamId);
-    //       for (const region of regions) {
-    //         // TODO - re-add them to the queue
-    //         // await this.redis.zadd(
-    //         //   getMatchMakingQueueCacheKey(type, region),
-    //         //   new Date(joinedAt).getTime(),
-    //         //   steamId,
-    //         // );
-    //       }
+      let requeue = true;
+      for (const steamId of lobby.players) {
+        const wasReady = await this.redis.hget(
+          getMatchmakingConformationCacheKey(confirmationId),
+          steamId,
+        );
 
-    //       this.sendQueueDetailsToLobby(steamId);
-    //       continue;
-    //     }
-    //   }
+        if (!wasReady) {
+          requeue = false;
+          await this.matchmakingLobbyService.removeLobbyFromQueue(steamId);
+          break;
+        }
+      }
+      if (requeue) {
+        await this.addLobbyToQueue(lobbyId);
+      }
+    }
 
-    //   await this.removeLobbyFromQueue(steamId);
-
-    //   this.sendQueueDetailsToLobby(steamId);
-    // }
-
-    // /**
-    //  * remove the confirmation details
-    //  */
-    // await this.redis.del(
-    //   getMatchmakingConformationCacheKey(confirmationId),
-    // );
-
-    // await this.sendRegionStats();
-
-    // if (!readyCheckFailed) {
-    //   return;
-    // }
-
-    // this.matchmake(type, region);
+    await this.sendRegionStats();
   }
 
   private async acuireLock(type: e_match_types_enum, region: string) {

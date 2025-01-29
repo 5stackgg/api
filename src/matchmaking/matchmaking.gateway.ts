@@ -60,21 +60,10 @@ export class MatchmakingGateway {
       return;
     }
 
-    await this.matchmakingLobbyService.setQueuedDetails(regions, type, lobby);
+    await this.matchmakingLobbyService.setLobbyDetails(regions, type, lobby);
 
-    const avgRank = await this.matchmakeService.getAverageLobbyRank(lobby.id);
+    await this.matchmakeService.addLobbyToQueue(lobby.id);
 
-    // store the lobby's rank in a separate sorted set for quick rank matching
-    for (const region of regions) {
-      await this.matchmakeService.addLobbyToQueue(
-        region,
-        type,
-        lobby.id,
-        avgRank,
-      );
-    }
-
-    await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobby.id);
     await this.matchmakeService.sendRegionStats();
 
     for (const region of regions) {
