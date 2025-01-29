@@ -160,6 +160,28 @@ export class MatchmakingLobbyService {
     );
   }
 
+  public async removeLobbyDetails(lobbyId: string) {
+    await this.redis.hdel(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "details",
+    );
+    await this.redis.hdel(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "confirmationId",
+    );
+  }
+
+  public async setMatchConformationIdForLobby(
+    lobbyId: string,
+    confirmationId: string,
+  ) {
+    await this.redis.hset(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "confirmationId",
+      confirmationId,
+    );
+  }
+
   public async getAverageLobbyRank(players: Array<{ steam_id: string }>) {
     return 0;
   }
@@ -196,24 +218,22 @@ export class MatchmakingLobbyService {
       return;
     }
 
-    const pipeline = this.redis.pipeline();
-
     for (const region of queueDetails.regions) {
-      pipeline.zrem(
+      await this.redis.zrem(
         getMatchmakingQueueCacheKey(queueDetails.type, region),
         lobbyId,
       );
-      pipeline.zrem(
+      await this.redis.zrem(
         getMatchmakingRankCacheKey(queueDetails.type, region),
         lobbyId,
       );
     }
 
-    pipeline.del(getMatchmakingLobbyDetailsCacheKey(lobbyId));
+    await this.removeLobbyDetails(lobbyId);
 
     // notify players in the lobby that they have been removed from the queue
     for (const player of queueDetails.players) {
-      pipeline.publish(
+      await this.redis.publish(
         "send-message-to-steam-id",
         JSON.stringify({
           steamId: player,
@@ -222,8 +242,6 @@ export class MatchmakingLobbyService {
         }),
       );
     }
-
-    await pipeline.exec();
 
     await this.matchmaking.sendRegionStats();
   }
@@ -262,6 +280,7 @@ export class MatchmakingLobbyService {
     }
 
     const lobbyQueueDetails = await this.getLobbyDetails(lobbyId);
+
     if (!lobbyQueueDetails) {
       console.warn(`Lobby ${lobbyId} not found in queue`);
       return;
@@ -288,17 +307,6 @@ export class MatchmakingLobbyService {
         }),
       );
     }
-  }
-
-  public async setMatchConformationIdForLobby(
-    lobbyId: string,
-    confirmationId: string,
-  ) {
-    await this.redis.hset(
-      getMatchmakingLobbyDetailsCacheKey(lobbyId),
-      "confirmationId",
-      confirmationId,
-    );
   }
 
   public async sendQueueDetailsToAllUsers(

@@ -410,23 +410,18 @@ export class MatchmakeService {
           steamId,
         );
 
-        console.log("wasReady", wasReady);
-
         if (!wasReady) {
-          console.log("remove from queue lobby", lobbyId);
           requeue = false;
-          await this.matchmakingLobbyService.removeLobbyFromQueue(steamId);
+          await this.matchmakingLobbyService.removeLobbyFromQueue(lobbyId);
           break;
         }
       }
 
       if (requeue) {
-        console.log("add to queue lobby", lobbyId);
         await this.addLobbyToQueue(lobbyId);
       }
     }
 
-    console.info("remove confirmation details", confirmationId);
     await this.removeConfirmationDetails(confirmationId);
 
     await this.sendRegionStats();
