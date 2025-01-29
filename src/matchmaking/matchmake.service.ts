@@ -298,6 +298,8 @@ export class MatchmakeService {
     }
   }
 
+  // TODO - watch for a player leaving a lobby and force the entire lobby to be left the queue with an error
+
   public async createMatchConfirmation(
     region: string,
     type: e_match_types_enum,
@@ -305,7 +307,6 @@ export class MatchmakeService {
   ) {
     // TODO
     // -create lock per lobby
-    // -verify lobbies still available
 
     // if (
     //   !(await this.verifyLobbiesStillAvailable(
@@ -324,18 +325,14 @@ export class MatchmakeService {
     /**
      * remove the lobbies from the queue and rank cache
      */
-    const cleanupPipeline = this.redis.pipeline();
-
-    cleanupPipeline.zrem(
+    await this.redis.zrem(
       getMatchmakingQueueCacheKey(type, region),
       ...allLobbies,
     );
-    cleanupPipeline.zrem(
+    await this.redis.zrem(
       getMatchmakingRankCacheKey(type, region),
       ...allLobbies,
     );
-
-    await cleanupPipeline.exec();
 
     const expiresAt = new Date();
     expiresAt.setSeconds(expiresAt.getSeconds() + 30);
