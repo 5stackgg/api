@@ -131,7 +131,7 @@ export class MatchmakeService {
     return results.every(([err, score]) => !err && score !== null);
   }
 
-  public async processLobbyDetails(lobbiesData: string[]) {
+  public async processLobbyData(lobbiesData: string[]) {
     const lobbyDetails = [];
 
     for (let i = 0; i < lobbiesData.length; i += 3) {
@@ -151,68 +151,66 @@ export class MatchmakeService {
     return lobbyDetails;
   }
 
-  public async createMatches(
+  public createMatches(
     type: e_match_types_enum,
     lobbies: Array<{ id: string; players: string[]; avgRank: number }>,
   ): Promise<void> {
-    const playersPerTeam = type === "Wingman" ? 2 : 5;
-    const matches: Array<{ team1: Team; team2: Team }> = [];
+    const requiredPlayers = type === "Wingman" ? 2 : 5;
+    const totalPlayers = lobbies.reduce(
+      (acc, lobby) => acc + lobby.players.length,
+      0,
+    );
 
-    // Try to make as many valid matches as possible
-    while (true) {
-      // Initialize teams for this potential match
-      const team1: Team = {
-        players: [],
-        lobbies: [],
-        avgRank: 0,
-      };
-      const team2: Team = {
-        players: [],
-        lobbies: [],
-        avgRank: 0,
-      };
+    if (lobbies.length === 0 || totalPlayers !== requiredPlayers) {
+      return;
+    }
 
-      if (lobbies.length === 0) {
-        break;
-      }
+    // try to make as many valid matches as possible
+    const team1: Team = {
+      players: [],
+      lobbies: [],
+      avgRank: 0,
+    };
+    const team2: Team = {
+      players: [],
+      lobbies: [],
+      avgRank: 0,
+    };
 
-      // Try to fill teams with available lobbies
-      for (const lobby of lobbies) {
-        if (team1.players.length + lobby.players.length <= playersPerTeam) {
-          team1.players.push(...lobby.players);
-          team1.lobbies.push(lobby.id);
-          team1.avgRank =
-            (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
-            team1.lobbies.length;
-          lobbies.splice(lobbies.indexOf(lobby), 1);
-        } else if (
-          team2.players.length + lobby.players.length <=
-          playersPerTeam
-        ) {
-          team2.players.push(...lobby.players);
-          team2.lobbies.push(lobby.id);
-          team2.avgRank =
-            (team2.avgRank * (team2.lobbies.length - 1) + lobby.avgRank) /
-            team2.lobbies.length;
-          lobbies.splice(lobbies.indexOf(lobby), 1);
-        }
-      }
+    const playersPerTeam = requiredPlayers / 2;
 
-      // Check if we have valid teams for this match
-      if (
-        team1.players.length === playersPerTeam &&
-        team2.players.length === playersPerTeam
+    // try to fill teams with available lobbies
+    for (const lobby of lobbies) {
+      if (team1.players.length + lobby.players.length <= playersPerTeam) {
+        team1.players.push(...lobby.players);
+        team1.lobbies.push(lobby.id);
+        team1.avgRank =
+          (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
+          team1.lobbies.length;
+        lobbies.splice(lobbies.indexOf(lobby), 1);
+      } else if (
+        team2.players.length + lobby.players.length <=
+        playersPerTeam
       ) {
-        matches.push({ team1, team2 });
-      } else {
-        // If we can't make a valid match with remaining lobbies, break
-        break;
+        team2.players.push(...lobby.players);
+        team2.lobbies.push(lobby.id);
+        team2.avgRank =
+          (team2.avgRank * (team2.lobbies.length - 1) + lobby.avgRank) /
+          team2.lobbies.length;
+        lobbies.splice(lobbies.indexOf(lobby), 1);
       }
     }
 
-    // Process all found matches
-    for (const match of matches) {
+    // Check if we have valid teams for this match
+    if (
+      team1.players.length === playersPerTeam &&
+      team2.players.length === playersPerTeam
+    ) {
       // await this._handleMatchFound(match, type, region, getMatchmakingQueueCacheKey(type, region), getMatchmakingRankCacheKey(type, region));
+    }
+
+    if (lobbies.length > 0) {
+      this.createMatches(type, lobbies);
     }
   }
 
@@ -389,22 +387,24 @@ export class MatchmakeService {
       return;
     }
 
-    // Process lobby details to get players and ranks
-    const lobbyDetails = await this.processLobbyDetails(lobbiesData);
+    let lobbies = await this.processLobbyData(lobbiesData);
 
-    // Sort lobbies by a weighted score combining rank difference and wait time
-    const now = Date.now();
-    const mathcedLobbies = lobbyDetails.sort((a, b) => {
-      // Normalize wait times to 0-1 range (longer wait = higher priority)
-      const aWaitTime = (now - a.joinTime) / 1000;
-      const bWaitTime = (now - b.joinTime) / 1000;
+    if (lobbies.length === 0) {
+      return;
+    }
+
+    // sort lobbies by a weighted score combining rank difference and wait time
+    lobbies = lobbies.sort((a, b) => {
+      // normalize wait times to 0-1 range (longer wait = higher priority)
+      const aWaitTime = (Date.now() - a.joinTime) / 1000;
+      const bWaitTime = (Date.now() - b.joinTime) / 1000;
 
       const maxWaitTime = Math.max(aWaitTime, bWaitTime);
 
       const normalizedAWait = aWaitTime / maxWaitTime;
       const normalizedBWait = bWaitTime / maxWaitTime;
 
-      // Weight rank differences more heavily (0.7) than wait time (0.3)
+      // weight rank differences more heavily (0.7) than wait time (0.3)
       const rankWeight = 0.7;
       const waitWeight = 0.3;
 
@@ -418,20 +418,20 @@ export class MatchmakeService {
 
     // group lobbies based on rank differences that expand with wait time
     const groupedLobbies = [];
-    let currentGroup = [mathcedLobbies[0]];
+    let currentGroup = [lobbies.at(0)];
 
-    for (const currentLobby of mathcedLobbies.slice(1)) {
+    for (const currentLobby of lobbies.slice(1)) {
       const firstLobbyInGroup = currentGroup[0];
 
-      // Calculate wait time in minutes
+      // calculate wait time in minutes
       const waitTimeMinutes = Math.floor(
-        (now - firstLobbyInGroup.joinTime) / (1000 * 60),
+        (Date.now() - firstLobbyInGroup.joinTime) / (1000 * 60),
       );
 
-      // Maximum allowed rank difference increases by 100 for each minute waited
+      // maximum allowed rank difference increases by 100 for each minute waited
       const maxRankDiff = 100 * (waitTimeMinutes + 1);
 
-      // Check if current lobby's rank is within acceptable range
+      // check if current lobby's rank is within acceptable range
       if (
         Math.abs(currentLobby.avgRank - firstLobbyInGroup.avgRank) <=
         maxRankDiff
@@ -440,20 +440,20 @@ export class MatchmakeService {
         continue;
       }
 
-      // Start new group if rank difference is too high
+      // start new group if rank difference is too high
       if (currentGroup.length > 0) {
         groupedLobbies.push([...currentGroup]);
       }
       currentGroup = [currentLobby];
     }
 
-    // Add final group
+    // add final group
     if (currentGroup.length > 0) {
       groupedLobbies.push(currentGroup);
     }
 
     for (const group of groupedLobbies) {
-      await this.createMatches(type, group);
+      this.createMatches(type, group);
     }
   }
 
