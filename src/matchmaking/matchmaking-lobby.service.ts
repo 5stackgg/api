@@ -110,9 +110,7 @@ export class MatchmakingLobbyService {
     });
 
     if (!captain) {
-      throw new JoinQueueError(
-        `${user.steam_id} is not a captain of ${lobby.id}`,
-      );
+      throw new JoinQueueError(`you are not the captain of this lobby`);
     }
 
     for (const player of lobby.players) {

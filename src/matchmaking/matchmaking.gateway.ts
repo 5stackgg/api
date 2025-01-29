@@ -38,20 +38,20 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+    let lobby;
+    const user = client.user;
+    const { type, regions } = data;
+
+    if (!user) {
+      return;
+    }
+
     try {
-      const user = client.user;
-
-      if (!user) {
-        return;
-      }
-
-      const { type, regions } = data;
-
       if (!type || !regions || regions.length === 0) {
-        return;
+        throw new JoinQueueError("Missing Type or Regions");
       }
 
-      const lobby = await this.matchmakingLobbyService.getPlayerLobby(user);
+      lobby = await this.matchmakingLobbyService.getPlayerLobby(user);
 
       if (!lobby) {
         throw new JoinQueueError("Unable to find Player Lobby");
@@ -79,13 +79,25 @@ export class MatchmakingGateway {
       }
     } catch (error) {
       if (error instanceof JoinQueueError) {
-        const lobbyId = error.getLobbyId();
-        if (lobbyId) {
-          // TODO - send to lobby
-          return;
+        let steamIds = [user.steam_id];
+
+        if (lobby && error.getLobbyId()) {
+          steamIds = lobby.players.map((player) => player.steam_id);
         }
 
-        // TODO - send to user
+        console.info("SEND ERROR TO ", steamIds);
+        for (const steamId of steamIds) {
+          await this.redis.publish(
+            `send-message-to-steam-id`,
+            JSON.stringify({
+              steamId,
+              event: "matchmaking:error",
+              data: {
+                message: error.message,
+              },
+            }),
+          );
+        }
 
         return;
       }
