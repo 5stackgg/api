@@ -281,7 +281,6 @@ export class MatchmakingLobbyService {
     const lobbyQueueDetails = await this.getLobbyDetails(lobbyId);
 
     if (!lobbyQueueDetails) {
-      console.warn(`Lobby ${lobbyId} not found in queue`);
       return;
     }
 
