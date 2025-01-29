@@ -13,7 +13,7 @@ import {
 } from "./utilities/cacheKeys";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 
-interface TeamCombination {
+interface Team {
   lobbies: string[];
   players: string[];
   avgRank: number;
@@ -121,67 +121,6 @@ export class MatchmakeService {
     }
   }
 
-  public async processMatchmakingBatch(
-    type: e_match_types_enum,
-    region: string,
-    start: number,
-    batchSize: number,
-    playersPerTeam: number,
-  ) {
-    const queueKey = getMatchmakingQueueCacheKey(type, region);
-    const rankKey = getMatchmakingRankCacheKey(type, region);
-
-    // Get batch of lobbies
-    const lobbiesInBatch = (await this.redis.eval(
-      `
-      local queueKey = KEYS[1]
-      local rankKey = KEYS[2]
-      local start = tonumber(ARGV[1])
-      local batchSize = tonumber(ARGV[2])
-      
-      local lobbies = redis.call('ZRANGE', queueKey, start, start + batchSize - 1, 'WITHSCORES')
-      local result = {}
-      
-      for i = 1, #lobbies, 2 do
-        local lobbyId = lobbies[i]
-        local joinTime = lobbies[i + 1]
-        local rank = redis.call('ZSCORE', rankKey, lobbyId)
-        
-        if rank then
-          table.insert(result, lobbyId)
-          table.insert(result, joinTime)
-          table.insert(result, rank)
-        end
-      end
-      
-      return result
-    `,
-      2,
-      queueKey,
-      rankKey,
-      start,
-      batchSize,
-    )) as string[];
-
-    // Process batch similar to original logic
-    const lobbyDetails = await this.processLobbyDetails(lobbiesInBatch);
-
-    if (lobbyDetails.length < 2) return null;
-
-    // Find valid teams within this batch
-    const waitTimePriority = Math.floor(
-      (Date.now() - lobbyDetails[0].joinTime) / 10000,
-    );
-    const rankRange = Math.min(50 + waitTimePriority * 10, 500);
-
-    return this.findValidTeams(
-      lobbyDetails[0],
-      lobbyDetails,
-      playersPerTeam,
-      rankRange,
-    );
-  }
-
   public async verifyLobbiesStillAvailable(
     lobbyIds: string[],
     queueKey: string,
@@ -214,120 +153,72 @@ export class MatchmakeService {
     return lobbyDetails;
   }
 
-  public async findValidTeams(
-    startingLobby: { id: string; players: string[]; avgRank: number },
-    allLobbies: Array<{ id: string; players: string[]; avgRank: number }>,
+  public async createMatches(
+    type: e_match_types_enum,
+    lobbies: Array<{ id: string; players: string[]; avgRank: number }>,
     playersPerTeam: number,
-    rankRange: number,
-  ): Promise<{ team1: TeamCombination; team2: TeamCombination } | null> {
-    this.logger.debug(
-      `Finding valid teams starting with lobby ${startingLobby.id}`,
-    );
+  ): Promise<void> {
+    const requiredPlayers = type === "Wingman" ? 4 : 10;
 
-    // Find all possible team combinations
-    const team1Combinations = this.findTeamCombinations(
-      startingLobby,
-      allLobbies,
-      playersPerTeam,
-      new Set(),
-    );
+    const matches: Array<{ team1: Team; team2: Team }> = [];
+    const usedLobbies = new Set<string>();
 
-    if (team1Combinations.length === 0) {
-      this.logger.debug("No valid team1 combinations found");
-      return null;
-    }
+    // Try to make as many valid matches as possible
+    while (true) {
+      // Initialize teams for this potential match
+      const team1: Team = {
+        players: [],
+        lobbies: [],
+        avgRank: 0,
+      };
+      const team2: Team = {
+        players: [],
+        lobbies: [],
+        avgRank: 0,
+      };
 
-    for (const team1 of team1Combinations) {
-      // Create set of used lobby IDs
-      const usedLobbies = new Set(team1.lobbies);
-
-      // Get remaining lobbies that aren't used in team1
-      const remainingLobbies = allLobbies.filter((l) => !usedLobbies.has(l.id));
-
-      if (remainingLobbies.length === 0) {
-        this.logger.debug("No remaining lobbies for team2");
-        continue;
+      if (lobbies.length === 0) {
+        break;
       }
 
-      // Try each remaining lobby as a starting point for team2
-      for (const potentialTeam2Start of remainingLobbies) {
-        const team2Combinations = this.findTeamCombinations(
-          potentialTeam2Start,
-          remainingLobbies,
-          playersPerTeam,
-          usedLobbies,
-        );
-
-        // Find best matching team2 within rank range
-        const validTeam2 = team2Combinations.find(
-          (team2) => Math.abs(team1.avgRank - team2.avgRank) <= rankRange,
-        );
-
-        if (validTeam2) {
-          this.logger.debug(
-            `Found valid match: Team1 (${team1.lobbies.join(",")}) vs Team2 (${validTeam2.lobbies.join(",")})`,
-          );
-          return { team1, team2: validTeam2 };
+      // Try to fill teams with available lobbies
+      for (const lobby of lobbies) {
+        if (team1.players.length + lobby.players.length <= playersPerTeam) {
+          team1.players.push(...lobby.players);
+          team1.lobbies.push(lobby.id);
+          team1.avgRank =
+            (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
+            team1.lobbies.length;
+          lobbies.splice(lobbies.indexOf(lobby), 1);
+        } else if (
+          team2.players.length + lobby.players.length <=
+          playersPerTeam
+        ) {
+          team2.players.push(...lobby.players);
+          team2.lobbies.push(lobby.id);
+          team2.avgRank =
+            (team2.avgRank * (team2.lobbies.length - 1) + lobby.avgRank) /
+            team2.lobbies.length;
+          lobbies.splice(lobbies.indexOf(lobby), 1);
         }
       }
+
+      // Check if we have valid teams for this match
+      if (
+        team1.players.length === playersPerTeam &&
+        team2.players.length === playersPerTeam
+      ) {
+        matches.push({ team1, team2 });
+      } else {
+        // If we can't make a valid match with remaining lobbies, break
+        break;
+      }
     }
 
-    this.logger.debug("No valid team combinations found");
-    return null;
-  }
-
-  public findTeamCombinations(
-    startingLobby: { id: string; players: string[]; avgRank: number },
-    allLobbies: Array<{ id: string; players: string[]; avgRank: number }>,
-    targetSize: number,
-    usedLobbies: Set<string>,
-  ): TeamCombination[] {
-    const combinations: TeamCombination[] = [];
-
-    const findCombos = (
-      current: TeamCombination,
-      remainingLobbies: Array<{
-        id: string;
-        players: string[];
-        avgRank: number;
-      }>,
-    ) => {
-      if (current.players.length === targetSize) {
-        combinations.push(current);
-        return;
-      }
-
-      for (const lobby of remainingLobbies) {
-        if (usedLobbies.has(lobby.id)) continue;
-
-        const newPlayerCount = current.players.length + lobby.players.length;
-        if (newPlayerCount > targetSize) continue;
-
-        const newTotalRank =
-          current.avgRank * current.players.length +
-          lobby.avgRank * lobby.players.length;
-
-        findCombos(
-          {
-            lobbies: [...current.lobbies, lobby.id],
-            players: [...current.players, ...lobby.players],
-            avgRank: newTotalRank / newPlayerCount,
-          },
-          remainingLobbies.filter((l) => l.id !== lobby.id),
-        );
-      }
-    };
-
-    findCombos(
-      {
-        lobbies: [startingLobby.id],
-        players: startingLobby.players,
-        avgRank: startingLobby.avgRank,
-      },
-      allLobbies.filter((l) => l.id !== startingLobby.id),
-    );
-
-    return combinations;
+    // Process all found matches
+    for (const match of matches) {
+      // await this._handleMatchFound(match, type, region, getMatchmakingQueueCacheKey(type, region), getMatchmakingRankCacheKey(type, region));
+    }
   }
 
   public async confirmMatchMaking(
@@ -335,6 +226,16 @@ export class MatchmakeService {
     region: string,
     players: Array<string>,
   ) {
+    // if (
+    //   !(await this.verifyLobbiesStillAvailable(
+    //     mathcedLobbies.map((lobby) => {
+    //       return lobby.id;
+    //     }),
+    //     queueKey,
+    //   ))
+    // ) {
+    //   return;
+    // }
     // const expiresAt = new Date();
     // expiresAt.setSeconds(expiresAt.getSeconds() + 30);
     // const confirmationId = uuidv4();
@@ -462,13 +363,7 @@ export class MatchmakeService {
   private async acuireLock(type: e_match_types_enum, region: string) {
     const lockKey = `matchmaking-lock:${type}:${region}`;
     const lockValue = Date.now().toString();
-    return !!(await this.redis.set(
-      lockKey,
-      lockValue,
-      "EX",
-      10,
-      "NX",
-    ));
+    return !!(await this.redis.set(lockKey, lockValue, "EX", 10, "NX"));
   }
 
   private async releaseLock(type: e_match_types_enum, region: string) {
@@ -495,146 +390,84 @@ export class MatchmakeService {
     playersPerTeam: number,
   ) {
     const queueKey = getMatchmakingQueueCacheKey(type, region);
-    const rankKey = getMatchmakingRankCacheKey(type, region);
 
-    const oldestLobby = await this._getOldestLobby(queueKey, rankKey);
-    if (!oldestLobby) {
-      this.logger.debug("No lobbies in queue");
+    // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
+    const lobbiesData = await this.redis.zrange(queueKey, 0, -1, "WITHSCORES");
+
+    if (!lobbiesData.length) {
       return;
     }
 
-    const [oldestLobbyId, joinTime, rankStr] = oldestLobby;
-    const oldestLobbyDetails = await this._validateOldestLobby(oldestLobbyId);
-    if (!oldestLobbyDetails) return;
+    // Process lobby details to get players and ranks
+    const lobbyDetails = await this.processLobbyDetails(lobbiesData);
 
-    const baseRank = parseFloat(rankStr);
-    const waitTimePriority = Math.floor(
-      (Date.now() - parseInt(joinTime)) / 10000,
-    );
-    const rankRange = Math.min(50 + waitTimePriority * 10, 500);
+    // Sort lobbies by a weighted score combining rank difference and wait time
+    const now = Date.now();
+    const mathcedLobbies = lobbyDetails.sort((a, b) => {
+      // Normalize wait times to 0-1 range (longer wait = higher priority)
+      const aWaitTime = (now - a.joinTime) / 1000;
+      const bWaitTime = (now - b.joinTime) / 1000;
 
-    const lobbyDetails = await this._getLobbiesInRange(
-      queueKey,
-      rankKey,
-      baseRank,
-      rankRange,
-    );
-    if (lobbyDetails.length === 0) return;
+      const maxWaitTime = Math.max(aWaitTime, bWaitTime);
 
-    const match = await this.findValidTeams(
-      lobbyDetails[0],
-      lobbyDetails,
-      playersPerTeam,
-      rankRange,
-    );
+      const normalizedAWait = aWaitTime / maxWaitTime;
+      const normalizedBWait = bWaitTime / maxWaitTime;
 
-    if (match) {
-      await this._handleMatchFound(match, type, region, queueKey, rankKey);
-    } else {
-      this.logger.debug("No suitable match found in this iteration");
-    }
-  }
+      // Weight rank differences more heavily (0.7) than wait time (0.3)
+      const rankWeight = 0.7;
+      const waitWeight = 0.3;
 
-  private async _getOldestLobby(queueKey: string, rankKey: string) {
-    return (await this.redis.eval(
-      `
-      local queueKey = KEYS[1]
-      local rankKey = KEYS[2]
-      
-      local oldest = redis.call('ZRANGE', queueKey, 0, 0, 'WITHSCORES')
-      if #oldest == 0 then
-        return nil
-      end
-      
-      local lobbyId = oldest[1]
-      local joinTime = oldest[2]
-      local rank = redis.call('ZSCORE', rankKey, lobbyId)
-      
-      return {lobbyId, joinTime, rank}
-    `,
-      2,
-      queueKey,
-      rankKey,
-    )) as [string, string, string] | null;
-  }
-
-  private async _validateOldestLobby(oldestLobbyId: string) {
-    const oldestLobbyDetails =
-      await this.matchmakingLobbyService.getLobbyDetails(oldestLobbyId);
-    if (!oldestLobbyDetails) {
-      this.logger.warn(`Invalid oldest lobby found: ${oldestLobbyId}`);
-      await this.matchmakingLobbyService.removeLobbyFromQueue(oldestLobbyId);
-      return null;
-    }
-    return oldestLobbyDetails;
-  }
-
-  private async _getLobbiesInRange(
-    queueKey: string,
-    rankKey: string,
-    baseRank: number,
-    rankRange: number,
-  ) {
-    const lobbiesInRange = (await this.redis.eval(
-      `
-      local rankKey = KEYS[1]
-      local queueKey = KEYS[2]
-      local baseRank = tonumber(ARGV[1])
-      local rankRange = tonumber(ARGV[2])
-      local maxLobbies = tonumber(ARGV[3])
-      
-      local minRank = baseRank - rankRange
-      local maxRank = baseRank + rankRange
-      
-      local lobbies = redis.call('ZRANGEBYSCORE', rankKey, minRank, maxRank, 'WITHSCORES')
-      local result = {}
-      local count = 0
-      
-      for i = 1, #lobbies, 2 do
-        if count >= maxLobbies then break end
-        
-        local lobbyId = lobbies[i]
-        local rank = tonumber(lobbies[i + 1])
-        local joinTime = redis.call('ZSCORE', queueKey, lobbyId)
-        
-        if joinTime then
-          table.insert(result, lobbyId)
-          table.insert(result, joinTime)
-          table.insert(result, rank)
-          count = count + 1
-        end
-      end
-      
-      return result
-    `,
-      2,
-      rankKey,
-      queueKey,
-      baseRank,
-      rankRange,
-      50,
-    )) as string[];
-
-    const lobbyDetails = [];
-    for (let i = 0; i < lobbiesInRange.length; i += 3) {
-      const details = await this.matchmakingLobbyService.getLobbyDetails(
-        lobbiesInRange[i],
+      return (
+        rankWeight * b.avgRank +
+        waitWeight * normalizedBWait -
+        rankWeight * a.avgRank +
+        waitWeight * normalizedAWait
       );
-      if (details) {
-        lobbyDetails.push({
-          id: lobbiesInRange[i],
-          players: details.players,
-          avgRank: parseFloat(lobbiesInRange[i + 2]),
-          joinTime: parseInt(lobbiesInRange[i + 1]),
-        });
+    });
+
+    // group lobbies based on rank differences that expand with wait time
+    const groupedLobbies = [];
+    let currentGroup = [mathcedLobbies[0]];
+
+    for (const currentLobby of mathcedLobbies.slice(1)) {
+      const firstLobbyInGroup = currentGroup[0];
+
+      // Calculate wait time in minutes
+      const waitTimeMinutes = Math.floor(
+        (now - firstLobbyInGroup.joinTime) / (1000 * 60),
+      );
+
+      // Maximum allowed rank difference increases by 100 for each minute waited
+      const maxRankDiff = 100 * (waitTimeMinutes + 1);
+
+      // Check if current lobby's rank is within acceptable range
+      if (
+        Math.abs(currentLobby.avgRank - firstLobbyInGroup.avgRank) <=
+        maxRankDiff
+      ) {
+        currentGroup.push(currentLobby);
+        continue;
       }
+
+      // Start new group if rank difference is too high
+      if (currentGroup.length > 0) {
+        groupedLobbies.push([...currentGroup]);
+      }
+      currentGroup = [currentLobby];
     }
 
-    return lobbyDetails.sort((a, b) => a.joinTime - b.joinTime);
+    // Add final group
+    if (currentGroup.length > 0) {
+      groupedLobbies.push(currentGroup);
+    }
+
+    for (const group of groupedLobbies) {
+      await this.createMatches(type, group, playersPerTeam);
+    }
   }
 
   private async _handleMatchFound(
-    match: { team1: TeamCombination; team2: TeamCombination },
+    match: { team1: Team; team2: Team },
     type: e_match_types_enum,
     region: string,
     queueKey: string,

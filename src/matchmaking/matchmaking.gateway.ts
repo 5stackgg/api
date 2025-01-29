@@ -87,16 +87,6 @@ export class MatchmakingGateway {
       );
     }
 
-    // go through each region and add the lobby into the queue
-    for (const region of regions) {
-      // TODO - and speicic maps
-      await this.redis.zadd(
-        getMatchmakingQueueCacheKey(type, region),
-        joinedAt.getTime(),
-        lobby.id,
-      );
-    }
-
     await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobby.id);
     await this.matchmakeService.sendRegionStats();
 
