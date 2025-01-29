@@ -78,6 +78,7 @@ export class MatchmakingLobbyService {
         id: lobbyId,
         players: [
           {
+            captain: true,
             steam_id: players_by_pk.steam_id,
             is_banned: players_by_pk.is_banned,
             matchmaking_cooldown: players_by_pk.matchmaking_cooldown,
@@ -86,19 +87,11 @@ export class MatchmakingLobbyService {
       };
     }
 
-    const captain = lobby.players.find((player) => {
-      return player.steam_id === user.steam_id && player.captain === true;
-    });
-
-    if (!captain) {
-      this.logger.warn(`${user.steam_id} is not a captain of ${lobbyId}`);
-      return;
-    }
-
     return {
       id: lobbyId,
-      players: lobby.players.map(({ steam_id, player }) => {
+      players: lobby.players.map(({ steam_id, captain, player }) => {
         return {
+          captain,
           steam_id: steam_id,
           is_banned: player.is_banned,
           matchmaking_cooldown: player.matchmaking_cooldown,
@@ -107,7 +100,16 @@ export class MatchmakingLobbyService {
     };
   }
 
-  public async verifyLobby(lobby: PlayerLobby) {
+  public async verifyLobby(lobby: PlayerLobby, user: User) {
+    const captain = lobby.players.find((player) => {
+      return player.steam_id === user.steam_id && player.captain === true;
+    });
+
+    if (!captain) {
+      this.logger.warn(`${user.steam_id} is not a captain of ${lobby.id}`);
+      return false;
+    }
+
     for (const player of lobby.players) {
       const { players_by_pk } = await this.hasura.query({
         players_by_pk: {

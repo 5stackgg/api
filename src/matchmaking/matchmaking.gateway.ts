@@ -55,7 +55,7 @@ export class MatchmakingGateway {
       return;
     }
 
-    if (!(await this.matchmakingLobbyService.verifyLobby(lobby))) {
+    if (!(await this.matchmakingLobbyService.verifyLobby(lobby, user))) {
       return;
     }
 
