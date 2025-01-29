@@ -41,8 +41,6 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    await this.leaveQueue(client);
-
     const user = client.user;
 
     if (!user) {

@@ -103,7 +103,7 @@ export class MatchmakeService {
     }
 
     try {
-      const queueKey = getMatchmakingQueueCacheKey(type, region);
+      const queueKey = getMatchmakingRankCacheKey(type, region);
 
       // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
       const lobbiesData = await this.redis.zrange(
@@ -113,13 +113,10 @@ export class MatchmakeService {
         "WITHSCORES",
       );
 
-      if (!lobbiesData.length) {
-        return;
-      }
-
       let lobbies = await this.processLobbyData(lobbiesData);
 
       if (lobbies.length === 0) {
+        this.logger.warn("Not enough lobbies");
         return;
       }
 
@@ -205,16 +202,14 @@ export class MatchmakeService {
   public async processLobbyData(lobbiesData: string[]) {
     const lobbyDetails = [];
 
-    for (let i = 0; i < lobbiesData.length; i += 3) {
+    for (let i = 0; i < lobbiesData.length; i += 2) {
       const details = await this.matchmakingLobbyService.getLobbyDetails(
         lobbiesData[i],
       );
       if (details) {
         lobbyDetails.push({
-          id: lobbiesData[i],
-          players: details.players,
-          avgRank: parseFloat(lobbiesData[i + 2]),
-          joinTime: parseInt(lobbiesData[i + 1]),
+          ...details,
+          avgRank: lobbiesData[i + 1],
         });
       }
     }
