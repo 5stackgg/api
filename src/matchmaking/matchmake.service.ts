@@ -152,6 +152,7 @@ export class MatchmakeService {
   }
 
   public createMatches(
+    region: string,
     type: e_match_types_enum,
     lobbies: Array<{ id: string; players: string[]; avgRank: number }>,
   ): Promise<void> {
@@ -206,11 +207,14 @@ export class MatchmakeService {
       team1.players.length === playersPerTeam &&
       team2.players.length === playersPerTeam
     ) {
-      // await this._handleMatchFound(match, type, region, getMatchmakingQueueCacheKey(type, region), getMatchmakingRankCacheKey(type, region));
+      void this._handleMatchFound(region, type, {
+        team1,
+        team2,
+      });
     }
 
     if (lobbies.length > 0) {
-      this.createMatches(type, lobbies);
+      this.createMatches(region, type, lobbies);
     }
   }
 
@@ -453,16 +457,14 @@ export class MatchmakeService {
     }
 
     for (const group of groupedLobbies) {
-      this.createMatches(type, group);
+      this.createMatches(region, type, group);
     }
   }
 
   private async _handleMatchFound(
-    match: { team1: Team; team2: Team },
-    type: e_match_types_enum,
     region: string,
-    queueKey: string,
-    rankKey: string,
+    type: e_match_types_enum,
+    match: { team1: Team; team2: Team },
   ) {
     const { team1, team2 } = match;
     this.logger.debug(
@@ -475,8 +477,14 @@ export class MatchmakeService {
     const allLobbies = [...team1.lobbies, ...team2.lobbies];
     const cleanupPipeline = this.redis.pipeline();
 
-    cleanupPipeline.zrem(queueKey, ...allLobbies);
-    cleanupPipeline.zrem(rankKey, ...allLobbies);
+    cleanupPipeline.zrem(
+      getMatchmakingQueueCacheKey(type, region),
+      ...allLobbies,
+    );
+    cleanupPipeline.zrem(
+      getMatchmakingRankCacheKey(type, region),
+      ...allLobbies,
+    );
 
     for (const lobbyId of allLobbies) {
       cleanupPipeline.del(getMatchmakingDetailsCacheKey(lobbyId));
