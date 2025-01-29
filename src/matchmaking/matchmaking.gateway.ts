@@ -59,9 +59,13 @@ export class MatchmakingGateway {
       return;
     }
 
-    await this.matchmakingLobbyService.setLobbyDetails(regions, type, lobby);
-
-    await this.matchmakeService.addLobbyToQueue(lobby.id);
+    try {
+      await this.matchmakingLobbyService.setLobbyDetails(regions, type, lobby);
+      await this.matchmakeService.addLobbyToQueue(lobby.id);
+    } catch (error) {
+      this.logger.error(`unable to add lobby to queue`, error);
+      await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
+    }
 
     await this.matchmakeService.sendRegionStats();
 
