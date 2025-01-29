@@ -467,16 +467,6 @@ export class MatchmakeService {
     confirmationId: string,
     steamId: string,
   ) {
-    // if the user has already confirmed, do nothing
-    if (
-      await this.redis.hget(
-        `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
-        steamId,
-      )
-    ) {
-      return;
-    }
-
     await this.redis.hset(
       `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
       steamId,
