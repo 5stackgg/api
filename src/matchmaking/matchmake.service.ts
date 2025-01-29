@@ -362,7 +362,8 @@ export class MatchmakeService {
       region,
       expiresAt: new Date(Date.now() + 30 * 1000).toISOString(),
       lobbyIds: JSON.stringify([...team1.lobbies, ...team2.lobbies]),
-      steamIds: JSON.stringify([...team1.players, ...team2.players]),
+      team1: JSON.stringify(team1.players),
+      team2: JSON.stringify(team2.players),
     });
   }
 
@@ -371,17 +372,26 @@ export class MatchmakeService {
   }
 
   public async getMatchConfirmationDetails(confirmationId: string) {
-    const { type, region, lobbyIds, steamIds, confirmed, matchId, expiresAt } =
-      await this.redis.hgetall(
-        getMatchmakingConformationCacheKey(confirmationId),
-      );
+    const {
+      type,
+      region,
+      lobbyIds,
+      team1,
+      team2,
+      confirmed,
+      matchId,
+      expiresAt,
+    } = await this.redis.hgetall(
+      getMatchmakingConformationCacheKey(confirmationId),
+    );
 
     return {
       region,
       matchId,
       expiresAt,
       type: type as e_match_types_enum,
-      steamIds: JSON.parse(steamIds || "[]"),
+      team1: JSON.parse(team1 || "[]"),
+      team2: JSON.parse(team2 || "[]"),
       lobbyIds: JSON.parse(lobbyIds || "[]"),
       confirmed: parseInt(confirmed || "0"),
     };
@@ -425,5 +435,104 @@ export class MatchmakeService {
     await this.removeConfirmationDetails(confirmationId);
 
     await this.sendRegionStats();
+  }
+
+  public async playerConfirmMatchmaking(
+    confirmationId: string,
+    steamId: string,
+  ) {
+    /**
+     * if the user has already confirmed, do nothing
+     */
+    if (
+      await this.redis.hget(
+        getMatchmakingConformationCacheKey(confirmationId),
+        `${steamId}`,
+      )
+    ) {
+      return;
+    }
+
+    await this.redis.hincrby(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "confirmed",
+      1,
+    );
+
+    await this.redis.hset(
+      getMatchmakingConformationCacheKey(confirmationId),
+      `${steamId}`,
+      1,
+    );
+
+    const { lobbyIds, team1, team2, confirmed } =
+      await this.getMatchConfirmationDetails(confirmationId);
+
+    if (confirmed != team1.length + team2.length) {
+      for (const lobbyId of lobbyIds) {
+        this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+      }
+      return;
+    }
+
+    await this.createMatch(confirmationId);
+  }
+
+  private async createMatch(confirmationId: string) {
+    const { team1, team2, type, region, lobbyIds } =
+      await this.getMatchConfirmationDetails(confirmationId);
+
+    const match = await this.matchAssistant.createMatchBasedOnType(
+      type as e_match_types_enum,
+      // TODO - get map pool by type
+      "Competitive",
+      {
+        mr: 12,
+        best_of: 1,
+        knife: true,
+        overtime: true,
+        timeout_setting: "Admin",
+        region,
+      },
+    );
+
+    await this.hasura.mutation({
+      insert_match_lineup_players: {
+        __args: {
+          objects: team1.map((steamId: string) => ({
+            steam_id: steamId,
+            match_lineup_id: match.lineup_1_id,
+          })),
+        },
+        __typename: true,
+      },
+    });
+
+    await this.hasura.mutation({
+      insert_match_lineup_players: {
+        __args: {
+          objects: team2.map((steamId: string) => ({
+            steam_id: steamId,
+            match_lineup_id: match.lineup_2_id,
+          })),
+        },
+        __typename: true,
+      },
+    });
+
+    await this.matchAssistant.updateMatchStatus(match.id, "Veto");
+
+    /**
+     * add match id to the confirmation details
+     */
+    await this.redis.hset(
+      getMatchmakingConformationCacheKey(confirmationId),
+      "matchId",
+      match.id,
+    );
+
+    for (const lobbyId of lobbyIds) {
+      await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+    }
   }
 }

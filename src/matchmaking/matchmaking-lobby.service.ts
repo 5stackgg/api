@@ -265,7 +265,7 @@ export class MatchmakingLobbyService {
     );
 
     if (confirmationId) {
-      const { matchId, confirmed, type, region, steamIds, expiresAt } =
+      const { matchId, confirmed, type, region, team1, team2, expiresAt } =
         await this.matchmaking.getMatchConfirmationDetails(confirmationId);
 
       confirmationDetails = {
@@ -275,7 +275,7 @@ export class MatchmakingLobbyService {
         expiresAt,
         confirmed,
         confirmationId,
-        players: steamIds.length,
+        players: team1.length + team2.length,
       };
     }
 

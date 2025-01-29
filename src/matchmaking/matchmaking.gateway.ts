@@ -11,6 +11,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
+import { getMatchmakingConformationCacheKey } from "./utilities/cacheKeys";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -97,103 +98,15 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    // const user = client.user;
-    // if (!user) {
-    //   return;
-    // }
-    // const { confirmationId } = data;
-    // /**
-    //  * if the user has already confirmed, do nothing
-    //  */
-    // if (
-    //   await this.redis.hget(
-    //     getMatchmakingConformationCacheKey(confirmationId),
-    //     `${user.steam_id}`,
-    //   )
-    // ) {
-    //   return;
-    // }
-    // /**
-    //  * increment the number of players that have confirmed
-    //  */
-    // await this.redis.hincrby(
-    //   getMatchmakingConformationCacheKey(confirmationId),
-    //   "confirmed",
-    //   1,
-    // );
-    // /**
-    //  * set the user as confirmed
-    //  */
-    // await this.redis.hset(
-    //   getMatchmakingConformationCacheKey(confirmationId),
-    //   `${user.steam_id}`,
-    //   1,
-    // );
-    // const { players, type, region, confirmed } =
-    //   await this.getMatchConfirmationDetails(confirmationId);
-    //   for(const player of players) {
-    //     // this.sendQueueDetailsToLobby(player);
-    //   }
-    // if (confirmed != players.length) {
-    //   return;
-    // }
-    // const match = await this.matchAssistant.createMatchBasedOnType(
-    //   type as e_match_types_enum,
-    //   // TODO - get map pool by type
-    //   "Competitive",
-    //   {
-    //     mr: 12,
-    //     best_of: 1,
-    //     knife: true,
-    //     overtime: true,
-    //     timeout_setting: "Admin",
-    //     region,
-    //   },
-    // );
-    // await this.matchAssistant.removeCancelMatchMakingDueToReadyCheck(
-    //   confirmationId,
-    // );
-    // const lineup1PlayersToInsert =
-    //   type === "Wingman" ? players.slice(0, 2) : players.slice(0, 5);
-    // await this.hasura.mutation({
-    //   insert_match_lineup_players: {
-    //     __args: {
-    //       objects: lineup1PlayersToInsert.map((steamId: string) => ({
-    //         steam_id: steamId,
-    //         match_lineup_id: match.lineup_1_id,
-    //       })),
-    //     },
-    //     __typename: true,
-    //   },
-    // });
-    // const lineup2PlayersToInsert =
-    //   type === "Wingman" ? players.slice(2) : players.slice(5);
-    // await this.hasura.mutation({
-    //   insert_match_lineup_players: {
-    //     __args: {
-    //       objects: lineup2PlayersToInsert.map((steamId: string) => ({
-    //         steam_id: steamId,
-    //         match_lineup_id: match.lineup_2_id,
-    //       })),
-    //     },
-    //     __typename: true,
-    //   },
-    // });
-    // /**
-    //  * after the match is finished we need to remove people form the queue so they can queue again
-    //  */
-    // await this.redis.set(`matches:confirmation:${match.id}`, confirmationId);
-    // /**
-    //  * add match id to the confirmation details
-    //  */
-    // await this.redis.hset(
-    //   getMatchmakingConformationCacheKey(confirmationId),
-    //   "matchId",
-    //   match.id,
-    // );
-    // for (const steamId of players) {
-    //   // this.sendQueueDetailsToLobby(lobbyId, steamId);
-    // }
-    // await this.matchAssistant.updateMatchStatus(match.id, "Veto");
+    const user = client.user;
+    if (!user) {
+      return;
+    }
+    const { confirmationId } = data;
+
+    await this.matchmakeService.playerConfirmMatchmaking(
+      confirmationId,
+      user.steam_id,
+    );
   }
 }
