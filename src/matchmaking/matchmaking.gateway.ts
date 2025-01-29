@@ -28,7 +28,6 @@ export class MatchmakingGateway {
     this.redis = this.redisManager.getConnection();
   }
 
-  // TODO - send reason why they cant join the queue
   @SubscribeMessage("matchmaking:join-queue")
   async joinQueue(
     @MessageBody()
