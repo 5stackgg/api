@@ -11,6 +11,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
+import { JoinQueueError } from "./utilities/joinQueueError";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -37,40 +38,58 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    const user = client.user;
-
-    if (!user) {
-      return;
-    }
-
-    const { type, regions } = data;
-
-    if (!type || !regions || regions.length === 0) {
-      return;
-    }
-
-    const lobby = await this.matchmakingLobbyService.getPlayerLobby(user);
-
-    if (!lobby) {
-      return;
-    }
-
-    if (!(await this.matchmakingLobbyService.verifyLobby(lobby, user))) {
-      return;
-    }
-
     try {
-      await this.matchmakingLobbyService.setLobbyDetails(regions, type, lobby);
-      await this.matchmakeService.addLobbyToQueue(lobby.id);
+      const user = client.user;
+
+      if (!user) {
+        return;
+      }
+
+      const { type, regions } = data;
+
+      if (!type || !regions || regions.length === 0) {
+        return;
+      }
+
+      const lobby = await this.matchmakingLobbyService.getPlayerLobby(user);
+
+      if (!lobby) {
+        throw new JoinQueueError("Unable to find Player Lobby");
+      }
+
+      await this.matchmakingLobbyService.verifyLobby(lobby, user);
+
+      try {
+        await this.matchmakingLobbyService.setLobbyDetails(
+          regions,
+          type,
+          lobby,
+        );
+        await this.matchmakeService.addLobbyToQueue(lobby.id);
+      } catch (error) {
+        this.logger.error(`unable to add lobby to queue`, error);
+        await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
+        throw new JoinQueueError("Unknown Error");
+      }
+
+      await this.matchmakeService.sendRegionStats();
+
+      for (const region of regions) {
+        this.matchmakeService.matchmake(type, region);
+      }
     } catch (error) {
-      this.logger.error(`unable to add lobby to queue`, error);
-      await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
-    }
+      if (error instanceof JoinQueueError) {
+        const lobbyId = error.getLobbyId();
+        if (lobbyId) {
+          // TODO - send to lobby
+          return;
+        }
 
-    await this.matchmakeService.sendRegionStats();
+        // TODO - send to user
 
-    for (const region of regions) {
-      this.matchmakeService.matchmake(type, region);
+        return;
+      }
+      this.logger.error(`unable to join queue`, error);
     }
   }
 

@@ -8,13 +8,13 @@ import { MatchmakeService } from "./matchmake.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { MatchmakingLobby } from "./types/MatchmakingLobby";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { VerifyPlayerStatus } from "./types/VerifyPlayerStatus";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import {
   getMatchmakingRankCacheKey,
   getMatchmakingQueueCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
 } from "./utilities/cacheKeys";
+import { JoinQueueError } from "./utilities/joinQueueError";
 
 @Injectable()
 export class MatchmakingLobbyService {
@@ -51,6 +51,7 @@ export class MatchmakingLobbyService {
             steam_id: true,
             captain: true,
             player: {
+              name: true,
               steam_id: true,
               is_banned: true,
               matchmaking_cooldown: true,
@@ -68,6 +69,7 @@ export class MatchmakingLobbyService {
           __args: {
             steam_id: user.steam_id,
           },
+          name: true,
           steam_id: true,
           is_banned: true,
           matchmaking_cooldown: true,
@@ -79,6 +81,7 @@ export class MatchmakingLobbyService {
         players: [
           {
             captain: true,
+            name: players_by_pk.name,
             steam_id: players_by_pk.steam_id,
             is_banned: players_by_pk.is_banned,
             matchmaking_cooldown: players_by_pk.matchmaking_cooldown,
@@ -92,6 +95,7 @@ export class MatchmakingLobbyService {
       players: lobby.players.map(({ steam_id, captain, player }) => {
         return {
           captain,
+          name: player.name,
           steam_id: steam_id,
           is_banned: player.is_banned,
           matchmaking_cooldown: player.matchmaking_cooldown,
@@ -106,30 +110,13 @@ export class MatchmakingLobbyService {
     });
 
     if (!captain) {
-      this.logger.warn(`${user.steam_id} is not a captain of ${lobby.id}`);
-      return false;
+      throw new JoinQueueError(
+        `${user.steam_id} is not a captain of ${lobby.id}`,
+      );
     }
 
     for (const player of lobby.players) {
-      const { players_by_pk } = await this.hasura.query({
-        players_by_pk: {
-          __args: {
-            steam_id: player.steam_id,
-          },
-          is_banned: true,
-          matchmaking_cooldown: true,
-        },
-      });
-      if (
-        !(await this.verifyPlayer({
-          steam_id: player.steam_id,
-          is_banned: players_by_pk.is_banned,
-          matchmaking_cooldown: players_by_pk.matchmaking_cooldown,
-        }))
-      ) {
-        this.logger.warn(`${player.steam_id} is not able to join the queue`);
-        return false;
-      }
+      await this.verifyPlayer(lobby.id, player);
     }
 
     return true;
@@ -337,23 +324,28 @@ export class MatchmakingLobbyService {
     return players_by_pk.current_lobby_id || steamId;
   }
 
-  private async verifyPlayer(status: VerifyPlayerStatus): Promise<boolean> {
-    // TODO - use a redis SET to see if they are in the queue already
-    const existingUserInQueue = await this.getLobbyDetails(status.steam_id);
+  private async verifyPlayer(
+    lobbyId: string,
+    player: PlayerLobby["players"][0],
+  ): Promise<boolean> {
+    const existingUserInQueue = await this.getLobbyDetails(player.steam_id);
 
     if (existingUserInQueue) {
-      this.logger.warn(`${status.steam_id} player already in queue`);
-      return false;
+      throw new JoinQueueError(
+        `${player.name} player already in queue`,
+        lobbyId,
+      );
     }
 
-    if (status.matchmaking_cooldown) {
-      this.logger.warn(`${status.steam_id} is in matchmaking cooldown`);
-      return false;
+    if (player.matchmaking_cooldown) {
+      throw new JoinQueueError(
+        `${player.name} is in matchmaking cooldown`,
+        lobbyId,
+      );
     }
 
-    if (status.is_banned) {
-      this.logger.warn(`${status.steam_id} is banned`);
-      return false;
+    if (player.is_banned) {
+      throw new JoinQueueError(`${player.name} is banned`, lobbyId);
     }
 
     return true;
