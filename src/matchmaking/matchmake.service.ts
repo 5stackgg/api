@@ -502,7 +502,6 @@ export class MatchmakeService {
 
     const match = await this.matchAssistant.createMatchBasedOnType(
       type as e_match_types_enum,
-      // TODO - get map pool by type
       "Competitive",
       {
         mr: 12,
