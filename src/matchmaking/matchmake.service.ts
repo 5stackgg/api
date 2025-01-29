@@ -303,6 +303,7 @@ export class MatchmakeService {
     type: e_match_types_enum,
     players: { team1: MatchmakingTeam; team2: MatchmakingTeam },
   ) {
+    // TODO
     // -create lock per lobby
     // -verify lobbies still available
 
