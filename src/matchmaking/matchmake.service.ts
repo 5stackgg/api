@@ -351,7 +351,6 @@ export class MatchmakeService {
       await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
     }
 
-    // TODO - move this to here since were adding queues
     this.cancelMatchMakingDueToReadyCheck(confirmationId);
   }
 
