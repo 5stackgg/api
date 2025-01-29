@@ -273,8 +273,8 @@ export class MatchmakingLobbyService {
         region,
         matchId,
         expiresAt,
-        confirmed,
         confirmationId,
+        confirmed,
         players: team1.length + team2.length,
       };
     }
@@ -296,12 +296,12 @@ export class MatchmakingLobbyService {
             details: await this.getLobbyDetails(lobbyId),
             confirmation: confirmationId && {
               ...confirmationDetails,
+              confirmed: confirmationDetails.confirmed.length,
               isReady:
                 confirmationId &&
-                (await this.redis.hget(
-                  getMatchmakingConformationCacheKey(confirmationId),
-                  player,
-                )),
+                confirmationDetails.confirmed.find((steamId) => {
+                  return steamId === player;
+                }),
             },
           },
         }),

@@ -371,18 +371,23 @@ export class MatchmakeService {
     await this.redis.del(getMatchmakingConformationCacheKey(confirmationId));
   }
 
-  public async getMatchConfirmationDetails(confirmationId: string) {
-    const {
-      type,
-      region,
-      lobbyIds,
-      team1,
-      team2,
-      confirmed,
-      matchId,
-      expiresAt,
-    } = await this.redis.hgetall(
-      getMatchmakingConformationCacheKey(confirmationId),
+  public async getMatchConfirmationDetails(confirmationId: string): Promise<{
+    type: e_match_types_enum;
+    region: string;
+    lobbyIds: string[];
+    team1: string[];
+    team2: string[];
+    matchId: string;
+    expiresAt: string;
+    confirmed: string[];
+  }> {
+    const { type, region, lobbyIds, team1, team2, matchId, expiresAt } =
+      await this.redis.hgetall(
+        getMatchmakingConformationCacheKey(confirmationId),
+      );
+
+    const confirmed = await this.redis.hgetall(
+      `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
     );
 
     return {
@@ -393,7 +398,7 @@ export class MatchmakeService {
       team1: JSON.parse(team1 || "[]"),
       team2: JSON.parse(team2 || "[]"),
       lobbyIds: JSON.parse(lobbyIds || "[]"),
-      confirmed: parseInt(confirmed || "0"),
+      confirmed: Object.keys(confirmed),
     };
   }
 
@@ -441,34 +446,26 @@ export class MatchmakeService {
     confirmationId: string,
     steamId: string,
   ) {
-    /**
-     * if the user has already confirmed, do nothing
-     */
+    // if the user has already confirmed, do nothing
     if (
       await this.redis.hget(
-        getMatchmakingConformationCacheKey(confirmationId),
-        `${steamId}`,
+        `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
+        steamId,
       )
     ) {
       return;
     }
 
-    await this.redis.hincrby(
-      getMatchmakingConformationCacheKey(confirmationId),
-      "confirmed",
-      1,
-    );
-
     await this.redis.hset(
-      getMatchmakingConformationCacheKey(confirmationId),
-      `${steamId}`,
+      `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
+      steamId,
       1,
     );
 
     const { lobbyIds, team1, team2, confirmed } =
       await this.getMatchConfirmationDetails(confirmationId);
 
-    if (confirmed != team1.length + team2.length) {
+    if (confirmed.length != team1.length + team2.length) {
       for (const lobbyId of lobbyIds) {
         this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
       }
@@ -522,9 +519,7 @@ export class MatchmakeService {
 
     await this.matchAssistant.updateMatchStatus(match.id, "Veto");
 
-    /**
-     * add match id to the confirmation details
-     */
+    // add match id to the confirmation details
     await this.redis.hset(
       getMatchmakingConformationCacheKey(confirmationId),
       "matchId",
