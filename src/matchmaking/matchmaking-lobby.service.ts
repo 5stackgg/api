@@ -279,6 +279,17 @@ export class MatchmakingLobbyService {
     }
   }
 
+  public async setMatchConformationIdForLobby(
+    lobbyId: string,
+    confirmationId: string,
+  ) {
+    await this.redis.hset(
+      getMatchmakingDetailsCacheKey(lobbyId),
+      "confirmationId",
+      confirmationId,
+    );
+  }
+
   public async sendQueueDetailsToAllUsers(
     type: e_match_types_enum,
     region: string,

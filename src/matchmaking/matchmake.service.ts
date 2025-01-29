@@ -1,21 +1,33 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { User } from "../auth/types/User";
 import Redis from "ioredis";
-import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { v4 as uuidv4 } from "uuid";
+import { Logger } from "@nestjs/common";
+import { User } from "../auth/types/User";
+import { Injectable } from "@nestjs/common";
 import { e_match_types_enum } from "generated";
 import { HasuraService } from "src/hasura/hasura.service";
-import { Logger } from "@nestjs/common";
+import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import {
   getMatchmakingQueueCacheKey,
   getMatchmakingDetailsCacheKey,
   getMatchmakingConformationCacheKey,
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
-import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 
 interface Team {
   lobbies: string[];
   players: string[];
+  avgRank: number;
+}
+
+interface Lobby {
+  type: e_match_types_enum;
+  regions: string[];
+  joinedAt: Date;
+  lobbyId: string;
+  players: string[];
+  regionPositions: Record<string, number>;
   avgRank: number;
 }
 
@@ -27,6 +39,7 @@ export class MatchmakeService {
     public readonly logger: Logger,
     public readonly hasura: HasuraService,
     public readonly redisManager: RedisManagerService,
+    public readonly matchAssistant: MatchAssistantService,
     private matchmakingLobbyService: MatchmakingLobbyService,
   ) {
     this.redis = this.redisManager.getConnection();
@@ -123,8 +136,8 @@ export class MatchmakeService {
       // sort lobbies by a weighted score combining rank difference and wait time
       lobbies = lobbies.sort((a, b) => {
         // normalize wait times to 0-1 range (longer wait = higher priority)
-        const aWaitTime = (Date.now() - a.joinTime) / 1000;
-        const bWaitTime = (Date.now() - b.joinTime) / 1000;
+        const aWaitTime = (Date.now() - a.joinedAt) / 1000;
+        const bWaitTime = (Date.now() - b.joinedAt) / 1000;
 
         const maxWaitTime = Math.max(aWaitTime, bWaitTime);
 
@@ -148,11 +161,11 @@ export class MatchmakeService {
       let currentGroup = [lobbies.at(0)];
 
       for (const currentLobby of lobbies.slice(1)) {
-        const firstLobbyInGroup = currentGroup[0];
+        const firstLobbyInGroup = currentGroup.at(0);
 
         // calculate wait time in minutes
         const waitTimeMinutes = Math.floor(
-          (Date.now() - firstLobbyInGroup.joinTime) / (1000 * 60),
+          (Date.now() - firstLobbyInGroup.joinedAt.getTime()) / (1000 * 60),
         );
 
         // maximum allowed rank difference increases by 100 for each minute waited
@@ -210,6 +223,7 @@ export class MatchmakeService {
         lobbyDetails.push({
           ...details,
           avgRank: lobbiesData[i + 1],
+          joinedAt: new Date(details.joinedAt),
         });
       }
     }
@@ -220,9 +234,9 @@ export class MatchmakeService {
   public createMatches(
     region: string,
     type: e_match_types_enum,
-    lobbies: Array<{ id: string; players: string[]; avgRank: number }>,
+    lobbies: Array<Lobby>,
   ): Promise<void> {
-    const requiredPlayers = type === "Wingman" ? 2 : 5;
+    const requiredPlayers = type === "Wingman" ? 4 : 10;
     const totalPlayers = lobbies.reduce(
       (acc, lobby) => acc + lobby.players.length,
       0,
@@ -244,36 +258,44 @@ export class MatchmakeService {
       avgRank: 0,
     };
 
+    const lobbiesAdded: Array<number> = [];
     const playersPerTeam = requiredPlayers / 2;
 
     // try to fill teams with available lobbies
-    for (const lobby of lobbies) {
+    for (let lobbyIndex = 0; lobbyIndex < lobbies.length; lobbyIndex++) {
+      const lobby = lobbies[lobbyIndex];
+
       if (team1.players.length + lobby.players.length <= playersPerTeam) {
         team1.players.push(...lobby.players);
-        team1.lobbies.push(lobby.id);
+        team1.lobbies.push(lobby.lobbyId);
         team1.avgRank =
           (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
           team1.lobbies.length;
-        lobbies.splice(lobbies.indexOf(lobby), 1);
+        lobbiesAdded.push(lobbyIndex);
       } else if (
         team2.players.length + lobby.players.length <=
         playersPerTeam
       ) {
         team2.players.push(...lobby.players);
-        team2.lobbies.push(lobby.id);
+        team2.lobbies.push(lobby.lobbyId);
         team2.avgRank =
           (team2.avgRank * (team2.lobbies.length - 1) + lobby.avgRank) /
           team2.lobbies.length;
         lobbies.splice(lobbies.indexOf(lobby), 1);
+        lobbiesAdded.push(lobbyIndex);
       }
     }
 
-    // Check if we have valid teams for this match
+    for (const lobbyIndex of lobbiesAdded) {
+      lobbies.splice(lobbyIndex, 1);
+    }
+
+    // check if we have valid teams for this match
     if (
       team1.players.length === playersPerTeam &&
       team2.players.length === playersPerTeam
     ) {
-      void this._handleMatchFound(region, type, {
+      void this.createMatchConfirmation(region, type, {
         team1,
         team2,
       });
@@ -284,11 +306,14 @@ export class MatchmakeService {
     }
   }
 
-  public async confirmMatchMaking(
-    type: e_match_types_enum,
+  public async createMatchConfirmation(
     region: string,
-    players: Array<string>,
+    type: e_match_types_enum,
+    players: { team1: Team; team2: Team },
   ) {
+    // -create lock per lobby
+    // -verify lobbies still available
+
     // if (
     //   !(await this.verifyLobbiesStillAvailable(
     //     mathcedLobbies.map((lobby) => {
@@ -299,34 +324,57 @@ export class MatchmakeService {
     // ) {
     //   return;
     // }
-    // const expiresAt = new Date();
-    // expiresAt.setSeconds(expiresAt.getSeconds() + 30);
-    // const confirmationId = uuidv4();
-    // await this.redis.hset(
-    //   getMatchmakingConformationCacheKey(confirmationId),
-    //   {
-    //     type,
-    //     region,
-    //     expiresAt: expiresAt.toISOString(),
-    //     steamIds: JSON.stringify(steamIds),
-    //   },
-    // );
-    // /**
-    //  * assign the confirmation id to the players
-    //  */
-    // for (const steamId of steamIds) {
-    //   await this.redis.hset(
-    //     getmatchMakingDetailsCacheKey(steamId),
-    //     "confirmationId",
-    //     confirmationId,
-    //   );
-    //   this.sendQueueDetailsToLobby(steamId);
-    // }
-    // /**
-    //  * if the total number of players in the queue is still greater than the required number of players,
-    //  */
-    // await this.matchmake(type, region, false);
-    // this.matchAssistant.cancelMatchMakingDueToReadyCheck(confirmationId);
+
+    const { team1, team2 } = players;
+    const allLobbies = [...team1.lobbies, ...team2.lobbies];
+
+    /**
+     * remove the lobbies from the queue and rank cache
+     */
+    const cleanupPipeline = this.redis.pipeline();
+
+    cleanupPipeline.zrem(
+      getMatchmakingQueueCacheKey(type, region),
+      ...allLobbies,
+    );
+    cleanupPipeline.zrem(
+      getMatchmakingRankCacheKey(type, region),
+      ...allLobbies,
+    );
+
+    await cleanupPipeline.exec();
+
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + 30);
+
+    const confirmationId = uuidv4();
+
+    this.setConfirmationDetails(region, type, confirmationId, team1, team2);
+
+    for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
+      await this.matchmakingLobbyService.setMatchConformationIdForLobby(
+        lobbyId,
+        confirmationId,
+      );
+      await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+    }
+
+    this.matchAssistant.cancelMatchMakingDueToReadyCheck(confirmationId);
+  }
+
+  private async setConfirmationDetails(
+    region: string,
+    type: e_match_types_enum,
+    confirmationId: string,
+    team1: Team,
+    team2: Team,
+  ) {
+    await this.redis.hset(getMatchmakingConformationCacheKey(confirmationId), {
+      type,
+      region,
+      expiresAt: new Date().toISOString(),
+      steamIds: JSON.stringify([...team1.players, ...team2.players]),
+    });
   }
 
   public async getMatchConfirmationDetails(confirmationId: string) {
@@ -445,37 +493,5 @@ export class MatchmakeService {
       lockKey,
       lockValue,
     );
-  }
-
-  private async _handleMatchFound(
-    region: string,
-    type: e_match_types_enum,
-    match: { team1: Team; team2: Team },
-  ) {
-    const { team1, team2 } = match;
-    this.logger.debug(
-      `Found match! Team1: ${team1.lobbies.join(",")} vs Team2: ${team2.lobbies.join(",")}`,
-    );
-
-    const allPlayers = [...team1.players, ...team2.players];
-    await this.confirmMatchMaking(type, region, allPlayers);
-
-    const allLobbies = [...team1.lobbies, ...team2.lobbies];
-    const cleanupPipeline = this.redis.pipeline();
-
-    cleanupPipeline.zrem(
-      getMatchmakingQueueCacheKey(type, region),
-      ...allLobbies,
-    );
-    cleanupPipeline.zrem(
-      getMatchmakingRankCacheKey(type, region),
-      ...allLobbies,
-    );
-
-    for (const lobbyId of allLobbies) {
-      cleanupPipeline.del(getMatchmakingDetailsCacheKey(lobbyId));
-    }
-
-    await cleanupPipeline.exec();
   }
 }
