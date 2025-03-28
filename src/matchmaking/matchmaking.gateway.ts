@@ -84,7 +84,6 @@ export class MatchmakingGateway {
           steamIds = lobby.players.map((player) => player.steam_id);
         }
 
-        console.info("SEND ERROR TO ", steamIds);
         for (const steamId of steamIds) {
           await this.redis.publish(
             `send-message-to-steam-id`,

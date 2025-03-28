@@ -12,6 +12,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
+import { MatchmakingController } from "./matchmaking.controller";
 
 @Module({
   imports: [
@@ -35,5 +36,6 @@ import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
     ...getQueuesProcessors("Matchmaking"),
     loggerFactory(),
   ],
+  controllers: [MatchmakingController],
 })
 export class MatchMaking {}

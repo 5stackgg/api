@@ -464,6 +464,71 @@ export type e_lobby_access_select_column = 'description' | 'value'
 export type e_lobby_access_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_lobby_player_status" */
+export interface e_lobby_player_status {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_lobby_player_status'
+}
+
+
+/** aggregated selection of "e_lobby_player_status" */
+export interface e_lobby_player_status_aggregate {
+    aggregate: (e_lobby_player_status_aggregate_fields | null)
+    nodes: e_lobby_player_status[]
+    __typename: 'e_lobby_player_status_aggregate'
+}
+
+
+/** aggregate fields of "e_lobby_player_status" */
+export interface e_lobby_player_status_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_lobby_player_status_max_fields | null)
+    min: (e_lobby_player_status_min_fields | null)
+    __typename: 'e_lobby_player_status_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_lobby_player_status" */
+export type e_lobby_player_status_constraint = 'e_lobby_player_status_pkey'
+
+export type e_lobby_player_status_enum = 'Accepted' | 'Invited'
+
+
+/** aggregate max on columns */
+export interface e_lobby_player_status_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_lobby_player_status_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_lobby_player_status_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_lobby_player_status_min_fields'
+}
+
+
+/** response of any mutation on the table "e_lobby_player_status" */
+export interface e_lobby_player_status_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_lobby_player_status[]
+    __typename: 'e_lobby_player_status_mutation_response'
+}
+
+
+/** select columns of table "e_lobby_player_status" */
+export type e_lobby_player_status_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_lobby_player_status" */
+export type e_lobby_player_status_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_map_pool_types" */
 export interface e_map_pool_types {
     description: (Scalars['String'] | null)
@@ -1924,7 +1989,7 @@ export interface lobby_players {
     lobby_id: Scalars['uuid']
     /** An object relationship */
     player: players
-    status: (Scalars['String'] | null)
+    status: (e_lobby_player_status_enum | null)
     steam_id: Scalars['bigint']
     __typename: 'lobby_players'
 }
@@ -1971,7 +2036,6 @@ export type lobby_players_constraint = 'lobby_players_pkey'
 export interface lobby_players_max_fields {
     invited_by_steam_id: (Scalars['bigint'] | null)
     lobby_id: (Scalars['uuid'] | null)
-    status: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'lobby_players_max_fields'
 }
@@ -1981,7 +2045,6 @@ export interface lobby_players_max_fields {
 export interface lobby_players_min_fields {
     invited_by_steam_id: (Scalars['bigint'] | null)
     lobby_id: (Scalars['uuid'] | null)
-    status: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'lobby_players_min_fields'
 }
@@ -4001,6 +4064,10 @@ export interface mutation_root {
     delete_e_lobby_access: (e_lobby_access_mutation_response | null)
     /** delete single row from the table: "e_lobby_access" */
     delete_e_lobby_access_by_pk: (e_lobby_access | null)
+    /** delete data from the table: "e_lobby_player_status" */
+    delete_e_lobby_player_status: (e_lobby_player_status_mutation_response | null)
+    /** delete single row from the table: "e_lobby_player_status" */
+    delete_e_lobby_player_status_by_pk: (e_lobby_player_status | null)
     /** delete data from the table: "e_map_pool_types" */
     delete_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** delete single row from the table: "e_map_pool_types" */
@@ -4233,6 +4300,10 @@ export interface mutation_root {
     insert_e_lobby_access: (e_lobby_access_mutation_response | null)
     /** insert a single row into the table: "e_lobby_access" */
     insert_e_lobby_access_one: (e_lobby_access | null)
+    /** insert data into the table: "e_lobby_player_status" */
+    insert_e_lobby_player_status: (e_lobby_player_status_mutation_response | null)
+    /** insert a single row into the table: "e_lobby_player_status" */
+    insert_e_lobby_player_status_one: (e_lobby_player_status | null)
     /** insert data into the table: "e_map_pool_types" */
     insert_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** insert a single row into the table: "e_map_pool_types" */
@@ -4510,6 +4581,12 @@ export interface mutation_root {
     update_e_lobby_access_by_pk: (e_lobby_access | null)
     /** update multiples rows of table: "e_lobby_access" */
     update_e_lobby_access_many: ((e_lobby_access_mutation_response | null)[] | null)
+    /** update data of the table: "e_lobby_player_status" */
+    update_e_lobby_player_status: (e_lobby_player_status_mutation_response | null)
+    /** update single row of the table: "e_lobby_player_status" */
+    update_e_lobby_player_status_by_pk: (e_lobby_player_status | null)
+    /** update multiples rows of table: "e_lobby_player_status" */
+    update_e_lobby_player_status_many: ((e_lobby_player_status_mutation_response | null)[] | null)
     /** update data of the table: "e_map_pool_types" */
     update_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** update single row of the table: "e_map_pool_types" */
@@ -6879,6 +6956,12 @@ export interface query_root {
     e_lobby_access_aggregate: e_lobby_access_aggregate
     /** fetch data from the table: "e_lobby_access" using primary key columns */
     e_lobby_access_by_pk: (e_lobby_access | null)
+    /** fetch data from the table: "e_lobby_player_status" */
+    e_lobby_player_status: e_lobby_player_status[]
+    /** fetch aggregated fields from the table: "e_lobby_player_status" */
+    e_lobby_player_status_aggregate: e_lobby_player_status_aggregate
+    /** fetch data from the table: "e_lobby_player_status" using primary key columns */
+    e_lobby_player_status_by_pk: (e_lobby_player_status | null)
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types: e_map_pool_types[]
     /** fetch aggregated fields from the table: "e_map_pool_types" */
@@ -7689,6 +7772,14 @@ export interface subscription_root {
     e_lobby_access_by_pk: (e_lobby_access | null)
     /** fetch data from the table in a streaming manner: "e_lobby_access" */
     e_lobby_access_stream: e_lobby_access[]
+    /** fetch data from the table: "e_lobby_player_status" */
+    e_lobby_player_status: e_lobby_player_status[]
+    /** fetch aggregated fields from the table: "e_lobby_player_status" */
+    e_lobby_player_status_aggregate: e_lobby_player_status_aggregate
+    /** fetch data from the table: "e_lobby_player_status" using primary key columns */
+    e_lobby_player_status_by_pk: (e_lobby_player_status | null)
+    /** fetch data from the table in a streaming manner: "e_lobby_player_status" */
+    e_lobby_player_status_stream: e_lobby_player_status[]
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types: e_map_pool_types[]
     /** fetch aggregated fields from the table: "e_map_pool_types" */
@@ -11484,6 +11575,109 @@ _set?: (e_lobby_access_set_input | null),
 where: e_lobby_access_bool_exp}
 
 
+/** columns and relationships of "e_lobby_player_status" */
+export interface e_lobby_player_statusGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_lobby_player_status" */
+export interface e_lobby_player_status_aggregateGenqlSelection{
+    aggregate?: e_lobby_player_status_aggregate_fieldsGenqlSelection
+    nodes?: e_lobby_player_statusGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_lobby_player_status" */
+export interface e_lobby_player_status_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_lobby_player_status_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_lobby_player_status_max_fieldsGenqlSelection
+    min?: e_lobby_player_status_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_lobby_player_status". All fields are combined with a logical 'AND'. */
+export interface e_lobby_player_status_bool_exp {_and?: (e_lobby_player_status_bool_exp[] | null),_not?: (e_lobby_player_status_bool_exp | null),_or?: (e_lobby_player_status_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_lobby_player_status_enum". All fields are combined with logical 'AND'. */
+export interface e_lobby_player_status_enum_comparison_exp {_eq?: (e_lobby_player_status_enum | null),_in?: (e_lobby_player_status_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_lobby_player_status_enum | null),_nin?: (e_lobby_player_status_enum[] | null)}
+
+
+/** input type for inserting data into table "e_lobby_player_status" */
+export interface e_lobby_player_status_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_lobby_player_status_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_lobby_player_status_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_lobby_player_status" */
+export interface e_lobby_player_status_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_lobby_player_statusGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_lobby_player_status" */
+export interface e_lobby_player_status_on_conflict {constraint: e_lobby_player_status_constraint,update_columns?: e_lobby_player_status_update_column[],where?: (e_lobby_player_status_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_lobby_player_status". */
+export interface e_lobby_player_status_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_lobby_player_status */
+export interface e_lobby_player_status_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_lobby_player_status" */
+export interface e_lobby_player_status_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_lobby_player_status" */
+export interface e_lobby_player_status_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_lobby_player_status_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_lobby_player_status_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_lobby_player_status_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_lobby_player_status_set_input | null),
+/** filter the rows which have to be updated */
+where: e_lobby_player_status_bool_exp}
+
+
 /** columns and relationships of "e_map_pool_types" */
 export interface e_map_pool_typesGenqlSelection{
     description?: boolean | number
@@ -14130,7 +14324,7 @@ export interface lobby_players_avg_order_by {invited_by_steam_id?: (order_by | n
 
 
 /** Boolean expression to filter rows from the table "lobby_players". All fields are combined with a logical 'AND'. */
-export interface lobby_players_bool_exp {_and?: (lobby_players_bool_exp[] | null),_not?: (lobby_players_bool_exp | null),_or?: (lobby_players_bool_exp[] | null),captain?: (Boolean_comparison_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),lobby?: (lobbies_bool_exp | null),lobby_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),status?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+export interface lobby_players_bool_exp {_and?: (lobby_players_bool_exp[] | null),_not?: (lobby_players_bool_exp | null),_or?: (lobby_players_bool_exp[] | null),captain?: (Boolean_comparison_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),lobby?: (lobbies_bool_exp | null),lobby_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),status?: (e_lobby_player_status_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "lobby_players" */
@@ -14138,14 +14332,13 @@ export interface lobby_players_inc_input {invited_by_steam_id?: (Scalars['bigint
 
 
 /** input type for inserting data into table "lobby_players" */
-export interface lobby_players_insert_input {captain?: (Scalars['Boolean'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),lobby?: (lobbies_obj_rel_insert_input | null),lobby_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface lobby_players_insert_input {captain?: (Scalars['Boolean'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),lobby?: (lobbies_obj_rel_insert_input | null),lobby_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),status?: (e_lobby_player_status_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
 export interface lobby_players_max_fieldsGenqlSelection{
     invited_by_steam_id?: boolean | number
     lobby_id?: boolean | number
-    status?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -14153,14 +14346,13 @@ export interface lobby_players_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "lobby_players" */
-export interface lobby_players_max_order_by {invited_by_steam_id?: (order_by | null),lobby_id?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
+export interface lobby_players_max_order_by {invited_by_steam_id?: (order_by | null),lobby_id?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface lobby_players_min_fieldsGenqlSelection{
     invited_by_steam_id?: boolean | number
     lobby_id?: boolean | number
-    status?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -14168,7 +14360,7 @@ export interface lobby_players_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "lobby_players" */
-export interface lobby_players_min_order_by {invited_by_steam_id?: (order_by | null),lobby_id?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
+export interface lobby_players_min_order_by {invited_by_steam_id?: (order_by | null),lobby_id?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "lobby_players" */
@@ -14195,7 +14387,7 @@ export interface lobby_players_pk_columns_input {lobby_id: Scalars['uuid'],steam
 
 
 /** input type for updating data in table "lobby_players" */
-export interface lobby_players_set_input {captain?: (Scalars['Boolean'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),lobby_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface lobby_players_set_input {captain?: (Scalars['Boolean'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),lobby_id?: (Scalars['uuid'] | null),status?: (e_lobby_player_status_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -14246,7 +14438,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface lobby_players_stream_cursor_value_input {captain?: (Scalars['Boolean'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),lobby_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface lobby_players_stream_cursor_value_input {captain?: (Scalars['Boolean'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),lobby_id?: (Scalars['uuid'] | null),status?: (e_lobby_player_status_enum | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -17791,6 +17983,12 @@ export interface mutation_rootGenqlSelection{
     where: e_lobby_access_bool_exp} })
     /** delete single row from the table: "e_lobby_access" */
     delete_e_lobby_access_by_pk?: (e_lobby_accessGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_lobby_player_status" */
+    delete_e_lobby_player_status?: (e_lobby_player_status_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_lobby_player_status_bool_exp} })
+    /** delete single row from the table: "e_lobby_player_status" */
+    delete_e_lobby_player_status_by_pk?: (e_lobby_player_statusGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_map_pool_types" */
     delete_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -18177,6 +18375,18 @@ export interface mutation_rootGenqlSelection{
     object: e_lobby_access_insert_input, 
     /** upsert condition */
     on_conflict?: (e_lobby_access_on_conflict | null)} })
+    /** insert data into the table: "e_lobby_player_status" */
+    insert_e_lobby_player_status?: (e_lobby_player_status_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_lobby_player_status_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_lobby_player_status_on_conflict | null)} })
+    /** insert a single row into the table: "e_lobby_player_status" */
+    insert_e_lobby_player_status_one?: (e_lobby_player_statusGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_lobby_player_status_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_lobby_player_status_on_conflict | null)} })
     /** insert data into the table: "e_map_pool_types" */
     insert_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -18918,6 +19128,20 @@ export interface mutation_rootGenqlSelection{
     update_e_lobby_access_many?: (e_lobby_access_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_lobby_access_updates[]} })
+    /** update data of the table: "e_lobby_player_status" */
+    update_e_lobby_player_status?: (e_lobby_player_status_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_lobby_player_status_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_lobby_player_status_bool_exp} })
+    /** update single row of the table: "e_lobby_player_status" */
+    update_e_lobby_player_status_by_pk?: (e_lobby_player_statusGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_lobby_player_status_set_input | null), pk_columns: e_lobby_player_status_pk_columns_input} })
+    /** update multiples rows of table: "e_lobby_player_status" */
+    update_e_lobby_player_status_many?: (e_lobby_player_status_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_lobby_player_status_updates[]} })
     /** update data of the table: "e_map_pool_types" */
     update_e_map_pool_types?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -23538,6 +23762,32 @@ export interface query_rootGenqlSelection{
     where?: (e_lobby_access_bool_exp | null)} })
     /** fetch data from the table: "e_lobby_access" using primary key columns */
     e_lobby_access_by_pk?: (e_lobby_accessGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_lobby_player_status" */
+    e_lobby_player_status?: (e_lobby_player_statusGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_player_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_player_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_player_status_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_lobby_player_status" */
+    e_lobby_player_status_aggregate?: (e_lobby_player_status_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_player_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_player_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_player_status_bool_exp | null)} })
+    /** fetch data from the table: "e_lobby_player_status" using primary key columns */
+    e_lobby_player_status_by_pk?: (e_lobby_player_statusGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types?: (e_map_pool_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -25971,6 +26221,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_lobby_access_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_lobby_access_bool_exp | null)} })
+    /** fetch data from the table: "e_lobby_player_status" */
+    e_lobby_player_status?: (e_lobby_player_statusGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_player_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_player_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_player_status_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_lobby_player_status" */
+    e_lobby_player_status_aggregate?: (e_lobby_player_status_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_lobby_player_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_lobby_player_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_lobby_player_status_bool_exp | null)} })
+    /** fetch data from the table: "e_lobby_player_status" using primary key columns */
+    e_lobby_player_status_by_pk?: (e_lobby_player_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_lobby_player_status" */
+    e_lobby_player_status_stream?: (e_lobby_player_statusGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_lobby_player_status_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_lobby_player_status_bool_exp | null)} })
     /** fetch data from the table: "e_map_pool_types" */
     e_map_pool_types?: (e_map_pool_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -32666,6 +32950,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_lobby_player_status_possibleTypes: string[] = ['e_lobby_player_status']
+    export const ise_lobby_player_status = (obj?: { __typename?: any } | null): obj is e_lobby_player_status => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_player_status"')
+      return e_lobby_player_status_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_player_status_aggregate_possibleTypes: string[] = ['e_lobby_player_status_aggregate']
+    export const ise_lobby_player_status_aggregate = (obj?: { __typename?: any } | null): obj is e_lobby_player_status_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_player_status_aggregate"')
+      return e_lobby_player_status_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_player_status_aggregate_fields_possibleTypes: string[] = ['e_lobby_player_status_aggregate_fields']
+    export const ise_lobby_player_status_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_lobby_player_status_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_player_status_aggregate_fields"')
+      return e_lobby_player_status_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_player_status_max_fields_possibleTypes: string[] = ['e_lobby_player_status_max_fields']
+    export const ise_lobby_player_status_max_fields = (obj?: { __typename?: any } | null): obj is e_lobby_player_status_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_player_status_max_fields"')
+      return e_lobby_player_status_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_player_status_min_fields_possibleTypes: string[] = ['e_lobby_player_status_min_fields']
+    export const ise_lobby_player_status_min_fields = (obj?: { __typename?: any } | null): obj is e_lobby_player_status_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_player_status_min_fields"')
+      return e_lobby_player_status_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_lobby_player_status_mutation_response_possibleTypes: string[] = ['e_lobby_player_status_mutation_response']
+    export const ise_lobby_player_status_mutation_response = (obj?: { __typename?: any } | null): obj is e_lobby_player_status_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_lobby_player_status_mutation_response"')
+      return e_lobby_player_status_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_map_pool_types_possibleTypes: string[] = ['e_map_pool_types']
     export const ise_map_pool_types = (obj?: { __typename?: any } | null): obj is e_map_pool_types => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_map_pool_types"')
@@ -38317,6 +38649,25 @@ export const enumELobbyAccessSelectColumn = {
 }
 
 export const enumELobbyAccessUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumELobbyPlayerStatusConstraint = {
+   e_lobby_player_status_pkey: 'e_lobby_player_status_pkey' as const
+}
+
+export const enumELobbyPlayerStatusEnum = {
+   Accepted: 'Accepted' as const,
+   Invited: 'Invited' as const
+}
+
+export const enumELobbyPlayerStatusSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumELobbyPlayerStatusUpdateColumn = {
    description: 'description' as const,
    value: 'value' as const
 }

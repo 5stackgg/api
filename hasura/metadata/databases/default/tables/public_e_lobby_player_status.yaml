@@ -1,0 +1,4 @@
+table:
+  name: e_lobby_player_status
+  schema: public
+is_enum: true

@@ -347,7 +347,7 @@ export class MatchmakingLobbyService {
       );
     }
 
-    if (player.current_lobby_id !== lobbyId) {
+    if (player.current_lobby_id && player.current_lobby_id !== lobbyId) {
       throw new JoinQueueError(
         `${player.name} player already in queue`,
         lobbyId,
