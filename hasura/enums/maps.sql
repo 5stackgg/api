@@ -16,7 +16,7 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_train', 'Competitive', 'true',  null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg'),
 
     -- Workshop Competitive
-    ('de_cache', 'Competitive', 'false',  '3070596702', '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg'),
+    ('de_cache', 'Competitive', 'false',  '3437809122', '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg'),
     ('de_cbble', 'Competitive', 'false',  '3070212801', '/img/maps/screenshots/de_cbble.webp', null),
     ('de_biome', 'Competitive', 'false',  '3075706807', '/img/maps/screenshots/de_biome.webp', null),
     ('de_all_in_one', 'Competitive', 'false',  '3114174859', '/img/maps/screenshots/de_all_in_one.webp', null),
