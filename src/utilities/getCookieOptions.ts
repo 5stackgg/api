@@ -1,5 +1,7 @@
 import { CookieOptions } from "express-serve-static-core";
 
+process.env.SECURE_COOKIE = "false";
+
 export function getCookieOptions(
   options: CookieOptions = {},
   defaultOptions: CookieOptions = {
@@ -37,5 +39,6 @@ export function getCookieOptions(
     secure: process.env.SECURE_COOKIE ? process.env.SECURE_COOKIE === "true" : true,
   },
 ): CookieOptions {
+  console.info(Object.assign({}, defaultOptions, options))
   return Object.assign({}, defaultOptions, options);
 }
