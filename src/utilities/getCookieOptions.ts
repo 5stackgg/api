@@ -34,7 +34,7 @@ export function getCookieOptions(
     httpOnly: true,
     domain: process.env.AUTH_COOKIE_DOMAIN || `.${process.env.WEB_DOMAIN}`,
     maxAge: 14 * 24 * 60 * 60 * 1000,
-    secure: (process.env.SECURE_COOKIE && process.env.SECURE_COOKIE === "true") || true,
+    secure: process.env.SECURE_COOKIE ? process.env.SECURE_COOKIE === "true" : true,
   },
 ): CookieOptions {
   return Object.assign({}, defaultOptions, options);
