@@ -166,6 +166,7 @@ export class MatchesController {
         is_banned: player.player.is_banned,
         is_gagged: player.player.is_gagged,
         is_muted: player.player.is_muted,
+        // @ts-ignore
         player: undefined,
       }),
     );
@@ -176,6 +177,7 @@ export class MatchesController {
         is_banned: player.player.is_banned,
         is_gagged: player.player.is_gagged,
         is_muted: player.player.is_muted,
+        // @ts-ignore
         player: undefined,
       }),
     );
