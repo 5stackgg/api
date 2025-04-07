@@ -75,14 +75,10 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
 
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
 
-delete from maps where type = 'Competitive' and name = 'de_aztec';
-delete from maps where type = 'Competitive' and name = 'de_cpl_mill';
-delete from maps where type = 'Competitive' and name = 'drawbridge';
-delete from maps where type = 'Wingman' and name = 'de_train';
-
 insert into e_map_pool_types ("value", "description") values
     ('Competitive', '5 vs 5 match using active map pool'),
     ('Wingman', '2 vs 2 match'),
+    ('Duel', '1 vs 1 match'),
     ('Custom', 'Custom match')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
@@ -90,7 +86,8 @@ WITH new_rows AS (
   SELECT *
   FROM (VALUES
       ('Competitive', true, true),
-      ('Wingman', true, true)
+      ('Wingman', true, true),
+      ('Duel', true, true)
   ) AS data(type, enabled, seed)
 )
 INSERT INTO map_pools ("type", "enabled", "seed")
@@ -106,7 +103,7 @@ WHERE NOT EXISTS (
 WITH pool_ids AS (
     SELECT id, type
     FROM map_pools
-    WHERE type IN ('Competitive', 'Wingman')
+    WHERE type IN ('Competitive', 'Wingman', 'Duel')
     ORDER BY type
 ),
 inserted_maps AS (
@@ -115,7 +112,8 @@ inserted_maps AS (
     FROM maps m
     JOIN pool_ids p ON (
         (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
-        (p.type = 'Wingman' AND m.type = 'Wingman' AND m.active_pool = 'true')
+        (p.type = 'Wingman' AND m.type = 'Wingman' AND m.active_pool = 'true') OR
+        (p.type = 'Duel' AND m.type = 'Duel' AND m.active_pool = 'true')
     )
     ON CONFLICT DO NOTHING
     RETURNING *
