@@ -1474,6 +1474,9 @@ enum e_map_pool_types_enum {
   """Custom match"""
   Custom
 
+  """1 vs 1 match"""
+  Duel
+
   """2 vs 2 match"""
   Wingman
 }
