@@ -35,8 +35,9 @@ export class DiscordBotService {
       maps: { name: string; id: string }[];
     }
   > = {
-    Competitive: undefined,
+    Duel: undefined,
     Wingman: undefined,
+    Competitive: undefined,
   };
 
   constructor(
@@ -157,6 +158,11 @@ export class DiscordBotService {
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleWingMan)
               .setDescription("Creates a Wingman Match"),
+          ),
+          await this.addBaseOptions(
+            new SlashCommandBuilder()
+              .setName(ChatCommands.ScheduleDuel)
+              .setDescription("Creates a Duel Match"),
           ),
           new SlashCommandBuilder()
             .setName(ChatCommands.LinkDiscord)

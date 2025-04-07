@@ -223,7 +223,7 @@ export class DiscordPickPlayerService {
     await this.pickMember(
       matchId,
       otherLineup.id,
-      match.options.type === "Wingman"
+      (match.options.type != "Competitive")
         ? 1
         : /**
            * Pick Order: 1 -> 2 -> 1 by 1

@@ -557,7 +557,7 @@ export interface e_map_pool_types_aggregate_fields {
 /** unique or primary key constraints on table "e_map_pool_types" */
 export type e_map_pool_types_constraint = 'e_map_pool_types_pkey'
 
-export type e_map_pool_types_enum = 'Competitive' | 'Custom' | 'Wingman'
+export type e_map_pool_types_enum = 'Competitive' | 'Custom' | 'Wingman' | 'Duel'
 
 
 /** aggregate max on columns */
@@ -764,7 +764,7 @@ export interface e_match_types_aggregate_fields {
 /** unique or primary key constraints on table "e_match_types" */
 export type e_match_types_constraint = 'e_match_types_pkey'
 
-export type e_match_types_enum = 'Competitive' | 'Wingman'
+export type e_match_types_enum = 'Competitive' | 'Duel' | 'Wingman'
 
 
 /** aggregate max on columns */
@@ -38751,6 +38751,7 @@ export const enumEMatchTypesConstraint = {
 
 export const enumEMatchTypesEnum = {
    Competitive: 'Competitive' as const,
+   Duel: 'Duel' as const,
    Wingman: 'Wingman' as const
 }
 

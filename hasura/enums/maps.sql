@@ -1,6 +1,7 @@
 insert into e_match_types ("value", "description") values
     ('Competitive', '5 vs 5 match using active map pool'),
-    ('Wingman', '2 vs 2 match')
+    ('Wingman', '2 vs 2 match'),
+    ('Duel', '1 vs 1 match')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
 insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "patch") values
@@ -41,17 +42,34 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_nuke', 'Wingman', 'true',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
     ('de_overpass', 'Wingman', 'true',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
     ('de_vertigo', 'Wingman', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
-    ('de_assembly', 'Wingman', 'true',  '3071005299', '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
-    ('de_memento', 'Wingman', 'true',  '3165559377', '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
-    ('de_palais', 'Wingman', 'false',  null, '/img/maps/screenshots/de_palais.webp', '/img/maps/icons/de_palais.svg'),
-    ('de_whistle', 'Wingman', 'false',  null, '/img/maps/screenshots/de_whistle.webp', '/img/maps/icons/de_whistle.svg'),
+    ('de_assembly', 'Wingman', 'false',  '3071005299', '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
+    ('de_memento', 'Wingman', 'false',  '3165559377', '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
+    ('de_palais', 'Wingman', 'true',  null, '/img/maps/screenshots/de_palais.webp', '/img/maps/icons/de_palais.svg'),
+    ('de_whistle', 'Wingman', 'true',  null, '/img/maps/screenshots/de_whistle.webp', '/img/maps/icons/de_whistle.svg'),
 
     --  Workshop Wingman
     ('de_brewery', 'Wingman', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
     ('drawbridge', 'Wingman', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
     ('de_foroglio', 'Wingman', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
     ('de_overpass_night', 'Wingman', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', null),
-    ('de_inferno_night', 'Wingman', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null)
+    ('de_inferno_night', 'Wingman', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null),
+
+        -- Valve Wingman
+    ('de_inferno', 'Duel', 'true',  null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg'),
+    ('de_nuke', 'Duel', 'true',  null, '/img/maps/screenshots/de_nuke.webp', '/img/maps/icons/de_nuke.svg'),
+    ('de_overpass', 'Duel', 'true',  null, '/img/maps/screenshots/de_overpass.webp', '/img/maps/icons/de_overpass.svg'),
+    ('de_vertigo', 'Duel', 'true',  null, '/img/maps/screenshots/de_vertigo.webp', '/img/maps/icons/de_vertigo.svg'),
+    ('de_assembly', 'Duel', 'false',  '3071005299', '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg'),
+    ('de_memento', 'Duel', 'false',  '3165559377', '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg'),
+    ('de_palais', 'Duel', 'true',  null, '/img/maps/screenshots/de_palais.webp', '/img/maps/icons/de_palais.svg'),
+    ('de_whistle', 'Duel', 'true',  null, '/img/maps/screenshots/de_whistle.webp', '/img/maps/icons/de_whistle.svg'),
+
+    --  Workshop Wingman
+    ('de_brewery', 'Duel', 'false',  '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg'),
+    ('drawbridge', 'Duel', 'false',  '3070192462', '/img/maps/screenshots/de_drawbridge.webp', null),
+    ('de_foroglio', 'Duel', 'false',  '3132854332', '/img/maps/screenshots/de_foroglio.webp', null),
+    ('de_overpass_night', 'Duel', 'false', '3285124923', '/img/maps/screenshots/de_overpass_night.webp', null),
+    ('de_inferno_night', 'Duel', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null)
     
 
 

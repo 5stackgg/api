@@ -1,3 +1,4 @@
+import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
@@ -60,9 +61,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
       }
     }
 
-    if (match.options.type === "Competitive" && players.length < 10) {
-      return;
-    } else if (match.options.type === "Wingman" && players.length < 2) {
+    if (players.length < ExpectedPlayers[match.options.type] * 2) {
       return;
     }
 

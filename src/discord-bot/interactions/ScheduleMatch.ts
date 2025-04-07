@@ -25,6 +25,7 @@ type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 @BotChatCommand(ChatCommands.ScheduleComp)
 @BotChatCommand(ChatCommands.ScheduleWingMan)
+@BotChatCommand(ChatCommands.ScheduleDuel)
 export default class ScheduleMatch extends DiscordInteraction {
   public async handler(interaction: ChatInputCommandInteraction) {
     let matchType: e_match_types_enum;
@@ -38,6 +39,10 @@ export default class ScheduleMatch extends DiscordInteraction {
       case ChatCommands.ScheduleWingMan:
         matchType = "Wingman";
         mapPoolType = "Wingman";
+        break;
+      case ChatCommands.ScheduleDuel:
+        matchType = "Duel";
+        mapPoolType = "Duel";
         break;
       default:
         throw Error(`match type not supported ${interaction.type}`);
@@ -255,7 +260,7 @@ export default class ScheduleMatch extends DiscordInteraction {
     const availableUsers = usersInChannel;
     const shuffledUsers = availableUsers.sort(() => Math.random() - 0.5);
 
-    const playersPerTeam = matchType === "Wingman" ? 2 : 5;
+    const playersPerTeam = ExpectedPlayers[matchType];
     for (let playerIndex = 0; playerIndex < playersPerTeam * 2; playerIndex++) {
       if (playerIndex < shuffledUsers.length) {
         const user = shuffledUsers[playerIndex];
@@ -301,7 +306,7 @@ export default class ScheduleMatch extends DiscordInteraction {
       options[option.name] = option.value;
     }
 
-    if (matchType === "Wingman" && options.mr === 12) {
+    if (matchType !== "Competitive") {
       options.mr = 8;
     }
 

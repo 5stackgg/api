@@ -83,6 +83,7 @@ export class MatchmakeService {
 
     for (const region of regions.server_regions) {
       regionStats[region.value] = {
+        Duel: await this.getNumberOfPlayersInQueue("Duel", region.value),
         Wingman: await this.getNumberOfPlayersInQueue("Wingman", region.value),
         Competitive: await this.getNumberOfPlayersInQueue(
           "Competitive",
