@@ -19,7 +19,7 @@ export class FriendsService {
       `https://api.steampowered.com/ISteamUser/GetFriendList/v1/?key=${this.steamApiKey}&steamid=${user.steam_id}`,
     );
     const { friendslist } = await response.json();
-    const friends = friendslist.friends.map((friend: { steamid: string }) => {
+    const friends = friendslist?.friends.map((friend: { steamid: string }) => {
       return friend.steamid;
     });
     const { players } = await this.hasura.query({
