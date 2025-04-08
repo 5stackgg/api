@@ -27,7 +27,6 @@ insert_permissions:
       columns:
         - active_pool
         - enabled
-        - label
         - name
         - patch
         - poster
@@ -41,7 +40,6 @@ select_permissions:
         - active_pool
         - enabled
         - id
-        - label
         - name
         - patch
         - poster
@@ -55,7 +53,6 @@ update_permissions:
       columns:
         - active_pool
         - enabled
-        - label
         - name
         - patch
         - poster
@@ -63,4 +60,9 @@ update_permissions:
         - workshop_map_id
       filter: {}
       check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
     comment: ""

@@ -72,7 +72,6 @@ insert into maps ("name", "type", "active_pool", "workshop_map_id", "poster", "p
     ('de_inferno_night', 'Duel', 'false', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', null)
     
 
-
 on conflict(name, type) do update set "active_pool" = EXCLUDED."active_pool", "workshop_map_id" = EXCLUDED."workshop_map_id", "poster" = EXCLUDED."poster", "patch" = EXCLUDED."patch";
 
 insert into e_map_pool_types ("value", "description") values

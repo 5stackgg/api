@@ -1468,16 +1468,16 @@ enum e_map_pool_types_constraint {
 }
 
 enum e_map_pool_types_enum {
-  """5 vs 5 match using active map pool"""
+  """5 vs 5"""
   Competitive
 
-  """Custom match"""
+  """Custom"""
   Custom
 
-  """1 vs 1 match"""
+  """1 vs 1"""
   Duel
 
-  """2 vs 2 match"""
+  """2 vs 2"""
   Wingman
 }
 
@@ -2180,13 +2180,13 @@ enum e_match_types_constraint {
 }
 
 enum e_match_types_enum {
-  """5 vs 5 match using active map pool"""
+  """5 vs 5"""
   Competitive
 
-  """1 vs 1 match"""
+  """1 vs 1"""
   Duel
 
-  """2 vs 2 match"""
+  """2 vs 2"""
   Wingman
 }
 
@@ -6516,8 +6516,8 @@ type maps {
 
   """An object relationship"""
   e_match_type: e_match_types!
+  enabled: Boolean!
   id: uuid!
-  label: String
 
   """An array relationship"""
   match_maps(
@@ -6669,8 +6669,8 @@ input maps_bool_exp {
   _or: [maps_bool_exp!]
   active_pool: Boolean_comparison_exp
   e_match_type: e_match_types_bool_exp
+  enabled: Boolean_comparison_exp
   id: uuid_comparison_exp
-  label: String_comparison_exp
   match_maps: match_maps_bool_exp
   match_maps_aggregate: match_maps_aggregate_bool_exp
   match_veto_picks: match_map_veto_picks_bool_exp
@@ -6703,8 +6703,8 @@ input type for inserting data into table "maps"
 input maps_insert_input {
   active_pool: Boolean
   e_match_type: e_match_types_obj_rel_insert_input
+  enabled: Boolean
   id: uuid
-  label: String
   match_maps: match_maps_arr_rel_insert_input
   match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   name: String
@@ -6717,7 +6717,6 @@ input maps_insert_input {
 """aggregate max on columns"""
 type maps_max_fields {
   id: uuid
-  label: String
   name: String
   patch: String
   poster: String
@@ -6729,7 +6728,6 @@ order by max() on columns of table "maps"
 """
 input maps_max_order_by {
   id: order_by
-  label: order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -6739,7 +6737,6 @@ input maps_max_order_by {
 """aggregate min on columns"""
 type maps_min_fields {
   id: uuid
-  label: String
   name: String
   patch: String
   poster: String
@@ -6751,7 +6748,6 @@ order by min() on columns of table "maps"
 """
 input maps_min_order_by {
   id: order_by
-  label: order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -6792,8 +6788,8 @@ input maps_on_conflict {
 input maps_order_by {
   active_pool: order_by
   e_match_type: e_match_types_order_by
+  enabled: order_by
   id: order_by
-  label: order_by
   match_maps_aggregate: match_maps_aggregate_order_by
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
@@ -6816,10 +6812,10 @@ enum maps_select_column {
   active_pool
 
   """column name"""
-  id
+  enabled
 
   """column name"""
-  label
+  id
 
   """column name"""
   name
@@ -6843,6 +6839,9 @@ select "maps_aggregate_bool_exp_bool_and_arguments_columns" columns of table "ma
 enum maps_select_column_maps_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   active_pool
+
+  """column name"""
+  enabled
 }
 
 """
@@ -6851,6 +6850,9 @@ select "maps_aggregate_bool_exp_bool_or_arguments_columns" columns of table "map
 enum maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   active_pool
+
+  """column name"""
+  enabled
 }
 
 """
@@ -6858,8 +6860,8 @@ input type for updating data in table "maps"
 """
 input maps_set_input {
   active_pool: Boolean
+  enabled: Boolean
   id: uuid
-  label: String
   name: String
   patch: String
   poster: String
@@ -6881,8 +6883,8 @@ input maps_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input maps_stream_cursor_value_input {
   active_pool: Boolean
+  enabled: Boolean
   id: uuid
-  label: String
   name: String
   patch: String
   poster: String
@@ -6898,10 +6900,10 @@ enum maps_update_column {
   active_pool
 
   """column name"""
-  id
+  enabled
 
   """column name"""
-  label
+  id
 
   """column name"""
   name
