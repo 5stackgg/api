@@ -18,6 +18,7 @@ import {
   getMatchmakingConformationCacheKey,
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
+import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 
 @Injectable()
 export class MatchmakeService {
@@ -42,6 +43,12 @@ export class MatchmakeService {
       await this.redis.zadd(
         getMatchmakingRankCacheKey(lobby.type, region),
         lobby.avgRank,
+        lobbyId,
+      );
+      
+      await this.redis.zadd(
+        getMatchmakingQueueCacheKey(lobby.type, region),
+        0, // score doesn't matter for queue cache
         lobbyId,
       );
     }
@@ -217,7 +224,7 @@ export class MatchmakeService {
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
   ): Promise<void> {
-    const requiredPlayers = type === "Wingman" ? 4 : 10;
+    const requiredPlayers = ExpectedPlayers[type];
     const totalPlayers = lobbies.reduce(
       (acc, lobby) => acc + lobby.players.length,
       0,
@@ -515,8 +522,7 @@ export class MatchmakeService {
 
     const match = await this.matchAssistant.createMatchBasedOnType(
       type as e_match_types_enum,
-      // TODO - custom map pool
-      "Competitive",
+      type as e_match_types_enum,
       {
         mr: 12,
         best_of: 1,
