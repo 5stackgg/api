@@ -1,3 +1,24 @@
 table:
   name: _map_pool
   schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - map_id
+        - map_pool_id
+    comment: ""
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - map_id
+        - map_pool_id
+      filter: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

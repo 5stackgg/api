@@ -18,7 +18,9 @@ array_relationships:
 insert_permissions:
   - role: user
     permission:
-      check: {}
+      check:
+        type:
+          _eq: Custom
       columns:
         - id
         - type
