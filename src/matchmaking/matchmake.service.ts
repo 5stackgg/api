@@ -19,6 +19,7 @@ import {
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
+import { match } from "assert";
 
 @Injectable()
 export class MatchmakeService {
@@ -45,7 +46,7 @@ export class MatchmakeService {
         lobby.avgRank,
         lobbyId,
       );
-      
+
       await this.redis.zadd(
         getMatchmakingQueueCacheKey(lobby.type, region),
         0, // score doesn't matter for queue cache
@@ -416,7 +417,7 @@ export class MatchmakeService {
     });
   }
 
-  private async removeConfirmationDetails(confirmationId: string) {
+  public async removeConfirmationDetails(confirmationId: string) {
     await this.redis.del(getMatchmakingConformationCacheKey(confirmationId));
   }
 
@@ -459,6 +460,8 @@ export class MatchmakeService {
     if (confirmationId) {
       await this.cancelMatchMaking(confirmationId);
     }
+
+    await this.redis.del(`matches:confirmation:${matchId}`);
   }
 
   public async cancelMatchMaking(confirmationId: string) {
@@ -565,6 +568,8 @@ export class MatchmakeService {
       "matchId",
       match.id,
     );
+
+    await this.redis.set(`matches:confirmation:${match.id}`, confirmationId);
 
     for (const lobbyId of lobbyIds) {
       await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);

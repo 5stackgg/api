@@ -13,6 +13,7 @@ import {
   getMatchmakingRankCacheKey,
   getMatchmakingQueueCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
+  getMatchmakingConformationCacheKey,
 } from "./utilities/cacheKeys";
 import { JoinQueueError } from "./utilities/joinQueueError";
 
@@ -251,8 +252,16 @@ export class MatchmakingLobbyService {
     );
 
     if (confirmationId) {
-      const { matchId, confirmed, type, region, team1, team2, expiresAt } =
-        await this.matchmaking.getMatchConfirmationDetails(confirmationId);
+      const {
+        matchId,
+        confirmed,
+        type,
+        region,
+        team1,
+        team2,
+        expiresAt,
+        lobbyIds,
+      } = await this.matchmaking.getMatchConfirmationDetails(confirmationId);
 
       confirmationDetails = {
         type,
@@ -263,6 +272,35 @@ export class MatchmakingLobbyService {
         confirmed,
         players: team1.length + team2.length,
       };
+
+      if (matchId) {
+        const { matches_by_pk: match } = await this.hasura.query({
+          matches_by_pk: {
+            __args: {
+              id: matchId,
+            },
+            id: true,
+            status: true,
+          },
+        });
+        if (!match || match.status === "Canceled") {
+          for (const lobby of lobbyIds) {
+            await this.removeLobbyDetails(lobby);
+          }
+          await this.matchmaking.removeConfirmationDetails(confirmationId);
+
+          for (const player of team1.concat(team2)) {
+            await this.redis.publish(
+              "send-message-to-steam-id",
+              JSON.stringify({
+                steamId: player,
+                event: "matchmaking:details",
+                data: {},
+              }),
+            );
+          }
+        }
+      }
     }
 
     const lobbyQueueDetails = await this.getLobbyDetails(lobbyId);
