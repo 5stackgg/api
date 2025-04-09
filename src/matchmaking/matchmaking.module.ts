@@ -58,7 +58,7 @@ export class MatchMaking {
       player_elo_aggregate: {
         aggregate: {
           count: true,
-        }
+        },
       },
     });
 
@@ -68,17 +68,24 @@ export class MatchMaking {
 
     const matches = await this.hasuraService.query({
       matches: {
-        id: true
+        __args: {
+          order_by: [
+            {
+              created_at: "asc",
+            },
+          ],
+        },
+        id: true,
+        created_at: true,
       },
     });
 
+    this.queue.setGlobalConcurrency(1);
     for (const match of matches.matches) {
-      await this.queue.add(
-        EloCalculation.name,
-        {
-          matchId: match.id,
-        },
-      );
+      this.queue.add(MatchmakingQueues.Matchmaking, {
+        matchId: match.id,
+      });
     }
+    this.queue.removeGlobalConcurrency();
   }
 }

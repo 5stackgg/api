@@ -50,18 +50,13 @@ DECLARE
     _player_damage_percent FLOAT;
 BEGIN
     -- Get the player's current ELO value from the most recent record
-    -- We need to get the raw value without adding the base ELO again
-    SELECT COALESCE(current, 0) INTO _current_player_elo
+    SELECT COALESCE(current, _default_elo) INTO _current_player_elo
     FROM player_elo 
     WHERE steam_id = player_record.steam_id
     AND created_at < match_record.created_at
     AND match_id != match_record.id
     ORDER BY created_at DESC
     LIMIT 1;
-    
-    if _current_player_elo is null or _current_player_elo = 0 then
-        _current_player_elo := _default_elo;
-    end if;
 
     -- Determine which lineup the player is in
     SELECT mlp.match_lineup_id INTO _player_lineup_id
@@ -79,10 +74,7 @@ BEGIN
     -- Calculate average ELO for player's team
     -- First get the sum of all previous ELO changes for each player in the team
     SELECT 
-        CASE 
-            WHEN COALESCE(AVG(player_elo), 0) = 0 THEN _default_elo
-            ELSE AVG(player_elo)
-        END INTO _player_team_elo_avg
+        AVG(player_elo) INTO _player_team_elo_avg
     FROM (
         SELECT 
             mlp.steam_id,
@@ -95,7 +87,7 @@ BEGIN
                     AND pr2.match_id != match_record.id
                     ORDER BY pr2.created_at DESC
                     LIMIT 1
-                ), 0
+                ), _default_elo
             ) AS player_elo
         FROM 
             match_lineup_players mlp
@@ -108,10 +100,7 @@ BEGIN
     -- Calculate average ELO for opponent's team
     -- First get the sum of all previous ELO changes for each player in the team
     SELECT 
-        CASE 
-            WHEN COALESCE(AVG(player_elo), 0) = 0 THEN _default_elo
-            ELSE AVG(player_elo)
-        END INTO _opponent_team_elo_avg
+        AVG(player_elo) INTO _opponent_team_elo_avg
     FROM (
         SELECT 
             mlp.steam_id,
@@ -124,7 +113,7 @@ BEGIN
                     AND pr2.match_id != match_record.id
                     ORDER BY pr2.created_at DESC
                     LIMIT 1
-                ), 0
+                ), _default_elo
             ) AS player_elo
         FROM 
             match_lineup_players mlp
@@ -217,7 +206,6 @@ BEGIN
     -- Return the elo change as JSON with detailed information
     RETURN jsonb_build_object(
         'current_elo', _current_player_elo, -- The current ELO rating of the player (including base ELO)
-        'raw_current_elo', _current_player_elo, -- The raw current ELO value without base ELO
         'elo_change', _elo_change, -- The change in ELO rating for the player after the match
         'player_team_elo_avg', _player_team_elo_avg, -- The average ELO rating of the player's team before the match
         'opponent_team_elo_avg', _opponent_team_elo_avg, -- The average ELO rating of the opponent's team before the match
@@ -282,10 +270,7 @@ SELECT
     player_steam_id,
     player_name,
     match_result,
-    CASE 
-        WHEN (elo_data->>'current_elo')::INTEGER IS NULL OR (elo_data->>'current_elo')::INTEGER = 0 THEN 5000 + (elo_data->>'elo_change')::INTEGER
-        ELSE (elo_data->>'current_elo')::INTEGER + (elo_data->>'elo_change')::INTEGER
-    END AS updated_elo,
+    (elo_data->>'current_elo')::INTEGER + (elo_data->>'elo_change')::INTEGER AS updated_elo,
     (elo_data->>'current_elo')::INTEGER AS current_elo,
     (elo_data->>'elo_change')::INTEGER AS elo_change,
     (elo_data->>'player_team_elo_avg')::FLOAT AS player_team_elo_avg,
@@ -310,7 +295,7 @@ DECLARE
     player_record public.players;
     elo_data JSONB;
     elo_change INTEGER;
-    raw_current_elo INTEGER;
+    current_elo INTEGER;
     ratings_created INTEGER := 0;
 BEGIN
     -- Get the match record
@@ -339,10 +324,8 @@ BEGIN
     LOOP
         -- Calculate ELO change for this player in this match
         elo_data := get_player_elo_for_match(match_record, player_record);
-        elo_change := COALESCE((elo_data->>'elo_change')::INTEGER, 0);
-        
-        -- Get the raw current ELO value (without base ELO)
-        raw_current_elo := COALESCE((elo_data->>'raw_current_elo')::INTEGER, 0);
+        elo_change := (elo_data->>'elo_change')::INTEGER;
+        current_elo := (elo_data->>'current_elo')::INTEGER;
 
         INSERT INTO player_elo (
             match_id,
@@ -353,7 +336,7 @@ BEGIN
         ) VALUES (
             match_record.id,
             player_record.steam_id,
-            raw_current_elo + elo_change, -- Store only the raw ELO value plus change
+            current_elo + elo_change,
             elo_change,
             match_record.created_at
         );
