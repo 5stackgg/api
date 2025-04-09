@@ -3,6 +3,7 @@ import { TypeSenseService } from "./type-sense.service";
 import { HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import {
+  player_elo_set_input,
   player_sanctions_set_input,
   players_set_input,
   team_roster_set_input,
@@ -22,6 +23,13 @@ export class TypeSenseController {
     private readonly typeSense: TypeSenseService,
     @InjectQueue(TypesenseQueues.TypeSense) private queue: Queue,
   ) {}
+
+  @HasuraEvent()
+  public async player_elo_events(data: HasuraEventData<player_elo_set_input>) {
+    await this.typeSense.updatePlayer(
+      (data.new.steam_id as string) || data.old.steam_id,
+    );
+  }
 
   @HasuraEvent()
   public async player_events(data: HasuraEventData<players_set_input>) {

@@ -41,6 +41,8 @@ import { MatchEventsGateway } from "./match-events.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { ChatModule } from "src/chat/chat.module";
+import { HasuraService } from "src/hasura/hasura.service";
+import { EloCalculation } from "./jobs/EloCalculation";
 
 @Module({
   imports: [
@@ -74,6 +76,13 @@ import { ChatModule } from "src/chat/chat.module";
         adapter: BullMQAdapter,
       },
     ),
+    BullModule.registerQueue({
+      name: MatchQueues.EloCalculation,
+    }),
+    BullBoardModule.forFeature({
+      name: MatchQueues.EloCalculation,
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [MatchesController, DemosController, BackupRoundsController],
   exports: [MatchAssistantService],
@@ -88,6 +97,7 @@ import { ChatModule } from "src/chat/chat.module";
     RemoveCancelledMatches,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
+    EloCalculation,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),
@@ -95,8 +105,10 @@ import { ChatModule } from "src/chat/chat.module";
 })
 export class MatchesModule implements NestModule {
   constructor(
+    private readonly hasuraService: HasuraService,
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
+    @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
   ) {
     void scheduleMatchQueue.add(
       CheckForScheduledMatches.name,
@@ -157,6 +169,47 @@ export class MatchesModule implements NestModule {
         },
       },
     );
+
+    void this.generatePlayerRatings();
+  }
+
+  /**
+   * TODO - this is required one time
+   */
+  async generatePlayerRatings() {
+    const { player_elo_aggregate } = await this.hasuraService.query({
+      player_elo_aggregate: {
+        aggregate: {
+          count: true,
+        },
+      },
+    });
+
+    if (player_elo_aggregate.aggregate.count > 0) {
+      return;
+    }
+
+    const matches = await this.hasuraService.query({
+      matches: {
+        __args: {
+          order_by: [
+            {
+              created_at: "asc",
+            },
+          ],
+        },
+        id: true,
+        created_at: true,
+      },
+    });
+
+    this.eloCalculationQueue.setGlobalConcurrency(1);
+    for (const match of matches.matches) {
+      this.eloCalculationQueue.add(EloCalculation.name, {
+        matchId: match.id,
+      });
+    }
+    this.eloCalculationQueue.removeGlobalConcurrency();
   }
 
   configure(consumer: MiddlewareConsumer) {

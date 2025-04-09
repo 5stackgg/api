@@ -19,6 +19,10 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import { PostgresService } from "src/postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { MatchQueues } from "./enums/MatchQueues";
+import { EloCalculation } from "./jobs/EloCalculation";
 
 @Controller("matches")
 export class MatchesController {
@@ -35,6 +39,7 @@ export class MatchesController {
     private readonly discordMatchOverview: DiscordBotOverviewService,
     private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
     private readonly notifications: NotificationsService,
+    @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -205,6 +210,12 @@ export class MatchesController {
     ) {
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
+
+      if (status === "Tie" || status === "Forfeit" || status === "Finished") {
+        await this.eloCalculationQueue.add(EloCalculation.name, {
+          matchId,
+        });
+      }
 
       const serverId = data.new.server_id;
 

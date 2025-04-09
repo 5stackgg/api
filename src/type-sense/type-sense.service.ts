@@ -46,6 +46,7 @@ export class TypeSenseService {
           { name: "steam_id", type: "string", index: true },
           { name: "avatar_url", type: "string", optional: true },
           { name: "teams", type: "string[]", optional: true },
+          { name: "elo", type: "int32", optional: true },
         ],
         default_sorting_field: "name",
       });
@@ -58,6 +59,7 @@ export class TypeSenseService {
         __args: {
           steam_id: steamId,
         },
+        elo: true,
         name: true,
         country: true,
         avatar_url: true,

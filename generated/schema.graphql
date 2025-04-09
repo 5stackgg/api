@@ -19133,7 +19133,13 @@ type player_elo {
   change: numeric!
   created_at: timestamptz!
   current: numeric!
+
+  """An object relationship"""
+  match: matches!
   match_id: uuid!
+
+  """An object relationship"""
+  player: players!
   steam_id: bigint!
 }
 
@@ -19143,6 +19149,17 @@ aggregated selection of "player_elo"
 type player_elo_aggregate {
   aggregate: player_elo_aggregate_fields
   nodes: [player_elo!]!
+}
+
+input player_elo_aggregate_bool_exp {
+  count: player_elo_aggregate_bool_exp_count
+}
+
+input player_elo_aggregate_bool_exp_count {
+  arguments: [player_elo_select_column!]
+  distinct: Boolean
+  filter: player_elo_bool_exp
+  predicate: Int_comparison_exp!
 }
 
 """
@@ -19162,11 +19179,47 @@ type player_elo_aggregate_fields {
   variance: player_elo_variance_fields
 }
 
+"""
+order by aggregate values of table "player_elo"
+"""
+input player_elo_aggregate_order_by {
+  avg: player_elo_avg_order_by
+  count: order_by
+  max: player_elo_max_order_by
+  min: player_elo_min_order_by
+  stddev: player_elo_stddev_order_by
+  stddev_pop: player_elo_stddev_pop_order_by
+  stddev_samp: player_elo_stddev_samp_order_by
+  sum: player_elo_sum_order_by
+  var_pop: player_elo_var_pop_order_by
+  var_samp: player_elo_var_samp_order_by
+  variance: player_elo_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "player_elo"
+"""
+input player_elo_arr_rel_insert_input {
+  data: [player_elo_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_elo_on_conflict
+}
+
 """aggregate avg on columns"""
 type player_elo_avg_fields {
   change: Float
   current: Float
   steam_id: Float
+}
+
+"""
+order by avg() on columns of table "player_elo"
+"""
+input player_elo_avg_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
 }
 
 """
@@ -19179,7 +19232,9 @@ input player_elo_bool_exp {
   change: numeric_comparison_exp
   created_at: timestamptz_comparison_exp
   current: numeric_comparison_exp
+  match: matches_bool_exp
   match_id: uuid_comparison_exp
+  player: players_bool_exp
   steam_id: bigint_comparison_exp
 }
 
@@ -19209,7 +19264,9 @@ input player_elo_insert_input {
   change: numeric
   created_at: timestamptz
   current: numeric
+  match: matches_obj_rel_insert_input
   match_id: uuid
+  player: players_obj_rel_insert_input
   steam_id: bigint
 }
 
@@ -19222,6 +19279,17 @@ type player_elo_max_fields {
   steam_id: bigint
 }
 
+"""
+order by max() on columns of table "player_elo"
+"""
+input player_elo_max_order_by {
+  change: order_by
+  created_at: order_by
+  current: order_by
+  match_id: order_by
+  steam_id: order_by
+}
+
 """aggregate min on columns"""
 type player_elo_min_fields {
   change: numeric
@@ -19229,6 +19297,17 @@ type player_elo_min_fields {
   current: numeric
   match_id: uuid
   steam_id: bigint
+}
+
+"""
+order by min() on columns of table "player_elo"
+"""
+input player_elo_min_order_by {
+  change: order_by
+  created_at: order_by
+  current: order_by
+  match_id: order_by
+  steam_id: order_by
 }
 
 """
@@ -19256,7 +19335,9 @@ input player_elo_order_by {
   change: order_by
   created_at: order_by
   current: order_by
+  match: matches_order_by
   match_id: order_by
+  player: players_order_by
   steam_id: order_by
 }
 
@@ -19304,6 +19385,15 @@ type player_elo_stddev_fields {
   steam_id: Float
 }
 
+"""
+order by stddev() on columns of table "player_elo"
+"""
+input player_elo_stddev_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type player_elo_stddev_pop_fields {
   change: Float
@@ -19311,11 +19401,29 @@ type player_elo_stddev_pop_fields {
   steam_id: Float
 }
 
+"""
+order by stddev_pop() on columns of table "player_elo"
+"""
+input player_elo_stddev_pop_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type player_elo_stddev_samp_fields {
   change: Float
   current: Float
   steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "player_elo"
+"""
+input player_elo_stddev_samp_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
 }
 
 """
@@ -19343,6 +19451,15 @@ type player_elo_sum_fields {
   change: numeric
   current: numeric
   steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "player_elo"
+"""
+input player_elo_sum_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
 }
 
 """
@@ -19383,6 +19500,15 @@ type player_elo_var_pop_fields {
   steam_id: Float
 }
 
+"""
+order by var_pop() on columns of table "player_elo"
+"""
+input player_elo_var_pop_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
+}
+
 """aggregate var_samp on columns"""
 type player_elo_var_samp_fields {
   change: Float
@@ -19390,11 +19516,29 @@ type player_elo_var_samp_fields {
   steam_id: Float
 }
 
+"""
+order by var_samp() on columns of table "player_elo"
+"""
+input player_elo_var_samp_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
+}
+
 """aggregate variance on columns"""
 type player_elo_variance_fields {
   change: Float
   current: Float
   steam_id: Float
+}
+
+"""
+order by variance() on columns of table "player_elo"
+"""
+input player_elo_variance_order_by {
+  change: order_by
+  current: order_by
+  steam_id: order_by
 }
 
 """
@@ -22353,6 +22497,47 @@ type players {
   ): player_kills_aggregate!
   discord_id: String
 
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
+
+  """An array relationship"""
+  elo_history(
+    """distinct select on columns"""
+    distinct_on: [player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): [player_elo!]!
+
+  """An aggregate relationship"""
+  elo_history_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): player_elo_aggregate!
+
   """An array relationship"""
   flashed_by_players(
     """distinct select on columns"""
@@ -23104,6 +23289,10 @@ type players_aggregate_fields {
 
 """aggregate avg on columns"""
 type players_avg_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -23138,6 +23327,9 @@ input players_bool_exp {
   deaths: player_kills_bool_exp
   deaths_aggregate: player_kills_aggregate_bool_exp
   discord_id: String_comparison_exp
+  elo: numeric_comparison_exp
+  elo_history: player_elo_bool_exp
+  elo_history_aggregate: player_elo_aggregate_bool_exp
   flashed_by_players: player_flashes_bool_exp
   flashed_by_players_aggregate: player_flashes_aggregate_bool_exp
   flashed_players: player_flashes_bool_exp
@@ -23231,6 +23423,7 @@ input players_insert_input {
   damage_taken: player_damages_arr_rel_insert_input
   deaths: player_kills_arr_rel_insert_input
   discord_id: String
+  elo_history: player_elo_arr_rel_insert_input
   flashed_by_players: player_flashes_arr_rel_insert_input
   flashed_players: player_flashes_arr_rel_insert_input
   friends: my_friends_arr_rel_insert_input
@@ -23269,6 +23462,11 @@ type players_max_fields {
   discord_id: String
 
   """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
+
+  """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
   matchmaking_cooldown: timestamptz
@@ -23293,6 +23491,11 @@ type players_min_fields {
   """
   current_lobby_id: uuid
   discord_id: String
+
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
 
   """
   A computed field, executes function "get_player_matchmaking_cooldown"
@@ -23352,6 +23555,8 @@ input players_order_by {
   damage_taken_aggregate: player_damages_aggregate_order_by
   deaths_aggregate: player_kills_aggregate_order_by
   discord_id: order_by
+  elo: order_by
+  elo_history_aggregate: player_elo_aggregate_order_by
   flashed_by_players_aggregate: player_flashes_aggregate_order_by
   flashed_players_aggregate: player_flashes_aggregate_order_by
   friends_aggregate: my_friends_aggregate_order_by
@@ -23439,6 +23644,10 @@ input players_set_input {
 
 """aggregate stddev on columns"""
 type players_stddev_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -23449,6 +23658,10 @@ type players_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type players_stddev_pop_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -23459,6 +23672,10 @@ type players_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type players_stddev_samp_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -23493,6 +23710,10 @@ input players_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type players_sum_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: bigint
 
   """
@@ -23546,6 +23767,10 @@ input players_updates {
 
 """aggregate var_pop on columns"""
 type players_var_pop_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -23556,6 +23781,10 @@ type players_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type players_var_samp_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -23566,6 +23795,10 @@ type players_var_samp_fields {
 
 """aggregate variance on columns"""
 type players_variance_fields {
+  """
+  A computed field, executes function "get_player_elo"
+  """
+  elo: numeric
   steam_id: Float
 
   """
@@ -37203,6 +37436,7 @@ type v_player_elo {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  updated_elo: Int
 }
 
 """
@@ -37248,6 +37482,7 @@ type v_player_elo_avg_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """
@@ -37277,6 +37512,7 @@ input v_player_elo_bool_exp {
   player_steam_id: bigint_comparison_exp
   player_team_elo_avg: float8_comparison_exp
   team_avg_kda: float8_comparison_exp
+  updated_elo: Int_comparison_exp
 }
 
 """aggregate max on columns"""
@@ -37301,6 +37537,7 @@ type v_player_elo_max_fields {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  updated_elo: Int
 }
 
 """aggregate min on columns"""
@@ -37325,6 +37562,7 @@ type v_player_elo_min_fields {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  updated_elo: Int
 }
 
 """Ordering options when selecting data from "v_player_elo"."""
@@ -37349,6 +37587,7 @@ input v_player_elo_order_by {
   player_steam_id: order_by
   player_team_elo_avg: order_by
   team_avg_kda: order_by
+  updated_elo: order_by
 }
 
 """
@@ -37414,6 +37653,9 @@ enum v_player_elo_select_column {
 
   """column name"""
   team_avg_kda
+
+  """column name"""
+  updated_elo
 }
 
 """aggregate stddev on columns"""
@@ -37434,6 +37676,7 @@ type v_player_elo_stddev_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """aggregate stddev_pop on columns"""
@@ -37454,6 +37697,7 @@ type v_player_elo_stddev_pop_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """aggregate stddev_samp on columns"""
@@ -37474,6 +37718,7 @@ type v_player_elo_stddev_samp_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """
@@ -37509,6 +37754,7 @@ input v_player_elo_stream_cursor_value_input {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  updated_elo: Int
 }
 
 """aggregate sum on columns"""
@@ -37529,6 +37775,7 @@ type v_player_elo_sum_fields {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  updated_elo: Int
 }
 
 """aggregate var_pop on columns"""
@@ -37549,6 +37796,7 @@ type v_player_elo_var_pop_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """aggregate var_samp on columns"""
@@ -37569,6 +37817,7 @@ type v_player_elo_var_samp_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """aggregate variance on columns"""
@@ -37589,6 +37838,7 @@ type v_player_elo_variance_fields {
   player_steam_id: Float
   player_team_elo_avg: Float
   team_avg_kda: Float
+  updated_elo: Float
 }
 
 """

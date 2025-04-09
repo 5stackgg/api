@@ -50,13 +50,17 @@ DECLARE
     _player_damage_percent FLOAT;
 BEGIN
     -- Get the player's current ELO value from the most recent record
-    SELECT COALESCE(current, _default_elo) INTO _current_player_elo
+    SELECT current INTO _current_player_elo
     FROM player_elo 
     WHERE steam_id = player_record.steam_id
     AND created_at < match_record.created_at
     AND match_id != match_record.id
     ORDER BY created_at DESC
     LIMIT 1;
+
+    if(_current_player_elo is null) then
+        _current_player_elo := _default_elo;
+    end if;
 
     -- Determine which lineup the player is in
     SELECT mlp.match_lineup_id INTO _player_lineup_id

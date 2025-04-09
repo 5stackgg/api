@@ -51,6 +51,13 @@ array_relationships:
         table:
           name: player_kills
           schema: public
+  - name: elo_history
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: player_elo
+          schema: public
   - name: flashed_by_players
     using:
       foreign_key_constraint_on:
@@ -188,6 +195,11 @@ computed_fields:
         name: get_player_current_lobby_id
         schema: public
       session_argument: hasura_session
+  - name: elo
+    definition:
+      function:
+        name: get_player_elo
+        schema: public
   - name: is_banned
     definition:
       function:
@@ -242,6 +254,7 @@ select_permissions:
         - steam_id
       computed_fields:
         - current_lobby_id
+        - elo
         - is_banned
         - is_gagged
         - is_in_another_match
