@@ -231,14 +231,13 @@ export default {
         2011,
         2029,
         2047,
-        2070,
+        2065,
         2083,
         2101,
-        2119,
-        2145,
-        2179,
-        2180,
-        2181
+        2127,
+        2161,
+        2162,
+        2163
     ],
     "types": {
         "Boolean": {},
@@ -8444,10 +8443,10 @@ export default {
                 1975
             ],
             "maps": [
-                2162,
+                2144,
                 {
                     "distinct_on": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -8457,19 +8456,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2178,
+                        2160,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
             "maps_aggregate": [
-                2163,
+                2145,
                 {
                     "distinct_on": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -8479,11 +8478,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2178,
+                        2160,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
@@ -8551,10 +8550,10 @@ export default {
                 1976
             ],
             "maps": [
-                2171
+                2153
             ],
             "maps_aggregate": [
-                2164
+                2146
             ],
             "seed": [
                 1
@@ -8578,7 +8577,7 @@ export default {
                 1975
             ],
             "maps": [
-                2170
+                2152
             ],
             "seed": [
                 0
@@ -8653,7 +8652,7 @@ export default {
                 1104
             ],
             "maps_aggregate": [
-                2169
+                2151
             ],
             "seed": [
                 1104
@@ -21643,10 +21642,13 @@ export default {
             ]
         },
         "player_elo": {
+            "change": [
+                1102
+            ],
             "created_at": [
                 1678
             ],
-            "elo": [
+            "current": [
                 1102
             ],
             "match_id": [
@@ -21718,7 +21720,10 @@ export default {
             ]
         },
         "player_elo_avg_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -21738,10 +21743,13 @@ export default {
             "_or": [
                 1187
             ],
+            "change": [
+                1103
+            ],
             "created_at": [
                 1679
             ],
-            "elo": [
+            "current": [
                 1103
             ],
             "match_id": [
@@ -21756,7 +21764,10 @@ export default {
         },
         "player_elo_constraint": {},
         "player_elo_inc_input": {
-            "elo": [
+            "change": [
+                1102
+            ],
+            "current": [
                 1102
             ],
             "steam_id": [
@@ -21767,10 +21778,13 @@ export default {
             ]
         },
         "player_elo_insert_input": {
+            "change": [
+                1102
+            ],
             "created_at": [
                 1678
             ],
-            "elo": [
+            "current": [
                 1102
             ],
             "match_id": [
@@ -21784,10 +21798,13 @@ export default {
             ]
         },
         "player_elo_max_fields": {
+            "change": [
+                1102
+            ],
             "created_at": [
                 1678
             ],
-            "elo": [
+            "current": [
                 1102
             ],
             "match_id": [
@@ -21801,10 +21818,13 @@ export default {
             ]
         },
         "player_elo_min_fields": {
+            "change": [
+                1102
+            ],
             "created_at": [
                 1678
             ],
-            "elo": [
+            "current": [
                 1102
             ],
             "match_id": [
@@ -21843,10 +21863,13 @@ export default {
             ]
         },
         "player_elo_order_by": {
+            "change": [
+                1104
+            ],
             "created_at": [
                 1104
             ],
-            "elo": [
+            "current": [
                 1104
             ],
             "match_id": [
@@ -21872,10 +21895,13 @@ export default {
         },
         "player_elo_select_column": {},
         "player_elo_set_input": {
+            "change": [
+                1102
+            ],
             "created_at": [
                 1678
             ],
-            "elo": [
+            "current": [
                 1102
             ],
             "match_id": [
@@ -21889,7 +21915,10 @@ export default {
             ]
         },
         "player_elo_stddev_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -21900,7 +21929,10 @@ export default {
             ]
         },
         "player_elo_stddev_pop_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -21911,7 +21943,10 @@ export default {
             ]
         },
         "player_elo_stddev_samp_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -21933,10 +21968,13 @@ export default {
             ]
         },
         "player_elo_stream_cursor_value_input": {
+            "change": [
+                1102
+            ],
             "created_at": [
                 1678
             ],
-            "elo": [
+            "current": [
                 1102
             ],
             "match_id": [
@@ -21950,7 +21988,10 @@ export default {
             ]
         },
         "player_elo_sum_fields": {
-            "elo": [
+            "change": [
+                1102
+            ],
+            "current": [
                 1102
             ],
             "steam_id": [
@@ -21976,7 +22017,10 @@ export default {
             ]
         },
         "player_elo_var_pop_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -21987,7 +22031,10 @@ export default {
             ]
         },
         "player_elo_var_samp_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -21998,7 +22045,10 @@ export default {
             ]
         },
         "player_elo_variance_fields": {
-            "elo": [
+            "change": [
+                3
+            ],
+            "current": [
                 3
             ],
             "steam_id": [
@@ -27148,10 +27198,10 @@ export default {
                 1678
             ],
             "multi_kills": [
-                2129,
+                2111,
                 {
                     "distinct_on": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -27161,19 +27211,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2144,
+                        2126,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
             "multi_kills_aggregate": [
-                2130,
+                2112,
                 {
                     "distinct_on": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -27183,11 +27233,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2144,
+                        2126,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
@@ -27910,10 +27960,10 @@ export default {
                 1679
             ],
             "multi_kills": [
-                2138
+                2120
             ],
             "multi_kills_aggregate": [
-                2131
+                2113
             ],
             "name": [
                 13
@@ -28068,7 +28118,7 @@ export default {
                 579
             ],
             "multi_kills": [
-                2135
+                2117
             ],
             "name": [
                 11
@@ -28302,7 +28352,7 @@ export default {
                 1104
             ],
             "multi_kills_aggregate": [
-                2134
+                2116
             ],
             "name": [
                 1104
@@ -38478,7 +38528,7 @@ export default {
                 4,
                 {
                     "columns": [
-                        2083,
+                        2065,
                         "[v_player_elo_select_column!]"
                     ],
                     "distinct": [
@@ -38487,31 +38537,31 @@ export default {
                 }
             ],
             "max": [
-                2080
+                2062
             ],
             "min": [
-                2081
+                2063
             ],
             "stddev": [
-                2084
+                2066
             ],
             "stddev_pop": [
-                2085
+                2067
             ],
             "stddev_samp": [
-                2086
+                2068
             ],
             "sum": [
-                2089
+                2071
             ],
             "var_pop": [
-                2090
+                2072
             ],
             "var_samp": [
-                2091
+                2073
             ],
             "variance": [
-                2092
+                2074
             ],
             "__typename": [
                 11
@@ -38639,899 +38689,6 @@ export default {
             ],
             "team_avg_kda": [
                 471
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes": {
-            "actual_score": [
-                470
-            ],
-            "assists": [
-                4
-            ],
-            "current_elo": [
-                4
-            ],
-            "damage": [
-                4
-            ],
-            "damage_percent": [
-                470
-            ],
-            "deaths": [
-                4
-            ],
-            "elo_change": [
-                4
-            ],
-            "expected_score": [
-                470
-            ],
-            "k_factor": [
-                4
-            ],
-            "kda": [
-                470
-            ],
-            "kills": [
-                4
-            ],
-            "match_created_at": [
-                1678
-            ],
-            "match_id": [
-                1975
-            ],
-            "match_result": [
-                11
-            ],
-            "opponent_team_elo_avg": [
-                470
-            ],
-            "performance_multiplier": [
-                470
-            ],
-            "player_name": [
-                11
-            ],
-            "player_steam_id": [
-                74
-            ],
-            "player_team_elo_avg": [
-                470
-            ],
-            "team_avg_kda": [
-                470
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_aggregate": {
-            "aggregate": [
-                2064
-            ],
-            "nodes": [
-                2062
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_aggregate_fields": {
-            "avg": [
-                2065
-            ],
-            "count": [
-                4,
-                {
-                    "columns": [
-                        2070,
-                        "[v_player_elo_changes_select_column!]"
-                    ],
-                    "distinct": [
-                        0
-                    ]
-                }
-            ],
-            "max": [
-                2067
-            ],
-            "min": [
-                2068
-            ],
-            "stddev": [
-                2071
-            ],
-            "stddev_pop": [
-                2072
-            ],
-            "stddev_samp": [
-                2073
-            ],
-            "sum": [
-                2076
-            ],
-            "var_pop": [
-                2077
-            ],
-            "var_samp": [
-                2078
-            ],
-            "variance": [
-                2079
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_avg_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_bool_exp": {
-            "_and": [
-                2066
-            ],
-            "_not": [
-                2066
-            ],
-            "_or": [
-                2066
-            ],
-            "actual_score": [
-                471
-            ],
-            "assists": [
-                5
-            ],
-            "current_elo": [
-                5
-            ],
-            "damage": [
-                5
-            ],
-            "damage_percent": [
-                471
-            ],
-            "deaths": [
-                5
-            ],
-            "elo_change": [
-                5
-            ],
-            "expected_score": [
-                471
-            ],
-            "k_factor": [
-                5
-            ],
-            "kda": [
-                471
-            ],
-            "kills": [
-                5
-            ],
-            "match_created_at": [
-                1679
-            ],
-            "match_id": [
-                1976
-            ],
-            "match_result": [
-                13
-            ],
-            "opponent_team_elo_avg": [
-                471
-            ],
-            "performance_multiplier": [
-                471
-            ],
-            "player_name": [
-                13
-            ],
-            "player_steam_id": [
-                75
-            ],
-            "player_team_elo_avg": [
-                471
-            ],
-            "team_avg_kda": [
-                471
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_max_fields": {
-            "actual_score": [
-                470
-            ],
-            "assists": [
-                4
-            ],
-            "current_elo": [
-                4
-            ],
-            "damage": [
-                4
-            ],
-            "damage_percent": [
-                470
-            ],
-            "deaths": [
-                4
-            ],
-            "elo_change": [
-                4
-            ],
-            "expected_score": [
-                470
-            ],
-            "k_factor": [
-                4
-            ],
-            "kda": [
-                470
-            ],
-            "kills": [
-                4
-            ],
-            "match_created_at": [
-                1678
-            ],
-            "match_id": [
-                1975
-            ],
-            "match_result": [
-                11
-            ],
-            "opponent_team_elo_avg": [
-                470
-            ],
-            "performance_multiplier": [
-                470
-            ],
-            "player_name": [
-                11
-            ],
-            "player_steam_id": [
-                74
-            ],
-            "player_team_elo_avg": [
-                470
-            ],
-            "team_avg_kda": [
-                470
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_min_fields": {
-            "actual_score": [
-                470
-            ],
-            "assists": [
-                4
-            ],
-            "current_elo": [
-                4
-            ],
-            "damage": [
-                4
-            ],
-            "damage_percent": [
-                470
-            ],
-            "deaths": [
-                4
-            ],
-            "elo_change": [
-                4
-            ],
-            "expected_score": [
-                470
-            ],
-            "k_factor": [
-                4
-            ],
-            "kda": [
-                470
-            ],
-            "kills": [
-                4
-            ],
-            "match_created_at": [
-                1678
-            ],
-            "match_id": [
-                1975
-            ],
-            "match_result": [
-                11
-            ],
-            "opponent_team_elo_avg": [
-                470
-            ],
-            "performance_multiplier": [
-                470
-            ],
-            "player_name": [
-                11
-            ],
-            "player_steam_id": [
-                74
-            ],
-            "player_team_elo_avg": [
-                470
-            ],
-            "team_avg_kda": [
-                470
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_order_by": {
-            "actual_score": [
-                1104
-            ],
-            "assists": [
-                1104
-            ],
-            "current_elo": [
-                1104
-            ],
-            "damage": [
-                1104
-            ],
-            "damage_percent": [
-                1104
-            ],
-            "deaths": [
-                1104
-            ],
-            "elo_change": [
-                1104
-            ],
-            "expected_score": [
-                1104
-            ],
-            "k_factor": [
-                1104
-            ],
-            "kda": [
-                1104
-            ],
-            "kills": [
-                1104
-            ],
-            "match_created_at": [
-                1104
-            ],
-            "match_id": [
-                1104
-            ],
-            "match_result": [
-                1104
-            ],
-            "opponent_team_elo_avg": [
-                1104
-            ],
-            "performance_multiplier": [
-                1104
-            ],
-            "player_name": [
-                1104
-            ],
-            "player_steam_id": [
-                1104
-            ],
-            "player_team_elo_avg": [
-                1104
-            ],
-            "team_avg_kda": [
-                1104
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_select_column": {},
-        "v_player_elo_changes_stddev_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_stddev_pop_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_stddev_samp_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_stream_cursor_input": {
-            "initial_value": [
-                2075
-            ],
-            "ordering": [
-                78
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_stream_cursor_value_input": {
-            "actual_score": [
-                470
-            ],
-            "assists": [
-                4
-            ],
-            "current_elo": [
-                4
-            ],
-            "damage": [
-                4
-            ],
-            "damage_percent": [
-                470
-            ],
-            "deaths": [
-                4
-            ],
-            "elo_change": [
-                4
-            ],
-            "expected_score": [
-                470
-            ],
-            "k_factor": [
-                4
-            ],
-            "kda": [
-                470
-            ],
-            "kills": [
-                4
-            ],
-            "match_created_at": [
-                1678
-            ],
-            "match_id": [
-                1975
-            ],
-            "match_result": [
-                11
-            ],
-            "opponent_team_elo_avg": [
-                470
-            ],
-            "performance_multiplier": [
-                470
-            ],
-            "player_name": [
-                11
-            ],
-            "player_steam_id": [
-                74
-            ],
-            "player_team_elo_avg": [
-                470
-            ],
-            "team_avg_kda": [
-                470
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_sum_fields": {
-            "actual_score": [
-                470
-            ],
-            "assists": [
-                4
-            ],
-            "current_elo": [
-                4
-            ],
-            "damage": [
-                4
-            ],
-            "damage_percent": [
-                470
-            ],
-            "deaths": [
-                4
-            ],
-            "elo_change": [
-                4
-            ],
-            "expected_score": [
-                470
-            ],
-            "k_factor": [
-                4
-            ],
-            "kda": [
-                470
-            ],
-            "kills": [
-                4
-            ],
-            "opponent_team_elo_avg": [
-                470
-            ],
-            "performance_multiplier": [
-                470
-            ],
-            "player_steam_id": [
-                74
-            ],
-            "player_team_elo_avg": [
-                470
-            ],
-            "team_avg_kda": [
-                470
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_var_pop_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_var_samp_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
-            ],
-            "__typename": [
-                11
-            ]
-        },
-        "v_player_elo_changes_variance_fields": {
-            "actual_score": [
-                3
-            ],
-            "assists": [
-                3
-            ],
-            "current_elo": [
-                3
-            ],
-            "damage": [
-                3
-            ],
-            "damage_percent": [
-                3
-            ],
-            "deaths": [
-                3
-            ],
-            "elo_change": [
-                3
-            ],
-            "expected_score": [
-                3
-            ],
-            "k_factor": [
-                3
-            ],
-            "kda": [
-                3
-            ],
-            "kills": [
-                3
-            ],
-            "opponent_team_elo_avg": [
-                3
-            ],
-            "performance_multiplier": [
-                3
-            ],
-            "player_steam_id": [
-                3
-            ],
-            "player_team_elo_avg": [
-                3
-            ],
-            "team_avg_kda": [
-                3
             ],
             "__typename": [
                 11
@@ -39894,7 +39051,7 @@ export default {
         },
         "v_player_elo_stream_cursor_input": {
             "initial_value": [
-                2088
+                2070
             ],
             "ordering": [
                 78
@@ -40205,10 +39362,10 @@ export default {
         },
         "v_player_map_losses_aggregate": {
             "aggregate": [
-                2095
+                2077
             ],
             "nodes": [
-                2093
+                2075
             ],
             "__typename": [
                 11
@@ -40216,13 +39373,13 @@ export default {
         },
         "v_player_map_losses_aggregate_fields": {
             "avg": [
-                2096
+                2078
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2101,
+                        2083,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "distinct": [
@@ -40231,31 +39388,31 @@ export default {
                 }
             ],
             "max": [
-                2098
+                2080
             ],
             "min": [
-                2099
+                2081
             ],
             "stddev": [
-                2102
+                2084
             ],
             "stddev_pop": [
-                2103
+                2085
             ],
             "stddev_samp": [
-                2104
+                2086
             ],
             "sum": [
-                2107
+                2089
             ],
             "var_pop": [
-                2108
+                2090
             ],
             "var_samp": [
-                2109
+                2091
             ],
             "variance": [
-                2110
+                2092
             ],
             "__typename": [
                 11
@@ -40271,13 +39428,13 @@ export default {
         },
         "v_player_map_losses_bool_exp": {
             "_and": [
-                2097
+                2079
             ],
             "_not": [
-                2097
+                2079
             ],
             "_or": [
-                2097
+                2079
             ],
             "map": [
                 644
@@ -40385,7 +39542,7 @@ export default {
         },
         "v_player_map_losses_stream_cursor_input": {
             "initial_value": [
-                2106
+                2088
             ],
             "ordering": [
                 78
@@ -40468,10 +39625,10 @@ export default {
         },
         "v_player_map_wins_aggregate": {
             "aggregate": [
-                2113
+                2095
             ],
             "nodes": [
-                2111
+                2093
             ],
             "__typename": [
                 11
@@ -40479,13 +39636,13 @@ export default {
         },
         "v_player_map_wins_aggregate_fields": {
             "avg": [
-                2114
+                2096
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2119,
+                        2101,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "distinct": [
@@ -40494,31 +39651,31 @@ export default {
                 }
             ],
             "max": [
-                2116
+                2098
             ],
             "min": [
-                2117
+                2099
             ],
             "stddev": [
-                2120
+                2102
             ],
             "stddev_pop": [
-                2121
+                2103
             ],
             "stddev_samp": [
-                2122
+                2104
             ],
             "sum": [
-                2125
+                2107
             ],
             "var_pop": [
-                2126
+                2108
             ],
             "var_samp": [
-                2127
+                2109
             ],
             "variance": [
-                2128
+                2110
             ],
             "__typename": [
                 11
@@ -40534,13 +39691,13 @@ export default {
         },
         "v_player_map_wins_bool_exp": {
             "_and": [
-                2115
+                2097
             ],
             "_not": [
-                2115
+                2097
             ],
             "_or": [
-                2115
+                2097
             ],
             "map": [
                 644
@@ -40648,7 +39805,7 @@ export default {
         },
         "v_player_map_wins_stream_cursor_input": {
             "initial_value": [
-                2124
+                2106
             ],
             "ordering": [
                 78
@@ -40725,10 +39882,10 @@ export default {
         },
         "v_player_multi_kills_aggregate": {
             "aggregate": [
-                2133
+                2115
             ],
             "nodes": [
-                2129
+                2111
             ],
             "__typename": [
                 11
@@ -40736,7 +39893,7 @@ export default {
         },
         "v_player_multi_kills_aggregate_bool_exp": {
             "count": [
-                2132
+                2114
             ],
             "__typename": [
                 11
@@ -40744,13 +39901,13 @@ export default {
         },
         "v_player_multi_kills_aggregate_bool_exp_count": {
             "arguments": [
-                2145
+                2127
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2138
+                2120
             ],
             "predicate": [
                 5
@@ -40761,13 +39918,13 @@ export default {
         },
         "v_player_multi_kills_aggregate_fields": {
             "avg": [
-                2136
+                2118
             ],
             "count": [
                 4,
                 {
                     "columns": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "distinct": [
@@ -40776,31 +39933,31 @@ export default {
                 }
             ],
             "max": [
-                2140
+                2122
             ],
             "min": [
-                2142
+                2124
             ],
             "stddev": [
-                2146
+                2128
             ],
             "stddev_pop": [
-                2148
+                2130
             ],
             "stddev_samp": [
-                2150
+                2132
             ],
             "sum": [
-                2154
+                2136
             ],
             "var_pop": [
-                2156
+                2138
             ],
             "var_samp": [
-                2158
+                2140
             ],
             "variance": [
-                2160
+                2142
             ],
             "__typename": [
                 11
@@ -40808,37 +39965,37 @@ export default {
         },
         "v_player_multi_kills_aggregate_order_by": {
             "avg": [
-                2137
+                2119
             ],
             "count": [
                 1104
             ],
             "max": [
-                2141
+                2123
             ],
             "min": [
-                2143
+                2125
             ],
             "stddev": [
-                2147
+                2129
             ],
             "stddev_pop": [
-                2149
+                2131
             ],
             "stddev_samp": [
-                2151
+                2133
             ],
             "sum": [
-                2155
+                2137
             ],
             "var_pop": [
-                2157
+                2139
             ],
             "var_samp": [
-                2159
+                2141
             ],
             "variance": [
-                2161
+                2143
             ],
             "__typename": [
                 11
@@ -40846,7 +40003,7 @@ export default {
         },
         "v_player_multi_kills_arr_rel_insert_input": {
             "data": [
-                2139
+                2121
             ],
             "__typename": [
                 11
@@ -40882,13 +40039,13 @@ export default {
         },
         "v_player_multi_kills_bool_exp": {
             "_and": [
-                2138
+                2120
             ],
             "_not": [
-                2138
+                2120
             ],
             "_or": [
-                2138
+                2120
             ],
             "attacker_steam_id": [
                 75
@@ -41095,7 +40252,7 @@ export default {
         },
         "v_player_multi_kills_stream_cursor_input": {
             "initial_value": [
-                2153
+                2135
             ],
             "ordering": [
                 78
@@ -41267,10 +40424,10 @@ export default {
         },
         "v_pool_maps_aggregate": {
             "aggregate": [
-                2168
+                2150
             ],
             "nodes": [
-                2162
+                2144
             ],
             "__typename": [
                 11
@@ -41278,13 +40435,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp": {
             "bool_and": [
-                2165
+                2147
             ],
             "bool_or": [
-                2166
+                2148
             ],
             "count": [
-                2167
+                2149
             ],
             "__typename": [
                 11
@@ -41292,13 +40449,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp_bool_and": {
             "arguments": [
-                2180
+                2162
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2171
+                2153
             ],
             "predicate": [
                 1
@@ -41309,13 +40466,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp_bool_or": {
             "arguments": [
-                2181
+                2163
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2171
+                2153
             ],
             "predicate": [
                 1
@@ -41326,13 +40483,13 @@ export default {
         },
         "v_pool_maps_aggregate_bool_exp_count": {
             "arguments": [
-                2179
+                2161
             ],
             "distinct": [
                 0
             ],
             "filter": [
-                2171
+                2153
             ],
             "predicate": [
                 5
@@ -41346,7 +40503,7 @@ export default {
                 4,
                 {
                     "columns": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "distinct": [
@@ -41355,10 +40512,10 @@ export default {
                 }
             ],
             "max": [
-                2173
+                2155
             ],
             "min": [
-                2175
+                2157
             ],
             "__typename": [
                 11
@@ -41369,10 +40526,10 @@ export default {
                 1104
             ],
             "max": [
-                2174
+                2156
             ],
             "min": [
-                2176
+                2158
             ],
             "__typename": [
                 11
@@ -41380,7 +40537,7 @@ export default {
         },
         "v_pool_maps_arr_rel_insert_input": {
             "data": [
-                2172
+                2154
             ],
             "__typename": [
                 11
@@ -41388,13 +40545,13 @@ export default {
         },
         "v_pool_maps_bool_exp": {
             "_and": [
-                2171
+                2153
             ],
             "_not": [
-                2171
+                2153
             ],
             "_or": [
-                2171
+                2153
             ],
             "active_pool": [
                 1
@@ -41568,7 +40725,7 @@ export default {
                 4
             ],
             "returning": [
-                2162
+                2144
             ],
             "__typename": [
                 11
@@ -41611,7 +40768,7 @@ export default {
         "v_pool_maps_select_column_v_pool_maps_aggregate_bool_exp_bool_or_arguments_columns": {},
         "v_pool_maps_stream_cursor_input": {
             "initial_value": [
-                2183
+                2165
             ],
             "ordering": [
                 78
@@ -45102,7 +44259,7 @@ export default {
                 2057,
                 {
                     "distinct_on": [
-                        2083,
+                        2065,
                         "[v_player_elo_select_column!]"
                     ],
                     "limit": [
@@ -45112,7 +44269,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2082,
+                        2064,
                         "[v_player_elo_order_by!]"
                     ],
                     "where": [
@@ -45124,7 +44281,7 @@ export default {
                 2058,
                 {
                     "distinct_on": [
-                        2083,
+                        2065,
                         "[v_player_elo_select_column!]"
                     ],
                     "limit": [
@@ -45134,7 +44291,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2082,
+                        2064,
                         "[v_player_elo_order_by!]"
                     ],
                     "where": [
@@ -45142,55 +44299,11 @@ export default {
                     ]
                 }
             ],
-            "v_player_elo_changes": [
-                2062,
-                {
-                    "distinct_on": [
-                        2070,
-                        "[v_player_elo_changes_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2069,
-                        "[v_player_elo_changes_order_by!]"
-                    ],
-                    "where": [
-                        2066
-                    ]
-                }
-            ],
-            "v_player_elo_changes_aggregate": [
-                2063,
-                {
-                    "distinct_on": [
-                        2070,
-                        "[v_player_elo_changes_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2069,
-                        "[v_player_elo_changes_order_by!]"
-                    ],
-                    "where": [
-                        2066
-                    ]
-                }
-            ],
             "v_player_map_losses": [
-                2093,
+                2075,
                 {
                     "distinct_on": [
-                        2101,
+                        2083,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -45200,19 +44313,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2100,
+                        2082,
                         "[v_player_map_losses_order_by!]"
                     ],
                     "where": [
-                        2097
+                        2079
                     ]
                 }
             ],
             "v_player_map_losses_aggregate": [
-                2094,
+                2076,
                 {
                     "distinct_on": [
-                        2101,
+                        2083,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -45222,41 +44335,41 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2100,
+                        2082,
                         "[v_player_map_losses_order_by!]"
+                    ],
+                    "where": [
+                        2079
+                    ]
+                }
+            ],
+            "v_player_map_wins": [
+                2093,
+                {
+                    "distinct_on": [
+                        2101,
+                        "[v_player_map_wins_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        2100,
+                        "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
                         2097
                     ]
                 }
             ],
-            "v_player_map_wins": [
-                2111,
-                {
-                    "distinct_on": [
-                        2119,
-                        "[v_player_map_wins_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2118,
-                        "[v_player_map_wins_order_by!]"
-                    ],
-                    "where": [
-                        2115
-                    ]
-                }
-            ],
             "v_player_map_wins_aggregate": [
-                2112,
+                2094,
                 {
                     "distinct_on": [
-                        2119,
+                        2101,
                         "[v_player_map_wins_select_column!]"
                     ],
                     "limit": [
@@ -45266,19 +44379,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2118,
+                        2100,
                         "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
-                        2115
+                        2097
                     ]
                 }
             ],
             "v_player_multi_kills": [
-                2129,
+                2111,
                 {
                     "distinct_on": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -45288,19 +44401,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2144,
+                        2126,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
             "v_player_multi_kills_aggregate": [
-                2130,
+                2112,
                 {
                     "distinct_on": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -45310,19 +44423,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2144,
+                        2126,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
             "v_pool_maps": [
-                2162,
+                2144,
                 {
                     "distinct_on": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -45332,19 +44445,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2178,
+                        2160,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
             "v_pool_maps_aggregate": [
-                2163,
+                2145,
                 {
                     "distinct_on": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -45354,11 +44467,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2178,
+                        2160,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
@@ -46523,10 +45636,10 @@ export default {
                 }
             ],
             "delete_v_pool_maps": [
-                2177,
+                2159,
                 {
                     "where": [
-                        2171,
+                        2153,
                         "v_pool_maps_bool_exp!"
                     ]
                 }
@@ -48022,19 +47135,19 @@ export default {
                 }
             ],
             "insert_v_pool_maps": [
-                2177,
+                2159,
                 {
                     "objects": [
-                        2172,
+                        2154,
                         "[v_pool_maps_insert_input!]!"
                     ]
                 }
             ],
             "insert_v_pool_maps_one": [
-                2162,
+                2144,
                 {
                     "object": [
-                        2172,
+                        2154,
                         "v_pool_maps_insert_input!"
                     ]
                 }
@@ -54897,7 +54010,7 @@ export default {
                 2057,
                 {
                     "distinct_on": [
-                        2083,
+                        2065,
                         "[v_player_elo_select_column!]"
                     ],
                     "limit": [
@@ -54907,7 +54020,7 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2082,
+                        2064,
                         "[v_player_elo_order_by!]"
                     ],
                     "where": [
@@ -54919,7 +54032,7 @@ export default {
                 2058,
                 {
                     "distinct_on": [
-                        2083,
+                        2065,
                         "[v_player_elo_select_column!]"
                     ],
                     "limit": [
@@ -54929,71 +54042,11 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2082,
+                        2064,
                         "[v_player_elo_order_by!]"
                     ],
                     "where": [
                         2061
-                    ]
-                }
-            ],
-            "v_player_elo_changes": [
-                2062,
-                {
-                    "distinct_on": [
-                        2070,
-                        "[v_player_elo_changes_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2069,
-                        "[v_player_elo_changes_order_by!]"
-                    ],
-                    "where": [
-                        2066
-                    ]
-                }
-            ],
-            "v_player_elo_changes_aggregate": [
-                2063,
-                {
-                    "distinct_on": [
-                        2070,
-                        "[v_player_elo_changes_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2069,
-                        "[v_player_elo_changes_order_by!]"
-                    ],
-                    "where": [
-                        2066
-                    ]
-                }
-            ],
-            "v_player_elo_changes_stream": [
-                2062,
-                {
-                    "batch_size": [
-                        4,
-                        "Int!"
-                    ],
-                    "cursor": [
-                        2074,
-                        "[v_player_elo_changes_stream_cursor_input]!"
-                    ],
-                    "where": [
-                        2066
                     ]
                 }
             ],
@@ -55005,7 +54058,7 @@ export default {
                         "Int!"
                     ],
                     "cursor": [
-                        2087,
+                        2069,
                         "[v_player_elo_stream_cursor_input]!"
                     ],
                     "where": [
@@ -55014,10 +54067,10 @@ export default {
                 }
             ],
             "v_player_map_losses": [
-                2093,
+                2075,
                 {
                     "distinct_on": [
-                        2101,
+                        2083,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -55027,19 +54080,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2100,
+                        2082,
                         "[v_player_map_losses_order_by!]"
                     ],
                     "where": [
-                        2097
+                        2079
                     ]
                 }
             ],
             "v_player_map_losses_aggregate": [
-                2094,
+                2076,
                 {
                     "distinct_on": [
-                        2101,
+                        2083,
                         "[v_player_map_losses_select_column!]"
                     ],
                     "limit": [
@@ -55049,15 +54102,75 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2100,
+                        2082,
                         "[v_player_map_losses_order_by!]"
+                    ],
+                    "where": [
+                        2079
+                    ]
+                }
+            ],
+            "v_player_map_losses_stream": [
+                2075,
+                {
+                    "batch_size": [
+                        4,
+                        "Int!"
+                    ],
+                    "cursor": [
+                        2087,
+                        "[v_player_map_losses_stream_cursor_input]!"
+                    ],
+                    "where": [
+                        2079
+                    ]
+                }
+            ],
+            "v_player_map_wins": [
+                2093,
+                {
+                    "distinct_on": [
+                        2101,
+                        "[v_player_map_wins_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        2100,
+                        "[v_player_map_wins_order_by!]"
                     ],
                     "where": [
                         2097
                     ]
                 }
             ],
-            "v_player_map_losses_stream": [
+            "v_player_map_wins_aggregate": [
+                2094,
+                {
+                    "distinct_on": [
+                        2101,
+                        "[v_player_map_wins_select_column!]"
+                    ],
+                    "limit": [
+                        4
+                    ],
+                    "offset": [
+                        4
+                    ],
+                    "order_by": [
+                        2100,
+                        "[v_player_map_wins_order_by!]"
+                    ],
+                    "where": [
+                        2097
+                    ]
+                }
+            ],
+            "v_player_map_wins_stream": [
                 2093,
                 {
                     "batch_size": [
@@ -55066,78 +54179,18 @@ export default {
                     ],
                     "cursor": [
                         2105,
-                        "[v_player_map_losses_stream_cursor_input]!"
+                        "[v_player_map_wins_stream_cursor_input]!"
                     ],
                     "where": [
                         2097
                     ]
                 }
             ],
-            "v_player_map_wins": [
-                2111,
-                {
-                    "distinct_on": [
-                        2119,
-                        "[v_player_map_wins_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2118,
-                        "[v_player_map_wins_order_by!]"
-                    ],
-                    "where": [
-                        2115
-                    ]
-                }
-            ],
-            "v_player_map_wins_aggregate": [
-                2112,
-                {
-                    "distinct_on": [
-                        2119,
-                        "[v_player_map_wins_select_column!]"
-                    ],
-                    "limit": [
-                        4
-                    ],
-                    "offset": [
-                        4
-                    ],
-                    "order_by": [
-                        2118,
-                        "[v_player_map_wins_order_by!]"
-                    ],
-                    "where": [
-                        2115
-                    ]
-                }
-            ],
-            "v_player_map_wins_stream": [
-                2111,
-                {
-                    "batch_size": [
-                        4,
-                        "Int!"
-                    ],
-                    "cursor": [
-                        2123,
-                        "[v_player_map_wins_stream_cursor_input]!"
-                    ],
-                    "where": [
-                        2115
-                    ]
-                }
-            ],
             "v_player_multi_kills": [
-                2129,
+                2111,
                 {
                     "distinct_on": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -55147,19 +54200,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2144,
+                        2126,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
             "v_player_multi_kills_aggregate": [
-                2130,
+                2112,
                 {
                     "distinct_on": [
-                        2145,
+                        2127,
                         "[v_player_multi_kills_select_column!]"
                     ],
                     "limit": [
@@ -55169,35 +54222,35 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2144,
+                        2126,
                         "[v_player_multi_kills_order_by!]"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
             "v_player_multi_kills_stream": [
-                2129,
+                2111,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2152,
+                        2134,
                         "[v_player_multi_kills_stream_cursor_input]!"
                     ],
                     "where": [
-                        2138
+                        2120
                     ]
                 }
             ],
             "v_pool_maps": [
-                2162,
+                2144,
                 {
                     "distinct_on": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -55207,19 +54260,19 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2178,
+                        2160,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
             "v_pool_maps_aggregate": [
-                2163,
+                2145,
                 {
                     "distinct_on": [
-                        2179,
+                        2161,
                         "[v_pool_maps_select_column!]"
                     ],
                     "limit": [
@@ -55229,27 +54282,27 @@ export default {
                         4
                     ],
                     "order_by": [
-                        2178,
+                        2160,
                         "[v_pool_maps_order_by!]"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
             "v_pool_maps_stream": [
-                2162,
+                2144,
                 {
                     "batch_size": [
                         4,
                         "Int!"
                     ],
                     "cursor": [
-                        2182,
+                        2164,
                         "[v_pool_maps_stream_cursor_input]!"
                     ],
                     "where": [
-                        2171
+                        2153
                     ]
                 }
             ],
