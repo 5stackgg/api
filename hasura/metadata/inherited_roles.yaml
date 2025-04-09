@@ -10,3 +10,6 @@
   role_set:
     - match_organizer
     - user
+- role_name: verified_user
+  role_set:
+    - user

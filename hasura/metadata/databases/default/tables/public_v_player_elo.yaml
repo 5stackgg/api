@@ -1,0 +1,29 @@
+table:
+  name: v_player_elo
+  schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - player_steam_id
+        - actual_score
+        - damage_percent
+        - expected_score
+        - kda
+        - opponent_team_elo_avg
+        - performance_multiplier
+        - player_team_elo_avg
+        - team_avg_kda
+        - assists
+        - current_elo
+        - damage
+        - deaths
+        - elo_change
+        - k_factor
+        - kills
+        - match_result
+        - player_name
+        - match_created_at
+        - match_id
+      filter: {}
+    comment: ""

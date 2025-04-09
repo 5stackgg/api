@@ -4654,6 +4654,23 @@ input e_veto_pick_types_updates {
   where: e_veto_pick_types_bool_exp!
 }
 
+scalar float8
+
+"""
+Boolean expression to compare columns of type "float8". All fields are combined with logical 'AND'.
+"""
+input float8_comparison_exp {
+  _eq: float8
+  _gt: float8
+  _gte: float8
+  _in: [float8!]
+  _is_null: Boolean
+  _lt: float8
+  _lte: float8
+  _neq: float8
+  _nin: [float8!]
+}
+
 """
 columns and relationships of "friends"
 """
@@ -13326,6 +13343,19 @@ type mutation_root {
   ): player_damages_mutation_response
 
   """
+  delete data from the table: "player_elo"
+  """
+  delete_player_elo(
+    """filter the rows which have to be deleted"""
+    where: player_elo_bool_exp!
+  ): player_elo_mutation_response
+
+  """
+  delete single row from the table: "player_elo"
+  """
+  delete_player_elo_by_pk(match_id: uuid!, steam_id: bigint!): player_elo
+
+  """
   delete data from the table: "player_flashes"
   """
   delete_player_flashes(
@@ -14466,6 +14496,28 @@ type mutation_root {
     """the row to be inserted"""
     object: player_damages_insert_input!
   ): player_damages
+
+  """
+  insert data into the table: "player_elo"
+  """
+  insert_player_elo(
+    """the rows to be inserted"""
+    objects: [player_elo_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_elo_on_conflict
+  ): player_elo_mutation_response
+
+  """
+  insert a single row into the table: "player_elo"
+  """
+  insert_player_elo_one(
+    """the row to be inserted"""
+    object: player_elo_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_elo_on_conflict
+  ): player_elo
 
   """
   insert data into the table: "player_flashes"
@@ -16181,6 +16233,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_damages_updates!]!
   ): [player_damages_mutation_response]
+
+  """
+  update data of the table: "player_elo"
+  """
+  update_player_elo(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_elo_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_elo_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_elo_bool_exp!
+  ): player_elo_mutation_response
+
+  """
+  update single row of the table: "player_elo"
+  """
+  update_player_elo_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_elo_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_elo_set_input
+    pk_columns: player_elo_pk_columns_input!
+  ): player_elo
+
+  """
+  update multiples rows of table: "player_elo"
+  """
+  update_player_elo_many(
+    """updates to execute, in order"""
+    updates: [player_elo_updates!]!
+  ): [player_elo_mutation_response]
 
   """
   update data of the table: "player_flashes"
@@ -19038,6 +19124,254 @@ input player_damages_variance_order_by {
   damage_armor: order_by
   health: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "player_elo"
+"""
+type player_elo {
+  created_at: timestamptz!
+  elo: numeric!
+  match_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "player_elo"
+"""
+type player_elo_aggregate {
+  aggregate: player_elo_aggregate_fields
+  nodes: [player_elo!]!
+}
+
+"""
+aggregate fields of "player_elo"
+"""
+type player_elo_aggregate_fields {
+  avg: player_elo_avg_fields
+  count(columns: [player_elo_select_column!], distinct: Boolean): Int!
+  max: player_elo_max_fields
+  min: player_elo_min_fields
+  stddev: player_elo_stddev_fields
+  stddev_pop: player_elo_stddev_pop_fields
+  stddev_samp: player_elo_stddev_samp_fields
+  sum: player_elo_sum_fields
+  var_pop: player_elo_var_pop_fields
+  var_samp: player_elo_var_samp_fields
+  variance: player_elo_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_elo_avg_fields {
+  elo: Float
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_elo". All fields are combined with a logical 'AND'.
+"""
+input player_elo_bool_exp {
+  _and: [player_elo_bool_exp!]
+  _not: player_elo_bool_exp
+  _or: [player_elo_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  elo: numeric_comparison_exp
+  match_id: uuid_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_elo"
+"""
+enum player_elo_constraint {
+  """
+  unique or primary key constraint on columns "steam_id", "match_id"
+  """
+  player_ratings_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_elo"
+"""
+input player_elo_inc_input {
+  elo: numeric
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_elo"
+"""
+input player_elo_insert_input {
+  created_at: timestamptz
+  elo: numeric
+  match_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type player_elo_max_fields {
+  created_at: timestamptz
+  elo: numeric
+  match_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type player_elo_min_fields {
+  created_at: timestamptz
+  elo: numeric
+  match_id: uuid
+  steam_id: bigint
+}
+
+"""
+response of any mutation on the table "player_elo"
+"""
+type player_elo_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_elo!]!
+}
+
+"""
+on_conflict condition type for table "player_elo"
+"""
+input player_elo_on_conflict {
+  constraint: player_elo_constraint!
+  update_columns: [player_elo_update_column!]! = []
+  where: player_elo_bool_exp
+}
+
+"""Ordering options when selecting data from "player_elo"."""
+input player_elo_order_by {
+  created_at: order_by
+  elo: order_by
+  match_id: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: player_elo"""
+input player_elo_pk_columns_input {
+  match_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "player_elo"
+"""
+enum player_elo_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  elo
+
+  """column name"""
+  match_id
+
+  """column name"""
+  steam_id
+}
+
+"""
+input type for updating data in table "player_elo"
+"""
+input player_elo_set_input {
+  created_at: timestamptz
+  elo: numeric
+  match_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type player_elo_stddev_fields {
+  elo: Float
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_elo_stddev_pop_fields {
+  elo: Float
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_elo_stddev_samp_fields {
+  elo: Float
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "player_elo"
+"""
+input player_elo_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_elo_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_elo_stream_cursor_value_input {
+  created_at: timestamptz
+  elo: numeric
+  match_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type player_elo_sum_fields {
+  elo: numeric
+  steam_id: bigint
+}
+
+"""
+update columns of table "player_elo"
+"""
+enum player_elo_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  elo
+
+  """column name"""
+  match_id
+
+  """column name"""
+  steam_id
+}
+
+input player_elo_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_elo_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_elo_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_elo_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_elo_var_pop_fields {
+  elo: Float
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_elo_var_samp_fields {
+  elo: Float
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type player_elo_variance_fields {
+  elo: Float
+  steam_id: Float
 }
 
 """
@@ -24973,6 +25307,49 @@ type query_root {
     where: player_damages_bool_exp
   ): player_damages_aggregate!
 
+  """
+  fetch data from the table: "player_elo"
+  """
+  player_elo(
+    """distinct select on columns"""
+    distinct_on: [player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): [player_elo!]!
+
+  """
+  fetch aggregated fields from the table: "player_elo"
+  """
+  player_elo_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): player_elo_aggregate!
+
+  """fetch data from the table: "player_elo" using primary key columns"""
+  player_elo_by_pk(match_id: uuid!, steam_id: bigint!): player_elo
+
   """An array relationship"""
   player_flashes(
     """distinct select on columns"""
@@ -25950,6 +26327,86 @@ type query_root {
     """filter the rows returned"""
     where: v_player_damage_bool_exp
   ): v_player_damage_aggregate!
+
+  """
+  fetch data from the table: "v_player_elo"
+  """
+  v_player_elo(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_bool_exp
+  ): [v_player_elo!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_elo"
+  """
+  v_player_elo_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_bool_exp
+  ): v_player_elo_aggregate!
+
+  """
+  fetch data from the table: "v_player_elo_changes"
+  """
+  v_player_elo_changes(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_changes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_changes_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_changes_bool_exp
+  ): [v_player_elo_changes!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_elo_changes"
+  """
+  v_player_elo_changes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_changes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_changes_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_changes_bool_exp
+  ): v_player_elo_changes_aggregate!
 
   """
   fetch data from the table: "v_player_map_losses"
@@ -29560,6 +30017,63 @@ type subscription_root {
     where: player_damages_bool_exp
   ): [player_damages!]!
 
+  """
+  fetch data from the table: "player_elo"
+  """
+  player_elo(
+    """distinct select on columns"""
+    distinct_on: [player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): [player_elo!]!
+
+  """
+  fetch aggregated fields from the table: "player_elo"
+  """
+  player_elo_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): player_elo_aggregate!
+
+  """fetch data from the table: "player_elo" using primary key columns"""
+  player_elo_by_pk(match_id: uuid!, steam_id: bigint!): player_elo
+
+  """
+  fetch data from the table in a streaming manner: "player_elo"
+  """
+  player_elo_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_elo_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_elo_bool_exp
+  ): [player_elo!]!
+
   """An array relationship"""
   player_flashes(
     """distinct select on columns"""
@@ -30873,6 +31387,114 @@ type subscription_root {
     """filter the rows returned"""
     where: v_player_damage_bool_exp
   ): [v_player_damage!]!
+
+  """
+  fetch data from the table: "v_player_elo"
+  """
+  v_player_elo(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_bool_exp
+  ): [v_player_elo!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_elo"
+  """
+  v_player_elo_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_bool_exp
+  ): v_player_elo_aggregate!
+
+  """
+  fetch data from the table: "v_player_elo_changes"
+  """
+  v_player_elo_changes(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_changes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_changes_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_changes_bool_exp
+  ): [v_player_elo_changes!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_elo_changes"
+  """
+  v_player_elo_changes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_elo_changes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_elo_changes_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_elo_changes_bool_exp
+  ): v_player_elo_changes_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_elo_changes"
+  """
+  v_player_elo_changes_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_elo_changes_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_elo_changes_bool_exp
+  ): [v_player_elo_changes!]!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_elo"
+  """
+  v_player_elo_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_elo_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_elo_bool_exp
+  ): [v_player_elo!]!
 
   """
   fetch data from the table: "v_player_map_losses"
@@ -36626,6 +37248,830 @@ type v_player_damage_variance_fields {
   player_steam_id: Float
   total_damage: Float
   total_rounds: Float
+}
+
+"""
+columns and relationships of "v_player_elo"
+"""
+type v_player_elo {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""
+aggregated selection of "v_player_elo"
+"""
+type v_player_elo_aggregate {
+  aggregate: v_player_elo_aggregate_fields
+  nodes: [v_player_elo!]!
+}
+
+"""
+aggregate fields of "v_player_elo"
+"""
+type v_player_elo_aggregate_fields {
+  avg: v_player_elo_avg_fields
+  count(columns: [v_player_elo_select_column!], distinct: Boolean): Int!
+  max: v_player_elo_max_fields
+  min: v_player_elo_min_fields
+  stddev: v_player_elo_stddev_fields
+  stddev_pop: v_player_elo_stddev_pop_fields
+  stddev_samp: v_player_elo_stddev_samp_fields
+  sum: v_player_elo_sum_fields
+  var_pop: v_player_elo_var_pop_fields
+  var_samp: v_player_elo_var_samp_fields
+  variance: v_player_elo_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_elo_avg_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_elo". All fields are combined with a logical 'AND'.
+"""
+input v_player_elo_bool_exp {
+  _and: [v_player_elo_bool_exp!]
+  _not: v_player_elo_bool_exp
+  _or: [v_player_elo_bool_exp!]
+  actual_score: float8_comparison_exp
+  assists: Int_comparison_exp
+  current_elo: Int_comparison_exp
+  damage: Int_comparison_exp
+  damage_percent: float8_comparison_exp
+  deaths: Int_comparison_exp
+  elo_change: Int_comparison_exp
+  expected_score: float8_comparison_exp
+  k_factor: Int_comparison_exp
+  kda: float8_comparison_exp
+  kills: Int_comparison_exp
+  match_created_at: timestamptz_comparison_exp
+  match_id: uuid_comparison_exp
+  match_result: String_comparison_exp
+  opponent_team_elo_avg: float8_comparison_exp
+  performance_multiplier: float8_comparison_exp
+  player_name: String_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  player_team_elo_avg: float8_comparison_exp
+  team_avg_kda: float8_comparison_exp
+}
+
+"""
+columns and relationships of "v_player_elo_changes"
+"""
+type v_player_elo_changes {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""
+aggregated selection of "v_player_elo_changes"
+"""
+type v_player_elo_changes_aggregate {
+  aggregate: v_player_elo_changes_aggregate_fields
+  nodes: [v_player_elo_changes!]!
+}
+
+"""
+aggregate fields of "v_player_elo_changes"
+"""
+type v_player_elo_changes_aggregate_fields {
+  avg: v_player_elo_changes_avg_fields
+  count(columns: [v_player_elo_changes_select_column!], distinct: Boolean): Int!
+  max: v_player_elo_changes_max_fields
+  min: v_player_elo_changes_min_fields
+  stddev: v_player_elo_changes_stddev_fields
+  stddev_pop: v_player_elo_changes_stddev_pop_fields
+  stddev_samp: v_player_elo_changes_stddev_samp_fields
+  sum: v_player_elo_changes_sum_fields
+  var_pop: v_player_elo_changes_var_pop_fields
+  var_samp: v_player_elo_changes_var_samp_fields
+  variance: v_player_elo_changes_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_elo_changes_avg_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_elo_changes". All fields are combined with a logical 'AND'.
+"""
+input v_player_elo_changes_bool_exp {
+  _and: [v_player_elo_changes_bool_exp!]
+  _not: v_player_elo_changes_bool_exp
+  _or: [v_player_elo_changes_bool_exp!]
+  actual_score: float8_comparison_exp
+  assists: Int_comparison_exp
+  current_elo: Int_comparison_exp
+  damage: Int_comparison_exp
+  damage_percent: float8_comparison_exp
+  deaths: Int_comparison_exp
+  elo_change: Int_comparison_exp
+  expected_score: float8_comparison_exp
+  k_factor: Int_comparison_exp
+  kda: float8_comparison_exp
+  kills: Int_comparison_exp
+  match_created_at: timestamptz_comparison_exp
+  match_id: uuid_comparison_exp
+  match_result: String_comparison_exp
+  opponent_team_elo_avg: float8_comparison_exp
+  performance_multiplier: float8_comparison_exp
+  player_name: String_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  player_team_elo_avg: float8_comparison_exp
+  team_avg_kda: float8_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_elo_changes_max_fields {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""aggregate min on columns"""
+type v_player_elo_changes_min_fields {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""Ordering options when selecting data from "v_player_elo_changes"."""
+input v_player_elo_changes_order_by {
+  actual_score: order_by
+  assists: order_by
+  current_elo: order_by
+  damage: order_by
+  damage_percent: order_by
+  deaths: order_by
+  elo_change: order_by
+  expected_score: order_by
+  k_factor: order_by
+  kda: order_by
+  kills: order_by
+  match_created_at: order_by
+  match_id: order_by
+  match_result: order_by
+  opponent_team_elo_avg: order_by
+  performance_multiplier: order_by
+  player_name: order_by
+  player_steam_id: order_by
+  player_team_elo_avg: order_by
+  team_avg_kda: order_by
+}
+
+"""
+select columns of table "v_player_elo_changes"
+"""
+enum v_player_elo_changes_select_column {
+  """column name"""
+  actual_score
+
+  """column name"""
+  assists
+
+  """column name"""
+  current_elo
+
+  """column name"""
+  damage
+
+  """column name"""
+  damage_percent
+
+  """column name"""
+  deaths
+
+  """column name"""
+  elo_change
+
+  """column name"""
+  expected_score
+
+  """column name"""
+  k_factor
+
+  """column name"""
+  kda
+
+  """column name"""
+  kills
+
+  """column name"""
+  match_created_at
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_result
+
+  """column name"""
+  opponent_team_elo_avg
+
+  """column name"""
+  performance_multiplier
+
+  """column name"""
+  player_name
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  player_team_elo_avg
+
+  """column name"""
+  team_avg_kda
+}
+
+"""aggregate stddev on columns"""
+type v_player_elo_changes_stddev_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_elo_changes_stddev_pop_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_elo_changes_stddev_samp_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""
+Streaming cursor of the table "v_player_elo_changes"
+"""
+input v_player_elo_changes_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_elo_changes_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_elo_changes_stream_cursor_value_input {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""aggregate sum on columns"""
+type v_player_elo_changes_sum_fields {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""aggregate var_pop on columns"""
+type v_player_elo_changes_var_pop_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_elo_changes_var_samp_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_elo_changes_variance_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate max on columns"""
+type v_player_elo_max_fields {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""aggregate min on columns"""
+type v_player_elo_min_fields {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""Ordering options when selecting data from "v_player_elo"."""
+input v_player_elo_order_by {
+  actual_score: order_by
+  assists: order_by
+  current_elo: order_by
+  damage: order_by
+  damage_percent: order_by
+  deaths: order_by
+  elo_change: order_by
+  expected_score: order_by
+  k_factor: order_by
+  kda: order_by
+  kills: order_by
+  match_created_at: order_by
+  match_id: order_by
+  match_result: order_by
+  opponent_team_elo_avg: order_by
+  performance_multiplier: order_by
+  player_name: order_by
+  player_steam_id: order_by
+  player_team_elo_avg: order_by
+  team_avg_kda: order_by
+}
+
+"""
+select columns of table "v_player_elo"
+"""
+enum v_player_elo_select_column {
+  """column name"""
+  actual_score
+
+  """column name"""
+  assists
+
+  """column name"""
+  current_elo
+
+  """column name"""
+  damage
+
+  """column name"""
+  damage_percent
+
+  """column name"""
+  deaths
+
+  """column name"""
+  elo_change
+
+  """column name"""
+  expected_score
+
+  """column name"""
+  k_factor
+
+  """column name"""
+  kda
+
+  """column name"""
+  kills
+
+  """column name"""
+  match_created_at
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_result
+
+  """column name"""
+  opponent_team_elo_avg
+
+  """column name"""
+  performance_multiplier
+
+  """column name"""
+  player_name
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  player_team_elo_avg
+
+  """column name"""
+  team_avg_kda
+}
+
+"""aggregate stddev on columns"""
+type v_player_elo_stddev_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_elo_stddev_pop_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_elo_stddev_samp_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""
+Streaming cursor of the table "v_player_elo"
+"""
+input v_player_elo_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_elo_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_elo_stream_cursor_value_input {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  match_created_at: timestamptz
+  match_id: uuid
+  match_result: String
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_name: String
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""aggregate sum on columns"""
+type v_player_elo_sum_fields {
+  actual_score: float8
+  assists: Int
+  current_elo: Int
+  damage: Int
+  damage_percent: float8
+  deaths: Int
+  elo_change: Int
+  expected_score: float8
+  k_factor: Int
+  kda: float8
+  kills: Int
+  opponent_team_elo_avg: float8
+  performance_multiplier: float8
+  player_steam_id: bigint
+  player_team_elo_avg: float8
+  team_avg_kda: float8
+}
+
+"""aggregate var_pop on columns"""
+type v_player_elo_var_pop_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_elo_var_samp_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_elo_variance_fields {
+  actual_score: Float
+  assists: Float
+  current_elo: Float
+  damage: Float
+  damage_percent: Float
+  deaths: Float
+  elo_change: Float
+  expected_score: Float
+  k_factor: Float
+  kda: Float
+  kills: Float
+  opponent_team_elo_avg: Float
+  performance_multiplier: Float
+  player_steam_id: Float
+  player_team_elo_avg: Float
+  team_avg_kda: Float
 }
 
 """
