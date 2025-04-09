@@ -19,7 +19,5 @@ export class EloCalculation extends WorkerHost {
     `,
       [matchId],
     );
-
-    console.info(result);
   }
 }
