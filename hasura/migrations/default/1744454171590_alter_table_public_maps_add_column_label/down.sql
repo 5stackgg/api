@@ -1,4 +1,1 @@
--- Could not auto-generate a down migration.
--- Please write an appropriate down migration for the SQL below:
--- alter table "public"."maps" add column "label" text
---  null;
+alter table "public"."maps" drop column if exists "label"
