@@ -6535,6 +6535,7 @@ type maps {
   e_match_type: e_match_types!
   enabled: Boolean!
   id: uuid!
+  label: String
 
   """An array relationship"""
   match_maps(
@@ -6688,6 +6689,7 @@ input maps_bool_exp {
   e_match_type: e_match_types_bool_exp
   enabled: Boolean_comparison_exp
   id: uuid_comparison_exp
+  label: String_comparison_exp
   match_maps: match_maps_bool_exp
   match_maps_aggregate: match_maps_aggregate_bool_exp
   match_veto_picks: match_map_veto_picks_bool_exp
@@ -6722,6 +6724,7 @@ input maps_insert_input {
   e_match_type: e_match_types_obj_rel_insert_input
   enabled: Boolean
   id: uuid
+  label: String
   match_maps: match_maps_arr_rel_insert_input
   match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   name: String
@@ -6734,6 +6737,7 @@ input maps_insert_input {
 """aggregate max on columns"""
 type maps_max_fields {
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -6745,6 +6749,7 @@ order by max() on columns of table "maps"
 """
 input maps_max_order_by {
   id: order_by
+  label: order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -6754,6 +6759,7 @@ input maps_max_order_by {
 """aggregate min on columns"""
 type maps_min_fields {
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -6765,6 +6771,7 @@ order by min() on columns of table "maps"
 """
 input maps_min_order_by {
   id: order_by
+  label: order_by
   name: order_by
   patch: order_by
   poster: order_by
@@ -6807,6 +6814,7 @@ input maps_order_by {
   e_match_type: e_match_types_order_by
   enabled: order_by
   id: order_by
+  label: order_by
   match_maps_aggregate: match_maps_aggregate_order_by
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
@@ -6833,6 +6841,9 @@ enum maps_select_column {
 
   """column name"""
   id
+
+  """column name"""
+  label
 
   """column name"""
   name
@@ -6879,6 +6890,7 @@ input maps_set_input {
   active_pool: Boolean
   enabled: Boolean
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -6902,6 +6914,7 @@ input maps_stream_cursor_value_input {
   active_pool: Boolean
   enabled: Boolean
   id: uuid
+  label: String
   name: String
   patch: String
   poster: String
@@ -6921,6 +6934,9 @@ enum maps_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  label
 
   """column name"""
   name
@@ -19245,7 +19261,7 @@ enum player_elo_constraint {
   """
   unique or primary key constraint on columns "steam_id", "match_id"
   """
-  player_ratings_pkey
+  player_elo_pkey
 }
 
 """

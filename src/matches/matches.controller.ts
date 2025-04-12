@@ -165,6 +165,14 @@ export class MatchesController {
 
     const match = matches_by_pk;
 
+    match.match_maps = match.match_maps.map((map) => ({
+      ...map,
+      map: {
+        name: map.map.name,
+        workshop_map_id: map.map.workshop_map_id,
+      },
+    }));
+
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
       (player) => ({
         ...player,
