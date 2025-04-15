@@ -75,7 +75,6 @@ BEGIN
 
     SELECT map_id INTO _map_id FROM _map_pool WHERE map_pool_id = _map_pool_id LIMIT 1;
 
-
     IF _map_pool_count = _best_of THEN 
         FOR i IN 1.._best_of LOOP
             INSERT INTO match_maps (match_id, map_id, "order", lineup_1_side, lineup_2_side)
