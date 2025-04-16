@@ -41,7 +41,6 @@ BEGIN
         end if;
     END LOOP;
 
-     -- Add 'Decider' to the end of the pattern array
     pattern := array_append(pattern, 'Decider');
     
     RETURN pattern;
