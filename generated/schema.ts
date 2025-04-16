@@ -735,6 +735,10 @@ export type e_match_status_update_column = 'description' | 'value'
 
 /** columns and relationships of "e_match_types" */
 export interface e_match_types {
+    /** An array relationship */
+    config: match_type_cfgs[]
+    /** An aggregate relationship */
+    config_aggregate: match_type_cfgs_aggregate
     description: Scalars['String']
     /** An array relationship */
     maps: maps[]
@@ -3604,6 +3608,8 @@ export type match_region_veto_picks_update_column = 'created_at' | 'id' | 'match
 /** columns and relationships of "match_type_cfgs" */
 export interface match_type_cfgs {
     cfg: Scalars['String']
+    /** An object relationship */
+    e_match_type: e_match_types
     type: e_match_types_enum
     __typename: 'match_type_cfgs'
 }
@@ -12667,6 +12673,30 @@ where: e_match_status_bool_exp}
 
 /** columns and relationships of "e_match_types" */
 export interface e_match_typesGenqlSelection{
+    /** An array relationship */
+    config?: (match_type_cfgsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_type_cfgs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_type_cfgs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
+    /** An aggregate relationship */
+    config_aggregate?: (match_type_cfgs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_type_cfgs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_type_cfgs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
     description?: boolean | number
     /** An array relationship */
     maps?: (mapsGenqlSelection & { __args?: {
@@ -12718,7 +12748,7 @@ export interface e_match_types_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "e_match_types". All fields are combined with a logical 'AND'. */
-export interface e_match_types_bool_exp {_and?: (e_match_types_bool_exp[] | null),_not?: (e_match_types_bool_exp | null),_or?: (e_match_types_bool_exp[] | null),description?: (String_comparison_exp | null),maps?: (maps_bool_exp | null),maps_aggregate?: (maps_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+export interface e_match_types_bool_exp {_and?: (e_match_types_bool_exp[] | null),_not?: (e_match_types_bool_exp | null),_or?: (e_match_types_bool_exp[] | null),config?: (match_type_cfgs_bool_exp | null),config_aggregate?: (match_type_cfgs_aggregate_bool_exp | null),description?: (String_comparison_exp | null),maps?: (maps_bool_exp | null),maps_aggregate?: (maps_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
 
 
 /** Boolean expression to compare columns of type "e_match_types_enum". All fields are combined with logical 'AND'. */
@@ -12726,7 +12756,7 @@ export interface e_match_types_enum_comparison_exp {_eq?: (e_match_types_enum | 
 
 
 /** input type for inserting data into table "e_match_types" */
-export interface e_match_types_insert_input {description?: (Scalars['String'] | null),maps?: (maps_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+export interface e_match_types_insert_input {config?: (match_type_cfgs_arr_rel_insert_input | null),description?: (Scalars['String'] | null),maps?: (maps_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -12769,7 +12799,7 @@ export interface e_match_types_on_conflict {constraint: e_match_types_constraint
 
 
 /** Ordering options when selecting data from "e_match_types". */
-export interface e_match_types_order_by {description?: (order_by | null),maps_aggregate?: (maps_aggregate_order_by | null),value?: (order_by | null)}
+export interface e_match_types_order_by {config_aggregate?: (match_type_cfgs_aggregate_order_by | null),description?: (order_by | null),maps_aggregate?: (maps_aggregate_order_by | null),value?: (order_by | null)}
 
 
 /** primary key columns input for table: e_match_types */
@@ -17730,6 +17760,8 @@ where: match_region_veto_picks_bool_exp}
 /** columns and relationships of "match_type_cfgs" */
 export interface match_type_cfgsGenqlSelection{
     cfg?: boolean | number
+    /** An object relationship */
+    e_match_type?: e_match_typesGenqlSelection
     type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -17744,6 +17776,10 @@ export interface match_type_cfgs_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface match_type_cfgs_aggregate_bool_exp {count?: (match_type_cfgs_aggregate_bool_exp_count | null)}
+
+export interface match_type_cfgs_aggregate_bool_exp_count {arguments?: (match_type_cfgs_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (match_type_cfgs_bool_exp | null),predicate: Int_comparison_exp}
+
 
 /** aggregate fields of "match_type_cfgs" */
 export interface match_type_cfgs_aggregate_fieldsGenqlSelection{
@@ -17755,12 +17791,22 @@ export interface match_type_cfgs_aggregate_fieldsGenqlSelection{
 }
 
 
+/** order by aggregate values of table "match_type_cfgs" */
+export interface match_type_cfgs_aggregate_order_by {count?: (order_by | null),max?: (match_type_cfgs_max_order_by | null),min?: (match_type_cfgs_min_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "match_type_cfgs" */
+export interface match_type_cfgs_arr_rel_insert_input {data: match_type_cfgs_insert_input[],
+/** upsert condition */
+on_conflict?: (match_type_cfgs_on_conflict | null)}
+
+
 /** Boolean expression to filter rows from the table "match_type_cfgs". All fields are combined with a logical 'AND'. */
-export interface match_type_cfgs_bool_exp {_and?: (match_type_cfgs_bool_exp[] | null),_not?: (match_type_cfgs_bool_exp | null),_or?: (match_type_cfgs_bool_exp[] | null),cfg?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_type_cfgs_bool_exp {_and?: (match_type_cfgs_bool_exp[] | null),_not?: (match_type_cfgs_bool_exp | null),_or?: (match_type_cfgs_bool_exp[] | null),cfg?: (String_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for inserting data into table "match_type_cfgs" */
-export interface match_type_cfgs_insert_input {cfg?: (Scalars['String'] | null),type?: (e_match_types_enum | null)}
+export interface match_type_cfgs_insert_input {cfg?: (Scalars['String'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -17771,12 +17817,20 @@ export interface match_type_cfgs_max_fieldsGenqlSelection{
 }
 
 
+/** order by max() on columns of table "match_type_cfgs" */
+export interface match_type_cfgs_max_order_by {cfg?: (order_by | null)}
+
+
 /** aggregate min on columns */
 export interface match_type_cfgs_min_fieldsGenqlSelection{
     cfg?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** order by min() on columns of table "match_type_cfgs" */
+export interface match_type_cfgs_min_order_by {cfg?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_type_cfgs" */
@@ -17795,7 +17849,7 @@ export interface match_type_cfgs_on_conflict {constraint: match_type_cfgs_constr
 
 
 /** Ordering options when selecting data from "match_type_cfgs". */
-export interface match_type_cfgs_order_by {cfg?: (order_by | null),type?: (order_by | null)}
+export interface match_type_cfgs_order_by {cfg?: (order_by | null),e_match_type?: (e_match_types_order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_type_cfgs */

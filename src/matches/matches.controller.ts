@@ -165,6 +165,20 @@ export class MatchesController {
 
     const match = matches_by_pk;
 
+    const { match_type_cfgs_by_pk: matchTypeCfg } = await this.hasura.query({
+      match_type_cfgs_by_pk: {
+        __args: {
+          type: match.options.type,
+        },
+        cfg: true,
+      },
+    });
+
+    if (matchTypeCfg) {
+      // @ts-ignore
+      match.options.cfg_override = matchTypeCfg.cfg;
+    }
+
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
       (player) => ({
         ...player,

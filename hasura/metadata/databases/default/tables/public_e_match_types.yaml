@@ -3,6 +3,13 @@ table:
   schema: public
 is_enum: true
 array_relationships:
+  - name: config
+    using:
+      foreign_key_constraint_on:
+        column: type
+        table:
+          name: match_type_cfgs
+          schema: public
   - name: maps
     using:
       foreign_key_constraint_on:

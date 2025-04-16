@@ -2099,6 +2099,41 @@ input e_match_status_updates {
 columns and relationships of "e_match_types"
 """
 type e_match_types {
+  """An array relationship"""
+  config(
+    """distinct select on columns"""
+    distinct_on: [match_type_cfgs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_type_cfgs_order_by!]
+
+    """filter the rows returned"""
+    where: match_type_cfgs_bool_exp
+  ): [match_type_cfgs!]!
+
+  """An aggregate relationship"""
+  config_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_type_cfgs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_type_cfgs_order_by!]
+
+    """filter the rows returned"""
+    where: match_type_cfgs_bool_exp
+  ): match_type_cfgs_aggregate!
   description: String!
 
   """An array relationship"""
@@ -2163,6 +2198,8 @@ input e_match_types_bool_exp {
   _and: [e_match_types_bool_exp!]
   _not: e_match_types_bool_exp
   _or: [e_match_types_bool_exp!]
+  config: match_type_cfgs_bool_exp
+  config_aggregate: match_type_cfgs_aggregate_bool_exp
   description: String_comparison_exp
   maps: maps_bool_exp
   maps_aggregate: maps_aggregate_bool_exp
@@ -2205,6 +2242,7 @@ input e_match_types_enum_comparison_exp {
 input type for inserting data into table "e_match_types"
 """
 input e_match_types_insert_input {
+  config: match_type_cfgs_arr_rel_insert_input
   description: String
   maps: maps_arr_rel_insert_input
   value: String
@@ -2254,6 +2292,7 @@ input e_match_types_on_conflict {
 
 """Ordering options when selecting data from "e_match_types"."""
 input e_match_types_order_by {
+  config_aggregate: match_type_cfgs_aggregate_order_by
   description: order_by
   maps_aggregate: maps_aggregate_order_by
   value: order_by
@@ -11170,6 +11209,9 @@ columns and relationships of "match_type_cfgs"
 """
 type match_type_cfgs {
   cfg: String!
+
+  """An object relationship"""
+  e_match_type: e_match_types!
   type: e_match_types_enum!
 }
 
@@ -11179,6 +11221,17 @@ aggregated selection of "match_type_cfgs"
 type match_type_cfgs_aggregate {
   aggregate: match_type_cfgs_aggregate_fields
   nodes: [match_type_cfgs!]!
+}
+
+input match_type_cfgs_aggregate_bool_exp {
+  count: match_type_cfgs_aggregate_bool_exp_count
+}
+
+input match_type_cfgs_aggregate_bool_exp_count {
+  arguments: [match_type_cfgs_select_column!]
+  distinct: Boolean
+  filter: match_type_cfgs_bool_exp
+  predicate: Int_comparison_exp!
 }
 
 """
@@ -11191,6 +11244,25 @@ type match_type_cfgs_aggregate_fields {
 }
 
 """
+order by aggregate values of table "match_type_cfgs"
+"""
+input match_type_cfgs_aggregate_order_by {
+  count: order_by
+  max: match_type_cfgs_max_order_by
+  min: match_type_cfgs_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "match_type_cfgs"
+"""
+input match_type_cfgs_arr_rel_insert_input {
+  data: [match_type_cfgs_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_type_cfgs_on_conflict
+}
+
+"""
 Boolean expression to filter rows from the table "match_type_cfgs". All fields are combined with a logical 'AND'.
 """
 input match_type_cfgs_bool_exp {
@@ -11198,6 +11270,7 @@ input match_type_cfgs_bool_exp {
   _not: match_type_cfgs_bool_exp
   _or: [match_type_cfgs_bool_exp!]
   cfg: String_comparison_exp
+  e_match_type: e_match_types_bool_exp
   type: e_match_types_enum_comparison_exp
 }
 
@@ -11216,6 +11289,7 @@ input type for inserting data into table "match_type_cfgs"
 """
 input match_type_cfgs_insert_input {
   cfg: String
+  e_match_type: e_match_types_obj_rel_insert_input
   type: e_match_types_enum
 }
 
@@ -11224,9 +11298,23 @@ type match_type_cfgs_max_fields {
   cfg: String
 }
 
+"""
+order by max() on columns of table "match_type_cfgs"
+"""
+input match_type_cfgs_max_order_by {
+  cfg: order_by
+}
+
 """aggregate min on columns"""
 type match_type_cfgs_min_fields {
   cfg: String
+}
+
+"""
+order by min() on columns of table "match_type_cfgs"
+"""
+input match_type_cfgs_min_order_by {
+  cfg: order_by
 }
 
 """
@@ -11252,6 +11340,7 @@ input match_type_cfgs_on_conflict {
 """Ordering options when selecting data from "match_type_cfgs"."""
 input match_type_cfgs_order_by {
   cfg: order_by
+  e_match_type: e_match_types_order_by
   type: order_by
 }
 
