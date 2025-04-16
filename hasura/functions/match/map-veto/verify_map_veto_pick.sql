@@ -17,7 +17,7 @@ BEGIN
 
     -- Check if the pickType matches the type of the match_map_veto_pick veto
     IF match_map_veto_pick.type != pickType THEN
-        RAISE EXCEPTION 'Expected pick type of %, got %', pickType, match_map_veto_pick.type USING ERRCODE = '22000';
+        RAISE EXCEPTION 'Expected pick type of %', pickType USING ERRCODE = '22000';
     END IF;
 
     -- Get the lineup_id for the match
