@@ -3601,6 +3601,67 @@ export type match_region_veto_picks_select_column = 'created_at' | 'id' | 'match
 export type match_region_veto_picks_update_column = 'created_at' | 'id' | 'match_id' | 'match_lineup_id' | 'region' | 'type'
 
 
+/** columns and relationships of "match_type_cfgs" */
+export interface match_type_cfgs {
+    cfg: Scalars['String']
+    type: e_match_types_enum
+    __typename: 'match_type_cfgs'
+}
+
+
+/** aggregated selection of "match_type_cfgs" */
+export interface match_type_cfgs_aggregate {
+    aggregate: (match_type_cfgs_aggregate_fields | null)
+    nodes: match_type_cfgs[]
+    __typename: 'match_type_cfgs_aggregate'
+}
+
+
+/** aggregate fields of "match_type_cfgs" */
+export interface match_type_cfgs_aggregate_fields {
+    count: Scalars['Int']
+    max: (match_type_cfgs_max_fields | null)
+    min: (match_type_cfgs_min_fields | null)
+    __typename: 'match_type_cfgs_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "match_type_cfgs" */
+export type match_type_cfgs_constraint = 'match_type_cfgs_pkey'
+
+
+/** aggregate max on columns */
+export interface match_type_cfgs_max_fields {
+    cfg: (Scalars['String'] | null)
+    __typename: 'match_type_cfgs_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface match_type_cfgs_min_fields {
+    cfg: (Scalars['String'] | null)
+    __typename: 'match_type_cfgs_min_fields'
+}
+
+
+/** response of any mutation on the table "match_type_cfgs" */
+export interface match_type_cfgs_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: match_type_cfgs[]
+    __typename: 'match_type_cfgs_mutation_response'
+}
+
+
+/** select columns of table "match_type_cfgs" */
+export type match_type_cfgs_select_column = 'cfg' | 'type'
+
+
+/** update columns of table "match_type_cfgs" */
+export type match_type_cfgs_update_column = 'cfg' | 'type'
+
+
 /** columns and relationships of "matches" */
 export interface matches {
     /** A computed field, executes function "can_assign_server_to_match" */
@@ -4186,6 +4247,10 @@ export interface mutation_root {
     delete_match_region_veto_picks: (match_region_veto_picks_mutation_response | null)
     /** delete single row from the table: "match_region_veto_picks" */
     delete_match_region_veto_picks_by_pk: (match_region_veto_picks | null)
+    /** delete data from the table: "match_type_cfgs" */
+    delete_match_type_cfgs: (match_type_cfgs_mutation_response | null)
+    /** delete single row from the table: "match_type_cfgs" */
+    delete_match_type_cfgs_by_pk: (match_type_cfgs | null)
     /** delete data from the table: "matches" */
     delete_matches: (matches_mutation_response | null)
     /** delete single row from the table: "matches" */
@@ -4426,6 +4491,10 @@ export interface mutation_root {
     insert_match_region_veto_picks: (match_region_veto_picks_mutation_response | null)
     /** insert a single row into the table: "match_region_veto_picks" */
     insert_match_region_veto_picks_one: (match_region_veto_picks | null)
+    /** insert data into the table: "match_type_cfgs" */
+    insert_match_type_cfgs: (match_type_cfgs_mutation_response | null)
+    /** insert a single row into the table: "match_type_cfgs" */
+    insert_match_type_cfgs_one: (match_type_cfgs | null)
     /** insert data into the table: "matches" */
     insert_matches: (matches_mutation_response | null)
     /** insert a single row into the table: "matches" */
@@ -4771,6 +4840,12 @@ export interface mutation_root {
     update_match_region_veto_picks_by_pk: (match_region_veto_picks | null)
     /** update multiples rows of table: "match_region_veto_picks" */
     update_match_region_veto_picks_many: ((match_region_veto_picks_mutation_response | null)[] | null)
+    /** update data of the table: "match_type_cfgs" */
+    update_match_type_cfgs: (match_type_cfgs_mutation_response | null)
+    /** update single row of the table: "match_type_cfgs" */
+    update_match_type_cfgs_by_pk: (match_type_cfgs | null)
+    /** update multiples rows of table: "match_type_cfgs" */
+    update_match_type_cfgs_many: ((match_type_cfgs_mutation_response | null)[] | null)
     /** update data of the table: "matches" */
     update_matches: (matches_mutation_response | null)
     /** update single row of the table: "matches" */
@@ -4923,6 +4998,10 @@ export interface mutation_root {
     update_v_match_captains: (v_match_captains_mutation_response | null)
     /** update multiples rows of table: "v_match_captains" */
     update_v_match_captains_many: ((v_match_captains_mutation_response | null)[] | null)
+    /** update data of the table: "v_pool_maps" */
+    update_v_pool_maps: (v_pool_maps_mutation_response | null)
+    /** update multiples rows of table: "v_pool_maps" */
+    update_v_pool_maps_many: ((v_pool_maps_mutation_response | null)[] | null)
     __typename: 'mutation_root'
 }
 
@@ -7336,6 +7415,12 @@ export interface query_root {
     match_region_veto_picks_aggregate: match_region_veto_picks_aggregate
     /** fetch data from the table: "match_region_veto_picks" using primary key columns */
     match_region_veto_picks_by_pk: (match_region_veto_picks | null)
+    /** fetch data from the table: "match_type_cfgs" */
+    match_type_cfgs: match_type_cfgs[]
+    /** fetch aggregated fields from the table: "match_type_cfgs" */
+    match_type_cfgs_aggregate: match_type_cfgs_aggregate
+    /** fetch data from the table: "match_type_cfgs" using primary key columns */
+    match_type_cfgs_by_pk: (match_type_cfgs | null)
     /** An array relationship */
     matches: matches[]
     /** An aggregate relationship */
@@ -8220,6 +8305,14 @@ export interface subscription_root {
     match_region_veto_picks_by_pk: (match_region_veto_picks | null)
     /** fetch data from the table in a streaming manner: "match_region_veto_picks" */
     match_region_veto_picks_stream: match_region_veto_picks[]
+    /** fetch data from the table: "match_type_cfgs" */
+    match_type_cfgs: match_type_cfgs[]
+    /** fetch aggregated fields from the table: "match_type_cfgs" */
+    match_type_cfgs_aggregate: match_type_cfgs_aggregate
+    /** fetch data from the table: "match_type_cfgs" using primary key columns */
+    match_type_cfgs_by_pk: (match_type_cfgs | null)
+    /** fetch data from the table in a streaming manner: "match_type_cfgs" */
+    match_type_cfgs_stream: match_type_cfgs[]
     /** An array relationship */
     matches: matches[]
     /** An aggregate relationship */
@@ -11243,6 +11336,7 @@ export interface v_player_multi_kills_variance_fields {
 export interface v_pool_maps {
     active_pool: (Scalars['Boolean'] | null)
     id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
     /** An object relationship */
     map_pool: (map_pools | null)
     map_pool_id: (Scalars['uuid'] | null)
@@ -11275,6 +11369,7 @@ export interface v_pool_maps_aggregate_fields {
 /** aggregate max on columns */
 export interface v_pool_maps_max_fields {
     id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
     map_pool_id: (Scalars['uuid'] | null)
     name: (Scalars['String'] | null)
     patch: (Scalars['String'] | null)
@@ -11288,6 +11383,7 @@ export interface v_pool_maps_max_fields {
 /** aggregate min on columns */
 export interface v_pool_maps_min_fields {
     id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
     map_pool_id: (Scalars['uuid'] | null)
     name: (Scalars['String'] | null)
     patch: (Scalars['String'] | null)
@@ -11309,7 +11405,7 @@ export interface v_pool_maps_mutation_response {
 
 
 /** select columns of table "v_pool_maps" */
-export type v_pool_maps_select_column = 'active_pool' | 'id' | 'map_pool_id' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type v_pool_maps_select_column = 'active_pool' | 'id' | 'label' | 'map_pool_id' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
 /** select "v_pool_maps_aggregate_bool_exp_bool_and_arguments_columns" columns of table "v_pool_maps" */
@@ -17631,6 +17727,103 @@ _set?: (match_region_veto_picks_set_input | null),
 where: match_region_veto_picks_bool_exp}
 
 
+/** columns and relationships of "match_type_cfgs" */
+export interface match_type_cfgsGenqlSelection{
+    cfg?: boolean | number
+    type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "match_type_cfgs" */
+export interface match_type_cfgs_aggregateGenqlSelection{
+    aggregate?: match_type_cfgs_aggregate_fieldsGenqlSelection
+    nodes?: match_type_cfgsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "match_type_cfgs" */
+export interface match_type_cfgs_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (match_type_cfgs_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: match_type_cfgs_max_fieldsGenqlSelection
+    min?: match_type_cfgs_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "match_type_cfgs". All fields are combined with a logical 'AND'. */
+export interface match_type_cfgs_bool_exp {_and?: (match_type_cfgs_bool_exp[] | null),_not?: (match_type_cfgs_bool_exp | null),_or?: (match_type_cfgs_bool_exp[] | null),cfg?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+
+
+/** input type for inserting data into table "match_type_cfgs" */
+export interface match_type_cfgs_insert_input {cfg?: (Scalars['String'] | null),type?: (e_match_types_enum | null)}
+
+
+/** aggregate max on columns */
+export interface match_type_cfgs_max_fieldsGenqlSelection{
+    cfg?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface match_type_cfgs_min_fieldsGenqlSelection{
+    cfg?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "match_type_cfgs" */
+export interface match_type_cfgs_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: match_type_cfgsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "match_type_cfgs" */
+export interface match_type_cfgs_on_conflict {constraint: match_type_cfgs_constraint,update_columns?: match_type_cfgs_update_column[],where?: (match_type_cfgs_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "match_type_cfgs". */
+export interface match_type_cfgs_order_by {cfg?: (order_by | null),type?: (order_by | null)}
+
+
+/** primary key columns input for table: match_type_cfgs */
+export interface match_type_cfgs_pk_columns_input {type: e_match_types_enum}
+
+
+/** input type for updating data in table "match_type_cfgs" */
+export interface match_type_cfgs_set_input {cfg?: (Scalars['String'] | null),type?: (e_match_types_enum | null)}
+
+
+/** Streaming cursor of the table "match_type_cfgs" */
+export interface match_type_cfgs_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: match_type_cfgs_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface match_type_cfgs_stream_cursor_value_input {cfg?: (Scalars['String'] | null),type?: (e_match_types_enum | null)}
+
+export interface match_type_cfgs_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (match_type_cfgs_set_input | null),
+/** filter the rows which have to be updated */
+where: match_type_cfgs_bool_exp}
+
+
 /** columns and relationships of "matches" */
 export interface matchesGenqlSelection{
     /** A computed field, executes function "can_assign_server_to_match" */
@@ -18684,6 +18877,12 @@ export interface mutation_rootGenqlSelection{
     where: match_region_veto_picks_bool_exp} })
     /** delete single row from the table: "match_region_veto_picks" */
     delete_match_region_veto_picks_by_pk?: (match_region_veto_picksGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "match_type_cfgs" */
+    delete_match_type_cfgs?: (match_type_cfgs_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: match_type_cfgs_bool_exp} })
+    /** delete single row from the table: "match_type_cfgs" */
+    delete_match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_match_types_enum} })
     /** delete data from the table: "matches" */
     delete_matches?: (matches_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -19262,6 +19461,18 @@ export interface mutation_rootGenqlSelection{
     object: match_region_veto_picks_insert_input, 
     /** upsert condition */
     on_conflict?: (match_region_veto_picks_on_conflict | null)} })
+    /** insert data into the table: "match_type_cfgs" */
+    insert_match_type_cfgs?: (match_type_cfgs_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: match_type_cfgs_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (match_type_cfgs_on_conflict | null)} })
+    /** insert a single row into the table: "match_type_cfgs" */
+    insert_match_type_cfgs_one?: (match_type_cfgsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: match_type_cfgs_insert_input, 
+    /** upsert condition */
+    on_conflict?: (match_type_cfgs_on_conflict | null)} })
     /** insert data into the table: "matches" */
     insert_matches?: (matches_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -20123,6 +20334,20 @@ export interface mutation_rootGenqlSelection{
     update_match_region_veto_picks_many?: (match_region_veto_picks_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: match_region_veto_picks_updates[]} })
+    /** update data of the table: "match_type_cfgs" */
+    update_match_type_cfgs?: (match_type_cfgs_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_type_cfgs_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: match_type_cfgs_bool_exp} })
+    /** update single row of the table: "match_type_cfgs" */
+    update_match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_type_cfgs_set_input | null), pk_columns: match_type_cfgs_pk_columns_input} })
+    /** update multiples rows of table: "match_type_cfgs" */
+    update_match_type_cfgs_many?: (match_type_cfgs_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: match_type_cfgs_updates[]} })
     /** update data of the table: "matches" */
     update_matches?: (matches_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -20607,6 +20832,16 @@ export interface mutation_rootGenqlSelection{
     update_v_match_captains_many?: (v_match_captains_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: v_match_captains_updates[]} })
+    /** update data of the table: "v_pool_maps" */
+    update_v_pool_maps?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (v_pool_maps_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: v_pool_maps_bool_exp} })
+    /** update multiples rows of table: "v_pool_maps" */
+    update_v_pool_maps_many?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: v_pool_maps_updates[]} })
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -25407,6 +25642,32 @@ export interface query_rootGenqlSelection{
     where?: (match_region_veto_picks_bool_exp | null)} })
     /** fetch data from the table: "match_region_veto_picks" using primary key columns */
     match_region_veto_picks_by_pk?: (match_region_veto_picksGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "match_type_cfgs" */
+    match_type_cfgs?: (match_type_cfgsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_type_cfgs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_type_cfgs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_type_cfgs" */
+    match_type_cfgs_aggregate?: (match_type_cfgs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_type_cfgs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_type_cfgs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
+    /** fetch data from the table: "match_type_cfgs" using primary key columns */
+    match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_match_types_enum} })
     /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -28154,6 +28415,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (match_region_veto_picks_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (match_region_veto_picks_bool_exp | null)} })
+    /** fetch data from the table: "match_type_cfgs" */
+    match_type_cfgs?: (match_type_cfgsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_type_cfgs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_type_cfgs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_type_cfgs" */
+    match_type_cfgs_aggregate?: (match_type_cfgs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_type_cfgs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_type_cfgs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
+    /** fetch data from the table: "match_type_cfgs" using primary key columns */
+    match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_match_types_enum} })
+    /** fetch data from the table in a streaming manner: "match_type_cfgs" */
+    match_type_cfgs_stream?: (match_type_cfgsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (match_type_cfgs_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (match_type_cfgs_bool_exp | null)} })
     /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -33769,6 +34064,7 @@ export interface v_player_multi_kills_variance_order_by {attacker_steam_id?: (or
 export interface v_pool_mapsGenqlSelection{
     active_pool?: boolean | number
     id?: boolean | number
+    label?: boolean | number
     /** An object relationship */
     map_pool?: map_poolsGenqlSelection
     map_pool_id?: boolean | number
@@ -33818,16 +34114,17 @@ export interface v_pool_maps_arr_rel_insert_input {data: v_pool_maps_insert_inpu
 
 
 /** Boolean expression to filter rows from the table "v_pool_maps". All fields are combined with a logical 'AND'. */
-export interface v_pool_maps_bool_exp {_and?: (v_pool_maps_bool_exp[] | null),_not?: (v_pool_maps_bool_exp | null),_or?: (v_pool_maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (String_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+export interface v_pool_maps_bool_exp {_and?: (v_pool_maps_bool_exp[] | null),_not?: (v_pool_maps_bool_exp | null),_or?: (v_pool_maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (String_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_pool_maps" */
-export interface v_pool_maps_insert_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (Scalars['String'] | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface v_pool_maps_insert_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (Scalars['String'] | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface v_pool_maps_max_fieldsGenqlSelection{
     id?: boolean | number
+    label?: boolean | number
     map_pool_id?: boolean | number
     name?: boolean | number
     patch?: boolean | number
@@ -33840,12 +34137,13 @@ export interface v_pool_maps_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_pool_maps" */
-export interface v_pool_maps_max_order_by {id?: (order_by | null),map_pool_id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface v_pool_maps_max_order_by {id?: (order_by | null),label?: (order_by | null),map_pool_id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface v_pool_maps_min_fieldsGenqlSelection{
     id?: boolean | number
+    label?: boolean | number
     map_pool_id?: boolean | number
     name?: boolean | number
     patch?: boolean | number
@@ -33858,7 +34156,7 @@ export interface v_pool_maps_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_pool_maps" */
-export interface v_pool_maps_min_order_by {id?: (order_by | null),map_pool_id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface v_pool_maps_min_order_by {id?: (order_by | null),label?: (order_by | null),map_pool_id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "v_pool_maps" */
@@ -33873,7 +34171,11 @@ export interface v_pool_maps_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "v_pool_maps". */
-export interface v_pool_maps_order_by {active_pool?: (order_by | null),id?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface v_pool_maps_order_by {active_pool?: (order_by | null),id?: (order_by | null),label?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+
+
+/** input type for updating data in table "v_pool_maps" */
+export interface v_pool_maps_set_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),map_pool_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (Scalars['String'] | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "v_pool_maps" */
@@ -33885,7 +34187,13 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_pool_maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),map_pool_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (Scalars['String'] | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface v_pool_maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),map_pool_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (Scalars['String'] | null),workshop_map_id?: (Scalars['String'] | null)}
+
+export interface v_pool_maps_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (v_pool_maps_set_input | null),
+/** filter the rows which have to be updated */
+where: v_pool_maps_bool_exp}
 
 export type QueryGenqlSelection = query_rootGenqlSelection
 export type MutationGenqlSelection = mutation_rootGenqlSelection
@@ -36264,6 +36572,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ismatch_region_veto_picks_mutation_response = (obj?: { __typename?: any } | null): obj is match_region_veto_picks_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_region_veto_picks_mutation_response"')
       return match_region_veto_picks_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_type_cfgs_possibleTypes: string[] = ['match_type_cfgs']
+    export const ismatch_type_cfgs = (obj?: { __typename?: any } | null): obj is match_type_cfgs => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_type_cfgs"')
+      return match_type_cfgs_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_type_cfgs_aggregate_possibleTypes: string[] = ['match_type_cfgs_aggregate']
+    export const ismatch_type_cfgs_aggregate = (obj?: { __typename?: any } | null): obj is match_type_cfgs_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_type_cfgs_aggregate"')
+      return match_type_cfgs_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_type_cfgs_aggregate_fields_possibleTypes: string[] = ['match_type_cfgs_aggregate_fields']
+    export const ismatch_type_cfgs_aggregate_fields = (obj?: { __typename?: any } | null): obj is match_type_cfgs_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_type_cfgs_aggregate_fields"')
+      return match_type_cfgs_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_type_cfgs_max_fields_possibleTypes: string[] = ['match_type_cfgs_max_fields']
+    export const ismatch_type_cfgs_max_fields = (obj?: { __typename?: any } | null): obj is match_type_cfgs_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_type_cfgs_max_fields"')
+      return match_type_cfgs_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_type_cfgs_min_fields_possibleTypes: string[] = ['match_type_cfgs_min_fields']
+    export const ismatch_type_cfgs_min_fields = (obj?: { __typename?: any } | null): obj is match_type_cfgs_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_type_cfgs_min_fields"')
+      return match_type_cfgs_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_type_cfgs_mutation_response_possibleTypes: string[] = ['match_type_cfgs_mutation_response']
+    export const ismatch_type_cfgs_mutation_response = (obj?: { __typename?: any } | null): obj is match_type_cfgs_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_type_cfgs_mutation_response"')
+      return match_type_cfgs_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -40909,6 +41265,20 @@ export const enumMatchRegionVetoPicksUpdateColumn = {
    type: 'type' as const
 }
 
+export const enumMatchTypeCfgsConstraint = {
+   match_type_cfgs_pkey: 'match_type_cfgs_pkey' as const
+}
+
+export const enumMatchTypeCfgsSelectColumn = {
+   cfg: 'cfg' as const,
+   type: 'type' as const
+}
+
+export const enumMatchTypeCfgsUpdateColumn = {
+   cfg: 'cfg' as const,
+   type: 'type' as const
+}
+
 export const enumMatchesConstraint = {
    matches_lineup_1_id_key: 'matches_lineup_1_id_key' as const,
    matches_lineup_1_id_lineup_2_id_key: 'matches_lineup_1_id_lineup_2_id_key' as const,
@@ -41647,6 +42017,7 @@ export const enumVPlayerMultiKillsSelectColumn = {
 export const enumVPoolMapsSelectColumn = {
    active_pool: 'active_pool' as const,
    id: 'id' as const,
+   label: 'label' as const,
    map_pool_id: 'map_pool_id' as const,
    name: 'name' as const,
    patch: 'patch' as const,

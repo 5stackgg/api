@@ -111,7 +111,7 @@ export class MatchesModule implements NestModule {
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
     private readonly postgres: PostgresService,
   ) {
-    if (process.env.RUN_MIGRATIONS) {  
+    if (process.env.RUN_MIGRATIONS) {
       return;
     }
 
@@ -174,7 +174,7 @@ export class MatchesModule implements NestModule {
         },
       },
     );
-    
+
     void this.generatePlayerRatings();
   }
 

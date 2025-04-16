@@ -1,0 +1,1 @@
+CREATE TABLE "public"."match_type_cfgs" ("type" text NOT NULL, "cfg" text NOT NULL, PRIMARY KEY ("type") , FOREIGN KEY ("type") REFERENCES "public"."e_match_types"("value") ON UPDATE cascade ON DELETE restrict);

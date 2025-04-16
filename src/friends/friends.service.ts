@@ -23,10 +23,10 @@ export class FriendsService {
       return friend.steamid;
     });
 
-    if(!friends || friends.length === 0) {
+    if (!friends || friends.length === 0) {
       return;
     }
-    
+
     const { players } = await this.hasura.query({
       players: {
         __args: {
@@ -41,8 +41,8 @@ export class FriendsService {
     });
 
     console.info({
-      players
-    })
+      players,
+    });
 
     for (const player of players) {
       await this.hasura.mutation({

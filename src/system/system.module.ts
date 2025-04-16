@@ -39,9 +39,7 @@ import { NotificationsModule } from "src/notifications/notifications.module";
   controllers: [SystemController],
 })
 export class SystemModule {
-  constructor(
-    @InjectQueue(SystemQueues.Version) queue: Queue,
-  ) {
+  constructor(@InjectQueue(SystemQueues.Version) queue: Queue) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
