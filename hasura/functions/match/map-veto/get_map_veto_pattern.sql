@@ -24,8 +24,11 @@ BEGIN
         WHERE m.id = _match.id;
 
     pool_size := coalesce(array_length(pool, 1), 0);
-    
-    IF pool_size < best_of + 2 THEN
+
+
+    IF best_of = 1 THEN
+	base_pattern := ARRAY['Ban'];
+    ElSE IF pool_size < best_of + 2 THEN
         base_pattern := ARRAY['Ban', 'Pick', 'Pick'];
     ELSE
         base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick'];
