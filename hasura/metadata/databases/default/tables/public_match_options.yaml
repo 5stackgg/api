@@ -41,6 +41,7 @@ insert_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -62,6 +63,7 @@ insert_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -83,6 +85,7 @@ insert_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -104,6 +107,7 @@ insert_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -126,6 +130,7 @@ select_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -148,6 +153,7 @@ update_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -169,7 +175,10 @@ update_permissions:
         - mr
         - number_of_substitutes
         - overtime
+        - prefer_dedicated_server
+        - ready_setting
         - region_veto
+        - regions
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
@@ -196,6 +205,7 @@ update_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting
@@ -224,6 +234,7 @@ update_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ready_setting
         - region_veto
         - regions
         - tech_timeout_setting

@@ -1005,6 +1005,71 @@ export type e_player_roles_select_column = 'description' | 'value'
 export type e_player_roles_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_ready_settings" */
+export interface e_ready_settings {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_ready_settings'
+}
+
+
+/** aggregated selection of "e_ready_settings" */
+export interface e_ready_settings_aggregate {
+    aggregate: (e_ready_settings_aggregate_fields | null)
+    nodes: e_ready_settings[]
+    __typename: 'e_ready_settings_aggregate'
+}
+
+
+/** aggregate fields of "e_ready_settings" */
+export interface e_ready_settings_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_ready_settings_max_fields | null)
+    min: (e_ready_settings_min_fields | null)
+    __typename: 'e_ready_settings_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_ready_settings" */
+export type e_ready_settings_constraint = 'e_ready_settings_pkey'
+
+export type e_ready_settings_enum = 'Admins' | 'Captains' | 'Coach' | 'Players'
+
+
+/** aggregate max on columns */
+export interface e_ready_settings_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_ready_settings_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_ready_settings_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_ready_settings_min_fields'
+}
+
+
+/** response of any mutation on the table "e_ready_settings" */
+export interface e_ready_settings_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_ready_settings[]
+    __typename: 'e_ready_settings_mutation_response'
+}
+
+
+/** select columns of table "e_ready_settings" */
+export type e_ready_settings_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_ready_settings" */
+export type e_ready_settings_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_sanction_types" */
 export interface e_sanction_types {
     description: Scalars['String']
@@ -1244,7 +1309,7 @@ export interface e_timeout_settings_aggregate_fields {
 /** unique or primary key constraints on table "e_timeout_settings" */
 export type e_timeout_settings_constraint = 'e_timeout_settings_pkey'
 
-export type e_timeout_settings_enum = 'Admin' | 'Coach' | 'CoachAndPlayers'
+export type e_timeout_settings_enum = 'Admin' | 'Coach' | 'CoachAndCaptains' | 'CoachAndPlayers'
 
 
 /** aggregate max on columns */
@@ -3361,6 +3426,7 @@ export interface match_options {
     number_of_substitutes: Scalars['Int']
     overtime: Scalars['Boolean']
     prefer_dedicated_server: Scalars['Boolean']
+    ready_setting: e_ready_settings_enum
     region_veto: Scalars['Boolean']
     regions: (Scalars['String'][] | null)
     tech_timeout_setting: e_timeout_settings_enum
@@ -3451,7 +3517,7 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -3495,7 +3561,7 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -4165,6 +4231,10 @@ export interface mutation_root {
     delete_e_player_roles: (e_player_roles_mutation_response | null)
     /** delete single row from the table: "e_player_roles" */
     delete_e_player_roles_by_pk: (e_player_roles | null)
+    /** delete data from the table: "e_ready_settings" */
+    delete_e_ready_settings: (e_ready_settings_mutation_response | null)
+    /** delete single row from the table: "e_ready_settings" */
+    delete_e_ready_settings_by_pk: (e_ready_settings | null)
     /** delete data from the table: "e_sanction_types" */
     delete_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** delete single row from the table: "e_sanction_types" */
@@ -4409,6 +4479,10 @@ export interface mutation_root {
     insert_e_player_roles: (e_player_roles_mutation_response | null)
     /** insert a single row into the table: "e_player_roles" */
     insert_e_player_roles_one: (e_player_roles | null)
+    /** insert data into the table: "e_ready_settings" */
+    insert_e_ready_settings: (e_ready_settings_mutation_response | null)
+    /** insert a single row into the table: "e_ready_settings" */
+    insert_e_ready_settings_one: (e_ready_settings | null)
     /** insert data into the table: "e_sanction_types" */
     insert_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** insert a single row into the table: "e_sanction_types" */
@@ -4714,6 +4788,12 @@ export interface mutation_root {
     update_e_player_roles_by_pk: (e_player_roles | null)
     /** update multiples rows of table: "e_player_roles" */
     update_e_player_roles_many: ((e_player_roles_mutation_response | null)[] | null)
+    /** update data of the table: "e_ready_settings" */
+    update_e_ready_settings: (e_ready_settings_mutation_response | null)
+    /** update single row of the table: "e_ready_settings" */
+    update_e_ready_settings_by_pk: (e_ready_settings | null)
+    /** update multiples rows of table: "e_ready_settings" */
+    update_e_ready_settings_many: ((e_ready_settings_mutation_response | null)[] | null)
     /** update data of the table: "e_sanction_types" */
     update_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** update single row of the table: "e_sanction_types" */
@@ -7287,6 +7367,12 @@ export interface query_root {
     e_player_roles_aggregate: e_player_roles_aggregate
     /** fetch data from the table: "e_player_roles" using primary key columns */
     e_player_roles_by_pk: (e_player_roles | null)
+    /** fetch data from the table: "e_ready_settings" */
+    e_ready_settings: e_ready_settings[]
+    /** fetch aggregated fields from the table: "e_ready_settings" */
+    e_ready_settings_aggregate: e_ready_settings_aggregate
+    /** fetch data from the table: "e_ready_settings" using primary key columns */
+    e_ready_settings_by_pk: (e_ready_settings | null)
     /** fetch data from the table: "e_sanction_types" */
     e_sanction_types: e_sanction_types[]
     /** fetch aggregated fields from the table: "e_sanction_types" */
@@ -8135,6 +8221,14 @@ export interface subscription_root {
     e_player_roles_by_pk: (e_player_roles | null)
     /** fetch data from the table in a streaming manner: "e_player_roles" */
     e_player_roles_stream: e_player_roles[]
+    /** fetch data from the table: "e_ready_settings" */
+    e_ready_settings: e_ready_settings[]
+    /** fetch aggregated fields from the table: "e_ready_settings" */
+    e_ready_settings_aggregate: e_ready_settings_aggregate
+    /** fetch data from the table: "e_ready_settings" using primary key columns */
+    e_ready_settings_by_pk: (e_ready_settings | null)
+    /** fetch data from the table in a streaming manner: "e_ready_settings" */
+    e_ready_settings_stream: e_ready_settings[]
     /** fetch data from the table: "e_sanction_types" */
     e_sanction_types: e_sanction_types[]
     /** fetch aggregated fields from the table: "e_sanction_types" */
@@ -13161,6 +13255,109 @@ _set?: (e_player_roles_set_input | null),
 where: e_player_roles_bool_exp}
 
 
+/** columns and relationships of "e_ready_settings" */
+export interface e_ready_settingsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_ready_settings" */
+export interface e_ready_settings_aggregateGenqlSelection{
+    aggregate?: e_ready_settings_aggregate_fieldsGenqlSelection
+    nodes?: e_ready_settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_ready_settings" */
+export interface e_ready_settings_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_ready_settings_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_ready_settings_max_fieldsGenqlSelection
+    min?: e_ready_settings_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_ready_settings". All fields are combined with a logical 'AND'. */
+export interface e_ready_settings_bool_exp {_and?: (e_ready_settings_bool_exp[] | null),_not?: (e_ready_settings_bool_exp | null),_or?: (e_ready_settings_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_ready_settings_enum". All fields are combined with logical 'AND'. */
+export interface e_ready_settings_enum_comparison_exp {_eq?: (e_ready_settings_enum | null),_in?: (e_ready_settings_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_ready_settings_enum | null),_nin?: (e_ready_settings_enum[] | null)}
+
+
+/** input type for inserting data into table "e_ready_settings" */
+export interface e_ready_settings_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_ready_settings_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_ready_settings_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_ready_settings" */
+export interface e_ready_settings_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_ready_settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_ready_settings" */
+export interface e_ready_settings_on_conflict {constraint: e_ready_settings_constraint,update_columns?: e_ready_settings_update_column[],where?: (e_ready_settings_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_ready_settings". */
+export interface e_ready_settings_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_ready_settings */
+export interface e_ready_settings_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_ready_settings" */
+export interface e_ready_settings_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_ready_settings" */
+export interface e_ready_settings_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_ready_settings_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_ready_settings_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_ready_settings_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_ready_settings_set_input | null),
+/** filter the rows which have to be updated */
+where: e_ready_settings_bool_exp}
+
+
 /** columns and relationships of "e_sanction_types" */
 export interface e_sanction_typesGenqlSelection{
     description?: boolean | number
@@ -17399,6 +17596,7 @@ export interface match_optionsGenqlSelection{
     number_of_substitutes?: boolean | number
     overtime?: boolean | number
     prefer_dedicated_server?: boolean | number
+    ready_setting?: boolean | number
     region_veto?: boolean | number
     regions?: boolean | number
     tech_timeout_setting?: boolean | number
@@ -17451,7 +17649,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -17459,7 +17657,7 @@ export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?:
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -17514,7 +17712,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
+export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -17522,7 +17720,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -17567,7 +17765,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -18799,6 +18997,12 @@ export interface mutation_rootGenqlSelection{
     where: e_player_roles_bool_exp} })
     /** delete single row from the table: "e_player_roles" */
     delete_e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_ready_settings" */
+    delete_e_ready_settings?: (e_ready_settings_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_ready_settings_bool_exp} })
+    /** delete single row from the table: "e_ready_settings" */
+    delete_e_ready_settings_by_pk?: (e_ready_settingsGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_sanction_types" */
     delete_e_sanction_types?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -19251,6 +19455,18 @@ export interface mutation_rootGenqlSelection{
     object: e_player_roles_insert_input, 
     /** upsert condition */
     on_conflict?: (e_player_roles_on_conflict | null)} })
+    /** insert data into the table: "e_ready_settings" */
+    insert_e_ready_settings?: (e_ready_settings_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_ready_settings_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_ready_settings_on_conflict | null)} })
+    /** insert a single row into the table: "e_ready_settings" */
+    insert_e_ready_settings_one?: (e_ready_settingsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_ready_settings_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_ready_settings_on_conflict | null)} })
     /** insert data into the table: "e_sanction_types" */
     insert_e_sanction_types?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -20044,6 +20260,20 @@ export interface mutation_rootGenqlSelection{
     update_e_player_roles_many?: (e_player_roles_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_player_roles_updates[]} })
+    /** update data of the table: "e_ready_settings" */
+    update_e_ready_settings?: (e_ready_settings_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_ready_settings_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_ready_settings_bool_exp} })
+    /** update single row of the table: "e_ready_settings" */
+    update_e_ready_settings_by_pk?: (e_ready_settingsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_ready_settings_set_input | null), pk_columns: e_ready_settings_pk_columns_input} })
+    /** update multiples rows of table: "e_ready_settings" */
+    update_e_ready_settings_many?: (e_ready_settings_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_ready_settings_updates[]} })
     /** update data of the table: "e_sanction_types" */
     update_e_sanction_types?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -25122,6 +25352,32 @@ export interface query_rootGenqlSelection{
     where?: (e_player_roles_bool_exp | null)} })
     /** fetch data from the table: "e_player_roles" using primary key columns */
     e_player_roles_by_pk?: (e_player_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_ready_settings" */
+    e_ready_settings?: (e_ready_settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_ready_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_ready_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_ready_settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_ready_settings" */
+    e_ready_settings_aggregate?: (e_ready_settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_ready_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_ready_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_ready_settings_bool_exp | null)} })
+    /** fetch data from the table: "e_ready_settings" using primary key columns */
+    e_ready_settings_by_pk?: (e_ready_settingsGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_sanction_types" */
     e_sanction_types?: (e_sanction_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -27721,6 +27977,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_player_roles_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_player_roles_bool_exp | null)} })
+    /** fetch data from the table: "e_ready_settings" */
+    e_ready_settings?: (e_ready_settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_ready_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_ready_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_ready_settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_ready_settings" */
+    e_ready_settings_aggregate?: (e_ready_settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_ready_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_ready_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_ready_settings_bool_exp | null)} })
+    /** fetch data from the table: "e_ready_settings" using primary key columns */
+    e_ready_settings_by_pk?: (e_ready_settingsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_ready_settings" */
+    e_ready_settings_stream?: (e_ready_settingsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_ready_settings_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_ready_settings_bool_exp | null)} })
     /** fetch data from the table: "e_sanction_types" */
     e_sanction_types?: (e_sanction_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -34998,6 +35288,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_ready_settings_possibleTypes: string[] = ['e_ready_settings']
+    export const ise_ready_settings = (obj?: { __typename?: any } | null): obj is e_ready_settings => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_ready_settings"')
+      return e_ready_settings_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_ready_settings_aggregate_possibleTypes: string[] = ['e_ready_settings_aggregate']
+    export const ise_ready_settings_aggregate = (obj?: { __typename?: any } | null): obj is e_ready_settings_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_ready_settings_aggregate"')
+      return e_ready_settings_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_ready_settings_aggregate_fields_possibleTypes: string[] = ['e_ready_settings_aggregate_fields']
+    export const ise_ready_settings_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_ready_settings_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_ready_settings_aggregate_fields"')
+      return e_ready_settings_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_ready_settings_max_fields_possibleTypes: string[] = ['e_ready_settings_max_fields']
+    export const ise_ready_settings_max_fields = (obj?: { __typename?: any } | null): obj is e_ready_settings_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_ready_settings_max_fields"')
+      return e_ready_settings_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_ready_settings_min_fields_possibleTypes: string[] = ['e_ready_settings_min_fields']
+    export const ise_ready_settings_min_fields = (obj?: { __typename?: any } | null): obj is e_ready_settings_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_ready_settings_min_fields"')
+      return e_ready_settings_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_ready_settings_mutation_response_possibleTypes: string[] = ['e_ready_settings_mutation_response']
+    export const ise_ready_settings_mutation_response = (obj?: { __typename?: any } | null): obj is e_ready_settings_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_ready_settings_mutation_response"')
+      return e_ready_settings_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_sanction_types_possibleTypes: string[] = ['e_sanction_types']
     export const ise_sanction_types = (obj?: { __typename?: any } | null): obj is e_sanction_types => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_sanction_types"')
@@ -40754,6 +41092,27 @@ export const enumEPlayerRolesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumEReadySettingsConstraint = {
+   e_ready_settings_pkey: 'e_ready_settings_pkey' as const
+}
+
+export const enumEReadySettingsEnum = {
+   Admins: 'Admins' as const,
+   Captains: 'Captains' as const,
+   Coach: 'Coach' as const,
+   Players: 'Players' as const
+}
+
+export const enumEReadySettingsSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEReadySettingsUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumESanctionTypesConstraint = {
    e_sanction_types_pkey: 'e_sanction_types_pkey' as const
 }
@@ -40823,6 +41182,7 @@ export const enumETimeoutSettingsConstraint = {
 export const enumETimeoutSettingsEnum = {
    Admin: 'Admin' as const,
    Coach: 'Coach' as const,
+   CoachAndCaptains: 'CoachAndCaptains' as const,
    CoachAndPlayers: 'CoachAndPlayers' as const
 }
 
@@ -41268,6 +41628,7 @@ export const enumMatchOptionsSelectColumn = {
    number_of_substitutes: 'number_of_substitutes' as const,
    overtime: 'overtime' as const,
    prefer_dedicated_server: 'prefer_dedicated_server' as const,
+   ready_setting: 'ready_setting' as const,
    region_veto: 'region_veto' as const,
    regions: 'regions' as const,
    tech_timeout_setting: 'tech_timeout_setting' as const,
@@ -41289,6 +41650,7 @@ export const enumMatchOptionsUpdateColumn = {
    number_of_substitutes: 'number_of_substitutes' as const,
    overtime: 'overtime' as const,
    prefer_dedicated_server: 'prefer_dedicated_server' as const,
+   ready_setting: 'ready_setting' as const,
    region_veto: 'region_veto' as const,
    regions: 'regions' as const,
    tech_timeout_setting: 'tech_timeout_setting' as const,

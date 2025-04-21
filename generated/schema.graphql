@@ -2921,6 +2921,183 @@ input e_player_roles_updates {
 }
 
 """
+columns and relationships of "e_ready_settings"
+"""
+type e_ready_settings {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_ready_settings"
+"""
+type e_ready_settings_aggregate {
+  aggregate: e_ready_settings_aggregate_fields
+  nodes: [e_ready_settings!]!
+}
+
+"""
+aggregate fields of "e_ready_settings"
+"""
+type e_ready_settings_aggregate_fields {
+  count(columns: [e_ready_settings_select_column!], distinct: Boolean): Int!
+  max: e_ready_settings_max_fields
+  min: e_ready_settings_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_ready_settings". All fields are combined with a logical 'AND'.
+"""
+input e_ready_settings_bool_exp {
+  _and: [e_ready_settings_bool_exp!]
+  _not: e_ready_settings_bool_exp
+  _or: [e_ready_settings_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_ready_settings"
+"""
+enum e_ready_settings_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_ready_settings_pkey
+}
+
+enum e_ready_settings_enum {
+  """Admins Only"""
+  Admins
+
+  """Captains Only"""
+  Captains
+
+  """Coach Only"""
+  Coach
+
+  """All Players"""
+  Players
+}
+
+"""
+Boolean expression to compare columns of type "e_ready_settings_enum". All fields are combined with logical 'AND'.
+"""
+input e_ready_settings_enum_comparison_exp {
+  _eq: e_ready_settings_enum
+  _in: [e_ready_settings_enum!]
+  _is_null: Boolean
+  _neq: e_ready_settings_enum
+  _nin: [e_ready_settings_enum!]
+}
+
+"""
+input type for inserting data into table "e_ready_settings"
+"""
+input e_ready_settings_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_ready_settings_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_ready_settings_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_ready_settings"
+"""
+type e_ready_settings_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_ready_settings!]!
+}
+
+"""
+on_conflict condition type for table "e_ready_settings"
+"""
+input e_ready_settings_on_conflict {
+  constraint: e_ready_settings_constraint!
+  update_columns: [e_ready_settings_update_column!]! = []
+  where: e_ready_settings_bool_exp
+}
+
+"""Ordering options when selecting data from "e_ready_settings"."""
+input e_ready_settings_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_ready_settings"""
+input e_ready_settings_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_ready_settings"
+"""
+enum e_ready_settings_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_ready_settings"
+"""
+input e_ready_settings_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_ready_settings"
+"""
+input e_ready_settings_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_ready_settings_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_ready_settings_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_ready_settings"
+"""
+enum e_ready_settings_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_ready_settings_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_ready_settings_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_ready_settings_bool_exp!
+}
+
+"""
 columns and relationships of "e_sanction_types"
 """
 type e_sanction_types {
@@ -3680,6 +3857,9 @@ enum e_timeout_settings_enum {
 
   """Coach Only"""
   Coach
+
+  """Coach And Captains"""
+  CoachAndCaptains
 
   """Coach And Players"""
   CoachAndPlayers
@@ -10484,6 +10664,7 @@ type match_options {
   number_of_substitutes: Int!
   overtime: Boolean!
   prefer_dedicated_server: Boolean!
+  ready_setting: e_ready_settings_enum!
   region_veto: Boolean!
   regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum!
@@ -10551,6 +10732,7 @@ input match_options_bool_exp {
   number_of_substitutes: Int_comparison_exp
   overtime: Boolean_comparison_exp
   prefer_dedicated_server: Boolean_comparison_exp
+  ready_setting: e_ready_settings_enum_comparison_exp
   region_veto: Boolean_comparison_exp
   regions: String_array_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
@@ -10598,6 +10780,7 @@ input match_options_insert_input {
   number_of_substitutes: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
+  ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum
@@ -10678,6 +10861,7 @@ input match_options_order_by {
   number_of_substitutes: order_by
   overtime: order_by
   prefer_dedicated_server: order_by
+  ready_setting: order_by
   region_veto: order_by
   regions: order_by
   tech_timeout_setting: order_by
@@ -10733,6 +10917,9 @@ enum match_options_select_column {
   prefer_dedicated_server
 
   """column name"""
+  ready_setting
+
+  """column name"""
   region_veto
 
   """column name"""
@@ -10767,6 +10954,7 @@ input match_options_set_input {
   number_of_substitutes: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
+  ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum
@@ -10824,6 +11012,7 @@ input match_options_stream_cursor_value_input {
   number_of_substitutes: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
+  ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
   tech_timeout_setting: e_timeout_settings_enum
@@ -10879,6 +11068,9 @@ enum match_options_update_column {
 
   """column name"""
   prefer_dedicated_server
+
+  """column name"""
+  ready_setting
 
   """column name"""
   region_veto
@@ -13249,6 +13441,19 @@ type mutation_root {
   delete_e_player_roles_by_pk(value: String!): e_player_roles
 
   """
+  delete data from the table: "e_ready_settings"
+  """
+  delete_e_ready_settings(
+    """filter the rows which have to be deleted"""
+    where: e_ready_settings_bool_exp!
+  ): e_ready_settings_mutation_response
+
+  """
+  delete single row from the table: "e_ready_settings"
+  """
+  delete_e_ready_settings_by_pk(value: String!): e_ready_settings
+
+  """
   delete data from the table: "e_sanction_types"
   """
   delete_e_sanction_types(
@@ -14166,6 +14371,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_player_roles_on_conflict
   ): e_player_roles
+
+  """
+  insert data into the table: "e_ready_settings"
+  """
+  insert_e_ready_settings(
+    """the rows to be inserted"""
+    objects: [e_ready_settings_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_ready_settings_on_conflict
+  ): e_ready_settings_mutation_response
+
+  """
+  insert a single row into the table: "e_ready_settings"
+  """
+  insert_e_ready_settings_one(
+    """the row to be inserted"""
+    object: e_ready_settings_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_ready_settings_on_conflict
+  ): e_ready_settings
 
   """
   insert data into the table: "e_sanction_types"
@@ -15649,6 +15876,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_player_roles_updates!]!
   ): [e_player_roles_mutation_response]
+
+  """
+  update data of the table: "e_ready_settings"
+  """
+  update_e_ready_settings(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_ready_settings_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_ready_settings_bool_exp!
+  ): e_ready_settings_mutation_response
+
+  """
+  update single row of the table: "e_ready_settings"
+  """
+  update_e_ready_settings_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_ready_settings_set_input
+    pk_columns: e_ready_settings_pk_columns_input!
+  ): e_ready_settings
+
+  """
+  update multiples rows of table: "e_ready_settings"
+  """
+  update_e_ready_settings_many(
+    """updates to execute, in order"""
+    updates: [e_ready_settings_updates!]!
+  ): [e_ready_settings_mutation_response]
 
   """
   update data of the table: "e_sanction_types"
@@ -24715,6 +24970,51 @@ type query_root {
   e_player_roles_by_pk(value: String!): e_player_roles
 
   """
+  fetch data from the table: "e_ready_settings"
+  """
+  e_ready_settings(
+    """distinct select on columns"""
+    distinct_on: [e_ready_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_ready_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_ready_settings_bool_exp
+  ): [e_ready_settings!]!
+
+  """
+  fetch aggregated fields from the table: "e_ready_settings"
+  """
+  e_ready_settings_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_ready_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_ready_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_ready_settings_bool_exp
+  ): e_ready_settings_aggregate!
+
+  """
+  fetch data from the table: "e_ready_settings" using primary key columns
+  """
+  e_ready_settings_by_pk(value: String!): e_ready_settings
+
+  """
   fetch data from the table: "e_sanction_types"
   """
   e_sanction_types(
@@ -29039,6 +29339,65 @@ type subscription_root {
     """filter the rows returned"""
     where: e_player_roles_bool_exp
   ): [e_player_roles!]!
+
+  """
+  fetch data from the table: "e_ready_settings"
+  """
+  e_ready_settings(
+    """distinct select on columns"""
+    distinct_on: [e_ready_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_ready_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_ready_settings_bool_exp
+  ): [e_ready_settings!]!
+
+  """
+  fetch aggregated fields from the table: "e_ready_settings"
+  """
+  e_ready_settings_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_ready_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_ready_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_ready_settings_bool_exp
+  ): e_ready_settings_aggregate!
+
+  """
+  fetch data from the table: "e_ready_settings" using primary key columns
+  """
+  e_ready_settings_by_pk(value: String!): e_ready_settings
+
+  """
+  fetch data from the table in a streaming manner: "e_ready_settings"
+  """
+  e_ready_settings_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_ready_settings_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_ready_settings_bool_exp
+  ): [e_ready_settings!]!
 
   """
   fetch data from the table: "e_sanction_types"
