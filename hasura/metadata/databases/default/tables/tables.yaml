@@ -12,6 +12,7 @@
 - "!include public_e_notification_types.yaml"
 - "!include public_e_objective_types.yaml"
 - "!include public_e_player_roles.yaml"
+- "!include public_e_ready_settings.yaml"
 - "!include public_e_sanction_types.yaml"
 - "!include public_e_sides.yaml"
 - "!include public_e_team_roles.yaml"

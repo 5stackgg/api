@@ -1033,7 +1033,7 @@ export interface e_ready_settings_aggregate_fields {
 /** unique or primary key constraints on table "e_ready_settings" */
 export type e_ready_settings_constraint = 'e_ready_settings_pkey'
 
-export type e_ready_settings_enum = 'Admins' | 'Captains' | 'Coach' | 'Players'
+export type e_ready_settings_enum = 'Admin' | 'Captains' | 'Coach' | 'Players'
 
 
 /** aggregate max on columns */
@@ -41097,7 +41097,7 @@ export const enumEReadySettingsConstraint = {
 }
 
 export const enumEReadySettingsEnum = {
-   Admins: 'Admins' as const,
+   Admin: 'Admin' as const,
    Captains: 'Captains' as const,
    Coach: 'Coach' as const,
    Players: 'Players' as const

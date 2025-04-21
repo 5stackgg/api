@@ -2968,7 +2968,7 @@ enum e_ready_settings_constraint {
 
 enum e_ready_settings_enum {
   """Admins Only"""
-  Admins
+  Admin
 
   """Captains Only"""
   Captains

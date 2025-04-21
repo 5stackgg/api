@@ -2,11 +2,3 @@ table:
   name: e_ready_settings
   schema: public
 is_enum: true
-select_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - value
-        - description
-      filter: {}
-    comment: ""
