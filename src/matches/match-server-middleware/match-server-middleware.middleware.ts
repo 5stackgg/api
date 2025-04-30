@@ -12,6 +12,12 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
     @Res() response: Response,
     next: NextFunction,
   ) {
+    if (
+      this.hasura.checkSecret(request.headers["hasura-admin-secret"] as string)
+    ) {
+      return next();
+    }
+
     const { matchId, serverId } = request.params;
 
     if (!matchId && !serverId) {

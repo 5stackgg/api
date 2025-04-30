@@ -36,6 +36,10 @@ export class HasuraService {
     return `user:${steamId.toString()}`;
   }
 
+  public checkSecret(secret: string) {
+    return secret === this.config.secret;
+  }
+
   public async query<R extends query_rootGenqlSelection>(
     request: R & { __name?: string },
     user?: User,

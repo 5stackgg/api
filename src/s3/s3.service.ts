@@ -97,4 +97,13 @@ export class S3Service {
       throw error;
     }
   }
+
+  public async presignedPutObject(
+    bucket: string,
+    key: string,
+    // 5 minutes
+    expires = 60 * 5,
+  ) {
+    return await this.client.presignedPutObject(bucket, key, expires);
+  }
 }
