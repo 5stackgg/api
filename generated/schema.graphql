@@ -8192,9 +8192,19 @@ input match_lineups_variance_order_by {
 columns and relationships of "match_map_demos"
 """
 type match_map_demos {
+  """
+  A computed field, executes function "demo_download_url"
+  """
+  download_url: String
   file: String!
   id: uuid!
+
+  """An object relationship"""
+  match: matches!
   match_id: uuid!
+
+  """An object relationship"""
+  match_map: match_maps!
   match_map_id: uuid!
   size: Int!
 }
@@ -8281,9 +8291,12 @@ input match_map_demos_bool_exp {
   _and: [match_map_demos_bool_exp!]
   _not: match_map_demos_bool_exp
   _or: [match_map_demos_bool_exp!]
+  download_url: String_comparison_exp
   file: String_comparison_exp
   id: uuid_comparison_exp
+  match: matches_bool_exp
   match_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
   size: Int_comparison_exp
 }
@@ -8311,13 +8324,19 @@ input type for inserting data into table "match_map_demos"
 input match_map_demos_insert_input {
   file: String
   id: uuid
+  match: matches_obj_rel_insert_input
   match_id: uuid
+  match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
   size: Int
 }
 
 """aggregate max on columns"""
 type match_map_demos_max_fields {
+  """
+  A computed field, executes function "demo_download_url"
+  """
+  download_url: String
   file: String
   id: uuid
   match_id: uuid
@@ -8338,6 +8357,10 @@ input match_map_demos_max_order_by {
 
 """aggregate min on columns"""
 type match_map_demos_min_fields {
+  """
+  A computed field, executes function "demo_download_url"
+  """
+  download_url: String
   file: String
   id: uuid
   match_id: uuid
@@ -8378,9 +8401,12 @@ input match_map_demos_on_conflict {
 
 """Ordering options when selecting data from "match_map_demos"."""
 input match_map_demos_order_by {
+  download_url: order_by
   file: order_by
   id: order_by
+  match: matches_order_by
   match_id: order_by
+  match_map: match_maps_order_by
   match_map_id: order_by
   size: order_by
 }
@@ -9553,7 +9579,7 @@ type match_maps {
   ): match_map_demos_aggregate!
 
   """
-  A computed field, executes function "demo_download_url"
+  A computed field, executes function "match_map_demo_download_url"
   """
   demos_download_url: String
 
@@ -10127,7 +10153,7 @@ type match_maps_max_fields {
   created_at: timestamptz
 
   """
-  A computed field, executes function "demo_download_url"
+  A computed field, executes function "match_map_demo_download_url"
   """
   demos_download_url: String
 
@@ -10177,7 +10203,7 @@ type match_maps_min_fields {
   created_at: timestamptz
 
   """
-  A computed field, executes function "demo_download_url"
+  A computed field, executes function "match_map_demo_download_url"
   """
   demos_download_url: String
 

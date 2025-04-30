@@ -2691,9 +2691,15 @@ export interface match_lineups_variance_fields {
 
 /** columns and relationships of "match_map_demos" */
 export interface match_map_demos {
+    /** A computed field, executes function "demo_download_url" */
+    download_url: (Scalars['String'] | null)
     file: Scalars['String']
     id: Scalars['uuid']
+    /** An object relationship */
+    match: matches
     match_id: Scalars['uuid']
+    /** An object relationship */
+    match_map: match_maps
     match_map_id: Scalars['uuid']
     size: Scalars['Int']
     __typename: 'match_map_demos'
@@ -2738,6 +2744,8 @@ export type match_map_demos_constraint = 'match_demos_pkey'
 
 /** aggregate max on columns */
 export interface match_map_demos_max_fields {
+    /** A computed field, executes function "demo_download_url" */
+    download_url: (Scalars['String'] | null)
     file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -2749,6 +2757,8 @@ export interface match_map_demos_max_fields {
 
 /** aggregate min on columns */
 export interface match_map_demos_min_fields {
+    /** A computed field, executes function "demo_download_url" */
+    download_url: (Scalars['String'] | null)
     file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -3127,7 +3137,7 @@ export interface match_maps {
     demos: match_map_demos[]
     /** An aggregate relationship */
     demos_aggregate: match_map_demos_aggregate
-    /** A computed field, executes function "demo_download_url" */
+    /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url: (Scalars['String'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
@@ -3242,7 +3252,7 @@ export type match_maps_constraint = 'match_maps_match_id_order_key' | 'match_map
 /** aggregate max on columns */
 export interface match_maps_max_fields {
     created_at: (Scalars['timestamptz'] | null)
-    /** A computed field, executes function "demo_download_url" */
+    /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url: (Scalars['String'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
@@ -3266,7 +3276,7 @@ export interface match_maps_max_fields {
 /** aggregate min on columns */
 export interface match_maps_min_fields {
     created_at: (Scalars['timestamptz'] | null)
-    /** A computed field, executes function "demo_download_url" */
+    /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url: (Scalars['String'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
@@ -16252,9 +16262,15 @@ export interface match_lineups_variance_order_by {coach_steam_id?: (order_by | n
 
 /** columns and relationships of "match_map_demos" */
 export interface match_map_demosGenqlSelection{
+    /** A computed field, executes function "demo_download_url" */
+    download_url?: boolean | number
     file?: boolean | number
     id?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
     match_id?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
     match_map_id?: boolean | number
     size?: boolean | number
     __typename?: boolean | number
@@ -16316,7 +16332,7 @@ export interface match_map_demos_avg_order_by {size?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_map_demos". All fields are combined with a logical 'AND'. */
-export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),size?: (Int_comparison_exp | null)}
+export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),download_url?: (String_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),size?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_demos" */
@@ -16324,11 +16340,13 @@ export interface match_map_demos_inc_input {size?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_map_demos" */
-export interface match_map_demos_insert_input {file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['Int'] | null)}
+export interface match_map_demos_insert_input {file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_map_demos_max_fieldsGenqlSelection{
+    /** A computed field, executes function "demo_download_url" */
+    download_url?: boolean | number
     file?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
@@ -16345,6 +16363,8 @@ export interface match_map_demos_max_order_by {file?: (order_by | null),id?: (or
 
 /** aggregate min on columns */
 export interface match_map_demos_min_fieldsGenqlSelection{
+    /** A computed field, executes function "demo_download_url" */
+    download_url?: boolean | number
     file?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
@@ -16375,7 +16395,7 @@ export interface match_map_demos_on_conflict {constraint: match_map_demos_constr
 
 
 /** Ordering options when selecting data from "match_map_demos". */
-export interface match_map_demos_order_by {file?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),size?: (order_by | null)}
+export interface match_map_demos_order_by {download_url?: (order_by | null),file?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),size?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_demos */
@@ -16994,7 +17014,7 @@ export interface match_mapsGenqlSelection{
     order_by?: (match_map_demos_order_by[] | null), 
     /** filter the rows returned */
     where?: (match_map_demos_bool_exp | null)} })
-    /** A computed field, executes function "demo_download_url" */
+    /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
@@ -17319,7 +17339,7 @@ export interface match_maps_insert_input {created_at?: (Scalars['timestamptz'] |
 /** aggregate max on columns */
 export interface match_maps_max_fieldsGenqlSelection{
     created_at?: boolean | number
-    /** A computed field, executes function "demo_download_url" */
+    /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
@@ -17348,7 +17368,7 @@ export interface match_maps_max_order_by {created_at?: (order_by | null),ended_a
 /** aggregate min on columns */
 export interface match_maps_min_fieldsGenqlSelection{
     created_at?: boolean | number
-    /** A computed field, executes function "demo_download_url" */
+    /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number

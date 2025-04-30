@@ -11043,14 +11043,23 @@ export default {
             ]
         },
         "match_map_demos": {
+            "download_url": [
+                11
+            ],
             "file": [
                 11
             ],
             "id": [
                 2033
             ],
+            "match": [
+                995
+            ],
             "match_id": [
                 2033
+            ],
+            "match_map": [
+                877
             ],
             "match_map_id": [
                 2033
@@ -11220,14 +11229,23 @@ export default {
             "_or": [
                 780
             ],
+            "download_url": [
+                13
+            ],
             "file": [
                 13
             ],
             "id": [
                 2034
             ],
+            "match": [
+                1004
+            ],
             "match_id": [
                 2034
+            ],
+            "match_map": [
+                886
             ],
             "match_map_id": [
                 2034
@@ -11255,8 +11273,14 @@ export default {
             "id": [
                 2033
             ],
+            "match": [
+                1013
+            ],
             "match_id": [
                 2033
+            ],
+            "match_map": [
+                895
             ],
             "match_map_id": [
                 2033
@@ -11269,6 +11293,9 @@ export default {
             ]
         },
         "match_map_demos_max_fields": {
+            "download_url": [
+                11
+            ],
             "file": [
                 11
             ],
@@ -11309,6 +11336,9 @@ export default {
             ]
         },
         "match_map_demos_min_fields": {
+            "download_url": [
+                11
+            ],
             "file": [
                 11
             ],
@@ -11374,14 +11404,23 @@ export default {
             ]
         },
         "match_map_demos_order_by": {
+            "download_url": [
+                1148
+            ],
             "file": [
                 1148
             ],
             "id": [
                 1148
             ],
+            "match": [
+                1015
+            ],
             "match_id": [
                 1148
+            ],
+            "match_map": [
+                897
             ],
             "match_map_id": [
                 1148

@@ -44,6 +44,7 @@ import { ChatModule } from "src/chat/chat.module";
 import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { PostgresService } from "src/postgres/postgres.service";
+import { CleanDemos } from "./jobs/CleanDemos";
 
 @Module({
   imports: [
@@ -66,6 +67,12 @@ import { PostgresService } from "src/postgres/postgres.service";
       {
         name: MatchQueues.ScheduledMatches,
       },
+      {
+        name: MatchQueues.CleanDemos,
+      },
+      {
+        name: MatchQueues.EloCalculation,
+      },
     ),
     BullBoardModule.forFeature(
       {
@@ -76,14 +83,15 @@ import { PostgresService } from "src/postgres/postgres.service";
         name: MatchQueues.ScheduledMatches,
         adapter: BullMQAdapter,
       },
+      {
+        name: MatchQueues.CleanDemos,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: MatchQueues.EloCalculation,
+        adapter: BullMQAdapter,
+      },
     ),
-    BullModule.registerQueue({
-      name: MatchQueues.EloCalculation,
-    }),
-    BullBoardModule.forFeature({
-      name: MatchQueues.EloCalculation,
-      adapter: BullMQAdapter,
-    }),
   ],
   controllers: [MatchesController, DemosController, BackupRoundsController],
   exports: [MatchAssistantService],
@@ -98,6 +106,7 @@ import { PostgresService } from "src/postgres/postgres.service";
     RemoveCancelledMatches,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
+    CleanDemos,
     EloCalculation,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
@@ -107,6 +116,7 @@ import { PostgresService } from "src/postgres/postgres.service";
 export class MatchesModule implements NestModule {
   constructor(
     private readonly hasuraService: HasuraService,
+    @InjectQueue(MatchQueues.CleanDemos) cleanDemosQueue: Queue,
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
     private readonly postgres: PostgresService,
@@ -171,6 +181,16 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "* * * * *",
+        },
+      },
+    );
+
+    void cleanDemosQueue.add(
+      CleanDemos.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 * * * *",
         },
       },
     );

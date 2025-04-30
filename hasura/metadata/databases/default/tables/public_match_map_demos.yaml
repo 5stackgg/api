@@ -1,6 +1,13 @@
 table:
   name: match_map_demos
   schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
 computed_fields:
   - name: download_url
     definition:
