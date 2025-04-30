@@ -461,7 +461,7 @@ export class MatchAssistantService {
                 nodeName: gameServerNodeId,
                 containers: [
                   {
-                    name: "server",
+                    name: "game-server",
                     image: this.gameServerConfig.serverImage,
                     ports: [
                       { containerPort: server.port, protocol: "TCP" },
@@ -470,6 +470,10 @@ export class MatchAssistantService {
                       { containerPort: server.tv_port, protocol: "UDP" },
                     ],
                     env: [
+                      {
+                        name: "GAME_NODE_SERVER",
+                        value: true,
+                      },
                       ...(!map.workshop_map_id
                         ? [{ name: "DEFAULT_MAP", value: map.name }]
                         : []),
