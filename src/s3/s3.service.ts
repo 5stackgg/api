@@ -98,7 +98,7 @@ export class S3Service {
     }
   }
 
-  public async presignedPutObject(
+  public async getPresignedUrl(
     bucket: string,
     key: string,
     // 5 minutes

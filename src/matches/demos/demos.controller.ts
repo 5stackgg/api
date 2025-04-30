@@ -147,7 +147,7 @@ export class DemosController {
       });
     }
 
-    const presignedUrl = await this.s3.presignedPutObject(
+    const presignedUrl = await this.s3.getPresignedUrl(
       process.env.S3_BUCKET,
       `${matchId}/${mapId}/demos/${demo}`,
     );
