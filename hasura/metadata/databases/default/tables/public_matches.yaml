@@ -291,6 +291,38 @@ insert_permissions:
         - scheduled_at
         - server_id
     comment: ""
+  - role: verified_user
+    permission:
+      check:
+        _or:
+          - _not:
+              _exists:
+                _table:
+                  name: settings
+                  schema: public
+                _where:
+                  name:
+                    _eq: public.create_matches_role
+          - _exists:
+              _table:
+                name: settings
+                schema: public
+              _where:
+                _and:
+                  - name:
+                      _eq: public.create_matches_role
+                  - value:
+                      _in:
+                        - user
+                        - verified_user
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - label
+        - match_options_id
+        - scheduled_at
+        - server_id
+    comment: ""
   - role: match_organizer
     permission:
       check:
@@ -314,6 +346,7 @@ insert_permissions:
                   - value:
                       _in:
                         - user
+                        - verified_user
                         - match_organizer
       set:
         organizer_steam_id: x-hasura-user-id
@@ -346,6 +379,7 @@ insert_permissions:
                   - value:
                       _in:
                         - user
+                        - verified_user
                         - match_organizer
                         - tournament_organizer
       set:

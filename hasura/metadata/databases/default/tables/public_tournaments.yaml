@@ -98,6 +98,38 @@ insert_permissions:
         - name
         - start
     comment: ""
+  - role: verified_user
+    permission:
+      check:
+        _or:
+          - _not:
+              _exists:
+                _table:
+                  name: settings
+                  schema: public
+                _where:
+                  name:
+                    _eq: public.create_tournaments_role
+          - _exists:
+              _table:
+                name: settings
+                schema: public
+              _where:
+                _and:
+                  - name:
+                      _eq: public.create_tournaments_role
+                  - value:
+                      _in:
+                        - user
+                        - verified_user
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - match_options_id
+        - name
+        - start
+    comment: ""
   - role: match_organizer
     permission:
       check:
@@ -121,6 +153,7 @@ insert_permissions:
                   - value:
                       _in:
                         - user
+                        - verified_user
                         - match_organizer
       set:
         organizer_steam_id: x-hasura-user-id
@@ -153,6 +186,7 @@ insert_permissions:
                   - value:
                       _in:
                         - user
+                        - verified_user
                         - match_organizer
                         - tournament_organizer
       set:
