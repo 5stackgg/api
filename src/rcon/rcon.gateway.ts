@@ -17,7 +17,6 @@ export class RconGateway {
     private readonly rconService: RconService,
   ) {}
 
-  // TODO - rcon gateway
   @SubscribeMessage("rcon")
   async rconEvent(
     @MessageBody()
