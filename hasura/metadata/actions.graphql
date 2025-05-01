@@ -52,10 +52,6 @@ type Query {
   getServiceStats: [PodStats]!
 }
 
-type Query {
-  telemetryStats: TelemetryStats!
-}
-
 type Mutation {
   joinLineup(
     match_id: String!
@@ -132,6 +128,10 @@ type Mutation {
   syncSteamFriends: SuccessOutput
 }
 
+type Query {
+  telemetryStats: TelemetryStats!
+}
+
 type Mutation {
   unlinkDiscord: SuccessOutput
 }
@@ -202,3 +202,4 @@ type PodStats {
 type TelemetryStats {
   online: Int!
 }
+

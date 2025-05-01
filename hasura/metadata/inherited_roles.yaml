@@ -5,6 +5,7 @@
     - tournament_organizer
 - role_name: match_organizer
   role_set:
+    - verified_user
     - user
 - role_name: tournament_organizer
   role_set:

@@ -160,6 +160,13 @@ actions:
       forward_client_headers: true
     permissions:
       - role: user
+  - name: telemetryStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
   - name: unlinkDiscord
     definition:
       kind: synchronous
@@ -175,13 +182,6 @@ actions:
     permissions:
       - role: administrator
   - name: updateServices
-    definition:
-      kind: synchronous
-      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
-      forward_client_headers: true
-    permissions:
-      - role: administrator
-  - name: telemetryStats
     definition:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
