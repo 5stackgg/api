@@ -28,7 +28,7 @@ export class RconGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    if (!client.user || client.user.role === "user") {
+    if (!client.user || client.user.role === "user" || client.user.role === "verified_user") {
       return;
     }
 
