@@ -2815,6 +2815,9 @@ enum e_player_roles_enum {
   """Ability Create and Manage Tournaments"""
   tournament_organizer
 
+  """Verified User"""
+  verified_user
+
   """Basic User"""
   user
 }

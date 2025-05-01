@@ -973,7 +973,7 @@ export interface e_player_roles_aggregate_fields {
 /** unique or primary key constraints on table "e_player_roles" */
 export type e_player_roles_constraint = 'e_player_roles_pkey'
 
-export type e_player_roles_enum = 'administrator' | 'match_organizer' | 'tournament_organizer' | 'user'
+export type e_player_roles_enum = 'administrator' | 'match_organizer' | 'tournament_organizer' | 'verified_user' | 'user'
 
 
 /** aggregate max on columns */
@@ -41138,6 +41138,7 @@ export const enumEPlayerRolesEnum = {
    administrator: 'administrator' as const,
    match_organizer: 'match_organizer' as const,
    tournament_organizer: 'tournament_organizer' as const,
+   verified_user: 'verified_user' as const,
    user: 'user' as const
 }
 
