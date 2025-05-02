@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 import { Logger } from "@nestjs/common";
-import { e_match_types_enum } from "generated";
+import { e_match_types_enum, e_player_roles } from "generated";
 import { MatchmakeService } from "./matchmake.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
@@ -12,6 +12,9 @@ import {
   WebSocketGateway,
 } from "@nestjs/websockets";
 import { JoinQueueError } from "./utilities/joinQueueError";
+import { HasuraService } from "src/hasura/hasura.service";
+import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { e_player_roles_enum } from "generated";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -21,6 +24,7 @@ export class MatchmakingGateway {
 
   constructor(
     public readonly logger: Logger,
+    public readonly hasura: HasuraService,
     public readonly redisManager: RedisManagerService,
     public readonly matchmakeService: MatchmakeService,
     public readonly matchmakingLobbyService: MatchmakingLobbyService,
@@ -37,6 +41,47 @@ export class MatchmakingGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
+
+    const { settings } = await this.hasura.query({
+      settings: {
+        __args: {
+          where: {
+            _or: [
+              {
+                name: {
+                  _eq: "public.matchmaking",
+                },
+              },
+              {
+                name: {
+                  _eq: "matchmaking_min_role",
+                },
+              },
+            ],
+          }
+        },
+        name: true,
+        value: true,
+      },
+    });
+
+    console.info("settings", settings);
+    const matchmakingEnabled = settings.find(
+      (setting) => setting.name === "public.matchmaking",
+    );
+
+    if(matchmakingEnabled && matchmakingEnabled.value === "false") {
+      throw new JoinQueueError("Matchmaking is disabled");
+    }
+
+    const matchmakingMinRole = settings.find(
+      (setting) => setting.name === "matchmaking_min_role",
+    );
+
+    if(matchmakingMinRole && !isRoleAbove(client.user.role, matchmakingMinRole.value as e_player_roles_enum)) {
+      throw new JoinQueueError("You do not have permission to join this queue");
+    }
+
     let lobby;
     const user = client.user;
     const { type, regions } = data;
