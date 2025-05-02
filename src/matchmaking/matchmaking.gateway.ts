@@ -65,7 +65,6 @@ export class MatchmakingGateway {
       },
     });
 
-    console.info("settings", settings);
     const matchmakingEnabled = settings.find(
       (setting) => setting.name === "public.matchmaking",
     );
