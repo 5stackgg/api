@@ -54,7 +54,7 @@ export class MatchmakingGateway {
               },
               {
                 name: {
-                  _eq: "matchmaking_min_role",
+                  _eq: "public.matchmaking_min_role",
                 },
               },
             ],
@@ -75,7 +75,7 @@ export class MatchmakingGateway {
     }
 
     const matchmakingMinRole = settings.find(
-      (setting) => setting.name === "matchmaking_min_role",
+      (setting) => setting.name === "public.matchmaking_min_role",
     );
 
     if(matchmakingMinRole && !isRoleAbove(client.user.role, matchmakingMinRole.value as e_player_roles_enum)) {
