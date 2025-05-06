@@ -428,6 +428,9 @@ export class MatchAssistantService {
           api_password: true,
           rcon_password: true,
           game_server_node_id: true,
+          game_server_node: {
+            supports_cpu_pinning: true,
+          },
         },
       });
 
@@ -455,6 +458,20 @@ export class MatchAssistantService {
 
         const gameServerNodeId = server.game_server_node_id;
 
+        let cpus: string;
+        if (server.game_server_node?.supports_cpu_pinning) {
+          const { settings_by_pk: cpuPinning } = await this.hasura.query({
+            settings_by_pk: {
+              __args: {
+                name: "number_of_cpus_per_server",
+              },
+              value: true,
+            },
+          });
+
+          cpus = cpuPinning?.value || "2";
+        }
+
         await batch.createNamespacedJob(this.namespace, {
           apiVersion: "batch/v1",
           kind: "Job",
@@ -476,6 +493,14 @@ export class MatchAssistantService {
                   {
                     name: "game-server",
                     image: this.gameServerConfig.serverImage,
+                    ...(cpus
+                      ? {
+                          resources: {
+                            requests: { cpu: cpus },
+                            limits: { cpu: cpus },
+                          },
+                        }
+                      : {}) ,
                     ports: [
                       { containerPort: server.port, protocol: "TCP" },
                       { containerPort: server.port, protocol: "UDP" },

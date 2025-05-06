@@ -97,6 +97,7 @@ export class GameServerNodeService {
     lanIP: string,
     publicIP: string,
     csBulid: number,
+    supportsCpuPinning: boolean,
     status: e_game_server_node_statuses_enum,
   ) {
     const { game_server_nodes_by_pk } = await this.hasura.query({
@@ -110,6 +111,7 @@ export class GameServerNodeService {
         node_ip: true,
         build_id: true,
         public_ip: true,
+        supports_cpu_pinning: true,
       },
     });
 
@@ -123,6 +125,7 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.public_ip !== publicIP ||
       game_server_nodes_by_pk.status !== status ||
       game_server_nodes_by_pk.build_id !== csBulid ||
+      game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.token
     ) {
       await this.hasura.mutation({
@@ -136,6 +139,7 @@ export class GameServerNodeService {
               lan_ip: lanIP,
               node_ip: nodeIP,
               public_ip: publicIP,
+              supports_cpu_pinning: supportsCpuPinning,
               ...(csBulid ? { build_id: csBulid } : {}),
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },

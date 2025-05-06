@@ -48,19 +48,15 @@ export class TelemetryService {
       return false;
     }
 
-    const { settings } = await this.hasuraService.query({
-      settings: {
+    const { settings_by_pk: telemetry } = await this.hasuraService.query({
+      settings_by_pk: {
         __args: {
-          where: {
-            name: {
-              _eq: "telemetry",
-            },
-          },
+          name: "telemetry",
         },
         value: true,
       },
     });
 
-    return settings.at(0)?.value !== "false";
+    return telemetry?.value !== "false";
   }
 }

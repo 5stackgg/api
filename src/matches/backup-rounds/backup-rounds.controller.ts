@@ -6,6 +6,7 @@ import {
   UseInterceptors,
   UploadedFile,
   StreamableFile,
+  Logger,
 } from "@nestjs/common";
 import { Request } from "express";
 import zlib from "zlib";
@@ -20,6 +21,7 @@ export class BackupRoundsController {
   constructor(
     private readonly s3: S3Service,
     private readonly hasura: HasuraService,
+    private readonly logger: Logger,
   ) {}
 
   @Get("map/:mapId")
@@ -96,9 +98,10 @@ export class BackupRoundsController {
   ) {
     const { matchId, mapId, round } = request.params;
 
-    console.log(
+    this.logger.log(
       `uploading backup rounds ${matchId}/${mapId}/backup-rounds/${file.originalname}`,
     );
+    
     await this.hasura.mutation({
       update_match_map_rounds: {
         __args: {

@@ -2221,13 +2221,15 @@ enum e_match_types_constraint {
 }
 
 enum e_match_types_enum {
-  """5 vs 5"""
+  """The classic 5 vs 5 competitive experience with full team coordination"""
   Competitive
 
-  """1 vs 1"""
+  """
+  A competitive 1 vs 1 experience, perfect for practicing individual skill
+  """
   Duel
 
-  """2 vs 2"""
+  """Team up with a friend and compete in fast-paced 2v2 matches"""
   Wingman
 }
 
@@ -5207,6 +5209,7 @@ type game_server_nodes {
   ): servers_aggregate!
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  supports_cpu_pinning: Boolean!
   token: String
 
   """
@@ -5343,6 +5346,7 @@ input game_server_nodes_bool_exp {
   servers_aggregate: servers_aggregate_bool_exp
   start_port_range: Int_comparison_exp
   status: e_game_server_node_statuses_enum_comparison_exp
+  supports_cpu_pinning: Boolean_comparison_exp
   token: String_comparison_exp
   total_server_count: Int_comparison_exp
   update_status: String_comparison_exp
@@ -5385,6 +5389,7 @@ input game_server_nodes_insert_input {
   servers: servers_arr_rel_insert_input
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  supports_cpu_pinning: Boolean
   token: String
   update_status: String
 }
@@ -5506,6 +5511,7 @@ input game_server_nodes_order_by {
   servers_aggregate: servers_aggregate_order_by
   start_port_range: order_by
   status: order_by
+  supports_cpu_pinning: order_by
   token: order_by
   total_server_count: order_by
   update_status: order_by
@@ -5554,6 +5560,9 @@ enum game_server_nodes_select_column {
   status
 
   """column name"""
+  supports_cpu_pinning
+
+  """column name"""
   token
 
   """column name"""
@@ -5566,6 +5575,9 @@ select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   enabled
+
+  """column name"""
+  supports_cpu_pinning
 }
 
 """
@@ -5574,6 +5586,9 @@ select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns 
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   enabled
+
+  """column name"""
+  supports_cpu_pinning
 }
 
 """
@@ -5591,6 +5606,7 @@ input game_server_nodes_set_input {
   region: String
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  supports_cpu_pinning: Boolean
   token: String
   update_status: String
 }
@@ -5694,6 +5710,7 @@ input game_server_nodes_stream_cursor_value_input {
   region: String
   start_port_range: Int
   status: e_game_server_node_statuses_enum
+  supports_cpu_pinning: Boolean
   token: String
   update_status: String
 }
@@ -5759,6 +5776,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   status
+
+  """column name"""
+  supports_cpu_pinning
 
   """column name"""
   token
@@ -17630,6 +17650,7 @@ type my_friends {
   country: String
   created_at: timestamptz
   discord_id: String
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   name: String
@@ -17721,6 +17742,7 @@ input my_friends_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type my_friends_avg_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -17730,6 +17752,7 @@ type my_friends_avg_fields {
 order by avg() on columns of table "v_my_friends"
 """
 input my_friends_avg_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -17746,6 +17769,7 @@ input my_friends_bool_exp {
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   discord_id: String_comparison_exp
+  elo: numeric_comparison_exp
   friend_steam_id: bigint_comparison_exp
   invited_by_steam_id: bigint_comparison_exp
   name: String_comparison_exp
@@ -17761,6 +17785,7 @@ input my_friends_bool_exp {
 input type for incrementing numeric columns in table "v_my_friends"
 """
 input my_friends_inc_input {
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   steam_id: bigint
@@ -17774,6 +17799,7 @@ input my_friends_insert_input {
   country: String
   created_at: timestamptz
   discord_id: String
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   name: String
@@ -17791,6 +17817,7 @@ type my_friends_max_fields {
   country: String
   created_at: timestamptz
   discord_id: String
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   name: String
@@ -17808,6 +17835,7 @@ input my_friends_max_order_by {
   country: order_by
   created_at: order_by
   discord_id: order_by
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   name: order_by
@@ -17823,6 +17851,7 @@ type my_friends_min_fields {
   country: String
   created_at: timestamptz
   discord_id: String
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   name: String
@@ -17840,6 +17869,7 @@ input my_friends_min_order_by {
   country: order_by
   created_at: order_by
   discord_id: order_by
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   name: order_by
@@ -17866,6 +17896,7 @@ input my_friends_order_by {
   country: order_by
   created_at: order_by
   discord_id: order_by
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   name: order_by
@@ -17892,6 +17923,9 @@ enum my_friends_select_column {
 
   """column name"""
   discord_id
+
+  """column name"""
+  elo
 
   """column name"""
   friend_steam_id
@@ -17942,6 +17976,7 @@ input my_friends_set_input {
   country: String
   created_at: timestamptz
   discord_id: String
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   name: String
@@ -17954,6 +17989,7 @@ input my_friends_set_input {
 
 """aggregate stddev on columns"""
 type my_friends_stddev_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -17963,6 +17999,7 @@ type my_friends_stddev_fields {
 order by stddev() on columns of table "v_my_friends"
 """
 input my_friends_stddev_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -17970,6 +18007,7 @@ input my_friends_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type my_friends_stddev_pop_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -17979,6 +18017,7 @@ type my_friends_stddev_pop_fields {
 order by stddev_pop() on columns of table "v_my_friends"
 """
 input my_friends_stddev_pop_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -17986,6 +18025,7 @@ input my_friends_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type my_friends_stddev_samp_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -17995,6 +18035,7 @@ type my_friends_stddev_samp_fields {
 order by stddev_samp() on columns of table "v_my_friends"
 """
 input my_friends_stddev_samp_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -18017,6 +18058,7 @@ input my_friends_stream_cursor_value_input {
   country: String
   created_at: timestamptz
   discord_id: String
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   name: String
@@ -18029,6 +18071,7 @@ input my_friends_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type my_friends_sum_fields {
+  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   steam_id: bigint
@@ -18038,6 +18081,7 @@ type my_friends_sum_fields {
 order by sum() on columns of table "v_my_friends"
 """
 input my_friends_sum_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -18056,6 +18100,7 @@ input my_friends_updates {
 
 """aggregate var_pop on columns"""
 type my_friends_var_pop_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -18065,6 +18110,7 @@ type my_friends_var_pop_fields {
 order by var_pop() on columns of table "v_my_friends"
 """
 input my_friends_var_pop_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -18072,6 +18118,7 @@ input my_friends_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type my_friends_var_samp_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -18081,6 +18128,7 @@ type my_friends_var_samp_fields {
 order by var_samp() on columns of table "v_my_friends"
 """
 input my_friends_var_samp_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -18088,6 +18136,7 @@ input my_friends_var_samp_order_by {
 
 """aggregate variance on columns"""
 type my_friends_variance_fields {
+  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -18097,6 +18146,7 @@ type my_friends_variance_fields {
 order by variance() on columns of table "v_my_friends"
 """
 input my_friends_variance_order_by {
+  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
