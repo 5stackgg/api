@@ -6787,6 +6787,9 @@ export default {
             "supports_cpu_pinning": [
                 0
             ],
+            "supports_low_latency": [
+                0
+            ],
             "token": [
                 11
             ],
@@ -7067,6 +7070,9 @@ export default {
             "supports_cpu_pinning": [
                 1
             ],
+            "supports_low_latency": [
+                1
+            ],
             "token": [
                 13
             ],
@@ -7139,6 +7145,9 @@ export default {
                 106
             ],
             "supports_cpu_pinning": [
+                0
+            ],
+            "supports_low_latency": [
                 0
             ],
             "token": [
@@ -7364,6 +7373,9 @@ export default {
             "supports_cpu_pinning": [
                 1149
             ],
+            "supports_low_latency": [
+                1149
+            ],
             "token": [
                 1149
             ],
@@ -7423,6 +7435,9 @@ export default {
                 106
             ],
             "supports_cpu_pinning": [
+                0
+            ],
+            "supports_low_latency": [
                 0
             ],
             "token": [
@@ -7583,6 +7598,9 @@ export default {
                 106
             ],
             "supports_cpu_pinning": [
+                0
+            ],
+            "supports_low_latency": [
                 0
             ],
             "token": [

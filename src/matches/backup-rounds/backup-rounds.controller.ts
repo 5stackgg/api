@@ -101,7 +101,7 @@ export class BackupRoundsController {
     this.logger.log(
       `uploading backup rounds ${matchId}/${mapId}/backup-rounds/${file.originalname}`,
     );
-    
+
     await this.hasura.mutation({
       update_match_map_rounds: {
         __args: {

@@ -5210,6 +5210,7 @@ type game_server_nodes {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean!
+  supports_low_latency: Boolean!
   token: String
 
   """
@@ -5347,6 +5348,7 @@ input game_server_nodes_bool_exp {
   start_port_range: Int_comparison_exp
   status: e_game_server_node_statuses_enum_comparison_exp
   supports_cpu_pinning: Boolean_comparison_exp
+  supports_low_latency: Boolean_comparison_exp
   token: String_comparison_exp
   total_server_count: Int_comparison_exp
   update_status: String_comparison_exp
@@ -5390,6 +5392,7 @@ input game_server_nodes_insert_input {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean
+  supports_low_latency: Boolean
   token: String
   update_status: String
 }
@@ -5512,6 +5515,7 @@ input game_server_nodes_order_by {
   start_port_range: order_by
   status: order_by
   supports_cpu_pinning: order_by
+  supports_low_latency: order_by
   token: order_by
   total_server_count: order_by
   update_status: order_by
@@ -5563,6 +5567,9 @@ enum game_server_nodes_select_column {
   supports_cpu_pinning
 
   """column name"""
+  supports_low_latency
+
+  """column name"""
   token
 
   """column name"""
@@ -5578,6 +5585,9 @@ enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_a
 
   """column name"""
   supports_cpu_pinning
+
+  """column name"""
+  supports_low_latency
 }
 
 """
@@ -5589,6 +5599,9 @@ enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_o
 
   """column name"""
   supports_cpu_pinning
+
+  """column name"""
+  supports_low_latency
 }
 
 """
@@ -5607,6 +5620,7 @@ input game_server_nodes_set_input {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean
+  supports_low_latency: Boolean
   token: String
   update_status: String
 }
@@ -5711,6 +5725,7 @@ input game_server_nodes_stream_cursor_value_input {
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean
+  supports_low_latency: Boolean
   token: String
   update_status: String
 }
@@ -5779,6 +5794,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   supports_cpu_pinning
+
+  """column name"""
+  supports_low_latency
 
   """column name"""
   token

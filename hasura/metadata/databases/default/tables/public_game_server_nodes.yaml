@@ -43,6 +43,7 @@ select_permissions:
         - start_port_range
         - status
         - supports_cpu_pinning
+        - supports_low_latency
         - update_status
       computed_fields:
         - available_server_count

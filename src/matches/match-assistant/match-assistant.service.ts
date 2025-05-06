@@ -500,7 +500,7 @@ export class MatchAssistantService {
                             limits: { cpu: cpus },
                           },
                         }
-                      : {}) ,
+                      : {}),
                     ports: [
                       { containerPort: server.port, protocol: "TCP" },
                       { containerPort: server.port, protocol: "UDP" },
