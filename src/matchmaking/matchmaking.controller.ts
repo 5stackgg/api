@@ -19,5 +19,9 @@ export class MatchmakingController {
     await this.matchmakingLobbyService.removeLobbyFromQueue(
       data.new.lobby_id || data.old.lobby_id,
     );
+
+    await this.matchmakingLobbyService.removeLobbyDetails(
+      data.new.lobby_id || data.old.lobby_id,
+    );
   }
 }

@@ -19,7 +19,6 @@ import {
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
-import { match } from "assert";
 
 @Injectable()
 export class MatchmakeService {
@@ -123,6 +122,11 @@ export class MatchmakeService {
   }
 
   public async matchmake(type: e_match_types_enum, region: string) {
+    const lock = await this.aquireMatchmakeRegionLock(region);
+    if (!lock) {
+      return;
+    }
+
     const queueKey = getMatchmakingRankCacheKey(type, region);
 
     // TODO - its possible, but highly unlikley we will ever runinto the issue of too many lobbies in the queue
@@ -131,7 +135,6 @@ export class MatchmakeService {
     let lobbies = await this.processLobbyData(lobbiesData);
 
     if (lobbies.length === 0) {
-      this.logger.warn("Not enough lobbies");
       return;
     }
 
@@ -194,9 +197,22 @@ export class MatchmakeService {
       groupedLobbies.push(currentGroup);
     }
 
+    const createMatchesPromises = [];
+
     for (const group of groupedLobbies) {
-      void this.createMatches(region, type, group);
+      createMatchesPromises.push(this.createMatches(region, type, group));
     }
+
+    // once all results are returned as false we no longer need to matchmake
+    const results = await Promise.all(createMatchesPromises).finally(() => {
+      void this.releaseMatchmakeRegionLock(region);
+    });
+
+    if (!results.some((result) => result === true)) {
+      return;
+    }
+
+    await this.matchmake(type, region);
   }
 
   private async processLobbyData(
@@ -208,13 +224,53 @@ export class MatchmakeService {
       const details = await this.matchmakingLobbyService.getLobbyDetails(
         lobbiesData[i],
       );
-      if (details) {
-        lobbyDetails.push({
-          ...details,
-          avgRank: parseInt(lobbiesData[i + 1]),
-          joinedAt: new Date(details.joinedAt),
-        });
+
+      if (!details) {
+        continue;
       }
+
+      if (details.players.length === ExpectedPlayers[details.type]) {
+        const lock = await this.accquireLobbyLock(details.lobbyId);
+        if (!lock) {
+          continue;
+        }
+
+        const shuffledPlayers = [...details.players].sort(
+          () => Math.random() - 0.5,
+        );
+        const halfLength = Math.floor(shuffledPlayers.length / 2);
+
+        const team1: MatchmakingTeam = {
+          players: shuffledPlayers.slice(0, halfLength),
+          lobbies: [],
+          avgRank: 0,
+        };
+        const team2: MatchmakingTeam = {
+          players: shuffledPlayers.slice(halfLength),
+          lobbies: [],
+          avgRank: 0,
+        };
+
+        team1.lobbies.push(details.lobbyId);
+        team2.lobbies.push(details.lobbyId);
+
+        team1.avgRank = details.avgRank;
+        team2.avgRank = details.avgRank;
+
+        const region = details.regions.at(0);
+
+        await this.createMatchConfirmation(region, details.type, {
+          team1,
+          team2,
+        });
+
+        continue;
+      }
+      lobbyDetails.push({
+        ...details,
+        avgRank: parseInt(lobbiesData[i + 1]),
+        joinedAt: new Date(details.joinedAt),
+      });
     }
 
     return lobbyDetails;
@@ -224,15 +280,15 @@ export class MatchmakeService {
     region: string,
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const requiredPlayers = ExpectedPlayers[type];
     const totalPlayers = lobbies.reduce(
       (acc, lobby) => acc + lobby.players.length,
       0,
     );
 
-    if (lobbies.length === 0 || totalPlayers !== requiredPlayers) {
-      return;
+    if (lobbies.length === 0 || totalPlayers < requiredPlayers) {
+      return false;
     }
 
     // try to make as many valid matches as possible
@@ -250,19 +306,19 @@ export class MatchmakeService {
     const lobbiesAdded: Array<number> = [];
     const playersPerTeam = requiredPlayers / 2;
 
-    let lobbyLocks: string[] = [];
+    let lobbyLocks = new Set<string>();
 
     // try to fill teams with available lobbies
+    // if they are unable to accuire the lock, it means they are already being matched, or another region is trying to matchmake
     for (let lobbyIndex = 0; lobbyIndex < lobbies.length; lobbyIndex++) {
       const lobby = lobbies[lobbyIndex];
-
       if (team1.players.length + lobby.players.length <= playersPerTeam) {
         const lock = await this.accquireLobbyLock(lobby.lobbyId);
         if (!lock) {
           continue;
         }
 
-        lobbyLocks.push(lobby.lobbyId);
+        lobbyLocks.add(lobby.lobbyId);
 
         team1.players.push(...lobby.players);
         team1.lobbies.push(lobby.lobbyId);
@@ -278,7 +334,7 @@ export class MatchmakeService {
         if (!lock) {
           continue;
         }
-        lobbyLocks.push(lobby.lobbyId);
+        lobbyLocks.add(lobby.lobbyId);
 
         team2.players.push(...lobby.players);
         team2.lobbies.push(lobby.lobbyId);
@@ -299,34 +355,51 @@ export class MatchmakeService {
       team1.players.length === playersPerTeam &&
       team2.players.length === playersPerTeam
     ) {
-      // lobby locks will be released after
-      lobbyLocks = [];
+      // lobby locks will be released after confimrmation
+      for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
+        lobbyLocks.delete(lobbyId);
+      }
+
       await this.createMatchConfirmation(region, type, {
         team1,
         team2,
       });
     }
 
-    if (lobbies.length > 0) {
-      await this.createMatches(region, type, lobbies);
+    // only try to re-matchmake lobbies that we were able to accuire a lock for
+    const lobbiesToMatch = lobbies.filter((lobby) =>
+      lobbyLocks.has(lobby.lobbyId),
+    );
+    if (lobbiesToMatch.length > 0) {
+      for (const lobby of lobbiesToMatch) {
+        await this.releaseLobbyLock(lobby.lobbyId, 0);
+      }
+      await this.createMatches(region, type, lobbiesToMatch);
+    }
+  }
+
+  private async aquireMatchmakeRegionLock(region: string): Promise<boolean> {
+    const lockKey = `matchmaking:lock:${region}`;
+
+    const result = await this.redis.set(lockKey, 1, "EX", 60, "NX");
+
+    if (result === null) {
+      return false;
     }
 
-    // release the locks for the lobbies that were not used
-    for (const lobbyId of lobbyLocks) {
-      void this.releaseLobbyLock(lobbyId, 0);
-    }
+    return true;
+  }
+
+  private async releaseMatchmakeRegionLock(region: string) {
+    const lockKey = `matchmaking:lock:${region}`;
+    await this.redis.del(lockKey);
   }
 
   private async accquireLobbyLock(lobbyId: string): Promise<boolean> {
     const lockKey = `matchmaking:lock:${lobbyId}`;
 
-    // Attempt to set a lock key in Redis with NX option to ensure the key is set only if it does not already exist
-    const result = await this.redis.set(lockKey, 1, "NX");
+    const result = await this.redis.set(lockKey, 1, "EX", 10, "NX");
 
-    // expire the lock after 60 seconds, just in case the server crashes
-    await this.redis.expire(lockKey, 60);
-
-    this.logger.log(`Accquired lock for lobby ${lobbyId}: ${result}`);
     if (result === null) {
       return false;
     }
@@ -346,20 +419,16 @@ export class MatchmakeService {
     type: e_match_types_enum,
     players: { team1: MatchmakingTeam; team2: MatchmakingTeam },
   ) {
+    if (!region) {
+      throw new Error("Region is required");
+    }
     const { team1, team2 } = players;
-    const allLobbies = [...team1.lobbies, ...team2.lobbies];
 
-    /**
-     * remove the lobbies from the queue and rank cache
-     */
-    await this.redis.zrem(
-      getMatchmakingQueueCacheKey(type, region),
-      ...allLobbies,
-    );
-    await this.redis.zrem(
-      getMatchmakingRankCacheKey(type, region),
-      ...allLobbies,
-    );
+    const allLobbies = new Set([...team1.lobbies, ...team2.lobbies]);
+
+    for (const lobby of allLobbies) {
+      await this.matchmakingLobbyService.removeLobbyFromQueue(lobby);
+    }
 
     for (const lobbyId of allLobbies) {
       void this.releaseLobbyLock(lobbyId, 30);
@@ -418,6 +487,10 @@ export class MatchmakeService {
   }
 
   public async removeConfirmationDetails(confirmationId: string) {
+    await this.redis.hdel(
+      `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
+    );
+
     await this.redis.del(getMatchmakingConformationCacheKey(confirmationId));
   }
 
@@ -470,23 +543,32 @@ export class MatchmakeService {
     for (const lobbyId of lobbyIds) {
       const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
 
+      if (!lobby) {
+        continue;
+      }
+
       let requeue = true;
       for (const steamId of lobby.players) {
         const wasReady = await this.redis.hget(
-          getMatchmakingConformationCacheKey(confirmationId),
+          `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
           steamId,
         );
 
         if (!wasReady) {
           requeue = false;
-          await this.matchmakingLobbyService.removeLobbyFromQueue(lobbyId);
           break;
         }
       }
 
-      if (requeue) {
-        await this.addLobbyToQueue(lobbyId);
+      await this.matchmakingLobbyService.removeLobbyFromQueue(lobbyId);
+      await this.matchmakingLobbyService.removeConfirmationIdFromLobby(lobbyId);
+
+      if (!requeue) {
+        await this.matchmakingLobbyService.removeLobbyDetails(lobbyId);
+        continue;
       }
+
+      await this.addLobbyToQueue(lobbyId);
     }
 
     await this.removeConfirmationDetails(confirmationId);

@@ -105,13 +105,43 @@ export class MatchmakingLobbyService {
     };
   }
 
-  public async verifyLobby(lobby: PlayerLobby, user: User) {
+  public async verifyLobby(
+    lobby: PlayerLobby,
+    user: User,
+    type: e_match_types_enum,
+  ) {
     const captain = lobby.players.find((player) => {
       return player.steam_id === user.steam_id && player.captain === true;
     });
 
     if (!captain) {
       throw new JoinQueueError(`you are not the captain of this lobby`);
+    }
+
+    const totalPlayers = lobby.players.length;
+
+    switch (type) {
+      case "Competitive":
+        if (totalPlayers > 5 && totalPlayers !== 10) {
+          throw new JoinQueueError(
+            `To join a Competitive match, with a lobby greater than 5 players, you must have 10 players in your lobby`,
+          );
+        }
+        break;
+      case "Wingman":
+        if (totalPlayers > 2 && totalPlayers !== 4) {
+          throw new JoinQueueError(
+            `To join a Wingman match, with a lobby greater than 2 players, you must have 4 players in your lobby`,
+          );
+        }
+        break;
+      case "Duel":
+        if (totalPlayers > 1 && totalPlayers !== 2) {
+          throw new JoinQueueError(
+            `To join a Duel match, with a lobby greater than 1 player you must have 2 players in your lobby`,
+          );
+        }
+        break;
     }
 
     for (const player of lobby.players) {
@@ -148,14 +178,26 @@ export class MatchmakingLobbyService {
   }
 
   public async removeLobbyDetails(lobbyId: string) {
+    const lobbyDetails = await this.getLobbyDetails(lobbyId);
+
     await this.redis.hdel(
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "details",
     );
-    await this.redis.hdel(
-      getMatchmakingLobbyDetailsCacheKey(lobbyId),
-      "confirmationId",
-    );
+
+    await this.removeConfirmationIdFromLobby(lobbyId);
+
+    // notify players in the lobby that they have been removed from the queue
+    for (const player of lobbyDetails.players) {
+      await this.redis.publish(
+        "send-message-to-steam-id",
+        JSON.stringify({
+          steamId: player,
+          event: "matchmaking:details",
+          data: {},
+        }),
+      );
+    }
   }
 
   public async setMatchConformationIdForLobby(
@@ -166,6 +208,13 @@ export class MatchmakingLobbyService {
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "confirmationId",
       confirmationId,
+    );
+  }
+
+  public async removeConfirmationIdFromLobby(lobbyId: string) {
+    await this.redis.hdel(
+      getMatchmakingLobbyDetailsCacheKey(lobbyId),
+      "confirmationId",
     );
   }
 
@@ -213,20 +262,6 @@ export class MatchmakingLobbyService {
       await this.redis.zrem(
         getMatchmakingRankCacheKey(queueDetails.type, region),
         lobbyId,
-      );
-    }
-
-    await this.removeLobbyDetails(lobbyId);
-
-    // notify players in the lobby that they have been removed from the queue
-    for (const player of queueDetails.players) {
-      await this.redis.publish(
-        "send-message-to-steam-id",
-        JSON.stringify({
-          steamId: player,
-          event: "matchmaking:details",
-          data: {},
-        }),
       );
     }
 

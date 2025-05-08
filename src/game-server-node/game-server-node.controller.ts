@@ -33,7 +33,10 @@ export class GameServerNodeController {
 
   @HasuraAction()
   public async updateCs(data: { game_server_node_id: string }) {
-    await this.gameServerNodeService.updateCsServer(data.game_server_node_id, true);
+    await this.gameServerNodeService.updateCsServer(
+      data.game_server_node_id,
+      true,
+    );
 
     return {
       success: true,

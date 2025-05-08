@@ -105,7 +105,7 @@ export class MatchmakingGateway {
         throw new JoinQueueError("Unable to find Player Lobby");
       }
 
-      await this.matchmakingLobbyService.verifyLobby(lobby, user);
+      await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
 
       try {
         await this.matchmakingLobbyService.setLobbyDetails(
@@ -117,13 +117,14 @@ export class MatchmakingGateway {
       } catch (error) {
         this.logger.error(`unable to add lobby to queue`, error);
         await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
+        await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
         throw new JoinQueueError("Unknown Error");
       }
 
       await this.matchmakeService.sendRegionStats();
 
       for (const region of regions) {
-        this.matchmakeService.matchmake(type, region);
+        void this.matchmakeService.matchmake(type, region);
       }
     } catch (error) {
       if (error instanceof JoinQueueError) {
@@ -167,6 +168,7 @@ export class MatchmakingGateway {
     }
 
     await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
+    await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
   }
 
   @SubscribeMessage("matchmaking:confirm")

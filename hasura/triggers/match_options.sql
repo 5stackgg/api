@@ -37,7 +37,7 @@ BEGIN
         NEW.regions = (SELECT array_agg(region) FROM servers where enabled = true);
     END IF;
 
-    IF NEW.region_veto = false AND (NEW.regions IS NULL OR NEW.regions = '{}') THEN
+    IF NEW.region_veto = true AND (NEW.regions IS NULL OR NEW.regions = '{}') THEN
         RAISE EXCEPTION 'Region veto is disabled but no regions are selected' USING ERRCODE = '22000';
     END IF;
 

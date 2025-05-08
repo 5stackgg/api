@@ -221,14 +221,14 @@ export class GameServerNodeService {
         },
         build_id: true,
       },
-    }); 
+    });
 
     if (!game_server_nodes_by_pk) {
       this.logger.error(`Game server node not found`, gameServerNodeId);
       throw new Error("Game server not found");
     }
 
-    if(!force) {
+    if (!force) {
       const { settings_by_pk } = await this.hasura.query({
         settings_by_pk: {
           __args: {
@@ -237,14 +237,18 @@ export class GameServerNodeService {
           value: true,
         },
       });
-  
+
       if (settings_by_pk?.value) {
         const currentBuild: {
           buildid: string;
         } = JSON.parse(settings_by_pk.value);
-  
-        if (currentBuild.buildid === game_server_nodes_by_pk.build_id.toString()) {
-          this.logger.log(`CS2 is already up to date on node ${gameServerNodeId}`);
+
+        if (
+          currentBuild.buildid === game_server_nodes_by_pk.build_id.toString()
+        ) {
+          this.logger.log(
+            `CS2 is already up to date on node ${gameServerNodeId}`,
+          );
           return;
         }
       }
@@ -454,7 +458,7 @@ export class GameServerNodeService {
         });
       });
     } catch (error) {
-      if(process.env.DEV) {
+      if (process.env.DEV) {
         console.warn("unable to monitor update status", error);
       }
       if (attempts > 0) {
