@@ -35,9 +35,9 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    token := encode(hmac(concat(player_role, ':', player_steam_id, ':', match.id)::bytea, password::bytea, 'sha256'), 'base64');
+    token := encode(hmac(concat(type, ':', player_role, ':', player_steam_id, ':', match.id)::bytea, password::bytea, 'sha256'), 'base64');
 
-    password := concat(player_role, ':', token);
+    password := concat(type, ':', player_role, ':', token);
 
     -- URL safe characters
     password := replace(password, '+', '-');
