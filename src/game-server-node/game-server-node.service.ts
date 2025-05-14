@@ -799,7 +799,12 @@ export class GameServerNodeService {
     }
 
     if (memory.endsWith("Gi")) {
-      return BigInt(memory.replace("Gi", "")) * BigInt(1024) * BigInt(1024) * BigInt(1024);
+      return (
+        BigInt(memory.replace("Gi", "")) *
+        BigInt(1024) *
+        BigInt(1024) *
+        BigInt(1024)
+      );
     }
 
     this.logger.error(`Unknown memory type ${memory}`);
