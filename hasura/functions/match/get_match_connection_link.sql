@@ -6,7 +6,11 @@ DECLARE
     connection_string text;
     server_host text;
     server_port int;
+    steam_id bigint;
+    token text;
 BEGIN
+    steam_id := (hasura_session ->> 'x-hasura-user-id')::bigint;
+
     IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
         SELECT m.password INTO password
         FROM matches m
@@ -19,9 +23,14 @@ BEGIN
             WHERE m.id = match.id AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
     END IF;
 
-	 IF password IS NULL THEN
+    IF password IS NULL THEN
         RETURN NULL;
     END IF;
+
+    token := encode(hmac(concat(steam_id, ':', match.id)::bytea, password::bytea, 'sha256'), 'base64');
+
+    password := concat(token);
+    password := replace(password, '/', '-');
 
     SELECT s.host, s.port
         INTO server_host, server_port
