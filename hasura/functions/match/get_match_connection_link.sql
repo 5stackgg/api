@@ -3,35 +3,9 @@ CREATE OR REPLACE FUNCTION public.get_match_connection_link(match public.matches
     AS $$
 DECLARE
     password text;
-    connection_string text;
     server_host text;
     server_port int;
-    steam_id bigint;
-    token text;
 BEGIN
-    steam_id := (hasura_session ->> 'x-hasura-user-id')::bigint;
-
-    IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
-        SELECT m.password INTO password
-        FROM matches m
-        WHERE m.id = match.id;
-    ELSE
-        SELECT m.password INTO password
-            FROM matches m
-            INNER JOIN v_match_lineups ml ON ml.match_id = m.id
-            INNER JOIN match_lineup_players mlp ON mlp.match_lineup_id = ml.id
-            WHERE m.id = match.id AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint;
-    END IF;
-
-    IF password IS NULL THEN
-        RETURN NULL;
-    END IF;
-
-    token := encode(hmac(concat(steam_id, ':', match.id)::bytea, password::bytea, 'sha256'), 'base64');
-
-    password := concat(token);
-    password := replace(password, '/', '-');
-
     SELECT s.host, s.port
         INTO server_host, server_port
         FROM matches m
@@ -43,8 +17,12 @@ BEGIN
         return NULL;
     END IF;
 
-    connection_string := CONCAT('steam://connect/', server_host, ':', server_port, ';password/', password);
+    password := player_match_password(match, 'game', hasura_session);
 
-    RETURN CONCAT('/quick-connect?link=', connection_string);
+    if(password is null) then
+        return null;
+    end if;
+
+    RETURN CONCAT('/quick-connect?link=', 'steam://connect/', server_host, ':', server_port, ';password/', password);
 END;
 $$;

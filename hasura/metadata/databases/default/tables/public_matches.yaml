@@ -274,12 +274,6 @@ computed_fields:
       function:
         name: get_match_teams
         schema: public
-  - name: tv_connection_link
-    definition:
-      function:
-        name: get_match_tv_connection_link
-        schema: public
-      session_argument: hasura_session
   - name: tv_connection_string
     definition:
       function:
@@ -507,7 +501,6 @@ select_permissions:
         - requested_organizer
         - server_region
         - server_type
-        - tv_connection_link
         - tv_connection_string
       filter:
         _or:

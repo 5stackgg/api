@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS public.get_match_tv_connection_link(match matches, hasura_session json);
+
 CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.matches, hasura_session json) RETURNS text
      LANGUAGE plpgsql STABLE
      AS $$
@@ -13,10 +15,19 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
      INNER JOIN servers s ON s.id = m.server_id
      WHERE m.id = match.id
      LIMIT 1;
-  IF server_host IS NULL THEN
+
+     IF server_host IS NULL THEN
          RETURN NULL;
      END IF;
-     connection_string := CONCAT('connect ', server_host, ':', tv_port);
-     RETURN connection_string;
+
+    password := player_match_password(match, 'tv', hasura_session);
+
+    if(password is null) then
+        return null;
+    end if;
+   
+    connection_string := CONCAT('connect ', server_host, ':', tv_port, '; password ', password);
+    
+    RETURN connection_string;
  END;
  $$;
