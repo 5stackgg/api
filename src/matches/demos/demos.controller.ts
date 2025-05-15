@@ -104,6 +104,9 @@ export class DemosController {
         status: true,
         match: {
           status: true,
+          server: {
+            is_dedicated: true,
+          },
         },
       },
     });
@@ -124,6 +127,7 @@ export class DemosController {
     }
 
     if (
+      !match_maps_by_pk.match.server.is_dedicated &&
       !["Finished", "Forfeit", "Surrender", "Tie"].includes(
         match_maps_by_pk.match.status,
       )

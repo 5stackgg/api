@@ -2,7 +2,6 @@ import { Controller } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
-import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 
 @Controller("invites")
 export class InvitesController {
@@ -70,6 +69,7 @@ export class InvitesController {
             steam_id: true,
           },
         },
+        max_players_per_lineup: true,
       },
     });
 
@@ -99,7 +99,7 @@ export class InvitesController {
     let lineupId = friendsLineup.id;
     if (
       friendsLineup.lineup_players.length >=
-      ExpectedPlayers[matches_by_pk.options.type]
+      matches_by_pk.max_players_per_lineup
     ) {
       const otherLineup =
         lineup_1.id === friendsLineup.id ? lineup_2 : lineup_1;
