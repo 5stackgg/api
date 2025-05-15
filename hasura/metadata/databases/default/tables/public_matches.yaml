@@ -518,6 +518,19 @@ select_permissions:
                 - Finished
                 - Forfeit
                 - Tie
+          - _or:
+              - lineup_1:
+                  lineup_players:
+                    player:
+                      friends:
+                        steam_id:
+                          _eq: X-Hasura-User-Id
+              - lineup_2:
+                  lineup_players:
+                    player:
+                      friends:
+                        steam_id:
+                          _eq: X-Hasura-User-Id
       allow_aggregations: true
     comment: ""
 update_permissions:
