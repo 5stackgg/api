@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "src/cache/cache.service";
-import { CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import { CoreV1Api, KubeConfig, AppsV1Api } from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
@@ -10,6 +10,7 @@ import { DiscordConfig } from "src/configs/types/DiscordConfig";
 @Injectable()
 export class SystemService {
   private apiClient: CoreV1Api;
+  private appsClient: AppsV1Api;
 
   constructor(
     private readonly cache: CacheService,
@@ -20,6 +21,7 @@ export class SystemService {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     this.apiClient = kc.makeApiClient(CoreV1Api);
+    this.appsClient = kc.makeApiClient(AppsV1Api);
   }
 
   public async detectFeatures() {
@@ -87,7 +89,11 @@ export class SystemService {
         continue;
       }
 
-      await this.restartPod(pod);
+      try {
+        await this.restartDeployment(service);
+      } catch {
+        await this.restartPod(pod);
+      }
       await this.cache.forget(this.getServiceCacheKey(service));
     }
   }
@@ -188,6 +194,34 @@ export class SystemService {
 
   public async restartPod(pod: string) {
     await this.apiClient.deleteNamespacedPod(pod, "5stack");
+
+    this.logger.log(`Successfully restarted pod ${pod}`);
+  }
+
+  public async restartDeployment(deploymentName: string) {
+    await this.appsClient.patchNamespacedDeployment(
+      deploymentName,
+      "5stack",
+      {
+        spec: {
+          template: {
+            metadata: {
+              annotations: {
+                "kubectl.kubernetes.io/restartedAt": new Date().toISOString()
+              }
+            }
+          }
+        }
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { headers: { 'Content-Type': 'application/strategic-merge-patch+json' } }
+    );
+
+    this.logger.log(`Successfully restarted deployment ${deploymentName}`);
   }
 
   public async getServices() {
