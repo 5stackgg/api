@@ -158,16 +158,17 @@ export class GameServerNodeController {
       throw Error("server not found");
     }
 
-    const { settings_by_pk } = await this.hasura.query({
-      settings_by_pk: {
-        __args: {
-          name: "plugin_version",
-        },
-        value: true,
-      },
-    });
-
     if (server.connected && server.plugin_version !== pluginVersion) {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: {
+            name: "plugin_version",
+          },
+          value: true,
+        },
+      });
+
+      
       if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
         await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
       }
@@ -204,6 +205,15 @@ export class GameServerNodeController {
     }
 
     if (!server.connected) {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: {
+            name: "plugin_version",
+          },
+          value: true,
+        },
+      });
+      
       if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
         await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
       }
