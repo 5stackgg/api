@@ -1,11 +1,12 @@
 import fetch from "node-fetch";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "src/cache/cache.service";
 import { CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
 import { DiscordConfig } from "src/configs/types/DiscordConfig";
+import { Colors } from "discord.js";
 
 @Injectable()
 export class SystemService {
@@ -15,6 +16,7 @@ export class SystemService {
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
     private readonly config: ConfigService,
+    private readonly logger: Logger,
   ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -92,10 +94,21 @@ export class SystemService {
   }
 
   public async setVersions() {
+    const hasUpdates = [];
+
+    const panelVersion = await this.getPanelVersion();
+    const latestPanelVersion = await this.getLatestPanelVersion();
+
+    if (panelVersion !== latestPanelVersion) {
+      hasUpdates.push({
+        service: "panel",
+        currentVersion: panelVersion,
+        newVersion: latestPanelVersion,
+      });
+    }
+
     const services = await this.getServices();
     const latestVersions = await this.getLatestVersions();
-
-    const hasUpdates = [];
 
     for (const { service, version, pod } of Object.values(services)) {
       const latestVersion = latestVersions[service];
@@ -237,5 +250,35 @@ export class SystemService {
 
   private getServiceCacheKey(service: string) {
     return `version:${service}`;
+  }
+
+  private async getPanelVersion() {
+    try {
+      const { body } = await this.apiClient.listNode(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        "node-role.kubernetes.io/control-plane",
+      );
+
+      return body.items.at(0)?.metadata.labels["5stack-panel-version"];
+    } catch (error) {
+      this.logger.warn("unable to fetch panel version", error);
+      return "";
+    }
+  }
+
+  private async getLatestPanelVersion() {
+    try {
+      const response = await fetch(
+        "https://api.github.com/repos/5stackgg/5stack-panel/commits/main",
+      );
+      const { sha } = await response.json();
+      return sha;
+    } catch (error) {
+      this.logger.warn("Unable to fetch latest panel version", error);
+      return "";
+    }
   }
 }
