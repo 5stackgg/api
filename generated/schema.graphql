@@ -28604,6 +28604,7 @@ type servers {
     """filter the rows returned"""
     where: matches_bool_exp
   ): matches_aggregate!
+  plugin_version: String
   port: Int!
   rcon_password: bytea!
   rcon_status: Boolean
@@ -28724,6 +28725,7 @@ input servers_bool_exp {
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
+  plugin_version: String_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
   rcon_status: Boolean_comparison_exp
@@ -28769,6 +28771,7 @@ input servers_insert_input {
   id: uuid
   label: String
   matches: matches_arr_rel_insert_input
+  plugin_version: String
   port: Int
   rcon_password: bytea
   rcon_status: Boolean
@@ -28784,6 +28787,7 @@ type servers_max_fields {
   host: String
   id: uuid
   label: String
+  plugin_version: String
   port: Int
   region: String
   reserved_by_match_id: uuid
@@ -28799,6 +28803,7 @@ input servers_max_order_by {
   host: order_by
   id: order_by
   label: order_by
+  plugin_version: order_by
   port: order_by
   region: order_by
   reserved_by_match_id: order_by
@@ -28812,6 +28817,7 @@ type servers_min_fields {
   host: String
   id: uuid
   label: String
+  plugin_version: String
   port: Int
   region: String
   reserved_by_match_id: uuid
@@ -28827,6 +28833,7 @@ input servers_min_order_by {
   host: order_by
   id: order_by
   label: order_by
+  plugin_version: order_by
   port: order_by
   region: order_by
   reserved_by_match_id: order_by
@@ -28876,6 +28883,7 @@ input servers_order_by {
   is_dedicated: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
+  plugin_version: order_by
   port: order_by
   rcon_password: order_by
   rcon_status: order_by
@@ -28913,6 +28921,9 @@ enum servers_select_column {
 
   """column name"""
   label
+
+  """column name"""
+  plugin_version
 
   """column name"""
   port
@@ -28972,6 +28983,7 @@ input servers_set_input {
   host: String
   id: uuid
   label: String
+  plugin_version: String
   port: Int
   rcon_password: bytea
   rcon_status: Boolean
@@ -29042,6 +29054,7 @@ input servers_stream_cursor_value_input {
   host: String
   id: uuid
   label: String
+  plugin_version: String
   port: Int
   rcon_password: bytea
   rcon_status: Boolean
@@ -29088,6 +29101,9 @@ enum servers_update_column {
 
   """column name"""
   label
+
+  """column name"""
+  plugin_version
 
   """column name"""
   port

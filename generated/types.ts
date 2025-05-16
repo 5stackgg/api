@@ -30941,6 +30941,9 @@ export default {
                     ]
                 }
             ],
+            "plugin_version": [
+                11
+            ],
             "port": [
                 4
             ],
@@ -31203,6 +31206,9 @@ export default {
             "matches_aggregate": [
                 1039
             ],
+            "plugin_version": [
+                13
+            ],
             "port": [
                 5
             ],
@@ -31268,6 +31274,9 @@ export default {
             "matches": [
                 1043
             ],
+            "plugin_version": [
+                11
+            ],
             "port": [
                 4
             ],
@@ -31306,6 +31315,9 @@ export default {
             "label": [
                 11
             ],
+            "plugin_version": [
+                11
+            ],
             "port": [
                 4
             ],
@@ -31336,6 +31348,9 @@ export default {
                 1190
             ],
             "label": [
+                1190
+            ],
+            "plugin_version": [
                 1190
             ],
             "port": [
@@ -31370,6 +31385,9 @@ export default {
             "label": [
                 11
             ],
+            "plugin_version": [
+                11
+            ],
             "port": [
                 4
             ],
@@ -31400,6 +31418,9 @@ export default {
                 1190
             ],
             "label": [
+                1190
+            ],
+            "plugin_version": [
                 1190
             ],
             "port": [
@@ -31488,6 +31509,9 @@ export default {
             "matches_aggregate": [
                 1042
             ],
+            "plugin_version": [
+                1190
+            ],
             "port": [
                 1190
             ],
@@ -31541,6 +31565,9 @@ export default {
                 2075
             ],
             "label": [
+                11
+            ],
+            "plugin_version": [
                 11
             ],
             "port": [
@@ -31662,6 +31689,9 @@ export default {
                 2075
             ],
             "label": [
+                11
+            ],
+            "plugin_version": [
                 11
             ],
             "port": [

@@ -8,6 +8,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
 import { Queue } from "bullmq";
 import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
+import { DedicatedServersPluginOutOfDate } from "./jobs/DedicatedServersPluginOutOfDate";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
@@ -130,12 +131,14 @@ export class GameServerNodeController {
   public async ping(@Req() request: Request) {
     const map = request.query.map;
     const serverId = request.params.serverId;
+    const pluginVersion = request.query.pluginVersion as string;
 
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
         __args: {
           id: serverId,
         },
+        plugin_version: true,
         connected: true,
         rcon_status: true,
         is_dedicated: true,
@@ -155,6 +158,35 @@ export class GameServerNodeController {
       throw Error("server not found");
     }
 
+    const { settings_by_pk } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name: "plugin_version",
+        },
+        value: true,
+      },
+    });
+
+    if (server.connected && server.plugin_version !== pluginVersion) {
+      if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
+        await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
+      }
+
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: {
+              id: serverId,
+            },
+            _set: {
+              plugin_version: pluginVersion,
+            },
+          },
+          __typename: true,
+        },
+      });
+    }
+
     if (server.current_match && !server.is_dedicated) {
       const currentMap = server.current_match?.match_maps.find((match_map) => {
         return match_map.id === server.current_match.current_match_map_id;
@@ -172,6 +204,10 @@ export class GameServerNodeController {
     }
 
     if (!server.connected) {
+      if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
+        await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
+      }
+
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -180,6 +216,7 @@ export class GameServerNodeController {
             },
             _set: {
               connected: true,
+              plugin_version: pluginVersion,
               ...(rconStatus !== null && { rcon_status: rconStatus }),
             },
           },

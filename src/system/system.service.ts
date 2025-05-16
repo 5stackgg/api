@@ -6,7 +6,6 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
 import { DiscordConfig } from "src/configs/types/DiscordConfig";
-import { Colors } from "discord.js";
 
 @Injectable()
 export class SystemService {
@@ -95,6 +94,8 @@ export class SystemService {
 
   public async setVersions() {
     const hasUpdates = [];
+
+    await this.updateGameServerVersion();
 
     const panelVersion = await this.getPanelVersion();
     const latestPanelVersion = await this.getLatestPanelVersion();
@@ -270,15 +271,54 @@ export class SystemService {
   }
 
   private async getLatestPanelVersion() {
-    try {
-      const response = await fetch(
-        "https://api.github.com/repos/5stackgg/5stack-panel/commits/main",
-      );
-      const { sha } = await response.json();
-      return sha;
-    } catch (error) {
-      this.logger.warn("Unable to fetch latest panel version", error);
-      return "";
-    }
+    return await this.cache.remember<string>(
+      this.getServiceCacheKey("panel"),
+      async () => {
+        try {
+          const response = await fetch(
+            "https://api.github.com/repos/5stackgg/5stack-panel/commits/main",
+          );
+          const { sha } = await response.json();
+          return sha;
+        } catch (error) {
+          this.logger.warn("Unable to fetch latest panel version", error);
+          return "";
+        }
+      },
+      300,
+    );
+  }
+
+  private async updateGameServerVersion() {
+    await this.cache.remember<string>(
+      this.getServiceCacheKey("plugin"),
+      async () => {
+        try {
+          const response = await fetch(
+            "https://api.github.com/repos/5stackgg/game-server/releases/latest",
+          );
+          const { tag_name } = await response.json();
+
+          await this.hasura.mutation({
+            insert_settings_one: {
+              __args: {
+                object: {
+                  name: "plugin_version",
+                  value: tag_name.replace("v", ""),
+                },
+                on_conflict: {
+                  constraint: "settings_pkey",
+                  update_columns: ["value"],
+                },
+              },
+              __typename: true,
+            },
+          });
+        } catch (error) {
+          this.logger.warn("Unable to fetch latest game server version", error);
+        }
+      },
+      300,
+    );
   }
 }

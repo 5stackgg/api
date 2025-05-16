@@ -20,6 +20,7 @@ import { LoggingServiceService } from "./logging-service/logging-service.service
 import { RedisModule } from "src/redis/redis.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { RconModule } from "src/rcon/rcon.module";
+import { DedicatedServersPluginOutOfDate } from "./jobs/DedicatedServersPluginOutOfDate";
 
 @Module({
   providers: [
@@ -28,6 +29,7 @@ import { RconModule } from "src/rcon/rcon.module";
     CheckGameUpdate,
     MarkGameServerNodeOffline,
     MarkDedicatedServerOffline,
+    DedicatedServersPluginOutOfDate,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
     LoggingServiceService,
@@ -46,6 +48,9 @@ import { RconModule } from "src/rcon/rcon.module";
       {
         name: GameServerQueues.NodeOffline,
       },
+      {
+        name: GameServerQueues.PluginVersion,
+      },
     ),
     BullBoardModule.forFeature(
       {
@@ -54,6 +59,10 @@ import { RconModule } from "src/rcon/rcon.module";
       },
       {
         name: GameServerQueues.NodeOffline,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: GameServerQueues.PluginVersion,
         adapter: BullMQAdapter,
       },
     ),

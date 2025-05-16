@@ -1,0 +1,1 @@
+alter table "public"."servers" drop column "plugin_version";

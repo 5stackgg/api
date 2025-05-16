@@ -51,6 +51,7 @@ select_permissions:
         - host
         - id
         - label
+        - plugin_version
         - port
         - rcon_status
         - region
@@ -70,6 +71,7 @@ select_permissions:
         - host
         - id
         - label
+        - plugin_version
         - port
         - rcon_status
         - region
@@ -90,6 +92,7 @@ select_permissions:
         - host
         - id
         - label
+        - plugin_version
         - port
         - rcon_status
         - region
