@@ -49,6 +49,10 @@ export class DedicatedServersPluginOutOfDate extends WorkerHost {
       },
     });
 
+    if (servers_aggregate.aggregate.count === 0) {
+      return;
+    }
+
     this.notifications.send("DedicatedServerStatus", {
       message: `${servers_aggregate.aggregate.count} servers has out of date plugins.`,
       title: "Plugin Out of Date",
