@@ -7,6 +7,7 @@ DECLARE
     server_port int;
     steam_relay text;
     connection_string text;
+    host text;
 BEGIN
     SELECT s.host, s.port, s.steam_relay
         INTO server_host, server_port, steam_relay
@@ -19,7 +20,14 @@ BEGIN
         return NULL;
     END IF;
 
-    connection_string := CONCAT('connect ', COALESCE(CONCAT(steam_relay, ':0'), CONCAT(server_host, ':', server_port)));
+    if(steam_relay) then
+        host := CONCAT(steam_relay, ':0');
+    else
+        host := CONCAT(server_host, ':', server_port);
+    end if;
+    
+    connection_string := CONCAT('connect ', host);
+
     if(is_in_lineup(match, hasura_session)) then
         return connection_string;
     end if;

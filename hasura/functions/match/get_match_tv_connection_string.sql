@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
      server_host text;
      tv_port int;
      steam_relay text;
+     host text;
  BEGIN
      SELECT s.host, s.tv_port, s.steam_relay
      INTO server_host, tv_port, steam_relay
@@ -27,7 +28,13 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
         return null;
     end if;
    
-    connection_string := CONCAT('connect ', COALESCE(CONCAT(steam_relay, ':1'), CONCAT(server_host, ':', tv_port)), '; password ', password);
+    if(steam_relay) then
+        host := CONCAT(steam_relay, ':0');
+    else
+        host := CONCAT(server_host, ':', tv_port);
+    end if;
+    
+    connection_string := CONCAT('connect ', host, '; password ', password);
     
     RETURN connection_string;
  END;
