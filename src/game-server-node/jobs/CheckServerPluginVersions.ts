@@ -1,6 +1,5 @@
 import { WorkerHost } from "@nestjs/bullmq";
 import { GameServerQueues } from "../enums/GameServerQueues";
-import { Job } from "bullmq";
 import { HasuraService } from "../../hasura/hasura.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { NotificationsService } from "../../notifications/notifications.service";
