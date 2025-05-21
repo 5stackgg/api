@@ -495,7 +495,7 @@ export class MatchAssistantService {
         }
 
         const steamRelay =
-          settings.find((setting) => setting.name === "steam_relay")?.value ===
+          settings.find((setting) => setting.name === "enable_steam_relay")?.value ===
           "true";
 
         await batch.createNamespacedJob(this.namespace, {
