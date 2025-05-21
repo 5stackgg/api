@@ -168,7 +168,6 @@ export class GameServerNodeController {
         },
       });
 
-      
       if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
         await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
       }
@@ -213,7 +212,7 @@ export class GameServerNodeController {
           value: true,
         },
       });
-      
+
       if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
         await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
       }

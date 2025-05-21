@@ -867,6 +867,13 @@ export class MatchesController {
             steam_id: {
               _eq: data.user.steam_id,
             },
+            lineup: {
+              v_match_lineup: {
+                match_id: {
+                  _eq: data.match_id,
+                },
+              },
+            },
           },
         },
         returning: {

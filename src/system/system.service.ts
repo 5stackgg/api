@@ -207,18 +207,18 @@ export class SystemService {
           template: {
             metadata: {
               annotations: {
-                "kubectl.kubernetes.io/restartedAt": new Date().toISOString()
-              }
-            }
-          }
-        }
+                "kubectl.kubernetes.io/restartedAt": new Date().toISOString(),
+              },
+            },
+          },
+        },
       },
       undefined,
       undefined,
       undefined,
       undefined,
       undefined,
-      { headers: { 'Content-Type': 'application/strategic-merge-patch+json' } }
+      { headers: { "Content-Type": "application/strategic-merge-patch+json" } },
     );
 
     this.logger.log(`Successfully restarted deployment ${deploymentName}`);

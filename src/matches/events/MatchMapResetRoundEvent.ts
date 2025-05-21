@@ -58,6 +58,9 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
               round: {
                 _gte: statsRound,
               },
+              match_map_id: {
+                _eq: this.data.match_map_id,
+              },
             },
           },
           __typename: true,
