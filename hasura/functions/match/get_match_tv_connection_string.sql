@@ -28,11 +28,11 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
         return null;
     end if;
    
-    if(steam_relay) then
-        host := CONCAT(steam_relay, ':0');
-    else
+    -- if(steam_relay is not null) then
+    --     host := CONCAT(steam_relay, ':1');
+    -- else
         host := CONCAT(server_host, ':', tv_port);
-    end if;
+    -- end if;
     
     connection_string := CONCAT('connect ', host, '; password ', password);
     

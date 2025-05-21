@@ -6,6 +6,7 @@ DECLARE
     server_host text;
     server_port int;
     steam_relay text;
+    host text;
 BEGIN
     SELECT s.host, s.port, s.steam_relay
         INTO server_host, server_port, steam_relay
@@ -22,6 +23,12 @@ BEGIN
         return NULL;
     end if;
 
-    RETURN CONCAT('steam://run/730//+connect ', COALESCE(CONCAT(steam_relay, ':0'), CONCAT(server_host, ':', server_port)));
+    if(steam_relay is not null) then
+        host := CONCAT(steam_relay, ':0');
+    else
+        host := CONCAT(server_host, ':', server_port);
+    end if;
+
+    RETURN CONCAT('steam://run/730//+connect ', host);
 END;
 $$;

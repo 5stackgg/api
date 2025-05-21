@@ -20,7 +20,7 @@ BEGIN
         return NULL;
     END IF;
 
-    if(steam_relay) then
+    if(steam_relay is not null) then
         host := CONCAT(steam_relay, ':0');
     else
         host := CONCAT(server_host, ':', server_port);
@@ -38,6 +38,6 @@ BEGIN
         return null;
     end if;
 
-    return CONCAT(connection_string, ' +password "', password, '"');
+    return CONCAT(connection_string, '; password ', password);
 END;
 $$;
