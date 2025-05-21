@@ -271,6 +271,9 @@ export class ChatService {
       }
 
       const rcon = await this.rcon.connect(server.id);
+      if (!rcon) {
+        return;
+      }
 
       return await rcon.send(`css_web_chat "${message}"`);
     } catch (error) {

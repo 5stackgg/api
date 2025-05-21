@@ -1,12 +1,11 @@
 import { WorkerHost } from "@nestjs/bullmq";
 import { GameServerQueues } from "../enums/GameServerQueues";
-import { Job } from "bullmq";
 import { HasuraService } from "../../hasura/hasura.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { NotificationsService } from "../../notifications/notifications.service";
 
 @UseQueue("GameServerNode", GameServerQueues.PluginVersion)
-export class DedicatedServersPluginOutOfDate extends WorkerHost {
+export class CheckServerPluginVersions extends WorkerHost {
   constructor(
     protected readonly hasura: HasuraService,
     protected readonly notifications: NotificationsService,
@@ -14,11 +13,7 @@ export class DedicatedServersPluginOutOfDate extends WorkerHost {
     super();
   }
 
-  async process(
-    job: Job<{
-      serverId: string;
-    }>,
-  ): Promise<void> {
+  async process(): Promise<void> {
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
         __args: {

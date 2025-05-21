@@ -33,7 +33,10 @@ insert_permissions:
   - role: tournament_organizer
     permission:
       check: {}
-      columns: []
+      columns:
+        - captain
+        - match_lineup_id
+        - steam_id
     comment: ""
   - role: user
     permission:

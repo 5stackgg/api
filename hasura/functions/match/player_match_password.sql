@@ -14,18 +14,20 @@ BEGIN
         RETURN NULL;
     END IF;
 
+     
+    is_in_lineup := is_in_lineup(match, hasura_session);
+
+    IF is_in_lineup THEN
+        return NULL;
+    END IF;
+
     player_role := hasura_session ->> 'x-hasura-role';
     player_steam_id := (hasura_session ->> 'x-hasura-user-id')::bigint;
     can_connect := FALSE;
-    is_in_lineup := is_in_lineup(match, hasura_session);
 
     IF player_role = 'admin' OR player_role = 'administrator' THEN
         can_connect := TRUE;
     ELSEIF type = 'game' THEN
-        IF is_in_lineup THEN
-            can_connect := TRUE;
-        END IF;
-
         IF player_role = 'match_organizer' OR player_role = 'tournament_organizer' THEN
             IF is_tournament_match(match) THEN
                 IF is_above_role(COALESCE(minimum_role_to_stream, 'tournament_organizer'), hasura_session) THEN
@@ -38,16 +40,12 @@ BEGIN
             END IF;
         END IF;
     ELSIF type = 'tv' THEN
-        IF is_in_lineup THEN
-            can_connect := FALSE;
-        ELSE
-            SELECT value INTO minimum_role_to_stream 
-            FROM settings 
-            WHERE name = 'public.minimum_role_to_stream';
+        SELECT value INTO minimum_role_to_stream 
+        FROM settings 
+        WHERE name = 'public.minimum_role_to_stream';
 
-            IF is_above_role(COALESCE(minimum_role_to_stream, 'user'), hasura_session) THEN
-                can_connect := TRUE;
-            END IF;
+        IF is_above_role(COALESCE(minimum_role_to_stream, 'user'), hasura_session) THEN
+            can_connect := TRUE;
         END IF;
     END IF;
 
