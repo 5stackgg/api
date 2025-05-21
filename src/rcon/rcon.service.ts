@@ -17,7 +17,7 @@ export class RconService {
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
 
-  public async connect(serverId: string) {
+  public async connect(serverId: string): Promise<RconClient | null> {
     if (this.connections[serverId]) {
       this.setupConnectionTimeout(serverId);
 
@@ -112,20 +112,12 @@ export class RconService {
           entity_id: serverId,
         });
       }
-
-      // TODO - we should return null here
-      return rcon;
+      return;
     }
 
     this.setupConnectionTimeout(serverId);
 
     return (this.connections[serverId] = rcon);
-  }
-
-  public async testConnection(serverId: string) {
-    await this.connect(serverId);
-
-    await this.disconnect(serverId);
   }
 
   private setupConnectionTimeout(serverId: string) {

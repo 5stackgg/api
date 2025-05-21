@@ -8,7 +8,6 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
 import { Queue } from "bullmq";
 import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
-import { DedicatedServersPluginOutOfDate } from "./jobs/DedicatedServersPluginOutOfDate";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
@@ -131,7 +130,23 @@ export class GameServerNodeController {
   public async ping(@Req() request: Request) {
     const map = request.query.map;
     const serverId = request.params.serverId;
-    const pluginVersion = request.query.pluginVersion as string;
+
+    let { steamRelay, pluginVersion } = request.query as {
+      steamRelay: string;
+      pluginVersion: string;
+    };
+
+    if (pluginVersion === "__RELEASE_VERSION__") {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: {
+            name: "plugin_version",
+          },
+          value: true,
+        },
+      });
+      pluginVersion = settings_by_pk?.value;
+    }
 
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
@@ -140,7 +155,7 @@ export class GameServerNodeController {
         },
         plugin_version: true,
         connected: true,
-        rcon_status: true,
+        steam_relay: true,
         is_dedicated: true,
         current_match: {
           current_match_map_id: true,
@@ -158,20 +173,7 @@ export class GameServerNodeController {
       throw Error("server not found");
     }
 
-    if (server.connected && server.plugin_version !== pluginVersion) {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: {
-            name: "plugin_version",
-          },
-          value: true,
-        },
-      });
-
-      if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
-        await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
-      }
-
+    if (pluginVersion && server.plugin_version !== pluginVersion) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -198,25 +200,24 @@ export class GameServerNodeController {
       }
     }
 
-    let rconStatus = server.rcon_status;
-    if (server.is_dedicated && rconStatus == null) {
-      await this.rcon.testConnection(serverId);
+    let status;
+    let steamRelayId = null;
+
+    const rcon = await this.rcon.connect(serverId);
+
+    if (rcon) {
+      if (steamRelay) {
+        status = await rcon.send("status");
+
+        if (status) {
+          const steamIdMatch = status.match(/steamid\s+:\s+(\[[^\]]+\])/);
+          steamRelayId = steamIdMatch ? steamIdMatch[1] : null;
+        }
+      }
+      await this.rcon.disconnect(serverId);
     }
 
-    if (!server.connected) {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: {
-            name: "plugin_version",
-          },
-          value: true,
-        },
-      });
-
-      if (settings_by_pk && settings_by_pk.value !== pluginVersion) {
-        await this.queue.add(DedicatedServersPluginOutOfDate.name, {});
-      }
-
+    if (!server.connected || server.steam_relay !== steamRelayId) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -225,8 +226,8 @@ export class GameServerNodeController {
             },
             _set: {
               connected: true,
+              steam_relay: steamRelayId,
               plugin_version: pluginVersion,
-              ...(rconStatus !== null && { rcon_status: rconStatus }),
             },
           },
           __typename: true,

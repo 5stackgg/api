@@ -20,7 +20,7 @@ import { LoggingServiceService } from "./logging-service/logging-service.service
 import { RedisModule } from "src/redis/redis.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { RconModule } from "src/rcon/rcon.module";
-import { DedicatedServersPluginOutOfDate } from "./jobs/DedicatedServersPluginOutOfDate";
+import { CheckServerPluginVersions } from "./jobs/CheckServerPluginVersions";
 
 @Module({
   providers: [
@@ -29,7 +29,7 @@ import { DedicatedServersPluginOutOfDate } from "./jobs/DedicatedServersPluginOu
     CheckGameUpdate,
     MarkGameServerNodeOffline,
     MarkDedicatedServerOffline,
-    DedicatedServersPluginOutOfDate,
+    CheckServerPluginVersions,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
     LoggingServiceService,
@@ -82,6 +82,16 @@ export class GameServerNodeModule {
       {
         repeat: {
           pattern: "*/6 * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      CheckServerPluginVersions.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
         },
       },
     );

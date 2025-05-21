@@ -30959,6 +30959,9 @@ export default {
             "reserved_by_match_id": [
                 2075
             ],
+            "steam_relay": [
+                11
+            ],
             "tv_port": [
                 4
             ],
@@ -31224,6 +31227,9 @@ export default {
             "reserved_by_match_id": [
                 2076
             ],
+            "steam_relay": [
+                13
+            ],
             "tv_port": [
                 5
             ],
@@ -31292,6 +31298,9 @@ export default {
             "reserved_by_match_id": [
                 2075
             ],
+            "steam_relay": [
+                11
+            ],
             "tv_port": [
                 4
             ],
@@ -31327,6 +31336,9 @@ export default {
             "reserved_by_match_id": [
                 2075
             ],
+            "steam_relay": [
+                11
+            ],
             "tv_port": [
                 4
             ],
@@ -31360,6 +31372,9 @@ export default {
                 1190
             ],
             "reserved_by_match_id": [
+                1190
+            ],
+            "steam_relay": [
                 1190
             ],
             "tv_port": [
@@ -31397,6 +31412,9 @@ export default {
             "reserved_by_match_id": [
                 2075
             ],
+            "steam_relay": [
+                11
+            ],
             "tv_port": [
                 4
             ],
@@ -31430,6 +31448,9 @@ export default {
                 1190
             ],
             "reserved_by_match_id": [
+                1190
+            ],
+            "steam_relay": [
                 1190
             ],
             "tv_port": [
@@ -31527,6 +31548,9 @@ export default {
             "reserved_by_match_id": [
                 1190
             ],
+            "steam_relay": [
+                1190
+            ],
             "tv_port": [
                 1190
             ],
@@ -31584,6 +31608,9 @@ export default {
             ],
             "reserved_by_match_id": [
                 2075
+            ],
+            "steam_relay": [
+                11
             ],
             "tv_port": [
                 4
@@ -31708,6 +31735,9 @@ export default {
             ],
             "reserved_by_match_id": [
                 2075
+            ],
+            "steam_relay": [
+                11
             ],
             "tv_port": [
                 4

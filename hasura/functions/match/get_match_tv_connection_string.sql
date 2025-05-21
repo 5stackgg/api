@@ -8,9 +8,10 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
      connection_string text;
      server_host text;
      tv_port int;
+     steam_relay text;
  BEGIN
-     SELECT s.host, s.tv_port
-     INTO server_host, tv_port
+     SELECT s.host, s.tv_port, s.steam_relay
+     INTO server_host, tv_port, steam_relay
      FROM matches m
      INNER JOIN servers s ON s.id = m.server_id
      WHERE m.id = match.id
@@ -26,7 +27,7 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
         return null;
     end if;
    
-    connection_string := CONCAT('connect ', server_host, ':', tv_port, '; password ', password);
+    connection_string := CONCAT('connect ', COALESCE(CONCAT(steam_relay, ':1'), CONCAT(server_host, ':', tv_port)), '; password ', password);
     
     RETURN connection_string;
  END;

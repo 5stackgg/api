@@ -452,31 +452,36 @@ export class MatchAssistantService {
 
         const gameServerNodeId = server.game_server_node_id;
 
+        const { settings } = await this.hasura.query({
+          settings: {
+            __args: {
+              where: {
+                _or: [
+                  {
+                    name: {
+                      _eq: "enable_cpu_pinning",
+                    },
+                  },
+                  {
+                    name: {
+                      _eq: "number_of_cpus_per_server",
+                    },
+                  },
+                  {
+                    name: {
+                      _eq: "steam_relay",
+                    },
+                  },
+                ],
+              },
+            },
+            name: true,
+            value: true,
+          },
+        });
+
         let cpus: string;
         if (server.game_server_node?.supports_cpu_pinning) {
-          const { settings } = await this.hasura.query({
-            settings: {
-              __args: {
-                where: {
-                  _or: [
-                    {
-                      name: {
-                        _eq: "enable_cpu_pinning",
-                      },
-                    },
-                    {
-                      name: {
-                        _eq: "number_of_cpus_per_server",
-                      },
-                    },
-                  ],
-                },
-              },
-              name: true,
-              value: true,
-            },
-          });
-
           const cpuPinning = settings.find(
             (setting) => setting.name === "enable_cpu_pinning",
           );
@@ -488,6 +493,10 @@ export class MatchAssistantService {
             cpus = numberOfCpus?.value || "2";
           }
         }
+
+        const steamRelay =
+          settings.find((setting) => setting.name === "steam_relay")?.value ===
+          "true";
 
         await batch.createNamespacedJob(this.namespace, {
           apiVersion: "batch/v1",
@@ -505,6 +514,10 @@ export class MatchAssistantService {
               },
               spec: {
                 restartPolicy: "Never",
+                // only enable host network if steam relay is enabled
+                ...(steamRelay
+                  ? { hostNetwork: true, dnsPolicy: "ClusterFirstWithHostNet" }
+                  : {}),
                 nodeName: gameServerNodeId,
                 containers: [
                   {
@@ -558,6 +571,10 @@ export class MatchAssistantService {
                       {
                         name: "WS_DOMAIN",
                         value: this.appConfig.wsDomain,
+                      },
+                      {
+                        name: "STEAM_RELAY",
+                        value: steamRelay ? "true" : "false",
                       },
                     ],
                     volumeMounts: [
@@ -742,12 +759,12 @@ export class MatchAssistantService {
         return false;
       }
 
-      try {
-        await this.rcon.connect(server.id);
-      } catch (error) {
-        this.logger.warn("unable to connect to server:", error.message);
+      const rcon = await this.rcon.connect(server.id);
+      if (!rcon) {
         return false;
       }
+
+      await this.rcon.disconnect(server.id);
 
       return true;
     } catch (error) {
@@ -780,7 +797,13 @@ export class MatchAssistantService {
 
     try {
       const rcon = await this.rcon.connect(serverId);
+      if (!rcon) {
+        this.logger.warn(`[${serverId}] unable to restart server`);
+        return;
+      }
+
       await rcon.send("sv_cheats 1; quit");
+      await this.rcon.disconnect(serverId);
     } catch (error) {
       this.logger.warn(`[${serverId}] unable to restart server`, error);
     }
@@ -927,6 +950,10 @@ export class MatchAssistantService {
       return;
     }
     const rcon = await this.rcon.connect(server.id);
+
+    if (!rcon) {
+      return;
+    }
 
     return await rcon.send(
       Array.isArray(command) ? command.join(";") : command,

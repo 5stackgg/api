@@ -5,9 +5,10 @@ DECLARE
     password text;
     server_host text;
     server_port int;
+    steam_relay text;
 BEGIN
-    SELECT s.host, s.port
-        INTO server_host, server_port
+    SELECT s.host, s.port, s.steam_relay
+        INTO server_host, server_port, steam_relay
         FROM matches m
         INNER JOIN servers s ON s.id = m.server_id
         WHERE m.id = match.id
@@ -17,12 +18,10 @@ BEGIN
         return NULL;
     END IF;
 
-    password := player_match_password(match, 'game', hasura_session);
-
-    if(password is null) then
-        return null;
+    if(is_in_lineup(match, hasura_session) = FALSE) then
+        return NULL;
     end if;
 
-    RETURN CONCAT('/quick-connect?link=', 'steam://connect/', server_host, ':', server_port, ';password/', password);
+    RETURN CONCAT('steam://run/730//+connect ', COALESCE(CONCAT(steam_relay, ':0'), CONCAT(server_host, ':', server_port)));
 END;
 $$;
