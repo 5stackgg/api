@@ -7922,6 +7922,7 @@ export interface server_regions {
     is_lan: Scalars['Boolean']
     /** A computed field, executes function "region_status" */
     status: (Scalars['String'] | null)
+    steam_relay: Scalars['Boolean']
     /** A computed field, executes function "total_region_server_count" */
     total_server_count: (Scalars['Int'] | null)
     value: Scalars['String']
@@ -8007,7 +8008,7 @@ export interface server_regions_mutation_response {
 
 
 /** select columns of table "server_regions" */
-export type server_regions_select_column = 'description' | 'is_lan' | 'value'
+export type server_regions_select_column = 'description' | 'is_lan' | 'steam_relay' | 'value'
 
 
 /** aggregate stddev on columns */
@@ -8051,7 +8052,7 @@ export interface server_regions_sum_fields {
 
 
 /** update columns of table "server_regions" */
-export type server_regions_update_column = 'description' | 'is_lan' | 'value'
+export type server_regions_update_column = 'description' | 'is_lan' | 'steam_relay' | 'value'
 
 
 /** aggregate var_pop on columns */
@@ -8109,6 +8110,8 @@ export interface servers {
     rcon_status: (Scalars['Boolean'] | null)
     region: Scalars['String']
     reserved_by_match_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    server_region: (server_regions | null)
     steam_relay: (Scalars['String'] | null)
     tv_port: (Scalars['Int'] | null)
     __typename: 'servers'
@@ -27517,6 +27520,7 @@ export interface server_regionsGenqlSelection{
     is_lan?: boolean | number
     /** A computed field, executes function "region_status" */
     status?: boolean | number
+    steam_relay?: boolean | number
     /** A computed field, executes function "total_region_server_count" */
     total_server_count?: boolean | number
     value?: boolean | number
@@ -27564,11 +27568,11 @@ export interface server_regions_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "server_regions". All fields are combined with a logical 'AND'. */
-export interface server_regions_bool_exp {_and?: (server_regions_bool_exp[] | null),_not?: (server_regions_bool_exp | null),_or?: (server_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),is_lan?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
+export interface server_regions_bool_exp {_and?: (server_regions_bool_exp[] | null),_not?: (server_regions_bool_exp | null),_or?: (server_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),is_lan?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),steam_relay?: (Boolean_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "server_regions" */
-export interface server_regions_insert_input {description?: (Scalars['String'] | null),game_server_nodes?: (game_server_nodes_arr_rel_insert_input | null),is_lan?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
+export interface server_regions_insert_input {description?: (Scalars['String'] | null),game_server_nodes?: (game_server_nodes_arr_rel_insert_input | null),is_lan?: (Scalars['Boolean'] | null),steam_relay?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -27623,7 +27627,7 @@ export interface server_regions_on_conflict {constraint: server_regions_constrai
 
 
 /** Ordering options when selecting data from "server_regions". */
-export interface server_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),is_lan?: (order_by | null),status?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
+export interface server_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),is_lan?: (order_by | null),status?: (order_by | null),steam_relay?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
 
 
 /** primary key columns input for table: server_regions */
@@ -27631,7 +27635,7 @@ export interface server_regions_pk_columns_input {value: Scalars['String']}
 
 
 /** input type for updating data in table "server_regions" */
-export interface server_regions_set_input {description?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
+export interface server_regions_set_input {description?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),steam_relay?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -27676,7 +27680,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface server_regions_stream_cursor_value_input {description?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
+export interface server_regions_stream_cursor_value_input {description?: (Scalars['String'] | null),is_lan?: (Scalars['Boolean'] | null),steam_relay?: (Scalars['Boolean'] | null),value?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -27774,6 +27778,8 @@ export interface serversGenqlSelection{
     rcon_status?: boolean | number
     region?: boolean | number
     reserved_by_match_id?: boolean | number
+    /** An object relationship */
+    server_region?: server_regionsGenqlSelection
     steam_relay?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -27840,7 +27846,7 @@ export interface servers_avg_order_by {port?: (order_by | null),tv_port?: (order
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),plugin_version?: (String_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),plugin_version?: (String_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
@@ -27848,7 +27854,7 @@ export interface servers_inc_input {port?: (Scalars['Int'] | null),tv_port?: (Sc
 
 
 /** input type for inserting data into table "servers" */
-export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),server_region?: (server_regions_obj_rel_insert_input | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -27917,7 +27923,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */
@@ -42872,12 +42878,14 @@ export const enumServerRegionsConstraint = {
 export const enumServerRegionsSelectColumn = {
    description: 'description' as const,
    is_lan: 'is_lan' as const,
+   steam_relay: 'steam_relay' as const,
    value: 'value' as const
 }
 
 export const enumServerRegionsUpdateColumn = {
    description: 'description' as const,
    is_lan: 'is_lan' as const,
+   steam_relay: 'steam_relay' as const,
    value: 'value' as const
 }
 

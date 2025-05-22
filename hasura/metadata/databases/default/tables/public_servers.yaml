@@ -14,6 +14,15 @@ object_relationships:
   - name: game_server_node
     using:
       foreign_key_constraint_on: game_server_node_id
+  - name: server_region
+    using:
+      manual_configuration:
+        column_mapping:
+          region: value
+        insertion_order: null
+        remote_table:
+          name: server_regions
+          schema: public
 array_relationships:
   - name: matches
     using:

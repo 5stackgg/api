@@ -437,6 +437,9 @@ export class MatchAssistantService {
           game_server_node: {
             supports_cpu_pinning: true,
           },
+          server_region: {
+            steam_relay: true,
+          },
         },
       });
 
@@ -451,37 +454,33 @@ export class MatchAssistantService {
         this.logger.verbose(`[${matchId}] create job for on demand server`);
 
         const gameServerNodeId = server.game_server_node_id;
-
-        const { settings } = await this.hasura.query({
-          settings: {
-            __args: {
-              where: {
-                _or: [
-                  {
-                    name: {
-                      _eq: "enable_cpu_pinning",
-                    },
-                  },
-                  {
-                    name: {
-                      _eq: "number_of_cpus_per_server",
-                    },
-                  },
-                  {
-                    name: {
-                      _eq: "enable_steam_relay",
-                    },
-                  },
-                ],
-              },
-            },
-            name: true,
-            value: true,
-          },
-        });
+        const steamRelay = server.server_region?.steam_relay || false;
 
         let cpus: string;
         if (server.game_server_node?.supports_cpu_pinning) {
+          const { settings } = await this.hasura.query({
+            settings: {
+              __args: {
+                where: {
+                  _or: [
+                    {
+                      name: {
+                        _eq: "enable_cpu_pinning",
+                      },
+                    },
+                    {
+                      name: {
+                        _eq: "number_of_cpus_per_server",
+                      },
+                    },
+                  ],
+                },
+              },
+              name: true,
+              value: true,
+            },
+          });
+
           const cpuPinning = settings.find(
             (setting) => setting.name === "enable_cpu_pinning",
           );
@@ -493,10 +492,6 @@ export class MatchAssistantService {
             cpus = numberOfCpus?.value || "2";
           }
         }
-
-        const steamRelay =
-          settings.find((setting) => setting.name === "enable_steam_relay")?.value ===
-          "true";
 
         await batch.createNamespacedJob(this.namespace, {
           apiVersion: "batch/v1",

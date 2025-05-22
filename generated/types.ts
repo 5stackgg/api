@@ -30492,6 +30492,9 @@ export default {
             "status": [
                 11
             ],
+            "steam_relay": [
+                0
+            ],
             "total_server_count": [
                 4
             ],
@@ -30599,6 +30602,9 @@ export default {
             "status": [
                 13
             ],
+            "steam_relay": [
+                1
+            ],
             "total_server_count": [
                 5
             ],
@@ -30618,6 +30624,9 @@ export default {
                 528
             ],
             "is_lan": [
+                0
+            ],
+            "steam_relay": [
                 0
             ],
             "value": [
@@ -30719,6 +30728,9 @@ export default {
             "status": [
                 1190
             ],
+            "steam_relay": [
+                1190
+            ],
             "total_server_count": [
                 1190
             ],
@@ -30743,6 +30755,9 @@ export default {
                 11
             ],
             "is_lan": [
+                0
+            ],
+            "steam_relay": [
                 0
             ],
             "value": [
@@ -30801,6 +30816,9 @@ export default {
                 11
             ],
             "is_lan": [
+                0
+            ],
+            "steam_relay": [
                 0
             ],
             "value": [
@@ -30958,6 +30976,9 @@ export default {
             ],
             "reserved_by_match_id": [
                 2075
+            ],
+            "server_region": [
+                1562
             ],
             "steam_relay": [
                 11
@@ -31227,6 +31248,9 @@ export default {
             "reserved_by_match_id": [
                 2076
             ],
+            "server_region": [
+                1566
+            ],
             "steam_relay": [
                 13
             ],
@@ -31297,6 +31321,9 @@ export default {
             ],
             "reserved_by_match_id": [
                 2075
+            ],
+            "server_region": [
+                1572
             ],
             "steam_relay": [
                 11
@@ -31547,6 +31574,9 @@ export default {
             ],
             "reserved_by_match_id": [
                 1190
+            ],
+            "server_region": [
+                1574
             ],
             "steam_relay": [
                 1190

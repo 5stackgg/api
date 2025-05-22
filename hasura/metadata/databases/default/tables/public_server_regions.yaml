@@ -32,9 +32,24 @@ insert_permissions:
       columns:
         - description
         - is_lan
+        - steam_relay
         - value
     comment: ""
 select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - is_lan
+        - steam_relay
+        - description
+        - value
+      computed_fields:
+        - available_server_count
+        - status
+        - total_server_count
+      filter: {}
+      allow_aggregations: true
+    comment: ""
   - role: user
     permission:
       columns:
@@ -54,6 +69,7 @@ update_permissions:
       columns:
         - description
         - is_lan
+        - steam_relay
         - value
       filter: {}
       check: {}
