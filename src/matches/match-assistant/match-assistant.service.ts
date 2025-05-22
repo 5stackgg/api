@@ -469,7 +469,7 @@ export class MatchAssistantService {
                   },
                   {
                     name: {
-                      _eq: "steam_relay",
+                      _eq: "enable_steam_relay",
                     },
                   },
                 ],
