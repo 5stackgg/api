@@ -89,6 +89,11 @@ export class MatchesController {
         lineup_2_id: true,
         organizer_steam_id: true,
         current_match_map_id: true,
+        server: {
+          server_region: {
+            is_lan: true,
+          },
+        },
         options: {
           mr: true,
           type: true,
@@ -166,7 +171,35 @@ export class MatchesController {
       return;
     }
 
-    const match = matches_by_pk;
+    const match = matches_by_pk as typeof matches_by_pk & {
+      is_lan: boolean;
+      options: typeof matches_by_pk.options & {
+        cfg_override: string;
+      };
+      lineup_1: typeof matches_by_pk.lineup_1 & {
+        lineup_players: Array<
+          Omit<(typeof matches_by_pk.lineup_1.lineup_players)[0], "player"> & {
+            player: Omit<
+              (typeof matches_by_pk.lineup_1.lineup_players)[0]["player"],
+              "name"
+            >;
+          }
+        >;
+      };
+      lineup_2: typeof matches_by_pk.lineup_2 & {
+        lineup_players: Array<
+          Omit<(typeof matches_by_pk.lineup_2.lineup_players)[0], "player"> & {
+            player: Omit<
+              (typeof matches_by_pk.lineup_2.lineup_players)[0]["player"],
+              "name"
+            >;
+          }
+        >;
+      };
+    };
+
+    match.is_lan = match.server.server_region.is_lan;
+    delete match.server;
 
     const { match_type_cfgs_by_pk: matchTypeCfg } = await this.hasura.query({
       match_type_cfgs_by_pk: {
@@ -178,7 +211,6 @@ export class MatchesController {
     });
 
     if (matchTypeCfg) {
-      // @ts-ignore
       match.options.cfg_override = matchTypeCfg.cfg;
     }
 
@@ -189,8 +221,7 @@ export class MatchesController {
         is_banned: player.player.is_banned,
         is_gagged: player.player.is_gagged,
         is_muted: player.player.is_muted,
-        // @ts-ignore
-        player: undefined,
+        player: undefined as undefined,
       }),
     );
 
@@ -201,8 +232,7 @@ export class MatchesController {
         is_banned: player.player.is_banned,
         is_gagged: player.player.is_gagged,
         is_muted: player.player.is_muted,
-        // @ts-ignore
-        player: undefined,
+        player: undefined as undefined,
       }),
     );
 
