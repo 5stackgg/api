@@ -201,17 +201,23 @@ export class MatchesController {
     match.is_lan = match.server.server_region.is_lan;
     delete match.server;
 
-    const { match_type_cfgs_by_pk: matchTypeCfg } = await this.hasura.query({
-      match_type_cfgs_by_pk: {
+    const { match_type_cfgs } = await this.hasura.query({
+      match_type_cfgs: {
         __args: {
-          type: match.options.type,
+          where: {
+            type: {
+              _in: ["Base", "Live", match.options.type],
+            },
+          },
         },
         cfg: true,
       },
     });
 
-    if (matchTypeCfg) {
-      match.options.cfg_override = matchTypeCfg.cfg;
+    if (match_type_cfgs) {
+      match.options.cfg_override = match_type_cfgs
+        .map((cfg) => cfg.cfg)
+        .join("\n");
     }
 
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(

@@ -69,6 +69,9 @@ export class RconService {
         await this.disconnect(serverId);
       })
       .on("end", () => {
+        if (!this.connections[serverId]) {
+          return;
+        }
         delete this.connections[serverId];
       });
 
@@ -131,8 +134,8 @@ export class RconService {
     clearTimeout(this.connectTimeouts[serverId]);
 
     if (this.connections[serverId]) {
-      await this.connections[serverId].end();
+      this.connections[serverId].end();
+      delete this.connections[serverId];
     }
-    return;
   }
 }

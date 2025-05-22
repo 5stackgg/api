@@ -341,6 +341,71 @@ export type e_friend_status_select_column = 'description' | 'value'
 export type e_friend_status_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_game_cfg_types" */
+export interface e_game_cfg_types {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_game_cfg_types'
+}
+
+
+/** aggregated selection of "e_game_cfg_types" */
+export interface e_game_cfg_types_aggregate {
+    aggregate: (e_game_cfg_types_aggregate_fields | null)
+    nodes: e_game_cfg_types[]
+    __typename: 'e_game_cfg_types_aggregate'
+}
+
+
+/** aggregate fields of "e_game_cfg_types" */
+export interface e_game_cfg_types_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_game_cfg_types_max_fields | null)
+    min: (e_game_cfg_types_min_fields | null)
+    __typename: 'e_game_cfg_types_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_game_cfg_types" */
+export type e_game_cfg_types_constraint = 'e_game_cfg_types_pkey'
+
+export type e_game_cfg_types_enum = 'Base' | 'Competitive' | 'Duel' | 'Lan' | 'Live' | 'Wingman'
+
+
+/** aggregate max on columns */
+export interface e_game_cfg_types_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_game_cfg_types_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_game_cfg_types_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_game_cfg_types_min_fields'
+}
+
+
+/** response of any mutation on the table "e_game_cfg_types" */
+export interface e_game_cfg_types_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_game_cfg_types[]
+    __typename: 'e_game_cfg_types_mutation_response'
+}
+
+
+/** select columns of table "e_game_cfg_types" */
+export type e_game_cfg_types_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_game_cfg_types" */
+export type e_game_cfg_types_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_game_server_node_statuses" */
 export interface e_game_server_node_statuses {
     description: Scalars['String']
@@ -741,10 +806,6 @@ export type e_match_status_update_column = 'description' | 'value'
 
 /** columns and relationships of "e_match_types" */
 export interface e_match_types {
-    /** An array relationship */
-    config: match_type_cfgs[]
-    /** An aggregate relationship */
-    config_aggregate: match_type_cfgs_aggregate
     description: Scalars['String']
     /** An array relationship */
     maps: maps[]
@@ -3848,9 +3909,7 @@ export type match_region_veto_picks_update_column = 'created_at' | 'id' | 'match
 /** columns and relationships of "match_type_cfgs" */
 export interface match_type_cfgs {
     cfg: Scalars['String']
-    /** An object relationship */
-    e_match_type: e_match_types
-    type: e_match_types_enum
+    type: e_game_cfg_types_enum
     __typename: 'match_type_cfgs'
 }
 
@@ -4363,6 +4422,10 @@ export interface mutation_root {
     delete_e_friend_status: (e_friend_status_mutation_response | null)
     /** delete single row from the table: "e_friend_status" */
     delete_e_friend_status_by_pk: (e_friend_status | null)
+    /** delete data from the table: "e_game_cfg_types" */
+    delete_e_game_cfg_types: (e_game_cfg_types_mutation_response | null)
+    /** delete single row from the table: "e_game_cfg_types" */
+    delete_e_game_cfg_types_by_pk: (e_game_cfg_types | null)
     /** delete data from the table: "e_game_server_node_statuses" */
     delete_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
     /** delete single row from the table: "e_game_server_node_statuses" */
@@ -4615,6 +4678,10 @@ export interface mutation_root {
     insert_e_friend_status: (e_friend_status_mutation_response | null)
     /** insert a single row into the table: "e_friend_status" */
     insert_e_friend_status_one: (e_friend_status | null)
+    /** insert data into the table: "e_game_cfg_types" */
+    insert_e_game_cfg_types: (e_game_cfg_types_mutation_response | null)
+    /** insert a single row into the table: "e_game_cfg_types" */
+    insert_e_game_cfg_types_one: (e_game_cfg_types | null)
     /** insert data into the table: "e_game_server_node_statuses" */
     insert_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
     /** insert a single row into the table: "e_game_server_node_statuses" */
@@ -4908,6 +4975,12 @@ export interface mutation_root {
     update_e_friend_status_by_pk: (e_friend_status | null)
     /** update multiples rows of table: "e_friend_status" */
     update_e_friend_status_many: ((e_friend_status_mutation_response | null)[] | null)
+    /** update data of the table: "e_game_cfg_types" */
+    update_e_game_cfg_types: (e_game_cfg_types_mutation_response | null)
+    /** update single row of the table: "e_game_cfg_types" */
+    update_e_game_cfg_types_by_pk: (e_game_cfg_types | null)
+    /** update multiples rows of table: "e_game_cfg_types" */
+    update_e_game_cfg_types_many: ((e_game_cfg_types_mutation_response | null)[] | null)
     /** update data of the table: "e_game_server_node_statuses" */
     update_e_game_server_node_statuses: (e_game_server_node_statuses_mutation_response | null)
     /** update single row of the table: "e_game_server_node_statuses" */
@@ -7507,6 +7580,12 @@ export interface query_root {
     e_friend_status_aggregate: e_friend_status_aggregate
     /** fetch data from the table: "e_friend_status" using primary key columns */
     e_friend_status_by_pk: (e_friend_status | null)
+    /** fetch data from the table: "e_game_cfg_types" */
+    e_game_cfg_types: e_game_cfg_types[]
+    /** fetch aggregated fields from the table: "e_game_cfg_types" */
+    e_game_cfg_types_aggregate: e_game_cfg_types_aggregate
+    /** fetch data from the table: "e_game_cfg_types" using primary key columns */
+    e_game_cfg_types_by_pk: (e_game_cfg_types | null)
     /** fetch data from the table: "e_game_server_node_statuses" */
     e_game_server_node_statuses: e_game_server_node_statuses[]
     /** fetch aggregated fields from the table: "e_game_server_node_statuses" */
@@ -8358,6 +8437,14 @@ export interface subscription_root {
     e_friend_status_by_pk: (e_friend_status | null)
     /** fetch data from the table in a streaming manner: "e_friend_status" */
     e_friend_status_stream: e_friend_status[]
+    /** fetch data from the table: "e_game_cfg_types" */
+    e_game_cfg_types: e_game_cfg_types[]
+    /** fetch aggregated fields from the table: "e_game_cfg_types" */
+    e_game_cfg_types_aggregate: e_game_cfg_types_aggregate
+    /** fetch data from the table: "e_game_cfg_types" using primary key columns */
+    e_game_cfg_types_by_pk: (e_game_cfg_types | null)
+    /** fetch data from the table in a streaming manner: "e_game_cfg_types" */
+    e_game_cfg_types_stream: e_game_cfg_types[]
     /** fetch data from the table: "e_game_server_node_statuses" */
     e_game_server_node_statuses: e_game_server_node_statuses[]
     /** fetch aggregated fields from the table: "e_game_server_node_statuses" */
@@ -12301,6 +12388,109 @@ _set?: (e_friend_status_set_input | null),
 where: e_friend_status_bool_exp}
 
 
+/** columns and relationships of "e_game_cfg_types" */
+export interface e_game_cfg_typesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_game_cfg_types" */
+export interface e_game_cfg_types_aggregateGenqlSelection{
+    aggregate?: e_game_cfg_types_aggregate_fieldsGenqlSelection
+    nodes?: e_game_cfg_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_game_cfg_types" */
+export interface e_game_cfg_types_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_game_cfg_types_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_game_cfg_types_max_fieldsGenqlSelection
+    min?: e_game_cfg_types_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_game_cfg_types". All fields are combined with a logical 'AND'. */
+export interface e_game_cfg_types_bool_exp {_and?: (e_game_cfg_types_bool_exp[] | null),_not?: (e_game_cfg_types_bool_exp | null),_or?: (e_game_cfg_types_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_game_cfg_types_enum". All fields are combined with logical 'AND'. */
+export interface e_game_cfg_types_enum_comparison_exp {_eq?: (e_game_cfg_types_enum | null),_in?: (e_game_cfg_types_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_game_cfg_types_enum | null),_nin?: (e_game_cfg_types_enum[] | null)}
+
+
+/** input type for inserting data into table "e_game_cfg_types" */
+export interface e_game_cfg_types_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_game_cfg_types_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_game_cfg_types_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_game_cfg_types" */
+export interface e_game_cfg_types_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_game_cfg_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_game_cfg_types" */
+export interface e_game_cfg_types_on_conflict {constraint: e_game_cfg_types_constraint,update_columns?: e_game_cfg_types_update_column[],where?: (e_game_cfg_types_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_game_cfg_types". */
+export interface e_game_cfg_types_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_game_cfg_types */
+export interface e_game_cfg_types_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_game_cfg_types" */
+export interface e_game_cfg_types_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_game_cfg_types" */
+export interface e_game_cfg_types_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_game_cfg_types_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_game_cfg_types_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_game_cfg_types_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_game_cfg_types_set_input | null),
+/** filter the rows which have to be updated */
+where: e_game_cfg_types_bool_exp}
+
+
 /** columns and relationships of "e_game_server_node_statuses" */
 export interface e_game_server_node_statusesGenqlSelection{
     description?: boolean | number
@@ -12999,30 +13189,6 @@ where: e_match_status_bool_exp}
 
 /** columns and relationships of "e_match_types" */
 export interface e_match_typesGenqlSelection{
-    /** An array relationship */
-    config?: (match_type_cfgsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_type_cfgs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_type_cfgs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_type_cfgs_bool_exp | null)} })
-    /** An aggregate relationship */
-    config_aggregate?: (match_type_cfgs_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_type_cfgs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_type_cfgs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_type_cfgs_bool_exp | null)} })
     description?: boolean | number
     /** An array relationship */
     maps?: (mapsGenqlSelection & { __args?: {
@@ -13074,7 +13240,7 @@ export interface e_match_types_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "e_match_types". All fields are combined with a logical 'AND'. */
-export interface e_match_types_bool_exp {_and?: (e_match_types_bool_exp[] | null),_not?: (e_match_types_bool_exp | null),_or?: (e_match_types_bool_exp[] | null),config?: (match_type_cfgs_bool_exp | null),config_aggregate?: (match_type_cfgs_aggregate_bool_exp | null),description?: (String_comparison_exp | null),maps?: (maps_bool_exp | null),maps_aggregate?: (maps_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+export interface e_match_types_bool_exp {_and?: (e_match_types_bool_exp[] | null),_not?: (e_match_types_bool_exp | null),_or?: (e_match_types_bool_exp[] | null),description?: (String_comparison_exp | null),maps?: (maps_bool_exp | null),maps_aggregate?: (maps_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
 
 
 /** Boolean expression to compare columns of type "e_match_types_enum". All fields are combined with logical 'AND'. */
@@ -13082,7 +13248,7 @@ export interface e_match_types_enum_comparison_exp {_eq?: (e_match_types_enum | 
 
 
 /** input type for inserting data into table "e_match_types" */
-export interface e_match_types_insert_input {config?: (match_type_cfgs_arr_rel_insert_input | null),description?: (Scalars['String'] | null),maps?: (maps_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+export interface e_match_types_insert_input {description?: (Scalars['String'] | null),maps?: (maps_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -13125,7 +13291,7 @@ export interface e_match_types_on_conflict {constraint: e_match_types_constraint
 
 
 /** Ordering options when selecting data from "e_match_types". */
-export interface e_match_types_order_by {config_aggregate?: (match_type_cfgs_aggregate_order_by | null),description?: (order_by | null),maps_aggregate?: (maps_aggregate_order_by | null),value?: (order_by | null)}
+export interface e_match_types_order_by {description?: (order_by | null),maps_aggregate?: (maps_aggregate_order_by | null),value?: (order_by | null)}
 
 
 /** primary key columns input for table: e_match_types */
@@ -18462,8 +18628,6 @@ where: match_region_veto_picks_bool_exp}
 /** columns and relationships of "match_type_cfgs" */
 export interface match_type_cfgsGenqlSelection{
     cfg?: boolean | number
-    /** An object relationship */
-    e_match_type?: e_match_typesGenqlSelection
     type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -18478,10 +18642,6 @@ export interface match_type_cfgs_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface match_type_cfgs_aggregate_bool_exp {count?: (match_type_cfgs_aggregate_bool_exp_count | null)}
-
-export interface match_type_cfgs_aggregate_bool_exp_count {arguments?: (match_type_cfgs_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (match_type_cfgs_bool_exp | null),predicate: Int_comparison_exp}
-
 
 /** aggregate fields of "match_type_cfgs" */
 export interface match_type_cfgs_aggregate_fieldsGenqlSelection{
@@ -18493,22 +18653,12 @@ export interface match_type_cfgs_aggregate_fieldsGenqlSelection{
 }
 
 
-/** order by aggregate values of table "match_type_cfgs" */
-export interface match_type_cfgs_aggregate_order_by {count?: (order_by | null),max?: (match_type_cfgs_max_order_by | null),min?: (match_type_cfgs_min_order_by | null)}
-
-
-/** input type for inserting array relation for remote table "match_type_cfgs" */
-export interface match_type_cfgs_arr_rel_insert_input {data: match_type_cfgs_insert_input[],
-/** upsert condition */
-on_conflict?: (match_type_cfgs_on_conflict | null)}
-
-
 /** Boolean expression to filter rows from the table "match_type_cfgs". All fields are combined with a logical 'AND'. */
-export interface match_type_cfgs_bool_exp {_and?: (match_type_cfgs_bool_exp[] | null),_not?: (match_type_cfgs_bool_exp | null),_or?: (match_type_cfgs_bool_exp[] | null),cfg?: (String_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_type_cfgs_bool_exp {_and?: (match_type_cfgs_bool_exp[] | null),_not?: (match_type_cfgs_bool_exp | null),_or?: (match_type_cfgs_bool_exp[] | null),cfg?: (String_comparison_exp | null),type?: (e_game_cfg_types_enum_comparison_exp | null)}
 
 
 /** input type for inserting data into table "match_type_cfgs" */
-export interface match_type_cfgs_insert_input {cfg?: (Scalars['String'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),type?: (e_match_types_enum | null)}
+export interface match_type_cfgs_insert_input {cfg?: (Scalars['String'] | null),type?: (e_game_cfg_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -18519,20 +18669,12 @@ export interface match_type_cfgs_max_fieldsGenqlSelection{
 }
 
 
-/** order by max() on columns of table "match_type_cfgs" */
-export interface match_type_cfgs_max_order_by {cfg?: (order_by | null)}
-
-
 /** aggregate min on columns */
 export interface match_type_cfgs_min_fieldsGenqlSelection{
     cfg?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
-
-
-/** order by min() on columns of table "match_type_cfgs" */
-export interface match_type_cfgs_min_order_by {cfg?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_type_cfgs" */
@@ -18551,15 +18693,15 @@ export interface match_type_cfgs_on_conflict {constraint: match_type_cfgs_constr
 
 
 /** Ordering options when selecting data from "match_type_cfgs". */
-export interface match_type_cfgs_order_by {cfg?: (order_by | null),e_match_type?: (e_match_types_order_by | null),type?: (order_by | null)}
+export interface match_type_cfgs_order_by {cfg?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_type_cfgs */
-export interface match_type_cfgs_pk_columns_input {type: e_match_types_enum}
+export interface match_type_cfgs_pk_columns_input {type: e_game_cfg_types_enum}
 
 
 /** input type for updating data in table "match_type_cfgs" */
-export interface match_type_cfgs_set_input {cfg?: (Scalars['String'] | null),type?: (e_match_types_enum | null)}
+export interface match_type_cfgs_set_input {cfg?: (Scalars['String'] | null),type?: (e_game_cfg_types_enum | null)}
 
 
 /** Streaming cursor of the table "match_type_cfgs" */
@@ -18571,7 +18713,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_type_cfgs_stream_cursor_value_input {cfg?: (Scalars['String'] | null),type?: (e_match_types_enum | null)}
+export interface match_type_cfgs_stream_cursor_value_input {cfg?: (Scalars['String'] | null),type?: (e_game_cfg_types_enum | null)}
 
 export interface match_type_cfgs_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -19459,6 +19601,12 @@ export interface mutation_rootGenqlSelection{
     where: e_friend_status_bool_exp} })
     /** delete single row from the table: "e_friend_status" */
     delete_e_friend_status_by_pk?: (e_friend_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_game_cfg_types" */
+    delete_e_game_cfg_types?: (e_game_cfg_types_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_game_cfg_types_bool_exp} })
+    /** delete single row from the table: "e_game_cfg_types" */
+    delete_e_game_cfg_types_by_pk?: (e_game_cfg_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_game_server_node_statuses" */
     delete_e_game_server_node_statuses?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -19668,7 +19816,7 @@ export interface mutation_rootGenqlSelection{
     /** filter the rows which have to be deleted */
     where: match_type_cfgs_bool_exp} })
     /** delete single row from the table: "match_type_cfgs" */
-    delete_match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_match_types_enum} })
+    delete_match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_game_cfg_types_enum} })
     /** delete data from the table: "matches" */
     delete_matches?: (matches_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -19863,6 +20011,18 @@ export interface mutation_rootGenqlSelection{
     object: e_friend_status_insert_input, 
     /** upsert condition */
     on_conflict?: (e_friend_status_on_conflict | null)} })
+    /** insert data into the table: "e_game_cfg_types" */
+    insert_e_game_cfg_types?: (e_game_cfg_types_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_game_cfg_types_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_game_cfg_types_on_conflict | null)} })
+    /** insert a single row into the table: "e_game_cfg_types" */
+    insert_e_game_cfg_types_one?: (e_game_cfg_typesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_game_cfg_types_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_game_cfg_types_on_conflict | null)} })
     /** insert data into the table: "e_game_server_node_statuses" */
     insert_e_game_server_node_statuses?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -20660,6 +20820,20 @@ export interface mutation_rootGenqlSelection{
     update_e_friend_status_many?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_friend_status_updates[]} })
+    /** update data of the table: "e_game_cfg_types" */
+    update_e_game_cfg_types?: (e_game_cfg_types_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_game_cfg_types_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_game_cfg_types_bool_exp} })
+    /** update single row of the table: "e_game_cfg_types" */
+    update_e_game_cfg_types_by_pk?: (e_game_cfg_typesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_game_cfg_types_set_input | null), pk_columns: e_game_cfg_types_pk_columns_input} })
+    /** update multiples rows of table: "e_game_cfg_types" */
+    update_e_game_cfg_types_many?: (e_game_cfg_types_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_game_cfg_types_updates[]} })
     /** update data of the table: "e_game_server_node_statuses" */
     update_e_game_server_node_statuses?: (e_game_server_node_statuses_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -25664,6 +25838,32 @@ export interface query_rootGenqlSelection{
     where?: (e_friend_status_bool_exp | null)} })
     /** fetch data from the table: "e_friend_status" using primary key columns */
     e_friend_status_by_pk?: (e_friend_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_game_cfg_types" */
+    e_game_cfg_types?: (e_game_cfg_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_cfg_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_cfg_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_cfg_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_game_cfg_types" */
+    e_game_cfg_types_aggregate?: (e_game_cfg_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_cfg_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_cfg_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_cfg_types_bool_exp | null)} })
+    /** fetch data from the table: "e_game_cfg_types" using primary key columns */
+    e_game_cfg_types_by_pk?: (e_game_cfg_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_game_server_node_statuses" */
     e_game_server_node_statuses?: (e_game_server_node_statusesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -26575,7 +26775,7 @@ export interface query_rootGenqlSelection{
     /** filter the rows returned */
     where?: (match_type_cfgs_bool_exp | null)} })
     /** fetch data from the table: "match_type_cfgs" using primary key columns */
-    match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_match_types_enum} })
+    match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_game_cfg_types_enum} })
     /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -28246,6 +28446,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_friend_status_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_friend_status_bool_exp | null)} })
+    /** fetch data from the table: "e_game_cfg_types" */
+    e_game_cfg_types?: (e_game_cfg_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_cfg_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_cfg_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_cfg_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_game_cfg_types" */
+    e_game_cfg_types_aggregate?: (e_game_cfg_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_game_cfg_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_game_cfg_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_game_cfg_types_bool_exp | null)} })
+    /** fetch data from the table: "e_game_cfg_types" using primary key columns */
+    e_game_cfg_types_by_pk?: (e_game_cfg_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_game_cfg_types" */
+    e_game_cfg_types_stream?: (e_game_cfg_typesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_game_cfg_types_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_game_cfg_types_bool_exp | null)} })
     /** fetch data from the table: "e_game_server_node_statuses" */
     e_game_server_node_statuses?: (e_game_server_node_statusesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -29427,7 +29661,7 @@ export interface subscription_rootGenqlSelection{
     /** filter the rows returned */
     where?: (match_type_cfgs_bool_exp | null)} })
     /** fetch data from the table: "match_type_cfgs" using primary key columns */
-    match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_match_types_enum} })
+    match_type_cfgs_by_pk?: (match_type_cfgsGenqlSelection & { __args: {type: e_game_cfg_types_enum} })
     /** fetch data from the table in a streaming manner: "match_type_cfgs" */
     match_type_cfgs_stream?: (match_type_cfgsGenqlSelection & { __args: {
     /** maximum number of rows returned in a single batch */
@@ -35455,6 +35689,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_friend_status_mutation_response = (obj?: { __typename?: any } | null): obj is e_friend_status_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_friend_status_mutation_response"')
       return e_friend_status_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_cfg_types_possibleTypes: string[] = ['e_game_cfg_types']
+    export const ise_game_cfg_types = (obj?: { __typename?: any } | null): obj is e_game_cfg_types => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_cfg_types"')
+      return e_game_cfg_types_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_cfg_types_aggregate_possibleTypes: string[] = ['e_game_cfg_types_aggregate']
+    export const ise_game_cfg_types_aggregate = (obj?: { __typename?: any } | null): obj is e_game_cfg_types_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_cfg_types_aggregate"')
+      return e_game_cfg_types_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_cfg_types_aggregate_fields_possibleTypes: string[] = ['e_game_cfg_types_aggregate_fields']
+    export const ise_game_cfg_types_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_game_cfg_types_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_cfg_types_aggregate_fields"')
+      return e_game_cfg_types_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_cfg_types_max_fields_possibleTypes: string[] = ['e_game_cfg_types_max_fields']
+    export const ise_game_cfg_types_max_fields = (obj?: { __typename?: any } | null): obj is e_game_cfg_types_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_cfg_types_max_fields"')
+      return e_game_cfg_types_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_cfg_types_min_fields_possibleTypes: string[] = ['e_game_cfg_types_min_fields']
+    export const ise_game_cfg_types_min_fields = (obj?: { __typename?: any } | null): obj is e_game_cfg_types_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_cfg_types_min_fields"')
+      return e_game_cfg_types_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_game_cfg_types_mutation_response_possibleTypes: string[] = ['e_game_cfg_types_mutation_response']
+    export const ise_game_cfg_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_game_cfg_types_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_game_cfg_types_mutation_response"')
+      return e_game_cfg_types_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -41636,6 +41918,29 @@ export const enumEFriendStatusSelectColumn = {
 }
 
 export const enumEFriendStatusUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEGameCfgTypesConstraint = {
+   e_game_cfg_types_pkey: 'e_game_cfg_types_pkey' as const
+}
+
+export const enumEGameCfgTypesEnum = {
+   Base: 'Base' as const,
+   Competitive: 'Competitive' as const,
+   Duel: 'Duel' as const,
+   Lan: 'Lan' as const,
+   Live: 'Live' as const,
+   Wingman: 'Wingman' as const
+}
+
+export const enumEGameCfgTypesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEGameCfgTypesUpdateColumn = {
    description: 'description' as const,
    value: 'value' as const
 }

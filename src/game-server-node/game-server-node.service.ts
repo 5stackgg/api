@@ -253,7 +253,7 @@ export class GameServerNodeService {
         } = JSON.parse(settings_by_pk.value);
 
         if (
-          currentBuild.buildid === game_server_nodes_by_pk.build_id.toString()
+          currentBuild.buildid === game_server_nodes_by_pk?.build_id.toString()
         ) {
           this.logger.log(
             `CS2 is already up to date on node ${gameServerNodeId}`,

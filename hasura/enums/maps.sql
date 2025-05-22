@@ -4,6 +4,15 @@ insert into e_match_types ("value", "description") values
     ('Duel', 'A competitive 1 vs 1 experience, perfect for practicing individual skill')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
+insert into e_game_cfg_types ("value", "description") values
+    ('Base', 'Base game configuration'),
+    ('Lan', 'Lan game configuration'),
+    ('Live', 'Live game configuration'),
+    ('Competitive', 'Competitive game configuration'),
+    ('Wingman', 'Wingman game configuration'),
+    ('Duel', 'Duel game configuration')
+on conflict(value) do update set "description" = EXCLUDED."description";
+
 -- Valve will add and remove workshop maps from the game, so we need to update the maps table accordingly
 update maps 
    set "name" = 'de_grail', "workshop_map_id" = null

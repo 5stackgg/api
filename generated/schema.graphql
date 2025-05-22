@@ -880,6 +880,189 @@ input e_friend_status_updates {
 }
 
 """
+columns and relationships of "e_game_cfg_types"
+"""
+type e_game_cfg_types {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_game_cfg_types"
+"""
+type e_game_cfg_types_aggregate {
+  aggregate: e_game_cfg_types_aggregate_fields
+  nodes: [e_game_cfg_types!]!
+}
+
+"""
+aggregate fields of "e_game_cfg_types"
+"""
+type e_game_cfg_types_aggregate_fields {
+  count(columns: [e_game_cfg_types_select_column!], distinct: Boolean): Int!
+  max: e_game_cfg_types_max_fields
+  min: e_game_cfg_types_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_game_cfg_types". All fields are combined with a logical 'AND'.
+"""
+input e_game_cfg_types_bool_exp {
+  _and: [e_game_cfg_types_bool_exp!]
+  _not: e_game_cfg_types_bool_exp
+  _or: [e_game_cfg_types_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_game_cfg_types"
+"""
+enum e_game_cfg_types_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_game_cfg_types_pkey
+}
+
+enum e_game_cfg_types_enum {
+  """Base game configuration"""
+  Base
+
+  """Competitive game configuration"""
+  Competitive
+
+  """Duel game configuration"""
+  Duel
+
+  """Lan game configuration"""
+  Lan
+
+  """Live game configuration"""
+  Live
+
+  """Wingman game configuration"""
+  Wingman
+}
+
+"""
+Boolean expression to compare columns of type "e_game_cfg_types_enum". All fields are combined with logical 'AND'.
+"""
+input e_game_cfg_types_enum_comparison_exp {
+  _eq: e_game_cfg_types_enum
+  _in: [e_game_cfg_types_enum!]
+  _is_null: Boolean
+  _neq: e_game_cfg_types_enum
+  _nin: [e_game_cfg_types_enum!]
+}
+
+"""
+input type for inserting data into table "e_game_cfg_types"
+"""
+input e_game_cfg_types_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_game_cfg_types_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_game_cfg_types_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_game_cfg_types"
+"""
+type e_game_cfg_types_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_game_cfg_types!]!
+}
+
+"""
+on_conflict condition type for table "e_game_cfg_types"
+"""
+input e_game_cfg_types_on_conflict {
+  constraint: e_game_cfg_types_constraint!
+  update_columns: [e_game_cfg_types_update_column!]! = []
+  where: e_game_cfg_types_bool_exp
+}
+
+"""Ordering options when selecting data from "e_game_cfg_types"."""
+input e_game_cfg_types_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_game_cfg_types"""
+input e_game_cfg_types_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_game_cfg_types"
+"""
+enum e_game_cfg_types_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_game_cfg_types"
+"""
+input e_game_cfg_types_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_game_cfg_types"
+"""
+input e_game_cfg_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_game_cfg_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_game_cfg_types_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_game_cfg_types"
+"""
+enum e_game_cfg_types_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_game_cfg_types_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_game_cfg_types_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_game_cfg_types_bool_exp!
+}
+
+"""
 columns and relationships of "e_game_server_node_statuses"
 """
 type e_game_server_node_statuses {
@@ -2104,41 +2287,6 @@ input e_match_status_updates {
 columns and relationships of "e_match_types"
 """
 type e_match_types {
-  """An array relationship"""
-  config(
-    """distinct select on columns"""
-    distinct_on: [match_type_cfgs_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_type_cfgs_order_by!]
-
-    """filter the rows returned"""
-    where: match_type_cfgs_bool_exp
-  ): [match_type_cfgs!]!
-
-  """An aggregate relationship"""
-  config_aggregate(
-    """distinct select on columns"""
-    distinct_on: [match_type_cfgs_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_type_cfgs_order_by!]
-
-    """filter the rows returned"""
-    where: match_type_cfgs_bool_exp
-  ): match_type_cfgs_aggregate!
   description: String!
 
   """An array relationship"""
@@ -2203,8 +2351,6 @@ input e_match_types_bool_exp {
   _and: [e_match_types_bool_exp!]
   _not: e_match_types_bool_exp
   _or: [e_match_types_bool_exp!]
-  config: match_type_cfgs_bool_exp
-  config_aggregate: match_type_cfgs_aggregate_bool_exp
   description: String_comparison_exp
   maps: maps_bool_exp
   maps_aggregate: maps_aggregate_bool_exp
@@ -2249,7 +2395,6 @@ input e_match_types_enum_comparison_exp {
 input type for inserting data into table "e_match_types"
 """
 input e_match_types_insert_input {
-  config: match_type_cfgs_arr_rel_insert_input
   description: String
   maps: maps_arr_rel_insert_input
   value: String
@@ -2299,7 +2444,6 @@ input e_match_types_on_conflict {
 
 """Ordering options when selecting data from "e_match_types"."""
 input e_match_types_order_by {
-  config_aggregate: match_type_cfgs_aggregate_order_by
   description: order_by
   maps_aggregate: maps_aggregate_order_by
   value: order_by
@@ -11928,10 +12072,7 @@ columns and relationships of "match_type_cfgs"
 """
 type match_type_cfgs {
   cfg: String!
-
-  """An object relationship"""
-  e_match_type: e_match_types!
-  type: e_match_types_enum!
+  type: e_game_cfg_types_enum!
 }
 
 """
@@ -11940,17 +12081,6 @@ aggregated selection of "match_type_cfgs"
 type match_type_cfgs_aggregate {
   aggregate: match_type_cfgs_aggregate_fields
   nodes: [match_type_cfgs!]!
-}
-
-input match_type_cfgs_aggregate_bool_exp {
-  count: match_type_cfgs_aggregate_bool_exp_count
-}
-
-input match_type_cfgs_aggregate_bool_exp_count {
-  arguments: [match_type_cfgs_select_column!]
-  distinct: Boolean
-  filter: match_type_cfgs_bool_exp
-  predicate: Int_comparison_exp!
 }
 
 """
@@ -11963,25 +12093,6 @@ type match_type_cfgs_aggregate_fields {
 }
 
 """
-order by aggregate values of table "match_type_cfgs"
-"""
-input match_type_cfgs_aggregate_order_by {
-  count: order_by
-  max: match_type_cfgs_max_order_by
-  min: match_type_cfgs_min_order_by
-}
-
-"""
-input type for inserting array relation for remote table "match_type_cfgs"
-"""
-input match_type_cfgs_arr_rel_insert_input {
-  data: [match_type_cfgs_insert_input!]!
-
-  """upsert condition"""
-  on_conflict: match_type_cfgs_on_conflict
-}
-
-"""
 Boolean expression to filter rows from the table "match_type_cfgs". All fields are combined with a logical 'AND'.
 """
 input match_type_cfgs_bool_exp {
@@ -11989,8 +12100,7 @@ input match_type_cfgs_bool_exp {
   _not: match_type_cfgs_bool_exp
   _or: [match_type_cfgs_bool_exp!]
   cfg: String_comparison_exp
-  e_match_type: e_match_types_bool_exp
-  type: e_match_types_enum_comparison_exp
+  type: e_game_cfg_types_enum_comparison_exp
 }
 
 """
@@ -12008,8 +12118,7 @@ input type for inserting data into table "match_type_cfgs"
 """
 input match_type_cfgs_insert_input {
   cfg: String
-  e_match_type: e_match_types_obj_rel_insert_input
-  type: e_match_types_enum
+  type: e_game_cfg_types_enum
 }
 
 """aggregate max on columns"""
@@ -12017,23 +12126,9 @@ type match_type_cfgs_max_fields {
   cfg: String
 }
 
-"""
-order by max() on columns of table "match_type_cfgs"
-"""
-input match_type_cfgs_max_order_by {
-  cfg: order_by
-}
-
 """aggregate min on columns"""
 type match_type_cfgs_min_fields {
   cfg: String
-}
-
-"""
-order by min() on columns of table "match_type_cfgs"
-"""
-input match_type_cfgs_min_order_by {
-  cfg: order_by
 }
 
 """
@@ -12059,13 +12154,12 @@ input match_type_cfgs_on_conflict {
 """Ordering options when selecting data from "match_type_cfgs"."""
 input match_type_cfgs_order_by {
   cfg: order_by
-  e_match_type: e_match_types_order_by
   type: order_by
 }
 
 """primary key columns input for table: match_type_cfgs"""
 input match_type_cfgs_pk_columns_input {
-  type: e_match_types_enum!
+  type: e_game_cfg_types_enum!
 }
 
 """
@@ -12084,7 +12178,7 @@ input type for updating data in table "match_type_cfgs"
 """
 input match_type_cfgs_set_input {
   cfg: String
-  type: e_match_types_enum
+  type: e_game_cfg_types_enum
 }
 
 """
@@ -12101,7 +12195,7 @@ input match_type_cfgs_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input match_type_cfgs_stream_cursor_value_input {
   cfg: String
-  type: e_match_types_enum
+  type: e_game_cfg_types_enum
 }
 
 """
@@ -13861,6 +13955,19 @@ type mutation_root {
   delete_e_friend_status_by_pk(value: String!): e_friend_status
 
   """
+  delete data from the table: "e_game_cfg_types"
+  """
+  delete_e_game_cfg_types(
+    """filter the rows which have to be deleted"""
+    where: e_game_cfg_types_bool_exp!
+  ): e_game_cfg_types_mutation_response
+
+  """
+  delete single row from the table: "e_game_cfg_types"
+  """
+  delete_e_game_cfg_types_by_pk(value: String!): e_game_cfg_types
+
+  """
   delete data from the table: "e_game_server_node_statuses"
   """
   delete_e_game_server_node_statuses(
@@ -14313,7 +14420,7 @@ type mutation_root {
   """
   delete single row from the table: "match_type_cfgs"
   """
-  delete_match_type_cfgs_by_pk(type: e_match_types_enum!): match_type_cfgs
+  delete_match_type_cfgs_by_pk(type: e_game_cfg_types_enum!): match_type_cfgs
 
   """
   delete data from the table: "matches"
@@ -14714,6 +14821,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_friend_status_on_conflict
   ): e_friend_status
+
+  """
+  insert data into the table: "e_game_cfg_types"
+  """
+  insert_e_game_cfg_types(
+    """the rows to be inserted"""
+    objects: [e_game_cfg_types_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_game_cfg_types_on_conflict
+  ): e_game_cfg_types_mutation_response
+
+  """
+  insert a single row into the table: "e_game_cfg_types"
+  """
+  insert_e_game_cfg_types_one(
+    """the row to be inserted"""
+    object: e_game_cfg_types_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_game_cfg_types_on_conflict
+  ): e_game_cfg_types
 
   """
   insert data into the table: "e_game_server_node_statuses"
@@ -16181,6 +16310,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_friend_status_updates!]!
   ): [e_friend_status_mutation_response]
+
+  """
+  update data of the table: "e_game_cfg_types"
+  """
+  update_e_game_cfg_types(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_cfg_types_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_game_cfg_types_bool_exp!
+  ): e_game_cfg_types_mutation_response
+
+  """
+  update single row of the table: "e_game_cfg_types"
+  """
+  update_e_game_cfg_types_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_cfg_types_set_input
+    pk_columns: e_game_cfg_types_pk_columns_input!
+  ): e_game_cfg_types
+
+  """
+  update multiples rows of table: "e_game_cfg_types"
+  """
+  update_e_game_cfg_types_many(
+    """updates to execute, in order"""
+    updates: [e_game_cfg_types_updates!]!
+  ): [e_game_cfg_types_mutation_response]
 
   """
   update data of the table: "e_game_server_node_statuses"
@@ -25191,6 +25348,51 @@ type query_root {
   e_friend_status_by_pk(value: String!): e_friend_status
 
   """
+  fetch data from the table: "e_game_cfg_types"
+  """
+  e_game_cfg_types(
+    """distinct select on columns"""
+    distinct_on: [e_game_cfg_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_cfg_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_cfg_types_bool_exp
+  ): [e_game_cfg_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_cfg_types"
+  """
+  e_game_cfg_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_cfg_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_cfg_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_cfg_types_bool_exp
+  ): e_game_cfg_types_aggregate!
+
+  """
+  fetch data from the table: "e_game_cfg_types" using primary key columns
+  """
+  e_game_cfg_types_by_pk(value: String!): e_game_cfg_types
+
+  """
   fetch data from the table: "e_game_server_node_statuses"
   """
   e_game_server_node_statuses(
@@ -26709,7 +26911,7 @@ type query_root {
   ): match_type_cfgs_aggregate!
 
   """fetch data from the table: "match_type_cfgs" using primary key columns"""
-  match_type_cfgs_by_pk(type: e_match_types_enum!): match_type_cfgs
+  match_type_cfgs_by_pk(type: e_game_cfg_types_enum!): match_type_cfgs
 
   """An array relationship"""
   matches(
@@ -29534,6 +29736,65 @@ type subscription_root {
   ): [e_friend_status!]!
 
   """
+  fetch data from the table: "e_game_cfg_types"
+  """
+  e_game_cfg_types(
+    """distinct select on columns"""
+    distinct_on: [e_game_cfg_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_cfg_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_cfg_types_bool_exp
+  ): [e_game_cfg_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_cfg_types"
+  """
+  e_game_cfg_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_cfg_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_cfg_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_cfg_types_bool_exp
+  ): e_game_cfg_types_aggregate!
+
+  """
+  fetch data from the table: "e_game_cfg_types" using primary key columns
+  """
+  e_game_cfg_types_by_pk(value: String!): e_game_cfg_types
+
+  """
+  fetch data from the table in a streaming manner: "e_game_cfg_types"
+  """
+  e_game_cfg_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_game_cfg_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_game_cfg_types_bool_exp
+  ): [e_game_cfg_types!]!
+
+  """
   fetch data from the table: "e_game_server_node_statuses"
   """
   e_game_server_node_statuses(
@@ -31526,7 +31787,7 @@ type subscription_root {
   ): match_type_cfgs_aggregate!
 
   """fetch data from the table: "match_type_cfgs" using primary key columns"""
-  match_type_cfgs_by_pk(type: e_match_types_enum!): match_type_cfgs
+  match_type_cfgs_by_pk(type: e_game_cfg_types_enum!): match_type_cfgs
 
   """
   fetch data from the table in a streaming manner: "match_type_cfgs"
