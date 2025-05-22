@@ -24,7 +24,7 @@ BEGIN
     end if;
 
     if(steam_relay is not null) then
-        host := CONCAT(steam_relay, ':0');
+        host := steam_relay;
     else
         host := CONCAT(server_host, ':', server_port);
     end if;
