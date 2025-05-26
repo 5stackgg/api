@@ -232,7 +232,7 @@ export class GameServerNodeService {
       },
     });
 
-    if (!game_server_nodes_by_pk) {
+    if (!game_server_nodes_by_pk || !game_server_nodes_by_pk.build_id) {
       this.logger.error(`Game server node not found`, gameServerNodeId);
       throw new Error("Game server not found");
     }

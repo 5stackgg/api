@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Strategy } from "passport-steam";
+import { SteamOpenIdStrategy } from "passport-steam-openid";
 import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
 import { Request } from "express";
@@ -11,34 +11,23 @@ import { CacheService } from "../../cache/cache.service";
 import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
-  provider: "steam";
-  _json: {
-    steamid: string;
-    communityvisibilitystate: number;
-    profilestate: number;
-    personaname: string;
-    commentpermission: number;
-    profileurl: string;
-    avatar: string;
-    avatarmedium: string;
-    avatarfull: string;
-    avatarhash: string;
-    lastlogoff: number;
-    personastate: number;
-    realname: string;
-    primaryclanid: string;
-    timecreated: number;
-    personastateflags: number;
-    loccountrycode: string;
-    locstatecode: string;
-  };
-  id: string;
-  displayName: string;
-  photos: Array<{ value: string }>;
+  steamid: string;
+  communityvisibilitystate: number;
+  profilestate: number;
+  personaname: string;
+  profileurl: string;
+  avatar: string;
+  avatarmedium: string;
+  avatarfull: string;
+  avatarhash: string;
+  personastate: number;
+  primaryclanid: string;
+  timecreated: number;
+  personastateflags: 0;
 }
 
 @Injectable()
-export class SteamStrategy extends PassportStrategy(Strategy) {
+export class SteamStrategy extends PassportStrategy(SteamOpenIdStrategy) {
   constructor(
     readonly config: ConfigService,
     private readonly cache: CacheService,
@@ -47,8 +36,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
     const webDomain = config.get<AppConfig>("app").webDomain;
 
     super({
-      passReqToCallback: true,
-      realm: webDomain,
+      profile: true,
       apiKey: config.get<SteamConfig>("steam").steamApiKey,
       returnURL: `${webDomain}/auth/steam/callback`,
     });
@@ -60,7 +48,7 @@ export class SteamStrategy extends PassportStrategy(Strategy) {
     profile: SteamProfile,
     done: DoneCallback,
   ): Promise<void> {
-    const { steamid, personaname, profileurl, avatarfull } = profile._json;
+    const { steamid, personaname, profileurl, avatarfull } = profile;
 
     let role: e_player_roles_enum = "user";
     if (!(await this.cache.has("admin-check"))) {

@@ -1,4 +1,11 @@
-import { Controller, Get, UseGuards, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+  UseFilters,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
 import { HasuraAction } from "../hasura/hasura.controller";
@@ -7,8 +14,10 @@ import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { SocketsGateway } from "src/sockets/sockets.gateway";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { AuthHttpExceptionHandler } from "./AuthHttpExceptionHandler";
 
 @Controller("auth")
+@UseFilters(AuthHttpExceptionHandler)
 export class AuthController {
   constructor(
     private readonly cache: CacheService,
