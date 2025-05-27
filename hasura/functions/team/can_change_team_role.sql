@@ -7,6 +7,10 @@ BEGIN
         RETURN true;
     END IF;
 
+    if hasura_session ->> 'x-hasura-role' = 'administrator' then
+        RETURN true;
+    END IF;
+    
     RETURN EXISTS (
         SELECT 1 FROM team_roster 
         WHERE 
