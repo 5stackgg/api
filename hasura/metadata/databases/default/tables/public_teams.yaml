@@ -93,15 +93,6 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - name
-        - owner_steam_id
-        - short_name
-      filter: {}
-      check: null
-    comment: ""
   - role: user
     permission:
       columns:
