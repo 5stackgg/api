@@ -14,6 +14,31 @@ export class CheckServerPluginVersions extends WorkerHost {
   }
 
   async process(): Promise<void> {
+    const { notifications_aggregate } = await this.hasura.query({
+      notifications_aggregate: {
+        __args: {
+          where: {
+            entity_id: {
+              _eq: "plugin_version",
+            },
+            is_read: {
+              _eq: false,
+            },
+            deleted_at: {
+              _is_null: true,
+            },
+          },
+        },
+        aggregate: {
+          count: true,
+        },
+      },
+    });
+
+    if (notifications_aggregate.aggregate.count > 0) {
+      return;
+    }
+
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
         __args: {
@@ -49,6 +74,7 @@ export class CheckServerPluginVersions extends WorkerHost {
     }
 
     this.notifications.send("DedicatedServerStatus", {
+      entity_id: "plugin_version",
       message: `${servers_aggregate.aggregate.count} servers has out of date plugins.`,
       title: "Plugin Out of Date",
       role: "administrator",
