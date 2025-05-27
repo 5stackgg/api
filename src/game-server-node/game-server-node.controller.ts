@@ -206,12 +206,16 @@ export class GameServerNodeController {
     const rcon = await this.rcon.connect(serverId);
 
     if (rcon) {
-      if (steamRelay) {
-        status = await rcon.send("status");
+      if (steamRelay.toLowerCase() === "true") {
+        status = await rcon.send("status_json");
 
         if (status) {
-          const steamIdMatch = status.match(/steamid\s+:\s+(\[[^\]]+\])/);
-          steamRelayId = steamIdMatch ? steamIdMatch[1] : null;
+          const jsonStatus = JSON.parse(status) as {
+            server: {
+              steamid: string;
+            };
+          };
+          steamRelay = jsonStatus.server.steamid;
         }
       }
       await this.rcon.disconnect(serverId);
