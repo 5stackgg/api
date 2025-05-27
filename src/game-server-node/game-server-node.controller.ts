@@ -210,12 +210,17 @@ export class GameServerNodeController {
         status = await rcon.send("status_json");
 
         if (status) {
-          const jsonStatus = JSON.parse(status) as {
+          const {
+            server: { steamid },
+          } = JSON.parse(status) as {
             server: {
               steamid: string;
             };
           };
-          steamRelay = jsonStatus.server.steamid;
+
+          if (steamid !== "[A:1:0:0]") {
+            steamRelayId = steamid;
+          }
         }
       }
       await this.rcon.disconnect(serverId);
