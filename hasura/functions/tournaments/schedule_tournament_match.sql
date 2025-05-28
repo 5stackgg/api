@@ -21,14 +21,32 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          INNER JOIN tournament_stages ts on ts.id = tb.tournament_stage_id
          INNER JOIN tournaments t on t.id = ts.tournament_id
          where tb.id = bracket.id;
+
+     -- Create the match first
+     INSERT INTO matches (
+         status,
+         organizer_steam_id,
+         match_options_id
+     )
+     VALUES (
+         'Veto',
+         tournament.organizer_steam_id,
+         tournament.match_options_id
+     )
+     RETURNING id INTO _match_id;
          
      INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
      INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
 
+     -- Update match with lineup IDs
+     UPDATE matches 
+     SET lineup_1_id = _lineup_1_id,
+         lineup_2_id = _lineup_2_id
+     WHERE id = _match_id;
+
      FOR member IN
          SELECT * FROM tournament_team_roster
          WHERE tournament_team_id = bracket.tournament_team_id_1
-
      LOOP
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_1_id, member.player_steam_id);
@@ -41,22 +59,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_2_id, member.player_steam_id);
      END LOOP;
-
-     INSERT INTO matches (
-         status,
-         organizer_steam_id,
-         match_options_id,
-         lineup_1_id,
-         lineup_2_id
-     )
-     VALUES (
-         'Veto',
-         tournament.organizer_steam_id,
-         tournament.match_options_id,
-         _lineup_1_id,
-         _lineup_2_id
-     )
-     RETURNING id INTO _match_id;
 
      UPDATE tournament_brackets
      SET match_id = _match_id
