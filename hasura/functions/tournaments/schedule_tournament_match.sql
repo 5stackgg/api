@@ -29,7 +29,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          match_options_id
      )
      VALUES (
-         'Veto',
+         'WaitingForCheckIn',
          tournament.organizer_steam_id,
          tournament.match_options_id
      )
