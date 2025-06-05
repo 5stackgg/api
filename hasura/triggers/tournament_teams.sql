@@ -13,6 +13,11 @@ BEGIN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot join the tournament';
     END IF;
 
+
+    IF NEW.team_id IS NOT NULL THEN
+       select owner_steam_id into NEW.owner_steam_id from teams where id = NEW.team_id;
+    END IF;
+
     RETURN NEW;
 END;
 $$;

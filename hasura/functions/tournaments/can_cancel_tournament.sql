@@ -10,16 +10,7 @@ BEGIN
         return false;
     END IF;
 
-    IF hasura_session ->> 'x-hasura-role' = 'admin' THEN
-        RETURN true;
-    END IF;
-
-
-    IF hasura_session ->> 'x-hasura-role' = 'administrator' THEN
-        RETURN true;
-    END IF;
-
-    IF hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
+    IF hasura_session ->> 'x-hasura-role' = 'admin' OR hasura_session ->> 'x-hasura-role' = 'administrator' OR hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
         RETURN true;
     END IF;
 
