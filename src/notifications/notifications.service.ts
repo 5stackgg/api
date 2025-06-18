@@ -61,19 +61,23 @@ export class NotificationsService {
       },
     });
 
-    if (discord_support_webhook) {
-      await fetch(discord_support_webhook.value, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: new TurndownService().turndown(
-            `${discord_role_id ? ` <@&${discord_role_id.value}> ` : ""} ${notification.message}`,
-          ),
-          username: "5stack",
-        }),
-      });
+    if (discord_support_webhook.value) {
+      try {
+        await fetch(discord_support_webhook.value, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: new TurndownService().turndown(
+              `${discord_role_id ? ` <@&${discord_role_id.value}> ` : ""} ${notification.message}`,
+            ),
+            username: "5stack",
+          }),
+        });
+      } catch (error) {
+        console.error("Error sending discord notification", error);
+      }
     }
   }
 }

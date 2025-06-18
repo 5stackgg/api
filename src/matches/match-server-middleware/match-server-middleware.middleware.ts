@@ -30,6 +30,7 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
 
     const apiPassword = request.headers.authorization
       ?.replace("Bearer", "")
+      ?.replace("bearer", "")
       .trim();
 
     if (serverId) {

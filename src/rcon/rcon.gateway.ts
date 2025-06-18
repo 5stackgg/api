@@ -56,6 +56,20 @@ export class RconGateway {
 
     const rcon = await this.rconService.connect(data.serverId);
 
+    if (!rcon) {
+      client.send(
+        JSON.stringify({
+          event: "rcon",
+          data: {
+            uuid: data.uuid,
+            result: "unable to connect to rcon",
+          },
+        }),
+      );
+
+      return;
+    }
+
     client.send(
       JSON.stringify({
         event: "rcon",
