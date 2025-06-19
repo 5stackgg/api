@@ -107,9 +107,7 @@ export class RconService {
         });
       }
     } catch (error) {
-      // Clean up the rcon instance if connection failed
       try {
-        // Only try to end if the connection was actually established
         if (rcon.authenticated) {
           rcon.end();
         }
