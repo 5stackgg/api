@@ -12,7 +12,7 @@ export class RconService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  private CONNECTION_TIMEOUT = 10 * 1000;
+  private CONNECTION_TIMEOUT = 3 * 1000;
 
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
@@ -47,6 +47,7 @@ export class RconService {
     }
 
     const rcon = new RconClient({
+      timeout: this.CONNECTION_TIMEOUT,
       host: server.game_server_node?.node_ip
         ? server.game_server_node.node_ip
         : server.host,
@@ -76,7 +77,20 @@ export class RconService {
       });
 
     try {
-      await rcon.connect();
+      // Create a timeout promise that rejects after the connection timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              `RCON connection timeout after ${this.CONNECTION_TIMEOUT}ms`,
+            ),
+          );
+        }, this.CONNECTION_TIMEOUT);
+      });
+
+      // Race between the connection and the timeout
+      await Promise.race([rcon.connect(), timeoutPromise]);
+
       if (!server.rcon_status && server.is_dedicated) {
         this.hasuraService.mutation({
           update_servers_by_pk: {
@@ -93,6 +107,16 @@ export class RconService {
         });
       }
     } catch (error) {
+      // Clean up the rcon instance if connection failed
+      try {
+        // Only try to end if the connection was actually established
+        if (rcon.authenticated) {
+          rcon.end();
+        }
+      } catch (cleanupError) {
+        console.warn("Error during RCON cleanup:", cleanupError);
+      }
+
       if (server.rcon_status && server.is_dedicated) {
         this.hasuraService.mutation({
           update_servers_by_pk: {
@@ -115,7 +139,7 @@ export class RconService {
           entity_id: serverId,
         });
       }
-      return;
+      return null;
     }
 
     this.setupConnectionTimeout(serverId);

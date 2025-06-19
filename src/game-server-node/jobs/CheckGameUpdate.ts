@@ -45,11 +45,6 @@ export class CheckGameUpdate extends WorkerHost {
 
     const currentVersion = JSON.parse(_currentVersion.value);
 
-    console.info({
-      currentVersion,
-      publicBuild,
-    });
-
     if (currentVersion.buildid === publicBuild.buildid) {
       return;
     }
