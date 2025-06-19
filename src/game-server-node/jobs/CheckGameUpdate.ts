@@ -1,5 +1,4 @@
 import { WorkerHost } from "@nestjs/bullmq";
-import { CacheService } from "../../cache/cache.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { Logger } from "@nestjs/common";
@@ -10,7 +9,6 @@ import { NotificationsService } from "src/notifications/notifications.service";
 @UseQueue("GameServerNode", GameServerQueues.GameUpdate)
 export class CheckGameUpdate extends WorkerHost {
   constructor(
-    protected readonly cache: CacheService,
     protected readonly logger: Logger,
     protected readonly gameServerNodeService: GameServerNodeService,
     protected readonly hasuraService: HasuraService,
@@ -21,13 +19,38 @@ export class CheckGameUpdate extends WorkerHost {
 
   async process(): Promise<void> {
     const response = await fetch("https://api.steamcmd.net/v1/info/730");
-    const latestBuildTime = await this.cache.get("cs:updated-at");
 
     const { data } = await response.json();
 
     const publicBuild = data["730"].depots?.branches?.public;
 
     if (!publicBuild) {
+      return;
+    }
+
+    const {
+      settings: [_currentVersion],
+    } = await this.hasuraService.query({
+      settings: {
+        __args: {
+          where: {
+            name: {
+              _eq: "cs_version",
+            },
+          },
+        },
+        value: true,
+      },
+    });
+
+    const currentVersion = JSON.parse(_currentVersion.value);
+
+    console.info({
+      currentVersion,
+      publicBuild,
+    });
+
+    if (currentVersion.buildid === publicBuild.buildid) {
       return;
     }
 
@@ -47,19 +70,12 @@ export class CheckGameUpdate extends WorkerHost {
       },
     });
 
-    if (
-      !latestBuildTime ||
-      latestBuildTime < parseInt(publicBuild.timeupdated)
-    ) {
-      await this.cache.put("cs:updated-at", parseInt(publicBuild.timeupdated));
+    this.notifications.send("GameUpdate", {
+      message: `A CS2 Update (${publicBuild.buildid}) has been detected. The Game Node Servers will update automatically.`,
+      title: "CS2 Update",
+      role: "administrator",
+    });
 
-      this.notifications.send("GameUpdate", {
-        message: `A CS2 Update (${publicBuild.buildid}) has been detected. The Game Node Servers will update automatically.`,
-        title: "CS2 Update",
-        role: "administrator",
-      });
-
-      await this.gameServerNodeService.updateCs();
-    }
+    await this.gameServerNodeService.updateCs();
   }
 }
