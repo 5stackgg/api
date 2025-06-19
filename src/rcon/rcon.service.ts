@@ -139,7 +139,7 @@ export class RconService {
           entity_id: serverId,
         });
       }
-      return null;
+      return;
     }
 
     this.setupConnectionTimeout(serverId);
