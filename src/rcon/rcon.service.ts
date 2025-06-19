@@ -77,7 +77,6 @@ export class RconService {
       });
 
     try {
-      // Create a timeout promise that rejects after the connection timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(
@@ -88,7 +87,6 @@ export class RconService {
         }, this.CONNECTION_TIMEOUT);
       });
 
-      // Race between the connection and the timeout
       await Promise.race([rcon.connect(), timeoutPromise]);
 
       if (!server.rcon_status && server.is_dedicated) {
