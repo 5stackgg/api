@@ -43,10 +43,12 @@ export class CheckGameUpdate extends WorkerHost {
       },
     });
 
-    const currentVersion = JSON.parse(_currentVersion.value);
+    if (_currentVersion?.value) {
+      const currentVersion = JSON.parse(_currentVersion.value);
 
-    if (currentVersion.buildid === publicBuild.buildid) {
-      return;
+      if (currentVersion.buildid === publicBuild.buildid) {
+        return;
+      }
     }
 
     await this.hasuraService.mutation({

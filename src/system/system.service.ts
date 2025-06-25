@@ -333,6 +333,11 @@ export class SystemService {
           );
           const { tag_name } = await response.json();
 
+          if (!tag_name) {
+            this.logger.warn("no tag name found for game server plugin");
+            return;
+          }
+
           await this.hasura.mutation({
             insert_settings_one: {
               __args: {
