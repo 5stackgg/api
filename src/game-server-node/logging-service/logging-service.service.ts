@@ -79,6 +79,75 @@ export class LoggingServiceService {
     return body.items;
   }
 
+  private async tryGetPodLogs(
+    logApi: Log,
+    namespace: string,
+    pod: V1Pod,
+    containerName: string,
+    logStream: PassThrough,
+    stream: Writable,
+    previous: boolean,
+    download: boolean,
+    tailLines: number,
+    aborts: Array<() => void> | undefined,
+    abortFn: () => void,
+    isAborted: { value: boolean },
+  ): Promise<void> {
+    if (isAborted.value) {
+      return;
+    }
+    try {
+      const podLogs = await logApi.log(
+        namespace,
+        pod.metadata.name,
+        containerName,
+        logStream,
+        {
+          previous,
+          pretty: false,
+          timestamps: true,
+          follow: download === false,
+          tailLines,
+        },
+      );
+      // If we reach here, the log call succeeded
+      if (aborts) {
+        // Replace the abort function with one that aborts the podLogs
+        const index = aborts.indexOf(abortFn);
+        if (index !== -1) {
+          aborts[index] = () => {
+            abortFn();
+            podLogs.abort();
+          };
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to get logs for pod ${pod.metadata.name}, container ${containerName}`,
+        error,
+      );
+      if (isAborted.value) {
+        this.logger.log("Log retrieval aborted, stopping retries");
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await this.tryGetPodLogs(
+        logApi,
+        namespace,
+        pod,
+        containerName,
+        logStream,
+        stream,
+        previous,
+        download,
+        tailLines,
+        aborts,
+        abortFn,
+        isAborted,
+      );
+    }
+  }
+
   public async getLogsForPod(
     pod: V1Pod,
     stream: Writable,
@@ -89,6 +158,7 @@ export class LoggingServiceService {
     archive?: archiver.Archiver,
   ) {
     let totalAdded = 0;
+    const isAborted = { value: false };
 
     for (const container of pod.spec.containers) {
       const logStream = new PassThrough();
@@ -147,26 +217,29 @@ export class LoggingServiceService {
 
       const logApi = new Log(this.kubeConfig);
 
-      const podLogs = await logApi.log(
-        this.namespace,
-        pod.metadata.name,
-        container.name,
-        logStream,
-        {
-          previous,
-          pretty: false,
-          timestamps: true,
-          follow: download === false,
-          tailLines,
-        },
-      );
+      const abortFn = () => {
+        isAborted.value = true;
+        stream.end();
+      };
 
       if (aborts) {
-        aborts.push(() => {
-          stream.end();
-          podLogs.abort();
-        });
+        aborts.push(abortFn);
       }
+
+      await this.tryGetPodLogs(
+        logApi,
+        this.namespace,
+        pod,
+        container.name,
+        logStream,
+        stream,
+        previous,
+        download,
+        tailLines,
+        aborts,
+        abortFn,
+        isAborted,
+      );
     }
   }
 }
