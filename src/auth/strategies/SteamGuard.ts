@@ -4,7 +4,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
-export class SteamGuard extends AuthGuard("steam-openid") {
+export class SteamGuard extends AuthGuard("steam") {
   constructor(private readonly config: ConfigService) {
     super();
   }

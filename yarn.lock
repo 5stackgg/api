@@ -1133,6 +1133,19 @@
     consola "^2.15.0"
     node-fetch "^2.6.1"
 
+"@passport-next/passport-openid@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@passport-next/passport-openid/-/passport-openid-1.0.0.tgz#d3b5e067a9aa1388ed172ab7cc02c39b8634283d"
+  integrity sha512-W9uj4Ui/ZK/iBUNzSNxPWDQ8wCD1tUddGEVSGm0FN0B7ewo3yBQLGMoW3i3UqcwEzxdyGbAj06ohAhNQIXC4VA==
+  dependencies:
+    "@passport-next/passport-strategy" "1.x.x"
+    openid "2.x.x"
+
+"@passport-next/passport-strategy@1.x.x":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@passport-next/passport-strategy/-/passport-strategy-1.1.0.tgz#4c0df069e2ec9262791b9ef1e23320c1d73bdb74"
+  integrity sha512-2KhFjtPueJG6xVj2HnqXt9BlANOfYCVLyu+pXYjPGBDT8yk+vQwc/6tsceIj+mayKcoxMau2JimggXRPHgoc8w==
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
@@ -2083,15 +2096,6 @@ aws4@^1.8.0:
   version "1.13.2"
   resolved "https://registry.npmjs.org/aws4/-/aws4-1.13.2.tgz"
   integrity sha512-lHe62zvbTB5eEABUVi/AwVh0ZKY9rMMDhmm+eeyuuUQbQ3+J+fONVQOZyj+DdrvD4BY33uYniyRJ4UJIaSKAfw==
-
-axios@^1.4.0:
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.9.0.tgz#25534e3b72b54540077d33046f77e3b8d7081901"
-  integrity sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==
-  dependencies:
-    follow-redirects "^1.15.6"
-    form-data "^4.0.0"
-    proxy-from-env "^1.1.0"
 
 axios@^1.6.0:
   version "1.8.4"
@@ -5244,6 +5248,14 @@ openid-client@^6.1.3:
     jose "^6.0.10"
     oauth4webapi "^3.4.0"
 
+openid@2.x.x:
+  version "2.0.13"
+  resolved "https://registry.yarnpkg.com/openid/-/openid-2.0.13.tgz#2ca3f7ae0c9dce5423aa1454e654e8e2af738fa8"
+  integrity sha512-GVHa+EsDeH+jpPOihw2J5L3xUXeyf1cfmVpNP4XKk8twwmclUUcTOA4oVwu5pVrESomQoHFEQIR9FRlNuLofWA==
+  dependencies:
+    axios "^1.6.0"
+    qs "^6.5.2"
+
 openpgp@^5.11.1:
   version "5.11.2"
   resolved "https://registry.npmjs.org/openpgp/-/openpgp-5.11.2.tgz"
@@ -5361,27 +5373,18 @@ passport-oauth2@^1.5.0:
     uid2 "0.0.x"
     utils-merge "1.x.x"
 
-passport-steam-openid@^1.1.5:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/passport-steam-openid/-/passport-steam-openid-1.1.5.tgz#646f2c7ee3e971225d152c0483ced74a7a99e431"
-  integrity sha512-JpTtd7wvuTmY6Yso+25rMx8AQ+vorTrdNLpDP6pOzYXES65AZm/nu/f7luA99b4D8jA6i/iIiQ30PWhwQhLMJQ==
+passport-steam@^1.0.18:
+  version "1.0.18"
+  resolved "https://registry.yarnpkg.com/passport-steam/-/passport-steam-1.0.18.tgz#7d934344c521f04adb35628f7118761f502299d5"
+  integrity sha512-3S6XlgATcJE3M3IfpwkvjWHeTDreaPUWQPykwxjv8LA5RtnfHrkt5c5HJdadYMCRHf3qh1OfCWETMxdpSdlBZA==
   dependencies:
-    axios "^1.4.0"
-    passport "^0.6.0"
+    "@passport-next/passport-openid" "^1.0.0"
+    steam-web "0.4.0"
 
 passport-strategy@1.x.x:
   version "1.0.0"
   resolved "https://registry.npmjs.org/passport-strategy/-/passport-strategy-1.0.0.tgz"
   integrity sha512-CB97UUvDKJde2V0KDWWB3lyf6PC3FaZP7YxZ2G8OAtn9p4HI9j9JLP9qjOGZFvyl8uwNT8qM+hGnz/n16NI7oA==
-
-passport@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/passport/-/passport-0.6.0.tgz#e869579fab465b5c0b291e841e6cc95c005fac9d"
-  integrity sha512-0fe+p3ZnrWRW74fe8+SvCyf4a3Pb2/h7gFkQ8yTJpAO50gDzlfjZUZTO1k5Eg9kUct22OxHLqDZoKUWRHOh9ug==
-  dependencies:
-    passport-strategy "1.x.x"
-    pause "0.0.1"
-    utils-merge "^1.0.1"
 
 passport@^0.7.0:
   version "0.7.0"
@@ -5701,7 +5704,7 @@ qs@6.13.0:
   dependencies:
     side-channel "^1.0.6"
 
-qs@^6.11.0, qs@^6.14.0:
+qs@^6.1.0, qs@^6.11.0, qs@^6.14.0, qs@^6.5.2:
   version "6.14.0"
   resolved "https://registry.npmjs.org/qs/-/qs-6.14.0.tgz"
   integrity sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==
@@ -6317,6 +6320,13 @@ statuses@2.0.1, statuses@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/statuses/-/statuses-2.0.1.tgz"
   integrity sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==
+
+steam-web@0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/steam-web/-/steam-web-0.4.0.tgz#9333b5843ff7ebd77945fe09a0d5d5b28694b331"
+  integrity sha512-FgSYhL7GaP4Va5JKT09yZ+WrTZttFtLwenIPuZd7GUA1z3W7vu7qqPT/qTC76Pd9+sf85txMgIPr/y0+3gNlUA==
+  dependencies:
+    qs "^6.1.0"
 
 stream-buffers@^3.0.2:
   version "3.0.3"

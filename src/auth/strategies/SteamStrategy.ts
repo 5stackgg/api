@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { SteamOpenIdStrategy } from "passport-steam-openid";
+import { Strategy as _SteamStrategy } from "passport-steam";
 import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
 import { Request } from "express";
@@ -11,23 +11,30 @@ import { CacheService } from "../../cache/cache.service";
 import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
-  steamid: string;
-  communityvisibilitystate: number;
-  profilestate: number;
-  personaname: string;
-  profileurl: string;
-  avatar: string;
-  avatarmedium: string;
-  avatarfull: string;
-  avatarhash: string;
-  personastate: number;
-  primaryclanid: string;
-  timecreated: number;
-  personastateflags: 0;
+  provider: string;
+  _json: {
+    steamid: string;
+    communityvisibilitystate: number;
+    profilestate: number;
+    personaname: string;
+    profileurl: string;
+    avatar: string;
+    avatarmedium: string;
+    avatarfull: string;
+    avatarhash: string;
+    lastlogoff: number;
+    personastate: number;
+    primaryclanid: string;
+    timecreated: number;
+    personastateflags: number;
+  };
+  id: string;
+  displayName: string;
+  photos: { value: string }[];
 }
 
 @Injectable()
-export class SteamStrategy extends PassportStrategy(SteamOpenIdStrategy) {
+export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
   constructor(
     readonly config: ConfigService,
     private readonly cache: CacheService,
@@ -35,21 +42,24 @@ export class SteamStrategy extends PassportStrategy(SteamOpenIdStrategy) {
   ) {
     const webDomain = config.get<AppConfig>("app").webDomain;
 
+    console.info({
+      realm: webDomain,
+      apiKey: config.get<SteamConfig>("steam").steamApiKey,
+      returnURL: `${webDomain}/auth/steam/callback`,
+    });
+
     super({
-      profile: true,
+      realm: webDomain,
       apiKey: config.get<SteamConfig>("steam").steamApiKey,
       returnURL: `${webDomain}/auth/steam/callback`,
     });
   }
 
   async validate(
-    request: Request,
     identifier: string,
     profile: SteamProfile,
     done: DoneCallback,
   ): Promise<void> {
-    const { steamid, personaname, profileurl, avatarfull } = profile;
-
     let role: e_player_roles_enum = "user";
     if (!(await this.cache.has("admin-check"))) {
       const { players } = await this.hasura.query({
@@ -72,10 +82,10 @@ export class SteamStrategy extends PassportStrategy(SteamOpenIdStrategy) {
         __args: {
           object: {
             role,
-            steam_id: steamid,
-            name: personaname,
-            profile_url: profileurl,
-            avatar_url: avatarfull,
+            steam_id: profile._json.steamid,
+            name: profile._json.personaname,
+            profile_url: profile._json.profileurl,
+            avatar_url: profile._json.avatarfull,
           },
           on_conflict: {
             constraint: "players_steam_id_key",
