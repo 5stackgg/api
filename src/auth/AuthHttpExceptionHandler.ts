@@ -15,8 +15,11 @@ export class AuthHttpExceptionHandler implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
-    response
-      .status(status)
-      .redirect(`/?auth-failure=${status}&message=${exception.message}`);
+
+    console.info({
+      message: exception.message,
+    });
+
+    response.status(status).redirect(`/?error=${exception.message}`);
   }
 }

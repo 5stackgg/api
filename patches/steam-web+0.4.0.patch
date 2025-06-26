@@ -1,0 +1,14 @@
+diff --git a/node_modules/steam-web/lib/steam.js b/node_modules/steam-web/lib/steam.js
+index 902c920..12e1ee4 100755
+--- a/node_modules/steam-web/lib/steam.js
++++ b/node_modules/steam-web/lib/steam.js
+@@ -464,6 +464,9 @@ steam.prototype.makeRequest = function(obj) {
+       } else if (statusCode == 403) {
+         callback('403 Error: Check your API key is correct');
+         return;
++      } else if(statusCode == 429) {
++        callback('429 Error: Too many requests to the steam API');
++        return;
+       }
+ 
+       if (format == 'json') {

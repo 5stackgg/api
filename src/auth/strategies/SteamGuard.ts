@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable } from "@nestjs/common";
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
@@ -7,6 +11,13 @@ import { ConfigService } from "@nestjs/config";
 export class SteamGuard extends AuthGuard("steam") {
   constructor(private readonly config: ConfigService) {
     super();
+  }
+
+  handleRequest(err: any, user: any): any {
+    if (err || !user) {
+      throw new UnauthorizedException(err || "Invalid login credentials");
+    }
+    return user;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
