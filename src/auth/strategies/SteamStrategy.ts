@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { Strategy as _SteamStrategy } from "passport-steam";
 import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
-import { Request } from "express";
 import { DoneCallback } from "passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";

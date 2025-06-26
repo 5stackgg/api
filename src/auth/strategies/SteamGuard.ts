@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable } from "@nestjs/common";
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
@@ -7,6 +11,30 @@ import { ConfigService } from "@nestjs/config";
 export class SteamGuard extends AuthGuard("steam") {
   constructor(private readonly config: ConfigService) {
     super();
+  }
+
+  handleRequest(
+    err: any,
+    user: any,
+    info: any,
+    context: ExecutionContext,
+  ): any {
+    if (err) {
+      const request = context.switchToHttp().getRequest();
+      const response = context.switchToHttp().getResponse();
+
+      let redirect = request.session.redirect || "/";
+      if (redirect.includes("?")) {
+        redirect += `&error=${err}`;
+      } else {
+        redirect += `?error=${err}`;
+      }
+
+      response.redirect(redirect);
+
+      throw new UnauthorizedException(err);
+    }
+    return user;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
