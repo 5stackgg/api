@@ -31,7 +31,8 @@ export class SteamGuard extends AuthGuard("steam") {
       }
 
       response.redirect(redirect);
-      return;
+      
+      throw new UnauthorizedException(err);
     }
     return user;
   }
