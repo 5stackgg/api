@@ -19,7 +19,7 @@ export class SteamGuard extends AuthGuard("steam") {
     info: any,
     context: ExecutionContext,
   ): any {
-    if (err || !user) {
+    if (err) {
       const request = context.switchToHttp().getRequest();
       const response = context.switchToHttp().getResponse();
 
@@ -30,9 +30,8 @@ export class SteamGuard extends AuthGuard("steam") {
         redirect += `?error=${err}`;
       }
 
-      response.status(401).redirect(redirect);
-
-      throw new UnauthorizedException(err || "Invalid login credentials");
+      response.redirect(redirect);
+      return;
     }
     return user;
   }
