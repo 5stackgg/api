@@ -127,7 +127,8 @@ export class DemosController {
     }
 
     if (
-      !match_maps_by_pk.match.server.is_dedicated &&
+      (!match_maps_by_pk.match.server ||
+        !match_maps_by_pk.match.server.is_dedicated) &&
       !["Finished", "Forfeit", "Surrender", "Tie"].includes(
         match_maps_by_pk.match.status,
       )
