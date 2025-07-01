@@ -117,9 +117,12 @@ export class DemosController {
       });
     }
 
-    const { 'game-server-node': gameServerNode } = request.query;
+    const { "game-server-node": gameServerNode } = request.query;
 
-    if(gameServerNode && match_maps_by_pk.match.server?.is_dedicated === true) {
+    if (
+      gameServerNode &&
+      match_maps_by_pk.match.server?.is_dedicated === true
+    ) {
       return response.status(401).json({
         error: "unauthorized",
       });
@@ -135,10 +138,8 @@ export class DemosController {
     }
 
     if (
-      (
-        !match_maps_by_pk.match.server ||
-        match_maps_by_pk.match.server?.is_dedicated === false
-      ) &&
+      (!match_maps_by_pk.match.server ||
+        match_maps_by_pk.match.server?.is_dedicated === false) &&
       !["Finished", "Forfeit", "Surrender", "Tie"].includes(
         match_maps_by_pk.match.status,
       )

@@ -255,6 +255,7 @@ DECLARE
     elo_data JSONB;
     elo_change INTEGER;
     current_elo INTEGER;
+    new_elo INTEGER;
     ratings_created INTEGER := 0;
 BEGIN
     -- Get the match record
@@ -262,6 +263,12 @@ BEGIN
     
     IF match_record IS NULL THEN
         RAISE EXCEPTION 'Match with ID % not found', _match_id;
+    END IF;
+    
+    -- Skip matches that haven't ended yet
+    IF match_record.ended_at IS NULL THEN
+        RAISE NOTICE 'Skipping match % as it has not ended yet (ended_at is null)', _match_id;
+        RETURN 0;
     END IF;
     
     -- Skip matches without a winning_lineup_id
@@ -283,8 +290,24 @@ BEGIN
     LOOP
         -- Calculate ELO change for this player in this match
         elo_data := get_player_elo_for_match(match_record, player_record);
-        elo_change := (elo_data->>'elo_change')::INTEGER;
-        current_elo := (elo_data->>'current_elo')::INTEGER;
+        
+        -- Validate that we got valid data back
+        IF elo_data IS NULL THEN
+            RAISE NOTICE 'Skipping player % for match % - elo_data is null', player_record.steam_id, _match_id;
+            CONTINUE;
+        END IF;
+        
+        -- Extract values with null checks
+        elo_change := COALESCE((elo_data->>'elo_change')::INTEGER, 0);
+        current_elo := COALESCE((elo_data->>'current_elo')::INTEGER, 5000); -- Default ELO if null
+        new_elo := current_elo + elo_change;
+        
+        -- Validate the calculated values
+        IF current_elo IS NULL OR elo_change IS NULL OR new_elo IS NULL THEN
+            RAISE NOTICE 'Skipping player % for match % - invalid elo values (current: %, change: %, new: %)', 
+                player_record.steam_id, _match_id, current_elo, elo_change, new_elo;
+            CONTINUE;
+        END IF;
 
         INSERT INTO player_elo (
             match_id,
@@ -295,7 +318,7 @@ BEGIN
         ) VALUES (
             match_record.id,
             player_record.steam_id,
-            current_elo + elo_change,
+            new_elo,
             elo_change,
             match_record.ended_at
         );
