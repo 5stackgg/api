@@ -797,7 +797,7 @@ export class MatchAssistantService {
         return;
       }
 
-      await rcon.send("sv_cheats 1; restart");
+      await rcon.send("sv_cheats 1; restart; sv_cheats 0");
       await this.rcon.disconnect(serverId);
     } catch (error) {
       this.logger.warn(`[${serverId}] unable to restart server`, error);
