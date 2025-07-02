@@ -162,7 +162,11 @@ export class GameServerNodeService {
       });
     }
 
-    if (status === "Online" && game_server_nodes_by_pk.status !== status) {
+    if (
+      status === "Online" &&
+      game_server_nodes_by_pk.build_id &&
+      game_server_nodes_by_pk.status !== status
+    ) {
       await this.updateCsServer(node);
     }
   }
