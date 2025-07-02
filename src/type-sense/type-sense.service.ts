@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Client } from "typesense";
 import { HasuraService } from "../hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
@@ -10,6 +10,7 @@ export class TypeSenseService {
   private client: Client;
 
   constructor(
+    private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly matchAssistant: MatchAssistantService,
@@ -28,7 +29,16 @@ export class TypeSenseService {
   }
 
   public async setup() {
-    await this.createPlayerCollection();
+    let setup = false;
+    while (!setup) {
+      try {
+        await this.createPlayerCollection();
+        setup = true;
+      } catch (error) {
+        this.logger.error(`unable to setup typesense: ${error}`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
   }
 
   public async createPlayerCollection() {
