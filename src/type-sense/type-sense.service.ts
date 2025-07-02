@@ -57,7 +57,7 @@ export class TypeSenseService {
           { name: "teams", type: "string[]", optional: true },
         ],
         default_sorting_field: "name",
-      });
+      } as any);
     }
   }
 

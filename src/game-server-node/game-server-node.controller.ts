@@ -43,9 +43,9 @@ export class GameServerNodeController {
     };
   }
 
-  @Get("/script/:gameServerNodeId.sh")
+  @Get("/script/:gameServerNodeId")
   public async script(@Req() request: Request, @Res() response: Response) {
-    const gameServerNodeId = request.params.gameServerNodeId;
+    const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");
 
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {

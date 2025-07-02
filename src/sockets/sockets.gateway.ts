@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Request } from "express";
 import session from "express-session";
 import { getCookieOptions } from "../utilities/getCookieOptions";
-import RedisStore from "connect-redis";
+import { RedisStore } from "connect-redis";
 import passport from "passport";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { AppConfig } from "src/configs/types/AppConfig";

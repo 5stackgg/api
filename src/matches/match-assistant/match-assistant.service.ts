@@ -1,6 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
-import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import {
+  BatchV1Api,
+  CoreV1Api,
+  FetchError,
+  KubeConfig,
+} from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -493,180 +498,189 @@ export class MatchAssistantService {
           }
         }
 
-        await batch.createNamespacedJob(this.namespace, {
-          apiVersion: "batch/v1",
-          kind: "Job",
-          metadata: {
-            name: jobName,
-          },
-          spec: {
-            template: {
-              metadata: {
-                name: jobName,
-                labels: {
-                  job: jobName,
+        await batch.createNamespacedJob({
+          namespace: this.namespace,
+          body: {
+            apiVersion: "batch/v1",
+            kind: "Job",
+            metadata: {
+              name: jobName,
+            },
+            spec: {
+              template: {
+                metadata: {
+                  name: jobName,
+                  labels: {
+                    job: jobName,
+                  },
+                },
+                spec: {
+                  restartPolicy: "Never",
+                  // only enable host network if steam relay is enabled
+                  ...(steamRelay
+                    ? {
+                        hostNetwork: true,
+                        dnsPolicy: "ClusterFirstWithHostNet",
+                      }
+                    : {}),
+                  nodeName: gameServerNodeId,
+                  containers: [
+                    {
+                      name: "game-server",
+                      image: this.gameServerConfig.serverImage,
+                      ...(cpus
+                        ? {
+                            resources: {
+                              requests: { cpu: cpus },
+                              limits: { cpu: cpus },
+                            },
+                          }
+                        : {}),
+                      ports: [
+                        { containerPort: server.port, protocol: "TCP" },
+                        { containerPort: server.port, protocol: "UDP" },
+                        { containerPort: server.tv_port, protocol: "TCP" },
+                        { containerPort: server.tv_port, protocol: "UDP" },
+                      ],
+                      env: [
+                        {
+                          name: "GAME_NODE_SERVER",
+                          value: "true",
+                        },
+                        { name: "SERVER_PORT", value: server.port.toString() },
+                        { name: "TV_PORT", value: server.tv_port.toString() },
+                        {
+                          name: "RCON_PASSWORD",
+                          value: await this.encryption.decrypt(
+                            server.rcon_password,
+                          ),
+                        },
+                        { name: "SERVER_PASSWORD", value: match.password },
+                        {
+                          name: "EXTRA_GAME_PARAMS",
+                          value: `-maxplayers 13 ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`}`,
+                        },
+                        { name: "SERVER_ID", value: server.id },
+                        {
+                          name: "SERVER_API_PASSWORD",
+                          value: server.api_password,
+                        },
+                        {
+                          name: "API_DOMAIN",
+                          value: this.appConfig.apiDomain,
+                        },
+                        {
+                          name: "DEMOS_DOMAIN",
+                          value: this.appConfig.demosDomain,
+                        },
+                        {
+                          name: "WS_DOMAIN",
+                          value: this.appConfig.wsDomain,
+                        },
+                        {
+                          name: "STEAM_RELAY",
+                          value: steamRelay ? "true" : "false",
+                        },
+                      ],
+                      volumeMounts: [
+                        {
+                          name: `steamcmd-${gameServerNodeId}`,
+                          mountPath: "/serverdata/steamcmd",
+                        },
+                        {
+                          name: `serverfiles-${gameServerNodeId}`,
+                          mountPath: "/serverdata/serverfiles",
+                        },
+                        {
+                          name: `demos-${gameServerNodeId}`,
+                          mountPath: "/opt/demos",
+                        },
+                        {
+                          name: `custom-plugins-${gameServerNodeId}`,
+                          mountPath: "/opt/custom-plugins",
+                        },
+                      ],
+                    },
+                  ],
+                  // TODO - mabye we should use host paths, why do we want volumes?
+                  volumes: [
+                    {
+                      name: `steamcmd-${gameServerNodeId}`,
+                      persistentVolumeClaim: {
+                        claimName: `steamcmd-${gameServerNodeId}-claim`,
+                      },
+                    },
+                    {
+                      name: `serverfiles-${gameServerNodeId}`,
+                      persistentVolumeClaim: {
+                        claimName: `serverfiles-${gameServerNodeId}-claim`,
+                      },
+                    },
+                    {
+                      name: `demos-${gameServerNodeId}`,
+                      persistentVolumeClaim: {
+                        claimName: `demos-${gameServerNodeId}-claim`,
+                      },
+                    },
+                    {
+                      name: `custom-plugins-${gameServerNodeId}`,
+                      hostPath: {
+                        path: `/opt/5stack/custom-plugins`,
+                      },
+                    },
+                  ],
                 },
               },
-              spec: {
-                restartPolicy: "Never",
-                // only enable host network if steam relay is enabled
-                ...(steamRelay
-                  ? { hostNetwork: true, dnsPolicy: "ClusterFirstWithHostNet" }
-                  : {}),
-                nodeName: gameServerNodeId,
-                containers: [
-                  {
-                    name: "game-server",
-                    image: this.gameServerConfig.serverImage,
-                    ...(cpus
-                      ? {
-                          resources: {
-                            requests: { cpu: cpus },
-                            limits: { cpu: cpus },
-                          },
-                        }
-                      : {}),
-                    ports: [
-                      { containerPort: server.port, protocol: "TCP" },
-                      { containerPort: server.port, protocol: "UDP" },
-                      { containerPort: server.tv_port, protocol: "TCP" },
-                      { containerPort: server.tv_port, protocol: "UDP" },
-                    ],
-                    env: [
-                      {
-                        name: "GAME_NODE_SERVER",
-                        value: "true",
-                      },
-                      { name: "SERVER_PORT", value: server.port.toString() },
-                      { name: "TV_PORT", value: server.tv_port.toString() },
-                      {
-                        name: "RCON_PASSWORD",
-                        value: await this.encryption.decrypt(
-                          server.rcon_password,
-                        ),
-                      },
-                      { name: "SERVER_PASSWORD", value: match.password },
-                      {
-                        name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers 13 ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`}`,
-                      },
-                      { name: "SERVER_ID", value: server.id },
-                      {
-                        name: "SERVER_API_PASSWORD",
-                        value: server.api_password,
-                      },
-                      {
-                        name: "API_DOMAIN",
-                        value: this.appConfig.apiDomain,
-                      },
-                      {
-                        name: "DEMOS_DOMAIN",
-                        value: this.appConfig.demosDomain,
-                      },
-                      {
-                        name: "WS_DOMAIN",
-                        value: this.appConfig.wsDomain,
-                      },
-                      {
-                        name: "STEAM_RELAY",
-                        value: steamRelay ? "true" : "false",
-                      },
-                    ],
-                    volumeMounts: [
-                      {
-                        name: `steamcmd-${gameServerNodeId}`,
-                        mountPath: "/serverdata/steamcmd",
-                      },
-                      {
-                        name: `serverfiles-${gameServerNodeId}`,
-                        mountPath: "/serverdata/serverfiles",
-                      },
-                      {
-                        name: `demos-${gameServerNodeId}`,
-                        mountPath: "/opt/demos",
-                      },
-                      {
-                        name: `custom-plugins-${gameServerNodeId}`,
-                        mountPath: "/opt/custom-plugins",
-                      },
-                    ],
-                  },
-                ],
-                // TODO - mabye we should use host paths, why do we want volumes?
-                volumes: [
-                  {
-                    name: `steamcmd-${gameServerNodeId}`,
-                    persistentVolumeClaim: {
-                      claimName: `steamcmd-${gameServerNodeId}-claim`,
-                    },
-                  },
-                  {
-                    name: `serverfiles-${gameServerNodeId}`,
-                    persistentVolumeClaim: {
-                      claimName: `serverfiles-${gameServerNodeId}-claim`,
-                    },
-                  },
-                  {
-                    name: `demos-${gameServerNodeId}`,
-                    persistentVolumeClaim: {
-                      claimName: `demos-${gameServerNodeId}-claim`,
-                    },
-                  },
-                  {
-                    name: `custom-plugins-${gameServerNodeId}`,
-                    hostPath: {
-                      path: `/opt/5stack/custom-plugins`,
-                    },
-                  },
-                ],
-              },
+              backoffLimit: 10,
             },
-            backoffLimit: 10,
           },
         });
 
         this.logger.verbose(`[${matchId}] create service for on demand server`);
 
-        await core.createNamespacedService(this.namespace, {
-          apiVersion: "v1",
-          kind: "Service",
-          metadata: {
-            name: jobName,
-          },
-          spec: {
-            type: "NodePort",
-            ports: [
-              {
-                port: server.port,
-                targetPort: server.port,
-                nodePort: server.port,
-                name: "rcon",
-                protocol: "TCP",
+        await core.createNamespacedService({
+          namespace: this.namespace,
+          body: {
+            apiVersion: "v1",
+            kind: "Service",
+            metadata: {
+              name: jobName,
+            },
+            spec: {
+              type: "NodePort",
+              ports: [
+                {
+                  port: server.port,
+                  targetPort: server.port,
+                  nodePort: server.port,
+                  name: "rcon",
+                  protocol: "TCP",
+                },
+                {
+                  port: server.port,
+                  targetPort: server.port,
+                  nodePort: server.port,
+                  name: "game",
+                  protocol: "UDP",
+                },
+                {
+                  port: server.tv_port,
+                  targetPort: server.tv_port,
+                  nodePort: server.tv_port,
+                  name: "tv",
+                  protocol: "TCP",
+                },
+                {
+                  port: server.tv_port,
+                  targetPort: server.tv_port,
+                  nodePort: server.tv_port,
+                  name: "tv-udp",
+                  protocol: "UDP",
+                },
+              ],
+              selector: {
+                job: jobName,
               },
-              {
-                port: server.port,
-                targetPort: server.port,
-                nodePort: server.port,
-                name: "game",
-                protocol: "UDP",
-              },
-              {
-                port: server.tv_port,
-                targetPort: server.tv_port,
-                nodePort: server.tv_port,
-                name: "tv",
-                protocol: "TCP",
-              },
-              {
-                port: server.tv_port,
-                targetPort: server.tv_port,
-                nodePort: server.tv_port,
-                name: "tv-udp",
-                protocol: "UDP",
-              },
-            ],
-            selector: {
-              job: jobName,
             },
           },
         });
@@ -731,17 +745,16 @@ export class MatchAssistantService {
 
       const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
-      const job = await batch.readNamespacedJob(jobName, this.namespace);
-      if (job.body.status?.active) {
-        const { body: pods } = await core.listNamespacedPod(
-          this.namespace,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          `job-name=${jobName}`,
-        );
-        for (const pod of pods.items) {
+      const job = await batch.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+      if (job.status?.active) {
+        const postList = await core.listNamespacedPod({
+          namespace: this.namespace,
+          labelSelector: `job-name=${jobName}`,
+        });
+        for (const pod of postList.items) {
           if (pod.status!.phase !== "Running") {
             return false;
           }
@@ -830,21 +843,20 @@ export class MatchAssistantService {
       const core = kc.makeApiClient(CoreV1Api);
       const batch = kc.makeApiClient(BatchV1Api);
 
-      const { body: pods } = await core.listNamespacedPod(
-        this.namespace,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        `job-name=${jobName}`,
-      );
+      const postList = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
 
-      for (const pod of pods.items) {
+      for (const pod of postList.items) {
         this.logger.verbose(`[${matchId}] remove pod`);
         await core
-          .deleteNamespacedPod(pod.metadata!.name!, this.namespace)
+          .deleteNamespacedPod({
+            name: pod.metadata!.name!,
+            namespace: this.namespace,
+          })
           .catch((error) => {
-            if (error?.statusCode !== 404) {
+            if (error instanceof FetchError && error.code !== "404") {
               throw error;
             }
           });
@@ -852,18 +864,24 @@ export class MatchAssistantService {
 
       this.logger.verbose(`[${matchId}] remove job`);
       await batch
-        .deleteNamespacedJob(jobName, this.namespace)
+        .deleteNamespacedJob({
+          name: jobName,
+          namespace: this.namespace,
+        })
         .catch((error) => {
-          if (error?.statusCode !== 404) {
+          if (error instanceof FetchError && error.code !== "404") {
             throw error;
           }
         });
 
       this.logger.verbose(`[${matchId}] remove service`);
       await core
-        .deleteNamespacedService(jobName, this.namespace)
+        .deleteNamespacedService({
+          name: jobName,
+          namespace: this.namespace,
+        })
         .catch((error) => {
-          if (error?.statusCode !== 404) {
+          if (error instanceof FetchError && error.code !== "404") {
             throw error;
           }
         });

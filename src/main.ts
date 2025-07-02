@@ -4,7 +4,7 @@ import session from "express-session";
 import { NestFactory } from "@nestjs/core";
 import { Transport } from "@nestjs/microservices";
 import { AppModule } from "./app.module";
-import RedisStore from "connect-redis";
+import { RedisStore } from "connect-redis";
 import { getCookieOptions } from "./utilities/getCookieOptions";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import passport from "passport";
