@@ -7,5 +7,6 @@ insert into e_match_map_status ("value", "description") values
     ('Overtime', 'Overtime'),
     ('UploadingDemo', 'UploadingDemo'),
     ('Finished', 'Finished'),
-    ('Canceled', 'Canceled')
+    ('Canceled', 'Canceled'),
+    ('Surrendered', 'Surrendered')
 on conflict(value) do update set "description" = EXCLUDED."description"

@@ -1902,6 +1902,12 @@ enum e_match_map_status_enum {
   """Scheduled"""
   Scheduled
 
+  """Surrendered"""
+  Surrendered
+
+  """UploadingDemo"""
+  UploadingDemo
+
   """Warmup"""
   Warmup
 }

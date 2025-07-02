@@ -698,7 +698,7 @@ export interface e_match_map_status_aggregate_fields {
 /** unique or primary key constraints on table "e_match_map_status" */
 export type e_match_map_status_constraint = 'match_map_status_pkey'
 
-export type e_match_map_status_enum = 'Canceled' | 'Finished' | 'Knife' | 'Live' | 'Overtime' | 'Paused' | 'Scheduled' | 'Warmup'
+export type e_match_map_status_enum = 'Canceled' | 'Finished' | 'Knife' | 'Live' | 'Overtime' | 'Paused' | 'Scheduled' | 'Surrendered' | 'UploadingDemo' | 'Warmup'
 
 
 /** aggregate max on columns */
@@ -42039,6 +42039,8 @@ export const enumEMatchMapStatusEnum = {
    Overtime: 'Overtime' as const,
    Paused: 'Paused' as const,
    Scheduled: 'Scheduled' as const,
+   Surrendered: 'Surrendered' as const,
+   UploadingDemo: 'UploadingDemo' as const,
    Warmup: 'Warmup' as const
 }
 
