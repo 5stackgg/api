@@ -45,19 +45,12 @@ export class SystemGateway {
       );
     });
 
-    try {
-      const abort = await this.loggingService.getServiceLogs(
-        service,
-        stream,
-        !!previous,
-      );
+    client.on("close", () => {
+      stream.end();
+    });
 
-      client.on("close", () => {
-        stream.end();
-        if (abort) {
-          abort();
-        }
-      });
+    try {
+      await this.loggingService.getServiceLogs(service, stream, !!previous);
     } catch (error) {
       this.logger.warn(
         "unable to get logs:",

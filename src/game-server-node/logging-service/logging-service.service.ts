@@ -23,7 +23,7 @@ export class LoggingServiceService {
     stream: Writable,
     previous = false,
     download = false,
-  ): Promise<() => void> {
+  ): Promise<void> {
     let archive: archiver.Archiver;
 
     if (download) {
@@ -37,31 +37,11 @@ export class LoggingServiceService {
 
     const pods = await this.getPodsFromService(service);
 
-    const aborts: Array<() => void> = [];
-
     for (const pod of pods) {
       await Promise.all([
-        this.getLogsForPod(
-          pod,
-          stream,
-          download,
-          previous,
-          250,
-          aborts,
-          archive,
-        ),
+        this.getLogsForPod(pod, stream, download, previous, 250, archive),
       ]);
     }
-
-    return () => {
-      for (const abort of aborts) {
-        try {
-          abort();
-        } catch (error) {
-          this.logger.error("Failed to abort pod logs", error);
-        }
-      }
-    };
   }
 
   private async getPodsFromService(service: string) {
@@ -89,15 +69,24 @@ export class LoggingServiceService {
     previous: boolean,
     download: boolean,
     tailLines: number,
-    aborts: Array<() => void> | undefined,
-    abortFn: () => void,
-    isAborted: { value: boolean },
   ): Promise<void> {
-    if (isAborted.value) {
-      return;
-    }
     try {
-      const podLogs = await logApi.log(
+      let podLogs: Awaited<ReturnType<typeof logApi.log>>;
+
+      stream.on("end", () => {
+        podLogs?.abort();
+        stream.destroy();
+      });
+      stream.on("close", () => {
+        podLogs?.abort();
+        stream.destroy();
+      });
+      stream.on("error", () => {
+        podLogs?.abort();
+        stream.destroy();
+      });
+
+      podLogs = await logApi.log(
         namespace,
         pod.metadata.name,
         containerName,
@@ -110,40 +99,10 @@ export class LoggingServiceService {
           tailLines,
         },
       );
-      // If we reach here, the log call succeeded
-      if (aborts) {
-        // Replace the abort function with one that aborts the podLogs
-        const index = aborts.indexOf(abortFn);
-        if (index !== -1) {
-          aborts[index] = () => {
-            abortFn();
-            podLogs.abort();
-          };
-        }
-      }
     } catch (error) {
       this.logger.warn(
         `Failed to get logs for pod ${pod.metadata.name}, container ${containerName}`,
         error,
-      );
-      if (isAborted.value) {
-        this.logger.log("Log retrieval aborted, stopping retries");
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      await this.tryGetPodLogs(
-        logApi,
-        namespace,
-        pod,
-        containerName,
-        logStream,
-        stream,
-        previous,
-        download,
-        tailLines,
-        aborts,
-        abortFn,
-        isAborted,
       );
     }
   }
@@ -154,11 +113,9 @@ export class LoggingServiceService {
     download = false,
     previous = false,
     tailLines = 1,
-    aborts?: Array<() => void>,
     archive?: archiver.Archiver,
   ) {
     let totalAdded = 0;
-    const isAborted = { value: false };
 
     for (const container of pod.spec.containers) {
       const logStream = new PassThrough();
@@ -217,15 +174,6 @@ export class LoggingServiceService {
 
       const logApi = new Log(this.kubeConfig);
 
-      const abortFn = () => {
-        isAborted.value = true;
-        stream.end();
-      };
-
-      if (aborts) {
-        aborts.push(abortFn);
-      }
-
       await this.tryGetPodLogs(
         logApi,
         this.namespace,
@@ -236,9 +184,6 @@ export class LoggingServiceService {
         previous,
         download,
         tailLines,
-        aborts,
-        abortFn,
-        isAborted,
       );
     }
   }
