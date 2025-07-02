@@ -6,7 +6,7 @@ import { DiscordBotMessagingService } from "../discord-bot-messaging/discord-bot
 import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../../matches/match-assistant/match-assistant.service";
 import { DiscordBotVetoService } from "../discord-bot-veto/discord-bot-veto.service";
-import { InjectQueue } from "@nestjs/bullmq";
+import { BULL_CONFIG_DEFAULT_TOKEN, InjectQueue } from "@nestjs/bullmq";
 import { DiscordBotQueues } from "../enums/DiscordBotQueues";
 import { Queue } from "bullmq";
 import { MapSelectionTimeoutSeconds } from "../constants/MapBanSelectionTimeout";
@@ -92,6 +92,8 @@ export class DiscordBotOverviewService {
           color = 10674342;
           break;
         case "Paused":
+        case "Surrendered":
+        case "UploadingDemo":
           color = 16016479;
           break;
         case "Canceled":
