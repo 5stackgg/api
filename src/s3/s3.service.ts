@@ -99,11 +99,10 @@ export class S3Service {
   }
 
   public async getPresignedUrl(
-    bucket: string,
     key: string,
     // 5 minutes
     expires = 60 * 5,
   ) {
-    return await this.client.presignedPutObject(bucket, key, expires);
+    return await this.client.presignedPutObject(this.bucket, key, expires);
   }
 }
