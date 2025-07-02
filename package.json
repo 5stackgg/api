@@ -51,7 +51,7 @@
     "bullmq": "^5.56.0",
     "cache-manager": "^7.0.1",
     "cache-manager-redis-store": "^3.0.1",
-    "connect-redis": "^9.0.0",
+    "connect-redis": "^7.1.0",
     "discord.js": "^14.14.1",
     "express-session": "^1.18.0",
     "ioredis": "^5.6.1",

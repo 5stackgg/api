@@ -37296,7 +37296,7 @@ type tournament_teams {
     """filter the rows returned"""
     where: tournament_team_invites_bool_exp
   ): tournament_team_invites_aggregate!
-  name: String!
+  name: String
   owner_steam_id: bigint!
 
   """An array relationship"""

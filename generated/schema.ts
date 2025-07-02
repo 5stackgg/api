@@ -10184,7 +10184,7 @@ export interface tournament_teams {
     invites: tournament_team_invites[]
     /** An aggregate relationship */
     invites_aggregate: tournament_team_invites_aggregate
-    name: Scalars['String']
+    name: (Scalars['String'] | null)
     owner_steam_id: Scalars['bigint']
     /** An array relationship */
     roster: tournament_team_roster[]

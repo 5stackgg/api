@@ -20,6 +20,14 @@ export class CheckGameUpdate extends WorkerHost {
   async process(): Promise<void> {
     const response = await fetch("https://api.steamcmd.net/v1/info/730");
 
+    if (!response.ok) {
+      this.logger.error("Failed to fetch CS2 update", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+      return;
+    }
+
     const { data } = await response.json();
 
     const publicBuild = data["730"].depots?.branches?.public;
