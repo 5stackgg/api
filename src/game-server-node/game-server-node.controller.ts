@@ -43,7 +43,7 @@ export class GameServerNodeController {
     };
   }
 
-  @Get("/script/:gameServerNodeId.sh")
+  @Get("/script/:gameServerNodeId")
   public async script(@Req() request: Request, @Res() response: Response) {
     const gameServerNodeId = request.params.gameServerNodeId;
 

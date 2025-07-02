@@ -1,12 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
-import {
-  KubeConfig,
-  CoreV1Api,
-  PatchUtils,
-  BatchV1Api,
-} from "@kubernetes/client-node";
+import { KubeConfig, CoreV1Api, BatchV1Api } from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
 import { NodeStats } from "./jobs/NodeStats";
@@ -175,11 +170,13 @@ export class GameServerNodeService {
 
     try {
       // Fetch the current node
-      const { body: node } = await core.readNode(nodeId);
+      const node = await core.readNode({
+        name: nodeId,
+      });
 
-      await core.patchNode(
-        nodeId,
-        [
+      await core.patchNode({
+        name: nodeId,
+        body: [
           {
             op: "replace",
             path: "/metadata/labels",
@@ -191,13 +188,7 @@ export class GameServerNodeService {
             },
           },
         ],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        { headers: { "Content-type": PatchUtils.PATCH_FORMAT_JSON_PATCH } },
-      );
+      });
     } catch (error) {
       console.warn("unable to patch node", error);
     }
@@ -299,67 +290,70 @@ export class GameServerNodeService {
     const batchV1Api = kc.makeApiClient(BatchV1Api);
 
     try {
-      await batchV1Api.createNamespacedJob(this.namespace, {
-        apiVersion: "batch/v1",
-        kind: "Job",
-        metadata: {
-          name: `update-cs-server-${gameServerNodeId}`,
-        },
-        spec: {
-          template: {
-            metadata: {
-              labels: {
-                app: "update-cs-server",
+      await batchV1Api.createNamespacedJob({
+        namespace: this.namespace,
+        body: {
+          apiVersion: "batch/v1",
+          kind: "Job",
+          metadata: {
+            name: `update-cs-server-${gameServerNodeId}`,
+          },
+          spec: {
+            template: {
+              metadata: {
+                labels: {
+                  app: "update-cs-server",
+                },
+              },
+              spec: {
+                nodeName: gameServerNodeId,
+                restartPolicy: "Never",
+                containers: [
+                  {
+                    name: "update-cs-server",
+                    image: "ghcr.io/5stackgg/game-server:latest",
+                    command: ["/opt/scripts/update.sh"],
+                    volumeMounts: [
+                      {
+                        name: `steamcmd-${gameServerNodeId}`,
+                        mountPath: "/serverdata/steamcmd",
+                      },
+                      {
+                        name: `serverfiles-${gameServerNodeId}`,
+                        mountPath: "/serverdata/serverfiles",
+                      },
+                      {
+                        name: `demos-${gameServerNodeId}`,
+                        mountPath: "/opt/demos",
+                      },
+                    ],
+                  },
+                ],
+                volumes: [
+                  {
+                    name: `steamcmd-${gameServerNodeId}`,
+                    persistentVolumeClaim: {
+                      claimName: `steamcmd-${gameServerNodeId}-claim`,
+                    },
+                  },
+                  {
+                    name: `serverfiles-${gameServerNodeId}`,
+                    persistentVolumeClaim: {
+                      claimName: `serverfiles-${gameServerNodeId}-claim`,
+                    },
+                  },
+                  {
+                    name: `demos-${gameServerNodeId}`,
+                    persistentVolumeClaim: {
+                      claimName: `demos-${gameServerNodeId}-claim`,
+                    },
+                  },
+                ],
               },
             },
-            spec: {
-              nodeName: gameServerNodeId,
-              restartPolicy: "Never",
-              containers: [
-                {
-                  name: "update-cs-server",
-                  image: "ghcr.io/5stackgg/game-server:latest",
-                  command: ["/opt/scripts/update.sh"],
-                  volumeMounts: [
-                    {
-                      name: `steamcmd-${gameServerNodeId}`,
-                      mountPath: "/serverdata/steamcmd",
-                    },
-                    {
-                      name: `serverfiles-${gameServerNodeId}`,
-                      mountPath: "/serverdata/serverfiles",
-                    },
-                    {
-                      name: `demos-${gameServerNodeId}`,
-                      mountPath: "/opt/demos",
-                    },
-                  ],
-                },
-              ],
-              volumes: [
-                {
-                  name: `steamcmd-${gameServerNodeId}`,
-                  persistentVolumeClaim: {
-                    claimName: `steamcmd-${gameServerNodeId}-claim`,
-                  },
-                },
-                {
-                  name: `serverfiles-${gameServerNodeId}`,
-                  persistentVolumeClaim: {
-                    claimName: `serverfiles-${gameServerNodeId}-claim`,
-                  },
-                },
-                {
-                  name: `demos-${gameServerNodeId}`,
-                  persistentVolumeClaim: {
-                    claimName: `demos-${gameServerNodeId}-claim`,
-                  },
-                },
-              ],
-            },
+            backoffLimit: 1,
+            ttlSecondsAfterFinished: 30,
           },
-          backoffLimit: 1,
-          ttlSecondsAfterFinished: 30,
         },
       });
 
@@ -485,21 +479,17 @@ export class GameServerNodeService {
 
       const batchV1Api = kc.makeApiClient(BatchV1Api);
 
-      const { body: job } = await batchV1Api.readNamespacedJob(
-        `update-cs-server-${gameServerNodeId}`,
-        this.namespace,
-      );
+      const job = await batchV1Api.readNamespacedJob({
+        name: `update-cs-server-${gameServerNodeId}`,
+        namespace: this.namespace,
+      });
 
       const coreV1Api = kc.makeApiClient(CoreV1Api);
 
-      const { body: pods } = await coreV1Api.listNamespacedPod(
-        this.namespace,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        `job-name=${job.metadata.name}`,
-      );
+      const pods = await coreV1Api.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${job.metadata.name}`,
+      });
 
       return pods.items.at(0);
     } catch (error) {
@@ -522,9 +512,9 @@ export class GameServerNodeService {
 
     let existingPV;
     try {
-      existingPV = await k8sApi.readPersistentVolume(
-        `${name}-${gameServerNodeId}`,
-      );
+      existingPV = await k8sApi.readPersistentVolume({
+        name: `${name}-${gameServerNodeId}`,
+      });
     } catch (error) {
       if (error?.response?.statusCode !== 404) {
         throw error;
@@ -533,34 +523,36 @@ export class GameServerNodeService {
     if (!existingPV) {
       try {
         await k8sApi.createPersistentVolume({
-          apiVersion: "v1",
-          kind: "PersistentVolume",
-          metadata: {
-            name: `${name}-${gameServerNodeId}`,
-          },
-          spec: {
-            capacity: {
-              storage: size,
+          body: {
+            apiVersion: "v1",
+            kind: "PersistentVolume",
+            metadata: {
+              name: `${name}-${gameServerNodeId}`,
             },
-            volumeMode: "Filesystem",
-            accessModes: ["ReadWriteOnce"],
-            storageClassName: "local-storage",
-            local: {
-              path,
-            },
-            nodeAffinity: {
-              required: {
-                nodeSelectorTerms: [
-                  {
-                    matchExpressions: [
-                      {
-                        key: "5stack-id",
-                        operator: "In",
-                        values: [gameServerNodeId],
-                      },
-                    ],
-                  },
-                ],
+            spec: {
+              capacity: {
+                storage: size,
+              },
+              volumeMode: "Filesystem",
+              accessModes: ["ReadWriteOnce"],
+              storageClassName: "local-storage",
+              local: {
+                path,
+              },
+              nodeAffinity: {
+                required: {
+                  nodeSelectorTerms: [
+                    {
+                      matchExpressions: [
+                        {
+                          key: "5stack-id",
+                          operator: "In",
+                          values: [gameServerNodeId],
+                        },
+                      ],
+                    },
+                  ],
+                },
               },
             },
           },
@@ -577,10 +569,10 @@ export class GameServerNodeService {
 
     let existingClaim;
     try {
-      existingClaim = await k8sApi.readNamespacedPersistentVolumeClaim(
-        `${name}-${gameServerNodeId}-claim`,
-        this.namespace,
-      );
+      existingClaim = await k8sApi.readNamespacedPersistentVolumeClaim({
+        name: `${name}-${gameServerNodeId}-claim`,
+        namespace: this.namespace,
+      });
     } catch (error) {
       if (error?.response?.statusCode !== 404) {
         throw error;
@@ -589,20 +581,23 @@ export class GameServerNodeService {
 
     if (!existingClaim) {
       try {
-        await k8sApi.createNamespacedPersistentVolumeClaim(this.namespace, {
-          apiVersion: "v1",
-          kind: "PersistentVolumeClaim",
-          metadata: {
-            name: `${name}-${gameServerNodeId}-claim`,
-            namespace: this.namespace,
-          },
-          spec: {
-            volumeName: `${name}-${gameServerNodeId}`,
-            storageClassName: "local-storage",
-            accessModes: ["ReadWriteOnce"],
-            resources: {
-              requests: {
-                storage: size,
+        await k8sApi.createNamespacedPersistentVolumeClaim({
+          namespace: this.namespace,
+          body: {
+            apiVersion: "v1",
+            kind: "PersistentVolumeClaim",
+            metadata: {
+              name: `${name}-${gameServerNodeId}-claim`,
+              namespace: this.namespace,
+            },
+            spec: {
+              volumeName: `${name}-${gameServerNodeId}`,
+              storageClassName: "local-storage",
+              accessModes: ["ReadWriteOnce"],
+              resources: {
+                requests: {
+                  storage: size,
+                },
               },
             },
           },

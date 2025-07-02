@@ -193,16 +193,19 @@ export class SystemService {
   }
 
   public async restartPod(pod: string) {
-    await this.apiClient.deleteNamespacedPod(pod, "5stack");
+    await this.apiClient.deleteNamespacedPod({
+      name: pod,
+      namespace: "5stack",
+    });
 
     this.logger.log(`Successfully restarted pod ${pod}`);
   }
 
   public async restartDeployment(deploymentName: string) {
-    await this.appsClient.patchNamespacedDeployment(
-      deploymentName,
-      "5stack",
-      {
+    await this.appsClient.patchNamespacedDeployment({
+      name: deploymentName,
+      namespace: "5stack",
+      body: {
         spec: {
           template: {
             metadata: {
@@ -213,21 +216,17 @@ export class SystemService {
           },
         },
       },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      { headers: { "Content-Type": "application/strategic-merge-patch+json" } },
-    );
+    });
 
     this.logger.log(`Successfully restarted deployment ${deploymentName}`);
   }
 
   public async getServices() {
-    const { body } = await this.apiClient.listNamespacedPod("5stack");
+    let postList = await this.apiClient.listNamespacedPod({
+      namespace: "5stack",
+    });
 
-    const pods = body.items.filter((pod) => {
+    const pods = postList.items.filter((pod) => {
       if (pod.metadata.labels.codepier) {
         return false;
       }
@@ -257,15 +256,15 @@ export class SystemService {
 
   private async getServiceVersion(service: string, podName: string) {
     try {
-      const { body } = await this.apiClient.readNamespacedPod(
-        podName,
-        "5stack",
-      );
+      const pod = await this.apiClient.readNamespacedPod({
+        name: podName,
+        namespace: "5stack",
+      });
 
       return (
         service === "hasura"
-          ? body.status.initContainerStatuses.at(0).imageID
-          : body.status.containerStatuses.at(0).imageID
+          ? pod.status.initContainerStatuses.at(0).imageID
+          : pod.status.containerStatuses.at(0).imageID
       )
         .split("@")
         .at(1);
@@ -289,15 +288,11 @@ export class SystemService {
 
   private async getPanelVersion() {
     try {
-      const { body } = await this.apiClient.listNode(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        "node-role.kubernetes.io/control-plane",
-      );
+      const nodeList = await this.apiClient.listNode({
+        labelSelector: "node-role.kubernetes.io/control-plane",
+      });
 
-      return body.items.at(0)?.metadata.labels["5stack-panel-version"];
+      return nodeList.items.at(0)?.metadata.labels["5stack-panel-version"];
     } catch (error) {
       this.logger.warn("unable to fetch panel version", error);
       return "";
