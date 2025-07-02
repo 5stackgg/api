@@ -61,7 +61,7 @@ export class NotificationsService {
       },
     });
 
-    if (discord_support_webhook.value) {
+    if (discord_support_webhook?.value) {
       try {
         await fetch(discord_support_webhook.value, {
           method: "POST",
