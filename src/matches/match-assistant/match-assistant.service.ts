@@ -1,6 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
-import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import {
+  BatchV1Api,
+  CoreV1Api,
+  FetchError,
+  KubeConfig,
+} from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -851,7 +856,7 @@ export class MatchAssistantService {
             namespace: this.namespace,
           })
           .catch((error) => {
-            if (error?.statusCode !== 404) {
+            if (error instanceof FetchError && error.code !== "404") {
               throw error;
             }
           });
@@ -864,7 +869,7 @@ export class MatchAssistantService {
           namespace: this.namespace,
         })
         .catch((error) => {
-          if (error?.statusCode !== 404) {
+          if (error instanceof FetchError && error.code !== "404") {
             throw error;
           }
         });
@@ -876,7 +881,7 @@ export class MatchAssistantService {
           namespace: this.namespace,
         })
         .catch((error) => {
-          if (error?.statusCode !== 404) {
+          if (error instanceof FetchError && error.code !== "404") {
             throw error;
           }
         });

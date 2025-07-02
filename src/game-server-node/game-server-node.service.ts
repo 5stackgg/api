@@ -1,7 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
-import { KubeConfig, CoreV1Api, BatchV1Api } from "@kubernetes/client-node";
+import {
+  KubeConfig,
+  CoreV1Api,
+  BatchV1Api,
+  FetchError,
+} from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
 import { NodeStats } from "./jobs/NodeStats";
@@ -493,7 +498,7 @@ export class GameServerNodeService {
 
       return pods.items.at(0);
     } catch (error) {
-      if (error?.response?.statusCode !== 404) {
+      if (error instanceof FetchError && error.code !== "404") {
         throw error;
       }
     }
@@ -516,7 +521,7 @@ export class GameServerNodeService {
         name: `${name}-${gameServerNodeId}`,
       });
     } catch (error) {
-      if (error?.response?.statusCode !== 404) {
+      if (error instanceof FetchError && error.code !== "404") {
         throw error;
       }
     }
@@ -574,7 +579,7 @@ export class GameServerNodeService {
         namespace: this.namespace,
       });
     } catch (error) {
-      if (error?.response?.statusCode !== 404) {
+      if (error instanceof FetchError && error.code !== "404") {
         throw error;
       }
     }
