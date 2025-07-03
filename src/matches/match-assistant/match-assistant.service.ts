@@ -815,20 +815,6 @@ export class MatchAssistantService {
     } catch (error) {
       this.logger.warn(`[${serverId}] unable to restart server`, error);
     }
-
-    await this.hasura.mutation({
-      update_servers_by_pk: {
-        __args: {
-          pk_columns: {
-            id: serverId,
-          },
-          _set: {
-            reserved_by_match_id: null,
-          },
-        },
-        __typename: true,
-      },
-    });
   }
 
   public async stopOnDemandServer(matchId: string, serverId: string) {
@@ -887,20 +873,6 @@ export class MatchAssistantService {
         });
 
       this.logger.verbose(`[${matchId}] stopped on demand server`);
-
-      await this.hasura.mutation({
-        update_servers_by_pk: {
-          __args: {
-            pk_columns: {
-              id: serverId,
-            },
-            _set: {
-              reserved_by_match_id: null,
-            },
-          },
-          __typename: true,
-        },
-      });
     } catch (error) {
       this.logger.error(
         `[${matchId}] unable to stop on demand server`,

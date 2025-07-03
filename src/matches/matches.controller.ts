@@ -165,7 +165,8 @@ export class MatchesController {
       matches_by_pk.status === "Tie" ||
       matches_by_pk.status === "Canceled" ||
       matches_by_pk.status === "Forfeit" ||
-      matches_by_pk.status === "Finished"
+      matches_by_pk.status === "Finished" ||
+      matches_by_pk.status === "Surrendered"
     ) {
       response.status(204).end();
       return;
@@ -261,7 +262,8 @@ export class MatchesController {
       status === "Tie" ||
       status === "Forfeit" ||
       status === "Canceled" ||
-      status === "Finished"
+      status === "Finished" ||
+      status === "Surrendered"
     ) {
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);

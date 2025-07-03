@@ -158,6 +158,8 @@ CREATE TRIGGER tai_match AFTER INSERT ON public.matches FOR EACH ROW EXECUTE FUN
 CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    _server_id UUID;
 BEGIN
     IF is_tournament_match(NEW) THEN
         PERFORM update_tournament_bracket(NEW);
@@ -171,6 +173,11 @@ BEGIN
         UPDATE match_lineup_players 
             SET checked_in = false 
             WHERE match_lineup_id = NEW.lineup_1_id OR match_lineup_id = NEW.lineup_2_id;
+    END IF;
+
+    IF NEW.status IN ('Tie', 'Forfeit', 'Canceled', 'Finished', 'Surrendered') THEN
+        select server_id into _server_id from matches where id = NEW.id;
+        UPDATE servers SET reserved_by_match_id = null WHERE id = _server_id;
     END IF;
 
 	RETURN NEW;
