@@ -86,6 +86,7 @@ export class SystemService {
         });
 
         this.featuresDetected = true;
+        return;
       } catch (error) {
         this.logger.warn("Error detecting features", error);
       }
