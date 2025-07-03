@@ -12,6 +12,8 @@ export class SystemService {
   private apiClient: CoreV1Api;
   private appsClient: AppsV1Api;
 
+  private featuresDetected = false;
+
   constructor(
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
@@ -22,62 +24,74 @@ export class SystemService {
     kc.loadFromDefault();
     this.apiClient = kc.makeApiClient(CoreV1Api);
     this.appsClient = kc.makeApiClient(AppsV1Api);
+
+    this.detectFeatures();
   }
 
   public async detectFeatures() {
-    const tailscaleConfig = this.config.get<TailscaleConfig>("tailscale");
+    while (this.featuresDetected === false) {
+      try {
+        const tailscaleConfig = this.config.get<TailscaleConfig>("tailscale");
 
-    let supportsGameServerNodes = false;
-    if (
-      tailscaleConfig.key &&
-      tailscaleConfig.secret &&
-      tailscaleConfig.netName
-    ) {
-      supportsGameServerNodes = true;
+        let supportsGameServerNodes = false;
+        if (
+          tailscaleConfig.key &&
+          tailscaleConfig.secret &&
+          tailscaleConfig.netName
+        ) {
+          supportsGameServerNodes = true;
+        }
+
+        await this.hasura.mutation({
+          insert_settings_one: {
+            __args: {
+              object: {
+                name: "supports_game_server_nodes",
+                value: supportsGameServerNodes.toString(),
+              },
+              on_conflict: {
+                constraint: "settings_pkey",
+                update_columns: ["value"],
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        const discordConfig = this.config.get<DiscordConfig>("discord");
+
+        let supportsDiscordBot = false;
+        if (
+          discordConfig.clientId &&
+          discordConfig.clientSecret &&
+          discordConfig.token
+        ) {
+          supportsDiscordBot = true;
+        }
+
+        await this.hasura.mutation({
+          insert_settings_one: {
+            __args: {
+              object: {
+                name: "public.supports_discord_bot",
+                value: supportsDiscordBot.toString(),
+              },
+              on_conflict: {
+                constraint: "settings_pkey",
+                update_columns: ["value"],
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        this.featuresDetected = true;
+        return;
+      } catch (error) {
+        this.logger.warn("Error detecting features", error);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
-
-    await this.hasura.mutation({
-      insert_settings_one: {
-        __args: {
-          object: {
-            name: "supports_game_server_nodes",
-            value: supportsGameServerNodes.toString(),
-          },
-          on_conflict: {
-            constraint: "settings_pkey",
-            update_columns: ["value"],
-          },
-        },
-        __typename: true,
-      },
-    });
-
-    const discordConfig = this.config.get<DiscordConfig>("discord");
-
-    let supportsDiscordBot = false;
-    if (
-      discordConfig.clientId &&
-      discordConfig.clientSecret &&
-      discordConfig.token
-    ) {
-      supportsDiscordBot = true;
-    }
-
-    await this.hasura.mutation({
-      insert_settings_one: {
-        __args: {
-          object: {
-            name: "public.supports_discord_bot",
-            value: supportsDiscordBot.toString(),
-          },
-          on_conflict: {
-            constraint: "settings_pkey",
-            update_columns: ["value"],
-          },
-        },
-        __typename: true,
-      },
-    });
   }
 
   public async updateServices() {
