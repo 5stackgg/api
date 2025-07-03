@@ -13,8 +13,6 @@ import { RedisManagerService } from "./redis/redis-manager/redis-manager.service
 import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "./configs/types/RedisConfig";
 import { AppConfig } from "./configs/types/AppConfig";
-import { HasuraService } from "./hasura/hasura.service";
-import { SystemService } from "./system/system.service";
 
 /**
  * Increase the max listeners, based on load we may need to increase this
@@ -43,13 +41,13 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  if (process.env.RUN_MIGRATIONS || process.env.DEV) {
-    const hasura = app.get(HasuraService);
-    await hasura.setup();
-    if (!process.env.DEV) {
-      process.exit(0);
-    }
-  }
+  // if (process.env.RUN_MIGRATIONS || process.env.DEV) {
+  //   const hasura = app.get(HasuraService);
+  //   await hasura.setup();
+  //   if (!process.env.DEV) {
+  //     process.exit(0);
+  //   }
+  // }
 
   const configService = app.get(ConfigService);
 
@@ -66,10 +64,7 @@ async function bootstrap() {
     return true;
   });
 
-  const systemService = app.get(SystemService);
   const redisManagerService = app.get(RedisManagerService);
-
-  await systemService.detectFeatures();
 
   const appConfig = configService.get<AppConfig>("app");
 
