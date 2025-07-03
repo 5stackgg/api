@@ -14,7 +14,6 @@ import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "./configs/types/RedisConfig";
 import { AppConfig } from "./configs/types/AppConfig";
 import { HasuraService } from "./hasura/hasura.service";
-import { SystemService } from "./system/system.service";
 
 /**
  * Increase the max listeners, based on load we may need to increase this
