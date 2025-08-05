@@ -198,6 +198,9 @@ DECLARE
     _map_pool_count int;
     _regions text[];
 BEGIN
+    IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
+        UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
+    END IF;
 
     IF (NEW.status = 'WaitingForServer' AND OLD.status = 'WaitingForServer') AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN
         NEW.status = 'Live';
@@ -233,7 +236,6 @@ BEGIN
         NEW.cancels_at = NOW();
         NEW.ended_at = null;
     END IF;
-
 
     IF (
         OLD.status = 'Canceled' AND NEW.status != 'Canceled' OR
