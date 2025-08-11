@@ -701,6 +701,13 @@ export class GameServerNodeService {
 
     await this.redis.sadd("stat-nodes", nodeId);
 
+    if (!stats?.metrics?.usage?.memory) {
+      this.logger.warn(
+        `No memory stats for node ${nodeId}, skipping stats capture`,
+        stats,
+      );
+      return;
+    }
     await this.redis.lpush(
       `${baseKey}:memory`,
       JSON.stringify({
