@@ -1,4 +1,1 @@
--- Could not auto-generate a down migration.
--- Please write an appropriate down migration for the SQL below:
--- alter table "public"."matches" add column "cancels_at" timestamptz
---  null;
+alter table "public"."matches" drop column "cancels_at";

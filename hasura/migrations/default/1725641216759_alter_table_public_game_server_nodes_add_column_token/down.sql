@@ -1,4 +1,1 @@
--- Could not auto-generate a down migration.
--- Please write an appropriate down migration for the SQL below:
--- alter table "public"."game_server_nodes" add column "token" text
---  null;
+alter table "public"."game_server_nodes" drop column "token";

@@ -40,7 +40,6 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       },
     });
 
-
     const deletedAt = new Date();
 
     await this.hasura.mutation({

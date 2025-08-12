@@ -1,4 +1,1 @@
--- Could not auto-generate a down migration.
--- Please write an appropriate down migration for the SQL below:
--- alter table "public"."match_options" add column "tv_delay" Integer
---  not null default '115';
+alter table "public"."match_options" drop column "tv_delay";
