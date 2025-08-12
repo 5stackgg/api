@@ -50,6 +50,7 @@ select_permissions:
         - value
       computed_fields:
         - available_server_count
+        - has_node
         - status
         - total_server_count
       filter: {}
@@ -63,6 +64,7 @@ select_permissions:
         - value
       computed_fields:
         - available_server_count
+        - has_node
         - status
         - total_server_count
       filter: {}
