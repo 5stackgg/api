@@ -68,6 +68,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
             deleted_at: {
               _is_null: false,
             },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
           },
         },
         __typename: true,
@@ -78,6 +81,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
             deleted_at: {
               _is_null: false,
             },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
           },
         },
         __typename: true,
@@ -87,6 +93,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
           where: {
             deleted_at: {
               _is_null: false,
+            },  
+            match_map_id: {
+              _eq: this.data.match_map_id,
             },
           },
         },
@@ -98,6 +107,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
             deleted_at: {
               _is_null: false,
             },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
           },
         },
         __typename: true,
@@ -107,6 +119,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
           where: {
             deleted_at: {
               _is_null: false,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
             },
           },
         },
@@ -118,6 +133,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
             deleted_at: {
               _is_null: false,
             },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
           },
         },
         __typename: true,
@@ -128,6 +146,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
             deleted_at: {
               _is_null: false,
             },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
           },
         },
         __typename: true,
@@ -137,6 +158,9 @@ export default class ScoreEvent extends MatchEventProcessor<{
           where: {
             deleted_at: {
               _is_null: false,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
             },
           },
         },
