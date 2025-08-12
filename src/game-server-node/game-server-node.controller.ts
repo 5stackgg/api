@@ -122,6 +122,7 @@ export class GameServerNodeController {
     );
 
     return {
+      gameServerId: gameServer.id,
       link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServer.id}.sh?token=${gameServer.token} | bash`,
     };
   }
