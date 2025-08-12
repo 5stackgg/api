@@ -15,6 +15,11 @@ computed_fields:
       function:
         name: available_region_server_count
         schema: public
+  - name: has_node
+    definition:
+      function:
+        name: region_has_node
+        schema: public
   - name: status
     definition:
       function:

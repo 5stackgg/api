@@ -41,7 +41,6 @@ export class SignalServerGateway {
     const server = await this.getRegionServer(region);
 
     if (!server) {
-      this.logger.error(`No server found for region ${region}`);
       return;
     }
 
@@ -71,7 +70,6 @@ export class SignalServerGateway {
     const server = await this.getRegionServer(region);
 
     if (!server) {
-      this.logger.error(`No server found for region ${region}`);
       return;
     }
 
