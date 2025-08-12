@@ -101,7 +101,7 @@ export class MatchmakingGateway {
         __args: {
           where: {
             status: {
-              _eq: "Online",
+              _neq: "Disabled",
             },
           },
         },
