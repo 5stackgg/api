@@ -82,6 +82,7 @@ type PodStats {
 }
 
 type SetupGameServeOutput {
+  gameServerId: String!
   link: String!
 }
 
@@ -9194,6 +9195,8 @@ columns and relationships of "match_map_rounds"
 """
 type match_map_rounds {
   backup_file: String
+  created_at: timestamptz!
+  deleted_at: timestamptz
   id: uuid!
 
   """An array relationship"""
@@ -9343,6 +9346,8 @@ input match_map_rounds_bool_exp {
   _not: match_map_rounds_bool_exp
   _or: [match_map_rounds_bool_exp!]
   backup_file: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
@@ -9399,6 +9404,8 @@ input type for inserting data into table "match_map_rounds"
 """
 input match_map_rounds_insert_input {
   backup_file: String
+  created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   kills: player_kills_arr_rel_insert_input
   lineup_1_money: Int
@@ -9419,6 +9426,8 @@ input match_map_rounds_insert_input {
 """aggregate max on columns"""
 type match_map_rounds_max_fields {
   backup_file: String
+  created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   lineup_1_money: Int
   lineup_1_score: Int
@@ -9437,6 +9446,8 @@ order by max() on columns of table "match_map_rounds"
 """
 input match_map_rounds_max_order_by {
   backup_file: order_by
+  created_at: order_by
+  deleted_at: order_by
   id: order_by
   lineup_1_money: order_by
   lineup_1_score: order_by
@@ -9453,6 +9464,8 @@ input match_map_rounds_max_order_by {
 """aggregate min on columns"""
 type match_map_rounds_min_fields {
   backup_file: String
+  created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   lineup_1_money: Int
   lineup_1_score: Int
@@ -9471,6 +9484,8 @@ order by min() on columns of table "match_map_rounds"
 """
 input match_map_rounds_min_order_by {
   backup_file: order_by
+  created_at: order_by
+  deleted_at: order_by
   id: order_by
   lineup_1_money: order_by
   lineup_1_score: order_by
@@ -9507,6 +9522,8 @@ input match_map_rounds_on_conflict {
 """Ordering options when selecting data from "match_map_rounds"."""
 input match_map_rounds_order_by {
   backup_file: order_by
+  created_at: order_by
+  deleted_at: order_by
   id: order_by
   kills_aggregate: player_kills_aggregate_order_by
   lineup_1_money: order_by
@@ -9535,6 +9552,12 @@ select columns of table "match_map_rounds"
 enum match_map_rounds_select_column {
   """column name"""
   backup_file
+
+  """column name"""
+  created_at
+
+  """column name"""
+  deleted_at
 
   """column name"""
   id
@@ -9581,6 +9604,8 @@ input type for updating data in table "match_map_rounds"
 """
 input match_map_rounds_set_input {
   backup_file: String
+  created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   lineup_1_money: Int
   lineup_1_score: Int
@@ -9682,6 +9707,8 @@ input match_map_rounds_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input match_map_rounds_stream_cursor_value_input {
   backup_file: String
+  created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   lineup_1_money: Int
   lineup_1_score: Int
@@ -9727,6 +9754,12 @@ update columns of table "match_map_rounds"
 enum match_map_rounds_update_column {
   """column name"""
   backup_file
+
+  """column name"""
+  created_at
+
+  """column name"""
+  deleted_at
 
   """column name"""
   id
@@ -19426,6 +19459,7 @@ type player_assists {
   attacked_team: String!
   attacker_steam_id: bigint!
   attacker_team: String!
+  deleted_at: timestamptz
   flash: Boolean!
   id: uuid!
 
@@ -19552,6 +19586,7 @@ input player_assists_bool_exp {
   attacked_team: String_comparison_exp
   attacker_steam_id: bigint_comparison_exp
   attacker_team: String_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   flash: Boolean_comparison_exp
   id: uuid_comparison_exp
   is_team_assist: Boolean_comparison_exp
@@ -19582,6 +19617,7 @@ input player_assists_insert_input {
   attacked_team: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   flash: Boolean
   id: uuid
   match: matches_obj_rel_insert_input
@@ -19599,6 +19635,7 @@ type player_assists_max_fields {
   attacked_team: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -19614,6 +19651,7 @@ input player_assists_max_order_by {
   attacked_team: order_by
   attacker_steam_id: order_by
   attacker_team: order_by
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -19627,6 +19665,7 @@ type player_assists_min_fields {
   attacked_team: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -19642,6 +19681,7 @@ input player_assists_min_order_by {
   attacked_team: order_by
   attacker_steam_id: order_by
   attacker_team: order_by
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -19667,6 +19707,7 @@ input player_assists_order_by {
   attacked_team: order_by
   attacker_steam_id: order_by
   attacker_team: order_by
+  deleted_at: order_by
   flash: order_by
   id: order_by
   is_team_assist: order_by
@@ -19694,6 +19735,9 @@ enum player_assists_select_column {
 
   """column name"""
   attacker_team
+
+  """column name"""
+  deleted_at
 
   """column name"""
   flash
@@ -19738,6 +19782,7 @@ input player_assists_set_input {
   attacked_team: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   flash: Boolean
   id: uuid
   match_id: uuid
@@ -19811,6 +19856,7 @@ input player_assists_stream_cursor_value_input {
   attacked_team: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   flash: Boolean
   id: uuid
   match_id: uuid
@@ -19912,6 +19958,7 @@ type player_damages {
   attacker_team: String
   damage: Int!
   damage_armor: Int!
+  deleted_at: timestamptz
   health: Int!
   hitgroup: String!
   id: uuid!
@@ -20039,6 +20086,7 @@ input player_damages_bool_exp {
   attacker_team: String_comparison_exp
   damage: Int_comparison_exp
   damage_armor: Int_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   health: Int_comparison_exp
   hitgroup: String_comparison_exp
   id: uuid_comparison_exp
@@ -20082,6 +20130,7 @@ input player_damages_insert_input {
   attacker_team: String
   damage: Int
   damage_armor: Int
+  deleted_at: timestamptz
   health: Int
   hitgroup: String
   id: uuid
@@ -20108,6 +20157,7 @@ type player_damages_max_fields {
   attacker_team: String
   damage: Int
   damage_armor: Int
+  deleted_at: timestamptz
   health: Int
   hitgroup: String
   id: uuid
@@ -20133,6 +20183,7 @@ input player_damages_max_order_by {
   attacker_team: order_by
   damage: order_by
   damage_armor: order_by
+  deleted_at: order_by
   health: order_by
   hitgroup: order_by
   id: order_by
@@ -20156,6 +20207,7 @@ type player_damages_min_fields {
   attacker_team: String
   damage: Int
   damage_armor: Int
+  deleted_at: timestamptz
   health: Int
   hitgroup: String
   id: uuid
@@ -20181,6 +20233,7 @@ input player_damages_min_order_by {
   attacker_team: order_by
   damage: order_by
   damage_armor: order_by
+  deleted_at: order_by
   health: order_by
   hitgroup: order_by
   id: order_by
@@ -20216,6 +20269,7 @@ input player_damages_order_by {
   attacker_team: order_by
   damage: order_by
   damage_armor: order_by
+  deleted_at: order_by
   health: order_by
   hitgroup: order_by
   id: order_by
@@ -20268,6 +20322,9 @@ enum player_damages_select_column {
   damage_armor
 
   """column name"""
+  deleted_at
+
+  """column name"""
   health
 
   """column name"""
@@ -20307,6 +20364,7 @@ input player_damages_set_input {
   attacker_team: String
   damage: Int
   damage_armor: Int
+  deleted_at: timestamptz
   health: Int
   hitgroup: String
   id: uuid
@@ -20413,6 +20471,7 @@ input player_damages_stream_cursor_value_input {
   attacker_team: String
   damage: Int
   damage_armor: Int
+  deleted_at: timestamptz
   health: Int
   hitgroup: String
   id: uuid
@@ -20954,6 +21013,7 @@ type player_flashes {
 
   """An object relationship"""
   blinded: players!
+  deleted_at: timestamptz
   duration: numeric!
   id: uuid!
 
@@ -21076,6 +21136,7 @@ input player_flashes_bool_exp {
   attacked_steam_id: bigint_comparison_exp
   attacker_steam_id: bigint_comparison_exp
   blinded: players_bool_exp
+  deleted_at: timestamptz_comparison_exp
   duration: numeric_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
@@ -21105,6 +21166,7 @@ input player_flashes_insert_input {
   attacked_steam_id: bigint
   attacker_steam_id: bigint
   blinded: players_obj_rel_insert_input
+  deleted_at: timestamptz
   duration: numeric
   id: uuid
   match: matches_obj_rel_insert_input
@@ -21121,6 +21183,7 @@ input player_flashes_insert_input {
 type player_flashes_max_fields {
   attacked_steam_id: bigint
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   duration: numeric
   id: uuid
   match_id: uuid
@@ -21135,6 +21198,7 @@ order by max() on columns of table "player_flashes"
 input player_flashes_max_order_by {
   attacked_steam_id: order_by
   attacker_steam_id: order_by
+  deleted_at: order_by
   duration: order_by
   id: order_by
   match_id: order_by
@@ -21147,6 +21211,7 @@ input player_flashes_max_order_by {
 type player_flashes_min_fields {
   attacked_steam_id: bigint
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   duration: numeric
   id: uuid
   match_id: uuid
@@ -21161,6 +21226,7 @@ order by min() on columns of table "player_flashes"
 input player_flashes_min_order_by {
   attacked_steam_id: order_by
   attacker_steam_id: order_by
+  deleted_at: order_by
   duration: order_by
   id: order_by
   match_id: order_by
@@ -21185,6 +21251,7 @@ input player_flashes_order_by {
   attacked_steam_id: order_by
   attacker_steam_id: order_by
   blinded: players_order_by
+  deleted_at: order_by
   duration: order_by
   id: order_by
   match: matches_order_by
@@ -21206,6 +21273,9 @@ enum player_flashes_select_column {
 
   """column name"""
   attacker_steam_id
+
+  """column name"""
+  deleted_at
 
   """column name"""
   duration
@@ -21251,6 +21321,7 @@ input type for updating data in table "player_flashes"
 input player_flashes_set_input {
   attacked_steam_id: bigint
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   duration: numeric
   id: uuid
   match_id: uuid
@@ -21329,6 +21400,7 @@ input player_flashes_stream_cursor_input {
 input player_flashes_stream_cursor_value_input {
   attacked_steam_id: bigint
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   duration: numeric
   id: uuid
   match_id: uuid
@@ -21438,6 +21510,7 @@ type player_kills {
   attacker_steam_id: bigint
   attacker_team: String
   blinded: Boolean!
+  deleted_at: timestamptz
   headshot: Boolean!
   hitgroup: String!
   id: uuid!
@@ -21584,6 +21657,7 @@ input player_kills_bool_exp {
   attacker_steam_id: bigint_comparison_exp
   attacker_team: String_comparison_exp
   blinded: Boolean_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   headshot: Boolean_comparison_exp
   hitgroup: String_comparison_exp
   id: uuid_comparison_exp
@@ -21637,6 +21711,7 @@ input player_kills_insert_input {
   attacker_steam_id: bigint
   attacker_team: String
   blinded: Boolean
+  deleted_at: timestamptz
   headshot: Boolean
   hitgroup: String
   id: uuid
@@ -21664,6 +21739,7 @@ type player_kills_max_fields {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   hitgroup: String
   id: uuid
   match_id: uuid
@@ -21685,6 +21761,7 @@ input player_kills_max_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
   attacker_team: order_by
+  deleted_at: order_by
   hitgroup: order_by
   id: order_by
   match_id: order_by
@@ -21704,6 +21781,7 @@ type player_kills_min_fields {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   attacker_team: String
+  deleted_at: timestamptz
   hitgroup: String
   id: uuid
   match_id: uuid
@@ -21725,6 +21803,7 @@ input player_kills_min_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
   attacker_team: order_by
+  deleted_at: order_by
   hitgroup: order_by
   id: order_by
   match_id: order_by
@@ -21767,6 +21846,7 @@ input player_kills_order_by {
   attacker_steam_id: order_by
   attacker_team: order_by
   blinded: order_by
+  deleted_at: order_by
   headshot: order_by
   hitgroup: order_by
   id: order_by
@@ -21827,6 +21907,9 @@ enum player_kills_select_column {
 
   """column name"""
   blinded
+
+  """column name"""
+  deleted_at
 
   """column name"""
   headshot
@@ -21931,6 +22014,7 @@ input player_kills_set_input {
   attacker_steam_id: bigint
   attacker_team: String
   blinded: Boolean
+  deleted_at: timestamptz
   headshot: Boolean
   hitgroup: String
   id: uuid
@@ -22016,6 +22100,7 @@ input player_kills_stream_cursor_value_input {
   attacker_steam_id: bigint
   attacker_team: String
   blinded: Boolean
+  deleted_at: timestamptz
   headshot: Boolean
   hitgroup: String
   id: uuid
@@ -22079,6 +22164,9 @@ enum player_kills_update_column {
 
   """column name"""
   blinded
+
+  """column name"""
+  deleted_at
 
   """column name"""
   headshot
@@ -22180,6 +22268,7 @@ input player_kills_variance_order_by {
 columns and relationships of "player_objectives"
 """
 type player_objectives {
+  deleted_at: timestamptz
   id: uuid!
 
   """An object relationship"""
@@ -22279,6 +22368,7 @@ input player_objectives_bool_exp {
   _and: [player_objectives_bool_exp!]
   _not: player_objectives_bool_exp
   _or: [player_objectives_bool_exp!]
+  deleted_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -22303,6 +22393,7 @@ input player_objectives_inc_input {
 input type for inserting data into table "player_objectives"
 """
 input player_objectives_insert_input {
+  deleted_at: timestamptz
   id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -22317,6 +22408,7 @@ input player_objectives_insert_input {
 
 """aggregate max on columns"""
 type player_objectives_max_fields {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -22329,6 +22421,7 @@ type player_objectives_max_fields {
 order by max() on columns of table "player_objectives"
 """
 input player_objectives_max_order_by {
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -22339,6 +22432,7 @@ input player_objectives_max_order_by {
 
 """aggregate min on columns"""
 type player_objectives_min_fields {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -22351,6 +22445,7 @@ type player_objectives_min_fields {
 order by min() on columns of table "player_objectives"
 """
 input player_objectives_min_order_by {
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -22372,6 +22467,7 @@ type player_objectives_mutation_response {
 
 """Ordering options when selecting data from "player_objectives"."""
 input player_objectives_order_by {
+  deleted_at: order_by
   id: order_by
   match: matches_order_by
   match_id: order_by
@@ -22388,6 +22484,9 @@ input player_objectives_order_by {
 select columns of table "player_objectives"
 """
 enum player_objectives_select_column {
+  """column name"""
+  deleted_at
+
   """column name"""
   id
 
@@ -22414,6 +22513,7 @@ enum player_objectives_select_column {
 input type for updating data in table "player_objectives"
 """
 input player_objectives_set_input {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -22478,6 +22578,7 @@ input player_objectives_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input player_objectives_stream_cursor_value_input {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -22813,6 +22914,7 @@ type player_sanctions_variance_fields {
 columns and relationships of "player_unused_utility"
 """
 type player_unused_utility {
+  deleted_at: timestamptz
   id: uuid!
 
   """An object relationship"""
@@ -22916,6 +23018,7 @@ input player_unused_utility_bool_exp {
   _and: [player_unused_utility_bool_exp!]
   _not: player_unused_utility_bool_exp
   _or: [player_unused_utility_bool_exp!]
+  deleted_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -22950,6 +23053,7 @@ input player_unused_utility_inc_input {
 input type for inserting data into table "player_unused_utility"
 """
 input player_unused_utility_insert_input {
+  deleted_at: timestamptz
   id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -22963,6 +23067,7 @@ input player_unused_utility_insert_input {
 
 """aggregate max on columns"""
 type player_unused_utility_max_fields {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -22975,6 +23080,7 @@ type player_unused_utility_max_fields {
 order by max() on columns of table "player_unused_utility"
 """
 input player_unused_utility_max_order_by {
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -22985,6 +23091,7 @@ input player_unused_utility_max_order_by {
 
 """aggregate min on columns"""
 type player_unused_utility_min_fields {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -22997,6 +23104,7 @@ type player_unused_utility_min_fields {
 order by min() on columns of table "player_unused_utility"
 """
 input player_unused_utility_min_order_by {
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -23027,6 +23135,7 @@ input player_unused_utility_on_conflict {
 
 """Ordering options when selecting data from "player_unused_utility"."""
 input player_unused_utility_order_by {
+  deleted_at: order_by
   id: order_by
   match: matches_order_by
   match_id: order_by
@@ -23047,6 +23156,9 @@ input player_unused_utility_pk_columns_input {
 select columns of table "player_unused_utility"
 """
 enum player_unused_utility_select_column {
+  """column name"""
+  deleted_at
+
   """column name"""
   id
 
@@ -23070,6 +23182,7 @@ enum player_unused_utility_select_column {
 input type for updating data in table "player_unused_utility"
 """
 input player_unused_utility_set_input {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -23139,6 +23252,7 @@ input player_unused_utility_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input player_unused_utility_stream_cursor_value_input {
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -23167,6 +23281,9 @@ input player_unused_utility_sum_order_by {
 update columns of table "player_unused_utility"
 """
 enum player_unused_utility_update_column {
+  """column name"""
+  deleted_at
+
   """column name"""
   id
 
@@ -23251,6 +23368,7 @@ columns and relationships of "player_utility"
 type player_utility {
   attacker_location_coordinates: String
   attacker_steam_id: bigint!
+  deleted_at: timestamptz
   id: uuid!
 
   """An object relationship"""
@@ -23351,6 +23469,7 @@ input player_utility_bool_exp {
   _or: [player_utility_bool_exp!]
   attacker_location_coordinates: String_comparison_exp
   attacker_steam_id: bigint_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -23376,6 +23495,7 @@ input type for inserting data into table "player_utility"
 input player_utility_insert_input {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -23391,6 +23511,7 @@ input player_utility_insert_input {
 type player_utility_max_fields {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -23404,6 +23525,7 @@ order by max() on columns of table "player_utility"
 input player_utility_max_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -23415,6 +23537,7 @@ input player_utility_max_order_by {
 type player_utility_min_fields {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -23428,6 +23551,7 @@ order by min() on columns of table "player_utility"
 input player_utility_min_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
+  deleted_at: order_by
   id: order_by
   match_id: order_by
   match_map_id: order_by
@@ -23450,6 +23574,7 @@ type player_utility_mutation_response {
 input player_utility_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
+  deleted_at: order_by
   id: order_by
   match: matches_order_by
   match_id: order_by
@@ -23470,6 +23595,9 @@ enum player_utility_select_column {
 
   """column name"""
   attacker_steam_id
+
+  """column name"""
+  deleted_at
 
   """column name"""
   id
@@ -23496,6 +23624,7 @@ input type for updating data in table "player_utility"
 input player_utility_set_input {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -23561,6 +23690,7 @@ input player_utility_stream_cursor_input {
 input player_utility_stream_cursor_value_input {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
+  deleted_at: timestamptz
   id: uuid
   match_id: uuid
   match_map_id: uuid
@@ -28425,6 +28555,11 @@ type server_regions {
     """filter the rows returned"""
     where: game_server_nodes_bool_exp
   ): game_server_nodes_aggregate!
+
+  """
+  A computed field, executes function "region_has_node"
+  """
+  has_node: Boolean
   is_lan: Boolean!
 
   """
@@ -28489,6 +28624,7 @@ input server_regions_bool_exp {
   description: String_comparison_exp
   game_server_nodes: game_server_nodes_bool_exp
   game_server_nodes_aggregate: game_server_nodes_aggregate_bool_exp
+  has_node: Boolean_comparison_exp
   is_lan: Boolean_comparison_exp
   status: String_comparison_exp
   steam_relay: Boolean_comparison_exp
@@ -28592,6 +28728,7 @@ input server_regions_order_by {
   available_server_count: order_by
   description: order_by
   game_server_nodes_aggregate: game_server_nodes_aggregate_order_by
+  has_node: order_by
   is_lan: order_by
   status: order_by
   steam_relay: order_by

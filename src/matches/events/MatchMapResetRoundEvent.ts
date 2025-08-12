@@ -1,7 +1,6 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
-import { S3Service } from "../../s3/s3.service";
 import { Logger } from "@nestjs/common";
 import { ChatService } from "../../chat/chat.service";
 
@@ -14,7 +13,6 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
     hasura: HasuraService,
     matchAssistant: MatchAssistantService,
     chat: ChatService,
-    private readonly s3: S3Service,
   ) {
     super(logger, hasura, matchAssistant, chat);
   }
@@ -42,31 +40,123 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       },
     });
 
-    for (const type of [
-      "player_kills",
-      `player_assists`,
-      "player_damages",
-      "player_flashes",
-      "player_utility",
-      "player_objectives",
-      "player_unused_utility",
-    ]) {
-      await this.hasura.mutation({
-        [`delete_${type}`]: {
-          __args: {
-            where: {
-              round: {
-                _gte: statsRound,
-              },
-              match_map_id: {
-                _eq: this.data.match_map_id,
-              },
+
+    const deletedAt = new Date();
+
+    await this.hasura.mutation({
+      update_player_kills: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
             },
           },
-          __typename: true,
+          _set: {
+            deleted_at: deletedAt,
+          },
         },
-      });
-    }
+        __typename: true,
+      },
+      update_player_assists: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: deletedAt,
+          },
+        },
+        __typename: true,
+      },
+      update_player_damages: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: deletedAt,
+          },
+        },
+        __typename: true,
+      },
+      update_player_flashes: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: deletedAt,
+          },
+        },
+        __typename: true,
+      },
+      update_player_utility: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: deletedAt,
+          },
+        },
+        __typename: true,
+      },
+      update_player_objectives: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: deletedAt,
+          },
+        },
+        __typename: true,
+      },
+      update_player_unused_utility: {
+        __args: {
+          where: {
+            round: {
+              _gte: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: deletedAt,
+          },
+        },
+        __typename: true,
+      },
+    });
 
     for (const match_map_round of match_map_rounds) {
       if (match_map_round.round === statsRound) {
@@ -92,16 +182,15 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         continue;
       }
 
-      try {
-        await this.s3.remove(match_map_round.backup_file);
-      } catch (error) {
-        this.logger.warn("unable to delete backup round", error);
-      }
-
       await this.hasura.mutation({
-        delete_match_map_rounds_by_pk: {
+        update_match_map_rounds_by_pk: {
           __args: {
-            id: match_map_round.id,
+            pk_columns: {
+              id: match_map_round.id,
+            },
+            _set: {
+              deleted_at: deletedAt,
+            },
           },
           __typename: true,
         },

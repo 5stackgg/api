@@ -113,6 +113,11 @@ export class MatchesController {
             name: true,
             workshop_map_id: true,
           },
+          rounds: {
+            round: true,
+            backup_file: true,
+            deleted_at: true,
+          },
           order: true,
           status: true,
           lineup_1_side: true,

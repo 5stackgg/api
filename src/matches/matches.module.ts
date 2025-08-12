@@ -10,7 +10,6 @@ import { MatchAssistantService } from "./match-assistant/match-assistant.service
 import { HasuraModule } from "../hasura/hasura.module";
 import { RconModule } from "../rcon/rcon.module";
 import { DemosController } from "./demos/demos.controller";
-import { BackupRoundsController } from "./backup-rounds/backup-rounds.controller";
 import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { S3Module } from "../s3/s3.module";
@@ -93,7 +92,7 @@ import { CleanDemos } from "./jobs/CleanDemos";
       },
     ),
   ],
-  controllers: [MatchesController, DemosController, BackupRoundsController],
+  controllers: [MatchesController, DemosController],
   exports: [MatchAssistantService],
   providers: [
     MatchEventsGateway,

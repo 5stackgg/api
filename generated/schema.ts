@@ -64,6 +64,7 @@ export interface PodStats {
 }
 
 export interface SetupGameServeOutput {
+    gameServerId: Scalars['String']
     link: Scalars['String']
     __typename: 'SetupGameServeOutput'
 }
@@ -3057,6 +3058,8 @@ export interface match_map_demos_variance_fields {
 /** columns and relationships of "match_map_rounds" */
 export interface match_map_rounds {
     backup_file: (Scalars['String'] | null)
+    created_at: Scalars['timestamptz']
+    deleted_at: (Scalars['timestamptz'] | null)
     id: Scalars['uuid']
     /** An array relationship */
     kills: player_kills[]
@@ -3125,6 +3128,8 @@ export type match_map_rounds_constraint = 'match_rounds__id_key' | 'match_rounds
 /** aggregate max on columns */
 export interface match_map_rounds_max_fields {
     backup_file: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     lineup_1_money: (Scalars['Int'] | null)
     lineup_1_score: (Scalars['Int'] | null)
@@ -3143,6 +3148,8 @@ export interface match_map_rounds_max_fields {
 /** aggregate min on columns */
 export interface match_map_rounds_min_fields {
     backup_file: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     lineup_1_money: (Scalars['Int'] | null)
     lineup_1_score: (Scalars['Int'] | null)
@@ -3169,7 +3176,7 @@ export interface match_map_rounds_mutation_response {
 
 
 /** select columns of table "match_map_rounds" */
-export type match_map_rounds_select_column = 'backup_file' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_side'
+export type match_map_rounds_select_column = 'backup_file' | 'created_at' | 'deleted_at' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_side'
 
 
 /** aggregate stddev on columns */
@@ -3225,7 +3232,7 @@ export interface match_map_rounds_sum_fields {
 
 
 /** update columns of table "match_map_rounds" */
-export type match_map_rounds_update_column = 'backup_file' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_side'
+export type match_map_rounds_update_column = 'backup_file' | 'created_at' | 'deleted_at' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_side'
 
 
 /** aggregate var_pop on columns */
@@ -5703,6 +5710,7 @@ export interface player_assists {
     attacked_team: Scalars['String']
     attacker_steam_id: Scalars['bigint']
     attacker_team: Scalars['String']
+    deleted_at: (Scalars['timestamptz'] | null)
     flash: Scalars['Boolean']
     id: Scalars['uuid']
     /** A computed field, executes function "is_team_assist" */
@@ -5761,6 +5769,7 @@ export interface player_assists_max_fields {
     attacked_team: (Scalars['String'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
     attacker_team: (Scalars['String'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -5776,6 +5785,7 @@ export interface player_assists_min_fields {
     attacked_team: (Scalars['String'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
     attacker_team: (Scalars['String'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -5796,7 +5806,7 @@ export interface player_assists_mutation_response {
 
 
 /** select columns of table "player_assists" */
-export type player_assists_select_column = 'attacked_steam_id' | 'attacked_team' | 'attacker_steam_id' | 'attacker_team' | 'flash' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'time'
+export type player_assists_select_column = 'attacked_steam_id' | 'attacked_team' | 'attacker_steam_id' | 'attacker_team' | 'deleted_at' | 'flash' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'time'
 
 
 /** select "player_assists_aggregate_bool_exp_bool_and_arguments_columns" columns of table "player_assists" */
@@ -5885,6 +5895,7 @@ export interface player_damages {
     attacker_team: (Scalars['String'] | null)
     damage: Scalars['Int']
     damage_armor: Scalars['Int']
+    deleted_at: (Scalars['timestamptz'] | null)
     health: Scalars['Int']
     hitgroup: Scalars['String']
     id: Scalars['uuid']
@@ -5956,6 +5967,7 @@ export interface player_damages_max_fields {
     attacker_team: (Scalars['String'] | null)
     damage: (Scalars['Int'] | null)
     damage_armor: (Scalars['Int'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     health: (Scalars['Int'] | null)
     hitgroup: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
@@ -5981,6 +5993,7 @@ export interface player_damages_min_fields {
     attacker_team: (Scalars['String'] | null)
     damage: (Scalars['Int'] | null)
     damage_armor: (Scalars['Int'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     health: (Scalars['Int'] | null)
     hitgroup: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
@@ -6004,7 +6017,7 @@ export interface player_damages_mutation_response {
 
 
 /** select columns of table "player_damages" */
-export type player_damages_select_column = 'armor' | 'attacked_location' | 'attacked_location_coordinates' | 'attacked_steam_id' | 'attacked_team' | 'attacker_location' | 'attacker_location_coordinates' | 'attacker_steam_id' | 'attacker_team' | 'damage' | 'damage_armor' | 'health' | 'hitgroup' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'time' | 'with'
+export type player_damages_select_column = 'armor' | 'attacked_location' | 'attacked_location_coordinates' | 'attacked_steam_id' | 'attacked_team' | 'attacker_location' | 'attacker_location_coordinates' | 'attacker_steam_id' | 'attacker_team' | 'damage' | 'damage_armor' | 'deleted_at' | 'health' | 'hitgroup' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'time' | 'with'
 
 
 /** aggregate stddev on columns */
@@ -6260,6 +6273,7 @@ export interface player_flashes {
     attacker_steam_id: Scalars['bigint']
     /** An object relationship */
     blinded: players
+    deleted_at: (Scalars['timestamptz'] | null)
     duration: Scalars['numeric']
     id: Scalars['uuid']
     /** An object relationship */
@@ -6316,6 +6330,7 @@ export interface player_flashes_avg_fields {
 export interface player_flashes_max_fields {
     attacked_steam_id: (Scalars['bigint'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     duration: (Scalars['numeric'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -6330,6 +6345,7 @@ export interface player_flashes_max_fields {
 export interface player_flashes_min_fields {
     attacked_steam_id: (Scalars['bigint'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     duration: (Scalars['numeric'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -6351,7 +6367,7 @@ export interface player_flashes_mutation_response {
 
 
 /** select columns of table "player_flashes" */
-export type player_flashes_select_column = 'attacked_steam_id' | 'attacker_steam_id' | 'duration' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'team_flash' | 'time'
+export type player_flashes_select_column = 'attacked_steam_id' | 'attacker_steam_id' | 'deleted_at' | 'duration' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'team_flash' | 'time'
 
 
 /** select "player_flashes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "player_flashes" */
@@ -6446,6 +6462,7 @@ export interface player_kills {
     attacker_steam_id: (Scalars['bigint'] | null)
     attacker_team: (Scalars['String'] | null)
     blinded: Scalars['Boolean']
+    deleted_at: (Scalars['timestamptz'] | null)
     headshot: Scalars['Boolean']
     hitgroup: Scalars['String']
     id: Scalars['uuid']
@@ -6520,6 +6537,7 @@ export interface player_kills_max_fields {
     attacker_location_coordinates: (Scalars['String'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
     attacker_team: (Scalars['String'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     hitgroup: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -6541,6 +6559,7 @@ export interface player_kills_min_fields {
     attacker_location_coordinates: (Scalars['String'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
     attacker_team: (Scalars['String'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     hitgroup: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -6563,7 +6582,7 @@ export interface player_kills_mutation_response {
 
 
 /** select columns of table "player_kills" */
-export type player_kills_select_column = 'assisted' | 'attacked_location' | 'attacked_location_coordinates' | 'attacked_steam_id' | 'attacked_team' | 'attacker_location' | 'attacker_location_coordinates' | 'attacker_steam_id' | 'attacker_team' | 'blinded' | 'headshot' | 'hitgroup' | 'id' | 'in_air' | 'match_id' | 'match_map_id' | 'no_scope' | 'round' | 'thru_smoke' | 'thru_wall' | 'time' | 'with'
+export type player_kills_select_column = 'assisted' | 'attacked_location' | 'attacked_location_coordinates' | 'attacked_steam_id' | 'attacked_team' | 'attacker_location' | 'attacker_location_coordinates' | 'attacker_steam_id' | 'attacker_team' | 'blinded' | 'deleted_at' | 'headshot' | 'hitgroup' | 'id' | 'in_air' | 'match_id' | 'match_map_id' | 'no_scope' | 'round' | 'thru_smoke' | 'thru_wall' | 'time' | 'with'
 
 
 /** select "player_kills_aggregate_bool_exp_bool_and_arguments_columns" columns of table "player_kills" */
@@ -6611,7 +6630,7 @@ export interface player_kills_sum_fields {
 
 
 /** update columns of table "player_kills" */
-export type player_kills_update_column = 'assisted' | 'attacked_location' | 'attacked_location_coordinates' | 'attacked_steam_id' | 'attacked_team' | 'attacker_location' | 'attacker_location_coordinates' | 'attacker_steam_id' | 'attacker_team' | 'blinded' | 'headshot' | 'hitgroup' | 'id' | 'in_air' | 'match_id' | 'match_map_id' | 'no_scope' | 'round' | 'thru_smoke' | 'thru_wall' | 'time' | 'with'
+export type player_kills_update_column = 'assisted' | 'attacked_location' | 'attacked_location_coordinates' | 'attacked_steam_id' | 'attacked_team' | 'attacker_location' | 'attacker_location_coordinates' | 'attacker_steam_id' | 'attacker_team' | 'blinded' | 'deleted_at' | 'headshot' | 'hitgroup' | 'id' | 'in_air' | 'match_id' | 'match_map_id' | 'no_scope' | 'round' | 'thru_smoke' | 'thru_wall' | 'time' | 'with'
 
 
 /** aggregate var_pop on columns */
@@ -6643,6 +6662,7 @@ export interface player_kills_variance_fields {
 
 /** columns and relationships of "player_objectives" */
 export interface player_objectives {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: Scalars['uuid']
     /** An object relationship */
     match: matches
@@ -6695,6 +6715,7 @@ export interface player_objectives_avg_fields {
 
 /** aggregate max on columns */
 export interface player_objectives_max_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -6707,6 +6728,7 @@ export interface player_objectives_max_fields {
 
 /** aggregate min on columns */
 export interface player_objectives_min_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -6728,7 +6750,7 @@ export interface player_objectives_mutation_response {
 
 
 /** select columns of table "player_objectives" */
-export type player_objectives_select_column = 'id' | 'match_id' | 'match_map_id' | 'player_steam_id' | 'round' | 'time' | 'type'
+export type player_objectives_select_column = 'deleted_at' | 'id' | 'match_id' | 'match_map_id' | 'player_steam_id' | 'round' | 'time' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -6935,6 +6957,7 @@ export interface player_sanctions_variance_fields {
 
 /** columns and relationships of "player_unused_utility" */
 export interface player_unused_utility {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: Scalars['uuid']
     /** An object relationship */
     match: matches
@@ -6991,6 +7014,7 @@ export type player_unused_utility_constraint = 'player_unused_utility_pkey'
 
 /** aggregate max on columns */
 export interface player_unused_utility_max_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -7003,6 +7027,7 @@ export interface player_unused_utility_max_fields {
 
 /** aggregate min on columns */
 export interface player_unused_utility_min_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -7024,7 +7049,7 @@ export interface player_unused_utility_mutation_response {
 
 
 /** select columns of table "player_unused_utility" */
-export type player_unused_utility_select_column = 'id' | 'match_id' | 'match_map_id' | 'player_steam_id' | 'round' | 'unused'
+export type player_unused_utility_select_column = 'deleted_at' | 'id' | 'match_id' | 'match_map_id' | 'player_steam_id' | 'round' | 'unused'
 
 
 /** aggregate stddev on columns */
@@ -7064,7 +7089,7 @@ export interface player_unused_utility_sum_fields {
 
 
 /** update columns of table "player_unused_utility" */
-export type player_unused_utility_update_column = 'id' | 'match_id' | 'match_map_id' | 'player_steam_id' | 'round' | 'unused'
+export type player_unused_utility_update_column = 'deleted_at' | 'id' | 'match_id' | 'match_map_id' | 'player_steam_id' | 'round' | 'unused'
 
 
 /** aggregate var_pop on columns */
@@ -7098,6 +7123,7 @@ export interface player_unused_utility_variance_fields {
 export interface player_utility {
     attacker_location_coordinates: (Scalars['String'] | null)
     attacker_steam_id: Scalars['bigint']
+    deleted_at: (Scalars['timestamptz'] | null)
     id: Scalars['uuid']
     /** An object relationship */
     match: matches
@@ -7151,6 +7177,7 @@ export interface player_utility_avg_fields {
 export interface player_utility_max_fields {
     attacker_location_coordinates: (Scalars['String'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -7164,6 +7191,7 @@ export interface player_utility_max_fields {
 export interface player_utility_min_fields {
     attacker_location_coordinates: (Scalars['String'] | null)
     attacker_steam_id: (Scalars['bigint'] | null)
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
@@ -7184,7 +7212,7 @@ export interface player_utility_mutation_response {
 
 
 /** select columns of table "player_utility" */
-export type player_utility_select_column = 'attacker_location_coordinates' | 'attacker_steam_id' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'time' | 'type'
+export type player_utility_select_column = 'attacker_location_coordinates' | 'attacker_steam_id' | 'deleted_at' | 'id' | 'match_id' | 'match_map_id' | 'round' | 'time' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -7998,6 +8026,8 @@ export interface server_regions {
     game_server_nodes: game_server_nodes[]
     /** An aggregate relationship */
     game_server_nodes_aggregate: game_server_nodes_aggregate
+    /** A computed field, executes function "region_has_node" */
+    has_node: (Scalars['Boolean'] | null)
     is_lan: Scalars['Boolean']
     /** A computed field, executes function "region_status" */
     status: (Scalars['String'] | null)
@@ -11888,6 +11918,7 @@ export interface PodStatsGenqlSelection{
 }
 
 export interface SetupGameServeOutputGenqlSelection{
+    gameServerId?: boolean | number
     link?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -17150,6 +17181,8 @@ export interface match_map_demos_variance_order_by {size?: (order_by | null)}
 /** columns and relationships of "match_map_rounds" */
 export interface match_map_roundsGenqlSelection{
     backup_file?: boolean | number
+    created_at?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     /** An array relationship */
     kills?: (player_killsGenqlSelection & { __args?: {
@@ -17254,7 +17287,7 @@ export interface match_map_rounds_avg_order_by {lineup_1_money?: (order_by | nul
 
 
 /** Boolean expression to filter rows from the table "match_map_rounds". All fields are combined with a logical 'AND'. */
-export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),winning_side?: (String_comparison_exp | null)}
+export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),winning_side?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_rounds" */
@@ -17262,12 +17295,14 @@ export interface match_map_rounds_inc_input {lineup_1_money?: (Scalars['Int'] | 
 
 
 /** input type for inserting data into table "match_map_rounds" */
-export interface match_map_rounds_insert_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (player_kills_arr_rel_insert_input | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
+export interface match_map_rounds_insert_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),kills?: (player_kills_arr_rel_insert_input | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_map_rounds_max_fieldsGenqlSelection{
     backup_file?: boolean | number
+    created_at?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     lineup_1_money?: boolean | number
     lineup_1_score?: boolean | number
@@ -17285,12 +17320,14 @@ export interface match_map_rounds_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_map_rounds" */
-export interface match_map_rounds_max_order_by {backup_file?: (order_by | null),id?: (order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
+export interface match_map_rounds_max_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface match_map_rounds_min_fieldsGenqlSelection{
     backup_file?: boolean | number
+    created_at?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     lineup_1_money?: boolean | number
     lineup_1_score?: boolean | number
@@ -17308,7 +17345,7 @@ export interface match_map_rounds_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_map_rounds" */
-export interface match_map_rounds_min_order_by {backup_file?: (order_by | null),id?: (order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
+export interface match_map_rounds_min_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_map_rounds" */
@@ -17327,7 +17364,7 @@ export interface match_map_rounds_on_conflict {constraint: match_map_rounds_cons
 
 
 /** Ordering options when selecting data from "match_map_rounds". */
-export interface match_map_rounds_order_by {backup_file?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
+export interface match_map_rounds_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_rounds */
@@ -17335,7 +17372,7 @@ export interface match_map_rounds_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_map_rounds" */
-export interface match_map_rounds_set_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
+export interface match_map_rounds_set_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -17401,7 +17438,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_rounds_stream_cursor_value_input {backup_file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
+export interface match_map_rounds_stream_cursor_value_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -22445,6 +22482,7 @@ export interface player_assistsGenqlSelection{
     attacked_team?: boolean | number
     attacker_steam_id?: boolean | number
     attacker_team?: boolean | number
+    deleted_at?: boolean | number
     flash?: boolean | number
     id?: boolean | number
     /** A computed field, executes function "is_team_assist" */
@@ -22522,7 +22560,7 @@ export interface player_assists_avg_order_by {attacked_steam_id?: (order_by | nu
 
 
 /** Boolean expression to filter rows from the table "player_assists". All fields are combined with a logical 'AND'. */
-export interface player_assists_bool_exp {_and?: (player_assists_bool_exp[] | null),_not?: (player_assists_bool_exp | null),_or?: (player_assists_bool_exp[] | null),attacked_player?: (players_bool_exp | null),attacked_steam_id?: (bigint_comparison_exp | null),attacked_team?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),attacker_team?: (String_comparison_exp | null),flash?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_team_assist?: (Boolean_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null)}
+export interface player_assists_bool_exp {_and?: (player_assists_bool_exp[] | null),_not?: (player_assists_bool_exp | null),_or?: (player_assists_bool_exp[] | null),attacked_player?: (players_bool_exp | null),attacked_steam_id?: (bigint_comparison_exp | null),attacked_team?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),attacker_team?: (String_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),flash?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_team_assist?: (Boolean_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_assists" */
@@ -22530,7 +22568,7 @@ export interface player_assists_inc_input {attacked_steam_id?: (Scalars['bigint'
 
 
 /** input type for inserting data into table "player_assists" */
-export interface player_assists_insert_input {attacked_player?: (players_obj_rel_insert_input | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),flash?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface player_assists_insert_input {attacked_player?: (players_obj_rel_insert_input | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),deleted_at?: (Scalars['timestamptz'] | null),flash?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -22539,6 +22577,7 @@ export interface player_assists_max_fieldsGenqlSelection{
     attacked_team?: boolean | number
     attacker_steam_id?: boolean | number
     attacker_team?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -22550,7 +22589,7 @@ export interface player_assists_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_assists" */
-export interface player_assists_max_order_by {attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_assists_max_order_by {attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -22559,6 +22598,7 @@ export interface player_assists_min_fieldsGenqlSelection{
     attacked_team?: boolean | number
     attacker_steam_id?: boolean | number
     attacker_team?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -22570,7 +22610,7 @@ export interface player_assists_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_assists" */
-export interface player_assists_min_order_by {attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_assists_min_order_by {attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_assists" */
@@ -22585,11 +22625,11 @@ export interface player_assists_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "player_assists". */
-export interface player_assists_order_by {attacked_player?: (players_order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),flash?: (order_by | null),id?: (order_by | null),is_team_assist?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_assists_order_by {attacked_player?: (players_order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),deleted_at?: (order_by | null),flash?: (order_by | null),id?: (order_by | null),is_team_assist?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** input type for updating data in table "player_assists" */
-export interface player_assists_set_input {attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),flash?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface player_assists_set_input {attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),deleted_at?: (Scalars['timestamptz'] | null),flash?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -22643,7 +22683,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_assists_stream_cursor_value_input {attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),flash?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface player_assists_stream_cursor_value_input {attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),deleted_at?: (Scalars['timestamptz'] | null),flash?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -22725,6 +22765,7 @@ export interface player_damagesGenqlSelection{
     attacker_team?: boolean | number
     damage?: boolean | number
     damage_armor?: boolean | number
+    deleted_at?: boolean | number
     health?: boolean | number
     hitgroup?: boolean | number
     id?: boolean | number
@@ -22804,7 +22845,7 @@ export interface player_damages_avg_order_by {armor?: (order_by | null),attacked
 
 
 /** Boolean expression to filter rows from the table "player_damages". All fields are combined with a logical 'AND'. */
-export interface player_damages_bool_exp {_and?: (player_damages_bool_exp[] | null),_not?: (player_damages_bool_exp | null),_or?: (player_damages_bool_exp[] | null),armor?: (Int_comparison_exp | null),attacked_location?: (String_comparison_exp | null),attacked_location_coordinates?: (String_comparison_exp | null),attacked_player?: (players_bool_exp | null),attacked_steam_id?: (bigint_comparison_exp | null),attacked_team?: (String_comparison_exp | null),attacker_location?: (String_comparison_exp | null),attacker_location_coordinates?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),attacker_team?: (String_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_armor?: (Int_comparison_exp | null),health?: (Int_comparison_exp | null),hitgroup?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),round?: (numeric_comparison_exp | null),team_damage?: (Boolean_comparison_exp | null),time?: (timestamptz_comparison_exp | null),with?: (String_comparison_exp | null)}
+export interface player_damages_bool_exp {_and?: (player_damages_bool_exp[] | null),_not?: (player_damages_bool_exp | null),_or?: (player_damages_bool_exp[] | null),armor?: (Int_comparison_exp | null),attacked_location?: (String_comparison_exp | null),attacked_location_coordinates?: (String_comparison_exp | null),attacked_player?: (players_bool_exp | null),attacked_steam_id?: (bigint_comparison_exp | null),attacked_team?: (String_comparison_exp | null),attacker_location?: (String_comparison_exp | null),attacker_location_coordinates?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),attacker_team?: (String_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_armor?: (Int_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),health?: (Int_comparison_exp | null),hitgroup?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),round?: (numeric_comparison_exp | null),team_damage?: (Boolean_comparison_exp | null),time?: (timestamptz_comparison_exp | null),with?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_damages" */
@@ -22812,7 +22853,7 @@ export interface player_damages_inc_input {armor?: (Scalars['Int'] | null),attac
 
 
 /** input type for inserting data into table "player_damages" */
-export interface player_damages_insert_input {armor?: (Scalars['Int'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_player?: (players_obj_rel_insert_input | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),damage?: (Scalars['Int'] | null),damage_armor?: (Scalars['Int'] | null),health?: (Scalars['Int'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['numeric'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
+export interface player_damages_insert_input {armor?: (Scalars['Int'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_player?: (players_obj_rel_insert_input | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),damage?: (Scalars['Int'] | null),damage_armor?: (Scalars['Int'] | null),deleted_at?: (Scalars['timestamptz'] | null),health?: (Scalars['Int'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['numeric'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -22828,6 +22869,7 @@ export interface player_damages_max_fieldsGenqlSelection{
     attacker_team?: boolean | number
     damage?: boolean | number
     damage_armor?: boolean | number
+    deleted_at?: boolean | number
     health?: boolean | number
     hitgroup?: boolean | number
     id?: boolean | number
@@ -22842,7 +22884,7 @@ export interface player_damages_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_damages" */
-export interface player_damages_max_order_by {armor?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),damage?: (order_by | null),damage_armor?: (order_by | null),health?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
+export interface player_damages_max_order_by {armor?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),damage?: (order_by | null),damage_armor?: (order_by | null),deleted_at?: (order_by | null),health?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -22858,6 +22900,7 @@ export interface player_damages_min_fieldsGenqlSelection{
     attacker_team?: boolean | number
     damage?: boolean | number
     damage_armor?: boolean | number
+    deleted_at?: boolean | number
     health?: boolean | number
     hitgroup?: boolean | number
     id?: boolean | number
@@ -22872,7 +22915,7 @@ export interface player_damages_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_damages" */
-export interface player_damages_min_order_by {armor?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),damage?: (order_by | null),damage_armor?: (order_by | null),health?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
+export interface player_damages_min_order_by {armor?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),damage?: (order_by | null),damage_armor?: (order_by | null),deleted_at?: (order_by | null),health?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_damages" */
@@ -22887,11 +22930,11 @@ export interface player_damages_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "player_damages". */
-export interface player_damages_order_by {armor?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_player?: (players_order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),damage?: (order_by | null),damage_armor?: (order_by | null),health?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),team_damage?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
+export interface player_damages_order_by {armor?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_player?: (players_order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),damage?: (order_by | null),damage_armor?: (order_by | null),deleted_at?: (order_by | null),health?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),team_damage?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
 
 
 /** input type for updating data in table "player_damages" */
-export interface player_damages_set_input {armor?: (Scalars['Int'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),damage?: (Scalars['Int'] | null),damage_armor?: (Scalars['Int'] | null),health?: (Scalars['Int'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['numeric'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
+export interface player_damages_set_input {armor?: (Scalars['Int'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),damage?: (Scalars['Int'] | null),damage_armor?: (Scalars['Int'] | null),deleted_at?: (Scalars['timestamptz'] | null),health?: (Scalars['Int'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['numeric'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -22957,7 +23000,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_damages_stream_cursor_value_input {armor?: (Scalars['Int'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),damage?: (Scalars['Int'] | null),damage_armor?: (Scalars['Int'] | null),health?: (Scalars['Int'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['numeric'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
+export interface player_damages_stream_cursor_value_input {armor?: (Scalars['Int'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),damage?: (Scalars['Int'] | null),damage_armor?: (Scalars['Int'] | null),deleted_at?: (Scalars['timestamptz'] | null),health?: (Scalars['Int'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['numeric'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -23306,6 +23349,7 @@ export interface player_flashesGenqlSelection{
     attacker_steam_id?: boolean | number
     /** An object relationship */
     blinded?: playersGenqlSelection
+    deleted_at?: boolean | number
     duration?: boolean | number
     id?: boolean | number
     /** An object relationship */
@@ -23383,7 +23427,7 @@ export interface player_flashes_avg_order_by {attacked_steam_id?: (order_by | nu
 
 
 /** Boolean expression to filter rows from the table "player_flashes". All fields are combined with a logical 'AND'. */
-export interface player_flashes_bool_exp {_and?: (player_flashes_bool_exp[] | null),_not?: (player_flashes_bool_exp | null),_or?: (player_flashes_bool_exp[] | null),attacked_steam_id?: (bigint_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),blinded?: (players_bool_exp | null),duration?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),team_flash?: (Boolean_comparison_exp | null),thrown_by?: (players_bool_exp | null),time?: (timestamptz_comparison_exp | null)}
+export interface player_flashes_bool_exp {_and?: (player_flashes_bool_exp[] | null),_not?: (player_flashes_bool_exp | null),_or?: (player_flashes_bool_exp[] | null),attacked_steam_id?: (bigint_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),blinded?: (players_bool_exp | null),deleted_at?: (timestamptz_comparison_exp | null),duration?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),team_flash?: (Boolean_comparison_exp | null),thrown_by?: (players_bool_exp | null),time?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_flashes" */
@@ -23391,13 +23435,14 @@ export interface player_flashes_inc_input {attacked_steam_id?: (Scalars['bigint'
 
 
 /** input type for inserting data into table "player_flashes" */
-export interface player_flashes_insert_input {attacked_steam_id?: (Scalars['bigint'] | null),attacker_steam_id?: (Scalars['bigint'] | null),blinded?: (players_obj_rel_insert_input | null),duration?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),team_flash?: (Scalars['Boolean'] | null),thrown_by?: (players_obj_rel_insert_input | null),time?: (Scalars['timestamptz'] | null)}
+export interface player_flashes_insert_input {attacked_steam_id?: (Scalars['bigint'] | null),attacker_steam_id?: (Scalars['bigint'] | null),blinded?: (players_obj_rel_insert_input | null),deleted_at?: (Scalars['timestamptz'] | null),duration?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),team_flash?: (Scalars['Boolean'] | null),thrown_by?: (players_obj_rel_insert_input | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
 export interface player_flashes_max_fieldsGenqlSelection{
     attacked_steam_id?: boolean | number
     attacker_steam_id?: boolean | number
+    deleted_at?: boolean | number
     duration?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
@@ -23410,13 +23455,14 @@ export interface player_flashes_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_flashes" */
-export interface player_flashes_max_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),duration?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_flashes_max_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),deleted_at?: (order_by | null),duration?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface player_flashes_min_fieldsGenqlSelection{
     attacked_steam_id?: boolean | number
     attacker_steam_id?: boolean | number
+    deleted_at?: boolean | number
     duration?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
@@ -23429,7 +23475,7 @@ export interface player_flashes_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_flashes" */
-export interface player_flashes_min_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),duration?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_flashes_min_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),deleted_at?: (order_by | null),duration?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_flashes" */
@@ -23444,11 +23490,11 @@ export interface player_flashes_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "player_flashes". */
-export interface player_flashes_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),blinded?: (players_order_by | null),duration?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),team_flash?: (order_by | null),thrown_by?: (players_order_by | null),time?: (order_by | null)}
+export interface player_flashes_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),blinded?: (players_order_by | null),deleted_at?: (order_by | null),duration?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),team_flash?: (order_by | null),thrown_by?: (players_order_by | null),time?: (order_by | null)}
 
 
 /** input type for updating data in table "player_flashes" */
-export interface player_flashes_set_input {attacked_steam_id?: (Scalars['bigint'] | null),attacker_steam_id?: (Scalars['bigint'] | null),duration?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),team_flash?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface player_flashes_set_input {attacked_steam_id?: (Scalars['bigint'] | null),attacker_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),duration?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),team_flash?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23505,7 +23551,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_flashes_stream_cursor_value_input {attacked_steam_id?: (Scalars['bigint'] | null),attacker_steam_id?: (Scalars['bigint'] | null),duration?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),team_flash?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null)}
+export interface player_flashes_stream_cursor_value_input {attacked_steam_id?: (Scalars['bigint'] | null),attacker_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),duration?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),team_flash?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -23590,6 +23636,7 @@ export interface player_killsGenqlSelection{
     attacker_steam_id?: boolean | number
     attacker_team?: boolean | number
     blinded?: boolean | number
+    deleted_at?: boolean | number
     headshot?: boolean | number
     hitgroup?: boolean | number
     id?: boolean | number
@@ -23677,7 +23724,7 @@ export interface player_kills_avg_order_by {attacked_steam_id?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "player_kills". All fields are combined with a logical 'AND'. */
-export interface player_kills_bool_exp {_and?: (player_kills_bool_exp[] | null),_not?: (player_kills_bool_exp | null),_or?: (player_kills_bool_exp[] | null),assisted?: (Boolean_comparison_exp | null),attacked_location?: (String_comparison_exp | null),attacked_location_coordinates?: (String_comparison_exp | null),attacked_player?: (players_bool_exp | null),attacked_steam_id?: (bigint_comparison_exp | null),attacked_team?: (String_comparison_exp | null),attacker_location?: (String_comparison_exp | null),attacker_location_coordinates?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),attacker_team?: (String_comparison_exp | null),blinded?: (Boolean_comparison_exp | null),headshot?: (Boolean_comparison_exp | null),hitgroup?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),in_air?: (Boolean_comparison_exp | null),is_suicide?: (Boolean_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),no_scope?: (Boolean_comparison_exp | null),player?: (players_bool_exp | null),round?: (Int_comparison_exp | null),team_kill?: (Boolean_comparison_exp | null),thru_smoke?: (Boolean_comparison_exp | null),thru_wall?: (Boolean_comparison_exp | null),time?: (timestamptz_comparison_exp | null),with?: (String_comparison_exp | null)}
+export interface player_kills_bool_exp {_and?: (player_kills_bool_exp[] | null),_not?: (player_kills_bool_exp | null),_or?: (player_kills_bool_exp[] | null),assisted?: (Boolean_comparison_exp | null),attacked_location?: (String_comparison_exp | null),attacked_location_coordinates?: (String_comparison_exp | null),attacked_player?: (players_bool_exp | null),attacked_steam_id?: (bigint_comparison_exp | null),attacked_team?: (String_comparison_exp | null),attacker_location?: (String_comparison_exp | null),attacker_location_coordinates?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),attacker_team?: (String_comparison_exp | null),blinded?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),headshot?: (Boolean_comparison_exp | null),hitgroup?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),in_air?: (Boolean_comparison_exp | null),is_suicide?: (Boolean_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),no_scope?: (Boolean_comparison_exp | null),player?: (players_bool_exp | null),round?: (Int_comparison_exp | null),team_kill?: (Boolean_comparison_exp | null),thru_smoke?: (Boolean_comparison_exp | null),thru_wall?: (Boolean_comparison_exp | null),time?: (timestamptz_comparison_exp | null),with?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_kills" */
@@ -23685,7 +23732,7 @@ export interface player_kills_inc_input {attacked_steam_id?: (Scalars['bigint'] 
 
 
 /** input type for inserting data into table "player_kills" */
-export interface player_kills_insert_input {assisted?: (Scalars['Boolean'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_player?: (players_obj_rel_insert_input | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),blinded?: (Scalars['Boolean'] | null),headshot?: (Scalars['Boolean'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_air?: (Scalars['Boolean'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),no_scope?: (Scalars['Boolean'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['Int'] | null),thru_smoke?: (Scalars['Boolean'] | null),thru_wall?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
+export interface player_kills_insert_input {assisted?: (Scalars['Boolean'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_player?: (players_obj_rel_insert_input | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),blinded?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),headshot?: (Scalars['Boolean'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_air?: (Scalars['Boolean'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),no_scope?: (Scalars['Boolean'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['Int'] | null),thru_smoke?: (Scalars['Boolean'] | null),thru_wall?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -23698,6 +23745,7 @@ export interface player_kills_max_fieldsGenqlSelection{
     attacker_location_coordinates?: boolean | number
     attacker_steam_id?: boolean | number
     attacker_team?: boolean | number
+    deleted_at?: boolean | number
     hitgroup?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
@@ -23711,7 +23759,7 @@ export interface player_kills_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_kills" */
-export interface player_kills_max_order_by {attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
+export interface player_kills_max_order_by {attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),deleted_at?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -23724,6 +23772,7 @@ export interface player_kills_min_fieldsGenqlSelection{
     attacker_location_coordinates?: boolean | number
     attacker_steam_id?: boolean | number
     attacker_team?: boolean | number
+    deleted_at?: boolean | number
     hitgroup?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
@@ -23737,7 +23786,7 @@ export interface player_kills_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_kills" */
-export interface player_kills_min_order_by {attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
+export interface player_kills_min_order_by {attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),deleted_at?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_kills" */
@@ -23756,7 +23805,7 @@ export interface player_kills_on_conflict {constraint: player_kills_constraint,u
 
 
 /** Ordering options when selecting data from "player_kills". */
-export interface player_kills_order_by {assisted?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_player?: (players_order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),blinded?: (order_by | null),headshot?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),in_air?: (order_by | null),is_suicide?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),no_scope?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),team_kill?: (order_by | null),thru_smoke?: (order_by | null),thru_wall?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
+export interface player_kills_order_by {assisted?: (order_by | null),attacked_location?: (order_by | null),attacked_location_coordinates?: (order_by | null),attacked_player?: (players_order_by | null),attacked_steam_id?: (order_by | null),attacked_team?: (order_by | null),attacker_location?: (order_by | null),attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),attacker_team?: (order_by | null),blinded?: (order_by | null),deleted_at?: (order_by | null),headshot?: (order_by | null),hitgroup?: (order_by | null),id?: (order_by | null),in_air?: (order_by | null),is_suicide?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),no_scope?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),team_kill?: (order_by | null),thru_smoke?: (order_by | null),thru_wall?: (order_by | null),time?: (order_by | null),with?: (order_by | null)}
 
 
 /** primary key columns input for table: player_kills */
@@ -23764,7 +23813,7 @@ export interface player_kills_pk_columns_input {id: Scalars['uuid'],match_id: Sc
 
 
 /** input type for updating data in table "player_kills" */
-export interface player_kills_set_input {assisted?: (Scalars['Boolean'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),blinded?: (Scalars['Boolean'] | null),headshot?: (Scalars['Boolean'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_air?: (Scalars['Boolean'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),no_scope?: (Scalars['Boolean'] | null),round?: (Scalars['Int'] | null),thru_smoke?: (Scalars['Boolean'] | null),thru_wall?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
+export interface player_kills_set_input {assisted?: (Scalars['Boolean'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),blinded?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),headshot?: (Scalars['Boolean'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_air?: (Scalars['Boolean'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),no_scope?: (Scalars['Boolean'] | null),round?: (Scalars['Int'] | null),thru_smoke?: (Scalars['Boolean'] | null),thru_wall?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23818,7 +23867,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_kills_stream_cursor_value_input {assisted?: (Scalars['Boolean'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),blinded?: (Scalars['Boolean'] | null),headshot?: (Scalars['Boolean'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_air?: (Scalars['Boolean'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),no_scope?: (Scalars['Boolean'] | null),round?: (Scalars['Int'] | null),thru_smoke?: (Scalars['Boolean'] | null),thru_wall?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
+export interface player_kills_stream_cursor_value_input {assisted?: (Scalars['Boolean'] | null),attacked_location?: (Scalars['String'] | null),attacked_location_coordinates?: (Scalars['String'] | null),attacked_steam_id?: (Scalars['bigint'] | null),attacked_team?: (Scalars['String'] | null),attacker_location?: (Scalars['String'] | null),attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),attacker_team?: (Scalars['String'] | null),blinded?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),headshot?: (Scalars['Boolean'] | null),hitgroup?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_air?: (Scalars['Boolean'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),no_scope?: (Scalars['Boolean'] | null),round?: (Scalars['Int'] | null),thru_smoke?: (Scalars['Boolean'] | null),thru_wall?: (Scalars['Boolean'] | null),time?: (Scalars['timestamptz'] | null),with?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -23887,6 +23936,7 @@ export interface player_kills_variance_order_by {attacked_steam_id?: (order_by |
 
 /** columns and relationships of "player_objectives" */
 export interface player_objectivesGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
@@ -23958,7 +24008,7 @@ export interface player_objectives_avg_order_by {player_steam_id?: (order_by | n
 
 
 /** Boolean expression to filter rows from the table "player_objectives". All fields are combined with a logical 'AND'. */
-export interface player_objectives_bool_exp {_and?: (player_objectives_bool_exp[] | null),_not?: (player_objectives_bool_exp | null),_or?: (player_objectives_bool_exp[] | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),type?: (e_objective_types_enum_comparison_exp | null)}
+export interface player_objectives_bool_exp {_and?: (player_objectives_bool_exp[] | null),_not?: (player_objectives_bool_exp | null),_or?: (player_objectives_bool_exp[] | null),deleted_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),type?: (e_objective_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_objectives" */
@@ -23966,11 +24016,12 @@ export interface player_objectives_inc_input {player_steam_id?: (Scalars['bigint
 
 
 /** input type for inserting data into table "player_objectives" */
-export interface player_objectives_insert_input {id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_objective_types_enum | null)}
+export interface player_objectives_insert_input {deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_objective_types_enum | null)}
 
 
 /** aggregate max on columns */
 export interface player_objectives_max_fieldsGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -23983,11 +24034,12 @@ export interface player_objectives_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_objectives" */
-export interface player_objectives_max_order_by {id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_objectives_max_order_by {deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface player_objectives_min_fieldsGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -24000,7 +24052,7 @@ export interface player_objectives_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_objectives" */
-export interface player_objectives_min_order_by {id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_objectives_min_order_by {deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_objectives" */
@@ -24015,11 +24067,11 @@ export interface player_objectives_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "player_objectives". */
-export interface player_objectives_order_by {id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),type?: (order_by | null)}
+export interface player_objectives_order_by {deleted_at?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),type?: (order_by | null)}
 
 
 /** input type for updating data in table "player_objectives" */
-export interface player_objectives_set_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_objective_types_enum | null)}
+export interface player_objectives_set_input {deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_objective_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -24070,7 +24122,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_objectives_stream_cursor_value_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_objective_types_enum | null)}
+export interface player_objectives_stream_cursor_value_input {deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_objective_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -24331,6 +24383,7 @@ export interface player_sanctions_variance_fieldsGenqlSelection{
 
 /** columns and relationships of "player_unused_utility" */
 export interface player_unused_utilityGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
@@ -24404,7 +24457,7 @@ export interface player_unused_utility_avg_order_by {player_steam_id?: (order_by
 
 
 /** Boolean expression to filter rows from the table "player_unused_utility". All fields are combined with a logical 'AND'. */
-export interface player_unused_utility_bool_exp {_and?: (player_unused_utility_bool_exp[] | null),_not?: (player_unused_utility_bool_exp | null),_or?: (player_unused_utility_bool_exp[] | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),round?: (Int_comparison_exp | null),unused?: (Int_comparison_exp | null)}
+export interface player_unused_utility_bool_exp {_and?: (player_unused_utility_bool_exp[] | null),_not?: (player_unused_utility_bool_exp | null),_or?: (player_unused_utility_bool_exp[] | null),deleted_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),round?: (Int_comparison_exp | null),unused?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_unused_utility" */
@@ -24412,11 +24465,12 @@ export interface player_unused_utility_inc_input {player_steam_id?: (Scalars['bi
 
 
 /** input type for inserting data into table "player_unused_utility" */
-export interface player_unused_utility_insert_input {id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),unused?: (Scalars['Int'] | null)}
+export interface player_unused_utility_insert_input {deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),unused?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
 export interface player_unused_utility_max_fieldsGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -24429,11 +24483,12 @@ export interface player_unused_utility_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_unused_utility" */
-export interface player_unused_utility_max_order_by {id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),unused?: (order_by | null)}
+export interface player_unused_utility_max_order_by {deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),unused?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface player_unused_utility_min_fieldsGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -24446,7 +24501,7 @@ export interface player_unused_utility_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_unused_utility" */
-export interface player_unused_utility_min_order_by {id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),unused?: (order_by | null)}
+export interface player_unused_utility_min_order_by {deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),unused?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_unused_utility" */
@@ -24465,7 +24520,7 @@ export interface player_unused_utility_on_conflict {constraint: player_unused_ut
 
 
 /** Ordering options when selecting data from "player_unused_utility". */
-export interface player_unused_utility_order_by {id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),unused?: (order_by | null)}
+export interface player_unused_utility_order_by {deleted_at?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),round?: (order_by | null),unused?: (order_by | null)}
 
 
 /** primary key columns input for table: player_unused_utility */
@@ -24473,7 +24528,7 @@ export interface player_unused_utility_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "player_unused_utility" */
-export interface player_unused_utility_set_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),unused?: (Scalars['Int'] | null)}
+export interface player_unused_utility_set_input {deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),unused?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -24527,7 +24582,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_unused_utility_stream_cursor_value_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),unused?: (Scalars['Int'] | null)}
+export interface player_unused_utility_stream_cursor_value_input {deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),round?: (Scalars['Int'] | null),unused?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -24598,6 +24653,7 @@ export interface player_unused_utility_variance_order_by {player_steam_id?: (ord
 export interface player_utilityGenqlSelection{
     attacker_location_coordinates?: boolean | number
     attacker_steam_id?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
@@ -24668,7 +24724,7 @@ export interface player_utility_avg_order_by {attacker_steam_id?: (order_by | nu
 
 
 /** Boolean expression to filter rows from the table "player_utility". All fields are combined with a logical 'AND'. */
-export interface player_utility_bool_exp {_and?: (player_utility_bool_exp[] | null),_not?: (player_utility_bool_exp | null),_or?: (player_utility_bool_exp[] | null),attacker_location_coordinates?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),type?: (e_utility_types_enum_comparison_exp | null)}
+export interface player_utility_bool_exp {_and?: (player_utility_bool_exp[] | null),_not?: (player_utility_bool_exp | null),_or?: (player_utility_bool_exp[] | null),attacker_location_coordinates?: (String_comparison_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),type?: (e_utility_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_utility" */
@@ -24676,13 +24732,14 @@ export interface player_utility_inc_input {attacker_steam_id?: (Scalars['bigint'
 
 
 /** input type for inserting data into table "player_utility" */
-export interface player_utility_insert_input {attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_utility_types_enum | null)}
+export interface player_utility_insert_input {attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_utility_types_enum | null)}
 
 
 /** aggregate max on columns */
 export interface player_utility_max_fieldsGenqlSelection{
     attacker_location_coordinates?: boolean | number
     attacker_steam_id?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -24694,13 +24751,14 @@ export interface player_utility_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_utility" */
-export interface player_utility_max_order_by {attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_utility_max_order_by {attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface player_utility_min_fieldsGenqlSelection{
     attacker_location_coordinates?: boolean | number
     attacker_steam_id?: boolean | number
+    deleted_at?: boolean | number
     id?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
@@ -24712,7 +24770,7 @@ export interface player_utility_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_utility" */
-export interface player_utility_min_order_by {attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
+export interface player_utility_min_order_by {attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_utility" */
@@ -24727,11 +24785,11 @@ export interface player_utility_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "player_utility". */
-export interface player_utility_order_by {attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),time?: (order_by | null),type?: (order_by | null)}
+export interface player_utility_order_by {attacker_location_coordinates?: (order_by | null),attacker_steam_id?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),round?: (order_by | null),time?: (order_by | null),type?: (order_by | null)}
 
 
 /** input type for updating data in table "player_utility" */
-export interface player_utility_set_input {attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_utility_types_enum | null)}
+export interface player_utility_set_input {attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_utility_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -24782,7 +24840,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_utility_stream_cursor_value_input {attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_utility_types_enum | null)}
+export interface player_utility_stream_cursor_value_input {attacker_location_coordinates?: (Scalars['String'] | null),attacker_steam_id?: (Scalars['bigint'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),type?: (e_utility_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -27717,6 +27775,8 @@ export interface server_regionsGenqlSelection{
     order_by?: (game_server_nodes_order_by[] | null), 
     /** filter the rows returned */
     where?: (game_server_nodes_bool_exp | null)} })
+    /** A computed field, executes function "region_has_node" */
+    has_node?: boolean | number
     is_lan?: boolean | number
     /** A computed field, executes function "region_status" */
     status?: boolean | number
@@ -27768,7 +27828,7 @@ export interface server_regions_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "server_regions". All fields are combined with a logical 'AND'. */
-export interface server_regions_bool_exp {_and?: (server_regions_bool_exp[] | null),_not?: (server_regions_bool_exp | null),_or?: (server_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),is_lan?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),steam_relay?: (Boolean_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
+export interface server_regions_bool_exp {_and?: (server_regions_bool_exp[] | null),_not?: (server_regions_bool_exp | null),_or?: (server_regions_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),description?: (String_comparison_exp | null),game_server_nodes?: (game_server_nodes_bool_exp | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_bool_exp | null),has_node?: (Boolean_comparison_exp | null),is_lan?: (Boolean_comparison_exp | null),status?: (String_comparison_exp | null),steam_relay?: (Boolean_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),value?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "server_regions" */
@@ -27827,7 +27887,7 @@ export interface server_regions_on_conflict {constraint: server_regions_constrai
 
 
 /** Ordering options when selecting data from "server_regions". */
-export interface server_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),is_lan?: (order_by | null),status?: (order_by | null),steam_relay?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
+export interface server_regions_order_by {available_server_count?: (order_by | null),description?: (order_by | null),game_server_nodes_aggregate?: (game_server_nodes_aggregate_order_by | null),has_node?: (order_by | null),is_lan?: (order_by | null),status?: (order_by | null),steam_relay?: (order_by | null),total_server_count?: (order_by | null),value?: (order_by | null)}
 
 
 /** primary key columns input for table: server_regions */
@@ -42627,6 +42687,8 @@ export const enumMatchMapRoundsConstraint = {
 
 export const enumMatchMapRoundsSelectColumn = {
    backup_file: 'backup_file' as const,
+   created_at: 'created_at' as const,
+   deleted_at: 'deleted_at' as const,
    id: 'id' as const,
    lineup_1_money: 'lineup_1_money' as const,
    lineup_1_score: 'lineup_1_score' as const,
@@ -42644,6 +42706,8 @@ export const enumMatchMapRoundsSelectColumn = {
 
 export const enumMatchMapRoundsUpdateColumn = {
    backup_file: 'backup_file' as const,
+   created_at: 'created_at' as const,
+   deleted_at: 'deleted_at' as const,
    id: 'id' as const,
    lineup_1_money: 'lineup_1_money' as const,
    lineup_1_score: 'lineup_1_score' as const,
@@ -42941,6 +43005,7 @@ export const enumPlayerAssistsSelectColumn = {
    attacked_team: 'attacked_team' as const,
    attacker_steam_id: 'attacker_steam_id' as const,
    attacker_team: 'attacker_team' as const,
+   deleted_at: 'deleted_at' as const,
    flash: 'flash' as const,
    id: 'id' as const,
    match_id: 'match_id' as const,
@@ -42969,6 +43034,7 @@ export const enumPlayerDamagesSelectColumn = {
    attacker_team: 'attacker_team' as const,
    damage: 'damage' as const,
    damage_armor: 'damage_armor' as const,
+   deleted_at: 'deleted_at' as const,
    health: 'health' as const,
    hitgroup: 'hitgroup' as const,
    id: 'id' as const,
@@ -43002,6 +43068,7 @@ export const enumPlayerEloUpdateColumn = {
 export const enumPlayerFlashesSelectColumn = {
    attacked_steam_id: 'attacked_steam_id' as const,
    attacker_steam_id: 'attacker_steam_id' as const,
+   deleted_at: 'deleted_at' as const,
    duration: 'duration' as const,
    id: 'id' as const,
    match_id: 'match_id' as const,
@@ -43034,6 +43101,7 @@ export const enumPlayerKillsSelectColumn = {
    attacker_steam_id: 'attacker_steam_id' as const,
    attacker_team: 'attacker_team' as const,
    blinded: 'blinded' as const,
+   deleted_at: 'deleted_at' as const,
    headshot: 'headshot' as const,
    hitgroup: 'hitgroup' as const,
    id: 'id' as const,
@@ -43079,6 +43147,7 @@ export const enumPlayerKillsUpdateColumn = {
    attacker_steam_id: 'attacker_steam_id' as const,
    attacker_team: 'attacker_team' as const,
    blinded: 'blinded' as const,
+   deleted_at: 'deleted_at' as const,
    headshot: 'headshot' as const,
    hitgroup: 'hitgroup' as const,
    id: 'id' as const,
@@ -43094,6 +43163,7 @@ export const enumPlayerKillsUpdateColumn = {
 }
 
 export const enumPlayerObjectivesSelectColumn = {
+   deleted_at: 'deleted_at' as const,
    id: 'id' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
@@ -43118,6 +43188,7 @@ export const enumPlayerUnusedUtilityConstraint = {
 }
 
 export const enumPlayerUnusedUtilitySelectColumn = {
+   deleted_at: 'deleted_at' as const,
    id: 'id' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
@@ -43127,6 +43198,7 @@ export const enumPlayerUnusedUtilitySelectColumn = {
 }
 
 export const enumPlayerUnusedUtilityUpdateColumn = {
+   deleted_at: 'deleted_at' as const,
    id: 'id' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
@@ -43138,6 +43210,7 @@ export const enumPlayerUnusedUtilityUpdateColumn = {
 export const enumPlayerUtilitySelectColumn = {
    attacker_location_coordinates: 'attacker_location_coordinates' as const,
    attacker_steam_id: 'attacker_steam_id' as const,
+   deleted_at: 'deleted_at' as const,
    id: 'id' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
