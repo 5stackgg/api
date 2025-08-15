@@ -72,7 +72,19 @@ CREATE TRIGGER tau_match_options AFTER UPDATE ON public.match_options FOR EACH R
 CREATE OR REPLACE FUNCTION public.tbu_match_options() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    _match_status text;
 BEGIN
+    SELECT m.status INTO _match_status
+        FROM matches m
+        INNER JOIN match_options mo ON mo.id = m.match_options_id
+        WHERE mo.id = OLD.id
+        LIMIT 1;
+    
+    IF _match_status = 'Live' OR _match_status = 'Veto' OR _match_status = 'Finished' OR _match_status = 'Forfeit' OR _match_status = 'Tie' OR _match_status = 'Surrendered' THEN  
+        RAISE EXCEPTION 'Cannot change match options after match goes live' USING ERRCODE = '22000';
+    END IF;
+
     IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
         RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
     END IF;
