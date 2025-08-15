@@ -95,8 +95,6 @@ BEGIN
         NEW.invite_code := NULL;
     END IF;
 
-    -- TODO : protect things that cannot be changed after match goes live
-
     RETURN NEW;
 END;
 $$;
