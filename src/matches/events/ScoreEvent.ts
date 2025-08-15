@@ -93,7 +93,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
           where: {
             deleted_at: {
               _is_null: false,
-            },  
+            },
             match_map_id: {
               _eq: this.data.match_map_id,
             },

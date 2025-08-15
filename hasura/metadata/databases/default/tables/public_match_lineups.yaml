@@ -123,6 +123,7 @@ update_permissions:
     permission:
       columns:
         - coach_steam_id
+        - team_id
       filter: {}
       check:
         _or:
