@@ -5324,6 +5324,7 @@ type game_server_nodes {
   label: String
   lan_ip: inet
   node_ip: inet
+  pin_build_id: String
   public_ip: inet
   region: String
 
@@ -5496,6 +5497,7 @@ input game_server_nodes_bool_exp {
   label: String_comparison_exp
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
+  pin_build_id: String_comparison_exp
   public_ip: inet_comparison_exp
   region: String_comparison_exp
   servers: servers_bool_exp
@@ -5541,6 +5543,7 @@ input game_server_nodes_insert_input {
   label: String
   lan_ip: inet
   node_ip: inet
+  pin_build_id: String
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
@@ -5562,6 +5565,7 @@ type game_server_nodes_max_fields {
   end_port_range: Int
   id: String
   label: String
+  pin_build_id: String
   region: String
   start_port_range: Int
   token: String
@@ -5581,6 +5585,7 @@ input game_server_nodes_max_order_by {
   end_port_range: order_by
   id: order_by
   label: order_by
+  pin_build_id: order_by
   region: order_by
   start_port_range: order_by
   token: order_by
@@ -5597,6 +5602,7 @@ type game_server_nodes_min_fields {
   end_port_range: Int
   id: String
   label: String
+  pin_build_id: String
   region: String
   start_port_range: Int
   token: String
@@ -5616,6 +5622,7 @@ input game_server_nodes_min_order_by {
   end_port_range: order_by
   id: order_by
   label: order_by
+  pin_build_id: order_by
   region: order_by
   start_port_range: order_by
   token: order_by
@@ -5664,6 +5671,7 @@ input game_server_nodes_order_by {
   label: order_by
   lan_ip: order_by
   node_ip: order_by
+  pin_build_id: order_by
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by
@@ -5705,6 +5713,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   node_ip
+
+  """column name"""
+  pin_build_id
 
   """column name"""
   public_ip
@@ -5770,6 +5781,7 @@ input game_server_nodes_set_input {
   label: String
   lan_ip: inet
   node_ip: inet
+  pin_build_id: String
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5875,6 +5887,7 @@ input game_server_nodes_stream_cursor_value_input {
   label: String
   lan_ip: inet
   node_ip: inet
+  pin_build_id: String
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5934,6 +5947,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   node_ip
+
+  """column name"""
+  pin_build_id
 
   """column name"""
   public_ip
@@ -6044,6 +6060,203 @@ input game_server_nodes_variance_order_by {
   build_id: order_by
   end_port_range: order_by
   start_port_range: order_by
+}
+
+"""
+columns and relationships of "game_versions"
+"""
+type game_versions {
+  build_id: String!
+  current: Boolean
+  description: String!
+  updated_at: timestamptz!
+  version: String!
+}
+
+"""
+aggregated selection of "game_versions"
+"""
+type game_versions_aggregate {
+  aggregate: game_versions_aggregate_fields
+  nodes: [game_versions!]!
+}
+
+"""
+aggregate fields of "game_versions"
+"""
+type game_versions_aggregate_fields {
+  count(columns: [game_versions_select_column!], distinct: Boolean): Int!
+  max: game_versions_max_fields
+  min: game_versions_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "game_versions". All fields are combined with a logical 'AND'.
+"""
+input game_versions_bool_exp {
+  _and: [game_versions_bool_exp!]
+  _not: game_versions_bool_exp
+  _or: [game_versions_bool_exp!]
+  build_id: String_comparison_exp
+  current: Boolean_comparison_exp
+  description: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_versions"
+"""
+enum game_versions_constraint {
+  """
+  unique or primary key constraint on columns "current"
+  """
+  game_versions_current_key
+
+  """
+  unique or primary key constraint on columns "build_id"
+  """
+  game_versions_pkey
+}
+
+"""
+input type for inserting data into table "game_versions"
+"""
+input game_versions_insert_input {
+  build_id: String
+  current: Boolean
+  description: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""aggregate max on columns"""
+type game_versions_max_fields {
+  build_id: String
+  description: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""aggregate min on columns"""
+type game_versions_min_fields {
+  build_id: String
+  description: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+response of any mutation on the table "game_versions"
+"""
+type game_versions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_versions!]!
+}
+
+"""
+on_conflict condition type for table "game_versions"
+"""
+input game_versions_on_conflict {
+  constraint: game_versions_constraint!
+  update_columns: [game_versions_update_column!]! = []
+  where: game_versions_bool_exp
+}
+
+"""Ordering options when selecting data from "game_versions"."""
+input game_versions_order_by {
+  build_id: order_by
+  current: order_by
+  description: order_by
+  updated_at: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: game_versions"""
+input game_versions_pk_columns_input {
+  build_id: String!
+}
+
+"""
+select columns of table "game_versions"
+"""
+enum game_versions_select_column {
+  """column name"""
+  build_id
+
+  """column name"""
+  current
+
+  """column name"""
+  description
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  version
+}
+
+"""
+input type for updating data in table "game_versions"
+"""
+input game_versions_set_input {
+  build_id: String
+  current: Boolean
+  description: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+Streaming cursor of the table "game_versions"
+"""
+input game_versions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_versions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_versions_stream_cursor_value_input {
+  build_id: String
+  current: Boolean
+  description: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+update columns of table "game_versions"
+"""
+enum game_versions_update_column {
+  """column name"""
+  build_id
+
+  """column name"""
+  current
+
+  """column name"""
+  description
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  version
+}
+
+input game_versions_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_versions_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_versions_bool_exp!
 }
 
 scalar inet
@@ -7072,6 +7285,9 @@ type maps {
     where: match_map_veto_picks_bool_exp
   ): match_map_veto_picks_aggregate!
   name: String!
+  night_available: Boolean!
+  night_poster: String
+  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum!
@@ -7158,6 +7374,9 @@ input maps_bool_exp {
   match_veto_picks: match_map_veto_picks_bool_exp
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
   name: String_comparison_exp
+  night_available: Boolean_comparison_exp
+  night_poster: String_comparison_exp
+  night_workshop_map_id: String_comparison_exp
   patch: String_comparison_exp
   poster: String_comparison_exp
   type: e_match_types_enum_comparison_exp
@@ -7191,6 +7410,9 @@ input maps_insert_input {
   match_maps: match_maps_arr_rel_insert_input
   match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   name: String
+  night_available: Boolean
+  night_poster: String
+  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum
@@ -7202,6 +7424,8 @@ type maps_max_fields {
   id: uuid
   label: String
   name: String
+  night_poster: String
+  night_workshop_map_id: String
   patch: String
   poster: String
   workshop_map_id: String
@@ -7214,6 +7438,8 @@ input maps_max_order_by {
   id: order_by
   label: order_by
   name: order_by
+  night_poster: order_by
+  night_workshop_map_id: order_by
   patch: order_by
   poster: order_by
   workshop_map_id: order_by
@@ -7224,6 +7450,8 @@ type maps_min_fields {
   id: uuid
   label: String
   name: String
+  night_poster: String
+  night_workshop_map_id: String
   patch: String
   poster: String
   workshop_map_id: String
@@ -7236,6 +7464,8 @@ input maps_min_order_by {
   id: order_by
   label: order_by
   name: order_by
+  night_poster: order_by
+  night_workshop_map_id: order_by
   patch: order_by
   poster: order_by
   workshop_map_id: order_by
@@ -7281,6 +7511,9 @@ input maps_order_by {
   match_maps_aggregate: match_maps_aggregate_order_by
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
+  night_available: order_by
+  night_poster: order_by
+  night_workshop_map_id: order_by
   patch: order_by
   poster: order_by
   type: order_by
@@ -7312,6 +7545,15 @@ enum maps_select_column {
   name
 
   """column name"""
+  night_available
+
+  """column name"""
+  night_poster
+
+  """column name"""
+  night_workshop_map_id
+
+  """column name"""
   patch
 
   """column name"""
@@ -7333,6 +7575,9 @@ enum maps_select_column_maps_aggregate_bool_exp_bool_and_arguments_columns {
 
   """column name"""
   enabled
+
+  """column name"""
+  night_available
 }
 
 """
@@ -7344,6 +7589,9 @@ enum maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns {
 
   """column name"""
   enabled
+
+  """column name"""
+  night_available
 }
 
 """
@@ -7355,6 +7603,9 @@ input maps_set_input {
   id: uuid
   label: String
   name: String
+  night_available: Boolean
+  night_poster: String
+  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum
@@ -7379,6 +7630,9 @@ input maps_stream_cursor_value_input {
   id: uuid
   label: String
   name: String
+  night_available: Boolean
+  night_poster: String
+  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum
@@ -7403,6 +7657,15 @@ enum maps_update_column {
 
   """column name"""
   name
+
+  """column name"""
+  night_available
+
+  """column name"""
+  night_poster
+
+  """column name"""
+  night_workshop_map_id
 
   """column name"""
   patch
@@ -14280,6 +14543,19 @@ type mutation_root {
   delete_game_server_nodes_by_pk(id: String!): game_server_nodes
 
   """
+  delete data from the table: "game_versions"
+  """
+  delete_game_versions(
+    """filter the rows which have to be deleted"""
+    where: game_versions_bool_exp!
+  ): game_versions_mutation_response
+
+  """
+  delete single row from the table: "game_versions"
+  """
+  delete_game_versions_by_pk(build_id: String!): game_versions
+
+  """
   delete data from the table: "lobbies"
   """
   delete_lobbies(
@@ -14784,14 +15060,6 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: v_match_captains_bool_exp!
   ): v_match_captains_mutation_response
-
-  """
-  delete data from the table: "v_pool_maps"
-  """
-  delete_v_pool_maps(
-    """filter the rows which have to be deleted"""
-    where: v_pool_maps_bool_exp!
-  ): v_pool_maps_mutation_response
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
 
@@ -15344,6 +15612,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: game_server_nodes_on_conflict
   ): game_server_nodes
+
+  """
+  insert data into the table: "game_versions"
+  """
+  insert_game_versions(
+    """the rows to be inserted"""
+    objects: [game_versions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_versions_on_conflict
+  ): game_versions_mutation_response
+
+  """
+  insert a single row into the table: "game_versions"
+  """
+  insert_game_versions_one(
+    """the row to be inserted"""
+    object: game_versions_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_versions_on_conflict
+  ): game_versions
 
   """
   insert data into the table: "lobbies"
@@ -16220,22 +16510,6 @@ type mutation_root {
     """the row to be inserted"""
     object: v_match_captains_insert_input!
   ): v_match_captains
-
-  """
-  insert data into the table: "v_pool_maps"
-  """
-  insert_v_pool_maps(
-    """the rows to be inserted"""
-    objects: [v_pool_maps_insert_input!]!
-  ): v_pool_maps_mutation_response
-
-  """
-  insert a single row into the table: "v_pool_maps"
-  """
-  insert_v_pool_maps_one(
-    """the row to be inserted"""
-    object: v_pool_maps_insert_input!
-  ): v_pool_maps
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
   leaveLineup(match_id: String!): SuccessOutput
 
@@ -16977,6 +17251,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [game_server_nodes_updates!]!
   ): [game_server_nodes_mutation_response]
+
+  """
+  update data of the table: "game_versions"
+  """
+  update_game_versions(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_versions_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_versions_bool_exp!
+  ): game_versions_mutation_response
+
+  """
+  update single row of the table: "game_versions"
+  """
+  update_game_versions_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_versions_set_input
+    pk_columns: game_versions_pk_columns_input!
+  ): game_versions
+
+  """
+  update multiples rows of table: "game_versions"
+  """
+  update_game_versions_many(
+    """updates to execute, in order"""
+    updates: [game_versions_updates!]!
+  ): [game_versions_mutation_response]
 
   """
   update data of the table: "lobbies"
@@ -18339,25 +18641,6 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_match_captains_updates!]!
   ): [v_match_captains_mutation_response]
-
-  """
-  update data of the table: "v_pool_maps"
-  """
-  update_v_pool_maps(
-    """sets the columns of the filtered rows to the given values"""
-    _set: v_pool_maps_set_input
-
-    """filter the rows which have to be updated"""
-    where: v_pool_maps_bool_exp!
-  ): v_pool_maps_mutation_response
-
-  """
-  update multiples rows of table: "v_pool_maps"
-  """
-  update_v_pool_maps_many(
-    """updates to execute, in order"""
-    updates: [v_pool_maps_updates!]!
-  ): [v_pool_maps_mutation_response]
 }
 
 """
@@ -26452,6 +26735,49 @@ type query_root {
   fetch data from the table: "game_server_nodes" using primary key columns
   """
   game_server_nodes_by_pk(id: String!): game_server_nodes
+
+  """
+  fetch data from the table: "game_versions"
+  """
+  game_versions(
+    """distinct select on columns"""
+    distinct_on: [game_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_versions_bool_exp
+  ): [game_versions!]!
+
+  """
+  fetch aggregated fields from the table: "game_versions"
+  """
+  game_versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_versions_bool_exp
+  ): game_versions_aggregate!
+
+  """fetch data from the table: "game_versions" using primary key columns"""
+  game_versions_by_pk(build_id: String!): game_versions
   getNodeStats: [NodeStats]!
   getServiceStats: [PodStats]!
 
@@ -31155,6 +31481,63 @@ type subscription_root {
     """filter the rows returned"""
     where: game_server_nodes_bool_exp
   ): [game_server_nodes!]!
+
+  """
+  fetch data from the table: "game_versions"
+  """
+  game_versions(
+    """distinct select on columns"""
+    distinct_on: [game_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_versions_bool_exp
+  ): [game_versions!]!
+
+  """
+  fetch aggregated fields from the table: "game_versions"
+  """
+  game_versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_versions_bool_exp
+  ): game_versions_aggregate!
+
+  """fetch data from the table: "game_versions" using primary key columns"""
+  game_versions_by_pk(build_id: String!): game_versions
+
+  """
+  fetch data from the table in a streaming manner: "game_versions"
+  """
+  game_versions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_versions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_versions_bool_exp
+  ): [game_versions!]!
 
   """
   fetch data from the table: "lobbies"
@@ -40653,17 +41036,6 @@ input v_pool_maps_min_order_by {
   workshop_map_id: order_by
 }
 
-"""
-response of any mutation on the table "v_pool_maps"
-"""
-type v_pool_maps_mutation_response {
-  """number of rows affected by the mutation"""
-  affected_rows: Int!
-
-  """data from the rows affected by the mutation"""
-  returning: [v_pool_maps!]!
-}
-
 """Ordering options when selecting data from "v_pool_maps"."""
 input v_pool_maps_order_by {
   active_pool: order_by
@@ -40727,21 +41099,6 @@ enum v_pool_maps_select_column_v_pool_maps_aggregate_bool_exp_bool_or_arguments_
 }
 
 """
-input type for updating data in table "v_pool_maps"
-"""
-input v_pool_maps_set_input {
-  active_pool: Boolean
-  id: uuid
-  label: String
-  map_pool_id: uuid
-  name: String
-  patch: String
-  poster: String
-  type: String
-  workshop_map_id: String
-}
-
-"""
 Streaming cursor of the table "v_pool_maps"
 """
 input v_pool_maps_stream_cursor_input {
@@ -40763,12 +41120,4 @@ input v_pool_maps_stream_cursor_value_input {
   poster: String
   type: String
   workshop_map_id: String
-}
-
-input v_pool_maps_updates {
-  """sets the columns of the filtered rows to the given values"""
-  _set: v_pool_maps_set_input
-
-  """filter the rows which have to be updated"""
-  where: v_pool_maps_bool_exp!
 }

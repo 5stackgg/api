@@ -30,57 +30,100 @@ export class CheckGameUpdate extends WorkerHost {
 
     const { data } = await response.json();
 
-    const publicBuild = data["730"].depots?.branches?.public;
+    const branches: {
+      [key: string]: {
+        buildid: string;
+        description: string;
+        timeupdated: string;
+      }
+    } = data["730"].depots?.branches;
+    console.info({
+      branches
+    })
 
-    if (!publicBuild) {
-      return;
-    }
+    for(const version in branches) {
+      const branch = branches[version];
 
-    const {
-      settings: [_currentVersion],
-    } = await this.hasuraService.query({
-      settings: {
-        __args: {
-          where: {
-            name: {
-              _eq: "cs_version",
+      if(version === "public") {
+        if(await this.gameServerNodeService.getCurrentBuild() === branch.buildid) {
+          continue;
+        }
+
+        await this.hasuraService.mutation({
+          update_game_versions: {
+            __args: {
+              where: {
+                current: {
+                  _eq: true,
+                },
+              },
+              _set: {
+                current: false,
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        const { update_game_versions_by_pk } = await this.hasuraService.mutation({
+          update_game_versions_by_pk: {
+            __args: {
+              pk_columns: {
+                build_id: branch.buildid,
+              },
+              _set: {
+                current: true,
+              },
+            },
+            version: true,
+          },
+        });
+
+        this.notifications.send("GameUpdate", {
+          message: `A CS2 Update (${update_game_versions_by_pk.version}) has been detected. The Game Node Servers that do not have a build pin will update automatically.`,
+          title: "CS2 Update",
+          role: "administrator",
+        });
+    
+        await this.gameServerNodeService.updateCs();
+        continue;
+      }
+
+      const { game_versions } = await this.hasuraService.query({
+        game_versions: {
+          __args: {
+            where: {
+              build_id: {
+                _eq: branch.buildid,
+              },
             },
           },
+          build_id: true,
         },
-        value: true,
-      },
-    });
+      });
 
-    if (_currentVersion?.value) {
-      const currentVersion = JSON.parse(_currentVersion.value);
-
-      if (currentVersion.buildid === publicBuild.buildid) {
-        return;
+      if(game_versions.length > 0) {
+        continue;
       }
-    }
 
-    await this.hasuraService.mutation({
-      insert_settings_one: {
-        __args: {
-          object: {
-            name: "cs_version",
-            value: JSON.stringify(publicBuild),
+      await this.hasuraService.mutation({
+        insert_game_versions_one: {
+          __args: {
+            object: {
+              current: version === "public",
+              version: version, 
+              build_id: branch.buildid,
+              description: branch.description,
+              updated_at: branch.timeupdated ? new Date(Number(branch.timeupdated) * 1000) : new Date(),
+            },
+            on_conflict: {
+              constraint: "game_versions_pkey",
+              update_columns: ["build_id", "version", "updated_at"],
+            },
           },
-          on_conflict: {
-            constraint: "settings_pkey",
-            update_columns: ["value"],
-          },
+          __typename: true,
         },
-        __typename: true,
-      },
-    });
-
-    this.notifications.send("GameUpdate", {
-      message: `A CS2 Update (${publicBuild.buildid}) has been detected. The Game Node Servers will update automatically.`,
-      title: "CS2 Update",
-      role: "administrator",
-    });
-
-    await this.gameServerNodeService.updateCs();
+      });
+    }
   }
 }

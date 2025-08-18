@@ -214,6 +214,7 @@ export class GameServerNodeService {
           },
         },
         id: true,
+        pin_build_id: true,
       },
     });
 
@@ -229,6 +230,7 @@ export class GameServerNodeService {
           id: gameServerNodeId,
         },
         build_id: true,
+        pin_build_id: true,
       },
     });
 
@@ -237,26 +239,22 @@ export class GameServerNodeService {
       throw new Error("Game server not found");
     }
 
+    const nodeBuildId = game_server_nodes_by_pk.build_id?.toString();
+    const pinBuildId = game_server_nodes_by_pk.pin_build_id?.toString();
+
     if (!force) {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: {
-            name: "cs_version",
-          },
-          value: true,
-        },
-      });
-
-      if (settings_by_pk?.value) {
-        const currentBuild: {
-          buildid: string;
-        } = JSON.parse(settings_by_pk.value);
-
-        if (
-          currentBuild.buildid === game_server_nodes_by_pk.build_id?.toString()
-        ) {
+      if (pinBuildId) {
+        if (nodeBuildId === pinBuildId) {
           this.logger.log(
-            `CS2 is already up to date on node ${gameServerNodeId}`,
+            `CS2 is already up to date on node ${gameServerNodeId} (pinned build: ${pinBuildId})`,
+          );
+          return;
+        }
+      } else {
+        const currentBuild = await this.getCurrentBuild();
+        if (nodeBuildId === currentBuild) {
+          this.logger.log(
+            `CS2 is already up to date on node ${gameServerNodeId} (current build: ${currentBuild})`,
           );
           return;
         }
@@ -322,6 +320,14 @@ export class GameServerNodeService {
                     name: "update-cs-server",
                     image: "ghcr.io/5stackgg/game-server:latest",
                     command: ["/opt/scripts/update.sh"],
+                    env: [
+                      ...(pinBuildId
+                        ? [{
+                            name: "BUILD_ID",
+                            value: pinBuildId,
+                          }]
+                        : []),
+                    ],
                     volumeMounts: [
                       {
                         name: `steamcmd-${gameServerNodeId}`,
@@ -817,5 +823,22 @@ export class GameServerNodeService {
     this.logger.error(`Unknown memory type ${memory}`);
 
     return BigInt(0);
+  }
+
+  public async getCurrentBuild() {
+    const { game_versions } = await this.hasura.query({
+      game_versions: {
+        __args: {
+          where: {
+            current: {
+              _eq: true,
+            },
+          },
+        },
+        build_id: true,
+      },
+    });
+
+    return game_versions.at(0)?.build_id;
   }
 }

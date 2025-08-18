@@ -1,0 +1,14 @@
+table:
+  name: game_versions
+  schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - build_id
+        - current
+        - description
+        - updated_at
+        - version
+      filter: {}
+    comment: ""

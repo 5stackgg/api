@@ -38,6 +38,7 @@ select_permissions:
         - label
         - lan_ip
         - node_ip
+        - pin_build_id
         - public_ip
         - region
         - start_port_range
@@ -58,6 +59,7 @@ update_permissions:
         - enabled
         - end_port_range
         - label
+        - pin_build_id
         - region
         - start_port_range
       filter: {}

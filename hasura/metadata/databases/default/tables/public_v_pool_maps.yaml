@@ -28,6 +28,7 @@ select_permissions:
         - active_pool
         - id
         - label
+        - map_pool_id
         - name
         - patch
         - poster
