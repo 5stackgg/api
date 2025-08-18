@@ -14,6 +14,10 @@ BEGIN
 
     SELECT * INTO tournament FROM tournaments WHERE id = roster.tournament_id LIMIT 1;
 
+    IF(tournament IS NULL) THEN
+        RETURN;
+    END IF;
+
     max_players := tournament_max_players_per_lineup(tournament);
 
     IF roster_count > max_players THEN
