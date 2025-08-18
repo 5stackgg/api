@@ -13,10 +13,10 @@ BEGIN
     IF (regions IS NULL OR array_length(regions, 1) = 0) THEN
         SELECT array_agg(sr.value) INTO available_regions 
         FROM server_regions sr
-        INNER JOIN game_server_nodes gsn ON gsn.region = sr.value AND gsn.enabled = true
         LEFT JOIN match_region_veto_picks mvp ON mvp.region = sr.value AND mvp.match_id = match_region_veto_pick.match_id
         WHERE mvp.region IS NULL
-        AND sr.is_lan = false;
+        AND sr.is_lan = false
+        AND region_status(sr) != 'Disabled';
     END IF;
 
   IF array_length(available_regions, 1) = 1 THEN
