@@ -5,7 +5,6 @@ import { Logger } from "@nestjs/common";
 import { GameServerNodeService } from "../game-server-node.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
-import { CacheService } from "src/cache/cache.service";
 
 type Depot = {
   systemdefined?: string;
@@ -34,7 +33,6 @@ export class CheckGameUpdate extends WorkerHost {
     protected readonly gameServerNodeService: GameServerNodeService,
     protected readonly hasuraService: HasuraService,
     protected readonly notifications: NotificationsService,
-    protected readonly cache: CacheService,
   ) {
     super();
   }
@@ -208,24 +206,18 @@ export class CheckGameUpdate extends WorkerHost {
       [key: string]: Depot | unknown;
     };
   }> {
-    return this.cache.remember(
-      "game-data",
-      async () => {
-        const response = await fetch("https://api.steamcmd.net/v1/info/730");
+    const response = await fetch("https://api.steamcmd.net/v1/info/730");
 
-        if (!response.ok) {
-          this.logger.error("Failed to fetch CS2 update", {
-            status: response.status,
-            statusText: response.statusText,
-          });
-          return;
-        }
+    if (!response.ok) {
+      this.logger.error("Failed to fetch CS2 update", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+      return;
+    }
 
-        const { data } = await response.json();
+    const { data } = await response.json();
 
-        return data?.["730"];
-      },
-      5 * 60,
-    );
+    return data?.["730"];
   }
 }
