@@ -230,8 +230,8 @@ export class GameServerNodeService {
           id: gameServerNodeId,
         },
         build_id: true,
-        pin_build_id: true,
         pinned_version: {
+          build_id: true,
           downloads: true,
         },
       },
@@ -243,7 +243,7 @@ export class GameServerNodeService {
     }
 
     const nodeBuildId = game_server_nodes_by_pk.build_id;
-    const pinBuildId = game_server_nodes_by_pk.pin_build_id;
+    const pinBuildId = game_server_nodes_by_pk.pinned_version?.build_id;
 
     if (!force) {
       if (pinBuildId) {
@@ -324,8 +324,12 @@ export class GameServerNodeService {
                     image: "ghcr.io/5stackgg/game-server:latest",
                     command: ["/opt/scripts/update.sh"],
                     env: [
-                      ...(game_server_nodes_by_pk.pinned_version
+                      ...(pinBuildId
                         ? [
+                            {
+                              name: "BUILD_ID",
+                              value: pinBuildId.toString(),
+                            },
                             {
                               name: "BUILD_MANIFESTS",
                               value: JSON.stringify(
