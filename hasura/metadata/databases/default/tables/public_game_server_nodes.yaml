@@ -8,6 +8,15 @@ object_relationships:
   - name: e_status
     using:
       foreign_key_constraint_on: status
+  - name: pinned_version
+    using:
+      manual_configuration:
+        column_mapping:
+          pin_build_id: build_id
+        insertion_order: null
+        remote_table:
+          name: game_versions
+          schema: public
   - name: version
     using:
       manual_configuration:
