@@ -328,7 +328,9 @@ export class GameServerNodeService {
                         ? [
                             {
                               name: "BUILD_MANIFESTS",
-                              value: game_server_nodes_by_pk.version.downloads,
+                              value: JSON.stringify(
+                                game_server_nodes_by_pk.version.downloads,
+                              ),
                             },
                           ]
                         : []),
