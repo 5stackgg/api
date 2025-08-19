@@ -15,6 +15,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { Redis } from "ioredis";
 import { LoggingServiceService } from "./logging-service/logging-service.service";
 import { PassThrough } from "stream";
+import { SteamConfig } from "src/configs/types/SteamConfig";
 
 @Injectable()
 export class GameServerNodeService {
@@ -22,6 +23,7 @@ export class GameServerNodeService {
   private readonly namespace: string;
   private maxStatsHistory: number = 60 * 3;
   private gameServerConfig: GameServersConfig;
+  private steamConfig: SteamConfig;
 
   constructor(
     protected readonly logger: Logger,
@@ -31,9 +33,9 @@ export class GameServerNodeService {
     protected readonly loggingService: LoggingServiceService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
-
     this.namespace = this.gameServerConfig.namespace;
     this.redis = redisManager.getConnection();
+    this.steamConfig = this.config.get<SteamConfig>("steam");
   }
 
   public async create(
@@ -336,6 +338,19 @@ export class GameServerNodeService {
                                 game_server_nodes_by_pk.pinned_version
                                   .downloads,
                               ),
+                            },
+                          ]
+                        : []),
+                      ...(this.steamConfig.steamUser &&
+                      this.steamConfig.steamPassword
+                        ? [
+                            {
+                              name: "STEAM_USER",
+                              value: this.steamConfig.steamUser,
+                            },
+                            {
+                              name: "STEAM_PASSWORD",
+                              value: this.steamConfig.steamPassword,
                             },
                           ]
                         : []),
