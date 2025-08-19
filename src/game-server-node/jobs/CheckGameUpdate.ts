@@ -8,6 +8,7 @@ import { NotificationsService } from "src/notifications/notifications.service";
 import { CacheService } from "src/cache/cache.service";
 
 type Depot = {
+  systemdefined?: string;
   config: {
     osarch?: string;
     oslist?: string;
@@ -51,14 +52,18 @@ export class CheckGameUpdate extends WorkerHost {
     const depots: Map<string, Depot> = new Map();
     for (const depotId in data.depots) {
       const depot = data.depots[depotId] as Depot;
-      if (!depotId.match(/^[0-9]+$/) || !depot.config) {
+      if (!depotId.match(/^[0-9]+$/)) {
         continue;
       }
 
+      const depotConfig = depot.config;
+
       if (
-        !depot.config.optionaldlc &&
-        depot.config.osarch === "64" &&
-        (!depot.config.oslist || depot.config.oslist.includes("linux"))
+        (depot.systemdefined && !depotConfig) ||
+        (depotConfig &&
+          !depotConfig.optionaldlc &&
+          depotConfig.osarch === "64" &&
+          (!depotConfig.oslist || depotConfig.oslist.includes("linux")))
       ) {
         depots.set(depotId, depot);
       }

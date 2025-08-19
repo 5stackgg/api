@@ -5334,6 +5334,9 @@ type game_server_nodes {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
+
+  """An object relationship"""
+  pinned_version: game_versions
   public_ip: inet
   region: String
 
@@ -5512,6 +5515,7 @@ input game_server_nodes_bool_exp {
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
   pin_build_id: Int_comparison_exp
+  pinned_version: game_versions_bool_exp
   public_ip: inet_comparison_exp
   region: String_comparison_exp
   servers: servers_bool_exp
@@ -5560,6 +5564,7 @@ input game_server_nodes_insert_input {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
+  pinned_version: game_versions_obj_rel_insert_input
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
@@ -5689,6 +5694,7 @@ input game_server_nodes_order_by {
   lan_ip: order_by
   node_ip: order_by
   pin_build_id: order_by
+  pinned_version: game_versions_order_by
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by

@@ -6920,6 +6920,9 @@ export default {
             "pin_build_id": [
                 5
             ],
+            "pinned_version": [
+                588
+            ],
             "public_ip": [
                 621
             ],
@@ -7253,6 +7256,9 @@ export default {
             "pin_build_id": [
                 6
             ],
+            "pinned_version": [
+                593
+            ],
             "public_ip": [
                 622
             ],
@@ -7341,6 +7347,9 @@ export default {
             ],
             "pin_build_id": [
                 5
+            ],
+            "pinned_version": [
+                603
             ],
             "public_ip": [
                 621
@@ -7585,6 +7594,9 @@ export default {
             ],
             "pin_build_id": [
                 1239
+            ],
+            "pinned_version": [
+                605
             ],
             "public_ip": [
                 1239

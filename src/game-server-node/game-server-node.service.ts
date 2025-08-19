@@ -231,7 +231,7 @@ export class GameServerNodeService {
         },
         build_id: true,
         pin_build_id: true,
-        version: {
+        pinned_version: {
           downloads: true,
         },
       },
@@ -324,12 +324,13 @@ export class GameServerNodeService {
                     image: "ghcr.io/5stackgg/game-server:latest",
                     command: ["/opt/scripts/update.sh"],
                     env: [
-                      ...(pinBuildId
+                      ...(game_server_nodes_by_pk.pinned_version
                         ? [
                             {
                               name: "BUILD_MANIFESTS",
                               value: JSON.stringify(
-                                game_server_nodes_by_pk.version.downloads,
+                                game_server_nodes_by_pk.pinned_version
+                                  .downloads,
                               ),
                             },
                           ]
