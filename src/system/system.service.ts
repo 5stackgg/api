@@ -6,6 +6,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
 import { DiscordConfig } from "src/configs/types/DiscordConfig";
+import { SteamConfig } from "src/configs/types/SteamConfig";
 
 @Injectable()
 export class SystemService {
@@ -75,6 +76,29 @@ export class SystemService {
               object: {
                 name: "public.supports_discord_bot",
                 value: supportsDiscordBot.toString(),
+              },
+              on_conflict: {
+                constraint: "settings_pkey",
+                update_columns: ["value"],
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        const steamConfig = this.config.get<SteamConfig>("steam");
+
+        let supportsGameServerNodeVersionPinning = false;
+        if (steamConfig.steamUser && steamConfig.steamPassword) {
+          supportsGameServerNodeVersionPinning = true;
+        }
+
+        await this.hasura.mutation({
+          insert_settings_one: {
+            __args: {
+              object: {
+                name: "supports_game_server_version_pinning",
+                value: supportsGameServerNodeVersionPinning.toString(),
               },
               on_conflict: {
                 constraint: "settings_pkey",
