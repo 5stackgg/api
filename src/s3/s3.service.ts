@@ -102,7 +102,12 @@ export class S3Service {
     key: string,
     // 5 minutes
     expires = 60 * 5,
+    type: "put" | "get" = "put",
   ) {
-    return await this.client.presignedPutObject(this.bucket, key, expires);
+    if (type === "put") {
+      return await this.client.presignedPutObject(this.bucket, key, expires);
+    } else {
+      return await this.client.presignedGetObject(this.bucket, key, expires);
+    }
   }
 }

@@ -53,6 +53,10 @@ type Query {
 }
 
 type Mutation {
+  getTestUploadLink: GetTestUploadResponse!
+}
+
+type Mutation {
   joinLineup(
     match_id: String!
     lineup_id: String!
@@ -133,6 +137,10 @@ type Query {
 }
 
 type Mutation {
+  testUpload: TestUploadResponse
+}
+
+type Mutation {
   unlinkDiscord: SuccessOutput
 }
 
@@ -203,5 +211,14 @@ type PodStats {
 
 type TelemetryStats {
   online: Int!
+}
+
+type TestUploadResponse {
+  error: String
+}
+
+type GetTestUploadResponse {
+  error: String
+  link: String
 }
 

@@ -322,10 +322,12 @@ export class GameServerNodeService {
                     command: ["/opt/scripts/update.sh"],
                     env: [
                       ...(pinBuildId
-                        ? [{
-                            name: "BUILD_ID",
-                            value: pinBuildId,
-                          }]
+                        ? [
+                            {
+                              name: "BUILD_ID",
+                              value: pinBuildId,
+                            },
+                          ]
                         : []),
                     ],
                     volumeMounts: [

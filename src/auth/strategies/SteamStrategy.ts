@@ -41,12 +41,6 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
   ) {
     const webDomain = config.get<AppConfig>("app").webDomain;
 
-    console.info({
-      realm: webDomain,
-      apiKey: config.get<SteamConfig>("steam").steamApiKey,
-      returnURL: `${webDomain}/auth/steam/callback`,
-    });
-
     super({
       realm: webDomain,
       apiKey: config.get<SteamConfig>("steam").steamApiKey,

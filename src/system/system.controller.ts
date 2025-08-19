@@ -1,14 +1,18 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Logger } from "@nestjs/common";
 import { SystemService } from "./system.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { Get } from "@nestjs/common";
 import { User } from "src/auth/types/User";
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { S3Service } from "src/s3/s3.service";
+import { link } from "fs";
 
 @Controller("system")
 export class SystemController {
   constructor(
+    private readonly logger: Logger,
+    private readonly s3: S3Service,
     private readonly system: SystemService,
     private readonly hasura: HasuraService,
     private readonly notifications: NotificationsService,
@@ -26,6 +30,44 @@ export class SystemController {
     return {
       success: true,
     };
+  }
+
+  @HasuraAction()
+  public async testUpload() {
+    if (await this.s3.has("hello.txt")) {
+      await this.s3.remove("hello.txt");
+    }
+
+    try {
+      // test presigned url
+      await this.s3.getPresignedUrl("hello.txt");
+
+      await this.s3.put(
+        "hello.txt",
+        Buffer.from(`world : ${new Date().toISOString()}`),
+      );
+
+      return {};
+    } catch (error) {
+      this.logger.error(`Failed to upload file to S3: ${error.message}`);
+      return {
+        error: error.message,
+      };
+    }
+  }
+
+  @HasuraAction()
+  public async getTestUploadLink() {
+    try {
+      return {
+        link: await this.s3.getPresignedUrl("hello.txt", 60, "get"),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get presigned URL: ${error.message}`);
+      return {
+        error: error.message,
+      };
+    }
   }
 
   @HasuraAction()

@@ -64,6 +64,13 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
+  - name: getTestUploadLink
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
   - name: joinLineup
     definition:
       kind: synchronous
@@ -167,6 +174,13 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
+  - name: testUpload
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
   - name: unlinkDiscord
     definition:
       kind: synchronous
@@ -211,4 +225,6 @@ custom_types:
     - name: NodeStats
     - name: PodStats
     - name: TelemetryStats
+    - name: TestUploadResponse
+    - name: GetTestUploadResponse
   scalars: []

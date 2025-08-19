@@ -35,17 +35,17 @@ export class CheckGameUpdate extends WorkerHost {
         buildid: string;
         description: string;
         timeupdated: string;
-      }
+      };
     } = data["730"].depots?.branches;
-    console.info({
-      branches
-    })
 
-    for(const version in branches) {
+    for (const version in branches) {
       const branch = branches[version];
 
-      if(version === "public") {
-        if(await this.gameServerNodeService.getCurrentBuild() === branch.buildid) {
+      if (version === "public") {
+        if (
+          (await this.gameServerNodeService.getCurrentBuild()) ===
+          branch.buildid
+        ) {
           continue;
         }
 
@@ -65,26 +65,27 @@ export class CheckGameUpdate extends WorkerHost {
           },
         });
 
-        const { update_game_versions_by_pk } = await this.hasuraService.mutation({
-          update_game_versions_by_pk: {
-            __args: {
-              pk_columns: {
-                build_id: branch.buildid,
+        const { update_game_versions_by_pk } =
+          await this.hasuraService.mutation({
+            update_game_versions_by_pk: {
+              __args: {
+                pk_columns: {
+                  build_id: branch.buildid,
+                },
+                _set: {
+                  current: true,
+                },
               },
-              _set: {
-                current: true,
-              },
+              version: true,
             },
-            version: true,
-          },
-        });
+          });
 
         this.notifications.send("GameUpdate", {
           message: `A CS2 Update (${update_game_versions_by_pk.version}) has been detected. The Game Node Servers that do not have a build pin will update automatically.`,
           title: "CS2 Update",
           role: "administrator",
         });
-    
+
         await this.gameServerNodeService.updateCs();
         continue;
       }
@@ -102,7 +103,7 @@ export class CheckGameUpdate extends WorkerHost {
         },
       });
 
-      if(game_versions.length > 0) {
+      if (game_versions.length > 0) {
         continue;
       }
 
@@ -111,10 +112,12 @@ export class CheckGameUpdate extends WorkerHost {
           __args: {
             object: {
               current: version === "public",
-              version: version, 
+              version: version,
               build_id: branch.buildid,
               description: branch.description,
-              updated_at: branch.timeupdated ? new Date(Number(branch.timeupdated) * 1000) : new Date(),
+              updated_at: branch.timeupdated
+                ? new Date(Number(branch.timeupdated) * 1000)
+                : new Date(),
             },
             on_conflict: {
               constraint: "game_versions_pkey",
