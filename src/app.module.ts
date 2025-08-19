@@ -34,6 +34,7 @@ import { TelemetryModule } from "./telemetry/telemetry.module";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { SignalServerModule } from "./signal-server/signal-server.module";
 import { InvitesModule } from "./invites/invites.module";
+import { DemosModule } from "./demos/demos.module";
 
 @Module({
   imports: [
@@ -95,6 +96,7 @@ import { InvitesModule } from "./invites/invites.module";
     TelemetryModule,
     SignalServerModule,
     InvitesModule,
+    DemosModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

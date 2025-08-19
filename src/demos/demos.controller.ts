@@ -3,16 +3,13 @@ import {
   Get,
   Req,
   Post,
-  UseInterceptors,
-  UploadedFile,
   StreamableFile,
   Logger,
   Res,
 } from "@nestjs/common";
 import { Request, Response } from "express";
-import { HasuraService } from "../../hasura/hasura.service";
-import { S3Service } from "../../s3/s3.service";
-import { S3Interceptor } from "../../s3/s3.interceptor";
+import { HasuraService } from "../hasura/hasura.service";
+import { S3Service } from "../s3/s3.service";
 import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
@@ -183,7 +180,7 @@ export class DemosController {
   }
 
   @Post("uploaded")
-  public async uploadedDemo(
+  public async markDemoAsUploaded(
     @Req() request: Request,
     @Res() response: Response,
   ) {
@@ -211,39 +208,6 @@ export class DemosController {
     });
 
     return response.status(200).send();
-  }
-
-  @Post("map/:mapId")
-  @UseInterceptors(
-    S3Interceptor((request: Request, file: Express.Multer.File) => {
-      const { matchId, mapId } = request.params;
-
-      return `${matchId}/${mapId}/demos/${file.originalname}`;
-    }),
-  )
-  public async uploadDemo(
-    @Req() request: Request,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    const { matchId, mapId } = request.params;
-
-    const filename = `${matchId}/${mapId}/demos/${file.originalname}`;
-
-    const { size } = await this.s3.stat(filename);
-
-    await this.hasura.mutation({
-      insert_match_map_demos_one: {
-        __args: {
-          object: {
-            size,
-            file: filename,
-            match_id: matchId,
-            match_map_id: mapId,
-          },
-        },
-        __typename: true,
-      },
-    });
   }
 
   private async getDemo(demo: { id: string; file: string }) {

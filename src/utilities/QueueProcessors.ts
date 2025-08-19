@@ -8,6 +8,7 @@ class QueueProcessors {}
 
 type Modules =
   | "Matches"
+  | "Demos"
   | "Hasura"
   | "GameServerNode"
   | "DiscordBot"

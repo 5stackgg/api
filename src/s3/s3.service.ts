@@ -98,16 +98,32 @@ export class S3Service {
     }
   }
 
+  public getClientEndpoint() {
+    return `${this.config.endpoint}:${this.config.port}`;
+  }
+
   public async getPresignedUrl(
     key: string,
     // 5 minutes
     expires = 60 * 5,
     type: "put" | "get" = "put",
   ) {
+    let presignedUrl: string;
+
     if (type === "put") {
-      return await this.client.presignedPutObject(this.bucket, key, expires);
+      presignedUrl = await this.client.presignedPutObject(
+        this.bucket,
+        key,
+        expires,
+      );
     } else {
-      return await this.client.presignedGetObject(this.bucket, key, expires);
+      presignedUrl = await this.client.presignedGetObject(
+        this.bucket,
+        key,
+        expires,
+      );
     }
+
+    return presignedUrl;
   }
 }

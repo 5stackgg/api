@@ -1,12 +1,12 @@
 import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
-import { MatchQueues } from "../enums/MatchQueues";
+import { DemoQueues } from "../enums/DemoQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
 import { S3Service } from "../../s3/s3.service";
 
-@UseQueue("Matches", MatchQueues.CleanDemos)
+@UseQueue("Demos", DemoQueues.CleanDemos)
 export class CleanDemos extends WorkerHost {
   private maxStorageInBytes: number;
   private minRetentionInDays: number;

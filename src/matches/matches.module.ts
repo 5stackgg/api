@@ -9,7 +9,6 @@ import { MatchesController } from "./matches.controller";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { HasuraModule } from "../hasura/hasura.module";
 import { RconModule } from "../rcon/rcon.module";
-import { DemosController } from "./demos/demos.controller";
 import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { S3Module } from "../s3/s3.module";
@@ -43,7 +42,6 @@ import { ChatModule } from "src/chat/chat.module";
 import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { PostgresService } from "src/postgres/postgres.service";
-import { CleanDemos } from "./jobs/CleanDemos";
 
 @Module({
   imports: [
@@ -67,9 +65,6 @@ import { CleanDemos } from "./jobs/CleanDemos";
         name: MatchQueues.ScheduledMatches,
       },
       {
-        name: MatchQueues.CleanDemos,
-      },
-      {
         name: MatchQueues.EloCalculation,
       },
     ),
@@ -83,16 +78,12 @@ import { CleanDemos } from "./jobs/CleanDemos";
         adapter: BullMQAdapter,
       },
       {
-        name: MatchQueues.CleanDemos,
-        adapter: BullMQAdapter,
-      },
-      {
         name: MatchQueues.EloCalculation,
         adapter: BullMQAdapter,
       },
     ),
   ],
-  controllers: [MatchesController, DemosController],
+  controllers: [MatchesController],
   exports: [MatchAssistantService],
   providers: [
     MatchEventsGateway,
@@ -105,7 +96,6 @@ import { CleanDemos } from "./jobs/CleanDemos";
     RemoveCancelledMatches,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
-    CleanDemos,
     EloCalculation,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
@@ -115,7 +105,6 @@ import { CleanDemos } from "./jobs/CleanDemos";
 export class MatchesModule implements NestModule {
   constructor(
     private readonly hasuraService: HasuraService,
-    @InjectQueue(MatchQueues.CleanDemos) cleanDemosQueue: Queue,
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
     private readonly postgres: PostgresService,
@@ -180,16 +169,6 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "* * * * *",
-        },
-      },
-    );
-
-    void cleanDemosQueue.add(
-      CleanDemos.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
         },
       },
     );
