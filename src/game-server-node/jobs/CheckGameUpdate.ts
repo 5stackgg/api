@@ -38,8 +38,11 @@ export class CheckGameUpdate extends WorkerHost {
       };
     } = data["730"].depots?.branches;
 
+    let versions = [];
     for (const version in branches) {
       const branch = branches[version];
+
+      versions.push(branch.buildid);
 
       if (version === "public") {
         if (
@@ -128,5 +131,22 @@ export class CheckGameUpdate extends WorkerHost {
         },
       });
     }
+
+    if (versions.length === 0) {
+      return;
+    }
+
+    await this.hasuraService.mutation({
+      delete_game_versions: {
+        __args: {
+          where: {
+            build_id: {
+              _nin: versions,
+            },
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 }
