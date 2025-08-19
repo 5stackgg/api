@@ -5,6 +5,26 @@ import { Logger } from "@nestjs/common";
 import { GameServerNodeService } from "../game-server-node.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { CacheService } from "src/cache/cache.service";
+
+type Depot = {
+  config: {
+    osarch?: string;
+    oslist?: string;
+    optionaldlc?: string;
+  };
+  manifests: {
+    [key: string]: {
+      gid: string;
+    };
+  };
+};
+
+type Branch = {
+  buildid: string;
+  description: string;
+  timeupdated: string;
+};
 
 @UseQueue("GameServerNode", GameServerQueues.GameUpdate)
 export class CheckGameUpdate extends WorkerHost {
@@ -13,42 +33,47 @@ export class CheckGameUpdate extends WorkerHost {
     protected readonly gameServerNodeService: GameServerNodeService,
     protected readonly hasuraService: HasuraService,
     protected readonly notifications: NotificationsService,
+    protected readonly cache: CacheService,
   ) {
     super();
   }
 
   async process(): Promise<void> {
-    const response = await fetch("https://api.steamcmd.net/v1/info/730");
+    const data = await this.getGameData();
 
-    if (!response.ok) {
-      this.logger.error("Failed to fetch CS2 update", {
-        status: response.status,
-        statusText: response.statusText,
+    if (!data) {
+      this.logger.error("No depots found for CS2", {
+        data,
       });
       return;
     }
 
-    const { data } = await response.json();
+    const depots: Map<string, Depot> = new Map();
+    for (const depotId in data.depots) {
+      const depot = data.depots[depotId] as Depot;
+      if (!depotId.match(/^[0-9]+$/) || !depot.config) {
+        continue;
+      }
 
-    const branches: {
-      [key: string]: {
-        buildid: string;
-        description: string;
-        timeupdated: string;
-      };
-    } = data["730"].depots?.branches;
+      if (
+        !depot.config.optionaldlc &&
+        depot.config.osarch === "64" &&
+        (!depot.config.oslist || depot.config.oslist.includes("linux"))
+      ) {
+        depots.set(depotId, depot);
+      }
+    }
 
     let versions = [];
-    for (const version in branches) {
-      const branch = branches[version];
+    for (const version in data.depots.branches) {
+      const branch = data.depots.branches[version];
 
-      versions.push(branch.buildid);
+      const buildId = parseInt(branch.buildid);
+
+      versions.push(buildId);
 
       if (version === "public") {
-        if (
-          (await this.gameServerNodeService.getCurrentBuild()) ===
-          branch.buildid
-        ) {
+        if ((await this.gameServerNodeService.getCurrentBuild()) === buildId) {
           continue;
         }
 
@@ -73,7 +98,7 @@ export class CheckGameUpdate extends WorkerHost {
             update_game_versions_by_pk: {
               __args: {
                 pk_columns: {
-                  build_id: branch.buildid,
+                  build_id: buildId,
                 },
                 _set: {
                   current: true,
@@ -93,12 +118,34 @@ export class CheckGameUpdate extends WorkerHost {
         continue;
       }
 
+      let downloadable = true;
+      const downloads: Array<{
+        gid: string;
+        depotId: string;
+      }> = [];
+      for (const depotId of depots.keys()) {
+        const gid = depots.get(depotId).manifests[version]?.gid;
+        if (!gid) {
+          downloadable = false;
+          break;
+        }
+        downloads.push({
+          gid,
+          depotId,
+        });
+      }
+
+      if (!downloadable) {
+        // this is when a version is not meant for a server
+        continue;
+      }
+
       const { game_versions } = await this.hasuraService.query({
         game_versions: {
           __args: {
             where: {
               build_id: {
-                _eq: branch.buildid,
+                _eq: buildId,
               },
             },
           },
@@ -115,16 +162,13 @@ export class CheckGameUpdate extends WorkerHost {
           __args: {
             object: {
               current: version === "public",
-              version: version,
-              build_id: branch.buildid,
+              version,
+              build_id: buildId,
               description: branch.description,
+              downloads,
               updated_at: branch.timeupdated
                 ? new Date(Number(branch.timeupdated) * 1000)
                 : new Date(),
-            },
-            on_conflict: {
-              constraint: "game_versions_pkey",
-              update_columns: ["build_id", "version", "updated_at"],
             },
           },
           __typename: true,
@@ -148,5 +192,35 @@ export class CheckGameUpdate extends WorkerHost {
         __typename: true,
       },
     });
+  }
+
+  private async getGameData(): Promise<{
+    depots: {
+      branches: {
+        [key: string]: Branch;
+      };
+    } & {
+      [key: string]: Depot | unknown;
+    };
+  }> {
+    return this.cache.remember(
+      "game-data",
+      async () => {
+        const response = await fetch("https://api.steamcmd.net/v1/info/730");
+
+        if (!response.ok) {
+          this.logger.error("Failed to fetch CS2 update", {
+            status: response.status,
+            statusText: response.statusText,
+          });
+          return;
+        }
+
+        const { data } = await response.json();
+
+        return data?.["730"];
+      },
+      5 * 60,
+    );
   }
 }

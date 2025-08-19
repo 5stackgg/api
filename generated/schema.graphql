@@ -35,6 +35,11 @@ type CpuStat {
   window: Float
 }
 
+type GetTestUploadResponse {
+  error: String
+  link: String
+}
+
 """
 Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'.
 """
@@ -165,6 +170,10 @@ type SuccessOutput {
 
 type TelemetryStats {
   online: Int!
+}
+
+type TestUploadResponse {
+  error: String
 }
 
 """
@@ -5324,7 +5333,7 @@ type game_server_nodes {
   label: String
   lan_ip: inet
   node_ip: inet
-  pin_build_id: String
+  pin_build_id: Int
   public_ip: inet
   region: String
 
@@ -5374,6 +5383,9 @@ type game_server_nodes {
   """
   total_server_count: Int
   update_status: String
+
+  """An object relationship"""
+  version: game_versions
 }
 
 """
@@ -5463,6 +5475,7 @@ type game_server_nodes_avg_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -5477,6 +5490,7 @@ order by avg() on columns of table "game_server_nodes"
 input game_server_nodes_avg_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -5497,7 +5511,7 @@ input game_server_nodes_bool_exp {
   label: String_comparison_exp
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
-  pin_build_id: String_comparison_exp
+  pin_build_id: Int_comparison_exp
   public_ip: inet_comparison_exp
   region: String_comparison_exp
   servers: servers_bool_exp
@@ -5509,6 +5523,7 @@ input game_server_nodes_bool_exp {
   token: String_comparison_exp
   total_server_count: Int_comparison_exp
   update_status: String_comparison_exp
+  version: game_versions_bool_exp
 }
 
 """
@@ -5527,6 +5542,7 @@ input type for incrementing numeric columns in table "game_server_nodes"
 input game_server_nodes_inc_input {
   build_id: Int
   end_port_range: Int
+  pin_build_id: Int
   start_port_range: Int
 }
 
@@ -5543,7 +5559,7 @@ input game_server_nodes_insert_input {
   label: String
   lan_ip: inet
   node_ip: inet
-  pin_build_id: String
+  pin_build_id: Int
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
@@ -5553,6 +5569,7 @@ input game_server_nodes_insert_input {
   supports_low_latency: Boolean
   token: String
   update_status: String
+  version: game_versions_obj_rel_insert_input
 }
 
 """aggregate max on columns"""
@@ -5565,7 +5582,7 @@ type game_server_nodes_max_fields {
   end_port_range: Int
   id: String
   label: String
-  pin_build_id: String
+  pin_build_id: Int
   region: String
   start_port_range: Int
   token: String
@@ -5602,7 +5619,7 @@ type game_server_nodes_min_fields {
   end_port_range: Int
   id: String
   label: String
-  pin_build_id: String
+  pin_build_id: Int
   region: String
   start_port_range: Int
   token: String
@@ -5682,6 +5699,7 @@ input game_server_nodes_order_by {
   token: order_by
   total_server_count: order_by
   update_status: order_by
+  version: game_versions_order_by
 }
 
 """primary key columns input for table: game_server_nodes"""
@@ -5781,7 +5799,7 @@ input game_server_nodes_set_input {
   label: String
   lan_ip: inet
   node_ip: inet
-  pin_build_id: String
+  pin_build_id: Int
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5800,6 +5818,7 @@ type game_server_nodes_stddev_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -5814,6 +5833,7 @@ order by stddev() on columns of table "game_server_nodes"
 input game_server_nodes_stddev_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -5825,6 +5845,7 @@ type game_server_nodes_stddev_pop_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -5839,6 +5860,7 @@ order by stddev_pop() on columns of table "game_server_nodes"
 input game_server_nodes_stddev_pop_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -5850,6 +5872,7 @@ type game_server_nodes_stddev_samp_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -5864,6 +5887,7 @@ order by stddev_samp() on columns of table "game_server_nodes"
 input game_server_nodes_stddev_samp_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -5887,7 +5911,7 @@ input game_server_nodes_stream_cursor_value_input {
   label: String
   lan_ip: inet
   node_ip: inet
-  pin_build_id: String
+  pin_build_id: Int
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5906,6 +5930,7 @@ type game_server_nodes_sum_fields {
   available_server_count: Int
   build_id: Int
   end_port_range: Int
+  pin_build_id: Int
   start_port_range: Int
 
   """
@@ -5920,6 +5945,7 @@ order by sum() on columns of table "game_server_nodes"
 input game_server_nodes_sum_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -5995,6 +6021,7 @@ type game_server_nodes_var_pop_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -6009,6 +6036,7 @@ order by var_pop() on columns of table "game_server_nodes"
 input game_server_nodes_var_pop_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -6020,6 +6048,7 @@ type game_server_nodes_var_samp_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -6034,6 +6063,7 @@ order by var_samp() on columns of table "game_server_nodes"
 input game_server_nodes_var_samp_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -6045,6 +6075,7 @@ type game_server_nodes_variance_fields {
   available_server_count: Int
   build_id: Float
   end_port_range: Float
+  pin_build_id: Float
   start_port_range: Float
 
   """
@@ -6059,6 +6090,7 @@ order by variance() on columns of table "game_server_nodes"
 input game_server_nodes_variance_order_by {
   build_id: order_by
   end_port_range: order_by
+  pin_build_id: order_by
   start_port_range: order_by
 }
 
@@ -6066,9 +6098,13 @@ input game_server_nodes_variance_order_by {
 columns and relationships of "game_versions"
 """
 type game_versions {
-  build_id: String!
+  build_id: Int!
   current: Boolean
   description: String!
+  downloads(
+    """JSON select path"""
+    path: String
+  ): jsonb
   updated_at: timestamptz!
   version: String!
 }
@@ -6085,9 +6121,27 @@ type game_versions_aggregate {
 aggregate fields of "game_versions"
 """
 type game_versions_aggregate_fields {
+  avg: game_versions_avg_fields
   count(columns: [game_versions_select_column!], distinct: Boolean): Int!
   max: game_versions_max_fields
   min: game_versions_min_fields
+  stddev: game_versions_stddev_fields
+  stddev_pop: game_versions_stddev_pop_fields
+  stddev_samp: game_versions_stddev_samp_fields
+  sum: game_versions_sum_fields
+  var_pop: game_versions_var_pop_fields
+  var_samp: game_versions_var_samp_fields
+  variance: game_versions_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input game_versions_append_input {
+  downloads: jsonb
+}
+
+"""aggregate avg on columns"""
+type game_versions_avg_fields {
+  build_id: Float
 }
 
 """
@@ -6097,9 +6151,10 @@ input game_versions_bool_exp {
   _and: [game_versions_bool_exp!]
   _not: game_versions_bool_exp
   _or: [game_versions_bool_exp!]
-  build_id: String_comparison_exp
+  build_id: Int_comparison_exp
   current: Boolean_comparison_exp
   description: String_comparison_exp
+  downloads: jsonb_comparison_exp
   updated_at: timestamptz_comparison_exp
   version: String_comparison_exp
 }
@@ -6109,30 +6164,59 @@ unique or primary key constraints on table "game_versions"
 """
 enum game_versions_constraint {
   """
-  unique or primary key constraint on columns "current"
-  """
-  game_versions_current_key
-
-  """
   unique or primary key constraint on columns "build_id"
   """
   game_versions_pkey
+
+  """
+  unique or primary key constraint on columns "current"
+  """
+  idx_game_versions_current
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input game_versions_delete_at_path_input {
+  downloads: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input game_versions_delete_elem_input {
+  downloads: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input game_versions_delete_key_input {
+  downloads: String
+}
+
+"""
+input type for incrementing numeric columns in table "game_versions"
+"""
+input game_versions_inc_input {
+  build_id: Int
 }
 
 """
 input type for inserting data into table "game_versions"
 """
 input game_versions_insert_input {
-  build_id: String
+  build_id: Int
   current: Boolean
   description: String
+  downloads: jsonb
   updated_at: timestamptz
   version: String
 }
 
 """aggregate max on columns"""
 type game_versions_max_fields {
-  build_id: String
+  build_id: Int
   description: String
   updated_at: timestamptz
   version: String
@@ -6140,7 +6224,7 @@ type game_versions_max_fields {
 
 """aggregate min on columns"""
 type game_versions_min_fields {
-  build_id: String
+  build_id: Int
   description: String
   updated_at: timestamptz
   version: String
@@ -6158,6 +6242,16 @@ type game_versions_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "game_versions"
+"""
+input game_versions_obj_rel_insert_input {
+  data: game_versions_insert_input!
+
+  """upsert condition"""
+  on_conflict: game_versions_on_conflict
+}
+
+"""
 on_conflict condition type for table "game_versions"
 """
 input game_versions_on_conflict {
@@ -6171,13 +6265,19 @@ input game_versions_order_by {
   build_id: order_by
   current: order_by
   description: order_by
+  downloads: order_by
   updated_at: order_by
   version: order_by
 }
 
 """primary key columns input for table: game_versions"""
 input game_versions_pk_columns_input {
-  build_id: String!
+  build_id: Int!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input game_versions_prepend_input {
+  downloads: jsonb
 }
 
 """
@@ -6194,6 +6294,9 @@ enum game_versions_select_column {
   description
 
   """column name"""
+  downloads
+
+  """column name"""
   updated_at
 
   """column name"""
@@ -6204,11 +6307,27 @@ enum game_versions_select_column {
 input type for updating data in table "game_versions"
 """
 input game_versions_set_input {
-  build_id: String
+  build_id: Int
   current: Boolean
   description: String
+  downloads: jsonb
   updated_at: timestamptz
   version: String
+}
+
+"""aggregate stddev on columns"""
+type game_versions_stddev_fields {
+  build_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type game_versions_stddev_pop_fields {
+  build_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type game_versions_stddev_samp_fields {
+  build_id: Float
 }
 
 """
@@ -6224,11 +6343,17 @@ input game_versions_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input game_versions_stream_cursor_value_input {
-  build_id: String
+  build_id: Int
   current: Boolean
   description: String
+  downloads: jsonb
   updated_at: timestamptz
   version: String
+}
+
+"""aggregate sum on columns"""
+type game_versions_sum_fields {
+  build_id: Int
 }
 
 """
@@ -6245,6 +6370,9 @@ enum game_versions_update_column {
   description
 
   """column name"""
+  downloads
+
+  """column name"""
   updated_at
 
   """column name"""
@@ -6252,11 +6380,50 @@ enum game_versions_update_column {
 }
 
 input game_versions_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: game_versions_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: game_versions_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: game_versions_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: game_versions_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: game_versions_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: game_versions_prepend_input
+
   """sets the columns of the filtered rows to the given values"""
   _set: game_versions_set_input
 
   """filter the rows which have to be updated"""
   where: game_versions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type game_versions_var_pop_fields {
+  build_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type game_versions_var_samp_fields {
+  build_id: Float
+}
+
+"""aggregate variance on columns"""
+type game_versions_variance_fields {
+  build_id: Float
 }
 
 scalar inet
@@ -14553,7 +14720,7 @@ type mutation_root {
   """
   delete single row from the table: "game_versions"
   """
-  delete_game_versions_by_pk(build_id: String!): game_versions
+  delete_game_versions_by_pk(build_id: Int!): game_versions
 
   """
   delete data from the table: "lobbies"
@@ -15060,8 +15227,17 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: v_match_captains_bool_exp!
   ): v_match_captains_mutation_response
+
+  """
+  delete data from the table: "v_pool_maps"
+  """
+  delete_v_pool_maps(
+    """filter the rows which have to be deleted"""
+    where: v_pool_maps_bool_exp!
+  ): v_pool_maps_mutation_response
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
+  getTestUploadLink: GetTestUploadResponse!
 
   """
   insert data into the table: "_map_pool"
@@ -16510,6 +16686,22 @@ type mutation_root {
     """the row to be inserted"""
     object: v_match_captains_insert_input!
   ): v_match_captains
+
+  """
+  insert data into the table: "v_pool_maps"
+  """
+  insert_v_pool_maps(
+    """the rows to be inserted"""
+    objects: [v_pool_maps_insert_input!]!
+  ): v_pool_maps_mutation_response
+
+  """
+  insert a single row into the table: "v_pool_maps"
+  """
+  insert_v_pool_maps_one(
+    """the row to be inserted"""
+    object: v_pool_maps_insert_input!
+  ): v_pool_maps
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
   leaveLineup(match_id: String!): SuccessOutput
 
@@ -16530,6 +16722,7 @@ type mutation_root {
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
   syncSteamFriends: SuccessOutput
+  testUpload: TestUploadResponse
   unlinkDiscord: SuccessOutput
   updateCs(game_server_node_id: uuid): SuccessOutput
   updateServices: SuccessOutput
@@ -17256,6 +17449,30 @@ type mutation_root {
   update data of the table: "game_versions"
   """
   update_game_versions(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_versions_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_versions_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_versions_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_versions_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: game_versions_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_versions_prepend_input
+
     """sets the columns of the filtered rows to the given values"""
     _set: game_versions_set_input
 
@@ -17267,6 +17484,30 @@ type mutation_root {
   update single row of the table: "game_versions"
   """
   update_game_versions_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_versions_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_versions_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_versions_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_versions_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: game_versions_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_versions_prepend_input
+
     """sets the columns of the filtered rows to the given values"""
     _set: game_versions_set_input
     pk_columns: game_versions_pk_columns_input!
@@ -18641,6 +18882,25 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_match_captains_updates!]!
   ): [v_match_captains_mutation_response]
+
+  """
+  update data of the table: "v_pool_maps"
+  """
+  update_v_pool_maps(
+    """sets the columns of the filtered rows to the given values"""
+    _set: v_pool_maps_set_input
+
+    """filter the rows which have to be updated"""
+    where: v_pool_maps_bool_exp!
+  ): v_pool_maps_mutation_response
+
+  """
+  update multiples rows of table: "v_pool_maps"
+  """
+  update_v_pool_maps_many(
+    """updates to execute, in order"""
+    updates: [v_pool_maps_updates!]!
+  ): [v_pool_maps_mutation_response]
 }
 
 """
@@ -26777,7 +27037,7 @@ type query_root {
   ): game_versions_aggregate!
 
   """fetch data from the table: "game_versions" using primary key columns"""
-  game_versions_by_pk(build_id: String!): game_versions
+  game_versions_by_pk(build_id: Int!): game_versions
   getNodeStats: [NodeStats]!
   getServiceStats: [PodStats]!
 
@@ -31523,7 +31783,7 @@ type subscription_root {
   ): game_versions_aggregate!
 
   """fetch data from the table: "game_versions" using primary key columns"""
-  game_versions_by_pk(build_id: String!): game_versions
+  game_versions_by_pk(build_id: Int!): game_versions
 
   """
   fetch data from the table in a streaming manner: "game_versions"
@@ -41036,6 +41296,17 @@ input v_pool_maps_min_order_by {
   workshop_map_id: order_by
 }
 
+"""
+response of any mutation on the table "v_pool_maps"
+"""
+type v_pool_maps_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [v_pool_maps!]!
+}
+
 """Ordering options when selecting data from "v_pool_maps"."""
 input v_pool_maps_order_by {
   active_pool: order_by
@@ -41099,6 +41370,21 @@ enum v_pool_maps_select_column_v_pool_maps_aggregate_bool_exp_bool_or_arguments_
 }
 
 """
+input type for updating data in table "v_pool_maps"
+"""
+input v_pool_maps_set_input {
+  active_pool: Boolean
+  id: uuid
+  label: String
+  map_pool_id: uuid
+  name: String
+  patch: String
+  poster: String
+  type: String
+  workshop_map_id: String
+}
+
+"""
 Streaming cursor of the table "v_pool_maps"
 """
 input v_pool_maps_stream_cursor_input {
@@ -41120,4 +41406,12 @@ input v_pool_maps_stream_cursor_value_input {
   poster: String
   type: String
   workshop_map_id: String
+}
+
+input v_pool_maps_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: v_pool_maps_set_input
+
+  """filter the rows which have to be updated"""
+  where: v_pool_maps_bool_exp!
 }

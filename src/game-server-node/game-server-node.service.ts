@@ -231,6 +231,9 @@ export class GameServerNodeService {
         },
         build_id: true,
         pin_build_id: true,
+        version: {
+          downloads: true,
+        },
       },
     });
 
@@ -239,8 +242,8 @@ export class GameServerNodeService {
       throw new Error("Game server not found");
     }
 
-    const nodeBuildId = game_server_nodes_by_pk.build_id?.toString();
-    const pinBuildId = game_server_nodes_by_pk.pin_build_id?.toString();
+    const nodeBuildId = game_server_nodes_by_pk.build_id;
+    const pinBuildId = game_server_nodes_by_pk.pin_build_id;
 
     if (!force) {
       if (pinBuildId) {
@@ -324,8 +327,8 @@ export class GameServerNodeService {
                       ...(pinBuildId
                         ? [
                             {
-                              name: "BUILD_ID",
-                              value: pinBuildId,
+                              name: "BUILD_MANIFESTS",
+                              value: game_server_nodes_by_pk.version.downloads,
                             },
                           ]
                         : []),

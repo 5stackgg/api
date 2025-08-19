@@ -8,6 +8,15 @@ object_relationships:
   - name: e_status
     using:
       foreign_key_constraint_on: status
+  - name: version
+    using:
+      manual_configuration:
+        column_mapping:
+          build_id: build_id
+        insertion_order: null
+        remote_table:
+          name: game_versions
+          schema: public
 array_relationships:
   - name: servers
     using:
