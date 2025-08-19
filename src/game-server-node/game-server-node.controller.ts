@@ -132,7 +132,8 @@ export class GameServerNodeController {
     const map = request.query.map;
     const serverId = request.params.serverId;
 
-    let { steamRelay, pluginVersion } = request.query as {
+    let { steamRelay, pluginVersion, steamID } = request.query as {
+      steamID: string;
       steamRelay: string;
       pluginVersion: string;
     };
@@ -201,33 +202,7 @@ export class GameServerNodeController {
       }
     }
 
-    let status;
-    let steamRelayId = null;
-
-    const rcon = await this.rcon.connect(serverId);
-
-    if (rcon) {
-      if (steamRelay.toLowerCase() === "true") {
-        status = await rcon.send("status_json");
-
-        if (status) {
-          const {
-            server: { steamid },
-          } = JSON.parse(status) as {
-            server: {
-              steamid: string;
-            };
-          };
-
-          if (steamid !== "[A:1:0:0]") {
-            steamRelayId = steamid;
-          }
-        }
-      }
-      await this.rcon.disconnect(serverId);
-    }
-
-    if (!server.connected || server.steam_relay !== steamRelayId) {
+    if (!server.connected || server.steam_relay !== steamID) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -236,7 +211,7 @@ export class GameServerNodeController {
             },
             _set: {
               connected: true,
-              steam_relay: steamRelayId,
+              steam_relay: steamRelay && steamID,
               plugin_version: pluginVersion,
             },
           },
