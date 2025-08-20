@@ -405,6 +405,12 @@ export class MatchAssistantService {
       const { servers } = await this.hasura.query({
         servers: {
           __args: {
+            limit: 1,
+            order_by: [
+              {
+                updated_at: "asc",
+              },
+            ],
             where: {
               _and: [
                 ...(match.region
@@ -706,6 +712,7 @@ export class MatchAssistantService {
                 id: server.id,
               },
               _set: {
+                connected: false,
                 reserved_by_match_id: matchId,
               },
             },

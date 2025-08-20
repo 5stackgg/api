@@ -31996,6 +31996,9 @@ export default {
             "tv_port": [
                 5
             ],
+            "updated_at": [
+                1827
+            ],
             "__typename": [
                 12
             ]
@@ -32267,6 +32270,9 @@ export default {
             "tv_port": [
                 6
             ],
+            "updated_at": [
+                1828
+            ],
             "__typename": [
                 12
             ]
@@ -32341,6 +32347,9 @@ export default {
             "tv_port": [
                 5
             ],
+            "updated_at": [
+                1827
+            ],
             "__typename": [
                 12
             ]
@@ -32379,6 +32388,9 @@ export default {
             "tv_port": [
                 5
             ],
+            "updated_at": [
+                1827
+            ],
             "__typename": [
                 12
             ]
@@ -32415,6 +32427,9 @@ export default {
                 1239
             ],
             "tv_port": [
+                1239
+            ],
+            "updated_at": [
                 1239
             ],
             "__typename": [
@@ -32455,6 +32470,9 @@ export default {
             "tv_port": [
                 5
             ],
+            "updated_at": [
+                1827
+            ],
             "__typename": [
                 12
             ]
@@ -32491,6 +32509,9 @@ export default {
                 1239
             ],
             "tv_port": [
+                1239
+            ],
+            "updated_at": [
                 1239
             ],
             "__typename": [
@@ -32594,6 +32615,9 @@ export default {
             "tv_port": [
                 1239
             ],
+            "updated_at": [
+                1239
+            ],
             "__typename": [
                 12
             ]
@@ -32654,6 +32678,9 @@ export default {
             ],
             "tv_port": [
                 5
+            ],
+            "updated_at": [
+                1827
             ],
             "__typename": [
                 12
@@ -32781,6 +32808,9 @@ export default {
             ],
             "tv_port": [
                 5
+            ],
+            "updated_at": [
+                1827
             ],
             "__typename": [
                 12

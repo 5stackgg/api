@@ -138,6 +138,10 @@ export class GameServerNodeController {
       pluginVersion: string;
     };
 
+    if (steamRelay && steamID === "") {
+      return;
+    }
+
     if (pluginVersion === "__RELEASE_VERSION__") {
       const { settings_by_pk } = await this.hasura.query({
         settings_by_pk: {

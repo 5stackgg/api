@@ -29564,6 +29564,7 @@ type servers {
   server_region: server_regions
   steam_relay: String
   tv_port: Int
+  updated_at: timestamptz
 }
 
 """
@@ -29687,6 +29688,7 @@ input servers_bool_exp {
   server_region: server_regions_bool_exp
   steam_relay: String_comparison_exp
   tv_port: Int_comparison_exp
+  updated_at: timestamptz_comparison_exp
 }
 
 """
@@ -29735,6 +29737,7 @@ input servers_insert_input {
   server_region: server_regions_obj_rel_insert_input
   steam_relay: String
   tv_port: Int
+  updated_at: timestamptz
 }
 
 """aggregate max on columns"""
@@ -29750,6 +29753,7 @@ type servers_max_fields {
   reserved_by_match_id: uuid
   steam_relay: String
   tv_port: Int
+  updated_at: timestamptz
 }
 
 """
@@ -29767,6 +29771,7 @@ input servers_max_order_by {
   reserved_by_match_id: order_by
   steam_relay: order_by
   tv_port: order_by
+  updated_at: order_by
 }
 
 """aggregate min on columns"""
@@ -29782,6 +29787,7 @@ type servers_min_fields {
   reserved_by_match_id: uuid
   steam_relay: String
   tv_port: Int
+  updated_at: timestamptz
 }
 
 """
@@ -29799,6 +29805,7 @@ input servers_min_order_by {
   reserved_by_match_id: order_by
   steam_relay: order_by
   tv_port: order_by
+  updated_at: order_by
 }
 
 """
@@ -29853,6 +29860,7 @@ input servers_order_by {
   server_region: server_regions_order_by
   steam_relay: order_by
   tv_port: order_by
+  updated_at: order_by
 }
 
 """primary key columns input for table: servers"""
@@ -29908,6 +29916,9 @@ enum servers_select_column {
 
   """column name"""
   tv_port
+
+  """column name"""
+  updated_at
 }
 
 """
@@ -29957,6 +29968,7 @@ input servers_set_input {
   reserved_by_match_id: uuid
   steam_relay: String
   tv_port: Int
+  updated_at: timestamptz
 }
 
 """aggregate stddev on columns"""
@@ -30029,6 +30041,7 @@ input servers_stream_cursor_value_input {
   reserved_by_match_id: uuid
   steam_relay: String
   tv_port: Int
+  updated_at: timestamptz
 }
 
 """aggregate sum on columns"""
@@ -30093,6 +30106,9 @@ enum servers_update_column {
 
   """column name"""
   tv_port
+
+  """column name"""
+  updated_at
 }
 
 input servers_updates {
