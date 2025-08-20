@@ -138,7 +138,7 @@ export class GameServerNodeController {
       pluginVersion: string;
     };
 
-    if (steamRelay && steamID === "") {
+    if (steamRelay && !steamID) {
       return;
     }
 
