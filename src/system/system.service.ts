@@ -299,15 +299,26 @@ export class SystemService {
         namespace: "5stack",
       });
 
-      return (
-        service === "hasura"
-          ? pod.status.initContainerStatuses.at(0).imageID
-          : pod.status.containerStatuses.at(0).imageID
-      )
-        .split("@")
-        .at(1);
+      let imageID: string | undefined;
+
+      if (service === "hasura") {
+        imageID = pod.status?.initContainerStatuses?.[0]?.imageID;
+      } else {
+        imageID = pod.status?.containerStatuses?.[0]?.imageID;
+      }
+
+      if (!imageID) {
+        throw new Error("imageID not found");
+      }
+
+      const parts = imageID.split("@");
+      if (parts.length < 2) {
+        throw new Error("imageID format invalid");
+      }
+
+      return parts[1];
     } catch (error) {
-      console.error(`Error fetching pod info: ${error.message}`);
+      console.error(`Error fetching pod info: ${error?.message || error}`);
     }
   }
 
