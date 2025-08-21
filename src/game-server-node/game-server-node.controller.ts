@@ -206,7 +206,11 @@ export class GameServerNodeController {
       }
     }
 
-    if (!server.connected || server.steam_relay !== steamID) {
+    if (
+      !server.connected ||
+      (server.steam_relay && !steamRelay) ||
+      server.steam_relay !== steamID
+    ) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -215,7 +219,7 @@ export class GameServerNodeController {
             },
             _set: {
               connected: true,
-              steam_relay: steamRelay && steamID,
+              steam_relay: steamRelay ? steamID : null,
               plugin_version: pluginVersion,
             },
           },
