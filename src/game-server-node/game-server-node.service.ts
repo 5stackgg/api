@@ -155,7 +155,7 @@ export class GameServerNodeService {
               public_ip: publicIP,
               supports_low_latency: supportsLowLatency,
               supports_cpu_pinning: supportsCpuPinning,
-              ...(csBulid ? { build_id: csBulid } : {}),
+              build_id: csBulid || null,
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
           },

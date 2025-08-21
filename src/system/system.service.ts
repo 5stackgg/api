@@ -318,7 +318,7 @@ export class SystemService {
 
       return parts[1];
     } catch (error) {
-      console.error(`Error fetching pod info: ${error?.message || error}`);
+      this.logger.error(`Error fetching pod info: ${error?.message || error}`);
     }
   }
 

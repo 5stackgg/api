@@ -46,6 +46,17 @@ export class RconService {
       throw Error(`unable to find server ${serverId}`);
     }
 
+    console.info({
+      timeout: this.CONNECTION_TIMEOUT,
+      host: server.game_server_node?.node_ip
+        ? server.game_server_node.node_ip
+        : server.host,
+      port: server.port,
+      password: await this.encryption.decrypt(
+        server.rcon_password as unknown as string,
+      ),
+    });
+
     const rcon = new RconClient({
       timeout: this.CONNECTION_TIMEOUT,
       host: server.game_server_node?.node_ip
