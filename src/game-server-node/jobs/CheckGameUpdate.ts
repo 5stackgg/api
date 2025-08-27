@@ -126,7 +126,7 @@ export class CheckGameUpdate extends WorkerHost {
         insert_game_versions_one: {
           __args: {
             object: {
-              current: version === "public",
+              current: false,
               version,
               build_id: branch.buildid,
               description: branch.description || branch.buildid.toString(),
