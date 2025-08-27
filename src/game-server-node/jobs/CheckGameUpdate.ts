@@ -21,9 +21,19 @@ type Depot = {
 };
 
 type Branch = {
-  buildid: string;
+  buildid: number;
   description: string;
   timeupdated: string;
+};
+
+type GameData = {
+  depots: {
+    branches: {
+      [key: string]: Branch;
+    };
+  } & {
+    [key: string]: Depot | unknown;
+  };
 };
 
 @UseQueue("GameServerNode", GameServerQueues.GameUpdate)
@@ -71,55 +81,7 @@ export class CheckGameUpdate extends WorkerHost {
     for (const version in data.depots.branches) {
       const branch = data.depots.branches[version];
 
-      const buildId = parseInt(branch.buildid);
-
-      versions.push(buildId);
-
-      if (version === "public") {
-        if ((await this.gameServerNodeService.getCurrentBuild()) === buildId) {
-          continue;
-        }
-
-        await this.hasuraService.mutation({
-          update_game_versions: {
-            __args: {
-              where: {
-                current: {
-                  _eq: true,
-                },
-              },
-              _set: {
-                current: false,
-              },
-            },
-            __typename: true,
-          },
-        });
-
-        const { update_game_versions_by_pk } =
-          await this.hasuraService.mutation({
-            update_game_versions_by_pk: {
-              __args: {
-                pk_columns: {
-                  build_id: buildId,
-                },
-                _set: {
-                  current: true,
-                },
-              },
-              version: true,
-            },
-          });
-
-        this.notifications.send("GameUpdate", {
-          message: `A CS2 Update (${update_game_versions_by_pk.version}) has been detected. The Game Node Servers that do not have a build pin will update automatically.`,
-          title: "CS2 Update",
-          role: "administrator",
-        });
-
-        await this.gameServerNodeService.updateCs();
-        continue;
-      }
+      versions.push(branch.buildid);
 
       let downloadable = true;
       const downloads: Array<{
@@ -148,7 +110,7 @@ export class CheckGameUpdate extends WorkerHost {
           __args: {
             where: {
               build_id: {
-                _eq: buildId,
+                _eq: branch.buildid,
               },
             },
           },
@@ -164,10 +126,10 @@ export class CheckGameUpdate extends WorkerHost {
         insert_game_versions_one: {
           __args: {
             object: {
-              current: version === "public",
+              current: false,
               version,
-              build_id: buildId,
-              description: branch.description,
+              build_id: branch.buildid,
+              description: branch.description || branch.buildid.toString(),
               downloads,
               updated_at: branch.timeupdated
                 ? new Date(Number(branch.timeupdated) * 1000)
@@ -195,17 +157,61 @@ export class CheckGameUpdate extends WorkerHost {
         __typename: true,
       },
     });
+
+    await this.updateCurrentBuild(data.depots.branches["public"]);
   }
 
-  private async getGameData(): Promise<{
-    depots: {
-      branches: {
-        [key: string]: Branch;
-      };
-    } & {
-      [key: string]: Depot | unknown;
-    };
-  }> {
+  private async updateCurrentBuild(publicBranch: Branch) {
+    if (!publicBranch) {
+      return;
+    }
+
+    const currentBuild = await this.gameServerNodeService.getCurrentBuild();
+
+    if (currentBuild === publicBranch.buildid) {
+      return;
+    }
+
+    await this.hasuraService.mutation({
+      update_game_versions: {
+        __args: {
+          where: {
+            current: {
+              _eq: true,
+            },
+          },
+          _set: {
+            current: false,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    const { update_game_versions_by_pk } = await this.hasuraService.mutation({
+      update_game_versions_by_pk: {
+        __args: {
+          pk_columns: {
+            build_id: publicBranch.buildid,
+          },
+          _set: {
+            current: true,
+          },
+        },
+        version: true,
+      },
+    });
+
+    this.notifications.send("GameUpdate", {
+      message: `A CS2 Update (${update_game_versions_by_pk.version === "public" ? publicBranch.buildid.toString() : update_game_versions_by_pk.version}) has been detected. The Game Node Servers that do not have a build pin will update automatically.`,
+      title: "CS2 Update",
+      role: "administrator",
+    });
+
+    await this.gameServerNodeService.updateCs();
+  }
+
+  private async getGameData(): Promise<GameData> {
     const response = await fetch("https://api.steamcmd.net/v1/info/730");
 
     if (!response.ok) {
@@ -217,7 +223,14 @@ export class CheckGameUpdate extends WorkerHost {
     }
 
     const { data } = await response.json();
+    const gameData = data?.["730"] as GameData;
 
-    return data?.["730"];
+    for (const branch in gameData.depots.branches) {
+      gameData.depots.branches[branch].buildid = parseInt(
+        gameData.depots.branches[branch].buildid as unknown as string,
+      );
+    }
+
+    return gameData;
   }
 }
