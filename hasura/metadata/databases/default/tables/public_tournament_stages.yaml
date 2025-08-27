@@ -24,10 +24,11 @@ insert_permissions:
           organizer_steam_id:
             _eq: X-Hasura-User-Id
       columns:
+        - group
         - max_teams
         - min_teams
-        - order
         - settings
+        - stage
         - tournament_id
         - type
     comment: ""
@@ -35,13 +36,14 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - group
+        - id
         - max_teams
         - min_teams
-        - order
         - settings
-        - type
-        - id
+        - stage
         - tournament_id
+        - type
       filter: {}
       allow_aggregations: true
     comment: ""
@@ -49,10 +51,11 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - group
         - max_teams
         - min_teams
-        - order
         - settings
+        - stage
         - type
       filter:
         tournament:

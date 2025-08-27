@@ -21,7 +21,7 @@ BEGIN
     FOR bracket IN
         SELECT tb.*
         FROM tournament_brackets tb
-        INNER JOIN tournament_stages ts on ts.id = tb.tournament_stage_id and ts.order = 1
+        INNER JOIN tournament_stages ts on ts.id = tb.tournament_stage_id and ts.stage = 1
         WHERE tournament_id = tournament.id
         ORDER BY match_number ASC
     LOOP

@@ -32,7 +32,7 @@ BEGIN
         SELECT *
         FROM tournament_stages
         WHERE tournament_id = _tournament_id
-        ORDER BY "order"
+        ORDER BY "stage", "group"
     LOOP
         -- Delete existing brackets for this stage
         DELETE FROM tournament_brackets WHERE tournament_stage_id = stage.id;
