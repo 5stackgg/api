@@ -5,20 +5,32 @@ AS $$
 DECLARE
     total_teams int := 0;
     tournament_min_teams int := 0;
+    tournament_status text;
 BEGIN
-   SELECT ts.min_teams, COUNT(tt.*)
-       INTO tournament_min_teams, total_teams
-       FROM tournament_stages ts
-       INNER JOIN tournament_teams tt
-       ON tt.tournament_id = ts.tournament_id
-       WHERE ts.tournament_id = tournament.id
-       GROUP BY ts.min_teams
-       LIMIT 1;
+    -- Get tournament status for context
+    SELECT status INTO tournament_status
+    FROM tournaments
+    WHERE id = tournament.id;
+    
+    -- Get minimum teams required for stage 1
+    SELECT 
+        SUM(ts.min_teams) into tournament_min_teams
+        FROM tournament_stages ts
+        WHERE ts.tournament_id = tournament.id
+        AND ts.order = 1;
 
-   IF NOT FOUND THEN
-       RETURN FALSE;
-   END IF;
+    -- Count actual eligible teams
+    SELECT COUNT(tt.*)
+        INTO total_teams
+        FROM tournament_teams tt
+        WHERE tt.tournament_id = tournament.id
+        and tt.eligible_at is not null;
 
-   RETURN tournament_min_teams <= total_teams;
+    -- Log validation details
+    RAISE NOTICE 'Tournament % (status: %): %/% teams (actual/required)', 
+        tournament.id, tournament_status, total_teams, tournament_min_teams;
+
+    -- Return validation result
+    RETURN tournament_min_teams <= total_teams;
 END;
 $$;

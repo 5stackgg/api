@@ -10,8 +10,6 @@ BEGIN
     FROM match_lineup_players
     WHERE match_lineup_id = _match_lineup_id AND captain = true;
 
-    -- RAISE EXCEPTION 'Cannot add players: not in picking players status captain_count %', captain_count USING ERRCODE = '22000';
-
     IF captain_count = 0 THEN
         -- Select the first player (by ID) to be the new captain
         SELECT steam_id INTO new_captain_id
