@@ -52,7 +52,6 @@ export class S3Controller {
       const data = await fetch(
         await this.s3.getPresignedUrl("hello.txt", 60, "get"),
       );
-      console.info("DATA", await data.text());
 
       return {
         link: await this.s3.getPresignedUrl("hello.txt", 60, "get"),
