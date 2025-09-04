@@ -571,10 +571,10 @@ update_permissions:
         - server_id
         - winning_lineup_id
       filter:
-        is_tournament_match:
+        is_organizer:
           _eq: true
       check:
-        is_tournament_match:
+        is_organizer:
           _eq: true
     comment: ""
   - role: user
@@ -601,13 +601,13 @@ delete_permissions:
   - role: match_organizer
     permission:
       filter:
-        is_tournament_match:
-          _eq: false
+        is_organizer:
+          _eq: true
     comment: ""
   - role: tournament_organizer
     permission:
       filter:
-        is_tournament_match:
+        is_organizer:
           _eq: true
     comment: ""
   - role: user

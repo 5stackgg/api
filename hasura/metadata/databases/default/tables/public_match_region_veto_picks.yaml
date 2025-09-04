@@ -22,8 +22,8 @@ insert_permissions:
     permission:
       check:
         match:
-          is_tournament_match:
-            _eq: false
+          is_organizer:
+            _eq: true
       columns:
         - id
         - match_id
@@ -34,7 +34,7 @@ insert_permissions:
     permission:
       check:
         match:
-          is_tournament_match:
+          is_organizer:
             _eq: true
       columns:
         - id
