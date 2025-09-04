@@ -6,6 +6,7 @@ DECLARE
     parent_bracket tournament_brackets%ROWTYPE;
     winning_team_id UUID;
     bracket_spot_1 UUID;
+    tournament_id UUID;
 BEGIN
     -- If there's no winning lineup, return the match row as is
     IF match.winning_lineup_id IS NULL THEN
@@ -61,7 +62,14 @@ BEGIN
     -- Schedule the next match for the current bracket
     PERFORM schedule_tournament_match(bracket);
 
-    PERFORM check_tournament_finished(bracket.tournament_id);
+    -- Get tournament_id from tournament_stages and check if tournament is finished
+    SELECT ts.tournament_id INTO tournament_id
+    FROM tournament_stages ts 
+    WHERE ts.id = bracket.tournament_stage_id;
+    
+    IF tournament_id IS NOT NULL THEN
+        PERFORM check_tournament_finished(tournament_id);
+    END IF;
 
     RETURN;
 END;
