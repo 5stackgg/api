@@ -60,6 +60,9 @@ BEGIN
     
     -- Schedule the next match for the current bracket
     PERFORM schedule_tournament_match(bracket);
+
+    PERFORM check_tournament_finished(bracket.tournament_id);
+
     RETURN;
 END;
 $$;

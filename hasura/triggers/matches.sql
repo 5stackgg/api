@@ -178,10 +178,13 @@ BEGIN
         NEW.status = 'Live';
     END IF;
 
-
     IF(OLD.status = 'Finished' AND NEW.status = 'Canceled') THEN
       RAISE EXCEPTION 'Cannot cancel a match that is already finished' USING ERRCODE = '22000';
     END IF;
+
+    IF NEW.winning_lineup_id IS NOT NULL THEN
+        NEW.status = 'Finished';
+    END IF;   
 
     IF NEW.scheduled_at IS NOT NULL AND NEW.status = 'Scheduled' THEN
         NEW.cancels_at = null;
@@ -193,8 +196,7 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
-
-     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
+    IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
         NEW.cancels_at = NOW() + INTERVAL '15 minutes';
         NEW.ended_at = null;
     END IF;

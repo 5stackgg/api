@@ -4252,6 +4252,9 @@ enum e_tournament_stage_types_constraint {
 }
 
 enum e_tournament_stage_types_enum {
+  """Double Elimination"""
+  DoubleElimination
+
   """Single Elimination"""
   SingleElimination
 }
@@ -35922,7 +35925,9 @@ input timestamptz_comparison_exp {
 columns and relationships of "tournament_brackets"
 """
 type tournament_brackets {
+  bye: Boolean!
   created_at: timestamptz!
+  group: numeric
   id: uuid!
 
   """An object relationship"""
@@ -35954,7 +35959,23 @@ type tournament_brackets_aggregate {
 }
 
 input tournament_brackets_aggregate_bool_exp {
+  bool_and: tournament_brackets_aggregate_bool_exp_bool_and
+  bool_or: tournament_brackets_aggregate_bool_exp_bool_or
   count: tournament_brackets_aggregate_bool_exp_count
+}
+
+input tournament_brackets_aggregate_bool_exp_bool_and {
+  arguments: tournament_brackets_select_column_tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: tournament_brackets_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input tournament_brackets_aggregate_bool_exp_bool_or {
+  arguments: tournament_brackets_select_column_tournament_brackets_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: tournament_brackets_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input tournament_brackets_aggregate_bool_exp_count {
@@ -36010,6 +36031,7 @@ input tournament_brackets_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type tournament_brackets_avg_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36018,6 +36040,7 @@ type tournament_brackets_avg_fields {
 order by avg() on columns of table "tournament_brackets"
 """
 input tournament_brackets_avg_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
@@ -36029,7 +36052,9 @@ input tournament_brackets_bool_exp {
   _and: [tournament_brackets_bool_exp!]
   _not: tournament_brackets_bool_exp
   _or: [tournament_brackets_bool_exp!]
+  bye: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
+  group: numeric_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -36063,6 +36088,7 @@ enum tournament_brackets_constraint {
 input type for incrementing numeric columns in table "tournament_brackets"
 """
 input tournament_brackets_inc_input {
+  group: numeric
   match_number: Int
   round: Int
 }
@@ -36071,7 +36097,9 @@ input tournament_brackets_inc_input {
 input type for inserting data into table "tournament_brackets"
 """
 input tournament_brackets_insert_input {
+  bye: Boolean
   created_at: timestamptz
+  group: numeric
   id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -36089,6 +36117,7 @@ input tournament_brackets_insert_input {
 """aggregate max on columns"""
 type tournament_brackets_max_fields {
   created_at: timestamptz
+  group: numeric
   id: uuid
   match_id: uuid
   match_number: Int
@@ -36104,6 +36133,7 @@ order by max() on columns of table "tournament_brackets"
 """
 input tournament_brackets_max_order_by {
   created_at: order_by
+  group: order_by
   id: order_by
   match_id: order_by
   match_number: order_by
@@ -36117,6 +36147,7 @@ input tournament_brackets_max_order_by {
 """aggregate min on columns"""
 type tournament_brackets_min_fields {
   created_at: timestamptz
+  group: numeric
   id: uuid
   match_id: uuid
   match_number: Int
@@ -36132,6 +36163,7 @@ order by min() on columns of table "tournament_brackets"
 """
 input tournament_brackets_min_order_by {
   created_at: order_by
+  group: order_by
   id: order_by
   match_id: order_by
   match_number: order_by
@@ -36164,7 +36196,9 @@ input tournament_brackets_on_conflict {
 
 """Ordering options when selecting data from "tournament_brackets"."""
 input tournament_brackets_order_by {
+  bye: order_by
   created_at: order_by
+  group: order_by
   id: order_by
   match: matches_order_by
   match_id: order_by
@@ -36189,7 +36223,13 @@ select columns of table "tournament_brackets"
 """
 enum tournament_brackets_select_column {
   """column name"""
+  bye
+
+  """column name"""
   created_at
+
+  """column name"""
+  group
 
   """column name"""
   id
@@ -36217,10 +36257,28 @@ enum tournament_brackets_select_column {
 }
 
 """
+select "tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_brackets"
+"""
+enum tournament_brackets_select_column_tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  bye
+}
+
+"""
+select "tournament_brackets_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_brackets"
+"""
+enum tournament_brackets_select_column_tournament_brackets_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  bye
+}
+
+"""
 input type for updating data in table "tournament_brackets"
 """
 input tournament_brackets_set_input {
+  bye: Boolean
   created_at: timestamptz
+  group: numeric
   id: uuid
   match_id: uuid
   match_number: Int
@@ -36233,6 +36291,7 @@ input tournament_brackets_set_input {
 
 """aggregate stddev on columns"""
 type tournament_brackets_stddev_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36241,12 +36300,14 @@ type tournament_brackets_stddev_fields {
 order by stddev() on columns of table "tournament_brackets"
 """
 input tournament_brackets_stddev_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type tournament_brackets_stddev_pop_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36255,12 +36316,14 @@ type tournament_brackets_stddev_pop_fields {
 order by stddev_pop() on columns of table "tournament_brackets"
 """
 input tournament_brackets_stddev_pop_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type tournament_brackets_stddev_samp_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36269,6 +36332,7 @@ type tournament_brackets_stddev_samp_fields {
 order by stddev_samp() on columns of table "tournament_brackets"
 """
 input tournament_brackets_stddev_samp_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
@@ -36286,7 +36350,9 @@ input tournament_brackets_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_brackets_stream_cursor_value_input {
+  bye: Boolean
   created_at: timestamptz
+  group: numeric
   id: uuid
   match_id: uuid
   match_number: Int
@@ -36299,6 +36365,7 @@ input tournament_brackets_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type tournament_brackets_sum_fields {
+  group: numeric
   match_number: Int
   round: Int
 }
@@ -36307,6 +36374,7 @@ type tournament_brackets_sum_fields {
 order by sum() on columns of table "tournament_brackets"
 """
 input tournament_brackets_sum_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
@@ -36316,7 +36384,13 @@ update columns of table "tournament_brackets"
 """
 enum tournament_brackets_update_column {
   """column name"""
+  bye
+
+  """column name"""
   created_at
+
+  """column name"""
+  group
 
   """column name"""
   id
@@ -36356,6 +36430,7 @@ input tournament_brackets_updates {
 
 """aggregate var_pop on columns"""
 type tournament_brackets_var_pop_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36364,12 +36439,14 @@ type tournament_brackets_var_pop_fields {
 order by var_pop() on columns of table "tournament_brackets"
 """
 input tournament_brackets_var_pop_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
 
 """aggregate var_samp on columns"""
 type tournament_brackets_var_samp_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36378,12 +36455,14 @@ type tournament_brackets_var_samp_fields {
 order by var_samp() on columns of table "tournament_brackets"
 """
 input tournament_brackets_var_samp_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
 
 """aggregate variance on columns"""
 type tournament_brackets_variance_fields {
+  group: Float
   match_number: Float
   round: Float
 }
@@ -36392,6 +36471,7 @@ type tournament_brackets_variance_fields {
 order by variance() on columns of table "tournament_brackets"
 """
 input tournament_brackets_variance_order_by {
+  group: order_by
   match_number: order_by
   round: order_by
 }
@@ -36770,6 +36850,7 @@ type tournament_stages {
 
   """An object relationship"""
   e_tournament_stage_type: e_tournament_stage_types!
+  groups: Int
   id: uuid!
   max_teams: Int!
   min_teams: Int!
@@ -36855,6 +36936,7 @@ input tournament_stages_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type tournament_stages_avg_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -36864,6 +36946,7 @@ type tournament_stages_avg_fields {
 order by avg() on columns of table "tournament_stages"
 """
 input tournament_stages_avg_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -36879,6 +36962,7 @@ input tournament_stages_bool_exp {
   brackets: tournament_brackets_bool_exp
   brackets_aggregate: tournament_brackets_aggregate_bool_exp
   e_tournament_stage_type: e_tournament_stage_types_bool_exp
+  groups: Int_comparison_exp
   id: uuid_comparison_exp
   max_teams: Int_comparison_exp
   min_teams: Int_comparison_exp
@@ -36924,6 +37008,7 @@ input tournament_stages_delete_key_input {
 input type for incrementing numeric columns in table "tournament_stages"
 """
 input tournament_stages_inc_input {
+  groups: Int
   max_teams: Int
   min_teams: Int
   order: Int
@@ -36935,6 +37020,7 @@ input type for inserting data into table "tournament_stages"
 input tournament_stages_insert_input {
   brackets: tournament_brackets_arr_rel_insert_input
   e_tournament_stage_type: e_tournament_stage_types_obj_rel_insert_input
+  groups: Int
   id: uuid
   max_teams: Int
   min_teams: Int
@@ -36947,6 +37033,7 @@ input tournament_stages_insert_input {
 
 """aggregate max on columns"""
 type tournament_stages_max_fields {
+  groups: Int
   id: uuid
   max_teams: Int
   min_teams: Int
@@ -36958,6 +37045,7 @@ type tournament_stages_max_fields {
 order by max() on columns of table "tournament_stages"
 """
 input tournament_stages_max_order_by {
+  groups: order_by
   id: order_by
   max_teams: order_by
   min_teams: order_by
@@ -36967,6 +37055,7 @@ input tournament_stages_max_order_by {
 
 """aggregate min on columns"""
 type tournament_stages_min_fields {
+  groups: Int
   id: uuid
   max_teams: Int
   min_teams: Int
@@ -36978,6 +37067,7 @@ type tournament_stages_min_fields {
 order by min() on columns of table "tournament_stages"
 """
 input tournament_stages_min_order_by {
+  groups: order_by
   id: order_by
   max_teams: order_by
   min_teams: order_by
@@ -37019,6 +37109,7 @@ input tournament_stages_on_conflict {
 input tournament_stages_order_by {
   brackets_aggregate: tournament_brackets_aggregate_order_by
   e_tournament_stage_type: e_tournament_stage_types_order_by
+  groups: order_by
   id: order_by
   max_teams: order_by
   min_teams: order_by
@@ -37043,6 +37134,9 @@ input tournament_stages_prepend_input {
 select columns of table "tournament_stages"
 """
 enum tournament_stages_select_column {
+  """column name"""
+  groups
+
   """column name"""
   id
 
@@ -37069,6 +37163,7 @@ enum tournament_stages_select_column {
 input type for updating data in table "tournament_stages"
 """
 input tournament_stages_set_input {
+  groups: Int
   id: uuid
   max_teams: Int
   min_teams: Int
@@ -37080,6 +37175,7 @@ input tournament_stages_set_input {
 
 """aggregate stddev on columns"""
 type tournament_stages_stddev_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -37089,6 +37185,7 @@ type tournament_stages_stddev_fields {
 order by stddev() on columns of table "tournament_stages"
 """
 input tournament_stages_stddev_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -37096,6 +37193,7 @@ input tournament_stages_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type tournament_stages_stddev_pop_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -37105,6 +37203,7 @@ type tournament_stages_stddev_pop_fields {
 order by stddev_pop() on columns of table "tournament_stages"
 """
 input tournament_stages_stddev_pop_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -37112,6 +37211,7 @@ input tournament_stages_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type tournament_stages_stddev_samp_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -37121,6 +37221,7 @@ type tournament_stages_stddev_samp_fields {
 order by stddev_samp() on columns of table "tournament_stages"
 """
 input tournament_stages_stddev_samp_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -37139,6 +37240,7 @@ input tournament_stages_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_stages_stream_cursor_value_input {
+  groups: Int
   id: uuid
   max_teams: Int
   min_teams: Int
@@ -37150,6 +37252,7 @@ input tournament_stages_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type tournament_stages_sum_fields {
+  groups: Int
   max_teams: Int
   min_teams: Int
   order: Int
@@ -37159,6 +37262,7 @@ type tournament_stages_sum_fields {
 order by sum() on columns of table "tournament_stages"
 """
 input tournament_stages_sum_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -37168,6 +37272,9 @@ input tournament_stages_sum_order_by {
 update columns of table "tournament_stages"
 """
 enum tournament_stages_update_column {
+  """column name"""
+  groups
+
   """column name"""
   id
 
@@ -37224,6 +37331,7 @@ input tournament_stages_updates {
 
 """aggregate var_pop on columns"""
 type tournament_stages_var_pop_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -37233,6 +37341,7 @@ type tournament_stages_var_pop_fields {
 order by var_pop() on columns of table "tournament_stages"
 """
 input tournament_stages_var_pop_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -37240,6 +37349,7 @@ input tournament_stages_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type tournament_stages_var_samp_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -37249,6 +37359,7 @@ type tournament_stages_var_samp_fields {
 order by var_samp() on columns of table "tournament_stages"
 """
 input tournament_stages_var_samp_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -37256,6 +37367,7 @@ input tournament_stages_var_samp_order_by {
 
 """aggregate variance on columns"""
 type tournament_stages_variance_fields {
+  groups: Float
   max_teams: Float
   min_teams: Float
   order: Float
@@ -37265,6 +37377,7 @@ type tournament_stages_variance_fields {
 order by variance() on columns of table "tournament_stages"
 """
 input tournament_stages_variance_order_by {
+  groups: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -38063,6 +38176,7 @@ type tournament_teams {
   A computed field, executes function "can_manage_tournament_team"
   """
   can_manage: Boolean
+  created_at: timestamptz!
 
   """An object relationship"""
   creator: players!
@@ -38238,6 +38352,7 @@ input tournament_teams_bool_exp {
   _not: tournament_teams_bool_exp
   _or: [tournament_teams_bool_exp!]
   can_manage: Boolean_comparison_exp
+  created_at: timestamptz_comparison_exp
   creator: players_bool_exp
   eligible_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
@@ -38291,6 +38406,7 @@ input tournament_teams_inc_input {
 input type for inserting data into table "tournament_teams"
 """
 input tournament_teams_insert_input {
+  created_at: timestamptz
   creator: players_obj_rel_insert_input
   eligible_at: timestamptz
   id: uuid
@@ -38307,6 +38423,7 @@ input tournament_teams_insert_input {
 
 """aggregate max on columns"""
 type tournament_teams_max_fields {
+  created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
   name: String
@@ -38320,6 +38437,7 @@ type tournament_teams_max_fields {
 order by max() on columns of table "tournament_teams"
 """
 input tournament_teams_max_order_by {
+  created_at: order_by
   eligible_at: order_by
   id: order_by
   name: order_by
@@ -38331,6 +38449,7 @@ input tournament_teams_max_order_by {
 
 """aggregate min on columns"""
 type tournament_teams_min_fields {
+  created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
   name: String
@@ -38344,6 +38463,7 @@ type tournament_teams_min_fields {
 order by min() on columns of table "tournament_teams"
 """
 input tournament_teams_min_order_by {
+  created_at: order_by
   eligible_at: order_by
   id: order_by
   name: order_by
@@ -38386,6 +38506,7 @@ input tournament_teams_on_conflict {
 """Ordering options when selecting data from "tournament_teams"."""
 input tournament_teams_order_by {
   can_manage: order_by
+  created_at: order_by
   creator: players_order_by
   eligible_at: order_by
   id: order_by
@@ -38409,6 +38530,9 @@ input tournament_teams_pk_columns_input {
 select columns of table "tournament_teams"
 """
 enum tournament_teams_select_column {
+  """column name"""
+  created_at
+
   """column name"""
   eligible_at
 
@@ -38435,6 +38559,7 @@ enum tournament_teams_select_column {
 input type for updating data in table "tournament_teams"
 """
 input tournament_teams_set_input {
+  created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
   name: String
@@ -38499,6 +38624,7 @@ input tournament_teams_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_teams_stream_cursor_value_input {
+  created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
   name: String
@@ -38526,6 +38652,9 @@ input tournament_teams_sum_order_by {
 update columns of table "tournament_teams"
 """
 enum tournament_teams_update_column {
+  """column name"""
+  created_at
+
   """column name"""
   eligible_at
 
