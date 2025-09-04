@@ -74,30 +74,6 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - captain
-        - match_lineup_id
-      filter:
-        lineup:
-          v_match_lineup:
-            match:
-              is_tournament_match:
-                _eq: false
-      check:
-        lineup:
-          v_match_lineup:
-            match:
-              is_tournament_match:
-                _eq: false
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      columns: []
-      filter: {}
-      check: {}
-    comment: ""
   - role: user
     permission:
       columns:
@@ -107,14 +83,14 @@ update_permissions:
         lineup:
           v_match_lineup:
             match:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
       check:
         lineup:
           v_match_lineup:
             match:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
     comment: ""
 delete_permissions:
   - role: administrator
