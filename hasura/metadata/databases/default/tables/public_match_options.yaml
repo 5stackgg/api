@@ -163,64 +163,6 @@ update_permissions:
       filter: {}
       check: {}
     comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - best_of
-        - coaches
-        - knife_round
-        - lobby_access
-        - map_pool_id
-        - map_veto
-        - mr
-        - number_of_substitutes
-        - overtime
-        - prefer_dedicated_server
-        - ready_setting
-        - region_veto
-        - regions
-        - tech_timeout_setting
-        - timeout_setting
-        - tv_delay
-        - type
-      filter:
-        matches:
-          is_tournament_match:
-            _eq: false
-      check:
-        matches:
-          is_tournament_match:
-            _eq: false
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - best_of
-        - coaches
-        - knife_round
-        - lobby_access
-        - map_pool_id
-        - map_veto
-        - mr
-        - number_of_substitutes
-        - overtime
-        - prefer_dedicated_server
-        - ready_setting
-        - region_veto
-        - regions
-        - tech_timeout_setting
-        - timeout_setting
-        - tv_delay
-        - type
-      filter:
-        matches:
-          is_tournament_match:
-            _eq: true
-      check:
-        matches:
-          is_tournament_match:
-            _eq: true
-    comment: ""
   - role: user
     permission:
       columns:
@@ -245,32 +187,22 @@ update_permissions:
         _and:
           - _or:
               - matches:
-                  organizer_steam_id:
-                    _eq: X-Hasura-User-Id
+                  is_organizer:
+                    _eq: true
               - tournament:
-                  organizers:
-                    _and:
-                      - steam_id:
-                          _eq: X-Hasura-User-Id
-              - tournament:
-                  organizer_steam_id:
-                    _eq: X-Hasura-User-Id
+                  is_organizer:
+                    _eq: true
           - has_active_matches:
               _eq: false
       check:
         _and:
           - _or:
               - matches:
-                  organizer_steam_id:
-                    _eq: X-Hasura-User-Id
+                  is_organizer:
+                    _eq: true
               - tournament:
-                  organizers:
-                    _and:
-                      - steam_id:
-                          _eq: X-Hasura-User-Id
-              - tournament:
-                  organizer_steam_id:
-                    _eq: X-Hasura-User-Id
+                  is_organizer:
+                    _eq: true
           - has_active_matches:
               _eq: false
     comment: ""
