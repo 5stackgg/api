@@ -126,8 +126,8 @@ insert_permissions:
     permission:
       check:
         match:
-          is_tournament_match:
-            _eq: false
+          is_organizer:
+            _eq: true
       columns:
         - lineup_1_side
         - lineup_2_side
@@ -139,7 +139,7 @@ insert_permissions:
     permission:
       check:
         match:
-          is_tournament_match:
+          is_organizer:
             _eq: true
       columns:
         - lineup_1_side
@@ -206,12 +206,12 @@ update_permissions:
         - order
       filter:
         match:
-          is_tournament_match:
-            _eq: false
+          is_organizer:
+            _eq: true
       check:
         match:
-          is_tournament_match:
-            _eq: false
+          is_organizer:
+            _eq: true
     comment: ""
   - role: tournament_organizer
     permission:
@@ -222,11 +222,11 @@ update_permissions:
         - order
       filter:
         match:
-          is_tournament_match:
+          is_organizer:
             _eq: true
       check:
         match:
-          is_tournament_match:
+          is_organizer:
             _eq: true
     comment: ""
   - role: user
@@ -254,14 +254,14 @@ delete_permissions:
     permission:
       filter:
         match:
-          is_tournament_match:
-            _eq: false
+          is_organizer:
+            _eq: true
     comment: ""
   - role: tournament_organizer
     permission:
       filter:
         match:
-          is_tournament_match:
+          is_organizer:
             _eq: true
     comment: ""
   - role: user

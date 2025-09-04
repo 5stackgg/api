@@ -19,8 +19,8 @@ insert_permissions:
           _and:
             - status:
                 _eq: PickingPlayers
-            - is_tournament_match:
-                _eq: false
+            - is_organizer:
+                _eq: true
             - _or:
                 - organizer_steam_id:
                     _eq: X-Hasura-User-Id

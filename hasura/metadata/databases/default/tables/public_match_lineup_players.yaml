@@ -23,8 +23,8 @@ insert_permissions:
         lineup:
           v_match_lineup:
             match:
-              is_tournament_match:
-                _eq: false
+              is_organizer:
+                _eq: true
       columns:
         - captain
         - match_lineup_id
@@ -103,8 +103,8 @@ delete_permissions:
         lineup:
           v_match_lineup:
             match:
-              is_tournament_match:
-                _eq: false
+              is_organizer:
+                _eq: true
     comment: ""
   - role: tournament_organizer
     permission:
