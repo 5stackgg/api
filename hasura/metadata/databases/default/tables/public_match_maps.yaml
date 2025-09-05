@@ -152,8 +152,8 @@ insert_permissions:
     permission:
       check:
         match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
+          is_organizer:
+            _eq: true
       columns:
         - lineup_1_side
         - lineup_2_side
@@ -238,12 +238,12 @@ update_permissions:
         - order
       filter:
         match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
+          is_organizer:
+            _eq: true
       check:
         match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
+          is_organizer:
+            _eq: true
     comment: ""
 delete_permissions:
   - role: administrator
@@ -268,6 +268,6 @@ delete_permissions:
     permission:
       filter:
         match:
-          organizer_steam_id:
-            _eq: x-hasura-user-id
+          is_organizer:
+            _eq: true
     comment: ""

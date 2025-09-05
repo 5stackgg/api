@@ -139,8 +139,8 @@ update_permissions:
               - owner_steam_id:
                   _eq: X-Hasura-User-Id
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
       check:
         _or:
           - team:
@@ -156,8 +156,8 @@ update_permissions:
               - owner_steam_id:
                   _eq: X-Hasura-User-Id
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
     comment: ""
 delete_permissions:
   - role: administrator
@@ -185,6 +185,6 @@ delete_permissions:
               - owner_steam_id:
                   _eq: X-Hasura-User-Id
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
     comment: ""

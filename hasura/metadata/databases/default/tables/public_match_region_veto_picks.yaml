@@ -51,8 +51,8 @@ insert_permissions:
                 steam_id:
                   _eq: X-Hasura-User-Id
           - match:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
       columns:
         - match_id
         - match_lineup_id

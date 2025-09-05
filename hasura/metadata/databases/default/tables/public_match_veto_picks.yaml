@@ -21,8 +21,8 @@ insert_permissions:
                 steam_id:
                   _eq: X-Hasura-User-Id
           - match:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
       columns:
         - map_id
         - match_id
@@ -48,8 +48,8 @@ delete_permissions:
     permission:
       filter:
         match:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
     comment: ""
 event_triggers:
   - name: match_veto_pick

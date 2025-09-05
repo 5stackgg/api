@@ -132,6 +132,6 @@ update_permissions:
                 _eq: X-Hasura-User-Id
           - v_match_lineup:
               match:
-                organizer_steam_id:
-                  _eq: X-Hasura-User-Id
+                is_organizer:
+                  _eq: true
     comment: ""

@@ -20,8 +20,8 @@ insert_permissions:
       check:
         _or:
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
           - tournament_team:
               _or:
                 - roster:
@@ -63,8 +63,8 @@ update_permissions:
                   - role:
                       _eq: Admin
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
       check:
         _or:
           - tournament_team:
@@ -75,8 +75,8 @@ update_permissions:
                   - role:
                       _eq: Admin
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
     comment: ""
 delete_permissions:
   - role: user
@@ -91,8 +91,8 @@ delete_permissions:
                   - role:
                       _eq: Admin
           - tournament:
-              organizer_steam_id:
-                _eq: X-Hasura-User-Id
+              is_organizer:
+                _eq: true
           - player_steam_id:
               _eq: X-Hasura-User-Id
     comment: ""

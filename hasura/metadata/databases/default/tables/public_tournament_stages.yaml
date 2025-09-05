@@ -21,8 +21,8 @@ insert_permissions:
     permission:
       check:
         tournament:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
       columns:
         - groups
         - max_teams
@@ -59,18 +59,18 @@ update_permissions:
         - type
       filter:
         tournament:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
       check:
         tournament:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
         tournament:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
     comment: ""

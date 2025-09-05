@@ -109,8 +109,8 @@ delete_permissions:
     permission:
       filter:
         match:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
     comment: ""
 event_triggers:
   - name: match_veto_pick

@@ -21,18 +21,15 @@ insert_permissions:
                 _eq: PickingPlayers
             - is_organizer:
                 _eq: true
-            - _or:
-                - organizer_steam_id:
-                    _eq: X-Hasura-User-Id
-                - _and:
-                    - is_in_lineup:
-                        _eq: true
-                    - options:
-                        lobby_access:
-                          _in:
-                            - Open
-                            - Friends
-                            - Invite
+            - _and:
+                - is_in_lineup:
+                    _eq: true
+                - options:
+                    lobby_access:
+                      _in:
+                        - Open
+                        - Friends
+                        - Invite
       set:
         invited_by_player_steam_id: x-hasura-User-Id
       columns:

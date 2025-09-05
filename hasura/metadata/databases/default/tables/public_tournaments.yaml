@@ -300,16 +300,16 @@ update_permissions:
         - start
         - status
       filter:
-        organizer_steam_id:
-          _eq: X-Hasura-User-Id
+        is_organizer:
+          _eq: true
       check:
-        organizer_steam_id:
-          _eq: X-Hasura-User-Id
+        is_organizer:
+          _eq: true
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
-        organizer_steam_id:
-          _eq: X-Hasura-User-Id
+        is_organizer:
+          _eq: true
     comment: ""
