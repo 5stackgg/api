@@ -285,8 +285,8 @@ select_permissions:
         - min_players_per_lineup
       filter:
         _or:
-          - organizer_steam_id:
-              _eq: X-Hasura-User-Id
+          - is_organizer:
+              _eq: true
           - status:
               _neq: Setup
       allow_aggregations: true

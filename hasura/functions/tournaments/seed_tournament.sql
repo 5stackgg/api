@@ -52,7 +52,7 @@ BEGIN
             FROM tournament_brackets tb
             WHERE tb.tournament_stage_id = stage.id
               AND tb.match_number <= required_matches
-            ORDER BY tb.match_number ASC
+            ORDER BY tb.round ASC, tb.match_number ASC
             LIMIT required_matches
         LOOP
             -- Break if we've assigned all teams
@@ -66,7 +66,7 @@ BEGIN
             UPDATE tournament_brackets 
             SET tournament_team_id_1 = team_1_id,
                 tournament_team_id_2 = team_2_id,
-                bye = tournament_team_id_2 IS NULL
+                bye = team_2_id IS NULL
             WHERE id = bracket.id;
             
             IF team_1_id IS NOT NULL THEN

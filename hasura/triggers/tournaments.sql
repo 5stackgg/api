@@ -7,6 +7,11 @@ BEGIN
         PERFORM seed_tournament(NEW);
     END IF;
 
+    IF (NEW.status = 'Cancelled' OR NEW.status = 'CancelledMinTeams') THEN
+        DELETE FROM tournament_brackets
+        where tournament_stage_id in (select id from tournament_stages where tournament_id = NEW.id);
+    END IF;
+
 	RETURN NEW;
 END;
 $$;
