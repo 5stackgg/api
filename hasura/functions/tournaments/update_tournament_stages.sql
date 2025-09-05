@@ -260,7 +260,7 @@ BEGIN
 
         RAISE NOTICE 'Stage % : min_teams=%, max_teams=%, groups=%, effective_teams=%, teams_per_group=%, total_rounds=%, next_stage_max=%', 
             stage."order", stage.min_teams, stage.max_teams, stage.groups, effective_teams, teams_per_group, total_rounds, next_stage_max_teams;
-        
+                
         -- Initialize teams left to assign
         teams_left_to_assign := effective_teams;
         
@@ -272,6 +272,12 @@ BEGIN
 
             -- Create matches alternating between groups
             FOR match_idx IN 1..matches_in_round LOOP
+
+                if(round_num = total_rounds and teams_left_to_assign <= 1) then
+                    RAISE NOTICE '  => Skipping match %: teams_left_to_assign=%', match_idx, teams_left_to_assign;
+                    CONTINUE;
+                end if;
+
                 -- Calculate which group this match belongs to (alternating)
                 DECLARE
                     group_num int;
@@ -283,9 +289,11 @@ BEGIN
                     RETURNING id INTO new_id;
                     RAISE NOTICE '      => Created round % group % match %: id=%', round_num, group_num, match_idx, new_id;
                 END;
+                teams_left_to_assign := teams_left_to_assign - 2;
             END LOOP;
 
-            teams_left_to_assign := teams_left_to_assign / 2;
+            -- Calculate teams advancing to next round: each match produces 1 winner
+            teams_left_to_assign := matches_in_round;
         END LOOP;
         RAISE NOTICE '  => Linking matches within stage %', stage."order";
         PERFORM link_tournament_stage_matches(stage.id);
