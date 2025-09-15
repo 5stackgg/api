@@ -504,6 +504,8 @@ export class MatchAssistantService {
           }
         }
 
+        const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
+
         await batch.createNamespacedJob({
           namespace: this.namespace,
           body: {
@@ -590,19 +592,19 @@ export class MatchAssistantService {
                       ],
                       volumeMounts: [
                         {
-                          name: `steamcmd-${gameServerNodeId}`,
+                          name: `steamcmd-${sanitizedGameServerNodeId}`,
                           mountPath: "/serverdata/steamcmd",
                         },
                         {
-                          name: `serverfiles-${gameServerNodeId}`,
+                          name: `serverfiles-${sanitizedGameServerNodeId}`,
                           mountPath: "/serverdata/serverfiles",
                         },
                         {
-                          name: `demos-${gameServerNodeId}`,
+                          name: `demos-${sanitizedGameServerNodeId}`,
                           mountPath: "/opt/demos",
                         },
                         {
-                          name: `custom-plugins-${gameServerNodeId}`,
+                          name: `custom-plugins-${sanitizedGameServerNodeId}`,
                           mountPath: "/opt/custom-plugins",
                         },
                       ],
@@ -611,25 +613,25 @@ export class MatchAssistantService {
                   // TODO - mabye we should use host paths, why do we want volumes?
                   volumes: [
                     {
-                      name: `steamcmd-${gameServerNodeId}`,
+                      name: `steamcmd-${sanitizedGameServerNodeId}`,
                       persistentVolumeClaim: {
-                        claimName: `steamcmd-${gameServerNodeId}-claim`,
+                        claimName: `steamcmd-${sanitizedGameServerNodeId}-claim`,
                       },
                     },
                     {
-                      name: `serverfiles-${gameServerNodeId}`,
+                      name: `serverfiles-${sanitizedGameServerNodeId}`,
                       persistentVolumeClaim: {
-                        claimName: `serverfiles-${gameServerNodeId}-claim`,
+                        claimName: `serverfiles-${sanitizedGameServerNodeId}-claim`,
                       },
                     },
                     {
-                      name: `demos-${gameServerNodeId}`,
+                      name: `demos-${sanitizedGameServerNodeId}`,
                       persistentVolumeClaim: {
-                        claimName: `demos-${gameServerNodeId}-claim`,
+                        claimName: `demos-${sanitizedGameServerNodeId}-claim`,
                       },
                     },
                     {
-                      name: `custom-plugins-${gameServerNodeId}`,
+                      name: `custom-plugins-${sanitizedGameServerNodeId}`,
                       hostPath: {
                         path: `/opt/5stack/custom-plugins`,
                       },
