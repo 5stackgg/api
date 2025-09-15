@@ -57,6 +57,11 @@ export class MatchmakingGateway {
                   _eq: "public.matchmaking_min_role",
                 },
               },
+              {
+                name: {
+                  _eq: "public.max_acceptable_latency",
+                },
+              },
             ],
           },
         },
@@ -77,6 +82,12 @@ export class MatchmakingGateway {
       (setting) => setting.name === "public.matchmaking_min_role",
     );
 
+    const maxAcceptableLatency = parseInt(
+      settings.find(
+        (setting) => setting.name === "public.max_acceptable_latency",
+      )?.value || "100",
+    );
+
     if (
       matchmakingMinRole &&
       !isRoleAbove(
@@ -94,8 +105,6 @@ export class MatchmakingGateway {
       return;
     }
 
-    const latencyResults = await this.getLatencyResults(client);
-
     const { server_regions } = await this.hasura.query({
       server_regions: {
         __args: {
@@ -111,32 +120,45 @@ export class MatchmakingGateway {
       },
     });
 
-    // TODO - rather adding all regions at once we should add them when expanding the search
-
-    let regions = [];
-    for (const region of data.regions) {
-      const server_region = server_regions.find((server_region) => {
-        return server_region.value === region;
-      });
-
-      if (!server_region) {
-        continue;
-      }
-
-      const latency =
-        latencyResults[region.toLocaleLowerCase().replace(" ", "_")];
-      if (!server_region.is_lan || latency?.isLan === true) {
-        regions.push(server_region.value);
-      }
-    }
-
-    if (regions.length === 0) {
-      throw new JoinQueueError("No regions available");
-    }
-
-    const { type } = data;
-
     try {
+      const latencyResults = await this.getLatencyResults(client);
+
+      if (Object.keys(latencyResults).length === 0) {
+        throw new JoinQueueError("Unable to get latency results");
+      }
+      // TODO - rather adding all regions at once we should add them when expanding the search
+
+      let regions = [];
+      let pingTooHigh = false;
+      for (const region of data.regions) {
+        const server_region = server_regions.find((server_region) => {
+          return server_region.value === region;
+        });
+
+        if (!server_region) {
+          continue;
+        }
+
+        const latency =
+          latencyResults[region.toLocaleLowerCase().replace(" ", "_")];
+
+        if (!server_region.is_lan || latency?.isLan === true) {
+          if (latency?.latency < maxAcceptableLatency) {
+            pingTooHigh = true;
+            continue;
+          }
+          regions.push(server_region.value);
+        }
+      }
+
+      if (regions.length === 0) {
+        throw new JoinQueueError(
+          pingTooHigh ? "Ping too high to join queue" : "No regions available",
+        );
+      }
+
+      const { type } = data;
+
       if (!type || !regions || regions.length === 0) {
         throw new JoinQueueError("Missing Type or Regions");
       }
