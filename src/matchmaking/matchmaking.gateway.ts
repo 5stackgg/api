@@ -143,7 +143,7 @@ export class MatchmakingGateway {
           latencyResults[region.toLocaleLowerCase().replace(" ", "_")];
 
         if (!server_region.is_lan || latency?.isLan === true) {
-          if (latency?.latency < maxAcceptableLatency) {
+          if (latency && latency.latency > maxAcceptableLatency) {
             pingTooHigh = true;
             continue;
           }
