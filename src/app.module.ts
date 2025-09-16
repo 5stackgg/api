@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, OnApplicationBootstrap } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { HasuraModule } from "./hasura/hasura.module";
 import { RconModule } from "./rcon/rcon.module";
@@ -35,6 +35,7 @@ import { ThrottlerModule } from "@nestjs/throttler";
 import { SignalServerModule } from "./signal-server/signal-server.module";
 import { InvitesModule } from "./invites/invites.module";
 import { DemosModule } from "./demos/demos.module";
+import { SystemService } from "./system/system.service";
 
 @Module({
   imports: [
@@ -101,16 +102,16 @@ import { DemosModule } from "./demos/demos.module";
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
 })
-export class AppModule {
+export class AppModule implements OnApplicationBootstrap {
   constructor(
+    private readonly system: SystemService,
     private readonly typesense: TypeSenseService,
     private readonly discordBot: DiscordBotService,
-  ) {
-    void this.setup();
-  }
+  ) {}
 
-  private async setup() {
+  public async onApplicationBootstrap() {
     await this.typesense.setup();
-    await this.discordBot.setupBot();
+    await this.discordBot.setup();
+    await this.system.detectFeatures();
   }
 }

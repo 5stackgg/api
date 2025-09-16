@@ -138,7 +138,7 @@ export class DiscordBotService {
     await this.client.login(this.discordConfig.token);
   }
 
-  public async setupBot() {
+  public async setup() {
     if (!this.discordConfig.token) {
       this.logger.warn("discord bot not configured");
       return;

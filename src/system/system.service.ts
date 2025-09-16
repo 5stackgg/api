@@ -25,8 +25,6 @@ export class SystemService {
     kc.loadFromDefault();
     this.apiClient = kc.makeApiClient(CoreV1Api);
     this.appsClient = kc.makeApiClient(AppsV1Api);
-
-    this.detectFeatures();
   }
 
   public async detectFeatures() {

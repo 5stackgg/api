@@ -14,7 +14,9 @@ export class TypeSenseService {
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly matchAssistant: MatchAssistantService,
-  ) {
+  ) {}
+
+  public async setup() {
     this.client = new Client({
       nodes: [
         {
@@ -26,9 +28,7 @@ export class TypeSenseService {
       apiKey: this.config.get<TypeSenseConfig>("typesense").apiKey,
       connectionTimeoutSeconds: 2,
     });
-  }
 
-  public async setup() {
     let setup = false;
     while (!setup) {
       try {

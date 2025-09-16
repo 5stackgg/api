@@ -1,4 +1,3 @@
-import { User } from "../auth/types/User";
 import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
@@ -116,7 +115,7 @@ export class GameServerNodeController {
   }
 
   @HasuraAction()
-  public async setupGameServer(data: { user: User }) {
+  public async setupGameServer() {
     const gameServer = await this.gameServerNodeService.create(
       await this.tailscale.getAuthKey(),
     );

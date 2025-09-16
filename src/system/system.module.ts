@@ -31,6 +31,7 @@ import { S3Module } from "src/s3/s3.module";
       adapter: BullMQAdapter,
     }),
   ],
+  exports: [SystemService],
   providers: [
     SystemGateway,
     SystemService,
