@@ -1,0 +1,1 @@
+CREATE TABLE "public"."match_streams" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "match_id" uuid NOT NULL, "link" text NOT NULL, "title" text NOT NULL, "priority" integer NOT NULL DEFAULT 0, PRIMARY KEY ("id") , FOREIGN KEY ("match_id") REFERENCES "public"."matches"("id") ON UPDATE cascade ON DELETE cascade);

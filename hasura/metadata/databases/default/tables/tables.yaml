@@ -38,6 +38,7 @@
 - "!include public_match_maps.yaml"
 - "!include public_match_options.yaml"
 - "!include public_match_region_veto_picks.yaml"
+- "!include public_match_streams.yaml"
 - "!include public_match_type_cfgs.yaml"
 - "!include public_matches.yaml"
 - "!include public_notifications.yaml"

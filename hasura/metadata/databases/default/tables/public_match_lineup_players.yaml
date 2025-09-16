@@ -100,23 +100,37 @@ delete_permissions:
   - role: match_organizer
     permission:
       filter:
-        lineup:
-          v_match_lineup:
-            match:
-              is_organizer:
-                _eq: true
+        _or:
+          - lineup:
+              v_match_lineup:
+                match:
+                  is_organizer:
+                    _eq: true
+          - steam_id:
+              _eq: X-Hasura-User-Id
     comment: ""
   - role: tournament_organizer
     permission:
-      filter: {}
+      filter:
+        _or:
+          - lineup:
+              v_match_lineup:
+                match:
+                  is_organizer:
+                    _eq: true
+          - steam_id:
+              _eq: X-Hasura-User-Id
       backend_only: true
     comment: ""
   - role: user
     permission:
       filter:
-        lineup:
-          v_match_lineup:
-            match:
-              is_organizer:
-                _eq: true
+        _or:
+          - lineup:
+              v_match_lineup:
+                match:
+                  is_organizer:
+                    _eq: true
+          - steam_id:
+              _eq: X-Hasura-User-Id
     comment: ""

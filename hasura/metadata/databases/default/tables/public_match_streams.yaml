@@ -1,0 +1,143 @@
+table:
+  name: match_streams
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - link
+        - match_id
+        - priority
+        - title
+    comment: ""
+  - role: match_organizer
+    permission:
+      check: {}
+      columns:
+        - link
+        - match_id
+        - priority
+        - title
+    comment: ""
+  - role: streamer
+    permission:
+      check: {}
+      columns:
+        - link
+        - match_id
+        - priority
+        - title
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check: {}
+      columns:
+        - link
+        - match_id
+        - priority
+        - title
+    comment: ""
+  - role: user
+    permission:
+      check:
+        match:
+          is_organizer:
+            _eq: true
+      columns:
+        - link
+        - match_id
+        - priority
+        - title
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - link
+        - match_id
+        - priority
+        - title
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - link
+        - priority
+        - title
+      filter: {}
+      check: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - link
+        - priority
+        - title
+      filter: {}
+      check: {}
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - link
+        - priority
+        - title
+      filter: {}
+      check: null
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - link
+        - priority
+        - title
+      filter: {}
+      check: null
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - link
+        - priority
+        - title
+      filter:
+        match:
+          is_organizer:
+            _eq: true
+      check:
+        match:
+          is_organizer:
+            _eq: true
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter: {}
+    comment: ""
+  - role: streamer
+    permission:
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      filter:
+        match:
+          is_organizer:
+            _eq: true
+    comment: ""
