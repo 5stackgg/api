@@ -2,13 +2,11 @@
   role_set:
     - verified_user
     - match_organizer
-    - streamer
     - user
     - tournament_organizer
 - role_name: match_organizer
   role_set:
     - verified_user
-    - streamer
     - user
 - role_name: streamer
   role_set:
@@ -18,7 +16,6 @@
   role_set:
     - verified_user
     - match_organizer
-    - streamer
     - user
 - role_name: verified_user
   role_set:
