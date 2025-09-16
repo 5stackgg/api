@@ -13,29 +13,13 @@ export class TailscaleService {
   }
 
   public async getAuthKey(): Promise<string> {
-    const oauth2 = new OAuth.OAuth2(
-      this.config.key,
-      this.config.secret,
-      "",
-      "",
-      "https://api.tailscale.com/api/v2/oauth/token",
-    );
-
-    const token = await new Promise((resolve, reject) => {
-      oauth2.getOAuthAccessToken(
-        "",
-        { grant_type: "client_credentials" },
-        function (error, access_token) {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve(access_token);
-        },
-      );
-    });
-
     try {
+      const token = await this.getToken();
+
+      if (!token) {
+        throw new Error("Failed to obtain Tailscale token.");
+      }
+
       const response = await fetch(
         `https://api.tailscale.com/api/v2/tailnet/${this.config.netName}/keys`,
         {
@@ -79,6 +63,35 @@ export class TailscaleService {
       return authKey;
     } catch (error) {
       console.error("Error retrieving Tailscale auth key:", error);
+      throw error;
+    }
+  }
+
+  private async getToken() {
+    try {
+      const oauth2 = new OAuth.OAuth2(
+        this.config.key,
+        this.config.secret,
+        "",
+        "",
+        "https://api.tailscale.com/api/v2/oauth/token",
+      );
+
+      return await new Promise((resolve, reject) => {
+        oauth2.getOAuthAccessToken(
+          "",
+          { grant_type: "client_credentials" },
+          function (error, access_token) {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve(access_token);
+          },
+        );
+      });
+    } catch (error) {
+      console.error("Error retrieving Tailscale token:", error);
       throw error;
     }
   }
