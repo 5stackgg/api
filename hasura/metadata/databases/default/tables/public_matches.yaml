@@ -123,6 +123,13 @@ array_relationships:
         table:
           name: match_region_veto_picks
           schema: public
+  - name: streams
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: match_streams
+          schema: public
   - name: tournament_brackets
     using:
       foreign_key_constraint_on:
