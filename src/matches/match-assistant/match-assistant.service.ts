@@ -444,8 +444,9 @@ export class MatchAssistantService {
           tv_port: true,
           api_password: true,
           rcon_password: true,
-          game_server_node_id: true,
           game_server_node: {
+            id: true,
+            pin_plugin_version: true,
             supports_cpu_pinning: true,
           },
           server_region: {
@@ -464,7 +465,7 @@ export class MatchAssistantService {
       try {
         this.logger.verbose(`[${matchId}] create job for on demand server`);
 
-        const gameServerNodeId = server.game_server_node_id;
+        const gameServerNodeId = server.game_server_node?.id;
         const steamRelay = server.server_region?.steam_relay || false;
 
         let cpus: string;
@@ -506,6 +507,17 @@ export class MatchAssistantService {
 
         const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
 
+        let pluginImage = this.gameServerConfig.serverImage;
+
+        const pinPluginVersion = server.game_server_node?.pin_plugin_version;
+
+        if (pinPluginVersion) {
+          pluginImage = this.gameServerConfig.serverImage.replace(
+            /:.+$/,
+            `:v${pinPluginVersion.toString()}`,
+          );
+        }
+
         await batch.createNamespacedJob({
           namespace: this.namespace,
           body: {
@@ -535,7 +547,7 @@ export class MatchAssistantService {
                   containers: [
                     {
                       name: "game-server",
-                      image: this.gameServerConfig.serverImage,
+                      image: pluginImage,
                       ...(cpus
                         ? {
                             resources: {

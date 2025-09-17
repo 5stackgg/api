@@ -137,8 +137,6 @@ export class SystemService {
   public async setVersions() {
     const hasUpdates = [];
 
-    await this.updateGameServerVersion();
-
     const panelVersion = await this.getPanelVersion();
     const latestPanelVersion = await this.getLatestPanelVersion();
 
@@ -359,44 +357,6 @@ export class SystemService {
         } catch (error) {
           this.logger.warn("Unable to fetch latest panel version", error);
           return "";
-        }
-      },
-      300,
-    );
-  }
-
-  private async updateGameServerVersion() {
-    await this.cache.remember<string>(
-      this.getServiceCacheKey("plugin"),
-      async () => {
-        try {
-          const response = await fetch(
-            "https://api.github.com/repos/5stackgg/game-server/releases/latest",
-          );
-          const { tag_name } = await response.json();
-
-          if (!tag_name) {
-            this.logger.warn("no tag name found for game server plugin");
-            return;
-          }
-
-          await this.hasura.mutation({
-            insert_settings_one: {
-              __args: {
-                object: {
-                  name: "plugin_version",
-                  value: tag_name.replace("v", ""),
-                },
-                on_conflict: {
-                  constraint: "settings_pkey",
-                  update_columns: ["value"],
-                },
-              },
-              __typename: true,
-            },
-          });
-        } catch (error) {
-          this.logger.warn("Unable to fetch latest game server version", error);
         }
       },
       300,

@@ -432,7 +432,7 @@ export class GameServerNodeService {
       const pod = await this.getUpdateJobPod(gameServerNodeId);
 
       if (!pod) {
-        console.warn("unable to find update job pod");
+        this.logger.warn("unable to find update job pod");
         await this.hasura.mutation({
           update_game_server_nodes_by_pk: {
             __args: {

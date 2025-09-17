@@ -1,0 +1,12 @@
+table:
+  name: plugin_versions
+  schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - min_game_build_id
+        - published_at
+        - version
+      filter: {}
+    comment: ""

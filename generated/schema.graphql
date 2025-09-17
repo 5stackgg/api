@@ -5340,6 +5340,7 @@ type game_server_nodes {
 
   """An object relationship"""
   pinned_version: game_versions
+  plugin_version: Int
   public_ip: inet
   region: String
 
@@ -5482,6 +5483,7 @@ type game_server_nodes_avg_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5497,6 +5499,7 @@ input game_server_nodes_avg_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5519,6 +5522,7 @@ input game_server_nodes_bool_exp {
   node_ip: inet_comparison_exp
   pin_build_id: Int_comparison_exp
   pinned_version: game_versions_bool_exp
+  plugin_version: Int_comparison_exp
   public_ip: inet_comparison_exp
   region: String_comparison_exp
   servers: servers_bool_exp
@@ -5550,6 +5554,7 @@ input game_server_nodes_inc_input {
   build_id: Int
   end_port_range: Int
   pin_build_id: Int
+  plugin_version: Int
   start_port_range: Int
 }
 
@@ -5568,6 +5573,7 @@ input game_server_nodes_insert_input {
   node_ip: inet
   pin_build_id: Int
   pinned_version: game_versions_obj_rel_insert_input
+  plugin_version: Int
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
@@ -5591,6 +5597,7 @@ type game_server_nodes_max_fields {
   id: String
   label: String
   pin_build_id: Int
+  plugin_version: Int
   region: String
   start_port_range: Int
   token: String
@@ -5611,6 +5618,7 @@ input game_server_nodes_max_order_by {
   id: order_by
   label: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   region: order_by
   start_port_range: order_by
   token: order_by
@@ -5628,6 +5636,7 @@ type game_server_nodes_min_fields {
   id: String
   label: String
   pin_build_id: Int
+  plugin_version: Int
   region: String
   start_port_range: Int
   token: String
@@ -5648,6 +5657,7 @@ input game_server_nodes_min_order_by {
   id: order_by
   label: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   region: order_by
   start_port_range: order_by
   token: order_by
@@ -5698,6 +5708,7 @@ input game_server_nodes_order_by {
   node_ip: order_by
   pin_build_id: order_by
   pinned_version: game_versions_order_by
+  plugin_version: order_by
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by
@@ -5743,6 +5754,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   pin_build_id
+
+  """column name"""
+  plugin_version
 
   """column name"""
   public_ip
@@ -5809,6 +5823,7 @@ input game_server_nodes_set_input {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
+  plugin_version: Int
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5828,6 +5843,7 @@ type game_server_nodes_stddev_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5843,6 +5859,7 @@ input game_server_nodes_stddev_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5855,6 +5872,7 @@ type game_server_nodes_stddev_pop_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5870,6 +5888,7 @@ input game_server_nodes_stddev_pop_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5882,6 +5901,7 @@ type game_server_nodes_stddev_samp_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5897,6 +5917,7 @@ input game_server_nodes_stddev_samp_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5921,6 +5942,7 @@ input game_server_nodes_stream_cursor_value_input {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
+  plugin_version: Int
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5940,6 +5962,7 @@ type game_server_nodes_sum_fields {
   build_id: Int
   end_port_range: Int
   pin_build_id: Int
+  plugin_version: Int
   start_port_range: Int
 
   """
@@ -5955,6 +5978,7 @@ input game_server_nodes_sum_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5985,6 +6009,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   pin_build_id
+
+  """column name"""
+  plugin_version
 
   """column name"""
   public_ip
@@ -6031,6 +6058,7 @@ type game_server_nodes_var_pop_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -6046,6 +6074,7 @@ input game_server_nodes_var_pop_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -6058,6 +6087,7 @@ type game_server_nodes_var_samp_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -6073,6 +6103,7 @@ input game_server_nodes_var_samp_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -6085,6 +6116,7 @@ type game_server_nodes_variance_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
+  plugin_version: Float
   start_port_range: Float
 
   """
@@ -6100,6 +6132,7 @@ input game_server_nodes_variance_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -12546,6 +12579,380 @@ input match_region_veto_picks_updates {
 }
 
 """
+columns and relationships of "match_streams"
+"""
+type match_streams {
+  id: uuid!
+  link: String!
+
+  """An object relationship"""
+  match: matches!
+  match_id: uuid!
+  priority: Int!
+  title: String!
+}
+
+"""
+aggregated selection of "match_streams"
+"""
+type match_streams_aggregate {
+  aggregate: match_streams_aggregate_fields
+  nodes: [match_streams!]!
+}
+
+input match_streams_aggregate_bool_exp {
+  count: match_streams_aggregate_bool_exp_count
+}
+
+input match_streams_aggregate_bool_exp_count {
+  arguments: [match_streams_select_column!]
+  distinct: Boolean
+  filter: match_streams_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "match_streams"
+"""
+type match_streams_aggregate_fields {
+  avg: match_streams_avg_fields
+  count(columns: [match_streams_select_column!], distinct: Boolean): Int!
+  max: match_streams_max_fields
+  min: match_streams_min_fields
+  stddev: match_streams_stddev_fields
+  stddev_pop: match_streams_stddev_pop_fields
+  stddev_samp: match_streams_stddev_samp_fields
+  sum: match_streams_sum_fields
+  var_pop: match_streams_var_pop_fields
+  var_samp: match_streams_var_samp_fields
+  variance: match_streams_variance_fields
+}
+
+"""
+order by aggregate values of table "match_streams"
+"""
+input match_streams_aggregate_order_by {
+  avg: match_streams_avg_order_by
+  count: order_by
+  max: match_streams_max_order_by
+  min: match_streams_min_order_by
+  stddev: match_streams_stddev_order_by
+  stddev_pop: match_streams_stddev_pop_order_by
+  stddev_samp: match_streams_stddev_samp_order_by
+  sum: match_streams_sum_order_by
+  var_pop: match_streams_var_pop_order_by
+  var_samp: match_streams_var_samp_order_by
+  variance: match_streams_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "match_streams"
+"""
+input match_streams_arr_rel_insert_input {
+  data: [match_streams_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_streams_on_conflict
+}
+
+"""aggregate avg on columns"""
+type match_streams_avg_fields {
+  priority: Float
+}
+
+"""
+order by avg() on columns of table "match_streams"
+"""
+input match_streams_avg_order_by {
+  priority: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "match_streams". All fields are combined with a logical 'AND'.
+"""
+input match_streams_bool_exp {
+  _and: [match_streams_bool_exp!]
+  _not: match_streams_bool_exp
+  _or: [match_streams_bool_exp!]
+  id: uuid_comparison_exp
+  link: String_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  priority: Int_comparison_exp
+  title: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "match_streams"
+"""
+enum match_streams_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  match_streams_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "match_streams"
+"""
+input match_streams_inc_input {
+  priority: Int
+}
+
+"""
+input type for inserting data into table "match_streams"
+"""
+input match_streams_insert_input {
+  id: uuid
+  link: String
+  match: matches_obj_rel_insert_input
+  match_id: uuid
+  priority: Int
+  title: String
+}
+
+"""aggregate max on columns"""
+type match_streams_max_fields {
+  id: uuid
+  link: String
+  match_id: uuid
+  priority: Int
+  title: String
+}
+
+"""
+order by max() on columns of table "match_streams"
+"""
+input match_streams_max_order_by {
+  id: order_by
+  link: order_by
+  match_id: order_by
+  priority: order_by
+  title: order_by
+}
+
+"""aggregate min on columns"""
+type match_streams_min_fields {
+  id: uuid
+  link: String
+  match_id: uuid
+  priority: Int
+  title: String
+}
+
+"""
+order by min() on columns of table "match_streams"
+"""
+input match_streams_min_order_by {
+  id: order_by
+  link: order_by
+  match_id: order_by
+  priority: order_by
+  title: order_by
+}
+
+"""
+response of any mutation on the table "match_streams"
+"""
+type match_streams_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [match_streams!]!
+}
+
+"""
+on_conflict condition type for table "match_streams"
+"""
+input match_streams_on_conflict {
+  constraint: match_streams_constraint!
+  update_columns: [match_streams_update_column!]! = []
+  where: match_streams_bool_exp
+}
+
+"""Ordering options when selecting data from "match_streams"."""
+input match_streams_order_by {
+  id: order_by
+  link: order_by
+  match: matches_order_by
+  match_id: order_by
+  priority: order_by
+  title: order_by
+}
+
+"""primary key columns input for table: match_streams"""
+input match_streams_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "match_streams"
+"""
+enum match_streams_select_column {
+  """column name"""
+  id
+
+  """column name"""
+  link
+
+  """column name"""
+  match_id
+
+  """column name"""
+  priority
+
+  """column name"""
+  title
+}
+
+"""
+input type for updating data in table "match_streams"
+"""
+input match_streams_set_input {
+  id: uuid
+  link: String
+  match_id: uuid
+  priority: Int
+  title: String
+}
+
+"""aggregate stddev on columns"""
+type match_streams_stddev_fields {
+  priority: Float
+}
+
+"""
+order by stddev() on columns of table "match_streams"
+"""
+input match_streams_stddev_order_by {
+  priority: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type match_streams_stddev_pop_fields {
+  priority: Float
+}
+
+"""
+order by stddev_pop() on columns of table "match_streams"
+"""
+input match_streams_stddev_pop_order_by {
+  priority: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type match_streams_stddev_samp_fields {
+  priority: Float
+}
+
+"""
+order by stddev_samp() on columns of table "match_streams"
+"""
+input match_streams_stddev_samp_order_by {
+  priority: order_by
+}
+
+"""
+Streaming cursor of the table "match_streams"
+"""
+input match_streams_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: match_streams_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input match_streams_stream_cursor_value_input {
+  id: uuid
+  link: String
+  match_id: uuid
+  priority: Int
+  title: String
+}
+
+"""aggregate sum on columns"""
+type match_streams_sum_fields {
+  priority: Int
+}
+
+"""
+order by sum() on columns of table "match_streams"
+"""
+input match_streams_sum_order_by {
+  priority: order_by
+}
+
+"""
+update columns of table "match_streams"
+"""
+enum match_streams_update_column {
+  """column name"""
+  id
+
+  """column name"""
+  link
+
+  """column name"""
+  match_id
+
+  """column name"""
+  priority
+
+  """column name"""
+  title
+}
+
+input match_streams_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: match_streams_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: match_streams_set_input
+
+  """filter the rows which have to be updated"""
+  where: match_streams_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type match_streams_var_pop_fields {
+  priority: Float
+}
+
+"""
+order by var_pop() on columns of table "match_streams"
+"""
+input match_streams_var_pop_order_by {
+  priority: order_by
+}
+
+"""aggregate var_samp on columns"""
+type match_streams_var_samp_fields {
+  priority: Float
+}
+
+"""
+order by var_samp() on columns of table "match_streams"
+"""
+input match_streams_var_samp_order_by {
+  priority: order_by
+}
+
+"""aggregate variance on columns"""
+type match_streams_variance_fields {
+  priority: Float
+}
+
+"""
+order by variance() on columns of table "match_streams"
+"""
+input match_streams_variance_order_by {
+  priority: order_by
+}
+
+"""
 columns and relationships of "match_type_cfgs"
 """
 type match_type_cfgs {
@@ -13295,6 +13702,42 @@ type matches {
   started_at: timestamptz
   status: e_match_status_enum!
 
+  """An array relationship"""
+  streams(
+    """distinct select on columns"""
+    distinct_on: [match_streams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_streams_order_by!]
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): [match_streams!]!
+
+  """An aggregate relationship"""
+  streams_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_streams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_streams_order_by!]
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): match_streams_aggregate!
+
   """
   A computed field, executes function "get_match_teams"
   """
@@ -13523,6 +13966,8 @@ input matches_bool_exp {
   server_type: String_comparison_exp
   started_at: timestamptz_comparison_exp
   status: e_match_status_enum_comparison_exp
+  streams: match_streams_bool_exp
+  streams_aggregate: match_streams_aggregate_bool_exp
   teams: teams_bool_exp
   tournament_brackets: tournament_brackets_bool_exp
   tournament_brackets_aggregate: tournament_brackets_aggregate_bool_exp
@@ -13601,6 +14046,7 @@ input matches_insert_input {
   server_id: uuid
   started_at: timestamptz
   status: e_match_status_enum
+  streams: match_streams_arr_rel_insert_input
   tournament_brackets: tournament_brackets_arr_rel_insert_input
   winner: match_lineups_obj_rel_insert_input
   winning_lineup_id: uuid
@@ -13897,6 +14343,7 @@ input matches_order_by {
   server_type: order_by
   started_at: order_by
   status: order_by
+  streams_aggregate: match_streams_aggregate_order_by
   teams_aggregate: teams_aggregate_order_by
   tournament_brackets_aggregate: tournament_brackets_aggregate_order_by
   tv_connection_string: order_by
@@ -14901,6 +15348,19 @@ type mutation_root {
   delete_match_region_veto_picks_by_pk(id: uuid!): match_region_veto_picks
 
   """
+  delete data from the table: "match_streams"
+  """
+  delete_match_streams(
+    """filter the rows which have to be deleted"""
+    where: match_streams_bool_exp!
+  ): match_streams_mutation_response
+
+  """
+  delete single row from the table: "match_streams"
+  """
+  delete_match_streams_by_pk(id: uuid!): match_streams
+
+  """
   delete data from the table: "match_type_cfgs"
   """
   delete_match_type_cfgs(
@@ -15059,6 +15519,19 @@ type mutation_root {
   delete single row from the table: "players"
   """
   delete_players_by_pk(steam_id: bigint!): players
+
+  """
+  delete data from the table: "plugin_versions"
+  """
+  delete_plugin_versions(
+    """filter the rows which have to be deleted"""
+    where: plugin_versions_bool_exp!
+  ): plugin_versions_mutation_response
+
+  """
+  delete single row from the table: "plugin_versions"
+  """
+  delete_plugin_versions_by_pk(version: String!): plugin_versions
 
   """
   delete data from the table: "server_regions"
@@ -16107,6 +16580,28 @@ type mutation_root {
   ): match_region_veto_picks
 
   """
+  insert data into the table: "match_streams"
+  """
+  insert_match_streams(
+    """the rows to be inserted"""
+    objects: [match_streams_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: match_streams_on_conflict
+  ): match_streams_mutation_response
+
+  """
+  insert a single row into the table: "match_streams"
+  """
+  insert_match_streams_one(
+    """the row to be inserted"""
+    object: match_streams_insert_input!
+
+    """upsert condition"""
+    on_conflict: match_streams_on_conflict
+  ): match_streams
+
+  """
   insert data into the table: "match_type_cfgs"
   """
   insert_match_type_cfgs(
@@ -16393,6 +16888,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: players_on_conflict
   ): players
+
+  """
+  insert data into the table: "plugin_versions"
+  """
+  insert_plugin_versions(
+    """the rows to be inserted"""
+    objects: [plugin_versions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: plugin_versions_on_conflict
+  ): plugin_versions_mutation_response
+
+  """
+  insert a single row into the table: "plugin_versions"
+  """
+  insert_plugin_versions_one(
+    """the row to be inserted"""
+    object: plugin_versions_insert_input!
+
+    """upsert condition"""
+    on_conflict: plugin_versions_on_conflict
+  ): plugin_versions
 
   """
   insert data into the table: "server_regions"
@@ -17943,6 +18460,40 @@ type mutation_root {
   ): [match_region_veto_picks_mutation_response]
 
   """
+  update data of the table: "match_streams"
+  """
+  update_match_streams(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: match_streams_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: match_streams_set_input
+
+    """filter the rows which have to be updated"""
+    where: match_streams_bool_exp!
+  ): match_streams_mutation_response
+
+  """
+  update single row of the table: "match_streams"
+  """
+  update_match_streams_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: match_streams_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: match_streams_set_input
+    pk_columns: match_streams_pk_columns_input!
+  ): match_streams
+
+  """
+  update multiples rows of table: "match_streams"
+  """
+  update_match_streams_many(
+    """updates to execute, in order"""
+    updates: [match_streams_updates!]!
+  ): [match_streams_mutation_response]
+
+  """
   update data of the table: "match_type_cfgs"
   """
   update_match_type_cfgs(
@@ -18397,6 +18948,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [players_updates!]!
   ): [players_mutation_response]
+
+  """
+  update data of the table: "plugin_versions"
+  """
+  update_plugin_versions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: plugin_versions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: plugin_versions_set_input
+
+    """filter the rows which have to be updated"""
+    where: plugin_versions_bool_exp!
+  ): plugin_versions_mutation_response
+
+  """
+  update single row of the table: "plugin_versions"
+  """
+  update_plugin_versions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: plugin_versions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: plugin_versions_set_input
+    pk_columns: plugin_versions_pk_columns_input!
+  ): plugin_versions
+
+  """
+  update multiples rows of table: "plugin_versions"
+  """
+  update_plugin_versions_many(
+    """updates to execute, in order"""
+    updates: [plugin_versions_updates!]!
+  ): [plugin_versions_mutation_response]
 
   """
   update data of the table: "server_regions"
@@ -25907,6 +26492,230 @@ type players_variance_fields {
   total_matches: Int
 }
 
+"""
+columns and relationships of "plugin_versions"
+"""
+type plugin_versions {
+  min_game_build_id: Int
+  published_at: timestamptz!
+  version: String!
+}
+
+"""
+aggregated selection of "plugin_versions"
+"""
+type plugin_versions_aggregate {
+  aggregate: plugin_versions_aggregate_fields
+  nodes: [plugin_versions!]!
+}
+
+"""
+aggregate fields of "plugin_versions"
+"""
+type plugin_versions_aggregate_fields {
+  avg: plugin_versions_avg_fields
+  count(columns: [plugin_versions_select_column!], distinct: Boolean): Int!
+  max: plugin_versions_max_fields
+  min: plugin_versions_min_fields
+  stddev: plugin_versions_stddev_fields
+  stddev_pop: plugin_versions_stddev_pop_fields
+  stddev_samp: plugin_versions_stddev_samp_fields
+  sum: plugin_versions_sum_fields
+  var_pop: plugin_versions_var_pop_fields
+  var_samp: plugin_versions_var_samp_fields
+  variance: plugin_versions_variance_fields
+}
+
+"""aggregate avg on columns"""
+type plugin_versions_avg_fields {
+  min_game_build_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "plugin_versions". All fields are combined with a logical 'AND'.
+"""
+input plugin_versions_bool_exp {
+  _and: [plugin_versions_bool_exp!]
+  _not: plugin_versions_bool_exp
+  _or: [plugin_versions_bool_exp!]
+  min_game_build_id: Int_comparison_exp
+  published_at: timestamptz_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "plugin_versions"
+"""
+enum plugin_versions_constraint {
+  """
+  unique or primary key constraint on columns "version"
+  """
+  plugin_versions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "plugin_versions"
+"""
+input plugin_versions_inc_input {
+  min_game_build_id: Int
+}
+
+"""
+input type for inserting data into table "plugin_versions"
+"""
+input plugin_versions_insert_input {
+  min_game_build_id: Int
+  published_at: timestamptz
+  version: String
+}
+
+"""aggregate max on columns"""
+type plugin_versions_max_fields {
+  min_game_build_id: Int
+  published_at: timestamptz
+  version: String
+}
+
+"""aggregate min on columns"""
+type plugin_versions_min_fields {
+  min_game_build_id: Int
+  published_at: timestamptz
+  version: String
+}
+
+"""
+response of any mutation on the table "plugin_versions"
+"""
+type plugin_versions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [plugin_versions!]!
+}
+
+"""
+on_conflict condition type for table "plugin_versions"
+"""
+input plugin_versions_on_conflict {
+  constraint: plugin_versions_constraint!
+  update_columns: [plugin_versions_update_column!]! = []
+  where: plugin_versions_bool_exp
+}
+
+"""Ordering options when selecting data from "plugin_versions"."""
+input plugin_versions_order_by {
+  min_game_build_id: order_by
+  published_at: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: plugin_versions"""
+input plugin_versions_pk_columns_input {
+  version: String!
+}
+
+"""
+select columns of table "plugin_versions"
+"""
+enum plugin_versions_select_column {
+  """column name"""
+  min_game_build_id
+
+  """column name"""
+  published_at
+
+  """column name"""
+  version
+}
+
+"""
+input type for updating data in table "plugin_versions"
+"""
+input plugin_versions_set_input {
+  min_game_build_id: Int
+  published_at: timestamptz
+  version: String
+}
+
+"""aggregate stddev on columns"""
+type plugin_versions_stddev_fields {
+  min_game_build_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type plugin_versions_stddev_pop_fields {
+  min_game_build_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type plugin_versions_stddev_samp_fields {
+  min_game_build_id: Float
+}
+
+"""
+Streaming cursor of the table "plugin_versions"
+"""
+input plugin_versions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: plugin_versions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input plugin_versions_stream_cursor_value_input {
+  min_game_build_id: Int
+  published_at: timestamptz
+  version: String
+}
+
+"""aggregate sum on columns"""
+type plugin_versions_sum_fields {
+  min_game_build_id: Int
+}
+
+"""
+update columns of table "plugin_versions"
+"""
+enum plugin_versions_update_column {
+  """column name"""
+  min_game_build_id
+
+  """column name"""
+  published_at
+
+  """column name"""
+  version
+}
+
+input plugin_versions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: plugin_versions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: plugin_versions_set_input
+
+  """filter the rows which have to be updated"""
+  where: plugin_versions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type plugin_versions_var_pop_fields {
+  min_game_build_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type plugin_versions_var_samp_fields {
+  min_game_build_id: Float
+}
+
+"""aggregate variance on columns"""
+type plugin_versions_variance_fields {
+  min_game_build_id: Float
+}
+
 type query_root {
   """
   fetch data from the table: "_map_pool"
@@ -27602,6 +28411,49 @@ type query_root {
   match_region_veto_picks_by_pk(id: uuid!): match_region_veto_picks
 
   """
+  fetch data from the table: "match_streams"
+  """
+  match_streams(
+    """distinct select on columns"""
+    distinct_on: [match_streams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_streams_order_by!]
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): [match_streams!]!
+
+  """
+  fetch aggregated fields from the table: "match_streams"
+  """
+  match_streams_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_streams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_streams_order_by!]
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): match_streams_aggregate!
+
+  """fetch data from the table: "match_streams" using primary key columns"""
+  match_streams_by_pk(id: uuid!): match_streams
+
+  """
   fetch data from the table: "match_type_cfgs"
   """
   match_type_cfgs(
@@ -28199,6 +29051,49 @@ type query_root {
 
   """fetch data from the table: "players" using primary key columns"""
   players_by_pk(steam_id: bigint!): players
+
+  """
+  fetch data from the table: "plugin_versions"
+  """
+  plugin_versions(
+    """distinct select on columns"""
+    distinct_on: [plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: plugin_versions_bool_exp
+  ): [plugin_versions!]!
+
+  """
+  fetch aggregated fields from the table: "plugin_versions"
+  """
+  plugin_versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: plugin_versions_bool_exp
+  ): plugin_versions_aggregate!
+
+  """fetch data from the table: "plugin_versions" using primary key columns"""
+  plugin_versions_by_pk(version: String!): plugin_versions
 
   """
   fetch data from the table: "server_regions"
@@ -32558,6 +33453,63 @@ type subscription_root {
   ): [match_region_veto_picks!]!
 
   """
+  fetch data from the table: "match_streams"
+  """
+  match_streams(
+    """distinct select on columns"""
+    distinct_on: [match_streams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_streams_order_by!]
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): [match_streams!]!
+
+  """
+  fetch aggregated fields from the table: "match_streams"
+  """
+  match_streams_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_streams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_streams_order_by!]
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): match_streams_aggregate!
+
+  """fetch data from the table: "match_streams" using primary key columns"""
+  match_streams_by_pk(id: uuid!): match_streams
+
+  """
+  fetch data from the table in a streaming manner: "match_streams"
+  """
+  match_streams_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [match_streams_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: match_streams_bool_exp
+  ): [match_streams!]!
+
+  """
   fetch data from the table: "match_type_cfgs"
   """
   match_type_cfgs(
@@ -33362,6 +34314,63 @@ type subscription_root {
     """filter the rows returned"""
     where: players_bool_exp
   ): [players!]!
+
+  """
+  fetch data from the table: "plugin_versions"
+  """
+  plugin_versions(
+    """distinct select on columns"""
+    distinct_on: [plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: plugin_versions_bool_exp
+  ): [plugin_versions!]!
+
+  """
+  fetch aggregated fields from the table: "plugin_versions"
+  """
+  plugin_versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: plugin_versions_bool_exp
+  ): plugin_versions_aggregate!
+
+  """fetch data from the table: "plugin_versions" using primary key columns"""
+  plugin_versions_by_pk(version: String!): plugin_versions
+
+  """
+  fetch data from the table in a streaming manner: "plugin_versions"
+  """
+  plugin_versions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [plugin_versions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: plugin_versions_bool_exp
+  ): [plugin_versions!]!
 
   """
   fetch data from the table: "server_regions"
@@ -35936,6 +36945,7 @@ type tournament_brackets {
   match_number: Int
   parent_bracket_id: uuid
   round: Int!
+  scheduled_eta: timestamptz
 
   """An object relationship"""
   stage: tournament_stages!
@@ -36061,6 +37071,7 @@ input tournament_brackets_bool_exp {
   match_number: Int_comparison_exp
   parent_bracket_id: uuid_comparison_exp
   round: Int_comparison_exp
+  scheduled_eta: timestamptz_comparison_exp
   stage: tournament_stages_bool_exp
   team_1: tournament_teams_bool_exp
   team_2: tournament_teams_bool_exp
@@ -36106,6 +37117,7 @@ input tournament_brackets_insert_input {
   match_number: Int
   parent_bracket_id: uuid
   round: Int
+  scheduled_eta: timestamptz
   stage: tournament_stages_obj_rel_insert_input
   team_1: tournament_teams_obj_rel_insert_input
   team_2: tournament_teams_obj_rel_insert_input
@@ -36123,6 +37135,7 @@ type tournament_brackets_max_fields {
   match_number: Int
   parent_bracket_id: uuid
   round: Int
+  scheduled_eta: timestamptz
   tournament_stage_id: uuid
   tournament_team_id_1: uuid
   tournament_team_id_2: uuid
@@ -36139,6 +37152,7 @@ input tournament_brackets_max_order_by {
   match_number: order_by
   parent_bracket_id: order_by
   round: order_by
+  scheduled_eta: order_by
   tournament_stage_id: order_by
   tournament_team_id_1: order_by
   tournament_team_id_2: order_by
@@ -36153,6 +37167,7 @@ type tournament_brackets_min_fields {
   match_number: Int
   parent_bracket_id: uuid
   round: Int
+  scheduled_eta: timestamptz
   tournament_stage_id: uuid
   tournament_team_id_1: uuid
   tournament_team_id_2: uuid
@@ -36169,6 +37184,7 @@ input tournament_brackets_min_order_by {
   match_number: order_by
   parent_bracket_id: order_by
   round: order_by
+  scheduled_eta: order_by
   tournament_stage_id: order_by
   tournament_team_id_1: order_by
   tournament_team_id_2: order_by
@@ -36205,6 +37221,7 @@ input tournament_brackets_order_by {
   match_number: order_by
   parent_bracket_id: order_by
   round: order_by
+  scheduled_eta: order_by
   stage: tournament_stages_order_by
   team_1: tournament_teams_order_by
   team_2: tournament_teams_order_by
@@ -36247,6 +37264,9 @@ enum tournament_brackets_select_column {
   round
 
   """column name"""
+  scheduled_eta
+
+  """column name"""
   tournament_stage_id
 
   """column name"""
@@ -36284,6 +37304,7 @@ input tournament_brackets_set_input {
   match_number: Int
   parent_bracket_id: uuid
   round: Int
+  scheduled_eta: timestamptz
   tournament_stage_id: uuid
   tournament_team_id_1: uuid
   tournament_team_id_2: uuid
@@ -36358,6 +37379,7 @@ input tournament_brackets_stream_cursor_value_input {
   match_number: Int
   parent_bracket_id: uuid
   round: Int
+  scheduled_eta: timestamptz
   tournament_stage_id: uuid
   tournament_team_id_1: uuid
   tournament_team_id_2: uuid
@@ -36406,6 +37428,9 @@ enum tournament_brackets_update_column {
 
   """column name"""
   round
+
+  """column name"""
+  scheduled_eta
 
   """column name"""
   tournament_stage_id
