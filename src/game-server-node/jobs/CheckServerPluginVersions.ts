@@ -39,14 +39,25 @@ export class CheckServerPluginVersions extends WorkerHost {
       return;
     }
 
-    const { settings_by_pk } = await this.hasura.query({
-      settings_by_pk: {
+    const { plugin_versions } = await this.hasura.query({
+      plugin_versions: {
         __args: {
-          name: "plugin_version",
+          limit: 1,
+          order_by: [
+            {
+              published_at: "desc",
+            },
+          ],
         },
-        value: true,
+        version: true,
       },
     });
+
+    const plugin_version = plugin_versions.at(0)?.version;
+
+    if (!plugin_version) {
+      return;
+    }
 
     const { servers_aggregate } = await this.hasura.query({
       servers_aggregate: {
@@ -59,7 +70,7 @@ export class CheckServerPluginVersions extends WorkerHost {
               _eq: true,
             },
             plugin_version: {
-              _neq: settings_by_pk.value,
+              _neq: plugin_version,
             },
           },
         },

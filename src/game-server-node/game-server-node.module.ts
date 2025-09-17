@@ -28,12 +28,14 @@ import { NotificationsModule } from "src/notifications/notifications.module";
 import { RconModule } from "src/rcon/rcon.module";
 import { CheckServerPluginVersions } from "./jobs/CheckServerPluginVersions";
 import { HasuraService } from "src/hasura/hasura.service";
+import { GetPluginVersions } from "./jobs/GetPluginVersions";
 
 @Module({
   providers: [
     GameServerNodeService,
     GameServerNodeGateway,
     CheckGameUpdate,
+    GetPluginVersions,
     MarkGameServerNodeOffline,
     MarkDedicatedServerOffline,
     CheckServerPluginVersions,
@@ -93,6 +95,16 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
       {
         repeat: {
           pattern: "*/6 * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      GetPluginVersions.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
         },
       },
     );

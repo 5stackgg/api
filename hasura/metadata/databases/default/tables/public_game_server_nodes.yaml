@@ -40,6 +40,11 @@ computed_fields:
       function:
         name: available_node_server_count
         schema: public
+  - name: plugin_supported
+    definition:
+      function:
+        name: game_server_node_plugin_supported
+        schema: public
   - name: total_server_count
     definition:
       function:
@@ -57,6 +62,7 @@ select_permissions:
         - lan_ip
         - node_ip
         - pin_build_id
+        - pin_plugin_version
         - public_ip
         - region
         - start_port_range
@@ -66,6 +72,7 @@ select_permissions:
         - update_status
       computed_fields:
         - available_server_count
+        - plugin_supported
         - total_server_count
       filter: {}
       allow_aggregations: true
@@ -78,6 +85,7 @@ update_permissions:
         - end_port_range
         - label
         - pin_build_id
+        - pin_plugin_version
         - region
         - start_port_range
       filter: {}
