@@ -343,7 +343,8 @@ export class GameServerNodeService {
                             },
                           ]
                         : []),
-                      ...(this.steamConfig.steamUser &&
+                      ...(pinBuildId &&
+                      this.steamConfig.steamUser &&
                       this.steamConfig.steamPassword
                         ? [
                             {
@@ -432,7 +433,7 @@ export class GameServerNodeService {
       const pod = await this.getUpdateJobPod(gameServerNodeId);
 
       if (!pod) {
-        this.logger.warn("unable to find update job pod");
+        this.logger.warn(`[${gameServerNodeId}] unable to find update job pod`);
         await this.hasura.mutation({
           update_game_server_nodes_by_pk: {
             __args: {
@@ -540,7 +541,22 @@ export class GameServerNodeService {
         setTimeout(() => {
           void this.moitorUpdateStatus(gameServerNodeId, attempts - 1);
         }, 5000);
+        return;
       }
+
+      await this.hasura.mutation({
+        update_game_server_nodes_by_pk: {
+          __args: {
+            pk_columns: {
+              id: gameServerNodeId,
+            },
+            _set: {
+              update_status: null,
+            },
+          },
+          update_status: true,
+        },
+      });
     }
   }
 

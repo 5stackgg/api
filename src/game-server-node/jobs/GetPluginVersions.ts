@@ -75,7 +75,9 @@ export class GetPluginVersions extends WorkerHost {
         __args: {
           where: {
             version: {
-              _nin: releases.map((release: { version: string }) => release.version),
+              _nin: releases.map(
+                (release: { version: string }) => release.version,
+              ),
             },
           },
         },

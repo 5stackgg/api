@@ -125,8 +125,8 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
       game_server_nodes: {
         __args: {
           where: {
-            enabled: {
-              _eq: true,
+            status: {
+              _eq: "Online",
             },
           },
         },
@@ -135,7 +135,7 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
     });
 
     for (const node of game_server_nodes) {
-      await this.gameServerNodeService.moitorUpdateStatus(node.id);
+      void this.gameServerNodeService.moitorUpdateStatus(node.id);
     }
   }
 
