@@ -69,5 +69,18 @@ export class GetPluginVersions extends WorkerHost {
         },
       });
     }
+
+    await this.hasuraService.mutation({
+      delete_plugin_versions: {
+        __args: {
+          where: {
+            version: {
+              _nin: releases.map((release: { version: string }) => release.version),
+            },
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 }
