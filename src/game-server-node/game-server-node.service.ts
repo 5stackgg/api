@@ -401,6 +401,20 @@ export class GameServerNodeService {
         },
       });
 
+      await this.hasura.mutation({
+        update_game_server_nodes_by_pk: {
+          __args: {
+            pk_columns: {
+              id: gameServerNodeId,
+            },
+            _set: {
+              update_status: "Initializing",
+            },
+          },
+          update_status: true,
+        },
+      });
+
       setTimeout(() => {
         void this.moitorUpdateStatus(gameServerNodeId, 3);
       }, 5000);
@@ -419,6 +433,20 @@ export class GameServerNodeService {
 
       if (!pod) {
         console.warn("unable to find update job pod");
+        await this.hasura.mutation({
+          update_game_server_nodes_by_pk: {
+            __args: {
+              pk_columns: {
+                id: gameServerNodeId,
+              },
+              _set: {
+                update_status: null,
+              },
+            },
+            update_status: true,
+          },
+        });
+
         return;
       }
 

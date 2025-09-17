@@ -1,4 +1,10 @@
-import { MiddlewareConsumer, Module, RequestMethod } from "@nestjs/common";
+import {
+  Logger,
+  MiddlewareConsumer,
+  Module,
+  OnApplicationBootstrap,
+  RequestMethod,
+} from "@nestjs/common";
 import { GameServerNodeService } from "./game-server-node.service";
 import { GameServerNodeController } from "./game-server-node.controller";
 import { TailscaleModule } from "../tailscale/tailscale.module";
@@ -21,6 +27,7 @@ import { RedisModule } from "src/redis/redis.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { RconModule } from "src/rcon/rcon.module";
 import { CheckServerPluginVersions } from "./jobs/CheckServerPluginVersions";
+import { HasuraService } from "src/hasura/hasura.service";
 
 @Module({
   providers: [
@@ -70,8 +77,12 @@ import { CheckServerPluginVersions } from "./jobs/CheckServerPluginVersions";
   exports: [LoggingServiceService],
   controllers: [GameServerNodeController],
 })
-export class GameServerNodeModule {
-  constructor(@InjectQueue(GameServerQueues.GameUpdate) queue: Queue) {
+export class GameServerNodeModule implements OnApplicationBootstrap {
+  constructor(
+    @InjectQueue(GameServerQueues.GameUpdate) queue: Queue,
+    private readonly hasura: HasuraService,
+    private readonly gameServerNodeService: GameServerNodeService,
+  ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
@@ -95,6 +106,25 @@ export class GameServerNodeModule {
         },
       },
     );
+  }
+
+  public async onApplicationBootstrap() {
+    const { game_server_nodes } = await this.hasura.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            enabled: {
+              _eq: true,
+            },
+          },
+        },
+        id: true,
+      },
+    });
+
+    for (const node of game_server_nodes) {
+      await this.gameServerNodeService.moitorUpdateStatus(node.id);
+    }
   }
 
   configure(consumer: MiddlewareConsumer) {
