@@ -9,11 +9,11 @@ BEGIN
         RETURN true;
     END IF;
 
-    IF is_tournament_match(match) THEN
-        IF hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
-            return true;
-        END IF;
+    IF hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
+        return true;
+    END IF;
 
+    IF is_tournament_match(match) THEN
         SELECT EXISTS (
             SELECT 1
             FROM matches m
