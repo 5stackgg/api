@@ -69,9 +69,18 @@ export class CheckServerPluginVersions extends WorkerHost {
             connected: {
               _eq: true,
             },
-            plugin_version: {
-              _neq: plugin_version,
-            },
+            _and: [
+              {
+                plugin_version: {
+                  _neq: plugin_version,
+                },
+              },
+              {
+                plugin_version: {
+                  _neq: "dev",
+                },
+              },
+            ],
           },
         },
         aggregate: {

@@ -142,15 +142,7 @@ export class GameServerNodeController {
     }
 
     if (pluginVersion === "__RELEASE_VERSION__") {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: {
-            name: "plugin_version",
-          },
-          value: true,
-        },
-      });
-      pluginVersion = settings_by_pk?.value;
+      pluginVersion = "dev";
     }
 
     const { servers_by_pk: server } = await this.hasura.query({
