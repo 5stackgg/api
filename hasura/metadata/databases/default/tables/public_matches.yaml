@@ -511,6 +511,10 @@ select_permissions:
         - tv_connection_string
       filter:
         _or:
+          - status:
+              _nin:
+                - PickingPlayers
+                - Canceled
           - is_organizer:
               _eq: true
           - options:
@@ -520,11 +524,6 @@ select_permissions:
                   - Invite
           - is_in_lineup:
               _eq: true
-          - status:
-              _in:
-                - Finished
-                - Forfeit
-                - Tie
           - _or:
               - lineup_1:
                   lineup_players:
