@@ -1,4 +1,4 @@
-import { Module, OnApplicationBootstrap } from "@nestjs/common";
+import { Logger, Module, OnApplicationBootstrap } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { HasuraModule } from "./hasura/hasura.module";
 import { RconModule } from "./rcon/rcon.module";
@@ -104,14 +104,20 @@ import { SystemService } from "./system/system.service";
 })
 export class AppModule implements OnApplicationBootstrap {
   constructor(
+    private readonly logger: Logger,
     private readonly system: SystemService,
     private readonly typesense: TypeSenseService,
     private readonly discordBot: DiscordBotService,
   ) {}
 
   public async onApplicationBootstrap() {
-    void this.discordBot.setup();
-    await this.typesense.setup();
-    await this.system.detectFeatures();
+    try {
+      void this.discordBot.setup();
+      await this.typesense.setup();
+      await this.system.detectFeatures();
+    } catch (error) {
+      this.logger.error("system is not able to start, exiting", error);
+      process.exit(1);
+    }
   }
 }

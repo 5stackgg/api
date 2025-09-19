@@ -44,7 +44,12 @@ async function bootstrap() {
 
   if (process.env.RUN_MIGRATIONS || process.env.DEV) {
     const hasura = app.get(HasuraService);
-    await hasura.setup();
+    try {
+      await hasura.setup();
+    } catch (error) {
+      console.warn("hasura is not able to be setup, exiting", error);
+      process.exit(1);
+    }
     if (!process.env.DEV) {
       process.exit(0);
     }
