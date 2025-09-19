@@ -170,6 +170,7 @@ DECLARE
     _map_pool_count int;    
     _regions text[];
     auto_cancel_duration text;
+    scheduled_at timestamptz;
 BEGIN
     auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes'; 
 
@@ -194,13 +195,21 @@ BEGIN
         NEW.ended_at = null;
     END IF;
 
+    scheduled_at := COALESCE(NEW.scheduled_at);
+    
+    -- We need to correctly handle the cancels_at field, since matches open 15 minutes before the scheduled time.
+    -- Therefore, cancels_at should be set relative to the scheduled time, not the current time.
+    IF (scheduled_at IS NOT NULL AND scheduled_at < NOW()) THEN
+        NEW.scheduled_at = NOW();
+    END IF;
+
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        NEW.cancels_at = NOW() + (auto_cancel_duration)::interval;
+        NEW.cancels_at = scheduled_at + (auto_cancel_duration)::interval;
         NEW.ended_at = null;
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
-        NEW.cancels_at = NOW() + (auto_cancel_duration)::interval;
+        NEW.cancels_at = scheduled_at + (auto_cancel_duration)::interval;
         NEW.ended_at = null;
     END IF;
 
