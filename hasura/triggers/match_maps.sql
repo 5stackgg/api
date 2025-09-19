@@ -26,9 +26,13 @@ CREATE TRIGGER tbi_match_maps BEFORE INSERT ON public.match_maps FOR EACH ROW EX
 CREATE OR REPLACE FUNCTION public.tbu_match_maps() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    auto_cancel_duration text;
 BEGIN
+    auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
+
     IF NEW.status = 'Warmup' THEN
-        update matches set cancels_at = NOW() + INTERVAL '15 minutes' where id = NEW.match_id;
+        update matches set cancels_at = NOW() + (auto_cancel_duration)::interval where id = NEW.match_id;
     END IF;
 
     IF NEW.status = 'Live' THEN

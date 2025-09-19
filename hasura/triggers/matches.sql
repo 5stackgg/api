@@ -167,9 +167,12 @@ DECLARE
     has_region_veto BOOLEAN;
     _map_pool_id UUID;
     _map_pool UUID[];
-    _map_pool_count int;
+    _map_pool_count int;    
     _regions text[];
+    auto_cancel_duration text;
 BEGIN
+    auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes'; 
+
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
         UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
     END IF;
@@ -192,12 +195,12 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        NEW.cancels_at = NOW() + INTERVAL '15 minutes';
+        NEW.cancels_at = NOW() + (auto_cancel_duration)::interval;
         NEW.ended_at = null;
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
-        NEW.cancels_at = NOW() + INTERVAL '15 minutes';
+        NEW.cancels_at = NOW() + (auto_cancel_duration)::interval;
         NEW.ended_at = null;
     END IF;
 
