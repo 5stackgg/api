@@ -4,11 +4,17 @@ CREATE OR REPLACE FUNCTION public.get_player_matches(player public.players) RETU
 DECLARE
 BEGIN
     RETURN QUERY
-        SELECT m.*
-        FROM players p
-        INNER JOIN match_lineup_players mlp ON mlp.steam_id = p.steam_id
-        INNER JOIN matches m ON m.lineup_1_id = mlp.match_lineup_id or m.lineup_2_id = mlp.match_lineup_id
-        WHERE p.steam_id = player.steam_id;
+        SELECT DISTINCT m.*
+        FROM match_lineup_players mlp
+        INNER JOIN matches m ON m.lineup_1_id = mlp.match_lineup_id
+        WHERE mlp.steam_id = player.steam_id
+        
+        UNION
+        
+        SELECT DISTINCT m.*
+        FROM match_lineup_players mlp
+        INNER JOIN matches m ON m.lineup_2_id = mlp.match_lineup_id
+        WHERE mlp.steam_id = player.steam_id;
 END;
 $$;
 
@@ -18,12 +24,22 @@ CREATE OR REPLACE FUNCTION public.get_total_player_matches(player public.players
 DECLARE
     total_matches INT;
 BEGIN
+    WITH player_matches AS (
+        SELECT DISTINCT m.id
+        FROM match_lineup_players mlp
+        INNER JOIN matches m ON m.lineup_1_id = mlp.match_lineup_id
+        WHERE mlp.steam_id = player.steam_id
+        
+        UNION
+        
+        SELECT DISTINCT m.id
+        FROM match_lineup_players mlp
+        INNER JOIN matches m ON m.lineup_2_id = mlp.match_lineup_id
+        WHERE mlp.steam_id = player.steam_id
+    )
     SELECT count(*)
     INTO total_matches
-    FROM players p
-    INNER JOIN match_lineup_players mlp ON mlp.steam_id = p.steam_id
-    INNER JOIN matches m ON m.lineup_1_id = mlp.match_lineup_id or m.lineup_2_id = mlp.match_lineup_id
-    WHERE p.steam_id = player.steam_id;
+    FROM player_matches;
 
     RETURN total_matches;
 END;
