@@ -8,11 +8,15 @@ import { PostgresQueues } from "./enums/PostgresQueues";
 import { PostgresAnalyzeJob } from "./jobs/PostgresAnalyzeJob";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import { ReindexTables } from "./jobs/ReindexTables";
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: PostgresQueues.Postgres,
+    }),
+    BullModule.registerFlowProducer({
+      name: "reindex",
     }),
     BullBoardModule.forFeature({
       name: PostgresQueues.Postgres,
@@ -23,12 +27,13 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
   providers: [
     PostgresService,
     PostgresAnalyzeJob,
+    ReindexTables,
     ...getQueuesProcessors("Postgres"),
     loggerFactory(),
   ],
 })
 export class PostgresModule {
-  constructor(@InjectQueue(PostgresQueues.Postgres) private queue: Queue) {
+  constructor(@InjectQueue(PostgresQueues.Postgres) queue: Queue) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
@@ -39,6 +44,16 @@ export class PostgresModule {
       {
         repeat: {
           pattern: "0 * * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      ReindexTables.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 0 * * *",
         },
       },
     );
