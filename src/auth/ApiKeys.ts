@@ -5,6 +5,7 @@ import { e_player_roles_enum } from "generated";
 import jwt from "jsonwebtoken";
 import { ConfigService } from "@nestjs/config";
 import { User } from "./types/User";
+import e from "express";
 
 @Injectable()
 export class ApiKeys {
@@ -71,7 +72,9 @@ export class ApiKeys {
     );
   }
 
-  public async verifyJWT(token: string): Promise<User | void> {
+  public async verifyJWT(token: string): Promise<{
+    steam_id: string;
+  }> {
     try {
       const decoded = jwt.verify(token, this.encSecret) as {
         id: string;
@@ -84,6 +87,7 @@ export class ApiKeys {
             id: decoded.id,
           },
           steam_id: true,
+          last_used_at: true,
         },
       });
 
@@ -91,26 +95,29 @@ export class ApiKeys {
         return;
       }
 
-      const { players_by_pk } = await this.hasura.query({
-        players_by_pk: {
-          __args: {
-            steam_id: api_keys_by_pk.steam_id,
-          },
-          name: true,
-          role: true,
-          steam_id: true,
-          profile_url: true,
-          avatar_url: true,
-          discord_id: true,
-          language: true,
-        },
-      });
+      const lastUsedAt = api_keys_by_pk.last_used_at
+        ? new Date(api_keys_by_pk.last_used_at)
+        : null;
 
-      if (!players_by_pk) {
-        return;
+      if (
+        !lastUsedAt ||
+        lastUsedAt < new Date(Date.now() - 1000 * 60 * 60 * 24)
+      ) {
+        console.log("updating last used at");
+        await this.hasura.mutation({
+          update_api_keys_by_pk: {
+            __args: {
+              pk_columns: { id: decoded.id },
+              _set: { last_used_at: new Date() },
+            },
+            __typename: true,
+          },
+        });
       }
 
-      return players_by_pk;
+      return {
+        steam_id: api_keys_by_pk.steam_id,
+      };
     } catch (error) {
       this.logger.error("unable to verify JWT", error);
     }
