@@ -42,6 +42,7 @@ import { ChatModule } from "src/chat/chat.module";
 import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { PostgresService } from "src/postgres/postgres.service";
+import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { PostgresService } from "src/postgres/postgres.service";
     CheckForTournamentStart,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
+    StopOnDemandServer,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
     EloCalculation,

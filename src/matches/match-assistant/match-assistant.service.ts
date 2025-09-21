@@ -391,7 +391,7 @@ export class MatchAssistantService {
 
     return this.cache.lock(`get-on-demand-server:${match.region}`, async () => {
       if (match.server_id) {
-        await this.stopOnDemandServer(matchId, match.server_id);
+        await this.stopOnDemandServer(matchId);
       }
 
       const kc = new KubeConfig();
@@ -736,7 +736,7 @@ export class MatchAssistantService {
 
         return true;
       } catch (error) {
-        await this.stopOnDemandServer(matchId, server.id);
+        await this.stopOnDemandServer(matchId);
 
         this.logger.error(
           `[${matchId}] unable to create on demand server`,
@@ -838,7 +838,7 @@ export class MatchAssistantService {
     }
   }
 
-  public async stopOnDemandServer(matchId: string, serverId: string) {
+  public async stopOnDemandServer(matchId: string) {
     this.logger.log(`[${matchId}] stopping match server`);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);

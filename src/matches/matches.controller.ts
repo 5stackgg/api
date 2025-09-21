@@ -24,6 +24,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "./enums/MatchQueues";
 import { EloCalculation } from "./jobs/EloCalculation";
+import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 
 @Controller("matches")
 export class MatchesController {
@@ -41,6 +42,8 @@ export class MatchesController {
     private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
     private readonly notifications: NotificationsService,
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
+    @InjectQueue(MatchQueues.ScheduledMatches)
+    private scheduledMatchesQueue: Queue,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -297,7 +300,36 @@ export class MatchesController {
       if (server.is_dedicated) {
         await this.matchAssistant.restartDedicatedServer(serverId);
       } else {
-        await this.matchAssistant.stopOnDemandServer(matchId, serverId);
+        if (status === "Canceled" || data.op === "DELETE") {
+          await this.matchAssistant.stopOnDemandServer(matchId);
+        } else {
+          const { match_options_by_pk: matchOptions } = await this.hasura.query(
+            {
+              match_options_by_pk: {
+                __args: {
+                  id: data.new.match_options_id,
+                },
+                tv_delay: true,
+              },
+            },
+          );
+
+          if (!matchOptions) {
+            await this.matchAssistant.stopOnDemandServer(matchId);
+          } else {
+            const tvDelay = matchOptions.tv_delay || 0;
+
+            this.logger.log(
+              `[${matchId}] adding stop on demand server job in ${tvDelay} seconds`,
+            );
+
+            await this.scheduledMatchesQueue.add(
+              StopOnDemandServer.name,
+              { matchId },
+              tvDelay ? { delay: tvDelay * 1000 } : undefined,
+            );
+          }
+        }
       }
 
       await this.hasura.mutation({
@@ -321,7 +353,7 @@ export class MatchesController {
      * Server was removed from match
      */
     if (data.old.server_id && data.old.server_id != data.new.server_id) {
-      await this.matchAssistant.stopOnDemandServer(matchId, data.old.server_id);
+      await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
     const { matches_by_pk: match } = await this.hasura.query({
