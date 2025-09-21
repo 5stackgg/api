@@ -6,6 +6,7 @@ import {
 import { AuthGuard } from "@nestjs/passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
+import { request } from "http";
 
 @Injectable()
 export class SteamGuard extends AuthGuard("steam") {

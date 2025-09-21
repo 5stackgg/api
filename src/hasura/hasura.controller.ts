@@ -10,6 +10,7 @@ import {
 import { ModulesContainer } from "@nestjs/core";
 import { Request, Response } from "express";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
+import { ApiKeyGuard } from "../auth/strategies/ApiKeyGuard";
 import { HasuraService } from "./hasura.service";
 
 type Handler = {
@@ -48,7 +49,7 @@ export class HasuraController {
     private readonly modulesContainer: ModulesContainer,
   ) {}
 
-  @UseGuards(SteamGuard)
+  @UseGuards(ApiKeyGuard, SteamGuard)
   @Get()
   public async hasura(@Req() request: Request) {
     const user = request.user;

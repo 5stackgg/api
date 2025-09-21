@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS "public"."api_keys" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "steam_id" bigint NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), "label" text NOT NULL, "last_used_at" timestamptz, PRIMARY KEY ("id") , FOREIGN KEY ("steam_id") REFERENCES "public"."players"("steam_id") ON UPDATE cascade ON DELETE cascade);

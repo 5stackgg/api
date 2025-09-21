@@ -31,6 +31,12 @@ type Mutation {
 }
 
 type Mutation {
+  createApiKey(
+    label: String!
+  ): ApiKeyResponse
+}
+
+type Mutation {
   denyInvite(
     invite_id: uuid!
     type: String!
@@ -220,5 +226,9 @@ type TestUploadResponse {
 type GetTestUploadResponse {
   error: String
   link: String
+}
+
+type ApiKeyResponse {
+  key: String!
 }
 

@@ -1,0 +1,27 @@
+table:
+  name: api_keys
+  schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - label
+        - created_at
+        - last_used_at
+        - id
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

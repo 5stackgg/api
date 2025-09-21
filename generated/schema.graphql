@@ -13,6 +13,10 @@ directive @cached(
   refresh: Boolean! = false
 ) on QUERY
 
+type ApiKeyResponse {
+  key: String!
+}
+
 """
 Boolean expression to compare columns of type "Boolean". All fields are combined with logical 'AND'.
 """
@@ -663,6 +667,258 @@ order by variance() on columns of table "abandoned_matches"
 """
 input abandoned_matches_variance_order_by {
   steam_id: order_by
+}
+
+"""
+columns and relationships of "api_keys"
+"""
+type api_keys {
+  created_at: timestamptz!
+  id: uuid!
+  label: String!
+  last_used_at: timestamptz
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "api_keys"
+"""
+type api_keys_aggregate {
+  aggregate: api_keys_aggregate_fields
+  nodes: [api_keys!]!
+}
+
+"""
+aggregate fields of "api_keys"
+"""
+type api_keys_aggregate_fields {
+  avg: api_keys_avg_fields
+  count(columns: [api_keys_select_column!], distinct: Boolean): Int!
+  max: api_keys_max_fields
+  min: api_keys_min_fields
+  stddev: api_keys_stddev_fields
+  stddev_pop: api_keys_stddev_pop_fields
+  stddev_samp: api_keys_stddev_samp_fields
+  sum: api_keys_sum_fields
+  var_pop: api_keys_var_pop_fields
+  var_samp: api_keys_var_samp_fields
+  variance: api_keys_variance_fields
+}
+
+"""aggregate avg on columns"""
+type api_keys_avg_fields {
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "api_keys". All fields are combined with a logical 'AND'.
+"""
+input api_keys_bool_exp {
+  _and: [api_keys_bool_exp!]
+  _not: api_keys_bool_exp
+  _or: [api_keys_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  label: String_comparison_exp
+  last_used_at: timestamptz_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "api_keys"
+"""
+enum api_keys_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  api_keys_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "api_keys"
+"""
+input api_keys_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "api_keys"
+"""
+input api_keys_insert_input {
+  created_at: timestamptz
+  id: uuid
+  label: String
+  last_used_at: timestamptz
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type api_keys_max_fields {
+  created_at: timestamptz
+  id: uuid
+  label: String
+  last_used_at: timestamptz
+  steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type api_keys_min_fields {
+  created_at: timestamptz
+  id: uuid
+  label: String
+  last_used_at: timestamptz
+  steam_id: bigint
+}
+
+"""
+response of any mutation on the table "api_keys"
+"""
+type api_keys_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [api_keys!]!
+}
+
+"""
+on_conflict condition type for table "api_keys"
+"""
+input api_keys_on_conflict {
+  constraint: api_keys_constraint!
+  update_columns: [api_keys_update_column!]! = []
+  where: api_keys_bool_exp
+}
+
+"""Ordering options when selecting data from "api_keys"."""
+input api_keys_order_by {
+  created_at: order_by
+  id: order_by
+  label: order_by
+  last_used_at: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: api_keys"""
+input api_keys_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "api_keys"
+"""
+enum api_keys_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  label
+
+  """column name"""
+  last_used_at
+
+  """column name"""
+  steam_id
+}
+
+"""
+input type for updating data in table "api_keys"
+"""
+input api_keys_set_input {
+  created_at: timestamptz
+  id: uuid
+  label: String
+  last_used_at: timestamptz
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type api_keys_stddev_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type api_keys_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type api_keys_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "api_keys"
+"""
+input api_keys_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: api_keys_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input api_keys_stream_cursor_value_input {
+  created_at: timestamptz
+  id: uuid
+  label: String
+  last_used_at: timestamptz
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type api_keys_sum_fields {
+  steam_id: bigint
+}
+
+"""
+update columns of table "api_keys"
+"""
+enum api_keys_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  label
+
+  """column name"""
+  last_used_at
+
+  """column name"""
+  steam_id
+}
+
+input api_keys_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: api_keys_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: api_keys_set_input
+
+  """filter the rows which have to be updated"""
+  where: api_keys_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type api_keys_var_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type api_keys_var_samp_fields {
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type api_keys_variance_fields {
+  steam_id: Float
 }
 
 scalar bigint
@@ -5337,10 +5593,15 @@ type game_server_nodes {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
+  pin_plugin_version: String
 
   """An object relationship"""
   pinned_version: game_versions
-  plugin_version: Int
+
+  """
+  A computed field, executes function "game_server_node_plugin_supported"
+  """
+  plugin_supported: Boolean
   public_ip: inet
   region: String
 
@@ -5483,7 +5744,6 @@ type game_server_nodes_avg_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5499,7 +5759,6 @@ input game_server_nodes_avg_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5521,8 +5780,9 @@ input game_server_nodes_bool_exp {
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
   pin_build_id: Int_comparison_exp
+  pin_plugin_version: String_comparison_exp
   pinned_version: game_versions_bool_exp
-  plugin_version: Int_comparison_exp
+  plugin_supported: Boolean_comparison_exp
   public_ip: inet_comparison_exp
   region: String_comparison_exp
   servers: servers_bool_exp
@@ -5554,7 +5814,6 @@ input game_server_nodes_inc_input {
   build_id: Int
   end_port_range: Int
   pin_build_id: Int
-  plugin_version: Int
   start_port_range: Int
 }
 
@@ -5572,8 +5831,8 @@ input game_server_nodes_insert_input {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
+  pin_plugin_version: String
   pinned_version: game_versions_obj_rel_insert_input
-  plugin_version: Int
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
@@ -5597,7 +5856,7 @@ type game_server_nodes_max_fields {
   id: String
   label: String
   pin_build_id: Int
-  plugin_version: Int
+  pin_plugin_version: String
   region: String
   start_port_range: Int
   token: String
@@ -5618,7 +5877,7 @@ input game_server_nodes_max_order_by {
   id: order_by
   label: order_by
   pin_build_id: order_by
-  plugin_version: order_by
+  pin_plugin_version: order_by
   region: order_by
   start_port_range: order_by
   token: order_by
@@ -5636,7 +5895,7 @@ type game_server_nodes_min_fields {
   id: String
   label: String
   pin_build_id: Int
-  plugin_version: Int
+  pin_plugin_version: String
   region: String
   start_port_range: Int
   token: String
@@ -5657,7 +5916,7 @@ input game_server_nodes_min_order_by {
   id: order_by
   label: order_by
   pin_build_id: order_by
-  plugin_version: order_by
+  pin_plugin_version: order_by
   region: order_by
   start_port_range: order_by
   token: order_by
@@ -5707,8 +5966,9 @@ input game_server_nodes_order_by {
   lan_ip: order_by
   node_ip: order_by
   pin_build_id: order_by
+  pin_plugin_version: order_by
   pinned_version: game_versions_order_by
-  plugin_version: order_by
+  plugin_supported: order_by
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by
@@ -5756,7 +6016,7 @@ enum game_server_nodes_select_column {
   pin_build_id
 
   """column name"""
-  plugin_version
+  pin_plugin_version
 
   """column name"""
   public_ip
@@ -5823,7 +6083,7 @@ input game_server_nodes_set_input {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
-  plugin_version: Int
+  pin_plugin_version: String
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5843,7 +6103,6 @@ type game_server_nodes_stddev_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5859,7 +6118,6 @@ input game_server_nodes_stddev_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5872,7 +6130,6 @@ type game_server_nodes_stddev_pop_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5888,7 +6145,6 @@ input game_server_nodes_stddev_pop_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5901,7 +6157,6 @@ type game_server_nodes_stddev_samp_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -5917,7 +6172,6 @@ input game_server_nodes_stddev_samp_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -5942,7 +6196,7 @@ input game_server_nodes_stream_cursor_value_input {
   lan_ip: inet
   node_ip: inet
   pin_build_id: Int
-  plugin_version: Int
+  pin_plugin_version: String
   public_ip: inet
   region: String
   start_port_range: Int
@@ -5962,7 +6216,6 @@ type game_server_nodes_sum_fields {
   build_id: Int
   end_port_range: Int
   pin_build_id: Int
-  plugin_version: Int
   start_port_range: Int
 
   """
@@ -5978,7 +6231,6 @@ input game_server_nodes_sum_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -6011,7 +6263,7 @@ enum game_server_nodes_update_column {
   pin_build_id
 
   """column name"""
-  plugin_version
+  pin_plugin_version
 
   """column name"""
   public_ip
@@ -6058,7 +6310,6 @@ type game_server_nodes_var_pop_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -6074,7 +6325,6 @@ input game_server_nodes_var_pop_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -6087,7 +6337,6 @@ type game_server_nodes_var_samp_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -6103,7 +6352,6 @@ input game_server_nodes_var_samp_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -6116,7 +6364,6 @@ type game_server_nodes_variance_fields {
   build_id: Float
   end_port_range: Float
   pin_build_id: Float
-  plugin_version: Float
   start_port_range: Float
 
   """
@@ -6132,7 +6379,6 @@ input game_server_nodes_variance_order_by {
   build_id: order_by
   end_port_range: order_by
   pin_build_id: order_by
-  plugin_version: order_by
   start_port_range: order_by
 }
 
@@ -14839,6 +15085,7 @@ type mutation_root {
 
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
+  createApiKey(label: String!): ApiKeyResponse
 
   """
   delete data from the table: "_map_pool"
@@ -14865,6 +15112,19 @@ type mutation_root {
   delete single row from the table: "abandoned_matches"
   """
   delete_abandoned_matches_by_pk(id: uuid!): abandoned_matches
+
+  """
+  delete data from the table: "api_keys"
+  """
+  delete_api_keys(
+    """filter the rows which have to be deleted"""
+    where: api_keys_bool_exp!
+  ): api_keys_mutation_response
+
+  """
+  delete single row from the table: "api_keys"
+  """
+  delete_api_keys_by_pk(id: uuid!): api_keys
 
   """
   delete data from the table: "e_friend_status"
@@ -15764,6 +16024,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: abandoned_matches_on_conflict
   ): abandoned_matches
+
+  """
+  insert data into the table: "api_keys"
+  """
+  insert_api_keys(
+    """the rows to be inserted"""
+    objects: [api_keys_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: api_keys_on_conflict
+  ): api_keys_mutation_response
+
+  """
+  insert a single row into the table: "api_keys"
+  """
+  insert_api_keys_one(
+    """the row to be inserted"""
+    object: api_keys_insert_input!
+
+    """upsert condition"""
+    on_conflict: api_keys_on_conflict
+  ): api_keys
 
   """
   insert data into the table: "e_friend_status"
@@ -17314,6 +17596,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [abandoned_matches_updates!]!
   ): [abandoned_matches_mutation_response]
+
+  """
+  update data of the table: "api_keys"
+  """
+  update_api_keys(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: api_keys_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: api_keys_set_input
+
+    """filter the rows which have to be updated"""
+    where: api_keys_bool_exp!
+  ): api_keys_mutation_response
+
+  """
+  update single row of the table: "api_keys"
+  """
+  update_api_keys_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: api_keys_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: api_keys_set_input
+    pk_columns: api_keys_pk_columns_input!
+  ): api_keys
+
+  """
+  update multiples rows of table: "api_keys"
+  """
+  update_api_keys_many(
+    """updates to execute, in order"""
+    updates: [api_keys_updates!]!
+  ): [api_keys_mutation_response]
 
   """
   update data of the table: "e_friend_status"
@@ -19508,6 +19824,7 @@ type my_friends {
   elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
+  language: String
   name: String
   name_registered: Boolean
 
@@ -19627,6 +19944,7 @@ input my_friends_bool_exp {
   elo: numeric_comparison_exp
   friend_steam_id: bigint_comparison_exp
   invited_by_steam_id: bigint_comparison_exp
+  language: String_comparison_exp
   name: String_comparison_exp
   name_registered: Boolean_comparison_exp
   player: players_bool_exp
@@ -19657,6 +19975,7 @@ input my_friends_insert_input {
   elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
+  language: String
   name: String
   name_registered: Boolean
   player: players_obj_rel_insert_input
@@ -19675,6 +19994,7 @@ type my_friends_max_fields {
   elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
+  language: String
   name: String
   profile_url: String
   role: String
@@ -19693,6 +20013,7 @@ input my_friends_max_order_by {
   elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
+  language: order_by
   name: order_by
   profile_url: order_by
   role: order_by
@@ -19709,6 +20030,7 @@ type my_friends_min_fields {
   elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
+  language: String
   name: String
   profile_url: String
   role: String
@@ -19727,6 +20049,7 @@ input my_friends_min_order_by {
   elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
+  language: order_by
   name: order_by
   profile_url: order_by
   role: order_by
@@ -19754,6 +20077,7 @@ input my_friends_order_by {
   elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
+  language: order_by
   name: order_by
   name_registered: order_by
   player: players_order_by
@@ -19787,6 +20111,9 @@ enum my_friends_select_column {
 
   """column name"""
   invited_by_steam_id
+
+  """column name"""
+  language
 
   """column name"""
   name
@@ -19834,6 +20161,7 @@ input my_friends_set_input {
   elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
+  language: String
   name: String
   name_registered: Boolean
   profile_url: String
@@ -19916,6 +20244,7 @@ input my_friends_stream_cursor_value_input {
   elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
+  language: String
   name: String
   name_registered: Boolean
   profile_url: String
@@ -26802,6 +27131,49 @@ type query_root {
   abandoned_matches_by_pk(id: uuid!): abandoned_matches
 
   """
+  fetch data from the table: "api_keys"
+  """
+  api_keys(
+    """distinct select on columns"""
+    distinct_on: [api_keys_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [api_keys_order_by!]
+
+    """filter the rows returned"""
+    where: api_keys_bool_exp
+  ): [api_keys!]!
+
+  """
+  fetch aggregated fields from the table: "api_keys"
+  """
+  api_keys_aggregate(
+    """distinct select on columns"""
+    distinct_on: [api_keys_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [api_keys_order_by!]
+
+    """filter the rows returned"""
+    where: api_keys_bool_exp
+  ): api_keys_aggregate!
+
+  """fetch data from the table: "api_keys" using primary key columns"""
+  api_keys_by_pk(id: uuid!): api_keys
+
+  """
   fetch data from the table: "e_friend_status"
   """
   e_friend_status(
@@ -31326,6 +31698,63 @@ type subscription_root {
     """filter the rows returned"""
     where: abandoned_matches_bool_exp
   ): [abandoned_matches!]!
+
+  """
+  fetch data from the table: "api_keys"
+  """
+  api_keys(
+    """distinct select on columns"""
+    distinct_on: [api_keys_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [api_keys_order_by!]
+
+    """filter the rows returned"""
+    where: api_keys_bool_exp
+  ): [api_keys!]!
+
+  """
+  fetch aggregated fields from the table: "api_keys"
+  """
+  api_keys_aggregate(
+    """distinct select on columns"""
+    distinct_on: [api_keys_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [api_keys_order_by!]
+
+    """filter the rows returned"""
+    where: api_keys_bool_exp
+  ): api_keys_aggregate!
+
+  """fetch data from the table: "api_keys" using primary key columns"""
+  api_keys_by_pk(id: uuid!): api_keys
+
+  """
+  fetch data from the table in a streaming manner: "api_keys"
+  """
+  api_keys_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [api_keys_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: api_keys_bool_exp
+  ): [api_keys!]!
 
   """
   fetch data from the table: "e_friend_status"

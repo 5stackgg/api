@@ -11,11 +11,13 @@ import { HasuraController } from "./hasura.controller";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { CacheModule } from "../cache/cache.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import { AuthModule } from "src/auth/auth.module";
 
 @Module({
   imports: [
     CacheModule,
     PostgresModule,
+    AuthModule,
     BullModule.registerQueue({
       name: HasuraQueues.Hasura,
     }),

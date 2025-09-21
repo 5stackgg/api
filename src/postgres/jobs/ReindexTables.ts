@@ -3,7 +3,7 @@ import { PostgresService } from "../../postgres/postgres.service";
 import { PostgresQueues } from "../enums/PostgresQueues";
 import { Logger } from "@nestjs/common";
 import { UseQueue } from "../../utilities/QueueProcessors";
-import { Job, Queue } from "bullmq";
+import { Job } from "bullmq";
 import { InjectFlowProducer } from "@nestjs/bullmq";
 import { FlowProducer } from "bullmq";
 

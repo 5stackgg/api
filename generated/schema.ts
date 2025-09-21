@@ -20,6 +20,11 @@ export type Scalars = {
     uuid: any,
 }
 
+export interface ApiKeyResponse {
+    key: Scalars['String']
+    __typename: 'ApiKeyResponse'
+}
+
 export interface CpuStat {
     time: (Scalars['timestamp'] | null)
     total: (Scalars['bigint'] | null)
@@ -281,6 +286,142 @@ export interface abandoned_matches_var_samp_fields {
 export interface abandoned_matches_variance_fields {
     steam_id: (Scalars['Float'] | null)
     __typename: 'abandoned_matches_variance_fields'
+}
+
+
+/** columns and relationships of "api_keys" */
+export interface api_keys {
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    label: Scalars['String']
+    last_used_at: (Scalars['timestamptz'] | null)
+    steam_id: Scalars['bigint']
+    __typename: 'api_keys'
+}
+
+
+/** aggregated selection of "api_keys" */
+export interface api_keys_aggregate {
+    aggregate: (api_keys_aggregate_fields | null)
+    nodes: api_keys[]
+    __typename: 'api_keys_aggregate'
+}
+
+
+/** aggregate fields of "api_keys" */
+export interface api_keys_aggregate_fields {
+    avg: (api_keys_avg_fields | null)
+    count: Scalars['Int']
+    max: (api_keys_max_fields | null)
+    min: (api_keys_min_fields | null)
+    stddev: (api_keys_stddev_fields | null)
+    stddev_pop: (api_keys_stddev_pop_fields | null)
+    stddev_samp: (api_keys_stddev_samp_fields | null)
+    sum: (api_keys_sum_fields | null)
+    var_pop: (api_keys_var_pop_fields | null)
+    var_samp: (api_keys_var_samp_fields | null)
+    variance: (api_keys_variance_fields | null)
+    __typename: 'api_keys_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface api_keys_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "api_keys" */
+export type api_keys_constraint = 'api_keys_pkey'
+
+
+/** aggregate max on columns */
+export interface api_keys_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
+    last_used_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'api_keys_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface api_keys_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    label: (Scalars['String'] | null)
+    last_used_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'api_keys_min_fields'
+}
+
+
+/** response of any mutation on the table "api_keys" */
+export interface api_keys_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: api_keys[]
+    __typename: 'api_keys_mutation_response'
+}
+
+
+/** select columns of table "api_keys" */
+export type api_keys_select_column = 'created_at' | 'id' | 'label' | 'last_used_at' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface api_keys_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface api_keys_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface api_keys_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface api_keys_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'api_keys_sum_fields'
+}
+
+
+/** update columns of table "api_keys" */
+export type api_keys_update_column = 'created_at' | 'id' | 'label' | 'last_used_at' | 'steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface api_keys_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface api_keys_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface api_keys_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'api_keys_variance_fields'
 }
 
 
@@ -1855,9 +1996,11 @@ export interface game_server_nodes {
     lan_ip: (Scalars['inet'] | null)
     node_ip: (Scalars['inet'] | null)
     pin_build_id: (Scalars['Int'] | null)
+    pin_plugin_version: (Scalars['String'] | null)
     /** An object relationship */
     pinned_version: (game_versions | null)
-    plugin_version: (Scalars['Int'] | null)
+    /** A computed field, executes function "game_server_node_plugin_supported" */
+    plugin_supported: (Scalars['Boolean'] | null)
     public_ip: (Scalars['inet'] | null)
     region: (Scalars['String'] | null)
     /** An array relationship */
@@ -1910,7 +2053,6 @@ export interface game_server_nodes_avg_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -1931,7 +2073,7 @@ export interface game_server_nodes_max_fields {
     id: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
     pin_build_id: (Scalars['Int'] | null)
-    plugin_version: (Scalars['Int'] | null)
+    pin_plugin_version: (Scalars['String'] | null)
     region: (Scalars['String'] | null)
     start_port_range: (Scalars['Int'] | null)
     token: (Scalars['String'] | null)
@@ -1951,7 +2093,7 @@ export interface game_server_nodes_min_fields {
     id: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
     pin_build_id: (Scalars['Int'] | null)
-    plugin_version: (Scalars['Int'] | null)
+    pin_plugin_version: (Scalars['String'] | null)
     region: (Scalars['String'] | null)
     start_port_range: (Scalars['Int'] | null)
     token: (Scalars['String'] | null)
@@ -1973,7 +2115,7 @@ export interface game_server_nodes_mutation_response {
 
 
 /** select columns of table "game_server_nodes" */
-export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
@@ -1991,7 +2133,6 @@ export interface game_server_nodes_stddev_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -2006,7 +2147,6 @@ export interface game_server_nodes_stddev_pop_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -2021,7 +2161,6 @@ export interface game_server_nodes_stddev_samp_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -2036,7 +2175,6 @@ export interface game_server_nodes_sum_fields {
     build_id: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     pin_build_id: (Scalars['Int'] | null)
-    plugin_version: (Scalars['Int'] | null)
     start_port_range: (Scalars['Int'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -2045,7 +2183,7 @@ export interface game_server_nodes_sum_fields {
 
 
 /** update columns of table "game_server_nodes" */
-export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
 
 
 /** aggregate var_pop on columns */
@@ -2055,7 +2193,6 @@ export interface game_server_nodes_var_pop_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -2070,7 +2207,6 @@ export interface game_server_nodes_var_samp_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -2085,7 +2221,6 @@ export interface game_server_nodes_variance_fields {
     build_id: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
-    plugin_version: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
     /** A computed field, executes function "total_node_server_count" */
     total_server_count: (Scalars['Int'] | null)
@@ -4738,6 +4873,7 @@ export interface mutation_root {
     cancelMatch: (SuccessOutput | null)
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
+    createApiKey: (ApiKeyResponse | null)
     /** delete data from the table: "_map_pool" */
     delete__map_pool: (_map_pool_mutation_response | null)
     /** delete single row from the table: "_map_pool" */
@@ -4746,6 +4882,10 @@ export interface mutation_root {
     delete_abandoned_matches: (abandoned_matches_mutation_response | null)
     /** delete single row from the table: "abandoned_matches" */
     delete_abandoned_matches_by_pk: (abandoned_matches | null)
+    /** delete data from the table: "api_keys" */
+    delete_api_keys: (api_keys_mutation_response | null)
+    /** delete single row from the table: "api_keys" */
+    delete_api_keys_by_pk: (api_keys | null)
     /** delete data from the table: "e_friend_status" */
     delete_e_friend_status: (e_friend_status_mutation_response | null)
     /** delete single row from the table: "e_friend_status" */
@@ -5015,6 +5155,10 @@ export interface mutation_root {
     insert_abandoned_matches: (abandoned_matches_mutation_response | null)
     /** insert a single row into the table: "abandoned_matches" */
     insert_abandoned_matches_one: (abandoned_matches | null)
+    /** insert data into the table: "api_keys" */
+    insert_api_keys: (api_keys_mutation_response | null)
+    /** insert a single row into the table: "api_keys" */
+    insert_api_keys_one: (api_keys | null)
     /** insert data into the table: "e_friend_status" */
     insert_e_friend_status: (e_friend_status_mutation_response | null)
     /** insert a single row into the table: "e_friend_status" */
@@ -5323,6 +5467,12 @@ export interface mutation_root {
     update_abandoned_matches_by_pk: (abandoned_matches | null)
     /** update multiples rows of table: "abandoned_matches" */
     update_abandoned_matches_many: ((abandoned_matches_mutation_response | null)[] | null)
+    /** update data of the table: "api_keys" */
+    update_api_keys: (api_keys_mutation_response | null)
+    /** update single row of the table: "api_keys" */
+    update_api_keys_by_pk: (api_keys | null)
+    /** update multiples rows of table: "api_keys" */
+    update_api_keys_many: ((api_keys_mutation_response | null)[] | null)
     /** update data of the table: "e_friend_status" */
     update_e_friend_status: (e_friend_status_mutation_response | null)
     /** update single row of the table: "e_friend_status" */
@@ -5732,6 +5882,7 @@ export interface my_friends {
     elo: (Scalars['numeric'] | null)
     friend_steam_id: (Scalars['bigint'] | null)
     invited_by_steam_id: (Scalars['bigint'] | null)
+    language: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     name_registered: (Scalars['Boolean'] | null)
     /** An object relationship */
@@ -5788,6 +5939,7 @@ export interface my_friends_max_fields {
     elo: (Scalars['numeric'] | null)
     friend_steam_id: (Scalars['bigint'] | null)
     invited_by_steam_id: (Scalars['bigint'] | null)
+    language: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
     role: (Scalars['String'] | null)
@@ -5806,6 +5958,7 @@ export interface my_friends_min_fields {
     elo: (Scalars['numeric'] | null)
     friend_steam_id: (Scalars['bigint'] | null)
     invited_by_steam_id: (Scalars['bigint'] | null)
+    language: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
     profile_url: (Scalars['String'] | null)
     role: (Scalars['String'] | null)
@@ -5826,7 +5979,7 @@ export interface my_friends_mutation_response {
 
 
 /** select columns of table "v_my_friends" */
-export type my_friends_select_column = 'avatar_url' | 'country' | 'created_at' | 'discord_id' | 'elo' | 'friend_steam_id' | 'invited_by_steam_id' | 'name' | 'name_registered' | 'profile_url' | 'role' | 'status' | 'steam_id'
+export type my_friends_select_column = 'avatar_url' | 'country' | 'created_at' | 'discord_id' | 'elo' | 'friend_steam_id' | 'invited_by_steam_id' | 'language' | 'name' | 'name_registered' | 'profile_url' | 'role' | 'status' | 'steam_id'
 
 
 /** select "my_friends_aggregate_bool_exp_bool_and_arguments_columns" columns of table "v_my_friends" */
@@ -8097,6 +8250,12 @@ export interface query_root {
     abandoned_matches_aggregate: abandoned_matches_aggregate
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk: (abandoned_matches | null)
+    /** fetch data from the table: "api_keys" */
+    api_keys: api_keys[]
+    /** fetch aggregated fields from the table: "api_keys" */
+    api_keys_aggregate: api_keys_aggregate
+    /** fetch data from the table: "api_keys" using primary key columns */
+    api_keys_by_pk: (api_keys | null)
     /** fetch data from the table: "e_friend_status" */
     e_friend_status: e_friend_status[]
     /** fetch aggregated fields from the table: "e_friend_status" */
@@ -8975,6 +9134,14 @@ export interface subscription_root {
     abandoned_matches_by_pk: (abandoned_matches | null)
     /** fetch data from the table in a streaming manner: "abandoned_matches" */
     abandoned_matches_stream: abandoned_matches[]
+    /** fetch data from the table: "api_keys" */
+    api_keys: api_keys[]
+    /** fetch aggregated fields from the table: "api_keys" */
+    api_keys_aggregate: api_keys_aggregate
+    /** fetch data from the table: "api_keys" using primary key columns */
+    api_keys_by_pk: (api_keys | null)
+    /** fetch data from the table in a streaming manner: "api_keys" */
+    api_keys_stream: api_keys[]
     /** fetch data from the table: "e_friend_status" */
     e_friend_status: e_friend_status[]
     /** fetch aggregated fields from the table: "e_friend_status" */
@@ -12438,6 +12605,12 @@ export type Query = query_root
 export type Mutation = mutation_root
 export type Subscription = subscription_root
 
+export interface ApiKeyResponseGenqlSelection{
+    key?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 
 /** Boolean expression to compare columns of type "Boolean". All fields are combined with logical 'AND'. */
 export interface Boolean_comparison_exp {_eq?: (Scalars['Boolean'] | null),_gt?: (Scalars['Boolean'] | null),_gte?: (Scalars['Boolean'] | null),_in?: (Scalars['Boolean'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Boolean'] | null),_lte?: (Scalars['Boolean'] | null),_neq?: (Scalars['Boolean'] | null),_nin?: (Scalars['Boolean'][] | null)}
@@ -12890,6 +13063,192 @@ export interface abandoned_matches_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "abandoned_matches" */
 export interface abandoned_matches_variance_order_by {steam_id?: (order_by | null)}
+
+
+/** columns and relationships of "api_keys" */
+export interface api_keysGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    label?: boolean | number
+    last_used_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "api_keys" */
+export interface api_keys_aggregateGenqlSelection{
+    aggregate?: api_keys_aggregate_fieldsGenqlSelection
+    nodes?: api_keysGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "api_keys" */
+export interface api_keys_aggregate_fieldsGenqlSelection{
+    avg?: api_keys_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (api_keys_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: api_keys_max_fieldsGenqlSelection
+    min?: api_keys_min_fieldsGenqlSelection
+    stddev?: api_keys_stddev_fieldsGenqlSelection
+    stddev_pop?: api_keys_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: api_keys_stddev_samp_fieldsGenqlSelection
+    sum?: api_keys_sum_fieldsGenqlSelection
+    var_pop?: api_keys_var_pop_fieldsGenqlSelection
+    var_samp?: api_keys_var_samp_fieldsGenqlSelection
+    variance?: api_keys_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface api_keys_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "api_keys". All fields are combined with a logical 'AND'. */
+export interface api_keys_bool_exp {_and?: (api_keys_bool_exp[] | null),_not?: (api_keys_bool_exp | null),_or?: (api_keys_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),last_used_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "api_keys" */
+export interface api_keys_inc_input {steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "api_keys" */
+export interface api_keys_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),last_used_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface api_keys_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    label?: boolean | number
+    last_used_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface api_keys_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    label?: boolean | number
+    last_used_at?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "api_keys" */
+export interface api_keys_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: api_keysGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "api_keys" */
+export interface api_keys_on_conflict {constraint: api_keys_constraint,update_columns?: api_keys_update_column[],where?: (api_keys_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "api_keys". */
+export interface api_keys_order_by {created_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),last_used_at?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: api_keys */
+export interface api_keys_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "api_keys" */
+export interface api_keys_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),last_used_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface api_keys_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface api_keys_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface api_keys_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "api_keys" */
+export interface api_keys_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: api_keys_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface api_keys_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),last_used_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface api_keys_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface api_keys_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (api_keys_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (api_keys_set_input | null),
+/** filter the rows which have to be updated */
+where: api_keys_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface api_keys_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface api_keys_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface api_keys_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** Boolean expression to compare columns of type "bigint". All fields are combined with logical 'AND'. */
@@ -15625,9 +15984,11 @@ export interface game_server_nodesGenqlSelection{
     lan_ip?: boolean | number
     node_ip?: boolean | number
     pin_build_id?: boolean | number
+    pin_plugin_version?: boolean | number
     /** An object relationship */
     pinned_version?: game_versionsGenqlSelection
-    plugin_version?: boolean | number
+    /** A computed field, executes function "game_server_node_plugin_supported" */
+    plugin_supported?: boolean | number
     public_ip?: boolean | number
     region?: boolean | number
     /** An array relationship */
@@ -15721,7 +16082,6 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15731,19 +16091,19 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "game_server_nodes" */
-export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_version?: (Int_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "game_server_nodes" */
-export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null),end_port_range?: (Scalars['Int'] | null),pin_build_id?: (Scalars['Int'] | null),plugin_version?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
+export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null),end_port_range?: (Scalars['Int'] | null),pin_build_id?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),plugin_version?: (Scalars['Int'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
+export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -15755,7 +16115,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
     id?: boolean | number
     label?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
+    pin_plugin_version?: boolean | number
     region?: boolean | number
     start_port_range?: boolean | number
     token?: boolean | number
@@ -15768,7 +16128,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "game_server_nodes" */
-export interface game_server_nodes_max_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_max_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -15780,7 +16140,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
     id?: boolean | number
     label?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
+    pin_plugin_version?: boolean | number
     region?: boolean | number
     start_port_range?: boolean | number
     token?: boolean | number
@@ -15793,7 +16153,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "game_server_nodes" */
-export interface game_server_nodes_min_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_min_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_nodes" */
@@ -15818,7 +16178,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),pin_build_id?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_version?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
+export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -15826,7 +16186,7 @@ export interface game_server_nodes_pk_columns_input {id: Scalars['String']}
 
 
 /** input type for updating data in table "game_server_nodes" */
-export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),plugin_version?: (Scalars['Int'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -15836,7 +16196,6 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15846,7 +16205,7 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -15856,7 +16215,6 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15866,7 +16224,7 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_pop_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_pop_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -15876,7 +16234,6 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15886,7 +16243,7 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_samp_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_samp_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Streaming cursor of the table "game_server_nodes" */
@@ -15898,7 +16255,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),plugin_version?: (Scalars['Int'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -15908,7 +16265,6 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15918,7 +16274,7 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "game_server_nodes" */
-export interface game_server_nodes_sum_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_sum_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 export interface game_server_nodes_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -15936,7 +16292,6 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15946,7 +16301,7 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "game_server_nodes" */
-export interface game_server_nodes_var_pop_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_var_pop_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -15956,7 +16311,6 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15966,7 +16320,7 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "game_server_nodes" */
-export interface game_server_nodes_var_samp_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_var_samp_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -15976,7 +16330,6 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
     build_id?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
-    plugin_version?: boolean | number
     start_port_range?: boolean | number
     /** A computed field, executes function "total_node_server_count" */
     total_server_count?: boolean | number
@@ -15986,7 +16339,7 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "game_server_nodes" */
-export interface game_server_nodes_variance_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),plugin_version?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_variance_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** columns and relationships of "game_versions" */
@@ -20732,6 +21085,7 @@ export interface mutation_rootGenqlSelection{
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
     /** delete data from the table: "_map_pool" */
     delete__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -20744,6 +21098,12 @@ export interface mutation_rootGenqlSelection{
     where: abandoned_matches_bool_exp} })
     /** delete single row from the table: "abandoned_matches" */
     delete_abandoned_matches_by_pk?: (abandoned_matchesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "api_keys" */
+    delete_api_keys?: (api_keys_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: api_keys_bool_exp} })
+    /** delete single row from the table: "api_keys" */
+    delete_api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "e_friend_status" */
     delete_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -21167,6 +21527,18 @@ export interface mutation_rootGenqlSelection{
     object: abandoned_matches_insert_input, 
     /** upsert condition */
     on_conflict?: (abandoned_matches_on_conflict | null)} })
+    /** insert data into the table: "api_keys" */
+    insert_api_keys?: (api_keys_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: api_keys_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (api_keys_on_conflict | null)} })
+    /** insert a single row into the table: "api_keys" */
+    insert_api_keys_one?: (api_keysGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: api_keys_insert_input, 
+    /** upsert condition */
+    on_conflict?: (api_keys_on_conflict | null)} })
     /** insert data into the table: "e_friend_status" */
     insert_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -22011,6 +22383,24 @@ export interface mutation_rootGenqlSelection{
     update_abandoned_matches_many?: (abandoned_matches_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: abandoned_matches_updates[]} })
+    /** update data of the table: "api_keys" */
+    update_api_keys?: (api_keys_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (api_keys_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (api_keys_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: api_keys_bool_exp} })
+    /** update single row of the table: "api_keys" */
+    update_api_keys_by_pk?: (api_keysGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (api_keys_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (api_keys_set_input | null), pk_columns: api_keys_pk_columns_input} })
+    /** update multiples rows of table: "api_keys" */
+    update_api_keys_many?: (api_keys_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: api_keys_updates[]} })
     /** update data of the table: "e_friend_status" */
     update_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -23151,6 +23541,7 @@ export interface my_friendsGenqlSelection{
     elo?: boolean | number
     friend_steam_id?: boolean | number
     invited_by_steam_id?: boolean | number
+    language?: boolean | number
     name?: boolean | number
     name_registered?: boolean | number
     /** An object relationship */
@@ -23223,7 +23614,7 @@ export interface my_friends_avg_order_by {elo?: (order_by | null),friend_steam_i
 
 
 /** Boolean expression to filter rows from the table "v_my_friends". All fields are combined with a logical 'AND'. */
-export interface my_friends_bool_exp {_and?: (my_friends_bool_exp[] | null),_not?: (my_friends_bool_exp | null),_or?: (my_friends_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),discord_id?: (String_comparison_exp | null),elo?: (numeric_comparison_exp | null),friend_steam_id?: (bigint_comparison_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),player?: (players_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (String_comparison_exp | null),status?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+export interface my_friends_bool_exp {_and?: (my_friends_bool_exp[] | null),_not?: (my_friends_bool_exp | null),_or?: (my_friends_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),discord_id?: (String_comparison_exp | null),elo?: (numeric_comparison_exp | null),friend_steam_id?: (bigint_comparison_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),language?: (String_comparison_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),player?: (players_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (String_comparison_exp | null),status?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "v_my_friends" */
@@ -23231,7 +23622,7 @@ export interface my_friends_inc_input {elo?: (Scalars['numeric'] | null),friend_
 
 
 /** input type for inserting data into table "v_my_friends" */
-export interface my_friends_insert_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['numeric'] | null),friend_steam_id?: (Scalars['bigint'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),player?: (players_obj_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface my_friends_insert_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['numeric'] | null),friend_steam_id?: (Scalars['bigint'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),player?: (players_obj_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -23243,6 +23634,7 @@ export interface my_friends_max_fieldsGenqlSelection{
     elo?: boolean | number
     friend_steam_id?: boolean | number
     invited_by_steam_id?: boolean | number
+    language?: boolean | number
     name?: boolean | number
     profile_url?: boolean | number
     role?: boolean | number
@@ -23254,7 +23646,7 @@ export interface my_friends_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_my_friends" */
-export interface my_friends_max_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),friend_steam_id?: (order_by | null),invited_by_steam_id?: (order_by | null),name?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
+export interface my_friends_max_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),friend_steam_id?: (order_by | null),invited_by_steam_id?: (order_by | null),language?: (order_by | null),name?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -23266,6 +23658,7 @@ export interface my_friends_min_fieldsGenqlSelection{
     elo?: boolean | number
     friend_steam_id?: boolean | number
     invited_by_steam_id?: boolean | number
+    language?: boolean | number
     name?: boolean | number
     profile_url?: boolean | number
     role?: boolean | number
@@ -23277,7 +23670,7 @@ export interface my_friends_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_my_friends" */
-export interface my_friends_min_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),friend_steam_id?: (order_by | null),invited_by_steam_id?: (order_by | null),name?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
+export interface my_friends_min_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),friend_steam_id?: (order_by | null),invited_by_steam_id?: (order_by | null),language?: (order_by | null),name?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "v_my_friends" */
@@ -23292,11 +23685,11 @@ export interface my_friends_mutation_responseGenqlSelection{
 
 
 /** Ordering options when selecting data from "v_my_friends". */
-export interface my_friends_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),friend_steam_id?: (order_by | null),invited_by_steam_id?: (order_by | null),name?: (order_by | null),name_registered?: (order_by | null),player?: (players_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
+export interface my_friends_order_by {avatar_url?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),friend_steam_id?: (order_by | null),invited_by_steam_id?: (order_by | null),language?: (order_by | null),name?: (order_by | null),name_registered?: (order_by | null),player?: (players_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),status?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** input type for updating data in table "v_my_friends" */
-export interface my_friends_set_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['numeric'] | null),friend_steam_id?: (Scalars['bigint'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface my_friends_set_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['numeric'] | null),friend_steam_id?: (Scalars['bigint'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23353,7 +23746,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface my_friends_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['numeric'] | null),friend_steam_id?: (Scalars['bigint'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface my_friends_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),discord_id?: (Scalars['String'] | null),elo?: (Scalars['numeric'] | null),friend_steam_id?: (Scalars['bigint'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),language?: (Scalars['String'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),profile_url?: (Scalars['String'] | null),role?: (Scalars['String'] | null),status?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -27292,6 +27685,32 @@ export interface query_rootGenqlSelection{
     where?: (abandoned_matches_bool_exp | null)} })
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk?: (abandoned_matchesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "api_keys" */
+    api_keys?: (api_keysGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (api_keys_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (api_keys_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (api_keys_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "api_keys" */
+    api_keys_aggregate?: (api_keys_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (api_keys_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (api_keys_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (api_keys_bool_exp | null)} })
+    /** fetch data from the table: "api_keys" using primary key columns */
+    api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "e_friend_status" */
     e_friend_status?: (e_friend_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -29975,6 +30394,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (abandoned_matches_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (abandoned_matches_bool_exp | null)} })
+    /** fetch data from the table: "api_keys" */
+    api_keys?: (api_keysGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (api_keys_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (api_keys_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (api_keys_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "api_keys" */
+    api_keys_aggregate?: (api_keys_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (api_keys_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (api_keys_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (api_keys_bool_exp | null)} })
+    /** fetch data from the table: "api_keys" using primary key columns */
+    api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "api_keys" */
+    api_keys_stream?: (api_keysGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (api_keys_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (api_keys_bool_exp | null)} })
     /** fetch data from the table: "e_friend_status" */
     e_friend_status?: (e_friend_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -37119,6 +37572,14 @@ export type MutationGenqlSelection = mutation_rootGenqlSelection
 export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
 
 
+    const ApiKeyResponse_possibleTypes: string[] = ['ApiKeyResponse']
+    export const isApiKeyResponse = (obj?: { __typename?: any } | null): obj is ApiKeyResponse => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isApiKeyResponse"')
+      return ApiKeyResponse_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const CpuStat_possibleTypes: string[] = ['CpuStat']
     export const isCpuStat = (obj?: { __typename?: any } | null): obj is CpuStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isCpuStat"')
@@ -37355,6 +37816,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isabandoned_matches_variance_fields = (obj?: { __typename?: any } | null): obj is abandoned_matches_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isabandoned_matches_variance_fields"')
       return abandoned_matches_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_possibleTypes: string[] = ['api_keys']
+    export const isapi_keys = (obj?: { __typename?: any } | null): obj is api_keys => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys"')
+      return api_keys_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_aggregate_possibleTypes: string[] = ['api_keys_aggregate']
+    export const isapi_keys_aggregate = (obj?: { __typename?: any } | null): obj is api_keys_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_aggregate"')
+      return api_keys_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_aggregate_fields_possibleTypes: string[] = ['api_keys_aggregate_fields']
+    export const isapi_keys_aggregate_fields = (obj?: { __typename?: any } | null): obj is api_keys_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_aggregate_fields"')
+      return api_keys_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_avg_fields_possibleTypes: string[] = ['api_keys_avg_fields']
+    export const isapi_keys_avg_fields = (obj?: { __typename?: any } | null): obj is api_keys_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_avg_fields"')
+      return api_keys_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_max_fields_possibleTypes: string[] = ['api_keys_max_fields']
+    export const isapi_keys_max_fields = (obj?: { __typename?: any } | null): obj is api_keys_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_max_fields"')
+      return api_keys_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_min_fields_possibleTypes: string[] = ['api_keys_min_fields']
+    export const isapi_keys_min_fields = (obj?: { __typename?: any } | null): obj is api_keys_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_min_fields"')
+      return api_keys_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_mutation_response_possibleTypes: string[] = ['api_keys_mutation_response']
+    export const isapi_keys_mutation_response = (obj?: { __typename?: any } | null): obj is api_keys_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_mutation_response"')
+      return api_keys_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_stddev_fields_possibleTypes: string[] = ['api_keys_stddev_fields']
+    export const isapi_keys_stddev_fields = (obj?: { __typename?: any } | null): obj is api_keys_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_stddev_fields"')
+      return api_keys_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_stddev_pop_fields_possibleTypes: string[] = ['api_keys_stddev_pop_fields']
+    export const isapi_keys_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is api_keys_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_stddev_pop_fields"')
+      return api_keys_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_stddev_samp_fields_possibleTypes: string[] = ['api_keys_stddev_samp_fields']
+    export const isapi_keys_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is api_keys_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_stddev_samp_fields"')
+      return api_keys_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_sum_fields_possibleTypes: string[] = ['api_keys_sum_fields']
+    export const isapi_keys_sum_fields = (obj?: { __typename?: any } | null): obj is api_keys_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_sum_fields"')
+      return api_keys_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_var_pop_fields_possibleTypes: string[] = ['api_keys_var_pop_fields']
+    export const isapi_keys_var_pop_fields = (obj?: { __typename?: any } | null): obj is api_keys_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_var_pop_fields"')
+      return api_keys_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_var_samp_fields_possibleTypes: string[] = ['api_keys_var_samp_fields']
+    export const isapi_keys_var_samp_fields = (obj?: { __typename?: any } | null): obj is api_keys_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_var_samp_fields"')
+      return api_keys_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const api_keys_variance_fields_possibleTypes: string[] = ['api_keys_variance_fields']
+    export const isapi_keys_variance_fields = (obj?: { __typename?: any } | null): obj is api_keys_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_variance_fields"')
+      return api_keys_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -43948,6 +44521,26 @@ export const enumAbandonedMatchesUpdateColumn = {
    steam_id: 'steam_id' as const
 }
 
+export const enumApiKeysConstraint = {
+   api_keys_pkey: 'api_keys_pkey' as const
+}
+
+export const enumApiKeysSelectColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   label: 'label' as const,
+   last_used_at: 'last_used_at' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumApiKeysUpdateColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   label: 'label' as const,
+   last_used_at: 'last_used_at' as const,
+   steam_id: 'steam_id' as const
+}
+
 export const enumCursorOrdering = {
    ASC: 'ASC' as const,
    DESC: 'DESC' as const
@@ -44437,7 +45030,7 @@ export const enumGameServerNodesSelectColumn = {
    lan_ip: 'lan_ip' as const,
    node_ip: 'node_ip' as const,
    pin_build_id: 'pin_build_id' as const,
-   plugin_version: 'plugin_version' as const,
+   pin_plugin_version: 'pin_plugin_version' as const,
    public_ip: 'public_ip' as const,
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
@@ -44469,7 +45062,7 @@ export const enumGameServerNodesUpdateColumn = {
    lan_ip: 'lan_ip' as const,
    node_ip: 'node_ip' as const,
    pin_build_id: 'pin_build_id' as const,
-   plugin_version: 'plugin_version' as const,
+   pin_plugin_version: 'pin_plugin_version' as const,
    public_ip: 'public_ip' as const,
    region: 'region' as const,
    start_port_range: 'start_port_range' as const,
@@ -44981,6 +45574,7 @@ export const enumMyFriendsSelectColumn = {
    elo: 'elo' as const,
    friend_steam_id: 'friend_steam_id' as const,
    invited_by_steam_id: 'invited_by_steam_id' as const,
+   language: 'language' as const,
    name: 'name' as const,
    name_registered: 'name_registered' as const,
    profile_url: 'profile_url' as const,

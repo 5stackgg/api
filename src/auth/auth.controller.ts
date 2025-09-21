@@ -1,12 +1,5 @@
-import {
-  Controller,
-  Get,
-  UseGuards,
-  Req,
-  Res,
-  UseFilters,
-} from "@nestjs/common";
-import { Request, Response } from "express";
+import { Controller, Get, UseGuards, Req, Res } from "@nestjs/common";
+import { request, Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
@@ -14,6 +7,9 @@ import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { SocketsGateway } from "src/sockets/sockets.gateway";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { ApiKeys } from "./ApiKeys";
+import { BadRequestException } from "@nestjs/common";
+import { User } from "./types/User";
 
 @Controller("auth")
 export class AuthController {
@@ -21,6 +17,7 @@ export class AuthController {
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
     private readonly redis: RedisManagerService,
+    private readonly apiKeys: ApiKeys,
   ) {}
 
   @UseGuards(SteamGuard)
@@ -94,5 +91,21 @@ export class AuthController {
       });
     }
     return { success: true };
+  }
+
+  @HasuraAction()
+  public async createApiKey(data: {
+    user: User;
+    label: string;
+  }): Promise<{ key: string }> {
+    const { label } = data;
+
+    if (!label) {
+      throw new BadRequestException("Label is required");
+    }
+
+    return {
+      key: await this.apiKeys.createApiKey(label, data.user.steam_id),
+    };
   }
 }
