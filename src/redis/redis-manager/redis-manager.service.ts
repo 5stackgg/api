@@ -78,6 +78,8 @@ export class RedisManagerService {
         enableOfflineQueue: true,
         maxRetriesPerRequest: null,
         showFriendlyErrorStack: !!process.env.DEV,
+        // our startup probe fails after 60 seconds
+        retryAttempts: 22,
         retryStrategy() {
           return 5 * 1000;
         },

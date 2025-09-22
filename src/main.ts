@@ -62,6 +62,11 @@ async function bootstrap() {
     options: {
       ...configService.get<RedisConfig>("redis").connections.default,
       wildcards: true,
+      // our startup probe fails after 60 seconds
+      retryAttempts: 22,
+      retryStrategy: () => {
+        return 5 * 1000;
+      },
     },
   });
 

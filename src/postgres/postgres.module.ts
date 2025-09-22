@@ -9,14 +9,31 @@ import { PostgresAnalyzeJob } from "./jobs/PostgresAnalyzeJob";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { ReindexTables } from "./jobs/ReindexTables";
+import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { RedisModule } from "src/redis/redis.module";
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: PostgresQueues.Postgres,
     }),
-    BullModule.registerFlowProducer({
+    BullModule.registerFlowProducerAsync({
       name: "reindex",
+      imports: [RedisModule],
+      inject: [RedisManagerService],
+      useFactory: async (redisManagerService: RedisManagerService) => {
+        return await new Promise((resolve) => {
+          const connection = redisManagerService.getConnection();
+
+          connection.on("ready", () => {
+            resolve({
+              connection,
+              name: "reindex",
+            });
+          });
+
+        });
+      },
     }),
     BullBoardModule.forFeature({
       name: PostgresQueues.Postgres,
