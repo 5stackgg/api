@@ -14,9 +14,9 @@ export class SystemController {
     private readonly notifications: NotificationsService,
   ) {}
 
-  @Get("health")
+  @Get("healthz")
   public async status() {
-    return "OK";
+    return;
   }
 
   @HasuraAction()
