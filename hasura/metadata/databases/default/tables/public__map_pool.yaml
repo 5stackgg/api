@@ -2,7 +2,7 @@ table:
   name: _map_pool
   schema: public
 insert_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       check: {}
       columns:
@@ -10,7 +10,7 @@ insert_permissions:
         - map_pool_id
     comment: ""
 select_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       columns:
         - map_id
@@ -18,7 +18,7 @@ select_permissions:
       filter: {}
     comment: ""
 delete_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       filter: {}
     comment: ""

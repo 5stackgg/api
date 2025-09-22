@@ -2,7 +2,7 @@ table:
   name: match_type_cfgs
   schema: public
 insert_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       check: {}
       columns:
@@ -18,7 +18,7 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       columns:
         - cfg
@@ -26,7 +26,7 @@ update_permissions:
       check: {}
     comment: ""
 delete_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       filter: {}
     comment: ""

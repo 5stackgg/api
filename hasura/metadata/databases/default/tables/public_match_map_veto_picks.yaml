@@ -12,16 +12,6 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_lineup_id
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      columns:
-        - map_id
-        - match_id
-        - match_lineup_id
-        - side
-        - type
-    comment: ""
   - role: match_organizer
     permission:
       check:
@@ -41,17 +31,9 @@ insert_permissions:
         - side
         - type
     comment: ""
-  - role: tournament_organizer
+  - role: system_administrator
     permission:
-      check:
-        _or:
-          - match_lineup:
-              captain:
-                steam_id:
-                  _eq: X-Hasura-User-Id
-          - match:
-              is_organizer:
-                _eq: true
+      check: {}
       columns:
         - map_id
         - match_id
@@ -87,10 +69,6 @@ select_permissions:
       filter: {}
     comment: ""
 delete_permissions:
-  - role: administrator
-    permission:
-      filter: {}
-    comment: ""
   - role: match_organizer
     permission:
       filter:
@@ -98,12 +76,9 @@ delete_permissions:
           is_organizer:
             _eq: true
     comment: ""
-  - role: tournament_organizer
+  - role: system_administrator
     permission:
-      filter:
-        match:
-          is_organizer:
-            _eq: true
+      filter: {}
     comment: ""
   - role: user
     permission:

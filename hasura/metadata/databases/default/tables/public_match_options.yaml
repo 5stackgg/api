@@ -27,51 +27,7 @@ computed_fields:
         name: has_active_matches
         schema: public
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      columns:
-        - best_of
-        - coaches
-        - knife_round
-        - lobby_access
-        - map_pool_id
-        - map_veto
-        - mr
-        - number_of_substitutes
-        - overtime
-        - prefer_dedicated_server
-        - ready_setting
-        - region_veto
-        - regions
-        - tech_timeout_setting
-        - timeout_setting
-        - tv_delay
-        - type
-    comment: ""
   - role: match_organizer
-    permission:
-      check: {}
-      columns:
-        - best_of
-        - coaches
-        - knife_round
-        - lobby_access
-        - map_pool_id
-        - map_veto
-        - mr
-        - number_of_substitutes
-        - overtime
-        - prefer_dedicated_server
-        - ready_setting
-        - region_veto
-        - regions
-        - tech_timeout_setting
-        - timeout_setting
-        - tv_delay
-        - type
-    comment: ""
-  - role: tournament_organizer
     permission:
       check: {}
       columns:
@@ -140,29 +96,6 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - best_of
-        - coaches
-        - knife_round
-        - lobby_access
-        - map_pool_id
-        - map_veto
-        - mr
-        - number_of_substitutes
-        - overtime
-        - prefer_dedicated_server
-        - ready_setting
-        - region_veto
-        - regions
-        - tech_timeout_setting
-        - timeout_setting
-        - tv_delay
-        - type
-      filter: {}
-      check: {}
-    comment: ""
   - role: user
     permission:
       columns:

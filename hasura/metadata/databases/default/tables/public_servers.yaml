@@ -51,27 +51,6 @@ insert_permissions:
         - tv_port
     comment: ""
 select_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - api_password
-        - connected
-        - enabled
-        - host
-        - id
-        - label
-        - plugin_version
-        - port
-        - rcon_status
-        - region
-        - tv_port
-      computed_fields:
-        - is_dedicated
-      filter:
-        is_dedicated:
-          _eq: true
-      allow_aggregations: true
-    comment: ""
   - role: match_organizer
     permission:
       columns:
@@ -93,29 +72,8 @@ select_permissions:
           _eq: true
       allow_aggregations: true
     comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - connected
-        - enabled
-        - host
-        - id
-        - label
-        - plugin_version
-        - port
-        - rcon_status
-        - region
-        - reserved_by_match_id
-        - tv_port
-      computed_fields:
-        - is_dedicated
-      filter:
-        is_dedicated:
-          _eq: true
-      allow_aggregations: true
-    comment: ""
 update_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       columns:
         - enabled

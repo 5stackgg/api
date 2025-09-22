@@ -34,16 +34,6 @@ computed_fields:
         schema: public
       session_argument: hasura_session
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      columns:
-        - name
-        - owner_steam_id
-        - seed
-        - team_id
-        - tournament_id
-    comment: ""
   - role: tournament_organizer
     permission:
       check: {}
@@ -104,14 +94,6 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - name
-        - seed
-      filter: {}
-      check: null
-    comment: ""
   - role: tournament_organizer
     permission:
       columns:
@@ -160,10 +142,6 @@ update_permissions:
                 _eq: true
     comment: ""
 delete_permissions:
-  - role: administrator
-    permission:
-      filter: {}
-    comment: ""
   - role: tournament_organizer
     permission:
       filter: {}

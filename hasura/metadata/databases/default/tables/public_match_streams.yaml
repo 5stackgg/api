@@ -6,21 +6,11 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_id
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      columns:
-        - link
-        - match_id
-        - priority
-        - title
-    comment: ""
   - role: match_organizer
     permission:
       check: {}
       columns:
         - link
-        - match_id
         - priority
         - title
     comment: ""
@@ -29,16 +19,6 @@ insert_permissions:
       check: {}
       columns:
         - link
-        - match_id
-        - priority
-        - title
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      check: {}
-      columns:
-        - link
-        - match_id
         - priority
         - title
     comment: ""
@@ -66,25 +46,7 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - link
-        - priority
-        - title
-      filter: {}
-      check: {}
-    comment: ""
   - role: match_organizer
-    permission:
-      columns:
-        - link
-        - priority
-        - title
-      filter: {}
-      check: {}
-    comment: ""
-  - role: streamer
     permission:
       columns:
         - link
@@ -93,7 +55,7 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
-  - role: tournament_organizer
+  - role: streamer
     permission:
       columns:
         - link
@@ -118,19 +80,11 @@ update_permissions:
             _eq: true
     comment: ""
 delete_permissions:
-  - role: administrator
-    permission:
-      filter: {}
-    comment: ""
   - role: match_organizer
     permission:
       filter: {}
     comment: ""
   - role: streamer
-    permission:
-      filter: {}
-    comment: ""
-  - role: tournament_organizer
     permission:
       filter: {}
     comment: ""

@@ -3234,6 +3234,9 @@ enum e_player_roles_enum {
   """Streamer"""
   streamer
 
+  """Ability Manage / View System Details"""
+  system_administrator
+
   """Ability Create and Manage Tournaments"""
   tournament_organizer
 

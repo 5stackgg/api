@@ -165,6 +165,17 @@ insert_permissions:
         - name
         - start
     comment: ""
+  - role: system_administrator
+    permission:
+      check: {}
+      set:
+        organizer_steam_id: x-hasura-user-id
+      columns:
+        - description
+        - match_options_id
+        - name
+        - start
+    comment: ""
   - role: tournament_organizer
     permission:
       check:

@@ -9,6 +9,7 @@ import {
   WebSocketGateway,
 } from "@nestjs/websockets";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
+import { isRoleAbove } from "src/utilities/isRoleAbove";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -30,7 +31,7 @@ export class SystemGateway {
   ) {
     const { service, previous } = data;
 
-    if (client.user.role !== "administrator") {
+    if (!isRoleAbove(client.user.role, "system_administrator")) {
       return;
     }
 

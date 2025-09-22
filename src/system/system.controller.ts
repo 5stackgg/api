@@ -115,7 +115,7 @@ export class SystemController {
       {
         message: `Player ${player.name} has requested to change their name to ${data.name}`,
         title: "Name Change Request",
-        role: "administrator",
+        role: "system_administrator",
         entity_id: data.steam_id,
       },
       [

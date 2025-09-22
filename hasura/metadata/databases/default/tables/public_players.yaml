@@ -266,33 +266,7 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - avatar_url
-        - country
-        - discord_id
-        - language
-        - name
-        - profile_url
-        - role
-      filter: {}
-      check: null
-    comment: ""
   - role: match_organizer
-    permission:
-      columns:
-        - avatar_url
-        - country
-        - discord_id
-        - language
-        - name
-        - profile_url
-        - role
-      filter: {}
-      check: null
-    comment: ""
-  - role: tournament_organizer
     permission:
       columns:
         - avatar_url
@@ -318,15 +292,7 @@ update_permissions:
           _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
-  - role: administrator
-    permission:
-      filter: {}
-    comment: ""
   - role: match_organizer
-    permission:
-      filter: {}
-    comment: ""
-  - role: tournament_organizer
     permission:
       filter: {}
     comment: ""

@@ -9,28 +9,7 @@ object_relationships:
     using:
       foreign_key_constraint_on: steam_id
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      columns:
-        - captain
-        - match_lineup_id
-        - steam_id
-    comment: ""
-  - role: match_organizer
-    permission:
-      check:
-        lineup:
-          v_match_lineup:
-            match:
-              is_organizer:
-                _eq: true
-      columns:
-        - captain
-        - match_lineup_id
-        - steam_id
-    comment: ""
-  - role: tournament_organizer
+  - role: system_administrator
     permission:
       check: {}
       columns:
@@ -66,7 +45,7 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       columns:
         - captain
@@ -93,7 +72,7 @@ update_permissions:
                 _eq: true
     comment: ""
 delete_permissions:
-  - role: administrator
+  - role: system_administrator
     permission:
       filter: {}
     comment: ""
