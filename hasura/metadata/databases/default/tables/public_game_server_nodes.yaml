@@ -96,10 +96,6 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
-  - role: system_administrator
-    permission:
-      filter: {}
-    comment: ""
 event_triggers:
   - name: node_server_availability
     definition:
