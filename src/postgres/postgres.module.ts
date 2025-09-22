@@ -31,7 +31,6 @@ import { RedisModule } from "src/redis/redis.module";
               name: "reindex",
             });
           });
-
         });
       },
     }),

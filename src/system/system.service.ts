@@ -256,12 +256,27 @@ export class SystemService {
   }
 
   public async getServices() {
+    const nodes = await this.apiClient.listNode();
+
     let postList = await this.apiClient.listNamespacedPod({
       namespace: "5stack",
     });
 
     const pods = postList.items.filter((pod) => {
       if (pod.metadata.labels.codepier) {
+        return false;
+      }
+
+      const node = nodes.items.find((node) => {
+        return node.metadata.name === pod.spec?.nodeName;
+      });
+
+      const status = node?.status?.conditions.find(
+        (condition) => condition.type === "Ready",
+      )?.status;
+
+      if (status !== "True") {
+        this.logger.warn(`node is offline: ${pod.spec?.nodeName}`);
         return false;
       }
 
