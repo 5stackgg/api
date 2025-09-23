@@ -276,7 +276,6 @@ export class SystemService {
       )?.status;
 
       if (status !== "True") {
-        this.logger.warn(`node is offline: ${pod.spec?.nodeName}`);
         return false;
       }
 
