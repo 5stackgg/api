@@ -536,6 +536,14 @@ export class MatchAssistantService {
                 },
                 spec: {
                   restartPolicy: "Never",
+                  dnsConfig: {
+                    options: [
+                      {
+                        name: "ndots",
+                        value: "1",
+                      },
+                    ],
+                  },
                   // only enable host network if steam relay is enabled
                   ...(steamRelay
                     ? {
