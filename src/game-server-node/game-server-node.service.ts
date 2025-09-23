@@ -39,7 +39,7 @@ export class GameServerNodeService {
   }
 
   public static GET_NODE_STATS_KEY(nodeId: string) {
-    return `node-stats-v8:${nodeId}`;
+    return `node-stats-v9:${nodeId}`;
   }
 
   public async create(
