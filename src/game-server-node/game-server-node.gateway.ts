@@ -12,8 +12,8 @@ import {
   MessageBody,
 } from "@nestjs/websockets";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
-import { NodeStats } from "./jobs/NodeStats";
-import { PodStats } from "./jobs/PodStats";
+import { NodeStats } from "./interfaces/NodeStats";
+import { PodStats } from "./interfaces/PodStats";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Logger } from "@nestjs/common";
 import { PeerSignalData } from "src/signal-server/types/SignalData";

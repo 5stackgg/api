@@ -235,4 +235,8 @@ custom_types:
     - name: TestUploadResponse
     - name: GetTestUploadResponse
     - name: ApiKeyResponse
+    - name: DiskStats
+    - name: DiskStat
+    - name: NetworkStats
+    - name: NicStat
   scalars: []

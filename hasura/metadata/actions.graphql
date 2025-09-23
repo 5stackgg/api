@@ -206,6 +206,8 @@ type NodeStats {
   node: String!
   cpu: CpuStat
   memory: MemoryStat
+  disks: [DiskStats]
+  network: [NetworkStats]
 }
 
 type PodStats {
@@ -230,5 +232,30 @@ type GetTestUploadResponse {
 
 type ApiKeyResponse {
   key: String!
+}
+
+type DiskStats {
+  time: timestamp
+  disks: [DiskStat]
+}
+
+type DiskStat {
+  filesystem: String
+  size: String
+  used: String
+  available: String
+  usedPercent: String
+  mountpoint: String
+}
+
+type NetworkStats {
+  time: timestamp
+  nics: [NicStat]
+}
+
+type NicStat {
+  name: String
+  tx: bigint
+  rx: bigint
 }
 

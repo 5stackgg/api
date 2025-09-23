@@ -9,8 +9,8 @@ import {
 } from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
-import { NodeStats } from "./jobs/NodeStats";
-import { PodStats } from "./jobs/PodStats";
+import { NodeStats } from "./interfaces/NodeStats";
+import { PodStats } from "./interfaces/PodStats";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Redis } from "ioredis";
 import { LoggingServiceService } from "./logging-service/logging-service.service";
@@ -36,6 +36,10 @@ export class GameServerNodeService {
     this.namespace = this.gameServerConfig.namespace;
     this.redis = redisManager.getConnection();
     this.steamConfig = this.config.get<SteamConfig>("steam");
+  }
+
+  public static GET_NODE_STATS_KEY(nodeId: string) {
+    return `node-stats-v8:${nodeId}`;
   }
 
   public async create(
@@ -322,6 +326,14 @@ export class GameServerNodeService {
               spec: {
                 nodeName: gameServerNodeId,
                 restartPolicy: "Never",
+                dnsConfig: {
+                  options: [
+                    {
+                      name: "ndots",
+                      value: "1",
+                    },
+                  ],
+                },
                 containers: [
                   {
                     name: "update-cs-server",
@@ -712,13 +724,15 @@ export class GameServerNodeService {
 
     return await Promise.all(
       nodes.map(async (node) => {
-        const cpuStats = await this.redis.lrange(
-          `node-stats:${node}:cpu`,
-          0,
-          -1,
-        );
-        const memoryStats = await this.redis.lrange(
-          `node-stats:${node}:memory`,
+        const baseKey = GameServerNodeService.GET_NODE_STATS_KEY(node);
+        const cpuStats = await this.redis.lrange(`${baseKey}:cpu`, 0, -1);
+
+        const memoryStats = await this.redis.lrange(`${baseKey}:memory`, 0, -1);
+
+        const disksStats = await this.redis.lrange(`${baseKey}:disks`, 0, -1);
+
+        const networkStats = await this.redis.lrange(
+          `${baseKey}:network`,
           0,
           -1,
         );
@@ -727,6 +741,8 @@ export class GameServerNodeService {
           node,
           cpu: cpuStats.map((stat) => JSON.parse(stat)).reverse(),
           memory: memoryStats.map((stat) => JSON.parse(stat)).reverse(),
+          disks: disksStats.map((stat) => JSON.parse(stat)).reverse(),
+          network: networkStats.map((stat) => JSON.parse(stat)).reverse(),
         };
       }),
     );
@@ -780,13 +796,26 @@ export class GameServerNodeService {
   }
 
   public async captureNodeStats(nodeId: string, stats: NodeStats) {
-    const baseKey = `node-stats:${nodeId}`;
+    const baseKey = GameServerNodeService.GET_NODE_STATS_KEY(nodeId);
 
     await this.redis.sadd("stat-nodes", nodeId);
 
     if (!stats?.metrics?.usage?.memory) {
       return;
     }
+
+    await this.redis.lpush(
+      `${baseKey}:cpu`,
+      JSON.stringify({
+        time: new Date(),
+        total: stats.cpuCapacity,
+        window: parseFloat(stats.metrics.window),
+        used: this.convertCpuFromTypeToMilliCores(
+          stats.metrics.usage.cpu,
+        ).toString(),
+      }),
+    );
+
     await this.redis.lpush(
       `${baseKey}:memory`,
       JSON.stringify({
@@ -800,20 +829,30 @@ export class GameServerNodeService {
       }),
     );
 
-    await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
-    await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
+    if (stats.disks && stats.disks.length > 0) {
+      await this.redis.lpush(
+        `${baseKey}:disks`,
+        JSON.stringify({
+          time: new Date(),
+          disks: stats.disks,
+        }),
+      );
+    }
 
-    await this.redis.lpush(
-      `${baseKey}:cpu`,
-      JSON.stringify({
-        time: new Date(),
-        total: stats.cpuCapacity,
-        window: parseFloat(stats.metrics.window),
-        used: this.convertCpuFromTypeToMilliCores(
-          stats.metrics.usage.cpu,
-        ).toString(),
-      }),
-    );
+    if (stats.network && Object.keys(stats.network).length > 0) {
+      await this.redis.lpush(
+        `${baseKey}:network`,
+        JSON.stringify({
+          time: new Date(),
+          nics: stats.network,
+        }),
+      );
+    }
+
+    await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
+    await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
+    await this.redis.ltrim(`${baseKey}:network`, 0, this.maxStatsHistory);
+    await this.redis.ltrim(`${baseKey}:disks`, 0, this.maxStatsHistory);
   }
 
   public async capturePodStats(
