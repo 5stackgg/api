@@ -20,7 +20,7 @@ export default class MatchSurrendered extends MatchEventProcessor<{
         },
       });
     } catch (error) {
-      console.error("Error updating match status", error);
+      this.logger.error("Error updating match status", error);
     }
   }
 }

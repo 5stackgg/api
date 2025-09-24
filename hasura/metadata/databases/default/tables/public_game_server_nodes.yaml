@@ -55,8 +55,11 @@ select_permissions:
     permission:
       columns:
         - build_id
+        - cpu_cores_per_socket
+        - cpu_threads_per_core
         - enabled
         - end_port_range
+        - gpu
         - id
         - label
         - lan_ip

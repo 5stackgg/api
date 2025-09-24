@@ -6,11 +6,14 @@ import {
 import { AuthGuard } from "@nestjs/passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
-import { request } from "http";
+import { Logger } from "@nestjs/common";
 
 @Injectable()
 export class SteamGuard extends AuthGuard("steam") {
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly logger: Logger,
+  ) {
     super();
   }
 
@@ -62,7 +65,7 @@ export class SteamGuard extends AuthGuard("steam") {
 
       return !!request.user;
     } catch (error) {
-      console.warn("error", error);
+      this.logger.warn("error", error);
       return false;
     }
   }

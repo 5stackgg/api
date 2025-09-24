@@ -114,6 +114,11 @@ export class GameServerNodeService {
     csBulid: number,
     supportsCpuPinning: boolean,
     supportsLowLatency: boolean,
+    cpuInfo: {
+      coresPerSocket: number;
+      threadsPerCore: number;
+    },
+    nvidiaGPU: boolean,
     status: e_game_server_node_statuses_enum,
   ) {
     const { game_server_nodes_by_pk } = await this.hasura.query({
@@ -127,6 +132,9 @@ export class GameServerNodeService {
         node_ip: true,
         build_id: true,
         public_ip: true,
+        gpu: true,
+        cpu_cores_per_socket: true,
+        cpu_threads_per_core: true,
         supports_low_latency: true,
         supports_cpu_pinning: true,
       },
@@ -144,6 +152,9 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.build_id !== csBulid ||
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
+      game_server_nodes_by_pk.gpu !== nvidiaGPU ||
+      game_server_nodes_by_pk.cpu_cores_per_socket !== cpuInfo.coresPerSocket ||
+      game_server_nodes_by_pk.cpu_threads_per_core !== cpuInfo.threadsPerCore ||
       game_server_nodes_by_pk.token
     ) {
       await this.hasura.mutation({
@@ -160,6 +171,9 @@ export class GameServerNodeService {
               supports_low_latency: supportsLowLatency,
               supports_cpu_pinning: supportsCpuPinning,
               build_id: csBulid || null,
+              gpu: nvidiaGPU,
+              cpu_cores_per_socket: cpuInfo.coresPerSocket,
+              cpu_threads_per_core: cpuInfo.threadsPerCore,
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
           },
@@ -205,7 +219,7 @@ export class GameServerNodeService {
         ],
       });
     } catch (error) {
-      console.warn("unable to patch node", error);
+      this.logger.warn("unable to patch node", error);
     }
   }
 
@@ -547,7 +561,7 @@ export class GameServerNodeService {
       });
     } catch (error) {
       if (process.env.DEV) {
-        console.warn("unable to monitor update status", error);
+        this.logger.warn("unable to monitor update status", error);
       }
       if (attempts > 0) {
         setTimeout(() => {
@@ -727,11 +741,7 @@ export class GameServerNodeService {
 
     const disksStats = await this.redis.lrange(`${baseKey}:disks`, 0, -1);
 
-    const networkStats = await this.redis.lrange(
-      `${baseKey}:network`,
-      0,
-      -1,
-    );
+    const networkStats = await this.redis.lrange(`${baseKey}:network`, 0, -1);
 
     return {
       node,

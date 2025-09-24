@@ -1,5 +1,5 @@
 import TurndownService from "turndown";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
 import {
   e_notification_types_enum,
@@ -8,7 +8,10 @@ import {
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly hasura: HasuraService) {}
+  constructor(
+    private readonly hasura: HasuraService,
+    private readonly logger: Logger,
+  ) {}
 
   async send(
     type: e_notification_types_enum,
@@ -76,7 +79,7 @@ export class NotificationsService {
           }),
         });
       } catch (error) {
-        console.error("Error sending discord notification", error);
+        this.logger.error("Error sending discord notification", error);
       }
     }
   }

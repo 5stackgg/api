@@ -1,5 +1,5 @@
 import OAuth from "oauth";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import fetch from "node-fetch";
 import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "../configs/types/TailscaleConfig";
@@ -8,7 +8,10 @@ import { TailscaleConfig } from "../configs/types/TailscaleConfig";
 export class TailscaleService {
   private config: TailscaleConfig;
 
-  constructor(protected readonly configService: ConfigService) {
+  constructor(
+    protected readonly configService: ConfigService,
+    protected readonly logger: Logger,
+  ) {
     this.config = this.configService.get("tailscale");
   }
 
@@ -62,7 +65,7 @@ export class TailscaleService {
 
       return authKey;
     } catch (error) {
-      console.error("Error retrieving Tailscale auth key:", error);
+      this.logger.error("Error retrieving Tailscale auth key:", error);
       throw error;
     }
   }
@@ -91,7 +94,7 @@ export class TailscaleService {
         );
       });
     } catch (error) {
-      console.error("Error retrieving Tailscale token:", error);
+      this.logger.error("Error retrieving Tailscale token:", error);
       throw error;
     }
   }

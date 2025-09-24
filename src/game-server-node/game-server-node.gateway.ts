@@ -93,6 +93,8 @@ export class GameServerNodeGateway {
       payload.csBuild,
       payload.supportsCpuPinning,
       payload.supportsLowLatency,
+      payload.nodeStats.cpuInfo,
+      payload.nodeStats.nvidiaGPU,
       "Online",
     );
 

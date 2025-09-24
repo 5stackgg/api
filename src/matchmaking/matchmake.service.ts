@@ -125,7 +125,7 @@ export class MatchmakeService {
   public async matchmake(type: e_match_types_enum, region: string) {
     const lock = await this.aquireMatchmakeRegionLock(region);
     if (!lock) {
-      console.warn("unable to acquire lock for region", region);
+      this.logger.warn("unable to acquire lock for region", region);
       return 0;
     }
 
@@ -262,7 +262,7 @@ export class MatchmakeService {
       if (details.players.length === ExpectedPlayers[details.type]) {
         const lock = await this.accquireLobbyLock(details.lobbyId);
         if (!lock) {
-          console.warn("unable to acquire lock for lobby", details.lobbyId);
+          this.logger.warn("unable to acquire lock for lobby", details.lobbyId);
           continue;
         }
 
@@ -350,7 +350,7 @@ export class MatchmakeService {
       if (team1.players.length + lobby.players.length <= playersPerTeam) {
         const lock = await this.accquireLobbyLock(lobby.lobbyId);
         if (!lock) {
-          console.warn("unable to acquire lock for lobby", lobby.lobbyId);
+          this.logger.warn("unable to acquire lock for lobby", lobby.lobbyId);
           continue;
         }
 

@@ -103,7 +103,6 @@ export class ApiKeys {
         !lastUsedAt ||
         lastUsedAt < new Date(Date.now() - 1000 * 60 * 60 * 24)
       ) {
-        console.log("updating last used at");
         await this.hasura.mutation({
           update_api_keys_by_pk: {
             __args: {

@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
-import { Controller, Get, Req, Res } from "@nestjs/common";
+import { Controller, Get, Req, Res, Logger } from "@nestjs/common";
 import { resolve4 } from "dns/promises";
 
 @Controller("quick-connect")
 export class QuickConnectController {
+  constructor(private readonly logger: Logger) {}
+
   @Get()
   public async quickConnect(
     @Req() request: Request,
@@ -21,7 +23,7 @@ export class QuickConnectController {
       const [address] = await resolve4(host);
       link = link.replace(host, address);
     } catch (error) {
-      console.warn("unable to get address from host", error.message);
+      this.logger.warn("unable to get address from host", error.message);
     }
 
     return response.redirect(307, link);

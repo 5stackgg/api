@@ -72,7 +72,7 @@ export class ChatService {
 
         break;
       default:
-        console.warn(`Unknown lobby type: ${type}`);
+        this.logger.warn(`Unknown lobby type: ${type}`);
         return;
     }
 

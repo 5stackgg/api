@@ -3,6 +3,11 @@ import { NodeDisk } from "./NodeDisk";
 import { NetworkStat } from "./NetworkStat";
 
 export class NodeStats {
+  nvidiaGPU: boolean;
+  cpuInfo: {
+    coresPerSocket: number;
+    threadsPerCore: number;
+  };
   memoryAllocatable: string;
   memoryCapacity: string;
   cpuCapacity: number;

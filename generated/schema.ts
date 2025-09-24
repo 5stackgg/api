@@ -33,6 +33,22 @@ export interface CpuStat {
     __typename: 'CpuStat'
 }
 
+export interface DiskStat {
+    available: (Scalars['String'] | null)
+    filesystem: (Scalars['String'] | null)
+    mountpoint: (Scalars['String'] | null)
+    size: (Scalars['String'] | null)
+    used: (Scalars['String'] | null)
+    usedPercent: (Scalars['String'] | null)
+    __typename: 'DiskStat'
+}
+
+export interface DiskStats {
+    disks: ((DiskStat | null)[] | null)
+    time: (Scalars['timestamp'] | null)
+    __typename: 'DiskStats'
+}
+
 export interface GetTestUploadResponse {
     error: (Scalars['String'] | null)
     link: (Scalars['String'] | null)
@@ -59,9 +75,24 @@ export interface MemoryStat {
     __typename: 'MemoryStat'
 }
 
+export interface NetworkStats {
+    nics: ((NicStat | null)[] | null)
+    time: (Scalars['timestamp'] | null)
+    __typename: 'NetworkStats'
+}
+
+export interface NicStat {
+    name: (Scalars['String'] | null)
+    rx: (Scalars['bigint'] | null)
+    tx: (Scalars['bigint'] | null)
+    __typename: 'NicStat'
+}
+
 export interface NodeStats {
     cpu: (CpuStat | null)
+    disks: ((DiskStats | null)[] | null)
     memory: (MemoryStat | null)
+    network: ((NetworkStats | null)[] | null)
     node: Scalars['String']
     __typename: 'NodeStats'
 }
@@ -1985,12 +2016,15 @@ export interface game_server_nodes {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Int'] | null)
+    cpu_cores_per_socket: (Scalars['Int'] | null)
+    cpu_threads_per_core: (Scalars['Int'] | null)
     /** An object relationship */
     e_region: (server_regions | null)
     /** An object relationship */
     e_status: (e_game_server_node_statuses | null)
     enabled: Scalars['Boolean']
     end_port_range: (Scalars['Int'] | null)
+    gpu: Scalars['Boolean']
     id: Scalars['String']
     label: (Scalars['String'] | null)
     lan_ip: (Scalars['inet'] | null)
@@ -2051,6 +2085,8 @@ export interface game_server_nodes_avg_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2069,6 +2105,8 @@ export interface game_server_nodes_max_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Int'] | null)
+    cpu_cores_per_socket: (Scalars['Int'] | null)
+    cpu_threads_per_core: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     id: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
@@ -2089,6 +2127,8 @@ export interface game_server_nodes_min_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Int'] | null)
+    cpu_cores_per_socket: (Scalars['Int'] | null)
+    cpu_threads_per_core: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     id: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
@@ -2115,15 +2155,15 @@ export interface game_server_nodes_mutation_response {
 
 
 /** select columns of table "game_server_nodes" */
-export type game_server_nodes_select_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_select_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_threads_per_core' | 'enabled' | 'end_port_range' | 'gpu' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
-export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled' | 'supports_cpu_pinning' | 'supports_low_latency'
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns = 'enabled' | 'gpu' | 'supports_cpu_pinning' | 'supports_low_latency'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_server_nodes" */
-export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled' | 'supports_cpu_pinning' | 'supports_low_latency'
+export type game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns = 'enabled' | 'gpu' | 'supports_cpu_pinning' | 'supports_low_latency'
 
 
 /** aggregate stddev on columns */
@@ -2131,6 +2171,8 @@ export interface game_server_nodes_stddev_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2145,6 +2187,8 @@ export interface game_server_nodes_stddev_pop_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2159,6 +2203,8 @@ export interface game_server_nodes_stddev_samp_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2173,6 +2219,8 @@ export interface game_server_nodes_sum_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Int'] | null)
+    cpu_cores_per_socket: (Scalars['Int'] | null)
+    cpu_threads_per_core: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     pin_build_id: (Scalars['Int'] | null)
     start_port_range: (Scalars['Int'] | null)
@@ -2183,7 +2231,7 @@ export interface game_server_nodes_sum_fields {
 
 
 /** update columns of table "game_server_nodes" */
-export type game_server_nodes_update_column = 'build_id' | 'enabled' | 'end_port_range' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_update_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_threads_per_core' | 'enabled' | 'end_port_range' | 'gpu' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
 
 
 /** aggregate var_pop on columns */
@@ -2191,6 +2239,8 @@ export interface game_server_nodes_var_pop_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2205,6 +2255,8 @@ export interface game_server_nodes_var_samp_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2219,6 +2271,8 @@ export interface game_server_nodes_variance_fields {
     /** A computed field, executes function "available_node_server_count" */
     available_server_count: (Scalars['Int'] | null)
     build_id: (Scalars['Float'] | null)
+    cpu_cores_per_socket: (Scalars['Float'] | null)
+    cpu_threads_per_core: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -8400,7 +8454,7 @@ export interface query_root {
     game_versions_aggregate: game_versions_aggregate
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk: (game_versions | null)
-    getNodeStats: (NodeStats | null)[]
+    getNodeStats: NodeStats
     getServiceStats: (PodStats | null)[]
     /** fetch data from the table: "lobbies" */
     lobbies: lobbies[]
@@ -12624,6 +12678,24 @@ export interface CpuStatGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface DiskStatGenqlSelection{
+    available?: boolean | number
+    filesystem?: boolean | number
+    mountpoint?: boolean | number
+    size?: boolean | number
+    used?: boolean | number
+    usedPercent?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface DiskStatsGenqlSelection{
+    disks?: DiskStatGenqlSelection
+    time?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface GetTestUploadResponseGenqlSelection{
     error?: boolean | number
     link?: boolean | number
@@ -12657,9 +12729,26 @@ export interface MemoryStatGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface NetworkStatsGenqlSelection{
+    nics?: NicStatGenqlSelection
+    time?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NicStatGenqlSelection{
+    name?: boolean | number
+    rx?: boolean | number
+    tx?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface NodeStatsGenqlSelection{
     cpu?: CpuStatGenqlSelection
+    disks?: DiskStatsGenqlSelection
     memory?: MemoryStatGenqlSelection
+    network?: NetworkStatsGenqlSelection
     node?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -15973,12 +16062,15 @@ export interface game_server_nodesGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     /** An object relationship */
     e_region?: server_regionsGenqlSelection
     /** An object relationship */
     e_status?: e_game_server_node_statusesGenqlSelection
     enabled?: boolean | number
     end_port_range?: boolean | number
+    gpu?: boolean | number
     id?: boolean | number
     label?: boolean | number
     lan_ip?: boolean | number
@@ -16080,6 +16172,8 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16091,19 +16185,19 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "game_server_nodes" */
-export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),cpu_cores_per_socket?: (Int_comparison_exp | null),cpu_threads_per_core?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),gpu?: (Boolean_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "game_server_nodes" */
-export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null),end_port_range?: (Scalars['Int'] | null),pin_build_id?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
+export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),end_port_range?: (Scalars['Int'] | null),pin_build_id?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
+export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -16111,6 +16205,8 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
     label?: boolean | number
@@ -16128,7 +16224,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "game_server_nodes" */
-export interface game_server_nodes_max_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_max_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -16136,6 +16232,8 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
     label?: boolean | number
@@ -16153,7 +16251,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "game_server_nodes" */
-export interface game_server_nodes_min_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_min_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_nodes" */
@@ -16178,7 +16276,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
+export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),gpu?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -16186,7 +16284,7 @@ export interface game_server_nodes_pk_columns_input {id: Scalars['String']}
 
 
 /** input type for updating data in table "game_server_nodes" */
-export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -16194,6 +16292,8 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16205,7 +16305,7 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -16213,6 +16313,8 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16224,7 +16326,7 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_pop_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_pop_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -16232,6 +16334,8 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16243,7 +16347,7 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_samp_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_samp_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Streaming cursor of the table "game_server_nodes" */
@@ -16255,7 +16359,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -16263,6 +16367,8 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16274,7 +16380,7 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "game_server_nodes" */
-export interface game_server_nodes_sum_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_sum_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 export interface game_server_nodes_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -16290,6 +16396,8 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16301,7 +16409,7 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "game_server_nodes" */
-export interface game_server_nodes_var_pop_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_var_pop_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -16309,6 +16417,8 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16320,7 +16430,7 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "game_server_nodes" */
-export interface game_server_nodes_var_samp_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_var_samp_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -16328,6 +16438,8 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
     /** A computed field, executes function "available_node_server_count" */
     available_server_count?: boolean | number
     build_id?: boolean | number
+    cpu_cores_per_socket?: boolean | number
+    cpu_threads_per_core?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16339,7 +16451,7 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "game_server_nodes" */
-export interface game_server_nodes_variance_order_by {build_id?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_variance_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** columns and relationships of "game_versions" */
@@ -28335,7 +28447,7 @@ export interface query_rootGenqlSelection{
     where?: (game_versions_bool_exp | null)} })
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk?: (game_versionsGenqlSelection & { __args: {build_id: Scalars['Int']} })
-    getNodeStats?: NodeStatsGenqlSelection
+    getNodeStats?: (NodeStatsGenqlSelection & { __args: {node: Scalars['String']} })
     getServiceStats?: PodStatsGenqlSelection
     /** fetch data from the table: "lobbies" */
     lobbies?: (lobbiesGenqlSelection & { __args?: {
@@ -37588,6 +37700,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const DiskStat_possibleTypes: string[] = ['DiskStat']
+    export const isDiskStat = (obj?: { __typename?: any } | null): obj is DiskStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isDiskStat"')
+      return DiskStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const DiskStats_possibleTypes: string[] = ['DiskStats']
+    export const isDiskStats = (obj?: { __typename?: any } | null): obj is DiskStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isDiskStats"')
+      return DiskStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const GetTestUploadResponse_possibleTypes: string[] = ['GetTestUploadResponse']
     export const isGetTestUploadResponse = (obj?: { __typename?: any } | null): obj is GetTestUploadResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isGetTestUploadResponse"')
@@ -37608,6 +37736,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isMemoryStat = (obj?: { __typename?: any } | null): obj is MemoryStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isMemoryStat"')
       return MemoryStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NetworkStats_possibleTypes: string[] = ['NetworkStats']
+    export const isNetworkStats = (obj?: { __typename?: any } | null): obj is NetworkStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNetworkStats"')
+      return NetworkStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NicStat_possibleTypes: string[] = ['NicStat']
+    export const isNicStat = (obj?: { __typename?: any } | null): obj is NicStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNicStat"')
+      return NicStat_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -45024,8 +45168,11 @@ export const enumGameServerNodesConstraint = {
 
 export const enumGameServerNodesSelectColumn = {
    build_id: 'build_id' as const,
+   cpu_cores_per_socket: 'cpu_cores_per_socket' as const,
+   cpu_threads_per_core: 'cpu_threads_per_core' as const,
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
+   gpu: 'gpu' as const,
    id: 'id' as const,
    label: 'label' as const,
    lan_ip: 'lan_ip' as const,
@@ -45044,20 +45191,25 @@ export const enumGameServerNodesSelectColumn = {
 
 export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolAndArgumentsColumns = {
    enabled: 'enabled' as const,
+   gpu: 'gpu' as const,
    supports_cpu_pinning: 'supports_cpu_pinning' as const,
    supports_low_latency: 'supports_low_latency' as const
 }
 
 export const enumGameServerNodesSelectColumnGameServerNodesAggregateBoolExpBoolOrArgumentsColumns = {
    enabled: 'enabled' as const,
+   gpu: 'gpu' as const,
    supports_cpu_pinning: 'supports_cpu_pinning' as const,
    supports_low_latency: 'supports_low_latency' as const
 }
 
 export const enumGameServerNodesUpdateColumn = {
    build_id: 'build_id' as const,
+   cpu_cores_per_socket: 'cpu_cores_per_socket' as const,
+   cpu_threads_per_core: 'cpu_threads_per_core' as const,
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
+   gpu: 'gpu' as const,
    id: 'id' as const,
    label: 'label' as const,
    lan_ip: 'lan_ip' as const,

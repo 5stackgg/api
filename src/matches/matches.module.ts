@@ -1,6 +1,7 @@
 import {
   forwardRef,
   MiddlewareConsumer,
+  Logger,
   Module,
   NestModule,
   RequestMethod,
@@ -107,6 +108,7 @@ import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 export class MatchesModule implements NestModule {
   constructor(
     private readonly hasuraService: HasuraService,
+    private readonly logger: Logger,
     @InjectQueue(MatchQueues.MatchServers) matchServersQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches) scheduleMatchQueue: Queue,
     private readonly postgres: PostgresService,
@@ -222,7 +224,7 @@ export class MatchesModule implements NestModule {
           [match.id],
         );
       } catch (error) {
-        console.error(
+        this.logger.error(
           `Failed to generate player ratings for match ${match.id}:`,
           error,
         );

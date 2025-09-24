@@ -1,11 +1,14 @@
 import { validate } from "uuid";
-import { Req, Res, Injectable, NestMiddleware } from "@nestjs/common";
+import { Req, Res, Injectable, NestMiddleware, Logger } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { HasuraService } from "../../hasura/hasura.service";
 
 @Injectable()
 export class MatchServerMiddlewareMiddleware implements NestMiddleware {
-  constructor(private readonly hasura: HasuraService) {}
+  constructor(
+    private readonly hasura: HasuraService,
+    private readonly logger: Logger,
+  ) {}
 
   async use(
     @Req() request: Request,
@@ -51,7 +54,7 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
           return response.status(401).end();
         }
       } catch (error) {
-        console.warn("unable to fetch server", error.message);
+        this.logger.warn("unable to fetch server", error.message);
         return response.status(401).end();
       }
 

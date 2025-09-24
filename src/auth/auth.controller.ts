@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Res } from "@nestjs/common";
+import { Controller, Get, UseGuards, Req, Res, Logger } from "@nestjs/common";
 import { request, Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
 import { HasuraAction } from "../hasura/hasura.controller";
@@ -18,6 +18,7 @@ export class AuthController {
     private readonly hasura: HasuraService,
     private readonly redis: RedisManagerService,
     private readonly apiKeys: ApiKeys,
+    private readonly logger: Logger,
   ) {}
 
   @UseGuards(SteamGuard)
@@ -86,7 +87,7 @@ export class AuthController {
 
       request.session.destroy((err) => {
         if (err) {
-          console.error("Error destroying session:", err);
+          this.logger.error("Error destroying session:", err);
         }
       });
     }

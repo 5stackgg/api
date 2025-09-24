@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Rcon as RconClient } from "rcon-client";
 import { HasuraService } from "../hasura/hasura.service";
 import { EncryptionService } from "../encryption/encryption.service";
@@ -10,6 +10,7 @@ export class RconService {
     private readonly hasuraService: HasuraService,
     private readonly encryption: EncryptionService,
     private readonly notifications: NotificationsService,
+    private readonly logger: Logger,
   ) {}
 
   private CONNECTION_TIMEOUT = 3 * 1000;
@@ -110,7 +111,7 @@ export class RconService {
           rcon.end();
         }
       } catch (cleanupError) {
-        console.warn("Error during RCON cleanup:", cleanupError);
+        this.logger.warn("Error during RCON cleanup:", cleanupError);
       }
 
       if (server.rcon_status && server.is_dedicated) {
