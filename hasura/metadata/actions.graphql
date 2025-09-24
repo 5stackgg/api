@@ -52,8 +52,8 @@ type Mutation {
 
 type Query {
   getNodeStats(
-    node: String
-  ): [NodeStats]!
+    node: String!
+  ): NodeStats!
 }
 
 type Query {

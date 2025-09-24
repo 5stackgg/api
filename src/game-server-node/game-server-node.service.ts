@@ -720,32 +720,26 @@ export class GameServerNodeService {
   }
 
   public async getNodeStats(node?: string) {
-    const nodes = node ? [node] : await this.redis.smembers("stat-nodes");
+    const baseKey = GameServerNodeService.GET_NODE_STATS_KEY(node);
+    const cpuStats = await this.redis.lrange(`${baseKey}:cpu`, 0, -1);
 
-    return await Promise.all(
-      nodes.map(async (node) => {
-        const baseKey = GameServerNodeService.GET_NODE_STATS_KEY(node);
-        const cpuStats = await this.redis.lrange(`${baseKey}:cpu`, 0, -1);
+    const memoryStats = await this.redis.lrange(`${baseKey}:memory`, 0, -1);
 
-        const memoryStats = await this.redis.lrange(`${baseKey}:memory`, 0, -1);
+    const disksStats = await this.redis.lrange(`${baseKey}:disks`, 0, -1);
 
-        const disksStats = await this.redis.lrange(`${baseKey}:disks`, 0, -1);
-
-        const networkStats = await this.redis.lrange(
-          `${baseKey}:network`,
-          0,
-          -1,
-        );
-
-        return {
-          node,
-          cpu: cpuStats.map((stat) => JSON.parse(stat)).reverse(),
-          memory: memoryStats.map((stat) => JSON.parse(stat)).reverse(),
-          disks: disksStats.map((stat) => JSON.parse(stat)).reverse(),
-          network: networkStats.map((stat) => JSON.parse(stat)).reverse(),
-        };
-      }),
+    const networkStats = await this.redis.lrange(
+      `${baseKey}:network`,
+      0,
+      -1,
     );
+
+    return {
+      node,
+      cpu: cpuStats.map((stat) => JSON.parse(stat)).reverse(),
+      memory: memoryStats.map((stat) => JSON.parse(stat)).reverse(),
+      disks: disksStats.map((stat) => JSON.parse(stat)).reverse(),
+      network: networkStats.map((stat) => JSON.parse(stat)).reverse(),
+    };
   }
 
   public async getAllPodStats() {
