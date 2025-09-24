@@ -105,8 +105,11 @@ export class GameServerNodeController {
   }
 
   @HasuraAction()
-  public async getNodeStats() {
-    return await this.gameServerNodeService.getNodeStats();
+  public async getNodeStats(data: {
+    node?: string;
+  }
+  ) {
+    return await this.gameServerNodeService.getNodeStats(data.node);
   }
 
   @HasuraAction()

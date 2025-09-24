@@ -719,8 +719,8 @@ export class GameServerNodeService {
     }
   }
 
-  public async getNodeStats() {
-    const nodes = await this.redis.smembers("stat-nodes");
+  public async getNodeStats(node?: string) {
+    const nodes = node ? [node] : await this.redis.smembers("stat-nodes");
 
     return await Promise.all(
       nodes.map(async (node) => {
