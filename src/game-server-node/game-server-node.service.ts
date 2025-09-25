@@ -20,10 +20,14 @@ import { SteamConfig } from "src/configs/types/SteamConfig";
 @Injectable()
 export class GameServerNodeService {
   private redis: Redis;
-  private readonly namespace: string;
-  private maxStatsHistory: number = 60 * 3;
-  private gameServerConfig: GameServersConfig;
   private steamConfig: SteamConfig;
+  private gameServerConfig: GameServersConfig;
+
+  private readonly namespace: string;
+
+  // keep 1.5 hours of stats; with a ping every 30 seconds, that's 3,600 / 30 = 120 per hour, so 1.5 * 120 = 180 entries.
+  private maxOfflineStatsHistory = 60 * 90;
+  private maxStatsHistory: number = 180 - 1;
 
   constructor(
     protected readonly logger: Logger,
@@ -857,6 +861,11 @@ export class GameServerNodeService {
     await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
     await this.redis.ltrim(`${baseKey}:network`, 0, this.maxStatsHistory);
     await this.redis.ltrim(`${baseKey}:disks`, 0, this.maxStatsHistory);
+
+    await this.redis.expire(`${baseKey}:cpu`, this.maxOfflineStatsHistory);
+    await this.redis.expire(`${baseKey}:memory`, this.maxOfflineStatsHistory);
+    await this.redis.expire(`${baseKey}:network`, this.maxOfflineStatsHistory);
+    await this.redis.expire(`${baseKey}:disks`, this.maxOfflineStatsHistory);
   }
 
   public async capturePodStats(
@@ -891,8 +900,6 @@ export class GameServerNodeService {
         }),
       );
 
-      await this.redis.expire(`${baseKey}:memory`, oneHour);
-
       await this.redis.lpush(
         `${baseKey}:cpu`,
         JSON.stringify({
@@ -905,6 +912,9 @@ export class GameServerNodeService {
 
       await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
       await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
+
+      await this.redis.expire(`${baseKey}:cpu`, this.maxOfflineStatsHistory);
+      await this.redis.expire(`${baseKey}:memory`, this.maxOfflineStatsHistory);
     }
   }
 
