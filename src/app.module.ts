@@ -12,7 +12,7 @@ import { CacheModule } from "./cache/cache.module";
 import { S3Module } from "./s3/s3.module";
 import { QuickConnectController } from "./quick-connect/quick-connect.controller";
 import { RedisModule } from "./redis/redis.module";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { DiscordBotService } from "./discord-bot/discord-bot.service";
 import { TypeSenseService } from "./type-sense/type-sense.service";
 import { BullModule } from "@nestjs/bullmq";
@@ -36,7 +36,8 @@ import { SignalServerModule } from "./signal-server/signal-server.module";
 import { InvitesModule } from "./invites/invites.module";
 import { DemosModule } from "./demos/demos.module";
 import { SystemService } from "./system/system.service";
-
+import { ClientsModule } from "@nestjs/microservices";
+import { Transport } from "@nestjs/microservices";
 @Module({
   imports: [
     AuthModule,
@@ -88,6 +89,22 @@ import { SystemService } from "./system/system.service";
     ConfigModule.forRoot({
       isGlobal: true,
       load: configs,
+    }),
+    ClientsModule.registerAsync({
+      isGlobal: true,
+      clients: [
+        {
+          imports: [RedisModule],
+          inject: [RedisManagerService],
+          name: "GAME_SERVER_NODE_CLIENT_SERVICE",
+          useFactory: async (redisManagerService: RedisManagerService) => {
+            return {
+              transport: Transport.REDIS,
+              options: redisManagerService.getConfig("default"),
+            };
+          },
+        },
+      ],
     }),
     GameServerNodeModule,
     SystemModule,

@@ -181,7 +181,7 @@ export class SystemService {
   }
 
   public async getLatestVersions(): Promise<Record<string, string>> {
-    const registries = ["api", "web", "game-server-node"];
+    const registries = ["api", "web", "game-server-node-connector"];
     const latestVersions: Record<string, string> = {};
 
     for (const registry of registries) {
@@ -291,10 +291,7 @@ export class SystemService {
       const service = pod.metadata.labels.app;
       services.push({
         pod: pod.metadata.name,
-        service:
-          service === "game-server-node-connector"
-            ? "game-server-node"
-            : service,
+        service,
         version: await this.getServiceVersion(service, pod.metadata.name),
       });
     }

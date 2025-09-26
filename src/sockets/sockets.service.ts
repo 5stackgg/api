@@ -1,0 +1,239 @@
+import { v4 as uuidv4 } from "uuid";
+import { Request } from "express";
+import session from "express-session";
+import { getCookieOptions } from "../utilities/getCookieOptions";
+import RedisStore from "connect-redis";
+import passport from "passport";
+import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { AppConfig } from "src/configs/types/AppConfig";
+import { Redis } from "ioredis";
+import { ConfigService } from "@nestjs/config";
+import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
+import { MatchmakeService } from "src/matchmaking/matchmake.service";
+import { MatchmakingLobbyService } from "src/matchmaking/matchmaking-lobby.service";
+import { Injectable, Logger } from "@nestjs/common";
+
+@Injectable()
+export class SocketsService {
+  private redis: Redis;
+  private appConfig: AppConfig;
+  private nodeId: string = process.env.POD_NAME;
+
+  private clients: Map<string, FiveStackWebSocketClient> = new Map();
+
+  constructor(
+    private readonly logger: Logger,
+    private readonly config: ConfigService,
+    private readonly matchmaking: MatchmakeService,
+    private readonly redisManager: RedisManagerService,
+    private readonly matchmakingLobbyService: MatchmakingLobbyService,
+  ) {
+    this.redis = this.redisManager.getConnection();
+    this.appConfig = this.config.get<AppConfig>("app");
+
+    const sub = this.redisManager.getConnection("sub");
+
+    sub.subscribe("broadcast-message");
+    sub.subscribe("send-message-to-steam-id");
+    sub.on("message", (channel, message) => {
+      const { steamId, clientId, event, data } = JSON.parse(message) as {
+        steamId: string;
+        clientId: string;
+        event: string;
+        data: unknown;
+      };
+
+      switch (channel) {
+        case "broadcast-message":
+          this.broadcastMessage(event, data);
+          break;
+        case "send-message-to-steam-id":
+          this.sendMessageToSteamId(steamId, event, data);
+          break;
+      }
+    });
+  }
+
+  public static GET_PLAYER_KEY(steamId: string) {
+    return `players:${steamId}`;
+  }
+
+  public static GET_PLAYER_CLIENTS(steamId: string) {
+    return `clients:${steamId}`;
+  }
+
+  public static GET_PLAYER_CLIENTS_BY_NODE(steamId: string, nodeId: string) {
+    return `${SocketsService.GET_PLAYER_CLIENTS(steamId)}:${nodeId}`;
+  }
+
+  public static GET_PLAYER_CLIENT(
+    steamId: string,
+    nodeId: string,
+    clientId: string,
+  ) {
+    return `${SocketsService.GET_PLAYER_CLIENTS_BY_NODE(steamId, nodeId)}:${clientId}`;
+  }
+
+  public static GET_PLAYER_CLIENT_LATENCY_TEST(sessionId: string) {
+    return `latency-test:${sessionId}`;
+  }
+
+  public async setupSocket(client: FiveStackWebSocketClient, request: Request) {
+    session({
+      rolling: true,
+      resave: false,
+      name: this.appConfig.name,
+      saveUninitialized: false,
+      secret: this.appConfig.encSecret,
+      cookie: getCookieOptions(),
+      store: new RedisStore({
+        prefix: `${this.appConfig.name}:auth:`,
+        client: this.redis,
+      }),
+      // @ts-ignore
+      // luckily in this case the middlewares do not require the response
+      // this is a hack to get the session loaded in a websocket
+    })(request, {}, () => {
+      passport.session()(request, {}, async () => {
+        if (!request.user) {
+          client.close();
+          return;
+        }
+
+        client.id = uuidv4();
+        client.user = request.user;
+        client.sessionId = request.session.id;
+        client.node = this.nodeId;
+
+        this.clients.set(client.id, client);
+
+        await this.updateClient(client.user.steam_id, client.id);
+
+        await this.matchmaking.cancelOffline(client.user.steam_id);
+
+        await this.sendPeopleOnline();
+        await this.matchmaking.sendRegionStats(client.user);
+        await this.matchmakingLobbyService.sendQueueDetailsToPlayer(
+          client.user.steam_id,
+        );
+
+        client.on("close", async () => {
+          await this.redis.del(
+            SocketsService.GET_PLAYER_CLIENT(
+              client.user.steam_id,
+              this.nodeId,
+              client.id,
+            ),
+          );
+
+          const clients = await this.redis.keys(
+            `${SocketsService.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
+          );
+
+          if (clients.length === 0) {
+            await this.redis.del(
+              SocketsService.GET_PLAYER_KEY(client.user.steam_id),
+            );
+
+            await this.sendPeopleOnline();
+
+            this.matchmaking.markOffline(client.user.steam_id);
+          }
+        });
+      });
+    });
+  }
+
+  public async updateClient(steamId: string, clientId: string) {
+    await this.redis.set(
+      SocketsService.GET_PLAYER_KEY(steamId),
+      JSON.stringify({ lastSeen: Date.now() }),
+      "EX",
+      20,
+    );
+
+    await this.redis.set(
+      SocketsService.GET_PLAYER_CLIENT(steamId, this.nodeId, clientId),
+      "1",
+      "EX",
+      20,
+    );
+  }
+
+  public async broadcastMessage(event: string, data: unknown) {
+    for (const client of Array.from(this.clients.values())) {
+      client.send(
+        JSON.stringify({
+          event,
+          data,
+        }),
+      );
+    }
+  }
+
+  public async sendMessageToClient(
+    clientId: string,
+    event: string,
+    data: unknown,
+  ) {
+    const client = this.clients.get(clientId);
+
+    if (!client) {
+      this.logger.warn(`Client not found: ${clientId}`);
+      return;
+    }
+
+    client.send(JSON.stringify({ event, data }));
+  }
+
+  private async sendMessageToSteamId(
+    steamId: string,
+    event: string,
+    data: unknown,
+  ) {
+    const clients = await this.redis.keys(
+      `${SocketsService.GET_PLAYER_CLIENTS_BY_NODE(steamId, this.nodeId)}:*`,
+    );
+
+    for (const client of clients) {
+      const [, , , clientId] = client.split(":");
+
+      const _client = this.getClient(clientId);
+
+      if (!_client) {
+        continue;
+      }
+
+      _client.send(
+        JSON.stringify({
+          event,
+          data,
+        }),
+      );
+    }
+  }
+
+  public async sendPeopleOnline() {
+    const players = await this.redis.keys("players:*");
+
+    await this.redis.publish(
+      `broadcast-message`,
+      JSON.stringify({
+        event: `players-online`,
+        data: players.map((player) => {
+          return player.slice(8);
+        }),
+      }),
+    );
+  }
+
+  private getClient(clientId: string) {
+    const _client = this.clients.get(clientId);
+
+    if (_client) {
+      return _client;
+    }
+
+    this.clients.delete(clientId);
+  }
+}

@@ -56,17 +56,13 @@ async function bootstrap() {
   }
 
   const configService = app.get(ConfigService);
+  const redisManagerService = app.get(RedisManagerService);
 
   app.connectMicroservice({
     transport: Transport.REDIS,
     options: {
-      ...configService.get<RedisConfig>("redis").connections.default,
+      ...redisManagerService.getConfig("default"),
       wildcards: true,
-      // our startup probe fails after 60 seconds
-      retryAttempts: 22,
-      retryStrategy: () => {
-        return 5 * 1000;
-      },
     },
   });
 
@@ -74,8 +70,6 @@ async function bootstrap() {
     // TODO - trust proxy
     return true;
   });
-
-  const redisManagerService = app.get(RedisManagerService);
 
   const appConfig = configService.get<AppConfig>("app");
 

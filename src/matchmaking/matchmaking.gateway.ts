@@ -15,7 +15,7 @@ import { JoinQueueError } from "./utilities/joinQueueError";
 import { HasuraService } from "src/hasura/hasura.service";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { e_player_roles_enum } from "generated";
-import { SocketsGateway } from "src/sockets/sockets.gateway";
+import { SocketsService } from "src/sockets/sockets.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -259,7 +259,7 @@ export class MatchmakingGateway {
 
   private async getLatencyResults(client: FiveStackWebSocketClient) {
     const data = await this.redis.hgetall(
-      SocketsGateway.GET_PLAYER_CLIENT_LATENCY_TEST(client.sessionId),
+      SocketsService.GET_PLAYER_CLIENT_LATENCY_TEST(client.sessionId),
     );
 
     const latencyResults: Record<

@@ -1,15 +1,15 @@
 import { Controller, Get, UseGuards, Req, Res, Logger } from "@nestjs/common";
-import { request, Request, Response } from "express";
+import { Request, Response } from "express";
 import { SteamGuard } from "./strategies/SteamGuard";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
-import { SocketsGateway } from "src/sockets/sockets.gateway";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { ApiKeys } from "./ApiKeys";
 import { BadRequestException } from "@nestjs/common";
 import { User } from "./types/User";
+import { SocketsService } from "src/sockets/sockets.service";
 
 @Controller("auth")
 export class AuthController {
@@ -83,7 +83,7 @@ export class AuthController {
     if (request.session) {
       await this.redis
         .getConnection()
-        .del(SocketsGateway.GET_PLAYER_CLIENT_LATENCY_TEST(request.session.id));
+        .del(SocketsService.GET_PLAYER_CLIENT_LATENCY_TEST(request.session.id));
 
       request.session.destroy((err) => {
         if (err) {

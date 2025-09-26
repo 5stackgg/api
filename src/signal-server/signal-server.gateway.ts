@@ -6,10 +6,9 @@ import {
   ConnectedSocket,
   MessageBody,
 } from "@nestjs/websockets";
-import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
-import Redis from "ioredis";
-import { Logger } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
 import { RegionSignalData } from "./types/SignalData";
+import { ClientProxy } from "@nestjs/microservices";
 
 interface WebRTCClient extends WebSocket {
   id: string;
@@ -20,15 +19,10 @@ interface WebRTCClient extends WebSocket {
   path: "/ws/web",
 })
 export class SignalServerGateway {
-  private redis: Redis;
-
   constructor(
     private readonly hasura: HasuraService,
-    private readonly redisManager: RedisManagerService,
-    private readonly logger: Logger,
-  ) {
-    this.redis = this.redisManager.getConnection();
-  }
+    @Inject("GAME_SERVER_NODE_CLIENT_SERVICE") private client: ClientProxy,
+  ) {}
 
   @SubscribeMessage("offer")
   public async handleOffer(
@@ -44,20 +38,13 @@ export class SignalServerGateway {
       return;
     }
 
-    this.redis.publish(
-      `send-message-to-node-ip`,
-      JSON.stringify({
-        nodeIp: server.node_ip,
-        event: "offer",
-        data: {
-          region,
-          signal,
-          peerId,
-          clientId: client.id,
-          sessionId: client.sessionId,
-        },
-      }),
-    );
+    this.client.emit(`offer.${server.id}`, {
+      region,
+      signal,
+      peerId,
+      clientId: client.id,
+      sessionId: client.sessionId,
+    });
   }
 
   @SubscribeMessage("candidate")
@@ -73,19 +60,12 @@ export class SignalServerGateway {
       return;
     }
 
-    this.redis.publish(
-      `send-message-to-node-ip`,
-      JSON.stringify({
-        nodeIp: server.node_ip,
-        event: "candidate",
-        data: {
-          region,
-          signal,
-          peerId,
-          clientId: client.id,
-        },
-      }),
-    );
+    this.client.emit(`candidate.${server.id}`, {
+      region,
+      signal,
+      peerId,
+      clientId: client.id,
+    });
   }
 
   private async getRegionServer(region: string) {

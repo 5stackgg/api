@@ -90,7 +90,6 @@ export class MatchesController {
         password: true,
         lineup_1_id: true,
         lineup_2_id: true,
-        organizer_steam_id: true,
         current_match_map_id: true,
         server: {
           server_region: {

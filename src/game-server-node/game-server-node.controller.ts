@@ -12,6 +12,10 @@ import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
 import { LoggingServiceService } from "./logging-service/logging-service.service";
 import { RconService } from "src/rcon/rcon.service";
+import { EventPattern } from "@nestjs/microservices";
+import { NodeStats } from "./interfaces/NodeStats";
+import { PodStats } from "./interfaces/PodStats";
+import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -25,9 +29,77 @@ export class GameServerNodeController {
     protected readonly tailscale: TailscaleService,
     protected readonly loggingService: LoggingServiceService,
     protected readonly gameServerNodeService: GameServerNodeService,
-    @InjectQueue(GameServerQueues.GameUpdate) private queue: Queue,
+    @InjectQueue(GameServerQueues.GameUpdate) private gameUpdateQueue: Queue,
+    @InjectQueue(GameServerQueues.NodeOffline)
+    private readonly nodeOfflineQueue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
+  }
+
+  @EventPattern(`ping`)
+  public async handleMessage(payload: {
+    node: string;
+    lanIP: string;
+    nodeIP: string;
+    publicIP: string;
+    csBuild: number;
+    supportsLowLatency: boolean;
+    supportsCpuPinning: boolean;
+    nodeStats: NodeStats;
+    podStats: Array<PodStats>;
+    labels: Record<string, string>;
+  }): Promise<void> {
+    if (!payload) {
+      return;
+    }
+
+    if (!payload.labels?.["5stack-id"]) {
+      await this.gameServerNodeService.updateIdLabel(payload.node);
+    }
+
+    await this.gameServerNodeService.updateStatus(
+      payload.node,
+      payload.nodeIP,
+      payload.lanIP,
+      payload.publicIP,
+      payload.csBuild,
+      payload.supportsCpuPinning,
+      payload.supportsLowLatency,
+      payload.nodeStats.cpuInfo,
+      payload.nodeStats.nvidiaGPU,
+      "Online",
+    );
+
+    if (payload.nodeStats && payload.podStats) {
+      await this.gameServerNodeService.captureNodeStats(
+        payload.node,
+        payload.nodeStats,
+      );
+
+      await this.gameServerNodeService.capturePodStats(
+        payload.node,
+        payload.nodeStats.cpuCapacity,
+        payload.nodeStats.memoryCapacity,
+        payload.podStats,
+      );
+    }
+
+    const jobId = `node:${payload.node}`;
+    await this.nodeOfflineQueue.remove(jobId);
+
+    await this.nodeOfflineQueue.add(
+      MarkGameServerNodeOffline.name,
+      {
+        node: payload.node,
+      },
+      {
+        delay: 90 * 1000,
+        attempts: 1,
+        removeOnFail: false,
+        removeOnComplete: true,
+        jobId,
+      },
+    );
   }
 
   @HasuraAction()
@@ -219,9 +291,9 @@ export class GameServerNodeController {
       });
     }
 
-    await this.queue.remove(`server-offline:${serverId}`);
+    await this.gameUpdateQueue.remove(`server-offline:${serverId}`);
 
-    await this.queue.add(
+    await this.gameUpdateQueue.add(
       MarkDedicatedServerOffline.name,
       {
         serverId,

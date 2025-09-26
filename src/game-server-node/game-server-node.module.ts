@@ -9,7 +9,6 @@ import { GameServerNodeService } from "./game-server-node.service";
 import { GameServerNodeController } from "./game-server-node.controller";
 import { TailscaleModule } from "../tailscale/tailscale.module";
 import { HasuraModule } from "../hasura/hasura.module";
-import { GameServerNodeGateway } from "./game-server-node.gateway";
 import { CacheModule } from "../cache/cache.module";
 import { CheckGameUpdate } from "./jobs/CheckGameUpdate";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
@@ -33,7 +32,6 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
 @Module({
   providers: [
     GameServerNodeService,
-    GameServerNodeGateway,
     CheckGameUpdate,
     GetPluginVersions,
     MarkGameServerNodeOffline,
