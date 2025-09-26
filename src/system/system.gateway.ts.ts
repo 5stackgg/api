@@ -10,6 +10,7 @@ import {
 } from "@nestjs/websockets";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -29,7 +30,7 @@ export class SystemGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    const { service, previous } = data;
+    let { service, previous } = data;
 
     if (!isRoleAbove(client.user.role, "system_administrator")) {
       return;
@@ -50,8 +51,31 @@ export class SystemGateway {
       stream.end();
     });
 
+    stream.on("end", () => {
+      client.send(
+        JSON.stringify({
+          event: `logs:${service}`,
+          data: JSON.stringify({
+            end: true,
+          }),
+        }),
+      );
+    });
+
+    let isJob = service.startsWith("cs-update:");
+
     try {
-      await this.loggingService.getServiceLogs(service, stream, !!previous);
+      await this.loggingService.getServiceLogs(
+        service.startsWith("cs-update:")
+          ? GameServerNodeService.GET_UPDATE_JOB_NAME(
+              service.replace("cs-update:", ""),
+            )
+          : service,
+        stream,
+        !!previous,
+        false,
+        isJob,
+      );
     } catch (error) {
       this.logger.warn(
         "unable to get logs:",

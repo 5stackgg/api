@@ -2,11 +2,19 @@ import zlib from "zlib";
 import archiver from "archiver";
 import { Injectable, Logger } from "@nestjs/common";
 import { PassThrough, Writable } from "stream";
-import { Log, KubeConfig, CoreV1Api, V1Pod } from "@kubernetes/client-node";
+import {
+  Log,
+  KubeConfig,
+  CoreV1Api,
+  V1Pod,
+  BatchV1Api,
+} from "@kubernetes/client-node";
+import { FetchError } from "@kubernetes/client-node";
 
 @Injectable()
 export class LoggingServiceService {
   private coreApi: CoreV1Api;
+  private batchApi: BatchV1Api;
   private namespace = "5stack";
   private kubeConfig: KubeConfig;
 
@@ -16,6 +24,7 @@ export class LoggingServiceService {
     this.kubeConfig.loadFromDefault();
 
     this.coreApi = this.kubeConfig.makeApiClient(CoreV1Api);
+    this.batchApi = this.kubeConfig.makeApiClient(BatchV1Api);
   }
 
   public async getServiceLogs(
@@ -23,6 +32,7 @@ export class LoggingServiceService {
     stream: Writable,
     previous = false,
     download = false,
+    isJob = false,
   ): Promise<void> {
     let archive: archiver.Archiver;
 
@@ -35,12 +45,24 @@ export class LoggingServiceService {
       archive.pipe(stream);
     }
 
-    const pods = await this.getPodsFromService(service);
+    let pods: V1Pod[] = [];
+    if (isJob) {
+      const pod = await this.getJobPod(service);
+      if (pod) {
+        pods.push(pod);
+      }
+    } else {
+      pods = await this.getPodsFromService(service);
+    }
 
     for (const pod of pods) {
       await Promise.all([
         this.getLogsForPod(pod, stream, download, previous, 250, archive),
       ]);
+    }
+
+    if (pods.length === 0) {
+      stream.end();
     }
   }
 
@@ -77,15 +99,15 @@ export class LoggingServiceService {
 
       stream.on("end", () => {
         podLogs?.abort();
-        stream.destroy();
       });
+
       stream.on("close", () => {
         podLogs?.abort();
-        stream.destroy();
       });
+
       stream.on("error", () => {
         podLogs?.abort();
-        stream.destroy();
+        stream.end();
       });
 
       podLogs = await logApi.log(
@@ -104,8 +126,8 @@ export class LoggingServiceService {
     } catch (error) {
       this.logger.warn(
         `Failed to get logs for pod ${pod.metadata.name}, container ${containerName}`,
-        error,
       );
+      stream.end();
     }
   }
 
@@ -118,6 +140,14 @@ export class LoggingServiceService {
     archive?: archiver.Archiver,
   ) {
     let totalAdded = 0;
+    let streamEnded = false;
+
+    const endStream = () => {
+      if (!streamEnded) {
+        streamEnded = true;
+        stream.end();
+      }
+    };
 
     for (const container of pod.spec.containers) {
       const logStream = new PassThrough();
@@ -128,10 +158,11 @@ export class LoggingServiceService {
         if (archive && totalAdded == pod.spec.containers.length) {
           void archive.finalize();
         }
-        stream.end();
+        endStream();
       });
 
       logStream.on("data", (chunk: Buffer) => {
+        console.info("DATA");
         if (archive) {
           return;
         }
@@ -165,7 +196,12 @@ export class LoggingServiceService {
 
       logStream.on("error", (error) => {
         this.logger.error("Log stream error", error);
-        stream.end();
+        endStream();
+      });
+
+      logStream.on("close", () => {
+        this.logger.log("log stream closed");
+        endStream();
       });
 
       if (archive) {
@@ -187,6 +223,31 @@ export class LoggingServiceService {
         download,
         tailLines,
       );
+    }
+  }
+
+  public async getJobPod(jobName: string) {
+    try {
+      const kc = new KubeConfig();
+      kc.loadFromDefault();
+
+      const job = await this.batchApi.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+
+      const coreV1Api = kc.makeApiClient(CoreV1Api);
+
+      const pods = await coreV1Api.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${job.metadata.name}`,
+      });
+
+      return pods.items.at(0);
+    } catch (error) {
+      if (error instanceof FetchError && error.code !== "404") {
+        throw error;
+      }
     }
   }
 }

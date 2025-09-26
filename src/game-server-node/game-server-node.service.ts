@@ -42,6 +42,10 @@ export class GameServerNodeService {
     this.steamConfig = this.config.get<SteamConfig>("steam");
   }
 
+  public static GET_UPDATE_JOB_NAME(gameServerNodeId: string) {
+    return `update-cs-server-${gameServerNodeId.replaceAll(".", "-")}`;
+  }
+
   public static GET_NODE_STATS_KEY(nodeId: string) {
     return `node-stats-v9:${nodeId}`;
   }
@@ -311,7 +315,9 @@ export class GameServerNodeService {
 
     this.logger.log(`Updating CS2 on node ${gameServerNodeId}`);
 
-    const pod = await this.getUpdateJobPod(gameServerNodeId);
+    const pod = await this.loggingService.getJobPod(
+      GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId),
+    );
 
     if (pod) {
       await this.moitorUpdateStatus(gameServerNodeId);
@@ -460,7 +466,9 @@ export class GameServerNodeService {
 
   public async moitorUpdateStatus(gameServerNodeId: string, attempts = 0) {
     try {
-      const pod = await this.getUpdateJobPod(gameServerNodeId);
+      const pod = await this.loggingService.getJobPod(
+        GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId),
+      );
 
       if (!pod) {
         this.logger.warn(`[${gameServerNodeId}] unable to find update job pod`);
@@ -587,33 +595,6 @@ export class GameServerNodeService {
           update_status: true,
         },
       });
-    }
-  }
-
-  private async getUpdateJobPod(gameServerNodeId: string) {
-    try {
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
-
-      const batchV1Api = kc.makeApiClient(BatchV1Api);
-
-      const job = await batchV1Api.readNamespacedJob({
-        name: `update-cs-server-${gameServerNodeId.replaceAll(".", "-")}`,
-        namespace: this.namespace,
-      });
-
-      const coreV1Api = kc.makeApiClient(CoreV1Api);
-
-      const pods = await coreV1Api.listNamespacedPod({
-        namespace: this.namespace,
-        labelSelector: `job-name=${job.metadata.name}`,
-      });
-
-      return pods.items.at(0);
-    } catch (error) {
-      if (error instanceof FetchError && error.code !== "404") {
-        throw error;
-      }
     }
   }
 
