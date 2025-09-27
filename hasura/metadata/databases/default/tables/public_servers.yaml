@@ -160,3 +160,27 @@ event_triggers:
       num_retries: 0
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  - name: servers
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - rcon_password
+          - port
+          - tv_port
+          - enabled
+          - is_dedicated
+          - game_server_node_id
+          - steam_relay
+          - type
+          - host
+          - label
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
