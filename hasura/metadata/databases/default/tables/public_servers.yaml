@@ -31,24 +31,23 @@ array_relationships:
         table:
           name: matches
           schema: public
-computed_fields:
-  - name: is_dedicated
-    definition:
-      function:
-        name: is_dedicated_server
-        schema: public
 insert_permissions:
   - role: administrator
     permission:
       check: {}
+      set:
+        is_dedicated: "true"
       columns:
+        - connect_password
         - enabled
+        - game_server_node_id
         - host
         - label
         - port
         - rcon_password
         - region
         - tv_port
+        - type
     comment: ""
 select_permissions:
   - role: match_organizer
@@ -65,7 +64,7 @@ select_permissions:
         - region
         - reserved_by_match_id
         - tv_port
-      computed_fields:
+        - type
         - is_dedicated
       filter:
         is_dedicated:
@@ -76,6 +75,29 @@ select_permissions:
     permission:
       columns:
         - api_password
+        - connect_password
+        - connected
+        - enabled
+        - game_server_node_id
+        - host
+        - id
+        - is_dedicated
+        - label
+        - plugin_version
+        - port
+        - rcon_status
+        - region
+        - reserved_by_match_id
+        - tv_port
+        - type
+      filter:
+        is_dedicated:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
         - connected
         - enabled
         - host
@@ -87,24 +109,26 @@ select_permissions:
         - region
         - reserved_by_match_id
         - tv_port
-      computed_fields:
-        - is_dedicated
+        - type
       filter:
-        is_dedicated:
-          _eq: true
-      allow_aggregations: true
+        type:
+          _neq: Ranked
     comment: ""
 update_permissions:
   - role: system_administrator
     permission:
       columns:
+        - connect_password
         - enabled
+        - game_server_node_id
         - host
+        - is_dedicated
         - label
         - port
         - rcon_password
         - region
         - tv_port
+        - type
       filter:
         is_dedicated:
           _eq: true

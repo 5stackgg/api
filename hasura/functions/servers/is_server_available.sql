@@ -6,6 +6,7 @@ BEGIN
         SELECT 1
         FROM servers s
         WHERE s.id = match_server_id AND reserved_by_match_id is not null AND match_id != reserved_by_match_id
+        and type = 'Ranked'
     ) THEN
         RETURN false;
     END IF;

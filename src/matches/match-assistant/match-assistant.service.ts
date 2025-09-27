@@ -304,6 +304,9 @@ export class MatchAssistantService {
             is_dedicated: {
               _eq: true,
             },
+            type: {
+              _eq: "Ranked",
+            },
             reserved_by_match_id: {
               _is_null: true,
             },
@@ -412,6 +415,9 @@ export class MatchAssistantService {
               },
             ],
             where: {
+              type: {
+                _eq: "Ranked",
+              },
               _and: [
                 ...(match.region
                   ? [
