@@ -42,10 +42,12 @@ export class DedicatedServersService {
         },
         id: true,
         host: true,
+        type: true,
         port: true,
         tv_port: true,
         api_password: true,
         rcon_password: true,
+        connect_password: true,
         game_server_node: {
           id: true,
           pin_plugin_version: true,
@@ -127,14 +129,14 @@ export class DedicatedServersService {
           spec: {
             selector: {
               matchLabels: {
-                deployment: dedicatedServerDeploymentName,
+                app: dedicatedServerDeploymentName,
               },
             },
             template: {
               metadata: {
                 name: dedicatedServerDeploymentName,
                 labels: {
-                  deployment: dedicatedServerDeploymentName,
+                  app: dedicatedServerDeploymentName,
                 },
               },
               spec: {
@@ -174,6 +176,10 @@ export class DedicatedServersService {
                     ],
                     env: [
                       {
+                        name: "INSTALL_5STACK_PLUGIN",
+                        value: server.type === "Ranked" ? "true" : "false",
+                      },
+                      {
                         name: "GAME_NODE_SERVER",
                         value: "true",
                       },
@@ -185,12 +191,14 @@ export class DedicatedServersService {
                           server.rcon_password,
                         ),
                       },
-                      // TODO - server password....
-                      { name: "SERVER_PASSWORD", value: server.id },
+                      {
+                        name: "SERVER_PASSWORD",
+                        value: server.connect_password,
+                      },
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers 13`,
+                        value: `-maxplayers 13 +map de_dust2`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
@@ -234,7 +242,6 @@ export class DedicatedServersService {
                     ],
                   },
                 ],
-                // TODO - mabye we should use host paths, why do we want volumes?
                 volumes: [
                   {
                     name: `steamcmd-${sanitizedGameServerNodeId}`,
@@ -310,7 +317,7 @@ export class DedicatedServersService {
               },
             ],
             selector: {
-              deployment: dedicatedServerDeploymentName,
+              app: dedicatedServerDeploymentName,
             },
           },
         },
