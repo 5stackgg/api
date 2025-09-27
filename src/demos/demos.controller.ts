@@ -101,9 +101,6 @@ export class DemosController {
         status: true,
         match: {
           status: true,
-          server: {
-            is_dedicated: true,
-          },
         },
       },
     });
@@ -111,17 +108,6 @@ export class DemosController {
     if (!match_maps_by_pk) {
       return response.status(410).json({
         error: "map not found",
-      });
-    }
-
-    const { "game-server-node": gameServerNode } = request.query;
-
-    if (
-      gameServerNode &&
-      match_maps_by_pk.match.server?.is_dedicated === true
-    ) {
-      return response.status(401).json({
-        error: "unauthorized",
       });
     }
 
@@ -135,8 +121,6 @@ export class DemosController {
     }
 
     if (
-      (!match_maps_by_pk.match.server ||
-        match_maps_by_pk.match.server?.is_dedicated === false) &&
       !["Finished", "Forfeit", "Surrender", "Tie"].includes(
         match_maps_by_pk.match.status,
       )
