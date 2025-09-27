@@ -583,10 +583,9 @@ export class MatchAssistantService {
                             server.rcon_password,
                           ),
                         },
-                        { name: "SERVER_PASSWORD", value: match.password },
                         {
                           name: "EXTRA_GAME_PARAMS",
-                          value: `-maxplayers 13 ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`}`,
+                          value: `-maxplayers 13 ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +sv_password ${match.password}`,
                         },
                         { name: "SERVER_ID", value: server.id },
                         {
