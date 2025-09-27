@@ -320,6 +320,18 @@ export class DedicatedServersService {
         },
       });
 
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: { id: serverId },
+            _set: {
+              connected: true,
+            },
+          },
+          id: true,
+        },
+      });
+
       return true;
     } catch (error) {
       await this.removeDedicatedServer(serverId);
@@ -346,6 +358,18 @@ export class DedicatedServersService {
     await this.apps.deleteNamespacedDeployment({
       namespace: this.namespace,
       name: dedicatedServerDeploymentName,
+    });
+
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: { id: serverId },
+          _set: {
+            connected: false,
+          },
+        },
+        id: true,
+      },
     });
   }
 
