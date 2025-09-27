@@ -162,7 +162,6 @@ export class LoggingServiceService {
       });
 
       logStream.on("data", (chunk: Buffer) => {
-        console.info("DATA");
         if (archive) {
           return;
         }
