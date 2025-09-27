@@ -124,6 +124,13 @@ export class LoggingServiceService {
         },
       );
     } catch (error) {
+      if (!(await this.isNodeOnline(pod.spec.nodeName))) {
+        this.logger.warn(
+          `Skipping logs for pod ${pod.metadata.name} on offline node ${pod.spec.nodeName}`,
+        );
+        return;
+      }
+
       this.logger.warn(
         `Failed to get logs for pod ${pod.metadata.name}, container ${containerName}`,
       );
@@ -247,6 +254,25 @@ export class LoggingServiceService {
       if (error instanceof FetchError && error.code !== "404") {
         throw error;
       }
+    }
+  }
+
+  private async isNodeOnline(nodeName: string): Promise<boolean> {
+    try {
+      const node = await this.coreApi.readNode({
+        name: nodeName,
+      });
+
+      // Check if the node has a Ready condition with status True
+      const readyCondition = node.status?.conditions?.find(
+        (condition) => condition.type === "Ready",
+      );
+
+      return readyCondition?.status === "True";
+    } catch (error) {
+      this.logger.error(`Failed to check node status for ${nodeName}:`, error);
+      // If we can't check the status, assume the node is online to avoid blocking logs
+      return true;
     }
   }
 }
