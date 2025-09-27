@@ -1,0 +1,20 @@
+table:
+  name: e_server_types
+  schema: public
+is_enum: true
+array_relationships:
+  - name: servers
+    using:
+      foreign_key_constraint_on:
+        column: type
+        table:
+          name: servers
+          schema: public
+select_permissions:
+  - role: system_administrator
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
