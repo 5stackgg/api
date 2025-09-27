@@ -179,11 +179,12 @@ event_triggers:
           - tv_port
           - enabled
           - is_dedicated
-          - game_server_node_id
+          - max_players
           - steam_relay
           - type
           - host
           - label
+          - game_server_node_id
     retry_conf:
       interval_sec: 10
       num_retries: 0
