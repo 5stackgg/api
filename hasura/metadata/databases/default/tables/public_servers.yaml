@@ -43,6 +43,7 @@ insert_permissions:
         - game_server_node_id
         - host
         - label
+        - max_players
         - port
         - rcon_password
         - region
@@ -57,7 +58,9 @@ select_permissions:
         - enabled
         - host
         - id
+        - is_dedicated
         - label
+        - max_players
         - plugin_version
         - port
         - rcon_status
@@ -65,7 +68,6 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
-        - is_dedicated
       filter:
         is_dedicated:
           _eq: true
@@ -83,6 +85,7 @@ select_permissions:
         - id
         - is_dedicated
         - label
+        - max_players
         - plugin_version
         - port
         - rcon_status
@@ -103,6 +106,7 @@ select_permissions:
         - host
         - id
         - label
+        - max_players
         - plugin_version
         - port
         - rcon_status
@@ -124,6 +128,7 @@ update_permissions:
         - host
         - is_dedicated
         - label
+        - max_players
         - port
         - rcon_password
         - region

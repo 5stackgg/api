@@ -194,7 +194,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers 13 +map de_dust2${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {

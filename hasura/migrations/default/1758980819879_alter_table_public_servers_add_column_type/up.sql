@@ -5,6 +5,7 @@ alter table "public"."servers" add column if not exists "is_dedicated" boolean
  not null default 'false';
 
 alter table "public"."servers" add column if not exists "connect_password" text null;
+alter table "public"."servers" add column if not exists "max_players" integer null default 32;
 
 update "public"."servers" set "is_dedicated" = true where "game_server_node_id" is null;
 
