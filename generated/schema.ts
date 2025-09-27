@@ -9014,6 +9014,10 @@ export interface servers {
     api_password: Scalars['uuid']
     connect_password: (Scalars['String'] | null)
     connected: Scalars['Boolean']
+    /** A computed field, executes function "get_server_connection_link" */
+    connection_link: (Scalars['String'] | null)
+    /** A computed field, executes function "get_server_connection_string" */
+    connection_string: (Scalars['String'] | null)
     /** An object relationship */
     current_match: (matches | null)
     enabled: Scalars['Boolean']
@@ -9091,6 +9095,10 @@ export type servers_constraint = 'servers_pkey' | 'servers_reserved_by_match_id_
 export interface servers_max_fields {
     api_password: (Scalars['uuid'] | null)
     connect_password: (Scalars['String'] | null)
+    /** A computed field, executes function "get_server_connection_link" */
+    connection_link: (Scalars['String'] | null)
+    /** A computed field, executes function "get_server_connection_string" */
+    connection_string: (Scalars['String'] | null)
     game_mode: (Scalars['Int'] | null)
     game_server_node_id: (Scalars['String'] | null)
     game_type: (Scalars['Int'] | null)
@@ -9113,6 +9121,10 @@ export interface servers_max_fields {
 export interface servers_min_fields {
     api_password: (Scalars['uuid'] | null)
     connect_password: (Scalars['String'] | null)
+    /** A computed field, executes function "get_server_connection_link" */
+    connection_link: (Scalars['String'] | null)
+    /** A computed field, executes function "get_server_connection_string" */
+    connection_string: (Scalars['String'] | null)
     game_mode: (Scalars['Int'] | null)
     game_server_node_id: (Scalars['String'] | null)
     game_type: (Scalars['Int'] | null)
@@ -30347,6 +30359,10 @@ export interface serversGenqlSelection{
     api_password?: boolean | number
     connect_password?: boolean | number
     connected?: boolean | number
+    /** A computed field, executes function "get_server_connection_link" */
+    connection_link?: boolean | number
+    /** A computed field, executes function "get_server_connection_string" */
+    connection_string?: boolean | number
     /** An object relationship */
     current_match?: matchesGenqlSelection
     enabled?: boolean | number
@@ -30463,7 +30479,7 @@ export interface servers_avg_order_by {game_mode?: (order_by | null),game_type?:
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connect_password?: (String_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_mode?: (Int_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),game_type?: (Int_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),max_players?: (Int_comparison_exp | null),plugin_version?: (String_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null),type?: (e_server_types_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connect_password?: (String_comparison_exp | null),connected?: (Boolean_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_mode?: (Int_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),game_type?: (Int_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),max_players?: (Int_comparison_exp | null),plugin_version?: (String_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null),type?: (e_server_types_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
@@ -30478,6 +30494,10 @@ export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),c
 export interface servers_max_fieldsGenqlSelection{
     api_password?: boolean | number
     connect_password?: boolean | number
+    /** A computed field, executes function "get_server_connection_link" */
+    connection_link?: boolean | number
+    /** A computed field, executes function "get_server_connection_string" */
+    connection_string?: boolean | number
     game_mode?: boolean | number
     game_server_node_id?: boolean | number
     game_type?: boolean | number
@@ -30505,6 +30525,10 @@ export interface servers_max_order_by {api_password?: (order_by | null),connect_
 export interface servers_min_fieldsGenqlSelection{
     api_password?: boolean | number
     connect_password?: boolean | number
+    /** A computed field, executes function "get_server_connection_link" */
+    connection_link?: boolean | number
+    /** A computed field, executes function "get_server_connection_string" */
+    connection_string?: boolean | number
     game_mode?: boolean | number
     game_server_node_id?: boolean | number
     game_type?: boolean | number
@@ -30550,7 +30574,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),connect_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_mode?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),game_type?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),max_players?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),type?: (order_by | null),updated_at?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),connect_password?: (order_by | null),connected?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_mode?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),game_type?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),max_players?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),type?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */

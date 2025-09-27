@@ -6,6 +6,7 @@ import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { EncryptionService } from "src/encryption/encryption.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { e_server_types_enum } from "../../generated";
+import { RconService } from "src/rcon/rcon.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -21,6 +22,7 @@ export class DedicatedServersService {
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly encryption: EncryptionService,
+    private readonly RconService: RconService,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
@@ -332,6 +334,10 @@ export class DedicatedServersService {
         },
       });
 
+      setTimeout(() => {
+        this.pingDedicatedServer(serverId);
+      }, 10000);
+
       return true;
     } catch (error) {
       await this.removeDedicatedServer(serverId);
@@ -402,5 +408,30 @@ export class DedicatedServersService {
       case "Custom":
         return 0;
     }
+  }
+
+  public async pingDedicatedServer(serverId: string): Promise<void> {
+    const rcon = await this.RconService.connect(serverId);
+    if (!rcon) {
+      return;
+    }
+
+    const status = JSON.parse(await rcon.send("status_json"));
+
+    const steamId = status.server.steamid;
+
+    if (steamId) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: { id: serverId },
+            _set: { steam_relay: steamId },
+          },
+          id: true,
+        },
+      });
+    }
+
+    await this.RconService.disconnect(serverId);
   }
 }

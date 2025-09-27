@@ -31,6 +31,19 @@ array_relationships:
         table:
           name: matches
           schema: public
+computed_fields:
+  - name: connection_link
+    definition:
+      function:
+        name: get_server_connection_link
+        schema: public
+      session_argument: hasura_session
+  - name: connection_string
+    definition:
+      function:
+        name: get_server_connection_string
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: administrator
     permission:
@@ -68,6 +81,9 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+      computed_fields:
+        - connection_link
+        - connection_string
       filter:
         is_dedicated:
           _eq: true
@@ -93,6 +109,9 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+      computed_fields:
+        - connection_link
+        - connection_string
       filter:
         is_dedicated:
           _eq: true
@@ -114,6 +133,9 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+      computed_fields:
+        - connection_link
+        - connection_string
       filter:
         type:
           _neq: Ranked
@@ -174,17 +196,16 @@ event_triggers:
         columns: '*'
       update:
         columns:
-          - rcon_password
-          - port
-          - tv_port
-          - enabled
-          - is_dedicated
           - max_players
-          - steam_relay
-          - type
+          - is_dedicated
+          - enabled
+          - tv_port
+          - port
+          - rcon_password
           - host
           - label
           - game_server_node_id
+          - type
     retry_conf:
       interval_sec: 10
       num_retries: 0

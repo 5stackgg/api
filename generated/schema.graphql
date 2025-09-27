@@ -31219,6 +31219,16 @@ type servers {
   connect_password: String
   connected: Boolean!
 
+  """
+  A computed field, executes function "get_server_connection_link"
+  """
+  connection_link: String
+
+  """
+  A computed field, executes function "get_server_connection_string"
+  """
+  connection_string: String
+
   """An object relationship"""
   current_match: matches
   enabled: Boolean!
@@ -31393,6 +31403,8 @@ input servers_bool_exp {
   api_password: uuid_comparison_exp
   connect_password: String_comparison_exp
   connected: Boolean_comparison_exp
+  connection_link: String_comparison_exp
+  connection_string: String_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
   game_mode: Int_comparison_exp
@@ -31481,6 +31493,16 @@ input servers_insert_input {
 type servers_max_fields {
   api_password: uuid
   connect_password: String
+
+  """
+  A computed field, executes function "get_server_connection_link"
+  """
+  connection_link: String
+
+  """
+  A computed field, executes function "get_server_connection_string"
+  """
+  connection_string: String
   game_mode: Int
   game_server_node_id: String
   game_type: Int
@@ -31523,6 +31545,16 @@ input servers_max_order_by {
 type servers_min_fields {
   api_password: uuid
   connect_password: String
+
+  """
+  A computed field, executes function "get_server_connection_link"
+  """
+  connection_link: String
+
+  """
+  A computed field, executes function "get_server_connection_string"
+  """
+  connection_string: String
   game_mode: Int
   game_server_node_id: String
   game_type: Int
@@ -31596,6 +31628,8 @@ input servers_order_by {
   api_password: order_by
   connect_password: order_by
   connected: order_by
+  connection_link: order_by
+  connection_string: order_by
   current_match: matches_order_by
   enabled: order_by
   game_mode: order_by

@@ -33785,6 +33785,12 @@ export default {
             "connected": [
                 1
             ],
+            "connection_link": [
+                17
+            ],
+            "connection_string": [
+                17
+            ],
             "current_match": [
                 1179
             ],
@@ -34130,6 +34136,12 @@ export default {
             "connected": [
                 2
             ],
+            "connection_link": [
+                19
+            ],
+            "connection_string": [
+                19
+            ],
             "current_match": [
                 1188
             ],
@@ -34317,6 +34329,12 @@ export default {
             "connect_password": [
                 17
             ],
+            "connection_link": [
+                17
+            ],
+            "connection_string": [
+                17
+            ],
             "game_mode": [
                 8
             ],
@@ -34421,6 +34439,12 @@ export default {
                 2248
             ],
             "connect_password": [
+                17
+            ],
+            "connection_link": [
+                17
+            ],
+            "connection_string": [
                 17
             ],
             "game_mode": [
@@ -34566,6 +34590,12 @@ export default {
                 1332
             ],
             "connected": [
+                1332
+            ],
+            "connection_link": [
+                1332
+            ],
+            "connection_string": [
                 1332
             ],
             "current_match": [
