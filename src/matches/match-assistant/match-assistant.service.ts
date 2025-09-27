@@ -304,6 +304,9 @@ export class MatchAssistantService {
             is_dedicated: {
               _eq: true,
             },
+            type: {
+              _eq: "Ranked",
+            },
             reserved_by_match_id: {
               _is_null: true,
             },
@@ -366,6 +369,7 @@ export class MatchAssistantService {
         region: true,
         password: true,
         server_id: true,
+        max_players_per_lineup: true,
         match_maps: {
           __args: {
             order_by: [
@@ -412,6 +416,9 @@ export class MatchAssistantService {
               },
             ],
             where: {
+              type: {
+                _eq: "Ranked",
+              },
               _and: [
                 ...(match.region
                   ? [
@@ -585,7 +592,7 @@ export class MatchAssistantService {
                         },
                         {
                           name: "EXTRA_GAME_PARAMS",
-                          value: `-maxplayers 13 ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +sv_password ${match.password}`,
+                          value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +sv_password ${match.password}`,
                         },
                         { name: "SERVER_ID", value: server.id },
                         {

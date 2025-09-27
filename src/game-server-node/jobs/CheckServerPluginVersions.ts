@@ -66,6 +66,9 @@ export class CheckServerPluginVersions extends WorkerHost {
             is_dedicated: {
               _eq: true,
             },
+            type: {
+              _eq: "Ranked",
+            },
             connected: {
               _eq: true,
             },

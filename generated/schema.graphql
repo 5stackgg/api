@@ -3756,6 +3756,232 @@ input e_sanction_types_updates {
 }
 
 """
+columns and relationships of "e_server_types"
+"""
+type e_server_types {
+  description: String!
+
+  """An array relationship"""
+  servers(
+    """distinct select on columns"""
+    distinct_on: [servers_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [servers_order_by!]
+
+    """filter the rows returned"""
+    where: servers_bool_exp
+  ): [servers!]!
+
+  """An aggregate relationship"""
+  servers_aggregate(
+    """distinct select on columns"""
+    distinct_on: [servers_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [servers_order_by!]
+
+    """filter the rows returned"""
+    where: servers_bool_exp
+  ): servers_aggregate!
+  value: String!
+}
+
+"""
+aggregated selection of "e_server_types"
+"""
+type e_server_types_aggregate {
+  aggregate: e_server_types_aggregate_fields
+  nodes: [e_server_types!]!
+}
+
+"""
+aggregate fields of "e_server_types"
+"""
+type e_server_types_aggregate_fields {
+  count(columns: [e_server_types_select_column!], distinct: Boolean): Int!
+  max: e_server_types_max_fields
+  min: e_server_types_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_server_types". All fields are combined with a logical 'AND'.
+"""
+input e_server_types_bool_exp {
+  _and: [e_server_types_bool_exp!]
+  _not: e_server_types_bool_exp
+  _or: [e_server_types_bool_exp!]
+  description: String_comparison_exp
+  servers: servers_bool_exp
+  servers_aggregate: servers_aggregate_bool_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_server_types"
+"""
+enum e_server_types_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_server_types_pkey
+}
+
+enum e_server_types_enum {
+  """Valve Arms Race"""
+  ArmsRace
+
+  """Valve Casual"""
+  Casual
+
+  """Valve Competitive"""
+  Competitive
+
+  """Custom"""
+  Custom
+
+  """Valve Deathmatch"""
+  Deathmatch
+
+  """5Stack Ranked Server"""
+  Ranked
+
+  """Valve Wingman"""
+  Wingman
+}
+
+"""
+Boolean expression to compare columns of type "e_server_types_enum". All fields are combined with logical 'AND'.
+"""
+input e_server_types_enum_comparison_exp {
+  _eq: e_server_types_enum
+  _in: [e_server_types_enum!]
+  _is_null: Boolean
+  _neq: e_server_types_enum
+  _nin: [e_server_types_enum!]
+}
+
+"""
+input type for inserting data into table "e_server_types"
+"""
+input e_server_types_insert_input {
+  description: String
+  servers: servers_arr_rel_insert_input
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_server_types_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_server_types_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_server_types"
+"""
+type e_server_types_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_server_types!]!
+}
+
+"""
+on_conflict condition type for table "e_server_types"
+"""
+input e_server_types_on_conflict {
+  constraint: e_server_types_constraint!
+  update_columns: [e_server_types_update_column!]! = []
+  where: e_server_types_bool_exp
+}
+
+"""Ordering options when selecting data from "e_server_types"."""
+input e_server_types_order_by {
+  description: order_by
+  servers_aggregate: servers_aggregate_order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_server_types"""
+input e_server_types_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_server_types"
+"""
+enum e_server_types_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_server_types"
+"""
+input e_server_types_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_server_types"
+"""
+input e_server_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_server_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_server_types_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_server_types"
+"""
+enum e_server_types_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_server_types_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_server_types_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_server_types_bool_exp!
+}
+
+"""
 columns and relationships of "e_sides"
 """
 type e_sides {
@@ -15423,6 +15649,19 @@ type mutation_root {
   delete_e_sanction_types_by_pk(value: String!): e_sanction_types
 
   """
+  delete data from the table: "e_server_types"
+  """
+  delete_e_server_types(
+    """filter the rows which have to be deleted"""
+    where: e_server_types_bool_exp!
+  ): e_server_types_mutation_response
+
+  """
+  delete single row from the table: "e_server_types"
+  """
+  delete_e_server_types_by_pk(value: String!): e_server_types
+
+  """
   delete data from the table: "e_sides"
   """
   delete_e_sides(
@@ -16468,6 +16707,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_sanction_types_on_conflict
   ): e_sanction_types
+
+  """
+  insert data into the table: "e_server_types"
+  """
+  insert_e_server_types(
+    """the rows to be inserted"""
+    objects: [e_server_types_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_server_types_on_conflict
+  ): e_server_types_mutation_response
+
+  """
+  insert a single row into the table: "e_server_types"
+  """
+  insert_e_server_types_one(
+    """the row to be inserted"""
+    object: e_server_types_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_server_types_on_conflict
+  ): e_server_types
 
   """
   insert data into the table: "e_sides"
@@ -18136,6 +18397,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_sanction_types_updates!]!
   ): [e_sanction_types_mutation_response]
+
+  """
+  update data of the table: "e_server_types"
+  """
+  update_e_server_types(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_server_types_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_server_types_bool_exp!
+  ): e_server_types_mutation_response
+
+  """
+  update single row of the table: "e_server_types"
+  """
+  update_e_server_types_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_server_types_set_input
+    pk_columns: e_server_types_pk_columns_input!
+  ): e_server_types
+
+  """
+  update multiples rows of table: "e_server_types"
+  """
+  update_e_server_types_many(
+    """updates to execute, in order"""
+    updates: [e_server_types_updates!]!
+  ): [e_server_types_mutation_response]
 
   """
   update data of the table: "e_sides"
@@ -27908,6 +28197,49 @@ type query_root {
   e_sanction_types_by_pk(value: String!): e_sanction_types
 
   """
+  fetch data from the table: "e_server_types"
+  """
+  e_server_types(
+    """distinct select on columns"""
+    distinct_on: [e_server_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_types_bool_exp
+  ): [e_server_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_server_types"
+  """
+  e_server_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_server_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_types_bool_exp
+  ): e_server_types_aggregate!
+
+  """fetch data from the table: "e_server_types" using primary key columns"""
+  e_server_types_by_pk(value: String!): e_server_types
+
+  """
   fetch data from the table: "e_sides"
   """
   e_sides(
@@ -30884,22 +31216,21 @@ columns and relationships of "servers"
 """
 type servers {
   api_password: uuid!
+  connect_password: String
   connected: Boolean!
 
   """An object relationship"""
   current_match: matches
   enabled: Boolean!
+  game_mode: Int
 
   """An object relationship"""
   game_server_node: game_server_nodes
   game_server_node_id: String
+  game_type: Int
   host: String!
   id: uuid!
-
-  """
-  A computed field, executes function "is_dedicated_server"
-  """
-  is_dedicated: Boolean
+  is_dedicated: Boolean!
   label: String!
 
   """An array relationship"""
@@ -30937,6 +31268,7 @@ type servers {
     """filter the rows returned"""
     where: matches_bool_exp
   ): matches_aggregate!
+  max_players: Int
   plugin_version: String
   port: Int!
   rcon_password: bytea!
@@ -30948,6 +31280,7 @@ type servers {
   server_region: server_regions
   steam_relay: String
   tv_port: Int
+  type: e_server_types_enum!
   updated_at: timestamptz
 }
 
@@ -31032,6 +31365,9 @@ input servers_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type servers_avg_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31040,6 +31376,9 @@ type servers_avg_fields {
 order by avg() on columns of table "servers"
 """
 input servers_avg_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
@@ -31052,17 +31391,21 @@ input servers_bool_exp {
   _not: servers_bool_exp
   _or: [servers_bool_exp!]
   api_password: uuid_comparison_exp
+  connect_password: String_comparison_exp
   connected: Boolean_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
+  game_mode: Int_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
+  game_type: Int_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
   label: String_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
+  max_players: Int_comparison_exp
   plugin_version: String_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
@@ -31072,6 +31415,7 @@ input servers_bool_exp {
   server_region: server_regions_bool_exp
   steam_relay: String_comparison_exp
   tv_port: Int_comparison_exp
+  type: e_server_types_enum_comparison_exp
   updated_at: timestamptz_comparison_exp
 }
 
@@ -31094,6 +31438,9 @@ enum servers_constraint {
 input type for incrementing numeric columns in table "servers"
 """
 input servers_inc_input {
+  game_mode: Int
+  game_type: Int
+  max_players: Int
   port: Int
   tv_port: Int
 }
@@ -31103,15 +31450,20 @@ input type for inserting data into table "servers"
 """
 input servers_insert_input {
   api_password: uuid
+  connect_password: String
   connected: Boolean
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
+  game_mode: Int
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
+  is_dedicated: Boolean
   label: String
   matches: matches_arr_rel_insert_input
+  max_players: Int
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -31121,16 +31473,21 @@ input servers_insert_input {
   server_region: server_regions_obj_rel_insert_input
   steam_relay: String
   tv_port: Int
+  type: e_server_types_enum
   updated_at: timestamptz
 }
 
 """aggregate max on columns"""
 type servers_max_fields {
   api_password: uuid
+  connect_password: String
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   label: String
+  max_players: Int
   plugin_version: String
   port: Int
   region: String
@@ -31145,10 +31502,14 @@ order by max() on columns of table "servers"
 """
 input servers_max_order_by {
   api_password: order_by
+  connect_password: order_by
+  game_mode: order_by
   game_server_node_id: order_by
+  game_type: order_by
   host: order_by
   id: order_by
   label: order_by
+  max_players: order_by
   plugin_version: order_by
   port: order_by
   region: order_by
@@ -31161,10 +31522,14 @@ input servers_max_order_by {
 """aggregate min on columns"""
 type servers_min_fields {
   api_password: uuid
+  connect_password: String
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   label: String
+  max_players: Int
   plugin_version: String
   port: Int
   region: String
@@ -31179,10 +31544,14 @@ order by min() on columns of table "servers"
 """
 input servers_min_order_by {
   api_password: order_by
+  connect_password: order_by
+  game_mode: order_by
   game_server_node_id: order_by
+  game_type: order_by
   host: order_by
   id: order_by
   label: order_by
+  max_players: order_by
   plugin_version: order_by
   port: order_by
   region: order_by
@@ -31225,16 +31594,20 @@ input servers_on_conflict {
 """Ordering options when selecting data from "servers"."""
 input servers_order_by {
   api_password: order_by
+  connect_password: order_by
   connected: order_by
   current_match: matches_order_by
   enabled: order_by
+  game_mode: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
+  game_type: order_by
   host: order_by
   id: order_by
   is_dedicated: order_by
   label: order_by
   matches_aggregate: matches_aggregate_order_by
+  max_players: order_by
   plugin_version: order_by
   port: order_by
   rcon_password: order_by
@@ -31244,6 +31617,7 @@ input servers_order_by {
   server_region: server_regions_order_by
   steam_relay: order_by
   tv_port: order_by
+  type: order_by
   updated_at: order_by
 }
 
@@ -31260,13 +31634,22 @@ enum servers_select_column {
   api_password
 
   """column name"""
+  connect_password
+
+  """column name"""
   connected
 
   """column name"""
   enabled
 
   """column name"""
+  game_mode
+
+  """column name"""
   game_server_node_id
+
+  """column name"""
+  game_type
 
   """column name"""
   host
@@ -31275,7 +31658,13 @@ enum servers_select_column {
   id
 
   """column name"""
+  is_dedicated
+
+  """column name"""
   label
+
+  """column name"""
+  max_players
 
   """column name"""
   plugin_version
@@ -31302,6 +31691,9 @@ enum servers_select_column {
   tv_port
 
   """column name"""
+  type
+
+  """column name"""
   updated_at
 }
 
@@ -31314,6 +31706,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns
 
   """column name"""
   enabled
+
+  """column name"""
+  is_dedicated
 
   """column name"""
   rcon_status
@@ -31330,6 +31725,9 @@ enum servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns 
   enabled
 
   """column name"""
+  is_dedicated
+
+  """column name"""
   rcon_status
 }
 
@@ -31338,12 +31736,17 @@ input type for updating data in table "servers"
 """
 input servers_set_input {
   api_password: uuid
+  connect_password: String
   connected: Boolean
   enabled: Boolean
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
+  is_dedicated: Boolean
   label: String
+  max_players: Int
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -31352,11 +31755,15 @@ input servers_set_input {
   reserved_by_match_id: uuid
   steam_relay: String
   tv_port: Int
+  type: e_server_types_enum
   updated_at: timestamptz
 }
 
 """aggregate stddev on columns"""
 type servers_stddev_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31365,12 +31772,18 @@ type servers_stddev_fields {
 order by stddev() on columns of table "servers"
 """
 input servers_stddev_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type servers_stddev_pop_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31379,12 +31792,18 @@ type servers_stddev_pop_fields {
 order by stddev_pop() on columns of table "servers"
 """
 input servers_stddev_pop_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type servers_stddev_samp_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31393,6 +31812,9 @@ type servers_stddev_samp_fields {
 order by stddev_samp() on columns of table "servers"
 """
 input servers_stddev_samp_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
@@ -31411,12 +31833,17 @@ input servers_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input servers_stream_cursor_value_input {
   api_password: uuid
+  connect_password: String
   connected: Boolean
   enabled: Boolean
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
+  is_dedicated: Boolean
   label: String
+  max_players: Int
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -31425,11 +31852,15 @@ input servers_stream_cursor_value_input {
   reserved_by_match_id: uuid
   steam_relay: String
   tv_port: Int
+  type: e_server_types_enum
   updated_at: timestamptz
 }
 
 """aggregate sum on columns"""
 type servers_sum_fields {
+  game_mode: Int
+  game_type: Int
+  max_players: Int
   port: Int
   tv_port: Int
 }
@@ -31438,6 +31869,9 @@ type servers_sum_fields {
 order by sum() on columns of table "servers"
 """
 input servers_sum_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
@@ -31450,13 +31884,22 @@ enum servers_update_column {
   api_password
 
   """column name"""
+  connect_password
+
+  """column name"""
   connected
 
   """column name"""
   enabled
 
   """column name"""
+  game_mode
+
+  """column name"""
   game_server_node_id
+
+  """column name"""
+  game_type
 
   """column name"""
   host
@@ -31465,7 +31908,13 @@ enum servers_update_column {
   id
 
   """column name"""
+  is_dedicated
+
+  """column name"""
   label
+
+  """column name"""
+  max_players
 
   """column name"""
   plugin_version
@@ -31492,6 +31941,9 @@ enum servers_update_column {
   tv_port
 
   """column name"""
+  type
+
+  """column name"""
   updated_at
 }
 
@@ -31508,6 +31960,9 @@ input servers_updates {
 
 """aggregate var_pop on columns"""
 type servers_var_pop_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31516,12 +31971,18 @@ type servers_var_pop_fields {
 order by var_pop() on columns of table "servers"
 """
 input servers_var_pop_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate var_samp on columns"""
 type servers_var_samp_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31530,12 +31991,18 @@ type servers_var_samp_fields {
 order by var_samp() on columns of table "servers"
 """
 input servers_var_samp_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
 
 """aggregate variance on columns"""
 type servers_variance_fields {
+  game_mode: Float
+  game_type: Float
+  max_players: Float
   port: Float
   tv_port: Float
 }
@@ -31544,6 +32011,9 @@ type servers_variance_fields {
 order by variance() on columns of table "servers"
 """
 input servers_variance_order_by {
+  game_mode: order_by
+  game_type: order_by
+  max_players: order_by
   port: order_by
   tv_port: order_by
 }
@@ -32685,6 +33155,63 @@ type subscription_root {
     """filter the rows returned"""
     where: e_sanction_types_bool_exp
   ): [e_sanction_types!]!
+
+  """
+  fetch data from the table: "e_server_types"
+  """
+  e_server_types(
+    """distinct select on columns"""
+    distinct_on: [e_server_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_types_bool_exp
+  ): [e_server_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_server_types"
+  """
+  e_server_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_server_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_server_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_server_types_bool_exp
+  ): e_server_types_aggregate!
+
+  """fetch data from the table: "e_server_types" using primary key columns"""
+  e_server_types_by_pk(value: String!): e_server_types
+
+  """
+  fetch data from the table in a streaming manner: "e_server_types"
+  """
+  e_server_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_server_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_server_types_bool_exp
+  ): [e_server_types!]!
 
   """
   fetch data from the table: "e_sides"

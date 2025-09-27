@@ -1386,6 +1386,75 @@ export type e_sanction_types_select_column = 'description' | 'value'
 export type e_sanction_types_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_server_types" */
+export interface e_server_types {
+    description: Scalars['String']
+    /** An array relationship */
+    servers: servers[]
+    /** An aggregate relationship */
+    servers_aggregate: servers_aggregate
+    value: Scalars['String']
+    __typename: 'e_server_types'
+}
+
+
+/** aggregated selection of "e_server_types" */
+export interface e_server_types_aggregate {
+    aggregate: (e_server_types_aggregate_fields | null)
+    nodes: e_server_types[]
+    __typename: 'e_server_types_aggregate'
+}
+
+
+/** aggregate fields of "e_server_types" */
+export interface e_server_types_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_server_types_max_fields | null)
+    min: (e_server_types_min_fields | null)
+    __typename: 'e_server_types_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_server_types" */
+export type e_server_types_constraint = 'e_server_types_pkey'
+
+export type e_server_types_enum = 'ArmsRace' | 'Casual' | 'Competitive' | 'Custom' | 'Deathmatch' | 'Ranked' | 'Wingman'
+
+
+/** aggregate max on columns */
+export interface e_server_types_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_server_types_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_server_types_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_server_types_min_fields'
+}
+
+
+/** response of any mutation on the table "e_server_types" */
+export interface e_server_types_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_server_types[]
+    __typename: 'e_server_types_mutation_response'
+}
+
+
+/** select columns of table "e_server_types" */
+export type e_server_types_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_server_types" */
+export type e_server_types_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_sides" */
 export interface e_sides {
     description: Scalars['String']
@@ -4996,6 +5065,10 @@ export interface mutation_root {
     delete_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** delete single row from the table: "e_sanction_types" */
     delete_e_sanction_types_by_pk: (e_sanction_types | null)
+    /** delete data from the table: "e_server_types" */
+    delete_e_server_types: (e_server_types_mutation_response | null)
+    /** delete single row from the table: "e_server_types" */
+    delete_e_server_types_by_pk: (e_server_types | null)
     /** delete data from the table: "e_sides" */
     delete_e_sides: (e_sides_mutation_response | null)
     /** delete single row from the table: "e_sides" */
@@ -5269,6 +5342,10 @@ export interface mutation_root {
     insert_e_sanction_types: (e_sanction_types_mutation_response | null)
     /** insert a single row into the table: "e_sanction_types" */
     insert_e_sanction_types_one: (e_sanction_types | null)
+    /** insert data into the table: "e_server_types" */
+    insert_e_server_types: (e_server_types_mutation_response | null)
+    /** insert a single row into the table: "e_server_types" */
+    insert_e_server_types_one: (e_server_types | null)
     /** insert data into the table: "e_sides" */
     insert_e_sides: (e_sides_mutation_response | null)
     /** insert a single row into the table: "e_sides" */
@@ -5611,6 +5688,12 @@ export interface mutation_root {
     update_e_sanction_types_by_pk: (e_sanction_types | null)
     /** update multiples rows of table: "e_sanction_types" */
     update_e_sanction_types_many: ((e_sanction_types_mutation_response | null)[] | null)
+    /** update data of the table: "e_server_types" */
+    update_e_server_types: (e_server_types_mutation_response | null)
+    /** update single row of the table: "e_server_types" */
+    update_e_server_types_by_pk: (e_server_types | null)
+    /** update multiples rows of table: "e_server_types" */
+    update_e_server_types_many: ((e_server_types_mutation_response | null)[] | null)
     /** update data of the table: "e_sides" */
     update_e_sides: (e_sides_mutation_response | null)
     /** update single row of the table: "e_sides" */
@@ -8394,6 +8477,12 @@ export interface query_root {
     e_sanction_types_aggregate: e_sanction_types_aggregate
     /** fetch data from the table: "e_sanction_types" using primary key columns */
     e_sanction_types_by_pk: (e_sanction_types | null)
+    /** fetch data from the table: "e_server_types" */
+    e_server_types: e_server_types[]
+    /** fetch aggregated fields from the table: "e_server_types" */
+    e_server_types_aggregate: e_server_types_aggregate
+    /** fetch data from the table: "e_server_types" using primary key columns */
+    e_server_types_by_pk: (e_server_types | null)
     /** fetch data from the table: "e_sides" */
     e_sides: e_sides[]
     /** fetch aggregated fields from the table: "e_sides" */
@@ -8923,22 +9012,25 @@ export interface server_regions_variance_fields {
 /** columns and relationships of "servers" */
 export interface servers {
     api_password: Scalars['uuid']
+    connect_password: (Scalars['String'] | null)
     connected: Scalars['Boolean']
     /** An object relationship */
     current_match: (matches | null)
     enabled: Scalars['Boolean']
+    game_mode: (Scalars['Int'] | null)
     /** An object relationship */
     game_server_node: (game_server_nodes | null)
     game_server_node_id: (Scalars['String'] | null)
+    game_type: (Scalars['Int'] | null)
     host: Scalars['String']
     id: Scalars['uuid']
-    /** A computed field, executes function "is_dedicated_server" */
-    is_dedicated: (Scalars['Boolean'] | null)
+    is_dedicated: Scalars['Boolean']
     label: Scalars['String']
     /** An array relationship */
     matches: matches[]
     /** An aggregate relationship */
     matches_aggregate: matches_aggregate
+    max_players: (Scalars['Int'] | null)
     plugin_version: (Scalars['String'] | null)
     port: Scalars['Int']
     rcon_password: Scalars['bytea']
@@ -8949,6 +9041,7 @@ export interface servers {
     server_region: (server_regions | null)
     steam_relay: (Scalars['String'] | null)
     tv_port: (Scalars['Int'] | null)
+    type: e_server_types_enum
     updated_at: (Scalars['timestamptz'] | null)
     __typename: 'servers'
 }
@@ -8981,6 +9074,9 @@ export interface servers_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface servers_avg_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_avg_fields'
@@ -8994,10 +9090,14 @@ export type servers_constraint = 'servers_pkey' | 'servers_reserved_by_match_id_
 /** aggregate max on columns */
 export interface servers_max_fields {
     api_password: (Scalars['uuid'] | null)
+    connect_password: (Scalars['String'] | null)
+    game_mode: (Scalars['Int'] | null)
     game_server_node_id: (Scalars['String'] | null)
+    game_type: (Scalars['Int'] | null)
     host: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     label: (Scalars['String'] | null)
+    max_players: (Scalars['Int'] | null)
     plugin_version: (Scalars['String'] | null)
     port: (Scalars['Int'] | null)
     region: (Scalars['String'] | null)
@@ -9012,10 +9112,14 @@ export interface servers_max_fields {
 /** aggregate min on columns */
 export interface servers_min_fields {
     api_password: (Scalars['uuid'] | null)
+    connect_password: (Scalars['String'] | null)
+    game_mode: (Scalars['Int'] | null)
     game_server_node_id: (Scalars['String'] | null)
+    game_type: (Scalars['Int'] | null)
     host: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     label: (Scalars['String'] | null)
+    max_players: (Scalars['Int'] | null)
     plugin_version: (Scalars['String'] | null)
     port: (Scalars['Int'] | null)
     region: (Scalars['String'] | null)
@@ -9038,19 +9142,22 @@ export interface servers_mutation_response {
 
 
 /** select columns of table "servers" */
-export type servers_select_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'plugin_version' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'updated_at'
+export type servers_select_column = 'api_password' | 'connect_password' | 'connected' | 'enabled' | 'game_mode' | 'game_server_node_id' | 'game_type' | 'host' | 'id' | 'is_dedicated' | 'label' | 'max_players' | 'plugin_version' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'type' | 'updated_at'
 
 
 /** select "servers_aggregate_bool_exp_bool_and_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled' | 'rcon_status'
+export type servers_select_column_servers_aggregate_bool_exp_bool_and_arguments_columns = 'connected' | 'enabled' | 'is_dedicated' | 'rcon_status'
 
 
 /** select "servers_aggregate_bool_exp_bool_or_arguments_columns" columns of table "servers" */
-export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled' | 'rcon_status'
+export type servers_select_column_servers_aggregate_bool_exp_bool_or_arguments_columns = 'connected' | 'enabled' | 'is_dedicated' | 'rcon_status'
 
 
 /** aggregate stddev on columns */
 export interface servers_stddev_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_stddev_fields'
@@ -9059,6 +9166,9 @@ export interface servers_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface servers_stddev_pop_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_stddev_pop_fields'
@@ -9067,6 +9177,9 @@ export interface servers_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface servers_stddev_samp_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_stddev_samp_fields'
@@ -9075,6 +9188,9 @@ export interface servers_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface servers_sum_fields {
+    game_mode: (Scalars['Int'] | null)
+    game_type: (Scalars['Int'] | null)
+    max_players: (Scalars['Int'] | null)
     port: (Scalars['Int'] | null)
     tv_port: (Scalars['Int'] | null)
     __typename: 'servers_sum_fields'
@@ -9082,11 +9198,14 @@ export interface servers_sum_fields {
 
 
 /** update columns of table "servers" */
-export type servers_update_column = 'api_password' | 'connected' | 'enabled' | 'game_server_node_id' | 'host' | 'id' | 'label' | 'plugin_version' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'updated_at'
+export type servers_update_column = 'api_password' | 'connect_password' | 'connected' | 'enabled' | 'game_mode' | 'game_server_node_id' | 'game_type' | 'host' | 'id' | 'is_dedicated' | 'label' | 'max_players' | 'plugin_version' | 'port' | 'rcon_password' | 'rcon_status' | 'region' | 'reserved_by_match_id' | 'steam_relay' | 'tv_port' | 'type' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
 export interface servers_var_pop_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_var_pop_fields'
@@ -9095,6 +9214,9 @@ export interface servers_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface servers_var_samp_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_var_samp_fields'
@@ -9103,6 +9225,9 @@ export interface servers_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface servers_variance_fields {
+    game_mode: (Scalars['Float'] | null)
+    game_type: (Scalars['Float'] | null)
+    max_players: (Scalars['Float'] | null)
     port: (Scalars['Float'] | null)
     tv_port: (Scalars['Float'] | null)
     __typename: 'servers_variance_fields'
@@ -9308,6 +9433,14 @@ export interface subscription_root {
     e_sanction_types_by_pk: (e_sanction_types | null)
     /** fetch data from the table in a streaming manner: "e_sanction_types" */
     e_sanction_types_stream: e_sanction_types[]
+    /** fetch data from the table: "e_server_types" */
+    e_server_types: e_server_types[]
+    /** fetch aggregated fields from the table: "e_server_types" */
+    e_server_types_aggregate: e_server_types_aggregate
+    /** fetch data from the table: "e_server_types" using primary key columns */
+    e_server_types_by_pk: (e_server_types | null)
+    /** fetch data from the table in a streaming manner: "e_server_types" */
+    e_server_types_stream: e_server_types[]
     /** fetch data from the table: "e_sides" */
     e_sides: e_sides[]
     /** fetch aggregated fields from the table: "e_sides" */
@@ -14932,6 +15065,133 @@ export interface e_sanction_types_updates {
 _set?: (e_sanction_types_set_input | null),
 /** filter the rows which have to be updated */
 where: e_sanction_types_bool_exp}
+
+
+/** columns and relationships of "e_server_types" */
+export interface e_server_typesGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    servers?: (serversGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (servers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (servers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (servers_bool_exp | null)} })
+    /** An aggregate relationship */
+    servers_aggregate?: (servers_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (servers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (servers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (servers_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_server_types" */
+export interface e_server_types_aggregateGenqlSelection{
+    aggregate?: e_server_types_aggregate_fieldsGenqlSelection
+    nodes?: e_server_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_server_types" */
+export interface e_server_types_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_server_types_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_server_types_max_fieldsGenqlSelection
+    min?: e_server_types_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_server_types". All fields are combined with a logical 'AND'. */
+export interface e_server_types_bool_exp {_and?: (e_server_types_bool_exp[] | null),_not?: (e_server_types_bool_exp | null),_or?: (e_server_types_bool_exp[] | null),description?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_server_types_enum". All fields are combined with logical 'AND'. */
+export interface e_server_types_enum_comparison_exp {_eq?: (e_server_types_enum | null),_in?: (e_server_types_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_server_types_enum | null),_nin?: (e_server_types_enum[] | null)}
+
+
+/** input type for inserting data into table "e_server_types" */
+export interface e_server_types_insert_input {description?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_server_types_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_server_types_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_server_types" */
+export interface e_server_types_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_server_typesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_server_types" */
+export interface e_server_types_on_conflict {constraint: e_server_types_constraint,update_columns?: e_server_types_update_column[],where?: (e_server_types_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_server_types". */
+export interface e_server_types_order_by {description?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_server_types */
+export interface e_server_types_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_server_types" */
+export interface e_server_types_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_server_types" */
+export interface e_server_types_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_server_types_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_server_types_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_server_types_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_server_types_set_input | null),
+/** filter the rows which have to be updated */
+where: e_server_types_bool_exp}
 
 
 /** columns and relationships of "e_sides" */
@@ -21300,6 +21560,12 @@ export interface mutation_rootGenqlSelection{
     where: e_sanction_types_bool_exp} })
     /** delete single row from the table: "e_sanction_types" */
     delete_e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_server_types" */
+    delete_e_server_types?: (e_server_types_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_server_types_bool_exp} })
+    /** delete single row from the table: "e_server_types" */
+    delete_e_server_types_by_pk?: (e_server_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_sides" */
     delete_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -21819,6 +22085,18 @@ export interface mutation_rootGenqlSelection{
     object: e_sanction_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_sanction_types_on_conflict | null)} })
+    /** insert data into the table: "e_server_types" */
+    insert_e_server_types?: (e_server_types_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_server_types_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_server_types_on_conflict | null)} })
+    /** insert a single row into the table: "e_server_types" */
+    insert_e_server_types_one?: (e_server_typesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_server_types_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_server_types_on_conflict | null)} })
     /** insert data into the table: "e_sides" */
     insert_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -22709,6 +22987,20 @@ export interface mutation_rootGenqlSelection{
     update_e_sanction_types_many?: (e_sanction_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_sanction_types_updates[]} })
+    /** update data of the table: "e_server_types" */
+    update_e_server_types?: (e_server_types_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_server_types_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_server_types_bool_exp} })
+    /** update single row of the table: "e_server_types" */
+    update_e_server_types_by_pk?: (e_server_typesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_server_types_set_input | null), pk_columns: e_server_types_pk_columns_input} })
+    /** update multiples rows of table: "e_server_types" */
+    update_e_server_types_many?: (e_server_types_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_server_types_updates[]} })
     /** update data of the table: "e_sides" */
     update_e_sides?: (e_sides_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -28187,6 +28479,32 @@ export interface query_rootGenqlSelection{
     where?: (e_sanction_types_bool_exp | null)} })
     /** fetch data from the table: "e_sanction_types" using primary key columns */
     e_sanction_types_by_pk?: (e_sanction_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_server_types" */
+    e_server_types?: (e_server_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_server_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_server_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_server_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_server_types" */
+    e_server_types_aggregate?: (e_server_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_server_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_server_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_server_types_bool_exp | null)} })
+    /** fetch data from the table: "e_server_types" using primary key columns */
+    e_server_types_by_pk?: (e_server_typesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_sides" */
     e_sides?: (e_sidesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -30027,16 +30345,18 @@ export interface server_regions_variance_fieldsGenqlSelection{
 /** columns and relationships of "servers" */
 export interface serversGenqlSelection{
     api_password?: boolean | number
+    connect_password?: boolean | number
     connected?: boolean | number
     /** An object relationship */
     current_match?: matchesGenqlSelection
     enabled?: boolean | number
+    game_mode?: boolean | number
     /** An object relationship */
     game_server_node?: game_server_nodesGenqlSelection
     game_server_node_id?: boolean | number
+    game_type?: boolean | number
     host?: boolean | number
     id?: boolean | number
-    /** A computed field, executes function "is_dedicated_server" */
     is_dedicated?: boolean | number
     label?: boolean | number
     /** An array relationship */
@@ -30063,6 +30383,7 @@ export interface serversGenqlSelection{
     order_by?: (matches_order_by[] | null), 
     /** filter the rows returned */
     where?: (matches_bool_exp | null)} })
+    max_players?: boolean | number
     plugin_version?: boolean | number
     port?: boolean | number
     rcon_password?: boolean | number
@@ -30073,6 +30394,7 @@ export interface serversGenqlSelection{
     server_region?: server_regionsGenqlSelection
     steam_relay?: boolean | number
     tv_port?: boolean | number
+    type?: boolean | number
     updated_at?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30126,6 +30448,9 @@ on_conflict?: (servers_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface servers_avg_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30134,28 +30459,32 @@ export interface servers_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "servers" */
-export interface servers_avg_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_avg_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "servers". All fields are combined with a logical 'AND'. */
-export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),plugin_version?: (String_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface servers_bool_exp {_and?: (servers_bool_exp[] | null),_not?: (servers_bool_exp | null),_or?: (servers_bool_exp[] | null),api_password?: (uuid_comparison_exp | null),connect_password?: (String_comparison_exp | null),connected?: (Boolean_comparison_exp | null),current_match?: (matches_bool_exp | null),enabled?: (Boolean_comparison_exp | null),game_mode?: (Int_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),game_type?: (Int_comparison_exp | null),host?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_dedicated?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),max_players?: (Int_comparison_exp | null),plugin_version?: (String_comparison_exp | null),port?: (Int_comparison_exp | null),rcon_password?: (bytea_comparison_exp | null),rcon_status?: (Boolean_comparison_exp | null),region?: (String_comparison_exp | null),reserved_by_match_id?: (uuid_comparison_exp | null),server_region?: (server_regions_bool_exp | null),steam_relay?: (String_comparison_exp | null),tv_port?: (Int_comparison_exp | null),type?: (e_server_types_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "servers" */
-export interface servers_inc_input {port?: (Scalars['Int'] | null),tv_port?: (Scalars['Int'] | null)}
+export interface servers_inc_input {game_mode?: (Scalars['Int'] | null),game_type?: (Scalars['Int'] | null),max_players?: (Scalars['Int'] | null),port?: (Scalars['Int'] | null),tv_port?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "servers" */
-export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),server_region?: (server_regions_obj_rel_insert_input | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface servers_insert_input {api_password?: (Scalars['uuid'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),current_match?: (matches_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),game_mode?: (Scalars['Int'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),game_type?: (Scalars['Int'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),matches?: (matches_arr_rel_insert_input | null),max_players?: (Scalars['Int'] | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),server_region?: (server_regions_obj_rel_insert_input | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
 export interface servers_max_fieldsGenqlSelection{
     api_password?: boolean | number
+    connect_password?: boolean | number
+    game_mode?: boolean | number
     game_server_node_id?: boolean | number
+    game_type?: boolean | number
     host?: boolean | number
     id?: boolean | number
     label?: boolean | number
+    max_players?: boolean | number
     plugin_version?: boolean | number
     port?: boolean | number
     region?: boolean | number
@@ -30169,16 +30498,20 @@ export interface servers_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "servers" */
-export interface servers_max_order_by {api_password?: (order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),updated_at?: (order_by | null)}
+export interface servers_max_order_by {api_password?: (order_by | null),connect_password?: (order_by | null),game_mode?: (order_by | null),game_server_node_id?: (order_by | null),game_type?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),max_players?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface servers_min_fieldsGenqlSelection{
     api_password?: boolean | number
+    connect_password?: boolean | number
+    game_mode?: boolean | number
     game_server_node_id?: boolean | number
+    game_type?: boolean | number
     host?: boolean | number
     id?: boolean | number
     label?: boolean | number
+    max_players?: boolean | number
     plugin_version?: boolean | number
     port?: boolean | number
     region?: boolean | number
@@ -30192,7 +30525,7 @@ export interface servers_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "servers" */
-export interface servers_min_order_by {api_password?: (order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),updated_at?: (order_by | null)}
+export interface servers_min_order_by {api_password?: (order_by | null),connect_password?: (order_by | null),game_mode?: (order_by | null),game_server_node_id?: (order_by | null),game_type?: (order_by | null),host?: (order_by | null),id?: (order_by | null),label?: (order_by | null),max_players?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** response of any mutation on the table "servers" */
@@ -30217,7 +30550,7 @@ export interface servers_on_conflict {constraint: servers_constraint,update_colu
 
 
 /** Ordering options when selecting data from "servers". */
-export interface servers_order_by {api_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),updated_at?: (order_by | null)}
+export interface servers_order_by {api_password?: (order_by | null),connect_password?: (order_by | null),connected?: (order_by | null),current_match?: (matches_order_by | null),enabled?: (order_by | null),game_mode?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),game_type?: (order_by | null),host?: (order_by | null),id?: (order_by | null),is_dedicated?: (order_by | null),label?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),max_players?: (order_by | null),plugin_version?: (order_by | null),port?: (order_by | null),rcon_password?: (order_by | null),rcon_status?: (order_by | null),region?: (order_by | null),reserved_by_match_id?: (order_by | null),server_region?: (server_regions_order_by | null),steam_relay?: (order_by | null),tv_port?: (order_by | null),type?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: servers */
@@ -30225,11 +30558,14 @@ export interface servers_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "servers" */
-export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface servers_set_input {api_password?: (Scalars['uuid'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_mode?: (Scalars['Int'] | null),game_server_node_id?: (Scalars['String'] | null),game_type?: (Scalars['Int'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),max_players?: (Scalars['Int'] | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface servers_stddev_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30238,11 +30574,14 @@ export interface servers_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "servers" */
-export interface servers_stddev_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_stddev_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface servers_stddev_pop_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30251,11 +30590,14 @@ export interface servers_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "servers" */
-export interface servers_stddev_pop_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_stddev_pop_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface servers_stddev_samp_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30264,7 +30606,7 @@ export interface servers_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "servers" */
-export interface servers_stddev_samp_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_stddev_samp_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** Streaming cursor of the table "servers" */
@@ -30276,11 +30618,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_server_node_id?: (Scalars['String'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface servers_stream_cursor_value_input {api_password?: (Scalars['uuid'] | null),connect_password?: (Scalars['String'] | null),connected?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),game_mode?: (Scalars['Int'] | null),game_server_node_id?: (Scalars['String'] | null),game_type?: (Scalars['Int'] | null),host?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_dedicated?: (Scalars['Boolean'] | null),label?: (Scalars['String'] | null),max_players?: (Scalars['Int'] | null),plugin_version?: (Scalars['String'] | null),port?: (Scalars['Int'] | null),rcon_password?: (Scalars['bytea'] | null),rcon_status?: (Scalars['Boolean'] | null),region?: (Scalars['String'] | null),reserved_by_match_id?: (Scalars['uuid'] | null),steam_relay?: (Scalars['String'] | null),tv_port?: (Scalars['Int'] | null),type?: (e_server_types_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
 export interface servers_sum_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30289,7 +30634,7 @@ export interface servers_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "servers" */
-export interface servers_sum_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_sum_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 export interface servers_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -30302,6 +30647,9 @@ where: servers_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface servers_var_pop_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30310,11 +30658,14 @@ export interface servers_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "servers" */
-export interface servers_var_pop_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_var_pop_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface servers_var_samp_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30323,11 +30674,14 @@ export interface servers_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "servers" */
-export interface servers_var_samp_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_var_samp_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface servers_variance_fieldsGenqlSelection{
+    game_mode?: boolean | number
+    game_type?: boolean | number
+    max_players?: boolean | number
     port?: boolean | number
     tv_port?: boolean | number
     __typename?: boolean | number
@@ -30336,7 +30690,7 @@ export interface servers_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "servers" */
-export interface servers_variance_order_by {port?: (order_by | null),tv_port?: (order_by | null)}
+export interface servers_variance_order_by {game_mode?: (order_by | null),game_type?: (order_by | null),max_players?: (order_by | null),port?: (order_by | null),tv_port?: (order_by | null)}
 
 
 /** columns and relationships of "settings" */
@@ -31016,6 +31370,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_sanction_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_sanction_types_bool_exp | null)} })
+    /** fetch data from the table: "e_server_types" */
+    e_server_types?: (e_server_typesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_server_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_server_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_server_types_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_server_types" */
+    e_server_types_aggregate?: (e_server_types_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_server_types_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_server_types_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_server_types_bool_exp | null)} })
+    /** fetch data from the table: "e_server_types" using primary key columns */
+    e_server_types_by_pk?: (e_server_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_server_types" */
+    e_server_types_stream?: (e_server_typesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_server_types_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_server_types_bool_exp | null)} })
     /** fetch data from the table: "e_sides" */
     e_sides?: (e_sidesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -38748,6 +39136,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_server_types_possibleTypes: string[] = ['e_server_types']
+    export const ise_server_types = (obj?: { __typename?: any } | null): obj is e_server_types => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_types"')
+      return e_server_types_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_server_types_aggregate_possibleTypes: string[] = ['e_server_types_aggregate']
+    export const ise_server_types_aggregate = (obj?: { __typename?: any } | null): obj is e_server_types_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_types_aggregate"')
+      return e_server_types_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_server_types_aggregate_fields_possibleTypes: string[] = ['e_server_types_aggregate_fields']
+    export const ise_server_types_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_server_types_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_types_aggregate_fields"')
+      return e_server_types_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_server_types_max_fields_possibleTypes: string[] = ['e_server_types_max_fields']
+    export const ise_server_types_max_fields = (obj?: { __typename?: any } | null): obj is e_server_types_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_types_max_fields"')
+      return e_server_types_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_server_types_min_fields_possibleTypes: string[] = ['e_server_types_min_fields']
+    export const ise_server_types_min_fields = (obj?: { __typename?: any } | null): obj is e_server_types_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_types_min_fields"')
+      return e_server_types_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_server_types_mutation_response_possibleTypes: string[] = ['e_server_types_mutation_response']
+    export const ise_server_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_server_types_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_server_types_mutation_response"')
+      return e_server_types_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_sides_possibleTypes: string[] = ['e_sides']
     export const ise_sides = (obj?: { __typename?: any } | null): obj is e_sides => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_sides"')
@@ -44998,6 +45434,30 @@ export const enumESanctionTypesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumEServerTypesConstraint = {
+   e_server_types_pkey: 'e_server_types_pkey' as const
+}
+
+export const enumEServerTypesEnum = {
+   ArmsRace: 'ArmsRace' as const,
+   Casual: 'Casual' as const,
+   Competitive: 'Competitive' as const,
+   Custom: 'Custom' as const,
+   Deathmatch: 'Deathmatch' as const,
+   Ranked: 'Ranked' as const,
+   Wingman: 'Wingman' as const
+}
+
+export const enumEServerTypesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEServerTypesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumESidesConstraint = {
    e_teams_pkey: 'e_teams_pkey' as const
 }
@@ -46085,12 +46545,17 @@ export const enumServersConstraint = {
 
 export const enumServersSelectColumn = {
    api_password: 'api_password' as const,
+   connect_password: 'connect_password' as const,
    connected: 'connected' as const,
    enabled: 'enabled' as const,
+   game_mode: 'game_mode' as const,
    game_server_node_id: 'game_server_node_id' as const,
+   game_type: 'game_type' as const,
    host: 'host' as const,
    id: 'id' as const,
+   is_dedicated: 'is_dedicated' as const,
    label: 'label' as const,
+   max_players: 'max_players' as const,
    plugin_version: 'plugin_version' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,
@@ -46099,29 +46564,37 @@ export const enumServersSelectColumn = {
    reserved_by_match_id: 'reserved_by_match_id' as const,
    steam_relay: 'steam_relay' as const,
    tv_port: 'tv_port' as const,
+   type: 'type' as const,
    updated_at: 'updated_at' as const
 }
 
 export const enumServersSelectColumnServersAggregateBoolExpBoolAndArgumentsColumns = {
    connected: 'connected' as const,
    enabled: 'enabled' as const,
+   is_dedicated: 'is_dedicated' as const,
    rcon_status: 'rcon_status' as const
 }
 
 export const enumServersSelectColumnServersAggregateBoolExpBoolOrArgumentsColumns = {
    connected: 'connected' as const,
    enabled: 'enabled' as const,
+   is_dedicated: 'is_dedicated' as const,
    rcon_status: 'rcon_status' as const
 }
 
 export const enumServersUpdateColumn = {
    api_password: 'api_password' as const,
+   connect_password: 'connect_password' as const,
    connected: 'connected' as const,
    enabled: 'enabled' as const,
+   game_mode: 'game_mode' as const,
    game_server_node_id: 'game_server_node_id' as const,
+   game_type: 'game_type' as const,
    host: 'host' as const,
    id: 'id' as const,
+   is_dedicated: 'is_dedicated' as const,
    label: 'label' as const,
+   max_players: 'max_players' as const,
    plugin_version: 'plugin_version' as const,
    port: 'port' as const,
    rcon_password: 'rcon_password' as const,
@@ -46130,6 +46603,7 @@ export const enumServersUpdateColumn = {
    reserved_by_match_id: 'reserved_by_match_id' as const,
    steam_relay: 'steam_relay' as const,
    tv_port: 'tv_port' as const,
+   type: 'type' as const,
    updated_at: 'updated_at' as const
 }
 

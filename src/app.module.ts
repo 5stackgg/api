@@ -38,6 +38,8 @@ import { DemosModule } from "./demos/demos.module";
 import { SystemService } from "./system/system.service";
 import { ClientsModule } from "@nestjs/microservices";
 import { Transport } from "@nestjs/microservices";
+import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.module";
+
 @Module({
   imports: [
     AuthModule,
@@ -115,6 +117,7 @@ import { Transport } from "@nestjs/microservices";
     SignalServerModule,
     InvitesModule,
     DemosModule,
+    DedicatedServersModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
