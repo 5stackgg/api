@@ -33791,11 +33791,17 @@ export default {
             "enabled": [
                 1
             ],
+            "game_mode": [
+                8
+            ],
             "game_server_node": [
                 594
             ],
             "game_server_node_id": [
                 17
+            ],
+            "game_type": [
+                8
             ],
             "host": [
                 17
@@ -34066,6 +34072,12 @@ export default {
             ]
         },
         "servers_avg_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34080,6 +34092,12 @@ export default {
             ]
         },
         "servers_avg_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34118,11 +34136,17 @@ export default {
             "enabled": [
                 2
             ],
+            "game_mode": [
+                9
+            ],
             "game_server_node": [
                 605
             ],
             "game_server_node_id": [
                 19
+            ],
+            "game_type": [
+                9
             ],
             "host": [
                 19
@@ -34184,6 +34208,12 @@ export default {
         },
         "servers_constraint": {},
         "servers_inc_input": {
+            "game_mode": [
+                8
+            ],
+            "game_type": [
+                8
+            ],
             "max_players": [
                 8
             ],
@@ -34213,11 +34243,17 @@ export default {
             "enabled": [
                 1
             ],
+            "game_mode": [
+                8
+            ],
             "game_server_node": [
                 614
             ],
             "game_server_node_id": [
                 17
+            ],
+            "game_type": [
+                8
             ],
             "host": [
                 17
@@ -34281,8 +34317,14 @@ export default {
             "connect_password": [
                 17
             ],
+            "game_mode": [
+                8
+            ],
             "game_server_node_id": [
                 17
+            ],
+            "game_type": [
+                8
             ],
             "host": [
                 17
@@ -34328,7 +34370,13 @@ export default {
             "connect_password": [
                 1332
             ],
+            "game_mode": [
+                1332
+            ],
             "game_server_node_id": [
+                1332
+            ],
+            "game_type": [
                 1332
             ],
             "host": [
@@ -34375,8 +34423,14 @@ export default {
             "connect_password": [
                 17
             ],
+            "game_mode": [
+                8
+            ],
             "game_server_node_id": [
                 17
+            ],
+            "game_type": [
+                8
             ],
             "host": [
                 17
@@ -34422,7 +34476,13 @@ export default {
             "connect_password": [
                 1332
             ],
+            "game_mode": [
+                1332
+            ],
             "game_server_node_id": [
+                1332
+            ],
+            "game_type": [
                 1332
             ],
             "host": [
@@ -34514,10 +34574,16 @@ export default {
             "enabled": [
                 1332
             ],
+            "game_mode": [
+                1332
+            ],
             "game_server_node": [
                 616
             ],
             "game_server_node_id": [
+                1332
+            ],
+            "game_type": [
                 1332
             ],
             "host": [
@@ -34599,8 +34665,14 @@ export default {
             "enabled": [
                 1
             ],
+            "game_mode": [
+                8
+            ],
             "game_server_node_id": [
                 17
+            ],
+            "game_type": [
+                8
             ],
             "host": [
                 17
@@ -34652,6 +34724,12 @@ export default {
             ]
         },
         "servers_stddev_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34666,6 +34744,12 @@ export default {
             ]
         },
         "servers_stddev_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34680,6 +34764,12 @@ export default {
             ]
         },
         "servers_stddev_pop_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34694,6 +34784,12 @@ export default {
             ]
         },
         "servers_stddev_pop_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34708,6 +34804,12 @@ export default {
             ]
         },
         "servers_stddev_samp_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34722,6 +34824,12 @@ export default {
             ]
         },
         "servers_stddev_samp_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34759,8 +34867,14 @@ export default {
             "enabled": [
                 1
             ],
+            "game_mode": [
+                8
+            ],
             "game_server_node_id": [
                 17
+            ],
+            "game_type": [
+                8
             ],
             "host": [
                 17
@@ -34812,6 +34926,12 @@ export default {
             ]
         },
         "servers_sum_fields": {
+            "game_mode": [
+                8
+            ],
+            "game_type": [
+                8
+            ],
             "max_players": [
                 8
             ],
@@ -34826,6 +34946,12 @@ export default {
             ]
         },
         "servers_sum_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34855,6 +34981,12 @@ export default {
             ]
         },
         "servers_var_pop_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34869,6 +35001,12 @@ export default {
             ]
         },
         "servers_var_pop_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34883,6 +35021,12 @@ export default {
             ]
         },
         "servers_var_samp_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34897,6 +35041,12 @@ export default {
             ]
         },
         "servers_var_samp_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],
@@ -34911,6 +35061,12 @@ export default {
             ]
         },
         "servers_variance_fields": {
+            "game_mode": [
+                6
+            ],
+            "game_type": [
+                6
+            ],
             "max_players": [
                 6
             ],
@@ -34925,6 +35081,12 @@ export default {
             ]
         },
         "servers_variance_order_by": {
+            "game_mode": [
+                1332
+            ],
+            "game_type": [
+                1332
+            ],
             "max_players": [
                 1332
             ],

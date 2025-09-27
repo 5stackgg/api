@@ -3840,20 +3840,26 @@ enum e_server_types_constraint {
 }
 
 enum e_server_types_enum {
-  """Aim"""
-  Aim
+  """Valve Arms Race"""
+  ArmsRace
+
+  """Valve Casual"""
+  Casual
+
+  """Valve Competitive"""
+  Competitive
 
   """Custom"""
   Custom
 
-  """Deathmatch"""
+  """Valve Deathmatch"""
   Deathmatch
 
-  """Ranked"""
+  """5Stack Ranked Server"""
   Ranked
 
-  """Retake"""
-  Retake
+  """Valve Wingman"""
+  Wingman
 }
 
 """
@@ -31216,10 +31222,12 @@ type servers {
   """An object relationship"""
   current_match: matches
   enabled: Boolean!
+  game_mode: Int
 
   """An object relationship"""
   game_server_node: game_server_nodes
   game_server_node_id: String
+  game_type: Int
   host: String!
   id: uuid!
   is_dedicated: Boolean!
@@ -31357,6 +31365,8 @@ input servers_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type servers_avg_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31366,6 +31376,8 @@ type servers_avg_fields {
 order by avg() on columns of table "servers"
 """
 input servers_avg_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31383,8 +31395,10 @@ input servers_bool_exp {
   connected: Boolean_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
+  game_mode: Int_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
+  game_type: Int_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
@@ -31424,6 +31438,8 @@ enum servers_constraint {
 input type for incrementing numeric columns in table "servers"
 """
 input servers_inc_input {
+  game_mode: Int
+  game_type: Int
   max_players: Int
   port: Int
   tv_port: Int
@@ -31438,8 +31454,10 @@ input servers_insert_input {
   connected: Boolean
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
+  game_mode: Int
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -31463,7 +31481,9 @@ input servers_insert_input {
 type servers_max_fields {
   api_password: uuid
   connect_password: String
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   label: String
@@ -31483,7 +31503,9 @@ order by max() on columns of table "servers"
 input servers_max_order_by {
   api_password: order_by
   connect_password: order_by
+  game_mode: order_by
   game_server_node_id: order_by
+  game_type: order_by
   host: order_by
   id: order_by
   label: order_by
@@ -31501,7 +31523,9 @@ input servers_max_order_by {
 type servers_min_fields {
   api_password: uuid
   connect_password: String
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   label: String
@@ -31521,7 +31545,9 @@ order by min() on columns of table "servers"
 input servers_min_order_by {
   api_password: order_by
   connect_password: order_by
+  game_mode: order_by
   game_server_node_id: order_by
+  game_type: order_by
   host: order_by
   id: order_by
   label: order_by
@@ -31572,8 +31598,10 @@ input servers_order_by {
   connected: order_by
   current_match: matches_order_by
   enabled: order_by
+  game_mode: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
+  game_type: order_by
   host: order_by
   id: order_by
   is_dedicated: order_by
@@ -31615,7 +31643,13 @@ enum servers_select_column {
   enabled
 
   """column name"""
+  game_mode
+
+  """column name"""
   game_server_node_id
+
+  """column name"""
+  game_type
 
   """column name"""
   host
@@ -31705,7 +31739,9 @@ input servers_set_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -31725,6 +31761,8 @@ input servers_set_input {
 
 """aggregate stddev on columns"""
 type servers_stddev_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31734,6 +31772,8 @@ type servers_stddev_fields {
 order by stddev() on columns of table "servers"
 """
 input servers_stddev_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31741,6 +31781,8 @@ input servers_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type servers_stddev_pop_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31750,6 +31792,8 @@ type servers_stddev_pop_fields {
 order by stddev_pop() on columns of table "servers"
 """
 input servers_stddev_pop_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31757,6 +31801,8 @@ input servers_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type servers_stddev_samp_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31766,6 +31812,8 @@ type servers_stddev_samp_fields {
 order by stddev_samp() on columns of table "servers"
 """
 input servers_stddev_samp_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31788,7 +31836,9 @@ input servers_stream_cursor_value_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
+  game_mode: Int
   game_server_node_id: String
+  game_type: Int
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -31808,6 +31858,8 @@ input servers_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type servers_sum_fields {
+  game_mode: Int
+  game_type: Int
   max_players: Int
   port: Int
   tv_port: Int
@@ -31817,6 +31869,8 @@ type servers_sum_fields {
 order by sum() on columns of table "servers"
 """
 input servers_sum_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31839,7 +31893,13 @@ enum servers_update_column {
   enabled
 
   """column name"""
+  game_mode
+
+  """column name"""
   game_server_node_id
+
+  """column name"""
+  game_type
 
   """column name"""
   host
@@ -31900,6 +31960,8 @@ input servers_updates {
 
 """aggregate var_pop on columns"""
 type servers_var_pop_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31909,6 +31971,8 @@ type servers_var_pop_fields {
 order by var_pop() on columns of table "servers"
 """
 input servers_var_pop_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31916,6 +31980,8 @@ input servers_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type servers_var_samp_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31925,6 +31991,8 @@ type servers_var_samp_fields {
 order by var_samp() on columns of table "servers"
 """
 input servers_var_samp_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -31932,6 +32000,8 @@ input servers_var_samp_order_by {
 
 """aggregate variance on columns"""
 type servers_variance_fields {
+  game_mode: Float
+  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -31941,6 +32011,8 @@ type servers_variance_fields {
 order by variance() on columns of table "servers"
 """
 input servers_variance_order_by {
+  game_mode: order_by
+  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by

@@ -15,12 +15,14 @@ CREATE TABLE if not exists public.e_server_types (
 );
 
 insert into e_server_types ("value", "description") values
-    ('Ranked', 'Ranked'),
-    ('Deathmatch', 'Deathmatch'),
-    ('Retake', 'Retake'),
-    ('Aim', 'Aim'),
+    ('Ranked', '5Stack Ranked Server'),
+    ('Competitive', 'Valve Competitive'),
+    ('Casual', 'Valve Casual'),
+    ('Wingman', 'Valve Wingman'),
+    ('Deathmatch', 'Valve Deathmatch'),
+    ('ArmsRace', 'Valve Arms Race'),
     ('Custom', 'Custom')
-on conflict(value) do update set "description" = EXCLUDED."description"
+on conflict(value) do update set "description" = EXCLUDED."description";
 
 alter table "public"."servers"
   add constraint "servers_type_fkey"

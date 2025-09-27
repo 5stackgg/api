@@ -5,6 +5,7 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { EncryptionService } from "src/encryption/encryption.service";
 import { HasuraService } from "src/hasura/hasura.service";
+import { e_server_types_enum } from "../../generated";
 
 @Injectable()
 export class DedicatedServersService {
@@ -194,7 +195,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)}${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
@@ -346,5 +347,36 @@ export class DedicatedServersService {
       namespace: this.namespace,
       name: dedicatedServerDeploymentName,
     });
+  }
+
+  private getGameType(type: e_server_types_enum): number {
+    switch (type) {
+      case "Ranked":
+      case "Casual":
+      case "Competitive":
+      case "Wingman":
+        return 0;
+      case "Deathmatch":
+      case "ArmsRace":
+        return 1;
+      case "Custom":
+        return 3;
+    }
+  }
+
+  private getGameMode(type: e_server_types_enum): number {
+    switch (type) {
+      case "Ranked":
+      case "Competitive":
+        return 1;
+      case "ArmsRace":
+      case "Casual":
+        return 0;
+      case "Wingman":
+      case "Deathmatch":
+        return 2;
+      case "Custom":
+        return 0;
+    }
   }
 }
