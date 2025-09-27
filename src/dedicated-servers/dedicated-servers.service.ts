@@ -191,14 +191,10 @@ export class DedicatedServersService {
                           server.rcon_password,
                         ),
                       },
-                      {
-                        name: "SERVER_PASSWORD",
-                        value: server.connect_password,
-                      },
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers 13 +map de_dust2`,
+                        value: `-maxplayers 13 +map de_dust2${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
