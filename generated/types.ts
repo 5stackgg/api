@@ -33853,6 +33853,9 @@ export default {
                     ]
                 }
             ],
+            "max_players": [
+                8
+            ],
             "plugin_version": [
                 17
             ],
@@ -34063,6 +34066,9 @@ export default {
             ]
         },
         "servers_avg_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34074,6 +34080,9 @@ export default {
             ]
         },
         "servers_avg_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34133,6 +34142,9 @@ export default {
             "matches_aggregate": [
                 1181
             ],
+            "max_players": [
+                9
+            ],
             "plugin_version": [
                 19
             ],
@@ -34172,6 +34184,9 @@ export default {
         },
         "servers_constraint": {},
         "servers_inc_input": {
+            "max_players": [
+                8
+            ],
             "port": [
                 8
             ],
@@ -34218,6 +34233,9 @@ export default {
             ],
             "matches": [
                 1185
+            ],
+            "max_players": [
+                8
             ],
             "plugin_version": [
                 17
@@ -34275,6 +34293,9 @@ export default {
             "label": [
                 17
             ],
+            "max_players": [
+                8
+            ],
             "plugin_version": [
                 17
             ],
@@ -34317,6 +34338,9 @@ export default {
                 1332
             ],
             "label": [
+                1332
+            ],
+            "max_players": [
                 1332
             ],
             "plugin_version": [
@@ -34363,6 +34387,9 @@ export default {
             "label": [
                 17
             ],
+            "max_players": [
+                8
+            ],
             "plugin_version": [
                 17
             ],
@@ -34405,6 +34432,9 @@ export default {
                 1332
             ],
             "label": [
+                1332
+            ],
+            "max_players": [
                 1332
             ],
             "plugin_version": [
@@ -34505,6 +34535,9 @@ export default {
             "matches_aggregate": [
                 1184
             ],
+            "max_players": [
+                1332
+            ],
             "plugin_version": [
                 1332
             ],
@@ -34581,6 +34614,9 @@ export default {
             "label": [
                 17
             ],
+            "max_players": [
+                8
+            ],
             "plugin_version": [
                 17
             ],
@@ -34616,6 +34652,9 @@ export default {
             ]
         },
         "servers_stddev_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34627,6 +34666,9 @@ export default {
             ]
         },
         "servers_stddev_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34638,6 +34680,9 @@ export default {
             ]
         },
         "servers_stddev_pop_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34649,6 +34694,9 @@ export default {
             ]
         },
         "servers_stddev_pop_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34660,6 +34708,9 @@ export default {
             ]
         },
         "servers_stddev_samp_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34671,6 +34722,9 @@ export default {
             ]
         },
         "servers_stddev_samp_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34720,6 +34774,9 @@ export default {
             "label": [
                 17
             ],
+            "max_players": [
+                8
+            ],
             "plugin_version": [
                 17
             ],
@@ -34755,6 +34812,9 @@ export default {
             ]
         },
         "servers_sum_fields": {
+            "max_players": [
+                8
+            ],
             "port": [
                 8
             ],
@@ -34766,6 +34826,9 @@ export default {
             ]
         },
         "servers_sum_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34792,6 +34855,9 @@ export default {
             ]
         },
         "servers_var_pop_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34803,6 +34869,9 @@ export default {
             ]
         },
         "servers_var_pop_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34814,6 +34883,9 @@ export default {
             ]
         },
         "servers_var_samp_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34825,6 +34897,9 @@ export default {
             ]
         },
         "servers_var_samp_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
@@ -34836,6 +34911,9 @@ export default {
             ]
         },
         "servers_variance_fields": {
+            "max_players": [
+                6
+            ],
             "port": [
                 6
             ],
@@ -34847,6 +34925,9 @@ export default {
             ]
         },
         "servers_variance_order_by": {
+            "max_players": [
+                1332
+            ],
             "port": [
                 1332
             ],
