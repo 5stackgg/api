@@ -7,6 +7,7 @@ import { EncryptionService } from "src/encryption/encryption.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { e_server_types_enum } from "../../generated";
 import { RconService } from "src/rcon/rcon.service";
+import { FetchError } from "@kubernetes/client-node";
 
 @Injectable()
 export class DedicatedServersService {
@@ -352,31 +353,41 @@ export class DedicatedServersService {
   }
 
   public async removeDedicatedServer(serverId: string): Promise<void> {
-    this.logger.log(`[${serverId}] removing dedicated server`);
+    try {
+      this.logger.log(`[${serverId}] removing dedicated server`);
 
-    const dedicatedServerDeploymentName = `dedicated-server-${serverId}`;
+      const dedicatedServerDeploymentName = `dedicated-server-${serverId}`;
 
-    await this.core.deleteNamespacedService({
-      namespace: this.namespace,
-      name: dedicatedServerDeploymentName,
-    });
+      await this.core.deleteNamespacedService({
+        namespace: this.namespace,
+        name: dedicatedServerDeploymentName,
+      });
 
-    await this.apps.deleteNamespacedDeployment({
-      namespace: this.namespace,
-      name: dedicatedServerDeploymentName,
-    });
-
-    await this.hasura.mutation({
-      update_servers_by_pk: {
-        __args: {
-          pk_columns: { id: serverId },
-          _set: {
-            connected: false,
+      await this.apps.deleteNamespacedDeployment({
+        namespace: this.namespace,
+        name: dedicatedServerDeploymentName,
+      });
+    } catch (error: FetchError | any) {
+      if (error instanceof FetchError && error.code === "404") {
+        return;
+      }
+      this.logger.error(
+        `[${serverId}] unable to remove dedicated server`,
+        error?.response?.body?.message || error,
+      );
+    } finally {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: { id: serverId },
+            _set: {
+              connected: false,
+            },
           },
+          id: true,
         },
-        id: true,
-      },
-    });
+      });
+    }
   }
 
   private getGameType(type: e_server_types_enum): number {
@@ -411,26 +422,34 @@ export class DedicatedServersService {
   }
 
   public async pingDedicatedServer(serverId: string): Promise<void> {
+    const { servers_by_pk: server } = await this.hasura.query({
+      servers_by_pk: {
+        __args: { id: serverId },
+        server_region: {
+          steam_relay: true,
+        },
+      },
+    });
     const rcon = await this.RconService.connect(serverId);
     if (!rcon) {
       return;
     }
 
-    const status = JSON.parse(await rcon.send("status_json"));
-
-    const steamId = status.server.steamid;
-
-    if (steamId) {
-      await this.hasura.mutation({
-        update_servers_by_pk: {
-          __args: {
-            pk_columns: { id: serverId },
-            _set: { steam_relay: steamId },
-          },
-          id: true,
-        },
-      });
+    let steamId = null;
+    if (server.server_region?.steam_relay) {
+      const status = JSON.parse(await rcon.send("status_json"));
+      steamId = status.server.steamid;
     }
+
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: { id: serverId },
+          _set: { steam_relay: steamId },
+        },
+        id: true,
+      },
+    });
 
     await this.RconService.disconnect(serverId);
   }

@@ -86,3 +86,15 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
+event_triggers:
+  - name: dedicated_server_region_relay
+    definition:
+      enable_manual: false
+      update:
+        columns:
+          - steam_relay
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
