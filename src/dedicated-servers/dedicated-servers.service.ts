@@ -384,7 +384,6 @@ export class DedicatedServersService {
         error?.response?.body?.message || error,
       );
     } finally {
-      // Clean up Redis stats for this server
       await this.redis.hdel("dedicated-servers:stats", serverId);
 
       await this.hasura.mutation({
@@ -506,6 +505,7 @@ export class DedicatedServersService {
         .map(([serverId, jsonData]) => {
           try {
             const data = JSON.parse(jsonData);
+
             return {
               id: serverId,
               map: data.map,
@@ -520,7 +520,7 @@ export class DedicatedServersService {
           }
         })
         .filter((result) => {
-          return !result;
+          return !!result;
         });
     } catch (error) {
       this.logger.error(
