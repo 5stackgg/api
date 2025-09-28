@@ -45,6 +45,13 @@ actions:
       forward_client_headers: true
     permissions:
       - role: user
+  - name: getDedicatedServerPlayerCounts
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
   - name: denyInvite
     definition:
       kind: synchronous
@@ -239,4 +246,5 @@ custom_types:
     - name: DiskStat
     - name: NetworkStats
     - name: NicStat
+    - name: DedicatedSeverStats
   scalars: []

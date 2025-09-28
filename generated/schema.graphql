@@ -39,6 +39,11 @@ type CpuStat {
   window: Float
 }
 
+type DedicatedSeverStats {
+  id: String!
+  players: Int!
+}
+
 type DiskStat {
   available: String
   filesystem: String
@@ -28674,6 +28679,7 @@ type query_root {
 
   """fetch data from the table: "game_versions" using primary key columns"""
   game_versions_by_pk(build_id: Int!): game_versions
+  getDedicatedServerPlayerCounts: [DedicatedSeverStats]!
   getNodeStats(node: String!): NodeStats!
   getServiceStats: [PodStats]!
 

@@ -8,6 +8,8 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { e_server_types_enum } from "../../generated";
 import { RconService } from "src/rcon/rcon.service";
 import { FetchError } from "@kubernetes/client-node";
+import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { Redis, Command } from "ioredis";
 
 @Injectable()
 export class DedicatedServersService {
@@ -18,15 +20,21 @@ export class DedicatedServersService {
   private core: CoreV1Api;
   private apps: AppsV1Api;
 
+  private redis: Redis;
+
   constructor(
     private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly encryption: EncryptionService,
     private readonly RconService: RconService,
+    private readonly redisManager: RedisManagerService,
   ) {
+    this.redis = this.redisManager.getConnection();
+
     this.appConfig = this.config.get<AppConfig>("app");
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
+
     this.namespace = this.gameServerConfig.namespace;
 
     const kc = new KubeConfig();
@@ -376,6 +384,9 @@ export class DedicatedServersService {
         error?.response?.body?.message || error,
       );
     } finally {
+      // Clean up Redis stats for this server
+      await this.redis.hdel("dedicated-servers:clients", serverId);
+
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -436,10 +447,27 @@ export class DedicatedServersService {
     }
 
     let steamId = null;
+    const status = JSON.parse(await rcon.send("status_json"));
+
     if (server.server_region?.steam_relay) {
-      const status = JSON.parse(await rcon.send("status_json"));
       steamId = status.server.steamid;
     }
+
+    await this.redis.hset(
+      "dedicated-servers:clients",
+      serverId,
+      status.server.clients_human,
+    );
+
+    await this.redis.sendCommand(
+      new Command("HEXPIRE", [
+        "dedicated-servers:clients",
+        120,
+        "FIELDS",
+        1,
+        serverId,
+      ]),
+    );
 
     await this.hasura.mutation({
       update_servers_by_pk: {
@@ -452,5 +480,29 @@ export class DedicatedServersService {
     });
 
     await this.RconService.disconnect(serverId);
+  }
+
+  public async getAllDedicatedServerStats(): Promise<
+    Array<{ id: string; players: number }>
+  > {
+    try {
+      const stats = await this.redis.hgetall("dedicated-servers:clients");
+      const result: Array<{ id: string; players: number }> = [];
+
+      for (const [serverId, clientCount] of Object.entries(stats)) {
+        result.push({
+          id: serverId,
+          players: parseInt(clientCount || "0", 10),
+        });
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error(
+        "Failed to get dedicated server stats from Redis",
+        error,
+      );
+      return [];
+    }
   }
 }

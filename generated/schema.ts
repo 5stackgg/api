@@ -33,6 +33,12 @@ export interface CpuStat {
     __typename: 'CpuStat'
 }
 
+export interface DedicatedSeverStats {
+    id: Scalars['String']
+    players: Scalars['Int']
+    __typename: 'DedicatedSeverStats'
+}
+
 export interface DiskStat {
     available: (Scalars['String'] | null)
     filesystem: (Scalars['String'] | null)
@@ -8543,6 +8549,7 @@ export interface query_root {
     game_versions_aggregate: game_versions_aggregate
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk: (game_versions | null)
+    getDedicatedServerPlayerCounts: (DedicatedSeverStats | null)[]
     getNodeStats: NodeStats
     getServiceStats: (PodStats | null)[]
     /** fetch data from the table: "lobbies" */
@@ -12819,6 +12826,13 @@ export interface CpuStatGenqlSelection{
     total?: boolean | number
     used?: boolean | number
     window?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface DedicatedSeverStatsGenqlSelection{
+    id?: boolean | number
+    players?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -28777,6 +28791,7 @@ export interface query_rootGenqlSelection{
     where?: (game_versions_bool_exp | null)} })
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk?: (game_versionsGenqlSelection & { __args: {build_id: Scalars['Int']} })
+    getDedicatedServerPlayerCounts?: DedicatedSeverStatsGenqlSelection
     getNodeStats?: (NodeStatsGenqlSelection & { __args: {node: Scalars['String']} })
     getServiceStats?: PodStatsGenqlSelection
     /** fetch data from the table: "lobbies" */
@@ -38108,6 +38123,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isCpuStat = (obj?: { __typename?: any } | null): obj is CpuStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isCpuStat"')
       return CpuStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const DedicatedSeverStats_possibleTypes: string[] = ['DedicatedSeverStats']
+    export const isDedicatedSeverStats = (obj?: { __typename?: any } | null): obj is DedicatedSeverStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isDedicatedSeverStats"')
+      return DedicatedSeverStats_possibleTypes.includes(obj.__typename)
     }
     
 

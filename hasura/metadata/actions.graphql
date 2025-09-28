@@ -36,6 +36,10 @@ type Mutation {
   ): ApiKeyResponse
 }
 
+type Query {
+  getDedicatedServerPlayerCounts: [DedicatedSeverStats]!
+}
+
 type Mutation {
   denyInvite(
     invite_id: uuid!
@@ -259,5 +263,10 @@ type NicStat {
   name: String
   tx: bigint
   rx: bigint
+}
+
+type DedicatedSeverStats {
+  id: String!
+  players: Int!
 }
 

@@ -12,6 +12,7 @@ import { PingDedicatedServers } from "./jobs/PingDedicatedServers";
 import { Queue } from "bullmq";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RconModule } from "src/rcon/rcon.module";
+import { RedisModule } from "src/redis/redis.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RconModule } from "src/rcon/rcon.module";
     HasuraModule,
     EncryptionModule,
     RconModule,
+    RedisModule,
   ],
   providers: [
     DedicatedServersService,
@@ -48,7 +50,7 @@ export class DedicatedServersModule {
       {},
       {
         repeat: {
-          pattern: "*/5 * * * *",
+          pattern: "* * * * *",
         },
       },
     );

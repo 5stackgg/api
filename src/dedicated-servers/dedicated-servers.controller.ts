@@ -4,6 +4,7 @@ import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { server_regions_set_input, servers_set_input } from "generated";
 import { DedicatedServersService } from "./dedicated-servers.service";
 import { HasuraService } from "src/hasura/hasura.service";
+import { HasuraAction } from "src/hasura/hasura.controller";
 
 @Controller("dedicated-servers")
 export class DedicatedServersController {
@@ -60,5 +61,10 @@ export class DedicatedServersController {
       await this.dedicatedServersService.removeDedicatedServer(server.id);
       await this.dedicatedServersService.setupDedicatedServer(server.id);
     }
+  }
+
+  @HasuraAction()
+  public async getDedicatedServerPlayerCounts() {
+    return await this.dedicatedServersService.getAllDedicatedServerStats();
   }
 }
