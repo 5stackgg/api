@@ -51,7 +51,7 @@ type Mutation {
 }
 
 type Query {
-  getDedicatedServerPlayerCounts: [DedicatedSeverStats]!
+  getDedicatedServerInfo: [DedicatedSeverInfo]!
 }
 
 type Query {
@@ -265,8 +265,10 @@ type NicStat {
   rx: bigint
 }
 
-type DedicatedSeverStats {
+type DedicatedSeverInfo {
   id: String!
   players: Int!
+  map: String!
+  lastPing: String!
 }
 

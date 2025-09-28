@@ -72,7 +72,7 @@ export class DedicatedServersController {
   }
 
   @HasuraAction()
-  public async getDedicatedServerPlayerCounts() {
+  public async getDedicatedServerInfo() {
     return await this.dedicatedServersService.getAllDedicatedServerStats();
   }
 }

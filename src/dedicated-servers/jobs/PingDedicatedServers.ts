@@ -29,11 +29,30 @@ export class PingDedicatedServers extends WorkerHost {
           },
         },
         id: true,
+        game_server_node: {
+          status: true,
+        },
       },
     });
 
-    for (const server of servers) {
-      await this.dedicatedServersService.pingDedicatedServer(server.id);
-    }
+    await Promise.all(
+      servers.map(async (server) => {
+        if (
+          !server.game_server_node ||
+          server.game_server_node.status !== "Online"
+        ) {
+          await this.hasura.mutation({
+            update_servers_by_pk: {
+              __args: {
+                pk_columns: { id: server.id },
+                _set: { connected: false },
+              },
+            },
+          });
+          return;
+        }
+        await this.dedicatedServersService.pingDedicatedServer(server.id);
+      }),
+    );
   }
 }

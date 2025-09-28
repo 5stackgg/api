@@ -385,7 +385,7 @@ export class DedicatedServersService {
       );
     } finally {
       // Clean up Redis stats for this server
-      await this.redis.hdel("dedicated-servers:clients", serverId);
+      await this.redis.hdel("dedicated-servers:stats", serverId);
 
       await this.hasura.mutation({
         update_servers_by_pk: {
@@ -454,49 +454,74 @@ export class DedicatedServersService {
     }
 
     await this.redis.hset(
-      "dedicated-servers:clients",
+      "dedicated-servers:stats",
       serverId,
-      status.server.clients_human,
+      JSON.stringify({
+        clients_human: status.server.clients_human,
+        map: status.server.map || "unknown",
+        last_ping: new Date().toISOString(),
+      }),
     );
 
-    await this.redis.sendCommand(
-      new Command("HEXPIRE", [
-        "dedicated-servers:clients",
-        120,
-        "FIELDS",
-        1,
-        serverId,
-      ]),
-    );
+    await this.redis.expire("dedicated-servers:stats", 120);
 
-    await this.hasura.mutation({
-      update_servers_by_pk: {
-        __args: {
-          pk_columns: { id: serverId },
-          _set: { steam_relay: steamId },
-        },
-        id: true,
+    const { servers_by_pk: currentServer } = await this.hasura.query({
+      servers_by_pk: {
+        __args: { id: serverId },
+        steam_relay: true,
       },
     });
+
+    if (currentServer.steam_relay !== steamId) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: { id: serverId },
+            _set: { steam_relay: steamId },
+          },
+          id: true,
+        },
+      });
+    }
 
     await this.RconService.disconnect(serverId);
   }
 
   public async getAllDedicatedServerStats(): Promise<
-    Array<{ id: string; players: number }>
+    Array<{
+      id: string;
+      players: number;
+      map?: string;
+      last_ping?: string;
+    }>
   > {
     try {
-      const stats = await this.redis.hgetall("dedicated-servers:clients");
-      const result: Array<{ id: string; players: number }> = [];
+      const allServerData = await this.redis.hgetall("dedicated-servers:stats");
 
-      for (const [serverId, clientCount] of Object.entries(stats)) {
-        result.push({
-          id: serverId,
-          players: parseInt(clientCount || "0", 10),
-        });
+      if (!allServerData || Object.keys(allServerData).length === 0) {
+        return [];
       }
 
-      return result;
+      return Object.entries(allServerData)
+        .map(([serverId, jsonData]) => {
+          try {
+            const data = JSON.parse(jsonData);
+            return {
+              id: serverId,
+              map: data.map,
+              lastPing: data.last_ping,
+              players: parseInt(data.clients_human),
+            };
+          } catch (error) {
+            this.logger.warn(
+              `Failed to parse server data for ${serverId}:`,
+              error,
+            );
+          }
+        })
+        .filter((result) => {
+          return !result;
+        });
     } catch (error) {
       this.logger.error(
         "Failed to get dedicated server stats from Redis",
