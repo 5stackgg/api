@@ -8,7 +8,16 @@ BEGIN
     enc_secret = current_setting('fivestack.app_key');
 
     IF NEW.is_dedicated = true AND NEW.game_server_node_id IS NOT NULL AND (TG_OP = 'INSERT' OR NEW.game_server_node_id != OLD.game_server_node_id) THEN
-        SELECT region, host(public_ip) INTO NEW.region, NEW.host FROM game_server_nodes WHERE id = NEW.game_server_node_id;
+        SELECT 
+            gsn.region, 
+            CASE 
+                WHEN sr.is_lan = true THEN host(gsn.lan_ip)
+                ELSE host(gsn.public_ip)
+            END
+        INTO NEW.region, NEW.host 
+        FROM game_server_nodes gsn
+        JOIN server_regions sr ON sr.value = gsn.region
+        WHERE gsn.id = NEW.game_server_node_id;
 
         SELECT id, port, tv_port INTO delete_server_id, NEW.port, NEW.tv_port FROM servers WHERE game_server_node_id = NEW.game_server_node_id AND reserved_by_match_id IS NULL ORDER BY port ASC LIMIT 1;
 
