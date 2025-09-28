@@ -15,20 +15,26 @@ export class DedicatedServersController {
 
   @HasuraEvent()
   public async servers(data: HasuraEventData<servers_set_input>) {
-    if (!data.old.is_dedicated || !data.new.is_dedicated) {
+    const serverId = data.old.id || data.new.id;
+    if (!data.old.is_dedicated && !data.new.is_dedicated) {
       return;
     }
 
-    await this.dedicatedServersService.removeDedicatedServer(data.old.id);
+    await this.dedicatedServersService.removeDedicatedServer(serverId);
+
+    if (data.op === "DELETE") {
+      return;
+    }
 
     if (
-      data.old.game_server_node_id !== data.new.game_server_node_id ||
-      data.new.enabled === false
+      data.op === "UPDATE" &&
+      (data.old.game_server_node_id !== data.new.game_server_node_id ||
+        data.new.enabled === false)
     ) {
       return;
     }
 
-    await this.dedicatedServersService.setupDedicatedServer(data.new.id);
+    await this.dedicatedServersService.setupDedicatedServer(serverId);
   }
 
   @HasuraEvent()

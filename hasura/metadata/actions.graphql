@@ -36,10 +36,6 @@ type Mutation {
   ): ApiKeyResponse
 }
 
-type Query {
-  getDedicatedServerPlayerCounts: [DedicatedSeverStats]!
-}
-
 type Mutation {
   denyInvite(
     invite_id: uuid!
@@ -52,6 +48,10 @@ type Mutation {
     match_id: uuid!
     winning_lineup_id: uuid!
   ): SuccessOutput
+}
+
+type Query {
+  getDedicatedServerPlayerCounts: [DedicatedSeverStats]!
 }
 
 type Query {
