@@ -36,12 +36,6 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    min_role_to_connect := get_setting('dedicated_servers_min_role_to_connect', 'user');
-
-    IF NOT is_above_role(min_role_to_connect, hasura_session) THEN
-        RETURN NULL;
-    END IF; 
-
     server_host := get_server_host(server);
 
     RETURN CONCAT('steam://run/730//+connect ', server_host);
