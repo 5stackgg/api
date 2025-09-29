@@ -188,6 +188,10 @@ export class DedicatedServersService {
                     ],
                     env: [
                       {
+                        name: "SERVER_TYPE",
+                        value: server.type,
+                      },
+                      {
                         name: "INSTALL_5STACK_PLUGIN",
                         value: server.type === "Ranked" ? "true" : "false",
                       },
