@@ -21,7 +21,7 @@ export class DedicatedServersController {
 
     if (
       !isDedicated ||
-      (!data.old.game_server_node_id && data.new.game_server_node_id)
+      (!data.old.game_server_node_id && !data.new.game_server_node_id)
     ) {
       return;
     }

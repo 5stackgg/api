@@ -301,6 +301,9 @@ export class MatchAssistantService {
             connected: {
               _eq: true,
             },
+            enabled: {
+              _eq: true,
+            },
             is_dedicated: {
               _eq: true,
             },
@@ -419,30 +422,26 @@ export class MatchAssistantService {
               type: {
                 _eq: "Ranked",
               },
-              _and: [
-                ...(match.region
-                  ? [
-                      {
-                        game_server_node: {
-                          region: {
-                            _eq: match.region,
-                          },
+              enabled: {
+                _eq: true,
+              },
+              is_dedicated: {
+                _eq: false,
+              },
+              reserved_by_match_id: {
+                _is_null: true,
+              },
+              ...(match.region
+                ? [
+                    {
+                      game_server_node: {
+                        region: {
+                          _eq: match.region,
                         },
                       },
-                    ]
-                  : [
-                      {
-                        is_dedicated: {
-                          _eq: false,
-                        },
-                      },
-                    ]),
-                {
-                  reserved_by_match_id: {
-                    _is_null: true,
-                  },
-                },
-              ],
+                    },
+                  ]
+                : []),
             },
           },
           id: true,

@@ -7,8 +7,8 @@ BEGIN
     SELECT COUNT(*)
     INTO server_count
     FROM servers s
-    WHERE s.game_server_node_id = game_server_node.id;
-
+    WHERE s.game_server_node_id = game_server_node.id
+    and enabled = true;
     RETURN server_count;
 END;
 $$;

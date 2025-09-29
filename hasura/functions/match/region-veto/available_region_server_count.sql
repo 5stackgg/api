@@ -15,7 +15,8 @@ BEGIN
     AND 
         (gsn.id IS NULL OR gsn.enabled = true)
     and s.reserved_by_match_id IS NULL
-    and s.type = 'Ranked';
+    and s.enabled = true
+    and type = 'Ranked';
 
     RETURN server_count;
 END;

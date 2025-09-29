@@ -8,7 +8,8 @@ BEGIN
     INTO server_count
     FROM servers s
     WHERE s.game_server_node_id = game_server_node.id and s.reserved_by_match_id IS NULL
-    and s.type = 'Ranked';
+    and s.enabled = true
+    and type = 'Ranked';
 
     RETURN server_count;
 END;

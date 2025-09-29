@@ -47,6 +47,7 @@ export class PingDedicatedServers extends WorkerHost {
                 pk_columns: { id: server.id },
                 _set: { connected: false },
               },
+              __typename: true,
             },
           });
           return;
