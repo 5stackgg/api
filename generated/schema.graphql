@@ -39,8 +39,10 @@ type CpuStat {
   window: Float
 }
 
-type DedicatedSeverStats {
+type DedicatedSeverInfo {
   id: String!
+  lastPing: String!
+  map: String!
   players: Int!
 }
 
@@ -5842,6 +5844,10 @@ type game_server_nodes {
   available_server_count: Int
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_governor_info(
+    """JSON select path"""
+    path: String
+  ): jsonb
   cpu_threads_per_core: Int
 
   """An object relationship"""
@@ -5989,6 +5995,11 @@ input game_server_nodes_aggregate_order_by {
   variance: game_server_nodes_variance_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input game_server_nodes_append_input {
+  cpu_governor_info: jsonb
+}
+
 """
 input type for inserting array relation for remote table "game_server_nodes"
 """
@@ -6040,6 +6051,7 @@ input game_server_nodes_bool_exp {
   available_server_count: Int_comparison_exp
   build_id: Int_comparison_exp
   cpu_cores_per_socket: Int_comparison_exp
+  cpu_governor_info: jsonb_comparison_exp
   cpu_threads_per_core: Int_comparison_exp
   e_region: server_regions_bool_exp
   e_status: e_game_server_node_statuses_bool_exp
@@ -6079,6 +6091,27 @@ enum game_server_nodes_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input game_server_nodes_delete_at_path_input {
+  cpu_governor_info: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input game_server_nodes_delete_elem_input {
+  cpu_governor_info: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input game_server_nodes_delete_key_input {
+  cpu_governor_info: String
+}
+
+"""
 input type for incrementing numeric columns in table "game_server_nodes"
 """
 input game_server_nodes_inc_input {
@@ -6096,6 +6129,7 @@ input type for inserting data into table "game_server_nodes"
 input game_server_nodes_insert_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_governor_info: jsonb
   cpu_threads_per_core: Int
   e_region: server_regions_obj_rel_insert_input
   e_status: e_game_server_node_statuses_obj_rel_insert_input
@@ -6242,6 +6276,7 @@ input game_server_nodes_order_by {
   available_server_count: order_by
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_governor_info: order_by
   cpu_threads_per_core: order_by
   e_region: server_regions_order_by
   e_status: e_game_server_node_statuses_order_by
@@ -6274,6 +6309,11 @@ input game_server_nodes_pk_columns_input {
   id: String!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input game_server_nodes_prepend_input {
+  cpu_governor_info: jsonb
+}
+
 """
 select columns of table "game_server_nodes"
 """
@@ -6283,6 +6323,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   cpu_cores_per_socket
+
+  """column name"""
+  cpu_governor_info
 
   """column name"""
   cpu_threads_per_core
@@ -6379,6 +6422,7 @@ input type for updating data in table "game_server_nodes"
 input game_server_nodes_set_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_governor_info: jsonb
   cpu_threads_per_core: Int
   enabled: Boolean
   end_port_range: Int
@@ -6507,6 +6551,7 @@ input game_server_nodes_stream_cursor_input {
 input game_server_nodes_stream_cursor_value_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_governor_info: jsonb
   cpu_threads_per_core: Int
   enabled: Boolean
   end_port_range: Int
@@ -6569,6 +6614,9 @@ enum game_server_nodes_update_column {
   cpu_cores_per_socket
 
   """column name"""
+  cpu_governor_info
+
+  """column name"""
   cpu_threads_per_core
 
   """column name"""
@@ -6624,8 +6672,29 @@ enum game_server_nodes_update_column {
 }
 
 input game_server_nodes_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: game_server_nodes_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: game_server_nodes_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: game_server_nodes_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: game_server_nodes_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: game_server_nodes_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: game_server_nodes_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: game_server_nodes_set_input
@@ -18665,8 +18734,29 @@ type mutation_root {
   update data of the table: "game_server_nodes"
   """
   update_game_server_nodes(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_server_nodes_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_server_nodes_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_server_nodes_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_server_nodes_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: game_server_nodes_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_server_nodes_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: game_server_nodes_set_input
@@ -18679,8 +18769,29 @@ type mutation_root {
   update single row of the table: "game_server_nodes"
   """
   update_game_server_nodes_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_server_nodes_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_server_nodes_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_server_nodes_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_server_nodes_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: game_server_nodes_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_server_nodes_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: game_server_nodes_set_input
@@ -28679,7 +28790,7 @@ type query_root {
 
   """fetch data from the table: "game_versions" using primary key columns"""
   game_versions_by_pk(build_id: Int!): game_versions
-  getDedicatedServerPlayerCounts: [DedicatedSeverStats]!
+  getDedicatedServerInfo: [DedicatedSeverInfo]!
   getNodeStats(node: String!): NodeStats!
   getServiceStats: [PodStats]!
 

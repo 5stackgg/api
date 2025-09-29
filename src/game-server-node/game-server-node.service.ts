@@ -16,6 +16,7 @@ import { Redis } from "ioredis";
 import { LoggingServiceService } from "./logging-service/logging-service.service";
 import { PassThrough } from "stream";
 import { SteamConfig } from "src/configs/types/SteamConfig";
+import { isJsonEqual } from "@utilities/isJsonEqual";
 
 @Injectable()
 export class GameServerNodeService {
@@ -126,6 +127,10 @@ export class GameServerNodeService {
       coresPerSocket: number;
       threadsPerCore: number;
     },
+    cpuGovernorInfo: {
+      governor: string;
+      cpus: Record<number, string>;
+    },
     nvidiaGPU: boolean,
     status: e_game_server_node_statuses_enum,
   ) {
@@ -145,6 +150,7 @@ export class GameServerNodeService {
         cpu_threads_per_core: true,
         supports_low_latency: true,
         supports_cpu_pinning: true,
+        cpu_governor_info: true,
       },
     });
 
@@ -163,6 +169,10 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.gpu !== nvidiaGPU ||
       game_server_nodes_by_pk.cpu_cores_per_socket !== cpuInfo.coresPerSocket ||
       game_server_nodes_by_pk.cpu_threads_per_core !== cpuInfo.threadsPerCore ||
+      !isJsonEqual(
+        game_server_nodes_by_pk.cpu_governor_info,
+        cpuGovernorInfo,
+      ) ||
       game_server_nodes_by_pk.token
     ) {
       await this.hasura.mutation({
@@ -182,6 +192,7 @@ export class GameServerNodeService {
               gpu: nvidiaGPU,
               cpu_cores_per_socket: cpuInfo.coresPerSocket,
               cpu_threads_per_core: cpuInfo.threadsPerCore,
+              cpu_governor_info: cpuGovernorInfo,
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
           },

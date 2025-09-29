@@ -46,6 +46,10 @@ export class GameServerNodeController {
     supportsLowLatency: boolean;
     supportsCpuPinning: boolean;
     nodeStats: NodeStats;
+    cpuGovernorInfo: {
+      governor: string;
+      cpus: Record<number, string>;
+    };
     podStats: Array<PodStats>;
     labels: Record<string, string>;
   }): Promise<void> {
@@ -66,6 +70,7 @@ export class GameServerNodeController {
       payload.supportsCpuPinning,
       payload.supportsLowLatency,
       payload.nodeStats.cpuInfo,
+      payload.cpuGovernorInfo,
       payload.nodeStats.nvidiaGPU,
       "Online",
     );

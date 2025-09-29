@@ -11,6 +11,9 @@
     "moduleResolution": "Node",
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@utilities/*": ["src/utilities/*"]
+    },
     "isolatedModules": true,
     "importHelpers": true,
     "incremental": true,
