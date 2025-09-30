@@ -1077,4 +1077,44 @@ export class MatchesController {
       success: true,
     };
   }
+
+  @HasuraAction()
+  public async swapLineups(data: { user: User; match_id: string }) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: {
+            id: data.match_id,
+          },
+          is_organizer: true,
+          lineup_1_id: true,
+          lineup_2_id: true,
+        },
+      },
+      data.user.steam_id,
+    );
+
+    if (!matches_by_pk.is_organizer) {
+      throw Error("not the match organizer");
+    }
+
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: {
+            id: data.match_id,
+          },
+          _set: {
+            lineup_1_id: matches_by_pk.lineup_2_id,
+            lineup_2_id: matches_by_pk.lineup_1_id,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  }
 }

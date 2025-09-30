@@ -133,9 +133,14 @@ export class SystemService {
     try {
       await this.restartDeployment(service);
     } catch (error) {
-      console.log(`Failed to rollout deployment ${service}, restarting pod ${pod}`, error);
-      if(pod) {
-        this.logger.warn(`Failed to rollout deployment ${service}, restarting pod ${pod}`);
+      console.log(
+        `Failed to rollout deployment ${service}, restarting pod ${pod}`,
+        error,
+      );
+      if (pod) {
+        this.logger.warn(
+          `Failed to rollout deployment ${service}, restarting pod ${pod}`,
+        );
         await this.restartPod(pod);
       }
     } finally {
