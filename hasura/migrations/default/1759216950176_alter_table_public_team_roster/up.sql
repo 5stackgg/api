@@ -10,12 +10,11 @@ create table if not exists "public"."e_team_roster_statuses" (
     primary key (value)
 );
 
-
 insert into e_team_roster_statuses ("value", "description") values
     ('Starter', 'Starter'),
     ('Substitute', 'Substitute'),
     ('Benched', 'Benched')
-on conflict(value) do update set "description" = EXCLUDED."description"
+on conflict(value) do update set "description" = EXCLUDED."description";
 
 alter table "public"."team_roster"
   add constraint "team_roster_status_fkey"
