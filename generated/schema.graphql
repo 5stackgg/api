@@ -9714,6 +9714,7 @@ type match_lineups {
   """An object relationship"""
   team: teams
   team_id: uuid
+  team_name: String
 
   """An object relationship"""
   v_match_lineup: v_match_lineups
@@ -9819,6 +9820,7 @@ input match_lineups_bool_exp {
   name: String_comparison_exp
   team: teams_bool_exp
   team_id: uuid_comparison_exp
+  team_name: String_comparison_exp
   v_match_lineup: v_match_lineups_bool_exp
 }
 
@@ -9851,6 +9853,7 @@ input match_lineups_insert_input {
   match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   team: teams_obj_rel_insert_input
   team_id: uuid
+  team_name: String
   v_match_lineup: v_match_lineups_obj_rel_insert_input
 }
 
@@ -9864,6 +9867,7 @@ type match_lineups_max_fields {
   """
   name: String
   team_id: uuid
+  team_name: String
 }
 
 """
@@ -9873,6 +9877,7 @@ input match_lineups_max_order_by {
   coach_steam_id: order_by
   id: order_by
   team_id: order_by
+  team_name: order_by
 }
 
 """aggregate min on columns"""
@@ -9885,6 +9890,7 @@ type match_lineups_min_fields {
   """
   name: String
   team_id: uuid
+  team_name: String
 }
 
 """
@@ -9894,6 +9900,7 @@ input match_lineups_min_order_by {
   coach_steam_id: order_by
   id: order_by
   team_id: order_by
+  team_name: order_by
 }
 
 """
@@ -9944,6 +9951,7 @@ input match_lineups_order_by {
   name: order_by
   team: teams_order_by
   team_id: order_by
+  team_name: order_by
   v_match_lineup: v_match_lineups_order_by
 }
 
@@ -9964,6 +9972,9 @@ enum match_lineups_select_column {
 
   """column name"""
   team_id
+
+  """column name"""
+  team_name
 }
 
 """
@@ -9973,6 +9984,7 @@ input match_lineups_set_input {
   coach_steam_id: bigint
   id: uuid
   team_id: uuid
+  team_name: String
 }
 
 """aggregate stddev on columns"""
@@ -10027,6 +10039,7 @@ input match_lineups_stream_cursor_value_input {
   coach_steam_id: bigint
   id: uuid
   team_id: uuid
+  team_name: String
 }
 
 """aggregate sum on columns"""
@@ -10053,6 +10066,9 @@ enum match_lineups_update_column {
 
   """column name"""
   team_id
+
+  """column name"""
+  team_name
 }
 
 input match_lineups_updates {
