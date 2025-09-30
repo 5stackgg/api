@@ -95,9 +95,10 @@ BEGIN
             (NEW.lobby_access IS DISTINCT FROM OLD.lobby_access) OR
             (NEW.invite_code IS DISTINCT FROM OLD.invite_code) OR
             (NEW.regions IS DISTINCT FROM OLD.regions) OR
-            (NEW.prefer_dedicated_server IS DISTINCT FROM OLD.prefer_dedicated_server)
+            (NEW.prefer_dedicated_server IS DISTINCT FROM OLD.prefer_dedicated_server) OR
+            (NEW.mr IS DISTINCT FROM OLD.mr AND _match_status = 'Live')
         THEN
-            RAISE EXCEPTION 'Only overtime, knife_round, mr, coaches, number_of_substitutes, timeout_setting, tech_timeout_setting, tv_delay, ready_setting can be modified during Live/Veto' USING ERRCODE = '22000';
+            RAISE EXCEPTION 'Cannot modify match options during Live/Veto' USING ERRCODE = '22000';
         END IF;
     END IF;
 
