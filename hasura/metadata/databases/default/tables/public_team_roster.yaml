@@ -20,15 +20,19 @@ insert_permissions:
                     - Admin
                     - Invite
       columns:
+        - coach
         - player_steam_id
+        - status
         - team_id
     comment: ""
 select_permissions:
   - role: user
     permission:
       columns:
+        - coach
         - player_steam_id
         - role
+        - status
         - team_id
       filter: {}
     comment: ""
@@ -36,23 +40,19 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - coach
         - role
+        - status
       filter:
-        _and:
-          - team:
-              roster:
-                role:
-                  _eq: Admin
-          - player_steam_id:
-              _neq: X-Hasura-User-Id
+        team:
+          roster:
+            role:
+              _eq: Admin
       check:
-        _and:
-          - team:
-              roster:
-                role:
-                  _eq: Admin
-          - player_steam_id:
-              _neq: X-Hasura-User-Id
+        team:
+          roster:
+            role:
+              _eq: Admin
     comment: ""
 delete_permissions:
   - role: user

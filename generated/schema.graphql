@@ -4510,6 +4510,180 @@ input e_team_roles_updates {
 }
 
 """
+columns and relationships of "e_team_roster_statuses"
+"""
+type e_team_roster_statuses {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_team_roster_statuses"
+"""
+type e_team_roster_statuses_aggregate {
+  aggregate: e_team_roster_statuses_aggregate_fields
+  nodes: [e_team_roster_statuses!]!
+}
+
+"""
+aggregate fields of "e_team_roster_statuses"
+"""
+type e_team_roster_statuses_aggregate_fields {
+  count(columns: [e_team_roster_statuses_select_column!], distinct: Boolean): Int!
+  max: e_team_roster_statuses_max_fields
+  min: e_team_roster_statuses_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_team_roster_statuses". All fields are combined with a logical 'AND'.
+"""
+input e_team_roster_statuses_bool_exp {
+  _and: [e_team_roster_statuses_bool_exp!]
+  _not: e_team_roster_statuses_bool_exp
+  _or: [e_team_roster_statuses_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_team_roster_statuses"
+"""
+enum e_team_roster_statuses_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_team_roster_statuses_pkey
+}
+
+enum e_team_roster_statuses_enum {
+  """Benched"""
+  Benched
+
+  """Starter"""
+  Starter
+
+  """Substitute"""
+  Substitute
+}
+
+"""
+Boolean expression to compare columns of type "e_team_roster_statuses_enum". All fields are combined with logical 'AND'.
+"""
+input e_team_roster_statuses_enum_comparison_exp {
+  _eq: e_team_roster_statuses_enum
+  _in: [e_team_roster_statuses_enum!]
+  _is_null: Boolean
+  _neq: e_team_roster_statuses_enum
+  _nin: [e_team_roster_statuses_enum!]
+}
+
+"""
+input type for inserting data into table "e_team_roster_statuses"
+"""
+input e_team_roster_statuses_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_team_roster_statuses_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_team_roster_statuses_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_team_roster_statuses"
+"""
+type e_team_roster_statuses_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_team_roster_statuses!]!
+}
+
+"""
+on_conflict condition type for table "e_team_roster_statuses"
+"""
+input e_team_roster_statuses_on_conflict {
+  constraint: e_team_roster_statuses_constraint!
+  update_columns: [e_team_roster_statuses_update_column!]! = []
+  where: e_team_roster_statuses_bool_exp
+}
+
+"""Ordering options when selecting data from "e_team_roster_statuses"."""
+input e_team_roster_statuses_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_team_roster_statuses"""
+input e_team_roster_statuses_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_team_roster_statuses"
+"""
+enum e_team_roster_statuses_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_team_roster_statuses"
+"""
+input e_team_roster_statuses_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_team_roster_statuses"
+"""
+input e_team_roster_statuses_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_team_roster_statuses_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_team_roster_statuses_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_team_roster_statuses"
+"""
+enum e_team_roster_statuses_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_team_roster_statuses_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_team_roster_statuses_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_team_roster_statuses_bool_exp!
+}
+
+"""
 columns and relationships of "e_timeout_settings"
 """
 type e_timeout_settings {
@@ -15762,6 +15936,19 @@ type mutation_root {
   delete_e_team_roles_by_pk(value: String!): e_team_roles
 
   """
+  delete data from the table: "e_team_roster_statuses"
+  """
+  delete_e_team_roster_statuses(
+    """filter the rows which have to be deleted"""
+    where: e_team_roster_statuses_bool_exp!
+  ): e_team_roster_statuses_mutation_response
+
+  """
+  delete single row from the table: "e_team_roster_statuses"
+  """
+  delete_e_team_roster_statuses_by_pk(value: String!): e_team_roster_statuses
+
+  """
   delete data from the table: "e_timeout_settings"
   """
   delete_e_timeout_settings(
@@ -16847,6 +17034,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_team_roles_on_conflict
   ): e_team_roles
+
+  """
+  insert data into the table: "e_team_roster_statuses"
+  """
+  insert_e_team_roster_statuses(
+    """the rows to be inserted"""
+    objects: [e_team_roster_statuses_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_team_roster_statuses_on_conflict
+  ): e_team_roster_statuses_mutation_response
+
+  """
+  insert a single row into the table: "e_team_roster_statuses"
+  """
+  insert_e_team_roster_statuses_one(
+    """the row to be inserted"""
+    object: e_team_roster_statuses_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_team_roster_statuses_on_conflict
+  ): e_team_roster_statuses
 
   """
   insert data into the table: "e_timeout_settings"
@@ -18555,6 +18764,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_team_roles_updates!]!
   ): [e_team_roles_mutation_response]
+
+  """
+  update data of the table: "e_team_roster_statuses"
+  """
+  update_e_team_roster_statuses(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_team_roster_statuses_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_team_roster_statuses_bool_exp!
+  ): e_team_roster_statuses_mutation_response
+
+  """
+  update single row of the table: "e_team_roster_statuses"
+  """
+  update_e_team_roster_statuses_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_team_roster_statuses_set_input
+    pk_columns: e_team_roster_statuses_pk_columns_input!
+  ): e_team_roster_statuses
+
+  """
+  update multiples rows of table: "e_team_roster_statuses"
+  """
+  update_e_team_roster_statuses_many(
+    """updates to execute, in order"""
+    updates: [e_team_roster_statuses_updates!]!
+  ): [e_team_roster_statuses_mutation_response]
 
   """
   update data of the table: "e_timeout_settings"
@@ -28442,6 +28679,51 @@ type query_root {
   e_team_roles_by_pk(value: String!): e_team_roles
 
   """
+  fetch data from the table: "e_team_roster_statuses"
+  """
+  e_team_roster_statuses(
+    """distinct select on columns"""
+    distinct_on: [e_team_roster_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_team_roster_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_team_roster_statuses_bool_exp
+  ): [e_team_roster_statuses!]!
+
+  """
+  fetch aggregated fields from the table: "e_team_roster_statuses"
+  """
+  e_team_roster_statuses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_team_roster_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_team_roster_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_team_roster_statuses_bool_exp
+  ): e_team_roster_statuses_aggregate!
+
+  """
+  fetch data from the table: "e_team_roster_statuses" using primary key columns
+  """
+  e_team_roster_statuses_by_pk(value: String!): e_team_roster_statuses
+
+  """
   fetch data from the table: "e_timeout_settings"
   """
   e_timeout_settings(
@@ -33479,6 +33761,65 @@ type subscription_root {
   ): [e_team_roles!]!
 
   """
+  fetch data from the table: "e_team_roster_statuses"
+  """
+  e_team_roster_statuses(
+    """distinct select on columns"""
+    distinct_on: [e_team_roster_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_team_roster_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_team_roster_statuses_bool_exp
+  ): [e_team_roster_statuses!]!
+
+  """
+  fetch aggregated fields from the table: "e_team_roster_statuses"
+  """
+  e_team_roster_statuses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_team_roster_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_team_roster_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_team_roster_statuses_bool_exp
+  ): e_team_roster_statuses_aggregate!
+
+  """
+  fetch data from the table: "e_team_roster_statuses" using primary key columns
+  """
+  e_team_roster_statuses_by_pk(value: String!): e_team_roster_statuses
+
+  """
+  fetch data from the table in a streaming manner: "e_team_roster_statuses"
+  """
+  e_team_roster_statuses_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_team_roster_statuses_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_team_roster_statuses_bool_exp
+  ): [e_team_roster_statuses!]!
+
+  """
   fetch data from the table: "e_timeout_settings"
   """
   e_timeout_settings(
@@ -37217,10 +37558,13 @@ input team_invites_variance_order_by {
 columns and relationships of "team_roster"
 """
 type team_roster {
+  coach: Boolean!
+
   """An object relationship"""
   player: players!
   player_steam_id: bigint!
   role: e_team_roles_enum!
+  status: e_team_roster_statuses_enum!
 
   """An object relationship"""
   team: teams!
@@ -37236,7 +37580,23 @@ type team_roster_aggregate {
 }
 
 input team_roster_aggregate_bool_exp {
+  bool_and: team_roster_aggregate_bool_exp_bool_and
+  bool_or: team_roster_aggregate_bool_exp_bool_or
   count: team_roster_aggregate_bool_exp_count
+}
+
+input team_roster_aggregate_bool_exp_bool_and {
+  arguments: team_roster_select_column_team_roster_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: team_roster_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input team_roster_aggregate_bool_exp_bool_or {
+  arguments: team_roster_select_column_team_roster_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: team_roster_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input team_roster_aggregate_bool_exp_count {
@@ -37309,9 +37669,11 @@ input team_roster_bool_exp {
   _and: [team_roster_bool_exp!]
   _not: team_roster_bool_exp
   _or: [team_roster_bool_exp!]
+  coach: Boolean_comparison_exp
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
   role: e_team_roles_enum_comparison_exp
+  status: e_team_roster_statuses_enum_comparison_exp
   team: teams_bool_exp
   team_id: uuid_comparison_exp
 }
@@ -37337,9 +37699,11 @@ input team_roster_inc_input {
 input type for inserting data into table "team_roster"
 """
 input team_roster_insert_input {
+  coach: Boolean
   player: players_obj_rel_insert_input
   player_steam_id: bigint
   role: e_team_roles_enum
+  status: e_team_roster_statuses_enum
   team: teams_obj_rel_insert_input
   team_id: uuid
 }
@@ -37394,9 +37758,11 @@ input team_roster_on_conflict {
 
 """Ordering options when selecting data from "team_roster"."""
 input team_roster_order_by {
+  coach: order_by
   player: players_order_by
   player_steam_id: order_by
   role: order_by
+  status: order_by
   team: teams_order_by
   team_id: order_by
 }
@@ -37412,21 +37778,45 @@ select columns of table "team_roster"
 """
 enum team_roster_select_column {
   """column name"""
+  coach
+
+  """column name"""
   player_steam_id
 
   """column name"""
   role
 
   """column name"""
+  status
+
+  """column name"""
   team_id
+}
+
+"""
+select "team_roster_aggregate_bool_exp_bool_and_arguments_columns" columns of table "team_roster"
+"""
+enum team_roster_select_column_team_roster_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  coach
+}
+
+"""
+select "team_roster_aggregate_bool_exp_bool_or_arguments_columns" columns of table "team_roster"
+"""
+enum team_roster_select_column_team_roster_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  coach
 }
 
 """
 input type for updating data in table "team_roster"
 """
 input team_roster_set_input {
+  coach: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
+  status: e_team_roster_statuses_enum
   team_id: uuid
 }
 
@@ -37479,8 +37869,10 @@ input team_roster_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input team_roster_stream_cursor_value_input {
+  coach: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
+  status: e_team_roster_statuses_enum
   team_id: uuid
 }
 
@@ -37501,10 +37893,16 @@ update columns of table "team_roster"
 """
 enum team_roster_update_column {
   """column name"""
+  coach
+
+  """column name"""
   player_steam_id
 
   """column name"""
   role
+
+  """column name"""
+  status
 
   """column name"""
   team_id
@@ -40041,6 +40439,9 @@ input tournament_team_invites_variance_order_by {
 columns and relationships of "tournament_team_roster"
 """
 type tournament_team_roster {
+  coach: Boolean!
+  core: Boolean!
+
   """An object relationship"""
   e_team_role: e_team_roles!
 
@@ -40048,6 +40449,7 @@ type tournament_team_roster {
   player: players!
   player_steam_id: bigint!
   role: e_team_roles_enum!
+  substitute: Boolean!
 
   """An object relationship"""
   tournament: tournaments!
@@ -40067,7 +40469,23 @@ type tournament_team_roster_aggregate {
 }
 
 input tournament_team_roster_aggregate_bool_exp {
+  bool_and: tournament_team_roster_aggregate_bool_exp_bool_and
+  bool_or: tournament_team_roster_aggregate_bool_exp_bool_or
   count: tournament_team_roster_aggregate_bool_exp_count
+}
+
+input tournament_team_roster_aggregate_bool_exp_bool_and {
+  arguments: tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: tournament_team_roster_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input tournament_team_roster_aggregate_bool_exp_bool_or {
+  arguments: tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: tournament_team_roster_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input tournament_team_roster_aggregate_bool_exp_count {
@@ -40140,10 +40558,13 @@ input tournament_team_roster_bool_exp {
   _and: [tournament_team_roster_bool_exp!]
   _not: tournament_team_roster_bool_exp
   _or: [tournament_team_roster_bool_exp!]
+  coach: Boolean_comparison_exp
+  core: Boolean_comparison_exp
   e_team_role: e_team_roles_bool_exp
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
   role: e_team_roles_enum_comparison_exp
+  substitute: Boolean_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
   tournament_team: tournament_teams_bool_exp
@@ -40176,10 +40597,13 @@ input tournament_team_roster_inc_input {
 input type for inserting data into table "tournament_team_roster"
 """
 input tournament_team_roster_insert_input {
+  coach: Boolean
+  core: Boolean
   e_team_role: e_team_roles_obj_rel_insert_input
   player: players_obj_rel_insert_input
   player_steam_id: bigint
   role: e_team_roles_enum
+  substitute: Boolean
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
   tournament_team: tournament_teams_obj_rel_insert_input
@@ -40240,10 +40664,13 @@ input tournament_team_roster_on_conflict {
 
 """Ordering options when selecting data from "tournament_team_roster"."""
 input tournament_team_roster_order_by {
+  coach: order_by
+  core: order_by
   e_team_role: e_team_roles_order_by
   player: players_order_by
   player_steam_id: order_by
   role: order_by
+  substitute: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
   tournament_team: tournament_teams_order_by
@@ -40261,10 +40688,19 @@ select columns of table "tournament_team_roster"
 """
 enum tournament_team_roster_select_column {
   """column name"""
+  coach
+
+  """column name"""
+  core
+
+  """column name"""
   player_steam_id
 
   """column name"""
   role
+
+  """column name"""
+  substitute
 
   """column name"""
   tournament_id
@@ -40274,11 +40710,42 @@ enum tournament_team_roster_select_column {
 }
 
 """
+select "tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_team_roster"
+"""
+enum tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  coach
+
+  """column name"""
+  core
+
+  """column name"""
+  substitute
+}
+
+"""
+select "tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_team_roster"
+"""
+enum tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  coach
+
+  """column name"""
+  core
+
+  """column name"""
+  substitute
+}
+
+"""
 input type for updating data in table "tournament_team_roster"
 """
 input tournament_team_roster_set_input {
+  coach: Boolean
+  core: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
+  substitute: Boolean
   tournament_id: uuid
   tournament_team_id: uuid
 }
@@ -40332,8 +40799,11 @@ input tournament_team_roster_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_team_roster_stream_cursor_value_input {
+  coach: Boolean
+  core: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
+  substitute: Boolean
   tournament_id: uuid
   tournament_team_id: uuid
 }
@@ -40355,10 +40825,19 @@ update columns of table "tournament_team_roster"
 """
 enum tournament_team_roster_update_column {
   """column name"""
+  coach
+
+  """column name"""
+  core
+
+  """column name"""
   player_steam_id
 
   """column name"""
   role
+
+  """column name"""
+  substitute
 
   """column name"""
   tournament_id

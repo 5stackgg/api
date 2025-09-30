@@ -19,6 +19,7 @@
 - "!include public_e_server_types.yaml"
 - "!include public_e_sides.yaml"
 - "!include public_e_team_roles.yaml"
+- "!include public_e_team_roster_statuses.yaml"
 - "!include public_e_timeout_settings.yaml"
 - "!include public_e_tournament_stage_types.yaml"
 - "!include public_e_tournament_status.yaml"

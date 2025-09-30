@@ -1609,6 +1609,71 @@ export type e_team_roles_select_column = 'description' | 'value'
 export type e_team_roles_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_team_roster_statuses" */
+export interface e_team_roster_statuses {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_team_roster_statuses'
+}
+
+
+/** aggregated selection of "e_team_roster_statuses" */
+export interface e_team_roster_statuses_aggregate {
+    aggregate: (e_team_roster_statuses_aggregate_fields | null)
+    nodes: e_team_roster_statuses[]
+    __typename: 'e_team_roster_statuses_aggregate'
+}
+
+
+/** aggregate fields of "e_team_roster_statuses" */
+export interface e_team_roster_statuses_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_team_roster_statuses_max_fields | null)
+    min: (e_team_roster_statuses_min_fields | null)
+    __typename: 'e_team_roster_statuses_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_team_roster_statuses" */
+export type e_team_roster_statuses_constraint = 'e_team_roster_statuses_pkey'
+
+export type e_team_roster_statuses_enum = 'Benched' | 'Starter' | 'Substitute'
+
+
+/** aggregate max on columns */
+export interface e_team_roster_statuses_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_team_roster_statuses_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_team_roster_statuses_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_team_roster_statuses_min_fields'
+}
+
+
+/** response of any mutation on the table "e_team_roster_statuses" */
+export interface e_team_roster_statuses_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_team_roster_statuses[]
+    __typename: 'e_team_roster_statuses_mutation_response'
+}
+
+
+/** select columns of table "e_team_roster_statuses" */
+export type e_team_roster_statuses_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_team_roster_statuses" */
+export type e_team_roster_statuses_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_timeout_settings" */
 export interface e_timeout_settings {
     description: Scalars['String']
@@ -5086,6 +5151,10 @@ export interface mutation_root {
     delete_e_team_roles: (e_team_roles_mutation_response | null)
     /** delete single row from the table: "e_team_roles" */
     delete_e_team_roles_by_pk: (e_team_roles | null)
+    /** delete data from the table: "e_team_roster_statuses" */
+    delete_e_team_roster_statuses: (e_team_roster_statuses_mutation_response | null)
+    /** delete single row from the table: "e_team_roster_statuses" */
+    delete_e_team_roster_statuses_by_pk: (e_team_roster_statuses | null)
     /** delete data from the table: "e_timeout_settings" */
     delete_e_timeout_settings: (e_timeout_settings_mutation_response | null)
     /** delete single row from the table: "e_timeout_settings" */
@@ -5363,6 +5432,10 @@ export interface mutation_root {
     insert_e_team_roles: (e_team_roles_mutation_response | null)
     /** insert a single row into the table: "e_team_roles" */
     insert_e_team_roles_one: (e_team_roles | null)
+    /** insert data into the table: "e_team_roster_statuses" */
+    insert_e_team_roster_statuses: (e_team_roster_statuses_mutation_response | null)
+    /** insert a single row into the table: "e_team_roster_statuses" */
+    insert_e_team_roster_statuses_one: (e_team_roster_statuses | null)
     /** insert data into the table: "e_timeout_settings" */
     insert_e_timeout_settings: (e_timeout_settings_mutation_response | null)
     /** insert a single row into the table: "e_timeout_settings" */
@@ -5715,6 +5788,12 @@ export interface mutation_root {
     update_e_team_roles_by_pk: (e_team_roles | null)
     /** update multiples rows of table: "e_team_roles" */
     update_e_team_roles_many: ((e_team_roles_mutation_response | null)[] | null)
+    /** update data of the table: "e_team_roster_statuses" */
+    update_e_team_roster_statuses: (e_team_roster_statuses_mutation_response | null)
+    /** update single row of the table: "e_team_roster_statuses" */
+    update_e_team_roster_statuses_by_pk: (e_team_roster_statuses | null)
+    /** update multiples rows of table: "e_team_roster_statuses" */
+    update_e_team_roster_statuses_many: ((e_team_roster_statuses_mutation_response | null)[] | null)
     /** update data of the table: "e_timeout_settings" */
     update_e_timeout_settings: (e_timeout_settings_mutation_response | null)
     /** update single row of the table: "e_timeout_settings" */
@@ -8504,6 +8583,12 @@ export interface query_root {
     e_team_roles_aggregate: e_team_roles_aggregate
     /** fetch data from the table: "e_team_roles" using primary key columns */
     e_team_roles_by_pk: (e_team_roles | null)
+    /** fetch data from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses: e_team_roster_statuses[]
+    /** fetch aggregated fields from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses_aggregate: e_team_roster_statuses_aggregate
+    /** fetch data from the table: "e_team_roster_statuses" using primary key columns */
+    e_team_roster_statuses_by_pk: (e_team_roster_statuses | null)
     /** fetch data from the table: "e_timeout_settings" */
     e_timeout_settings: e_timeout_settings[]
     /** fetch aggregated fields from the table: "e_timeout_settings" */
@@ -9479,6 +9564,14 @@ export interface subscription_root {
     e_team_roles_by_pk: (e_team_roles | null)
     /** fetch data from the table in a streaming manner: "e_team_roles" */
     e_team_roles_stream: e_team_roles[]
+    /** fetch data from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses: e_team_roster_statuses[]
+    /** fetch aggregated fields from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses_aggregate: e_team_roster_statuses_aggregate
+    /** fetch data from the table: "e_team_roster_statuses" using primary key columns */
+    e_team_roster_statuses_by_pk: (e_team_roster_statuses | null)
+    /** fetch data from the table in a streaming manner: "e_team_roster_statuses" */
+    e_team_roster_statuses_stream: e_team_roster_statuses[]
     /** fetch data from the table: "e_timeout_settings" */
     e_timeout_settings: e_timeout_settings[]
     /** fetch aggregated fields from the table: "e_timeout_settings" */
@@ -10083,10 +10176,12 @@ export interface team_invites_variance_fields {
 
 /** columns and relationships of "team_roster" */
 export interface team_roster {
+    coach: Scalars['Boolean']
     /** An object relationship */
     player: players
     player_steam_id: Scalars['bigint']
     role: e_team_roles_enum
+    status: e_team_roster_statuses_enum
     /** An object relationship */
     team: teams
     team_id: Scalars['uuid']
@@ -10157,7 +10252,15 @@ export interface team_roster_mutation_response {
 
 
 /** select columns of table "team_roster" */
-export type team_roster_select_column = 'player_steam_id' | 'role' | 'team_id'
+export type team_roster_select_column = 'coach' | 'player_steam_id' | 'role' | 'status' | 'team_id'
+
+
+/** select "team_roster_aggregate_bool_exp_bool_and_arguments_columns" columns of table "team_roster" */
+export type team_roster_select_column_team_roster_aggregate_bool_exp_bool_and_arguments_columns = 'coach'
+
+
+/** select "team_roster_aggregate_bool_exp_bool_or_arguments_columns" columns of table "team_roster" */
+export type team_roster_select_column_team_roster_aggregate_bool_exp_bool_or_arguments_columns = 'coach'
 
 
 /** aggregate stddev on columns */
@@ -10189,7 +10292,7 @@ export interface team_roster_sum_fields {
 
 
 /** update columns of table "team_roster" */
-export type team_roster_update_column = 'player_steam_id' | 'role' | 'team_id'
+export type team_roster_update_column = 'coach' | 'player_steam_id' | 'role' | 'status' | 'team_id'
 
 
 /** aggregate var_pop on columns */
@@ -11015,12 +11118,15 @@ export interface tournament_team_invites_variance_fields {
 
 /** columns and relationships of "tournament_team_roster" */
 export interface tournament_team_roster {
+    coach: Scalars['Boolean']
+    core: Scalars['Boolean']
     /** An object relationship */
     e_team_role: e_team_roles
     /** An object relationship */
     player: players
     player_steam_id: Scalars['bigint']
     role: e_team_roles_enum
+    substitute: Scalars['Boolean']
     /** An object relationship */
     tournament: tournaments
     tournament_id: Scalars['uuid']
@@ -11096,7 +11202,15 @@ export interface tournament_team_roster_mutation_response {
 
 
 /** select columns of table "tournament_team_roster" */
-export type tournament_team_roster_select_column = 'player_steam_id' | 'role' | 'tournament_id' | 'tournament_team_id'
+export type tournament_team_roster_select_column = 'coach' | 'core' | 'player_steam_id' | 'role' | 'substitute' | 'tournament_id' | 'tournament_team_id'
+
+
+/** select "tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_team_roster" */
+export type tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns = 'coach' | 'core' | 'substitute'
+
+
+/** select "tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_team_roster" */
+export type tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns = 'coach' | 'core' | 'substitute'
 
 
 /** aggregate stddev on columns */
@@ -11128,7 +11242,7 @@ export interface tournament_team_roster_sum_fields {
 
 
 /** update columns of table "tournament_team_roster" */
-export type tournament_team_roster_update_column = 'player_steam_id' | 'role' | 'tournament_id' | 'tournament_team_id'
+export type tournament_team_roster_update_column = 'coach' | 'core' | 'player_steam_id' | 'role' | 'substitute' | 'tournament_id' | 'tournament_team_id'
 
 
 /** aggregate var_pop on columns */
@@ -15531,6 +15645,109 @@ export interface e_team_roles_updates {
 _set?: (e_team_roles_set_input | null),
 /** filter the rows which have to be updated */
 where: e_team_roles_bool_exp}
+
+
+/** columns and relationships of "e_team_roster_statuses" */
+export interface e_team_roster_statusesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_team_roster_statuses" */
+export interface e_team_roster_statuses_aggregateGenqlSelection{
+    aggregate?: e_team_roster_statuses_aggregate_fieldsGenqlSelection
+    nodes?: e_team_roster_statusesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_team_roster_statuses" */
+export interface e_team_roster_statuses_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_team_roster_statuses_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_team_roster_statuses_max_fieldsGenqlSelection
+    min?: e_team_roster_statuses_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_team_roster_statuses". All fields are combined with a logical 'AND'. */
+export interface e_team_roster_statuses_bool_exp {_and?: (e_team_roster_statuses_bool_exp[] | null),_not?: (e_team_roster_statuses_bool_exp | null),_or?: (e_team_roster_statuses_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_team_roster_statuses_enum". All fields are combined with logical 'AND'. */
+export interface e_team_roster_statuses_enum_comparison_exp {_eq?: (e_team_roster_statuses_enum | null),_in?: (e_team_roster_statuses_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_team_roster_statuses_enum | null),_nin?: (e_team_roster_statuses_enum[] | null)}
+
+
+/** input type for inserting data into table "e_team_roster_statuses" */
+export interface e_team_roster_statuses_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_team_roster_statuses_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_team_roster_statuses_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_team_roster_statuses" */
+export interface e_team_roster_statuses_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_team_roster_statusesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_team_roster_statuses" */
+export interface e_team_roster_statuses_on_conflict {constraint: e_team_roster_statuses_constraint,update_columns?: e_team_roster_statuses_update_column[],where?: (e_team_roster_statuses_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_team_roster_statuses". */
+export interface e_team_roster_statuses_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_team_roster_statuses */
+export interface e_team_roster_statuses_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_team_roster_statuses" */
+export interface e_team_roster_statuses_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_team_roster_statuses" */
+export interface e_team_roster_statuses_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_team_roster_statuses_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_team_roster_statuses_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_team_roster_statuses_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_team_roster_statuses_set_input | null),
+/** filter the rows which have to be updated */
+where: e_team_roster_statuses_bool_exp}
 
 
 /** columns and relationships of "e_timeout_settings" */
@@ -21642,6 +21859,12 @@ export interface mutation_rootGenqlSelection{
     where: e_team_roles_bool_exp} })
     /** delete single row from the table: "e_team_roles" */
     delete_e_team_roles_by_pk?: (e_team_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_team_roster_statuses" */
+    delete_e_team_roster_statuses?: (e_team_roster_statuses_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_team_roster_statuses_bool_exp} })
+    /** delete single row from the table: "e_team_roster_statuses" */
+    delete_e_team_roster_statuses_by_pk?: (e_team_roster_statusesGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_timeout_settings" */
     delete_e_timeout_settings?: (e_timeout_settings_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -22185,6 +22408,18 @@ export interface mutation_rootGenqlSelection{
     object: e_team_roles_insert_input, 
     /** upsert condition */
     on_conflict?: (e_team_roles_on_conflict | null)} })
+    /** insert data into the table: "e_team_roster_statuses" */
+    insert_e_team_roster_statuses?: (e_team_roster_statuses_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_team_roster_statuses_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_team_roster_statuses_on_conflict | null)} })
+    /** insert a single row into the table: "e_team_roster_statuses" */
+    insert_e_team_roster_statuses_one?: (e_team_roster_statusesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_team_roster_statuses_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_team_roster_statuses_on_conflict | null)} })
     /** insert data into the table: "e_timeout_settings" */
     insert_e_timeout_settings?: (e_timeout_settings_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -23093,6 +23328,20 @@ export interface mutation_rootGenqlSelection{
     update_e_team_roles_many?: (e_team_roles_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_team_roles_updates[]} })
+    /** update data of the table: "e_team_roster_statuses" */
+    update_e_team_roster_statuses?: (e_team_roster_statuses_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_team_roster_statuses_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_team_roster_statuses_bool_exp} })
+    /** update single row of the table: "e_team_roster_statuses" */
+    update_e_team_roster_statuses_by_pk?: (e_team_roster_statusesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_team_roster_statuses_set_input | null), pk_columns: e_team_roster_statuses_pk_columns_input} })
+    /** update multiples rows of table: "e_team_roster_statuses" */
+    update_e_team_roster_statuses_many?: (e_team_roster_statuses_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_team_roster_statuses_updates[]} })
     /** update data of the table: "e_timeout_settings" */
     update_e_timeout_settings?: (e_timeout_settings_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -28641,6 +28890,32 @@ export interface query_rootGenqlSelection{
     where?: (e_team_roles_bool_exp | null)} })
     /** fetch data from the table: "e_team_roles" using primary key columns */
     e_team_roles_by_pk?: (e_team_rolesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses?: (e_team_roster_statusesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_team_roster_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_team_roster_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_team_roster_statuses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses_aggregate?: (e_team_roster_statuses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_team_roster_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_team_roster_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_team_roster_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_team_roster_statuses" using primary key columns */
+    e_team_roster_statuses_by_pk?: (e_team_roster_statusesGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_timeout_settings" */
     e_timeout_settings?: (e_timeout_settingsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -31569,6 +31844,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_team_roles_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_team_roles_bool_exp | null)} })
+    /** fetch data from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses?: (e_team_roster_statusesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_team_roster_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_team_roster_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_team_roster_statuses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_team_roster_statuses" */
+    e_team_roster_statuses_aggregate?: (e_team_roster_statuses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_team_roster_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_team_roster_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_team_roster_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_team_roster_statuses" using primary key columns */
+    e_team_roster_statuses_by_pk?: (e_team_roster_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_team_roster_statuses" */
+    e_team_roster_statuses_stream?: (e_team_roster_statusesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_team_roster_statuses_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_team_roster_statuses_bool_exp | null)} })
     /** fetch data from the table: "e_timeout_settings" */
     e_timeout_settings?: (e_timeout_settingsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -33838,10 +34147,12 @@ export interface team_invites_variance_order_by {invited_by_player_steam_id?: (o
 
 /** columns and relationships of "team_roster" */
 export interface team_rosterGenqlSelection{
+    coach?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
     player_steam_id?: boolean | number
     role?: boolean | number
+    status?: boolean | number
     /** An object relationship */
     team?: teamsGenqlSelection
     team_id?: boolean | number
@@ -33858,7 +34169,11 @@ export interface team_roster_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface team_roster_aggregate_bool_exp {count?: (team_roster_aggregate_bool_exp_count | null)}
+export interface team_roster_aggregate_bool_exp {bool_and?: (team_roster_aggregate_bool_exp_bool_and | null),bool_or?: (team_roster_aggregate_bool_exp_bool_or | null),count?: (team_roster_aggregate_bool_exp_count | null)}
+
+export interface team_roster_aggregate_bool_exp_bool_and {arguments: team_roster_select_column_team_roster_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (team_roster_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface team_roster_aggregate_bool_exp_bool_or {arguments: team_roster_select_column_team_roster_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (team_roster_bool_exp | null),predicate: Boolean_comparison_exp}
 
 export interface team_roster_aggregate_bool_exp_count {arguments?: (team_roster_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (team_roster_bool_exp | null),predicate: Int_comparison_exp}
 
@@ -33904,7 +34219,7 @@ export interface team_roster_avg_order_by {player_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "team_roster". All fields are combined with a logical 'AND'. */
-export interface team_roster_bool_exp {_and?: (team_roster_bool_exp[] | null),_not?: (team_roster_bool_exp | null),_or?: (team_roster_bool_exp[] | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),role?: (e_team_roles_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null)}
+export interface team_roster_bool_exp {_and?: (team_roster_bool_exp[] | null),_not?: (team_roster_bool_exp | null),_or?: (team_roster_bool_exp[] | null),coach?: (Boolean_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),role?: (e_team_roles_enum_comparison_exp | null),status?: (e_team_roster_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "team_roster" */
@@ -33912,7 +34227,7 @@ export interface team_roster_inc_input {player_steam_id?: (Scalars['bigint'] | n
 
 
 /** input type for inserting data into table "team_roster" */
-export interface team_roster_insert_input {player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null)}
+export interface team_roster_insert_input {coach?: (Scalars['Boolean'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),status?: (e_team_roster_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -33957,7 +34272,7 @@ export interface team_roster_on_conflict {constraint: team_roster_constraint,upd
 
 
 /** Ordering options when selecting data from "team_roster". */
-export interface team_roster_order_by {player?: (players_order_by | null),player_steam_id?: (order_by | null),role?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null)}
+export interface team_roster_order_by {coach?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),role?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null)}
 
 
 /** primary key columns input for table: team_roster */
@@ -33965,7 +34280,7 @@ export interface team_roster_pk_columns_input {player_steam_id: Scalars['bigint'
 
 
 /** input type for updating data in table "team_roster" */
-export interface team_roster_set_input {player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),team_id?: (Scalars['uuid'] | null)}
+export interface team_roster_set_input {coach?: (Scalars['Boolean'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),status?: (e_team_roster_statuses_enum | null),team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -34013,7 +34328,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface team_roster_stream_cursor_value_input {player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),team_id?: (Scalars['uuid'] | null)}
+export interface team_roster_stream_cursor_value_input {coach?: (Scalars['Boolean'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),status?: (e_team_roster_statuses_enum | null),team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -35548,12 +35863,15 @@ export interface tournament_team_invites_variance_order_by {invited_by_player_st
 
 /** columns and relationships of "tournament_team_roster" */
 export interface tournament_team_rosterGenqlSelection{
+    coach?: boolean | number
+    core?: boolean | number
     /** An object relationship */
     e_team_role?: e_team_rolesGenqlSelection
     /** An object relationship */
     player?: playersGenqlSelection
     player_steam_id?: boolean | number
     role?: boolean | number
+    substitute?: boolean | number
     /** An object relationship */
     tournament?: tournamentsGenqlSelection
     tournament_id?: boolean | number
@@ -35573,7 +35891,11 @@ export interface tournament_team_roster_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface tournament_team_roster_aggregate_bool_exp {count?: (tournament_team_roster_aggregate_bool_exp_count | null)}
+export interface tournament_team_roster_aggregate_bool_exp {bool_and?: (tournament_team_roster_aggregate_bool_exp_bool_and | null),bool_or?: (tournament_team_roster_aggregate_bool_exp_bool_or | null),count?: (tournament_team_roster_aggregate_bool_exp_count | null)}
+
+export interface tournament_team_roster_aggregate_bool_exp_bool_and {arguments: tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_team_roster_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface tournament_team_roster_aggregate_bool_exp_bool_or {arguments: tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_team_roster_bool_exp | null),predicate: Boolean_comparison_exp}
 
 export interface tournament_team_roster_aggregate_bool_exp_count {arguments?: (tournament_team_roster_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_team_roster_bool_exp | null),predicate: Int_comparison_exp}
 
@@ -35619,7 +35941,7 @@ export interface tournament_team_roster_avg_order_by {player_steam_id?: (order_b
 
 
 /** Boolean expression to filter rows from the table "tournament_team_roster". All fields are combined with a logical 'AND'. */
-export interface tournament_team_roster_bool_exp {_and?: (tournament_team_roster_bool_exp[] | null),_not?: (tournament_team_roster_bool_exp | null),_or?: (tournament_team_roster_bool_exp[] | null),e_team_role?: (e_team_roles_bool_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),role?: (e_team_roles_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
+export interface tournament_team_roster_bool_exp {_and?: (tournament_team_roster_bool_exp[] | null),_not?: (tournament_team_roster_bool_exp | null),_or?: (tournament_team_roster_bool_exp[] | null),coach?: (Boolean_comparison_exp | null),core?: (Boolean_comparison_exp | null),e_team_role?: (e_team_roles_bool_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),role?: (e_team_roles_enum_comparison_exp | null),substitute?: (Boolean_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_team_roster" */
@@ -35627,7 +35949,7 @@ export interface tournament_team_roster_inc_input {player_steam_id?: (Scalars['b
 
 
 /** input type for inserting data into table "tournament_team_roster" */
-export interface tournament_team_roster_insert_input {e_team_role?: (e_team_roles_obj_rel_insert_input | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
+export interface tournament_team_roster_insert_input {coach?: (Scalars['Boolean'] | null),core?: (Scalars['Boolean'] | null),e_team_role?: (e_team_roles_obj_rel_insert_input | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),substitute?: (Scalars['Boolean'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -35674,7 +35996,7 @@ export interface tournament_team_roster_on_conflict {constraint: tournament_team
 
 
 /** Ordering options when selecting data from "tournament_team_roster". */
-export interface tournament_team_roster_order_by {e_team_role?: (e_team_roles_order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),role?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
+export interface tournament_team_roster_order_by {coach?: (order_by | null),core?: (order_by | null),e_team_role?: (e_team_roles_order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),role?: (order_by | null),substitute?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_team_roster */
@@ -35682,7 +36004,7 @@ export interface tournament_team_roster_pk_columns_input {player_steam_id: Scala
 
 
 /** input type for updating data in table "tournament_team_roster" */
-export interface tournament_team_roster_set_input {player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+export interface tournament_team_roster_set_input {coach?: (Scalars['Boolean'] | null),core?: (Scalars['Boolean'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),substitute?: (Scalars['Boolean'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -35730,7 +36052,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_team_roster_stream_cursor_value_input {player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+export interface tournament_team_roster_stream_cursor_value_input {coach?: (Scalars['Boolean'] | null),core?: (Scalars['Boolean'] | null),player_steam_id?: (Scalars['bigint'] | null),role?: (e_team_roles_enum | null),substitute?: (Scalars['Boolean'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -39381,6 +39703,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_team_roles_mutation_response = (obj?: { __typename?: any } | null): obj is e_team_roles_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roles_mutation_response"')
       return e_team_roles_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_team_roster_statuses_possibleTypes: string[] = ['e_team_roster_statuses']
+    export const ise_team_roster_statuses = (obj?: { __typename?: any } | null): obj is e_team_roster_statuses => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roster_statuses"')
+      return e_team_roster_statuses_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_team_roster_statuses_aggregate_possibleTypes: string[] = ['e_team_roster_statuses_aggregate']
+    export const ise_team_roster_statuses_aggregate = (obj?: { __typename?: any } | null): obj is e_team_roster_statuses_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roster_statuses_aggregate"')
+      return e_team_roster_statuses_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_team_roster_statuses_aggregate_fields_possibleTypes: string[] = ['e_team_roster_statuses_aggregate_fields']
+    export const ise_team_roster_statuses_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_team_roster_statuses_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roster_statuses_aggregate_fields"')
+      return e_team_roster_statuses_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_team_roster_statuses_max_fields_possibleTypes: string[] = ['e_team_roster_statuses_max_fields']
+    export const ise_team_roster_statuses_max_fields = (obj?: { __typename?: any } | null): obj is e_team_roster_statuses_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roster_statuses_max_fields"')
+      return e_team_roster_statuses_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_team_roster_statuses_min_fields_possibleTypes: string[] = ['e_team_roster_statuses_min_fields']
+    export const ise_team_roster_statuses_min_fields = (obj?: { __typename?: any } | null): obj is e_team_roster_statuses_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roster_statuses_min_fields"')
+      return e_team_roster_statuses_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_team_roster_statuses_mutation_response_possibleTypes: string[] = ['e_team_roster_statuses_mutation_response']
+    export const ise_team_roster_statuses_mutation_response = (obj?: { __typename?: any } | null): obj is e_team_roster_statuses_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_team_roster_statuses_mutation_response"')
+      return e_team_roster_statuses_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -45604,6 +45974,26 @@ export const enumETeamRolesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumETeamRosterStatusesConstraint = {
+   e_team_roster_statuses_pkey: 'e_team_roster_statuses_pkey' as const
+}
+
+export const enumETeamRosterStatusesEnum = {
+   Benched: 'Benched' as const,
+   Starter: 'Starter' as const,
+   Substitute: 'Substitute' as const
+}
+
+export const enumETeamRosterStatusesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumETeamRosterStatusesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumETimeoutSettingsConstraint = {
    e_timeout_settings_pkey: 'e_timeout_settings_pkey' as const
 }
@@ -46754,14 +47144,26 @@ export const enumTeamRosterConstraint = {
 }
 
 export const enumTeamRosterSelectColumn = {
+   coach: 'coach' as const,
    player_steam_id: 'player_steam_id' as const,
    role: 'role' as const,
+   status: 'status' as const,
    team_id: 'team_id' as const
 }
 
+export const enumTeamRosterSelectColumnTeamRosterAggregateBoolExpBoolAndArgumentsColumns = {
+   coach: 'coach' as const
+}
+
+export const enumTeamRosterSelectColumnTeamRosterAggregateBoolExpBoolOrArgumentsColumns = {
+   coach: 'coach' as const
+}
+
 export const enumTeamRosterUpdateColumn = {
+   coach: 'coach' as const,
    player_steam_id: 'player_steam_id' as const,
    role: 'role' as const,
+   status: 'status' as const,
    team_id: 'team_id' as const
 }
 
@@ -46894,15 +47296,33 @@ export const enumTournamentTeamRosterConstraint = {
 }
 
 export const enumTournamentTeamRosterSelectColumn = {
+   coach: 'coach' as const,
+   core: 'core' as const,
    player_steam_id: 'player_steam_id' as const,
    role: 'role' as const,
+   substitute: 'substitute' as const,
    tournament_id: 'tournament_id' as const,
    tournament_team_id: 'tournament_team_id' as const
 }
 
+export const enumTournamentTeamRosterSelectColumnTournamentTeamRosterAggregateBoolExpBoolAndArgumentsColumns = {
+   coach: 'coach' as const,
+   core: 'core' as const,
+   substitute: 'substitute' as const
+}
+
+export const enumTournamentTeamRosterSelectColumnTournamentTeamRosterAggregateBoolExpBoolOrArgumentsColumns = {
+   coach: 'coach' as const,
+   core: 'core' as const,
+   substitute: 'substitute' as const
+}
+
 export const enumTournamentTeamRosterUpdateColumn = {
+   coach: 'coach' as const,
+   core: 'core' as const,
    player_steam_id: 'player_steam_id' as const,
    role: 'role' as const,
+   substitute: 'substitute' as const,
    tournament_id: 'tournament_id' as const,
    tournament_team_id: 'tournament_team_id' as const
 }

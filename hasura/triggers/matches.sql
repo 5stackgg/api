@@ -76,10 +76,59 @@ DECLARE
     available_regions text[];
     _lobby_id UUID;
     lobby_players bigint[];
+
+    lineup_1_team_id UUID;
+    lineup_2_team_id UUID;
+
+    lineup_1_player_count int;
+    lineup_2_player_count int;
+    member RECORD;
+    i RECORD;
 BEGIN
    PERFORM setup_match_maps(NEW.id, NEW.match_options_id);
 
    IF NOT is_tournament_match(NEW) THEN
+       SELECT match_max_players_per_lineup(NEW) INTO _max_players_per_lineup;
+
+       select team_id into lineup_1_team_id from match_lineups where id = NEW.lineup_1_id;
+       select team_id into lineup_2_team_id from match_lineups where id = NEW.lineup_2_id;
+
+       IF lineup_1_team_id IS NOT NULL THEN
+            FOR member IN
+            SELECT * FROM team_roster
+            WHERE team_id = lineup_1_team_id
+            ORDER BY
+                CASE status
+                    WHEN 'Starter' THEN 1
+                    WHEN 'Substitute' THEN 2
+                    WHEN 'Benched' THEN 3
+                    ELSE 4
+                END
+            LIMIT _max_players_per_lineup
+            LOOP
+                INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+                VALUES (NEW.lineup_1_id, member.player_steam_id);
+            END LOOP;
+       END IF;
+
+        IF lineup_2_team_id IS NOT NULL THEN
+            FOR member IN
+            SELECT * FROM team_roster
+            WHERE team_id = lineup_2_team_id
+            ORDER BY
+                CASE status
+                    WHEN 'Starter' THEN 1
+                    WHEN 'Substitute' THEN 2
+                    WHEN 'Benched' THEN 3
+                    ELSE 4
+                END
+            LIMIT _max_players_per_lineup
+            LOOP
+                INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+                VALUES (NEW.lineup_2_id, member.player_steam_id);
+            END LOOP;
+       END IF;
+       
         SELECT l.id INTO _lobby_id
             FROM lobbies l
             INNER JOIN lobby_players lp ON lp.lobby_id = l.id
@@ -87,33 +136,50 @@ BEGIN
             lp.steam_id = (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint
             AND lp.status = 'Accepted';  
 
-        IF (_lobby_id IS NOT NULL) THEN
+
+        IF (_lobby_id IS NOT NULL AND (lineup_1_team_id IS NULL OR lineup_2_team_id IS NULL)) THEN
             SELECT array_agg(lp.steam_id) INTO lobby_players 
                 FROM lobby_players lp
                 WHERE lp.lobby_id = _lobby_id
                 AND lp.status = 'Accepted';
 
-            SELECT match_max_players_per_lineup(NEW) INTO _max_players_per_lineup;
-
-            IF array_length(lobby_players, 1) > _max_players_per_lineup * 2 THEN
+            IF lineup_1_team_id IS NOT NULL OR lineup_2_team_id IS NOT NULL THEN
+                IF array_length(lobby_players, 1) > _max_players_per_lineup THEN
+                    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Too many players in lobby - maximum ' || (_max_players_per_lineup) || ' players allowed';
+                END IF;
+            ELSIF array_length(lobby_players, 1) > _max_players_per_lineup * 2 THEN
                 RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Too many players in lobby - maximum ' || (_max_players_per_lineup * 2) || ' players allowed';
             END IF;
-
-            WITH numbered_players AS (
-                SELECT steam_id, row_number() OVER () as rn, 
+            
+            FOR i IN
+                SELECT steam_id, row_number() OVER () as rn,
                        count(*) OVER () as total
                 FROM unnest(lobby_players) as steam_id
-            )
-            INSERT INTO match_lineup_players(match_lineup_id, steam_id)
-            SELECT 
-                CASE 
-                    WHEN rn <= (total + 1) / 2 THEN NEW.lineup_1_id 
-                    ELSE NEW.lineup_2_id
-                END,
-                steam_id
-            FROM numbered_players;
+            LOOP
 
-        ELSIF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' THEN
+                IF lineup_1_team_id IS NULL AND lineup_2_team_id IS NOT NULL THEN
+                     INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+                    VALUES (NEW.lineup_1_id, i.steam_id);
+                    continue;
+                END IF;
+
+                IF lineup_2_team_id IS NULL AND lineup_1_team_id IS NOT NULL THEN
+                    INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+                    VALUES (NEW.lineup_2_id, i.steam_id);
+                    continue;
+                END IF;
+
+               IF i.rn <= (i.total + 1) / 2 THEN
+                INSERT INTO match_lineup_players(match_lineup_id, steam_id)
+                VALUES (NEW.lineup_1_id, i.steam_id);
+               ELSE
+                INSERT INTO match_lineup_players(match_lineup_id, steam_id)
+                VALUES (NEW.lineup_2_id, i.steam_id);
+               END IF;
+
+            END LOOP;
+
+        ELSIF (lineup_1_team_id IS NULL AND lineup_2_team_id IS NULL AND (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin') THEN
             INSERT INTO match_lineup_players(match_lineup_id, steam_id)
             VALUES (NEW.lineup_1_id, (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint);
         END IF;
