@@ -29,6 +29,15 @@ export class SystemController {
   }
 
   @HasuraAction()
+  public async restartService(data: { service: string }) {
+    await this.system.restartService(data.service);
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
   public async registerName(data: { user: User; name: string }) {
     await this.hasura.mutation({
       update_players_by_pk: {

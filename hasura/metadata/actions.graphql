@@ -110,6 +110,12 @@ type Mutation {
 }
 
 type Mutation {
+  restartService(
+    service: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   scheduleMatch(
     match_id: uuid!
     time: timestamptz

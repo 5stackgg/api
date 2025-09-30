@@ -125,11 +125,20 @@ export class SystemService {
         continue;
       }
 
-      try {
-        await this.restartDeployment(service);
-      } catch {
+      void this.restartService(service, pod);
+    }
+  }
+
+  public async restartService(service: string, pod?: string) {
+    try {
+      await this.restartDeployment(service);
+    } catch (error) {
+      console.log(`Failed to rollout deployment ${service}, restarting pod ${pod}`, error);
+      if(pod) {
+        this.logger.warn(`Failed to rollout deployment ${service}, restarting pod ${pod}`);
         await this.restartPod(pod);
       }
+    } finally {
       await this.cache.forget(this.getServiceCacheKey(service));
     }
   }
@@ -239,17 +248,13 @@ export class SystemService {
     await this.appsClient.patchNamespacedDeployment({
       name: deploymentName,
       namespace: "5stack",
-      body: {
-        spec: {
-          template: {
-            metadata: {
-              annotations: {
-                "kubectl.kubernetes.io/restartedAt": new Date().toISOString(),
-              },
-            },
-          },
+      body: [
+        {
+          op: "add",
+          path: "/spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt",
+          value: new Date().toISOString(),
         },
-      },
+      ],
     });
 
     this.logger.log(`Successfully restarted deployment ${deploymentName}`);
