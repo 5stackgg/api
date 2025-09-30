@@ -110,8 +110,9 @@ DECLARE
     _match_id UUID;
     _map_ids UUID[];
     _match_maps UUID[];
+    _match_status text;
 BEGIN
-    SELECT m.id INTO _match_id
+    SELECT m.id, m.status INTO _match_id, _match_status
         FROM matches m
         INNER JOIN match_options mo ON mo.id = m.match_options_id
         WHERE mo.id = OLD.id
@@ -120,7 +121,7 @@ BEGIN
     SELECT array_agg(map_id ORDER BY "order") INTO _match_maps FROM match_maps WHERE match_id = _match_id;
     SELECT array_agg(map_id ORDER BY map_id) INTO _map_ids FROM _map_pool WHERE map_pool_id = NEW.map_pool_id;
 
-    IF (_match_maps IS NULL OR _match_maps IS DISTINCT FROM _map_ids OR NEW.map_pool_id != OLD.map_pool_id) THEN
+    IF (_match_status != 'Live' AND _match_status != 'Veto' AND (_match_maps IS NULL OR _match_maps IS DISTINCT FROM _map_ids OR NEW.map_pool_id != OLD.map_pool_id)) THEN
         DELETE FROM match_maps
         WHERE match_id = _match_id;
 
