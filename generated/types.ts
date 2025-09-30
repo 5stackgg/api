@@ -31769,6 +31769,9 @@ export default {
             "is_in_another_match": [
                 1
             ],
+            "is_in_lobby": [
+                1
+            ],
             "is_muted": [
                 1
             ],
@@ -32641,6 +32644,9 @@ export default {
             "is_in_another_match": [
                 2
             ],
+            "is_in_lobby": [
+                2
+            ],
             "is_muted": [
                 2
             ],
@@ -33064,6 +33070,9 @@ export default {
                 1358
             ],
             "is_in_another_match": [
+                1358
+            ],
+            "is_in_lobby": [
                 1358
             ],
             "is_muted": [
@@ -43555,6 +43564,9 @@ export default {
             "team_id": [
                 2282
             ],
+            "team_name": [
+                18
+            ],
             "__typename": [
                 18
             ]
@@ -43653,6 +43665,9 @@ export default {
             "team_id": [
                 2283
             ],
+            "team_name": [
+                20
+            ],
             "__typename": [
                 18
             ]
@@ -43676,6 +43691,9 @@ export default {
             "team_id": [
                 2282
             ],
+            "team_name": [
+                18
+            ],
             "__typename": [
                 18
             ]
@@ -43693,6 +43711,9 @@ export default {
             "team_id": [
                 2282
             ],
+            "team_name": [
+                18
+            ],
             "__typename": [
                 18
             ]
@@ -43709,6 +43730,9 @@ export default {
             ],
             "team_id": [
                 2282
+            ],
+            "team_name": [
+                18
             ],
             "__typename": [
                 18
@@ -43739,6 +43763,9 @@ export default {
                 1358
             ],
             "team_id": [
+                1358
+            ],
+            "team_name": [
                 1358
             ],
             "__typename": [
@@ -43793,6 +43820,9 @@ export default {
             ],
             "team_id": [
                 2282
+            ],
+            "team_name": [
+                18
             ],
             "__typename": [
                 18

@@ -215,6 +215,11 @@ computed_fields:
       function:
         name: is_in_another_match
         schema: public
+  - name: is_in_lobby
+    definition:
+      function:
+        name: is_in_lobby
+        schema: public
   - name: is_muted
     definition:
       function:
@@ -259,6 +264,7 @@ select_permissions:
         - is_banned
         - is_gagged
         - is_in_another_match
+        - is_in_lobby
         - is_muted
         - matchmaking_cooldown
         - total_matches
