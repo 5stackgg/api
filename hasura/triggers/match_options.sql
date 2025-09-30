@@ -80,9 +80,25 @@ BEGIN
         INNER JOIN match_options mo ON mo.id = m.match_options_id
         WHERE mo.id = OLD.id
         LIMIT 1;
-    
-    IF _match_status = 'Live' OR _match_status = 'Veto' OR _match_status = 'Finished' OR _match_status = 'Forfeit' OR _match_status = 'Tie' OR _match_status = 'Surrendered' THEN  
-        RAISE EXCEPTION 'Cannot change match options after match goes live' USING ERRCODE = '22000';
+
+    IF _match_status = 'Finished' OR _match_status = 'Forfeit' OR _match_status = 'Tie' OR _match_status = 'Surrendered' THEN  
+        RAISE EXCEPTION 'Cannot change match options after match is finished' USING ERRCODE = '22000';
+    END IF;
+
+    IF _match_status = 'Live' OR _match_status = 'Veto' THEN
+        IF 
+            (NEW.best_of IS DISTINCT FROM OLD.best_of) OR
+            (NEW.map_veto IS DISTINCT FROM OLD.map_veto) OR
+            (NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id) OR
+            (NEW.type IS DISTINCT FROM OLD.type) OR
+            (NEW.region_veto IS DISTINCT FROM OLD.region_veto) OR
+            (NEW.lobby_access IS DISTINCT FROM OLD.lobby_access) OR
+            (NEW.invite_code IS DISTINCT FROM OLD.invite_code) OR
+            (NEW.regions IS DISTINCT FROM OLD.regions) OR
+            (NEW.prefer_dedicated_server IS DISTINCT FROM OLD.prefer_dedicated_server)
+        THEN
+            RAISE EXCEPTION 'Only overtime, knife_round, mr, coaches, number_of_substitutes, timeout_setting, tech_timeout_setting, tv_delay, ready_setting can be modified during Live/Veto' USING ERRCODE = '22000';
+        END IF;
     END IF;
 
     IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 

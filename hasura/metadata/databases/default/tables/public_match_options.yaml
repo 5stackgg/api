@@ -117,25 +117,19 @@ update_permissions:
         - tv_delay
         - type
       filter:
-        _and:
-          - _or:
-              - matches:
-                  is_organizer:
-                    _eq: true
-              - tournament:
-                  is_organizer:
-                    _eq: true
-          - has_active_matches:
-              _eq: false
+        _or:
+          - matches:
+              is_organizer:
+                _eq: true
+          - tournament:
+              is_organizer:
+                _eq: true
       check:
-        _and:
-          - _or:
-              - matches:
-                  is_organizer:
-                    _eq: true
-              - tournament:
-                  is_organizer:
-                    _eq: true
-          - has_active_matches:
-              _eq: false
+        _or:
+          - matches:
+              is_organizer:
+                _eq: true
+          - tournament:
+              is_organizer:
+                _eq: true
     comment: ""

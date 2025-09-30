@@ -8,7 +8,8 @@ BEGIN
         SELECT 1
         FROM match_options mo
         INNER JOIN matches m ON m.match_options_id = mo.id
-        WHERE mo.id = match_options.id AND m.status != 'PickingPlayers'
+        WHERE mo.id = match_options.id 
+        AND m.status in ('Live', 'Finished', 'Forfeit', 'Tie', 'Surrendered')
     ) INTO match_exists;
     RETURN match_exists;
 END;
