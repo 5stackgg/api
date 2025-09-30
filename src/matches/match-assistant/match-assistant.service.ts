@@ -432,16 +432,14 @@ export class MatchAssistantService {
                 _is_null: true,
               },
               ...(match.region
-                ? [
-                    {
-                      game_server_node: {
-                        region: {
-                          _eq: match.region,
-                        },
+                ? {
+                    game_server_node: {
+                      region: {
+                        _eq: match.region,
                       },
                     },
-                  ]
-                : []),
+                  }
+                : {}),
             },
           },
           id: true,
