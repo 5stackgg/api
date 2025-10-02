@@ -49,10 +49,6 @@ BEGIN
     INNER JOIN v_match_lineups ml ON ml.match_id = m.id
     WHERE ml.id = COALESCE(NEW.match_lineup_id, OLD.match_lineup_id);
 
-    IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' AND status != 'PickingPlayers' THEN
-        RAISE EXCEPTION 'Cannot add players: not in picking players status' USING ERRCODE = '22000';
-    END IF;
-
     IF TG_OP = 'INSERT' THEN
         IF is_banned((SELECT p FROM players p WHERE steam_id = NEW.steam_id)) THEN
             RAISE EXCEPTION 'Player is Currently Banned' USING ERRCODE = '22000';
@@ -60,6 +56,10 @@ BEGIN
     END IF;
 
     IF TG_OP = 'DELETE' THEN
+        IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin' AND status != 'PickingPlayers' THEN
+            RAISE EXCEPTION 'Cannot remove players: not in picking players status' USING ERRCODE = '22000';
+        END IF;
+    
         RETURN OLD;
     ELSE
         select check_match_lineup_players_count(NEW) into lineup_count;
