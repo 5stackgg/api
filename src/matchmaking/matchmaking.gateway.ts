@@ -233,6 +233,7 @@ export class MatchmakingGateway {
       return;
     }
 
+    await this.matchmakeService.releaseLobbyLock(lobby.id, 0);
     await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
     await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
   }
