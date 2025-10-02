@@ -13,29 +13,12 @@ insert into e_game_cfg_types ("value", "description") values
     ('Duel', 'Duel game configuration')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
--- Valve will add and remove workshop maps from the game, so we need to update the maps table accordingly
-update maps 
-   set "name" = 'de_grail', "workshop_map_id" = null
-   where "workshop_map_id" = '3246527710';
-
-update maps 
-   set "name" = 'de_jura', "workshop_map_id" = null
-   where "workshop_map_id" = '3261289969';
-
-update maps 
-   set "name" = 'de_brewery', "workshop_map_id" = null
-   where "workshop_map_id" = '3070290240';
-
-update maps 
-   set "name" = 'de_dogtown', "workshop_map_id" = null
-   where "workshop_map_id" = '3273728973';
-
 -- Define map data in CTEs for reuse
 WITH map_data AS (
     SELECT * FROM (VALUES
         -- Valve maps
         ('de_ancient', null, '/img/maps/screenshots/de_ancient.webp', '/img/maps/icons/de_ancient.svg', null),
-        ('de_ancient_night', null, '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient.svg', null),
+        ('de_ancient_night', null, '/img/maps/screenshots/de_ancient_night.webp', '/img/maps/icons/de_ancient_night.svg', null),
         ('de_anubis', null, '/img/maps/screenshots/de_anubis.webp', '/img/maps/icons/de_anubis.svg', null),
         ('de_inferno', null, '/img/maps/screenshots/de_inferno.webp', '/img/maps/icons/de_inferno.svg', null),
         ('de_inferno_night', '3124567099', '/img/maps/screenshots/de_inferno_night.webp', '/img/maps/icons/de_inferno.svg', null),
@@ -54,14 +37,18 @@ WITH map_data AS (
         ('de_mills', '3152430710', '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg', null),    
         ('de_edin', '3328169568', '/img/maps/screenshots/de_edin.webp', '/img/maps/icons/de_edin.svg', null),
         ('de_basalt', '3329258290', '/img/maps/screenshots/de_basalt.webp', '/img/maps/icons/de_basalt.svg', null),
-        ('de_grail', null, '/img/maps/screenshots/de_grail.webp', '/img/maps/icons/de_grail.svg', null),
-        ('de_jura', null, '/img/maps/screenshots/de_jura.webp', '/img/maps/icons/de_jura.svg', null),
-        ('de_brewery', null, '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg', null),
+        ('de_grail', '3246527710', '/img/maps/screenshots/de_grail.webp', '/img/maps/icons/de_grail.svg', null),
+        ('de_jura', '3261289969', '/img/maps/screenshots/de_jura.webp', '/img/maps/icons/de_jura.svg', null),
+        ('de_brewery', '3070290240', '/img/maps/screenshots/de_brewery.webp', '/img/maps/icons/de_brewery.svg', null),
         ('de_assembly', '3071005299', '/img/maps/screenshots/de_assembly.webp', '/img/maps/icons/de_assembly.svg', null),
         ('de_memento', '3165559377', '/img/maps/screenshots/de_memento.webp', '/img/maps/icons/de_memento.svg', null),
         ('de_palais', '2891200262', '/img/maps/screenshots/de_palais.webp', '/img/maps/icons/de_palais.svg', null),
         ('de_whistle', '3308613773', '/img/maps/screenshots/de_whistle.webp', '/img/maps/icons/de_whistle.svg', null),
-        ('de_dogtown', null, '/img/maps/screenshots/de_dogtown.webp', '/img/maps/icons/de_dogtown.svg', null)
+        ('de_dogtown', '3414036782', '/img/maps/screenshots/de_dogtown.webp', '/img/maps/icons/de_dogtown.svg', null),
+        ('de_golden', null, '/img/maps/screenshots/de_golden.webp', '/img/maps/icons/de_golden.svg', null),
+        ('de_palacio', null, '/img/maps/screenshots/de_palacio.webp', '/img/maps/icons/de_palacio.svg', null),
+        ('de_rooftop', null, '/img/maps/screenshots/de_rooftop.webp', '/img/maps/icons/de_rooftop.svg', null),
+        ('de_transit', null, '/img/maps/screenshots/de_transit.webp', '/img/maps/icons/de_transit.svg', null)
     ) AS data(name, workshop_map_id, poster, patch, label)
 ),
 map_type_config AS (
@@ -86,30 +73,36 @@ map_type_config AS (
         ('de_mills', 'Competitive', false),
         ('de_edin', 'Competitive', false),
         ('de_basalt', 'Competitive', false),
-        ('de_grail', 'Competitive', true),
-        ('de_jura', 'Competitive', true),
+        ('de_grail', 'Competitive', false),
+        ('de_jura', 'Competitive', false),
+        ('de_golden', 'Competitive', false),
+        ('de_palacio', 'Competitive', false),
         -- Wingman maps
         ('de_inferno', 'Wingman', true),
         ('de_nuke', 'Wingman', true),
         ('de_overpass', 'Wingman', true),
         ('de_vertigo', 'Wingman', true),
-        ('de_brewery', 'Wingman', true),
+        ('de_brewery', 'Wingman', false),
         ('de_assembly', 'Wingman', false),
         ('de_memento', 'Wingman', false),
         ('de_palais', 'Wingman', false),
         ('de_whistle', 'Wingman', false),
-        ('de_dogtown', 'Wingman', true),
+        ('de_dogtown', 'Wingman', false),
+        ('de_rooftop', 'Wingman', true),
+        ('de_transit', 'Wingman', true),
         -- Duel maps
         ('de_inferno', 'Duel', true),
         ('de_nuke', 'Duel', true),
         ('de_overpass', 'Duel', true),
         ('de_vertigo', 'Duel', true),
-        ('de_brewery', 'Duel', true),
+        ('de_brewery', 'Duel', false),
         ('de_assembly', 'Duel', false),
         ('de_memento', 'Duel', false),
         ('de_palais', 'Duel', false),
         ('de_whistle', 'Duel', false),
-        ('de_dogtown', 'Duel', true)
+        ('de_dogtown', 'Duel', false),
+        ('de_rooftop', 'Duel', true),
+        ('de_transit', 'Duel', true)
     ) AS data(name, type, active_pool)
 ),
 all_maps AS (
