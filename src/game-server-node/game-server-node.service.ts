@@ -183,6 +183,7 @@ export class GameServerNodeService {
             },
             _set: {
               status,
+              offline_at: null,
               lan_ip: lanIP,
               node_ip: nodeIP,
               public_ip: publicIP,

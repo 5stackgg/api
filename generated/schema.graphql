@@ -6036,6 +6036,7 @@ type game_server_nodes {
   label: String
   lan_ip: inet
   node_ip: inet
+  offline_at: timestamptz
   pin_build_id: Int
   pin_plugin_version: String
 
@@ -6236,6 +6237,7 @@ input game_server_nodes_bool_exp {
   label: String_comparison_exp
   lan_ip: inet_comparison_exp
   node_ip: inet_comparison_exp
+  offline_at: timestamptz_comparison_exp
   pin_build_id: Int_comparison_exp
   pin_plugin_version: String_comparison_exp
   pinned_version: game_versions_bool_exp
@@ -6314,6 +6316,7 @@ input game_server_nodes_insert_input {
   label: String
   lan_ip: inet
   node_ip: inet
+  offline_at: timestamptz
   pin_build_id: Int
   pin_plugin_version: String
   pinned_version: game_versions_obj_rel_insert_input
@@ -6341,6 +6344,7 @@ type game_server_nodes_max_fields {
   end_port_range: Int
   id: String
   label: String
+  offline_at: timestamptz
   pin_build_id: Int
   pin_plugin_version: String
   region: String
@@ -6364,6 +6368,7 @@ input game_server_nodes_max_order_by {
   end_port_range: order_by
   id: order_by
   label: order_by
+  offline_at: order_by
   pin_build_id: order_by
   pin_plugin_version: order_by
   region: order_by
@@ -6384,6 +6389,7 @@ type game_server_nodes_min_fields {
   end_port_range: Int
   id: String
   label: String
+  offline_at: timestamptz
   pin_build_id: Int
   pin_plugin_version: String
   region: String
@@ -6407,6 +6413,7 @@ input game_server_nodes_min_order_by {
   end_port_range: order_by
   id: order_by
   label: order_by
+  offline_at: order_by
   pin_build_id: order_by
   pin_plugin_version: order_by
   region: order_by
@@ -6461,6 +6468,7 @@ input game_server_nodes_order_by {
   label: order_by
   lan_ip: order_by
   node_ip: order_by
+  offline_at: order_by
   pin_build_id: order_by
   pin_plugin_version: order_by
   pinned_version: game_versions_order_by
@@ -6524,6 +6532,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   node_ip
+
+  """column name"""
+  offline_at
 
   """column name"""
   pin_build_id
@@ -6605,6 +6616,7 @@ input game_server_nodes_set_input {
   label: String
   lan_ip: inet
   node_ip: inet
+  offline_at: timestamptz
   pin_build_id: Int
   pin_plugin_version: String
   public_ip: inet
@@ -6734,6 +6746,7 @@ input game_server_nodes_stream_cursor_value_input {
   label: String
   lan_ip: inet
   node_ip: inet
+  offline_at: timestamptz
   pin_build_id: Int
   pin_plugin_version: String
   public_ip: inet
@@ -6813,6 +6826,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   node_ip
+
+  """column name"""
+  offline_at
 
   """column name"""
   pin_build_id
@@ -31703,6 +31719,7 @@ type servers {
     where: matches_bool_exp
   ): matches_aggregate!
   max_players: Int
+  offline_at: timestamptz
   plugin_version: String
   port: Int!
   rcon_password: bytea!
@@ -31842,6 +31859,7 @@ input servers_bool_exp {
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
   max_players: Int_comparison_exp
+  offline_at: timestamptz_comparison_exp
   plugin_version: String_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
@@ -31900,6 +31918,7 @@ input servers_insert_input {
   label: String
   matches: matches_arr_rel_insert_input
   max_players: Int
+  offline_at: timestamptz
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -31934,6 +31953,7 @@ type servers_max_fields {
   id: uuid
   label: String
   max_players: Int
+  offline_at: timestamptz
   plugin_version: String
   port: Int
   region: String
@@ -31956,6 +31976,7 @@ input servers_max_order_by {
   id: order_by
   label: order_by
   max_players: order_by
+  offline_at: order_by
   plugin_version: order_by
   port: order_by
   region: order_by
@@ -31986,6 +32007,7 @@ type servers_min_fields {
   id: uuid
   label: String
   max_players: Int
+  offline_at: timestamptz
   plugin_version: String
   port: Int
   region: String
@@ -32008,6 +32030,7 @@ input servers_min_order_by {
   id: order_by
   label: order_by
   max_players: order_by
+  offline_at: order_by
   plugin_version: order_by
   port: order_by
   region: order_by
@@ -32066,6 +32089,7 @@ input servers_order_by {
   label: order_by
   matches_aggregate: matches_aggregate_order_by
   max_players: order_by
+  offline_at: order_by
   plugin_version: order_by
   port: order_by
   rcon_password: order_by
@@ -32123,6 +32147,9 @@ enum servers_select_column {
 
   """column name"""
   max_players
+
+  """column name"""
+  offline_at
 
   """column name"""
   plugin_version
@@ -32205,6 +32232,7 @@ input servers_set_input {
   is_dedicated: Boolean
   label: String
   max_players: Int
+  offline_at: timestamptz
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -32302,6 +32330,7 @@ input servers_stream_cursor_value_input {
   is_dedicated: Boolean
   label: String
   max_players: Int
+  offline_at: timestamptz
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -32373,6 +32402,9 @@ enum servers_update_column {
 
   """column name"""
   max_players
+
+  """column name"""
+  offline_at
 
   """column name"""
   plugin_version

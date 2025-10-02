@@ -65,6 +65,7 @@ select_permissions:
         - label
         - lan_ip
         - node_ip
+        - offline_at
         - pin_build_id
         - pin_plugin_version
         - public_ip

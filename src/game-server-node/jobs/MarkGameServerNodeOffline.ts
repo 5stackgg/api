@@ -27,6 +27,7 @@ export class MarkGameServerNodeOffline extends WorkerHost {
           },
           _set: {
             status: "Offline",
+            offline_at: new Date().toISOString(),
           },
         },
         label: true,

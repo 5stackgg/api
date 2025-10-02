@@ -27,6 +27,7 @@ export class MarkDedicatedServerOffline extends WorkerHost {
           },
           _set: {
             connected: false,
+            offline_at: new Date().toISOString(),
           },
         },
         label: true,

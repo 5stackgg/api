@@ -102,6 +102,7 @@ select_permissions:
         - is_dedicated
         - label
         - max_players
+        - offline_at
         - plugin_version
         - port
         - rcon_status

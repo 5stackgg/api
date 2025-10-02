@@ -276,6 +276,7 @@ export class GameServerNodeController {
 
     if (
       !server.connected ||
+      server.plugin_version !== pluginVersion ||
       (server.steam_relay && !steamRelay) ||
       server.steam_relay !== steamID
     ) {
@@ -289,6 +290,7 @@ export class GameServerNodeController {
               connected: true,
               steam_relay: steamRelay ? steamID : null,
               plugin_version: pluginVersion,
+              offline_at: null,
             },
           },
           __typename: true,

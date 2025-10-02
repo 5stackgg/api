@@ -7883,6 +7883,9 @@ export default {
             "node_ip": [
                 699
             ],
+            "offline_at": [
+                1977
+            ],
             "pin_build_id": [
                 9
             ],
@@ -8257,6 +8260,9 @@ export default {
             "node_ip": [
                 700
             ],
+            "offline_at": [
+                1978
+            ],
             "pin_build_id": [
                 10
             ],
@@ -8397,6 +8403,9 @@ export default {
             "node_ip": [
                 699
             ],
+            "offline_at": [
+                1977
+            ],
             "pin_build_id": [
                 9
             ],
@@ -8462,6 +8471,9 @@ export default {
             "label": [
                 18
             ],
+            "offline_at": [
+                1977
+            ],
             "pin_build_id": [
                 9
             ],
@@ -8504,6 +8516,9 @@ export default {
                 1358
             ],
             "label": [
+                1358
+            ],
+            "offline_at": [
                 1358
             ],
             "pin_build_id": [
@@ -8550,6 +8565,9 @@ export default {
             "label": [
                 18
             ],
+            "offline_at": [
+                1977
+            ],
             "pin_build_id": [
                 9
             ],
@@ -8592,6 +8610,9 @@ export default {
                 1358
             ],
             "label": [
+                1358
+            ],
+            "offline_at": [
                 1358
             ],
             "pin_build_id": [
@@ -8695,6 +8716,9 @@ export default {
             "node_ip": [
                 1358
             ],
+            "offline_at": [
+                1358
+            ],
             "pin_build_id": [
                 1358
             ],
@@ -8796,6 +8820,9 @@ export default {
             ],
             "node_ip": [
                 699
+            ],
+            "offline_at": [
+                1977
             ],
             "pin_build_id": [
                 9
@@ -9031,6 +9058,9 @@ export default {
             ],
             "node_ip": [
                 699
+            ],
+            "offline_at": [
+                1977
             ],
             "pin_build_id": [
                 9
@@ -34220,6 +34250,9 @@ export default {
             "max_players": [
                 9
             ],
+            "offline_at": [
+                1977
+            ],
             "plugin_version": [
                 18
             ],
@@ -34533,6 +34566,9 @@ export default {
             "max_players": [
                 10
             ],
+            "offline_at": [
+                1978
+            ],
             "plugin_version": [
                 20
             ],
@@ -34637,6 +34673,9 @@ export default {
             "max_players": [
                 9
             ],
+            "offline_at": [
+                1977
+            ],
             "plugin_version": [
                 18
             ],
@@ -34708,6 +34747,9 @@ export default {
             "max_players": [
                 9
             ],
+            "offline_at": [
+                1977
+            ],
             "plugin_version": [
                 18
             ],
@@ -34759,6 +34801,9 @@ export default {
                 1358
             ],
             "max_players": [
+                1358
+            ],
+            "offline_at": [
                 1358
             ],
             "plugin_version": [
@@ -34820,6 +34865,9 @@ export default {
             "max_players": [
                 9
             ],
+            "offline_at": [
+                1977
+            ],
             "plugin_version": [
                 18
             ],
@@ -34871,6 +34919,9 @@ export default {
                 1358
             ],
             "max_players": [
+                1358
+            ],
+            "offline_at": [
                 1358
             ],
             "plugin_version": [
@@ -34986,6 +35037,9 @@ export default {
             "max_players": [
                 1358
             ],
+            "offline_at": [
+                1358
+            ],
             "plugin_version": [
                 1358
             ],
@@ -35070,6 +35124,9 @@ export default {
             ],
             "max_players": [
                 9
+            ],
+            "offline_at": [
+                1977
             ],
             "plugin_version": [
                 18
@@ -35272,6 +35329,9 @@ export default {
             ],
             "max_players": [
                 9
+            ],
+            "offline_at": [
+                1977
             ],
             "plugin_version": [
                 18
