@@ -7,15 +7,18 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
      password text;
      server_host text;
      tv_port int;
+     started_at timestamp;
+     tv_delay int;
  BEGIN
-     SELECT s.host, s.tv_port
-     INTO server_host, tv_port
+     SELECT s.host, s.tv_port, m.started_at, mo.tv_delay
+     INTO server_host, tv_port, started_at, tv_delay
      FROM matches m
-     INNER JOIN servers s ON s.id = m.server_id
+        INNER JOIN servers s ON s.id = m.server_id
+        INNER JOIN match_options mo on mo.id = m.match_options_id
      WHERE m.id = match.id
      LIMIT 1;
 
-     IF server_host IS NULL THEN
+    IF server_host IS NULL OR started_at IS NULL OR NOW() < started_at + (tv_delay || ' seconds')::interval THEN
          RETURN NULL;
      END IF;
 
