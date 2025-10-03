@@ -173,7 +173,7 @@ returns boolean as $$
 declare
     update_map_pools text;
 begin
-    select COALESCE(value, 'false') into update_map_pools from settings where name = 'update_map_pools';
+    select COALESCE(value, 'true') into update_map_pools from settings where name = 'update_map_pools';
 
     if(select COUNT(*) from _map_pool) = 0 then 
         update_map_pools = 'true';
