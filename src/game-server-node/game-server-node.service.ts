@@ -972,12 +972,15 @@ export class GameServerNodeService {
     });
 
     for (const node of game_server_nodes) {
-      await this.updateDemoNetworkLimiterLabel(node.id, node.demo_network_limiter);
+      await this.updateDemoNetworkLimiterLabel(
+        node.id,
+        node.demo_network_limiter,
+      );
     }
   }
 
   public async updateDemoNetworkLimiterLabel(nodeId: string, value?: number) {
-    if(value === undefined) {
+    if (value === undefined) {
       value = await this.getGlobalDemoNetworkLimiter();
     }
 
@@ -1002,7 +1005,9 @@ export class GameServerNodeService {
         ],
       });
     } catch (error) {
-      this.logger.warn("unable to patch node", error);
+      if (error instanceof FetchError && error.code !== "404") {
+        this.logger.warn("unable to patch node", error);
+      }
     }
   }
 

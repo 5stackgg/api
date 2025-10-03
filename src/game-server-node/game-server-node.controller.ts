@@ -64,7 +64,9 @@ export class GameServerNodeController {
     }
 
     if (payload.labels?.["5stack-network-limiter"]) {
-      await this.gameServerNodeService.updateDemoNetworkLimiterLabel(payload.node);
+      await this.gameServerNodeService.updateDemoNetworkLimiterLabel(
+        payload.node,
+      );
     }
 
     await this.gameServerNodeService.updateStatus(
@@ -210,8 +212,13 @@ export class GameServerNodeController {
   }
 
   @HasuraEvent()
-  public async demo_network_limiter(data: HasuraEventData<game_server_nodes_set_input>) {
-    await this.gameServerNodeService.updateDemoNetworkLimiterLabel(data.new.id, data.new.demo_network_limiter);
+  public async demo_network_limiter(
+    data: HasuraEventData<game_server_nodes_set_input>,
+  ) {
+    await this.gameServerNodeService.updateDemoNetworkLimiterLabel(
+      data.new.id,
+      data.new.demo_network_limiter,
+    );
   }
 
   @Get("/ping/:serverId")

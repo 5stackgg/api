@@ -157,7 +157,13 @@ export class SystemController {
 
   @HasuraEvent()
   public async settings(data: HasuraEventData<settings_set_input>) {
-    if((data.new.name === "demo_network_limiter" || data.old.name === "demo_network_limiter") && (data.op === "INSERT" || data.op === "DELETE" || data.new.value !== data.old.value)) {
+    if (
+      (data.new.name === "demo_network_limiter" ||
+        data.old.name === "demo_network_limiter") &&
+      (data.op === "INSERT" ||
+        data.op === "DELETE" ||
+        data.new.value !== data.old.value)
+    ) {
       await this.gameServerNodeService.updateDemoNetworkLimiters();
     }
   }
