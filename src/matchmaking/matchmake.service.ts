@@ -517,7 +517,7 @@ export class MatchmakeService {
   }
 
   public async cancelOffline(steamId: string) {
-    await this.queue.remove(`matchmaking:mark-offline:${steamId}`);
+    await this.queue.remove(`matchmaking.mark-offline.${steamId}`);
   }
 
   private async createMatchConfirmation(

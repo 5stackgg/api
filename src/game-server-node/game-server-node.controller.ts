@@ -316,7 +316,8 @@ export class GameServerNodeController {
       });
     }
 
-    await this.gameUpdateQueue.remove(`server-offline:${serverId}`);
+    const jobId = `server-offline.${serverId}`;
+    await this.gameUpdateQueue.remove(jobId);
 
     await this.gameUpdateQueue.add(
       MarkDedicatedServerOffline.name,
@@ -328,7 +329,7 @@ export class GameServerNodeController {
         attempts: 1,
         removeOnFail: false,
         removeOnComplete: true,
-        jobId: `server-offline.${serverId}`,
+        jobId,
       },
     );
   }

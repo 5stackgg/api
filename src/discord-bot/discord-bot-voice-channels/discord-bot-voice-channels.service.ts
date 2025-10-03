@@ -132,7 +132,10 @@ export class DiscordBotVoiceChannelsService {
         for (const [, member] of channel.members) {
           await member.voice.setChannel(originalChannelId).catch((error) => {
             if (error.code !== 50013) {
-              this.logger.warn(`[${matchId}] unable to move player back`, error);
+              this.logger.warn(
+                `[${matchId}] unable to move player back`,
+                error,
+              );
             }
           });
         }
