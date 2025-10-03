@@ -130,6 +130,9 @@ export class MatchesController {
         lineup_1: {
           id: true,
           name: true,
+          team: {
+            short_name: true,
+          },
           coach_steam_id: true,
           lineup_players: {
             captain: true,
@@ -147,6 +150,9 @@ export class MatchesController {
         lineup_2: {
           id: true,
           name: true,
+          team: {
+            short_name: true,
+          },
           coach_steam_id: true,
           lineup_players: {
             captain: true,
@@ -185,6 +191,7 @@ export class MatchesController {
         cfg_override: string;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
+        tag: string;
         lineup_players: Array<
           Omit<(typeof matches_by_pk.lineup_1.lineup_players)[0], "player"> & {
             player: Omit<
@@ -195,6 +202,7 @@ export class MatchesController {
         >;
       };
       lineup_2: typeof matches_by_pk.lineup_2 & {
+        tag: string;
         lineup_players: Array<
           Omit<(typeof matches_by_pk.lineup_2.lineup_players)[0], "player"> & {
             player: Omit<
@@ -228,6 +236,8 @@ export class MatchesController {
         .join("\n");
     }
 
+    match.lineup_1.tag = match.lineup_1.team?.short_name;
+    delete match.lineup_1.team;
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
       (player) => ({
         ...player,
@@ -239,6 +249,8 @@ export class MatchesController {
       }),
     );
 
+    match.lineup_2.tag = match.lineup_2.team?.short_name;
+    delete match.lineup_2.team;
     match.lineup_2.lineup_players = match.lineup_2.lineup_players.map(
       (player) => ({
         ...player,
