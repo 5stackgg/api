@@ -54,7 +54,7 @@ export class TypeSenseController {
     const endOfSanction = data.new.remove_sanction_date;
 
     if (endOfSanction) {
-      const jobId = `player-sanctions:${data.new.type}:${data.new.player_steam_id}`;
+      const jobId = `player-sanctions.${data.new.type}.${data.new.player_steam_id}`;
       await this.queue.remove(jobId);
 
       await this.queue.add(

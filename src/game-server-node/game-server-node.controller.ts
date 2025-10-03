@@ -97,7 +97,7 @@ export class GameServerNodeController {
       );
     }
 
-    const jobId = `node:${payload.node}`;
+    const jobId = `node.${payload.node}`;
     await this.nodeOfflineQueue.remove(jobId);
 
     await this.nodeOfflineQueue.add(
@@ -328,7 +328,7 @@ export class GameServerNodeController {
         attempts: 1,
         removeOnFail: false,
         removeOnComplete: true,
-        jobId: `server-offline:${serverId}`,
+        jobId: `server-offline.${serverId}`,
       },
     );
   }

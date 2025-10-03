@@ -17,7 +17,7 @@ export class DiscordBotVetoService {
   ) {}
 
   static UPDATE_MAP_BANS_JOB_ID(matchId: string) {
-    return `match:${matchId}:bans`;
+    return `match.${matchId}.bans`;
   }
 
   public async getMapBanVotes(

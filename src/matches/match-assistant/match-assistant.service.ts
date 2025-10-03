@@ -827,7 +827,7 @@ export class MatchAssistantService {
         attempts: 1,
         removeOnFail: true,
         removeOnComplete: true,
-        jobId: `match:${matchId}:server`,
+        jobId: `match.${matchId}.server`,
       },
     );
   }

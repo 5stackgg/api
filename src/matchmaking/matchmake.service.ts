@@ -511,7 +511,7 @@ export class MatchmakeService {
       },
       {
         delay: 60 * 1000,
-        jobId: `matchmaking:mark-offline:${steamId}`,
+        jobId: `matchmaking.mark-offline.${steamId}`,
       },
     );
   }
@@ -566,7 +566,7 @@ export class MatchmakeService {
       },
       {
         delay: 30 * 1000,
-        jobId: `matchmaking:cancel:${confirmationId}`,
+        jobId: `matchmaking.cancel.${confirmationId}`,
       },
     );
   }
