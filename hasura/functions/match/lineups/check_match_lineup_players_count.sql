@@ -21,7 +21,7 @@ BEGIN
     WHERE match_lineup_id = match_lineup_player.match_lineup_id;
 
     IF lineup_count >= max_players THEN
-		RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Max number of players reached';
+		  RAISE EXCEPTION USING ERRCODE= '22000', MESSAGE= 'Max number of players reached';
     END IF;
 
     return lineup_count;
