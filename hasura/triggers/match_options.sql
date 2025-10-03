@@ -85,20 +85,38 @@ BEGIN
         RAISE EXCEPTION 'Cannot change match options after match is finished' USING ERRCODE = '22000';
     END IF;
 
+    IF _match_status != 'PickingPlayers' THEN
+      IF (NEW.invite_code IS DISTINCT FROM OLD.invite_code) THEN
+        RAISE EXCEPTION 'Cannot modify invite code' USING ERRCODE = '22000';
+      END IF;
+    END IF;
+
     IF _match_status = 'Live' OR _match_status = 'Veto' THEN
-        IF 
-            (NEW.best_of IS DISTINCT FROM OLD.best_of) OR
-            (NEW.map_veto IS DISTINCT FROM OLD.map_veto) OR
-            (NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id) OR
-            (NEW.type IS DISTINCT FROM OLD.type) OR
-            (NEW.region_veto IS DISTINCT FROM OLD.region_veto) OR
-            (NEW.lobby_access IS DISTINCT FROM OLD.lobby_access) OR
-            (NEW.invite_code IS DISTINCT FROM OLD.invite_code) OR
-            (NEW.regions IS DISTINCT FROM OLD.regions) OR
-            (NEW.prefer_dedicated_server IS DISTINCT FROM OLD.prefer_dedicated_server) OR
-            (NEW.mr IS DISTINCT FROM OLD.mr AND _match_status = 'Live')
-        THEN
-            RAISE EXCEPTION 'Cannot modify match options during Live/Veto' USING ERRCODE = '22000';
+        NEW.regions = OLD.regions;
+
+        IF (NEW.best_of IS DISTINCT FROM OLD.best_of) THEN
+            RAISE EXCEPTION 'Cannot modify best of during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.map_veto IS DISTINCT FROM OLD.map_veto) THEN
+            RAISE EXCEPTION 'Cannot modify map veto during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.map_pool_id IS DISTINCT FROM OLD.map_pool_id) THEN
+            RAISE EXCEPTION 'Cannot modify map pool during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.type IS DISTINCT FROM OLD.type) THEN
+            RAISE EXCEPTION 'Cannot modify match type during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.region_veto IS DISTINCT FROM OLD.region_veto) THEN
+            RAISE EXCEPTION 'Cannot modify region veto during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.lobby_access IS DISTINCT FROM OLD.lobby_access) THEN
+            RAISE EXCEPTION 'Cannot modify lobby access during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.prefer_dedicated_server IS DISTINCT FROM OLD.prefer_dedicated_server) THEN
+            RAISE EXCEPTION 'Cannot modify prefer dedicated server during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+        IF (NEW.mr IS DISTINCT FROM OLD.mr AND _match_status = 'Live') THEN
+            RAISE EXCEPTION 'Cannot modify mr during Live' USING ERRCODE = '22000';
         END IF;
     END IF;
 
