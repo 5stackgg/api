@@ -1,4 +1,4 @@
-import { ButtonInteraction } from "discord.js";
+import { ButtonInteraction, MessageFlags } from "discord.js";
 import { ButtonActions } from "../enums/ButtonActions";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { BotButtonInteraction } from "./interactions";
@@ -23,7 +23,7 @@ export default class VetoPick extends DiscordInteraction {
       })
     ) {
       await interaction.reply({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content: "your team is not currently map banning",
       });
       return;
@@ -34,7 +34,7 @@ export default class VetoPick extends DiscordInteraction {
     if (hasVote === -1) {
       if (votes.length) {
         await interaction.reply({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           content: `You are only allowed to select 1 map`,
         });
         return;

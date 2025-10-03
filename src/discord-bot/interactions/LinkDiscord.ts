@@ -1,4 +1,4 @@
-import { ButtonInteraction } from "discord.js";
+import { ButtonInteraction, MessageFlags } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { BotChatCommand } from "./interactions";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -24,14 +24,14 @@ export default class LinkDiscord extends DiscordInteraction {
 
     if (players.at(0)) {
       await interaction.reply({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content: "You have already linked your discord!",
       });
       return;
     }
 
     await interaction.reply({
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       components: [
         {
           type: 1,

@@ -11,6 +11,7 @@ import {
   ActionRowBuilder,
   ButtonStyle,
   ButtonBuilder,
+  MessageFlags,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -130,7 +131,7 @@ export default class ScheduleMatch extends DiscordInteraction {
         customMapPools["active_duty"].length === 0
       ) {
         await interaction.followUp({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           content: "Custom map pool selection timed out.",
         });
         return;
@@ -152,13 +153,13 @@ export default class ScheduleMatch extends DiscordInteraction {
     if (!teamSelectionChannel) {
       if (interaction.replied) {
         await interaction.followUp({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           content:
             "You need to be in a voice channel to use this command without specifying a channel.",
         });
       } else {
         await interaction.reply({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           content:
             "You need to be in a voice channel to use this command without specifying a channel.",
         });
@@ -172,14 +173,14 @@ export default class ScheduleMatch extends DiscordInteraction {
       const notEnoughUsersMessage = `Not enough players for ${matchType}`;
       if (interaction.replied) {
         await interaction.followUp({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
           content: notEnoughUsersMessage,
         });
         return;
       }
 
       await interaction.reply({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content: notEnoughUsersMessage,
       });
 
@@ -218,12 +219,12 @@ export default class ScheduleMatch extends DiscordInteraction {
 
     if (interaction.replied) {
       await interaction.followUp({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content: `Match Created: ${matchThread}`,
       });
     } else {
       await interaction.reply({
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         content: `Match Created: ${matchThread}`,
       });
     }
