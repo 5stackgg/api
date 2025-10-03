@@ -63,7 +63,7 @@ export class GameServerNodeController {
       await this.gameServerNodeService.updateIdLabel(payload.node);
     }
 
-    if (payload.labels?.["5stack-network-limiter"]) {
+    if (!payload.labels?.["5stack-network-limiter"]) {
       await this.gameServerNodeService.updateDemoNetworkLimiterLabel(
         payload.node,
       );
