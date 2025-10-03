@@ -439,6 +439,7 @@ export class DedicatedServersService {
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
         __args: { id: serverId },
+        connected: true,
         server_region: {
           steam_relay: true,
         },
@@ -447,6 +448,15 @@ export class DedicatedServersService {
     const rcon = await this.RconService.connect(serverId);
     if (!rcon) {
       return;
+    }
+
+    if (!server.connected) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: { pk_columns: { id: serverId }, _set: { connected: true } },
+          id: true,
+        },
+      });
     }
 
     let steamId = null;
