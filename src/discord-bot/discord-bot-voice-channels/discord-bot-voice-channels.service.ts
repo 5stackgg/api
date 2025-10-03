@@ -93,7 +93,9 @@ export class DiscordBotVoiceChannelsService {
 
       await member.voice.setChannel(voiceCache.voiceChannelId);
     } catch (error) {
-      this.logger.warn(`[${matchId}] unable to move user`, error);
+      if (error.code !== 50013) {
+        this.logger.warn(`[${matchId}] unable to move user`, error);
+      }
     }
   }
 
@@ -129,8 +131,9 @@ export class DiscordBotVoiceChannelsService {
 
         for (const [, member] of channel.members) {
           await member.voice.setChannel(originalChannelId).catch((error) => {
-            // do nothing as the member may have moved already
-            this.logger.warn(`[${matchId}] unable to move player back`, error);
+            if (error.code !== 50013) {
+              this.logger.warn(`[${matchId}] unable to move player back`, error);
+            }
           });
         }
 

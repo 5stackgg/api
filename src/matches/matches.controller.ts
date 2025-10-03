@@ -241,10 +241,10 @@ export class MatchesController {
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
       (player) => ({
         ...player,
-        name: player.player.name,
-        is_banned: player.player.is_banned,
-        is_gagged: player.player.is_gagged,
-        is_muted: player.player.is_muted,
+        name: player.player?.name || player.placeholder_name,
+        is_banned: player.player?.is_banned || false,
+        is_gagged: player.player?.is_gagged || false,
+        is_muted: player.player?.is_muted || false,
         player: undefined as undefined,
       }),
     );
@@ -254,10 +254,10 @@ export class MatchesController {
     match.lineup_2.lineup_players = match.lineup_2.lineup_players.map(
       (player) => ({
         ...player,
-        name: player.player.name,
-        is_banned: player.player.is_banned,
-        is_gagged: player.player.is_gagged,
-        is_muted: player.player.is_muted,
+        name: player.player?.name || player.placeholder_name,
+        is_banned: player.player?.is_banned || false,
+        is_gagged: player.player?.is_gagged || false,
+        is_muted: player.player?.is_muted || false,
         player: undefined as undefined,
       }),
     );

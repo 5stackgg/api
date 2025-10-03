@@ -267,7 +267,7 @@ export class DiscordBotOverviewService {
         current_match_map_id: true,
         connection_link: true,
         connection_string: true,
-        tv_connection_link: true,
+        tv_connection_string: true,
         map_veto_picking_lineup_id: true,
         options: {
           mr: true,
