@@ -999,6 +999,244 @@ enum cursor_ordering {
 }
 
 """
+columns and relationships of "db_backups"
+"""
+type db_backups {
+  created_at: timestamptz!
+  id: uuid!
+  name: String!
+  size: Int!
+}
+
+"""
+aggregated selection of "db_backups"
+"""
+type db_backups_aggregate {
+  aggregate: db_backups_aggregate_fields
+  nodes: [db_backups!]!
+}
+
+"""
+aggregate fields of "db_backups"
+"""
+type db_backups_aggregate_fields {
+  avg: db_backups_avg_fields
+  count(columns: [db_backups_select_column!], distinct: Boolean): Int!
+  max: db_backups_max_fields
+  min: db_backups_min_fields
+  stddev: db_backups_stddev_fields
+  stddev_pop: db_backups_stddev_pop_fields
+  stddev_samp: db_backups_stddev_samp_fields
+  sum: db_backups_sum_fields
+  var_pop: db_backups_var_pop_fields
+  var_samp: db_backups_var_samp_fields
+  variance: db_backups_variance_fields
+}
+
+"""aggregate avg on columns"""
+type db_backups_avg_fields {
+  size: Float
+}
+
+"""
+Boolean expression to filter rows from the table "db_backups". All fields are combined with a logical 'AND'.
+"""
+input db_backups_bool_exp {
+  _and: [db_backups_bool_exp!]
+  _not: db_backups_bool_exp
+  _or: [db_backups_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  name: String_comparison_exp
+  size: Int_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "db_backups"
+"""
+enum db_backups_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  db_backups_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "db_backups"
+"""
+input db_backups_inc_input {
+  size: Int
+}
+
+"""
+input type for inserting data into table "db_backups"
+"""
+input db_backups_insert_input {
+  created_at: timestamptz
+  id: uuid
+  name: String
+  size: Int
+}
+
+"""aggregate max on columns"""
+type db_backups_max_fields {
+  created_at: timestamptz
+  id: uuid
+  name: String
+  size: Int
+}
+
+"""aggregate min on columns"""
+type db_backups_min_fields {
+  created_at: timestamptz
+  id: uuid
+  name: String
+  size: Int
+}
+
+"""
+response of any mutation on the table "db_backups"
+"""
+type db_backups_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [db_backups!]!
+}
+
+"""
+on_conflict condition type for table "db_backups"
+"""
+input db_backups_on_conflict {
+  constraint: db_backups_constraint!
+  update_columns: [db_backups_update_column!]! = []
+  where: db_backups_bool_exp
+}
+
+"""Ordering options when selecting data from "db_backups"."""
+input db_backups_order_by {
+  created_at: order_by
+  id: order_by
+  name: order_by
+  size: order_by
+}
+
+"""primary key columns input for table: db_backups"""
+input db_backups_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "db_backups"
+"""
+enum db_backups_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  name
+
+  """column name"""
+  size
+}
+
+"""
+input type for updating data in table "db_backups"
+"""
+input db_backups_set_input {
+  created_at: timestamptz
+  id: uuid
+  name: String
+  size: Int
+}
+
+"""aggregate stddev on columns"""
+type db_backups_stddev_fields {
+  size: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type db_backups_stddev_pop_fields {
+  size: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type db_backups_stddev_samp_fields {
+  size: Float
+}
+
+"""
+Streaming cursor of the table "db_backups"
+"""
+input db_backups_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: db_backups_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input db_backups_stream_cursor_value_input {
+  created_at: timestamptz
+  id: uuid
+  name: String
+  size: Int
+}
+
+"""aggregate sum on columns"""
+type db_backups_sum_fields {
+  size: Int
+}
+
+"""
+update columns of table "db_backups"
+"""
+enum db_backups_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  name
+
+  """column name"""
+  size
+}
+
+input db_backups_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: db_backups_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: db_backups_set_input
+
+  """filter the rows which have to be updated"""
+  where: db_backups_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type db_backups_var_pop_fields {
+  size: Float
+}
+
+"""aggregate var_samp on columns"""
+type db_backups_var_samp_fields {
+  size: Float
+}
+
+"""aggregate variance on columns"""
+type db_backups_variance_fields {
+  size: Float
+}
+
+"""
 columns and relationships of "e_friend_status"
 """
 type e_friend_status {
@@ -6023,6 +6261,7 @@ type game_server_nodes {
     path: String
   ): jsonb
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
 
   """An object relationship"""
   e_region: server_regions
@@ -6194,6 +6433,7 @@ type game_server_nodes_avg_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6211,6 +6451,7 @@ input game_server_nodes_avg_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6228,6 +6469,7 @@ input game_server_nodes_bool_exp {
   cpu_cores_per_socket: Int_comparison_exp
   cpu_governor_info: jsonb_comparison_exp
   cpu_threads_per_core: Int_comparison_exp
+  demo_network_limiter: Int_comparison_exp
   e_region: server_regions_bool_exp
   e_status: e_game_server_node_statuses_bool_exp
   enabled: Boolean_comparison_exp
@@ -6294,6 +6536,7 @@ input game_server_nodes_inc_input {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   end_port_range: Int
   pin_build_id: Int
   start_port_range: Int
@@ -6307,6 +6550,7 @@ input game_server_nodes_insert_input {
   cpu_cores_per_socket: Int
   cpu_governor_info: jsonb
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   e_region: server_regions_obj_rel_insert_input
   e_status: e_game_server_node_statuses_obj_rel_insert_input
   enabled: Boolean
@@ -6341,6 +6585,7 @@ type game_server_nodes_max_fields {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   end_port_range: Int
   id: String
   label: String
@@ -6365,6 +6610,7 @@ input game_server_nodes_max_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   id: order_by
   label: order_by
@@ -6386,6 +6632,7 @@ type game_server_nodes_min_fields {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   end_port_range: Int
   id: String
   label: String
@@ -6410,6 +6657,7 @@ input game_server_nodes_min_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   id: order_by
   label: order_by
@@ -6459,6 +6707,7 @@ input game_server_nodes_order_by {
   cpu_cores_per_socket: order_by
   cpu_governor_info: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   e_region: server_regions_order_by
   e_status: e_game_server_node_statuses_order_by
   enabled: order_by
@@ -6511,6 +6760,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   cpu_threads_per_core
+
+  """column name"""
+  demo_network_limiter
 
   """column name"""
   enabled
@@ -6609,6 +6861,7 @@ input game_server_nodes_set_input {
   cpu_cores_per_socket: Int
   cpu_governor_info: jsonb
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
@@ -6638,6 +6891,7 @@ type game_server_nodes_stddev_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6655,6 +6909,7 @@ input game_server_nodes_stddev_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6669,6 +6924,7 @@ type game_server_nodes_stddev_pop_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6686,6 +6942,7 @@ input game_server_nodes_stddev_pop_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6700,6 +6957,7 @@ type game_server_nodes_stddev_samp_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6717,6 +6975,7 @@ input game_server_nodes_stddev_samp_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6739,6 +6998,7 @@ input game_server_nodes_stream_cursor_value_input {
   cpu_cores_per_socket: Int
   cpu_governor_info: jsonb
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
@@ -6768,6 +7028,7 @@ type game_server_nodes_sum_fields {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_threads_per_core: Int
+  demo_network_limiter: Int
   end_port_range: Int
   pin_build_id: Int
   start_port_range: Int
@@ -6785,6 +7046,7 @@ input game_server_nodes_sum_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6805,6 +7067,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   cpu_threads_per_core
+
+  """column name"""
+  demo_network_limiter
 
   """column name"""
   enabled
@@ -6902,6 +7167,7 @@ type game_server_nodes_var_pop_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6919,6 +7185,7 @@ input game_server_nodes_var_pop_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6933,6 +7200,7 @@ type game_server_nodes_var_samp_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6950,6 +7218,7 @@ input game_server_nodes_var_samp_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -6964,6 +7233,7 @@ type game_server_nodes_variance_fields {
   build_id: Float
   cpu_cores_per_socket: Float
   cpu_threads_per_core: Float
+  demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -6981,6 +7251,7 @@ input game_server_nodes_variance_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_threads_per_core: order_by
+  demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -15747,6 +16018,19 @@ type mutation_root {
   delete_api_keys_by_pk(id: uuid!): api_keys
 
   """
+  delete data from the table: "db_backups"
+  """
+  delete_db_backups(
+    """filter the rows which have to be deleted"""
+    where: db_backups_bool_exp!
+  ): db_backups_mutation_response
+
+  """
+  delete single row from the table: "db_backups"
+  """
+  delete_db_backups_by_pk(id: uuid!): db_backups
+
+  """
   delete data from the table: "e_friend_status"
   """
   delete_e_friend_status(
@@ -16692,6 +16976,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: api_keys_on_conflict
   ): api_keys
+
+  """
+  insert data into the table: "db_backups"
+  """
+  insert_db_backups(
+    """the rows to be inserted"""
+    objects: [db_backups_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: db_backups_on_conflict
+  ): db_backups_mutation_response
+
+  """
+  insert a single row into the table: "db_backups"
+  """
+  insert_db_backups_one(
+    """the row to be inserted"""
+    object: db_backups_insert_input!
+
+    """upsert condition"""
+    on_conflict: db_backups_on_conflict
+  ): db_backups
 
   """
   insert data into the table: "e_friend_status"
@@ -18322,6 +18628,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [api_keys_updates!]!
   ): [api_keys_mutation_response]
+
+  """
+  update data of the table: "db_backups"
+  """
+  update_db_backups(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: db_backups_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: db_backups_set_input
+
+    """filter the rows which have to be updated"""
+    where: db_backups_bool_exp!
+  ): db_backups_mutation_response
+
+  """
+  update single row of the table: "db_backups"
+  """
+  update_db_backups_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: db_backups_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: db_backups_set_input
+    pk_columns: db_backups_pk_columns_input!
+  ): db_backups
+
+  """
+  update multiples rows of table: "db_backups"
+  """
+  update_db_backups_many(
+    """updates to execute, in order"""
+    updates: [db_backups_updates!]!
+  ): [db_backups_mutation_response]
 
   """
   update data of the table: "e_friend_status"
@@ -27971,6 +28311,49 @@ type query_root {
   api_keys_by_pk(id: uuid!): api_keys
 
   """
+  fetch data from the table: "db_backups"
+  """
+  db_backups(
+    """distinct select on columns"""
+    distinct_on: [db_backups_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [db_backups_order_by!]
+
+    """filter the rows returned"""
+    where: db_backups_bool_exp
+  ): [db_backups!]!
+
+  """
+  fetch aggregated fields from the table: "db_backups"
+  """
+  db_backups_aggregate(
+    """distinct select on columns"""
+    distinct_on: [db_backups_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [db_backups_order_by!]
+
+    """filter the rows returned"""
+    where: db_backups_bool_exp
+  ): db_backups_aggregate!
+
+  """fetch data from the table: "db_backups" using primary key columns"""
+  db_backups_by_pk(id: uuid!): db_backups
+
+  """
   fetch data from the table: "e_friend_status"
   """
   e_friend_status(
@@ -32829,6 +33212,63 @@ type subscription_root {
     """filter the rows returned"""
     where: api_keys_bool_exp
   ): [api_keys!]!
+
+  """
+  fetch data from the table: "db_backups"
+  """
+  db_backups(
+    """distinct select on columns"""
+    distinct_on: [db_backups_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [db_backups_order_by!]
+
+    """filter the rows returned"""
+    where: db_backups_bool_exp
+  ): [db_backups!]!
+
+  """
+  fetch aggregated fields from the table: "db_backups"
+  """
+  db_backups_aggregate(
+    """distinct select on columns"""
+    distinct_on: [db_backups_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [db_backups_order_by!]
+
+    """filter the rows returned"""
+    where: db_backups_bool_exp
+  ): db_backups_aggregate!
+
+  """fetch data from the table: "db_backups" using primary key columns"""
+  db_backups_by_pk(id: uuid!): db_backups
+
+  """
+  fetch data from the table in a streaming manner: "db_backups"
+  """
+  db_backups_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [db_backups_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: db_backups_bool_exp
+  ): [db_backups!]!
 
   """
   fetch data from the table: "e_friend_status"

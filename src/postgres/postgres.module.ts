@@ -11,9 +11,12 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { ReindexTables } from "./jobs/ReindexTables";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { RedisModule } from "src/redis/redis.module";
+import { GetDatabaseBackups } from "./jobs/GetDatabaseBackups";
+import { S3Module } from "src/s3/s3.module";
 
 @Module({
   imports: [
+    S3Module,
     BullModule.registerQueue({
       name: PostgresQueues.Postgres,
     }),
@@ -44,6 +47,7 @@ import { RedisModule } from "src/redis/redis.module";
     PostgresService,
     PostgresAnalyzeJob,
     ReindexTables,
+    GetDatabaseBackups,
     ...getQueuesProcessors("Postgres"),
     loggerFactory(),
   ],
@@ -70,6 +74,16 @@ export class PostgresModule {
       {
         repeat: {
           pattern: "0 0 * * *",
+        },
+      },
+    );
+
+    void queue.add(
+      GetDatabaseBackups.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 4 * * *",
         },
       },
     );

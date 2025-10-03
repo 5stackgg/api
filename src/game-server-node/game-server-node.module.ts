@@ -74,7 +74,7 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
       },
     ),
   ],
-  exports: [LoggingServiceService],
+  exports: [LoggingServiceService, GameServerNodeService],
   controllers: [GameServerNodeController],
 })
 export class GameServerNodeModule implements OnApplicationBootstrap {

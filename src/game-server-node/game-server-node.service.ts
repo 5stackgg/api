@@ -26,6 +26,9 @@ export class GameServerNodeService {
 
   private readonly namespace: string;
 
+  private coreApi: CoreV1Api;
+  private batchApi: BatchV1Api;
+
   // keep 1.5 hours of stats; with a ping every 30 seconds, that's 3,600 / 30 = 120 per hour, so 1.5 * 120 = 180 entries.
   private maxOfflineStatsHistory = 60 * 90;
   private maxStatsHistory: number = 180 - 1;
@@ -41,6 +44,12 @@ export class GameServerNodeService {
     this.namespace = this.gameServerConfig.namespace;
     this.redis = redisManager.getConnection();
     this.steamConfig = this.config.get<SteamConfig>("steam");
+
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+
+    this.coreApi = kc.makeApiClient(CoreV1Api);
+    this.batchApi = kc.makeApiClient(BatchV1Api);
   }
 
   public static GET_UPDATE_JOB_NAME(gameServerNodeId: string) {
@@ -212,18 +221,12 @@ export class GameServerNodeService {
   }
 
   public async updateIdLabel(nodeId: string) {
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-
-    const core = kc.makeApiClient(CoreV1Api);
-
     try {
-      // Fetch the current node
-      const node = await core.readNode({
+      const node = await this.coreApi.readNode({
         name: nodeId,
       });
 
-      await core.patchNode({
+      await this.coreApi.patchNode({
         name: nodeId,
         body: [
           {
@@ -336,15 +339,10 @@ export class GameServerNodeService {
       return;
     }
 
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-
-    const batchV1Api = kc.makeApiClient(BatchV1Api);
-
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
 
     try {
-      await batchV1Api.createNamespacedJob({
+      await this.batchApi.createNamespacedJob({
         namespace: this.namespace,
         body: {
           apiVersion: "batch/v1",
@@ -963,5 +961,59 @@ export class GameServerNodeService {
     });
 
     return game_versions.at(0)?.build_id;
+  }
+
+  public async updateDemoNetworkLimiters() {
+    const { game_server_nodes } = await this.hasura.query({
+      game_server_nodes: {
+        id: true,
+        demo_network_limiter: true,
+      },
+    });
+
+    for (const node of game_server_nodes) {
+      await this.updateDemoNetworkLimiterLabel(node.id, node.demo_network_limiter);
+    }
+  }
+
+  public async updateDemoNetworkLimiterLabel(nodeId: string, value?: number) {
+    if(value === undefined) {
+      value = await this.getGlobalDemoNetworkLimiter();
+    }
+
+    try {
+      const node = await this.coreApi.readNode({
+        name: nodeId,
+      });
+
+      await this.coreApi.patchNode({
+        name: nodeId,
+        body: [
+          {
+            op: "replace",
+            path: "/metadata/labels",
+            value: {
+              ...node.metadata.labels,
+              ...{
+                "5stack-network-limiter": `${value}`,
+              },
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      this.logger.warn("unable to patch node", error);
+    }
+  }
+
+  private async getGlobalDemoNetworkLimiter(): Promise<number | undefined> {
+    const { settings } = await this.hasura.query({
+      settings: {
+        __args: { where: { name: { _eq: "demo_network_limiter" } } },
+        value: true,
+      },
+    });
+
+    return settings.at(0)?.value && parseInt(settings.at(0)?.value);
   }
 }

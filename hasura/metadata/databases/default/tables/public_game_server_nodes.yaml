@@ -58,6 +58,7 @@ select_permissions:
         - cpu_cores_per_socket
         - cpu_governor_info
         - cpu_threads_per_core
+        - demo_network_limiter
         - enabled
         - end_port_range
         - gpu
@@ -86,6 +87,7 @@ update_permissions:
   - role: system_administrator
     permission:
       columns:
+        - demo_network_limiter
         - enabled
         - end_port_range
         - label
@@ -102,6 +104,17 @@ delete_permissions:
       filter: {}
     comment: ""
 event_triggers:
+  - name: demo_network_limiter
+    definition:
+      enable_manual: false
+      update:
+        columns:
+          - demo_network_limiter
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
   - name: node_server_availability
     definition:
       enable_manual: false

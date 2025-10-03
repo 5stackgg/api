@@ -468,6 +468,139 @@ export interface api_keys_variance_fields {
 export type cursor_ordering = 'ASC' | 'DESC'
 
 
+/** columns and relationships of "db_backups" */
+export interface db_backups {
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    name: Scalars['String']
+    size: Scalars['Int']
+    __typename: 'db_backups'
+}
+
+
+/** aggregated selection of "db_backups" */
+export interface db_backups_aggregate {
+    aggregate: (db_backups_aggregate_fields | null)
+    nodes: db_backups[]
+    __typename: 'db_backups_aggregate'
+}
+
+
+/** aggregate fields of "db_backups" */
+export interface db_backups_aggregate_fields {
+    avg: (db_backups_avg_fields | null)
+    count: Scalars['Int']
+    max: (db_backups_max_fields | null)
+    min: (db_backups_min_fields | null)
+    stddev: (db_backups_stddev_fields | null)
+    stddev_pop: (db_backups_stddev_pop_fields | null)
+    stddev_samp: (db_backups_stddev_samp_fields | null)
+    sum: (db_backups_sum_fields | null)
+    var_pop: (db_backups_var_pop_fields | null)
+    var_samp: (db_backups_var_samp_fields | null)
+    variance: (db_backups_variance_fields | null)
+    __typename: 'db_backups_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface db_backups_avg_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "db_backups" */
+export type db_backups_constraint = 'db_backups_pkey'
+
+
+/** aggregate max on columns */
+export interface db_backups_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    name: (Scalars['String'] | null)
+    size: (Scalars['Int'] | null)
+    __typename: 'db_backups_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface db_backups_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    name: (Scalars['String'] | null)
+    size: (Scalars['Int'] | null)
+    __typename: 'db_backups_min_fields'
+}
+
+
+/** response of any mutation on the table "db_backups" */
+export interface db_backups_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: db_backups[]
+    __typename: 'db_backups_mutation_response'
+}
+
+
+/** select columns of table "db_backups" */
+export type db_backups_select_column = 'created_at' | 'id' | 'name' | 'size'
+
+
+/** aggregate stddev on columns */
+export interface db_backups_stddev_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface db_backups_stddev_pop_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface db_backups_stddev_samp_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface db_backups_sum_fields {
+    size: (Scalars['Int'] | null)
+    __typename: 'db_backups_sum_fields'
+}
+
+
+/** update columns of table "db_backups" */
+export type db_backups_update_column = 'created_at' | 'id' | 'name' | 'size'
+
+
+/** aggregate var_pop on columns */
+export interface db_backups_var_pop_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface db_backups_var_samp_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface db_backups_variance_fields {
+    size: (Scalars['Float'] | null)
+    __typename: 'db_backups_variance_fields'
+}
+
+
 /** columns and relationships of "e_friend_status" */
 export interface e_friend_status {
     description: Scalars['String']
@@ -2161,6 +2294,7 @@ export interface game_server_nodes {
     cpu_cores_per_socket: (Scalars['Int'] | null)
     cpu_governor_info: (Scalars['jsonb'] | null)
     cpu_threads_per_core: (Scalars['Int'] | null)
+    demo_network_limiter: (Scalars['Int'] | null)
     /** An object relationship */
     e_region: (server_regions | null)
     /** An object relationship */
@@ -2231,6 +2365,7 @@ export interface game_server_nodes_avg_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2251,6 +2386,7 @@ export interface game_server_nodes_max_fields {
     build_id: (Scalars['Int'] | null)
     cpu_cores_per_socket: (Scalars['Int'] | null)
     cpu_threads_per_core: (Scalars['Int'] | null)
+    demo_network_limiter: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     id: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
@@ -2274,6 +2410,7 @@ export interface game_server_nodes_min_fields {
     build_id: (Scalars['Int'] | null)
     cpu_cores_per_socket: (Scalars['Int'] | null)
     cpu_threads_per_core: (Scalars['Int'] | null)
+    demo_network_limiter: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     id: (Scalars['String'] | null)
     label: (Scalars['String'] | null)
@@ -2301,7 +2438,7 @@ export interface game_server_nodes_mutation_response {
 
 
 /** select columns of table "game_server_nodes" */
-export type game_server_nodes_select_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_governor_info' | 'cpu_threads_per_core' | 'enabled' | 'end_port_range' | 'gpu' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_select_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_governor_info' | 'cpu_threads_per_core' | 'demo_network_limiter' | 'enabled' | 'end_port_range' | 'gpu' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
 
 
 /** select "game_server_nodes_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_nodes" */
@@ -2319,6 +2456,7 @@ export interface game_server_nodes_stddev_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2335,6 +2473,7 @@ export interface game_server_nodes_stddev_pop_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2351,6 +2490,7 @@ export interface game_server_nodes_stddev_samp_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2367,6 +2507,7 @@ export interface game_server_nodes_sum_fields {
     build_id: (Scalars['Int'] | null)
     cpu_cores_per_socket: (Scalars['Int'] | null)
     cpu_threads_per_core: (Scalars['Int'] | null)
+    demo_network_limiter: (Scalars['Int'] | null)
     end_port_range: (Scalars['Int'] | null)
     pin_build_id: (Scalars['Int'] | null)
     start_port_range: (Scalars['Int'] | null)
@@ -2377,7 +2518,7 @@ export interface game_server_nodes_sum_fields {
 
 
 /** update columns of table "game_server_nodes" */
-export type game_server_nodes_update_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_governor_info' | 'cpu_threads_per_core' | 'enabled' | 'end_port_range' | 'gpu' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
+export type game_server_nodes_update_column = 'build_id' | 'cpu_cores_per_socket' | 'cpu_governor_info' | 'cpu_threads_per_core' | 'demo_network_limiter' | 'enabled' | 'end_port_range' | 'gpu' | 'id' | 'label' | 'lan_ip' | 'node_ip' | 'offline_at' | 'pin_build_id' | 'pin_plugin_version' | 'public_ip' | 'region' | 'start_port_range' | 'status' | 'supports_cpu_pinning' | 'supports_low_latency' | 'token' | 'update_status'
 
 
 /** aggregate var_pop on columns */
@@ -2387,6 +2528,7 @@ export interface game_server_nodes_var_pop_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2403,6 +2545,7 @@ export interface game_server_nodes_var_samp_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -2419,6 +2562,7 @@ export interface game_server_nodes_variance_fields {
     build_id: (Scalars['Float'] | null)
     cpu_cores_per_socket: (Scalars['Float'] | null)
     cpu_threads_per_core: (Scalars['Float'] | null)
+    demo_network_limiter: (Scalars['Float'] | null)
     end_port_range: (Scalars['Float'] | null)
     pin_build_id: (Scalars['Float'] | null)
     start_port_range: (Scalars['Float'] | null)
@@ -5089,6 +5233,10 @@ export interface mutation_root {
     delete_api_keys: (api_keys_mutation_response | null)
     /** delete single row from the table: "api_keys" */
     delete_api_keys_by_pk: (api_keys | null)
+    /** delete data from the table: "db_backups" */
+    delete_db_backups: (db_backups_mutation_response | null)
+    /** delete single row from the table: "db_backups" */
+    delete_db_backups_by_pk: (db_backups | null)
     /** delete data from the table: "e_friend_status" */
     delete_e_friend_status: (e_friend_status_mutation_response | null)
     /** delete single row from the table: "e_friend_status" */
@@ -5370,6 +5518,10 @@ export interface mutation_root {
     insert_api_keys: (api_keys_mutation_response | null)
     /** insert a single row into the table: "api_keys" */
     insert_api_keys_one: (api_keys | null)
+    /** insert data into the table: "db_backups" */
+    insert_db_backups: (db_backups_mutation_response | null)
+    /** insert a single row into the table: "db_backups" */
+    insert_db_backups_one: (db_backups | null)
     /** insert data into the table: "e_friend_status" */
     insert_e_friend_status: (e_friend_status_mutation_response | null)
     /** insert a single row into the table: "e_friend_status" */
@@ -5694,6 +5846,12 @@ export interface mutation_root {
     update_api_keys_by_pk: (api_keys | null)
     /** update multiples rows of table: "api_keys" */
     update_api_keys_many: ((api_keys_mutation_response | null)[] | null)
+    /** update data of the table: "db_backups" */
+    update_db_backups: (db_backups_mutation_response | null)
+    /** update single row of the table: "db_backups" */
+    update_db_backups_by_pk: (db_backups | null)
+    /** update multiples rows of table: "db_backups" */
+    update_db_backups_many: ((db_backups_mutation_response | null)[] | null)
     /** update data of the table: "e_friend_status" */
     update_e_friend_status: (e_friend_status_mutation_response | null)
     /** update single row of the table: "e_friend_status" */
@@ -8491,6 +8649,12 @@ export interface query_root {
     api_keys_aggregate: api_keys_aggregate
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk: (api_keys | null)
+    /** fetch data from the table: "db_backups" */
+    db_backups: db_backups[]
+    /** fetch aggregated fields from the table: "db_backups" */
+    db_backups_aggregate: db_backups_aggregate
+    /** fetch data from the table: "db_backups" using primary key columns */
+    db_backups_by_pk: (db_backups | null)
     /** fetch data from the table: "e_friend_status" */
     e_friend_status: e_friend_status[]
     /** fetch aggregated fields from the table: "e_friend_status" */
@@ -9441,6 +9605,14 @@ export interface subscription_root {
     api_keys_by_pk: (api_keys | null)
     /** fetch data from the table in a streaming manner: "api_keys" */
     api_keys_stream: api_keys[]
+    /** fetch data from the table: "db_backups" */
+    db_backups: db_backups[]
+    /** fetch aggregated fields from the table: "db_backups" */
+    db_backups_aggregate: db_backups_aggregate
+    /** fetch data from the table: "db_backups" using primary key columns */
+    db_backups_by_pk: (db_backups | null)
+    /** fetch data from the table in a streaming manner: "db_backups" */
+    db_backups_stream: db_backups[]
     /** fetch data from the table: "e_friend_status" */
     e_friend_status: e_friend_status[]
     /** fetch aggregated fields from the table: "e_friend_status" */
@@ -13642,6 +13814,189 @@ export interface bigint_comparison_exp {_eq?: (Scalars['bigint'] | null),_gt?: (
 export interface bytea_comparison_exp {_eq?: (Scalars['bytea'] | null),_gt?: (Scalars['bytea'] | null),_gte?: (Scalars['bytea'] | null),_in?: (Scalars['bytea'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['bytea'] | null),_lte?: (Scalars['bytea'] | null),_neq?: (Scalars['bytea'] | null),_nin?: (Scalars['bytea'][] | null)}
 
 
+/** columns and relationships of "db_backups" */
+export interface db_backupsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "db_backups" */
+export interface db_backups_aggregateGenqlSelection{
+    aggregate?: db_backups_aggregate_fieldsGenqlSelection
+    nodes?: db_backupsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "db_backups" */
+export interface db_backups_aggregate_fieldsGenqlSelection{
+    avg?: db_backups_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (db_backups_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: db_backups_max_fieldsGenqlSelection
+    min?: db_backups_min_fieldsGenqlSelection
+    stddev?: db_backups_stddev_fieldsGenqlSelection
+    stddev_pop?: db_backups_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: db_backups_stddev_samp_fieldsGenqlSelection
+    sum?: db_backups_sum_fieldsGenqlSelection
+    var_pop?: db_backups_var_pop_fieldsGenqlSelection
+    var_samp?: db_backups_var_samp_fieldsGenqlSelection
+    variance?: db_backups_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface db_backups_avg_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "db_backups". All fields are combined with a logical 'AND'. */
+export interface db_backups_bool_exp {_and?: (db_backups_bool_exp[] | null),_not?: (db_backups_bool_exp | null),_or?: (db_backups_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),size?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "db_backups" */
+export interface db_backups_inc_input {size?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "db_backups" */
+export interface db_backups_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),size?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface db_backups_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface db_backups_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "db_backups" */
+export interface db_backups_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: db_backupsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "db_backups" */
+export interface db_backups_on_conflict {constraint: db_backups_constraint,update_columns?: db_backups_update_column[],where?: (db_backups_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "db_backups". */
+export interface db_backups_order_by {created_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),size?: (order_by | null)}
+
+
+/** primary key columns input for table: db_backups */
+export interface db_backups_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "db_backups" */
+export interface db_backups_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),size?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface db_backups_stddev_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface db_backups_stddev_pop_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface db_backups_stddev_samp_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "db_backups" */
+export interface db_backups_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: db_backups_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface db_backups_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),size?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface db_backups_sum_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface db_backups_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (db_backups_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (db_backups_set_input | null),
+/** filter the rows which have to be updated */
+where: db_backups_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface db_backups_var_pop_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface db_backups_var_samp_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface db_backups_variance_fieldsGenqlSelection{
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "e_friend_status" */
 export interface e_friend_statusGenqlSelection{
     description?: boolean | number
@@ -16591,6 +16946,7 @@ export interface game_server_nodesGenqlSelection{
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     /** An object relationship */
     e_region?: server_regionsGenqlSelection
     /** An object relationship */
@@ -16706,6 +17062,7 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16717,11 +17074,11 @@ export interface game_server_nodes_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "game_server_nodes" */
-export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_avg_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "game_server_nodes". All fields are combined with a logical 'AND'. */
-export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),cpu_cores_per_socket?: (Int_comparison_exp | null),cpu_governor_info?: (jsonb_comparison_exp | null),cpu_threads_per_core?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),gpu?: (Boolean_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),offline_at?: (timestamptz_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
+export interface game_server_nodes_bool_exp {_and?: (game_server_nodes_bool_exp[] | null),_not?: (game_server_nodes_bool_exp | null),_or?: (game_server_nodes_bool_exp[] | null),available_server_count?: (Int_comparison_exp | null),build_id?: (Int_comparison_exp | null),cpu_cores_per_socket?: (Int_comparison_exp | null),cpu_governor_info?: (jsonb_comparison_exp | null),cpu_threads_per_core?: (Int_comparison_exp | null),demo_network_limiter?: (Int_comparison_exp | null),e_region?: (server_regions_bool_exp | null),e_status?: (e_game_server_node_statuses_bool_exp | null),enabled?: (Boolean_comparison_exp | null),end_port_range?: (Int_comparison_exp | null),gpu?: (Boolean_comparison_exp | null),id?: (String_comparison_exp | null),label?: (String_comparison_exp | null),lan_ip?: (inet_comparison_exp | null),node_ip?: (inet_comparison_exp | null),offline_at?: (timestamptz_comparison_exp | null),pin_build_id?: (Int_comparison_exp | null),pin_plugin_version?: (String_comparison_exp | null),pinned_version?: (game_versions_bool_exp | null),plugin_supported?: (Boolean_comparison_exp | null),public_ip?: (inet_comparison_exp | null),region?: (String_comparison_exp | null),servers?: (servers_bool_exp | null),servers_aggregate?: (servers_aggregate_bool_exp | null),start_port_range?: (Int_comparison_exp | null),status?: (e_game_server_node_statuses_enum_comparison_exp | null),supports_cpu_pinning?: (Boolean_comparison_exp | null),supports_low_latency?: (Boolean_comparison_exp | null),token?: (String_comparison_exp | null),total_server_count?: (Int_comparison_exp | null),update_status?: (String_comparison_exp | null),version?: (game_versions_bool_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -16737,11 +17094,11 @@ export interface game_server_nodes_delete_key_input {cpu_governor_info?: (Scalar
 
 
 /** input type for incrementing numeric columns in table "game_server_nodes" */
-export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),end_port_range?: (Scalars['Int'] | null),pin_build_id?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
+export interface game_server_nodes_inc_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),end_port_range?: (Scalars['Int'] | null),pin_build_id?: (Scalars['Int'] | null),start_port_range?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "game_server_nodes" */
-export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
+export interface game_server_nodes_insert_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),e_region?: (server_regions_obj_rel_insert_input | null),e_status?: (e_game_server_node_statuses_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),pinned_version?: (game_versions_obj_rel_insert_input | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),servers?: (servers_arr_rel_insert_input | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null),version?: (game_versions_obj_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -16751,6 +17108,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
     label?: boolean | number
@@ -16769,7 +17127,7 @@ export interface game_server_nodes_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "game_server_nodes" */
-export interface game_server_nodes_max_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_max_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -16779,6 +17137,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     id?: boolean | number
     label?: boolean | number
@@ -16797,7 +17156,7 @@ export interface game_server_nodes_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "game_server_nodes" */
-export interface game_server_nodes_min_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
+export interface game_server_nodes_min_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),id?: (order_by | null),label?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),region?: (order_by | null),start_port_range?: (order_by | null),token?: (order_by | null),update_status?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_nodes" */
@@ -16822,7 +17181,7 @@ export interface game_server_nodes_on_conflict {constraint: game_server_nodes_co
 
 
 /** Ordering options when selecting data from "game_server_nodes". */
-export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_governor_info?: (order_by | null),cpu_threads_per_core?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),gpu?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
+export interface game_server_nodes_order_by {available_server_count?: (order_by | null),build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_governor_info?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),e_region?: (server_regions_order_by | null),e_status?: (e_game_server_node_statuses_order_by | null),enabled?: (order_by | null),end_port_range?: (order_by | null),gpu?: (order_by | null),id?: (order_by | null),label?: (order_by | null),lan_ip?: (order_by | null),node_ip?: (order_by | null),offline_at?: (order_by | null),pin_build_id?: (order_by | null),pin_plugin_version?: (order_by | null),pinned_version?: (game_versions_order_by | null),plugin_supported?: (order_by | null),public_ip?: (order_by | null),region?: (order_by | null),servers_aggregate?: (servers_aggregate_order_by | null),start_port_range?: (order_by | null),status?: (order_by | null),supports_cpu_pinning?: (order_by | null),supports_low_latency?: (order_by | null),token?: (order_by | null),total_server_count?: (order_by | null),update_status?: (order_by | null),version?: (game_versions_order_by | null)}
 
 
 /** primary key columns input for table: game_server_nodes */
@@ -16834,7 +17193,7 @@ export interface game_server_nodes_prepend_input {cpu_governor_info?: (Scalars['
 
 
 /** input type for updating data in table "game_server_nodes" */
-export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_set_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -16844,6 +17203,7 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16855,7 +17215,7 @@ export interface game_server_nodes_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -16865,6 +17225,7 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16876,7 +17237,7 @@ export interface game_server_nodes_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_pop_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_pop_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -16886,6 +17247,7 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16897,7 +17259,7 @@ export interface game_server_nodes_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "game_server_nodes" */
-export interface game_server_nodes_stddev_samp_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_stddev_samp_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** Streaming cursor of the table "game_server_nodes" */
@@ -16909,7 +17271,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
+export interface game_server_nodes_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),cpu_cores_per_socket?: (Scalars['Int'] | null),cpu_governor_info?: (Scalars['jsonb'] | null),cpu_threads_per_core?: (Scalars['Int'] | null),demo_network_limiter?: (Scalars['Int'] | null),enabled?: (Scalars['Boolean'] | null),end_port_range?: (Scalars['Int'] | null),gpu?: (Scalars['Boolean'] | null),id?: (Scalars['String'] | null),label?: (Scalars['String'] | null),lan_ip?: (Scalars['inet'] | null),node_ip?: (Scalars['inet'] | null),offline_at?: (Scalars['timestamptz'] | null),pin_build_id?: (Scalars['Int'] | null),pin_plugin_version?: (Scalars['String'] | null),public_ip?: (Scalars['inet'] | null),region?: (Scalars['String'] | null),start_port_range?: (Scalars['Int'] | null),status?: (e_game_server_node_statuses_enum | null),supports_cpu_pinning?: (Scalars['Boolean'] | null),supports_low_latency?: (Scalars['Boolean'] | null),token?: (Scalars['String'] | null),update_status?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -16919,6 +17281,7 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16930,7 +17293,7 @@ export interface game_server_nodes_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "game_server_nodes" */
-export interface game_server_nodes_sum_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_sum_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 export interface game_server_nodes_updates {
 /** append existing jsonb value of filtered columns with new jsonb value */
@@ -16958,6 +17321,7 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16969,7 +17333,7 @@ export interface game_server_nodes_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "game_server_nodes" */
-export interface game_server_nodes_var_pop_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_var_pop_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -16979,6 +17343,7 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -16990,7 +17355,7 @@ export interface game_server_nodes_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "game_server_nodes" */
-export interface game_server_nodes_var_samp_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_var_samp_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -17000,6 +17365,7 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
     build_id?: boolean | number
     cpu_cores_per_socket?: boolean | number
     cpu_threads_per_core?: boolean | number
+    demo_network_limiter?: boolean | number
     end_port_range?: boolean | number
     pin_build_id?: boolean | number
     start_port_range?: boolean | number
@@ -17011,7 +17377,7 @@ export interface game_server_nodes_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "game_server_nodes" */
-export interface game_server_nodes_variance_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
+export interface game_server_nodes_variance_order_by {build_id?: (order_by | null),cpu_cores_per_socket?: (order_by | null),cpu_threads_per_core?: (order_by | null),demo_network_limiter?: (order_by | null),end_port_range?: (order_by | null),pin_build_id?: (order_by | null),start_port_range?: (order_by | null)}
 
 
 /** columns and relationships of "game_versions" */
@@ -21779,6 +22145,12 @@ export interface mutation_rootGenqlSelection{
     where: api_keys_bool_exp} })
     /** delete single row from the table: "api_keys" */
     delete_api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "db_backups" */
+    delete_db_backups?: (db_backups_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: db_backups_bool_exp} })
+    /** delete single row from the table: "db_backups" */
+    delete_db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "e_friend_status" */
     delete_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -22226,6 +22598,18 @@ export interface mutation_rootGenqlSelection{
     object: api_keys_insert_input, 
     /** upsert condition */
     on_conflict?: (api_keys_on_conflict | null)} })
+    /** insert data into the table: "db_backups" */
+    insert_db_backups?: (db_backups_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: db_backups_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (db_backups_on_conflict | null)} })
+    /** insert a single row into the table: "db_backups" */
+    insert_db_backups_one?: (db_backupsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: db_backups_insert_input, 
+    /** upsert condition */
+    on_conflict?: (db_backups_on_conflict | null)} })
     /** insert data into the table: "e_friend_status" */
     insert_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -23114,6 +23498,24 @@ export interface mutation_rootGenqlSelection{
     update_api_keys_many?: (api_keys_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: api_keys_updates[]} })
+    /** update data of the table: "db_backups" */
+    update_db_backups?: (db_backups_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (db_backups_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (db_backups_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: db_backups_bool_exp} })
+    /** update single row of the table: "db_backups" */
+    update_db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (db_backups_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (db_backups_set_input | null), pk_columns: db_backups_pk_columns_input} })
+    /** update multiples rows of table: "db_backups" */
+    update_db_backups_many?: (db_backups_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: db_backups_updates[]} })
     /** update data of the table: "e_friend_status" */
     update_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -28474,6 +28876,32 @@ export interface query_rootGenqlSelection{
     where?: (api_keys_bool_exp | null)} })
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "db_backups" */
+    db_backups?: (db_backupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (db_backups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (db_backups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (db_backups_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "db_backups" */
+    db_backups_aggregate?: (db_backups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (db_backups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (db_backups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (db_backups_bool_exp | null)} })
+    /** fetch data from the table: "db_backups" using primary key columns */
+    db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "e_friend_status" */
     e_friend_status?: (e_friend_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -31295,6 +31723,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (api_keys_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (api_keys_bool_exp | null)} })
+    /** fetch data from the table: "db_backups" */
+    db_backups?: (db_backupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (db_backups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (db_backups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (db_backups_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "db_backups" */
+    db_backups_aggregate?: (db_backups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (db_backups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (db_backups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (db_backups_bool_exp | null)} })
+    /** fetch data from the table: "db_backups" using primary key columns */
+    db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "db_backups" */
+    db_backups_stream?: (db_backupsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (db_backups_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (db_backups_bool_exp | null)} })
     /** fetch data from the table: "e_friend_status" */
     e_friend_status?: (e_friend_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -38923,6 +39385,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const db_backups_possibleTypes: string[] = ['db_backups']
+    export const isdb_backups = (obj?: { __typename?: any } | null): obj is db_backups => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups"')
+      return db_backups_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_aggregate_possibleTypes: string[] = ['db_backups_aggregate']
+    export const isdb_backups_aggregate = (obj?: { __typename?: any } | null): obj is db_backups_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_aggregate"')
+      return db_backups_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_aggregate_fields_possibleTypes: string[] = ['db_backups_aggregate_fields']
+    export const isdb_backups_aggregate_fields = (obj?: { __typename?: any } | null): obj is db_backups_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_aggregate_fields"')
+      return db_backups_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_avg_fields_possibleTypes: string[] = ['db_backups_avg_fields']
+    export const isdb_backups_avg_fields = (obj?: { __typename?: any } | null): obj is db_backups_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_avg_fields"')
+      return db_backups_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_max_fields_possibleTypes: string[] = ['db_backups_max_fields']
+    export const isdb_backups_max_fields = (obj?: { __typename?: any } | null): obj is db_backups_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_max_fields"')
+      return db_backups_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_min_fields_possibleTypes: string[] = ['db_backups_min_fields']
+    export const isdb_backups_min_fields = (obj?: { __typename?: any } | null): obj is db_backups_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_min_fields"')
+      return db_backups_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_mutation_response_possibleTypes: string[] = ['db_backups_mutation_response']
+    export const isdb_backups_mutation_response = (obj?: { __typename?: any } | null): obj is db_backups_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_mutation_response"')
+      return db_backups_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_stddev_fields_possibleTypes: string[] = ['db_backups_stddev_fields']
+    export const isdb_backups_stddev_fields = (obj?: { __typename?: any } | null): obj is db_backups_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_stddev_fields"')
+      return db_backups_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_stddev_pop_fields_possibleTypes: string[] = ['db_backups_stddev_pop_fields']
+    export const isdb_backups_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is db_backups_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_stddev_pop_fields"')
+      return db_backups_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_stddev_samp_fields_possibleTypes: string[] = ['db_backups_stddev_samp_fields']
+    export const isdb_backups_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is db_backups_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_stddev_samp_fields"')
+      return db_backups_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_sum_fields_possibleTypes: string[] = ['db_backups_sum_fields']
+    export const isdb_backups_sum_fields = (obj?: { __typename?: any } | null): obj is db_backups_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_sum_fields"')
+      return db_backups_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_var_pop_fields_possibleTypes: string[] = ['db_backups_var_pop_fields']
+    export const isdb_backups_var_pop_fields = (obj?: { __typename?: any } | null): obj is db_backups_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_var_pop_fields"')
+      return db_backups_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_var_samp_fields_possibleTypes: string[] = ['db_backups_var_samp_fields']
+    export const isdb_backups_var_samp_fields = (obj?: { __typename?: any } | null): obj is db_backups_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_var_samp_fields"')
+      return db_backups_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const db_backups_variance_fields_possibleTypes: string[] = ['db_backups_variance_fields']
+    export const isdb_backups_variance_fields = (obj?: { __typename?: any } | null): obj is db_backups_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_variance_fields"')
+      return db_backups_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_friend_status_possibleTypes: string[] = ['e_friend_status']
     export const ise_friend_status = (obj?: { __typename?: any } | null): obj is e_friend_status => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_friend_status"')
@@ -45633,6 +46207,24 @@ export const enumCursorOrdering = {
    DESC: 'DESC' as const
 }
 
+export const enumDbBackupsConstraint = {
+   db_backups_pkey: 'db_backups_pkey' as const
+}
+
+export const enumDbBackupsSelectColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   name: 'name' as const,
+   size: 'size' as const
+}
+
+export const enumDbBackupsUpdateColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   name: 'name' as const,
+   size: 'size' as const
+}
+
 export const enumEFriendStatusConstraint = {
    e_friend_status_pkey: 'e_friend_status_pkey' as const
 }
@@ -46158,6 +46750,7 @@ export const enumGameServerNodesSelectColumn = {
    cpu_cores_per_socket: 'cpu_cores_per_socket' as const,
    cpu_governor_info: 'cpu_governor_info' as const,
    cpu_threads_per_core: 'cpu_threads_per_core' as const,
+   demo_network_limiter: 'demo_network_limiter' as const,
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
    gpu: 'gpu' as const,
@@ -46197,6 +46790,7 @@ export const enumGameServerNodesUpdateColumn = {
    cpu_cores_per_socket: 'cpu_cores_per_socket' as const,
    cpu_governor_info: 'cpu_governor_info' as const,
    cpu_threads_per_core: 'cpu_threads_per_core' as const,
+   demo_network_limiter: 'demo_network_limiter' as const,
    enabled: 'enabled' as const,
    end_port_range: 'end_port_range' as const,
    gpu: 'gpu' as const,

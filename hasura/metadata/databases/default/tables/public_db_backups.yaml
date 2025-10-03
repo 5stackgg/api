@@ -1,0 +1,13 @@
+table:
+  name: db_backups
+  schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - size
+        - name
+        - created_at
+        - id
+      filter: {}
+    comment: ""

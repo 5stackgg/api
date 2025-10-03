@@ -4,6 +4,7 @@ import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import { S3Config } from "../configs/types/S3Config";
 import { Injectable, Logger } from "@nestjs/common";
+import { ObjectInfo } from "minio/dist/main/internal/type";
 
 @Injectable()
 export class S3Service {
@@ -62,21 +63,35 @@ export class S3Service {
     };
   }
 
-  public async get(filename: string): Promise<Readable> {
-    return await this.client.getObject(this.bucket, filename);
+  public async list(bucket: string = this.bucket): Promise<ObjectInfo[]> {
+    return await this.client.listObjects(bucket).toArray();
   }
 
-  public async put(filename: string, stream: Readable | Buffer): Promise<void> {
-    await this.client.putObject(this.bucket, filename, stream);
+  public async get(
+    filename: string,
+    bucket: string = this.bucket,
+  ): Promise<Readable> {
+    return await this.client.getObject(bucket, filename);
   }
 
-  public async stat(filename: string) {
-    return await this.client.statObject(this.bucket, filename);
+  public async put(
+    filename: string,
+    stream: Readable | Buffer,
+    bucket: string = this.bucket,
+  ): Promise<void> {
+    await this.client.putObject(bucket, filename, stream);
   }
 
-  public async remove(filename: string): Promise<boolean> {
+  public async stat(filename: string, bucket: string = this.bucket) {
+    return await this.client.statObject(bucket, filename);
+  }
+
+  public async remove(
+    filename: string,
+    bucket: string = this.bucket,
+  ): Promise<boolean> {
     try {
-      await this.client.removeObject(this.bucket, filename);
+      await this.client.removeObject(bucket, filename);
     } catch (error) {
       if (error.code === "NoSuchKey") {
         return false;
@@ -87,9 +102,12 @@ export class S3Service {
     return true;
   }
 
-  public async has(filepath: string): Promise<boolean> {
+  public async has(
+    filepath: string,
+    bucket: string = this.bucket,
+  ): Promise<boolean> {
     try {
-      return !!(await this.client.statObject(this.bucket, filepath));
+      return !!(await this.client.statObject(bucket, filepath));
     } catch (error) {
       if (error.code === "NotFound") {
         return false;
@@ -104,6 +122,7 @@ export class S3Service {
 
   public async getPresignedUrl(
     key: string,
+    bucket: string = this.bucket,
     // 5 minutes
     expires = 60 * 5,
     type: "put" | "get" = "put",
@@ -111,17 +130,9 @@ export class S3Service {
     let presignedUrl: string;
 
     if (type === "put") {
-      presignedUrl = await this.client.presignedPutObject(
-        this.bucket,
-        key,
-        expires,
-      );
+      presignedUrl = await this.client.presignedPutObject(bucket, key, expires);
     } else {
-      presignedUrl = await this.client.presignedGetObject(
-        this.bucket,
-        key,
-        expires,
-      );
+      presignedUrl = await this.client.presignedGetObject(bucket, key, expires);
     }
 
     return presignedUrl;

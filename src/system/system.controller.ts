@@ -5,6 +5,10 @@ import { Get } from "@nestjs/common";
 import { User } from "src/auth/types/User";
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { HasuraEvent } from "src/hasura/hasura.controller";
+import { HasuraEventData } from "src/hasura/types/HasuraEventData";
+import { settings_set_input } from "generated/schema";
+import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
 
 @Controller("system")
 export class SystemController {
@@ -12,6 +16,7 @@ export class SystemController {
     private readonly system: SystemService,
     private readonly hasura: HasuraService,
     private readonly notifications: NotificationsService,
+    private readonly gameServerNodeService: GameServerNodeService,
   ) {}
 
   @Get("healthz")
@@ -148,5 +153,12 @@ export class SystemController {
     return {
       success: true,
     };
+  }
+
+  @HasuraEvent()
+  public async settings(data: HasuraEventData<settings_set_input>) {
+    if((data.new.name === "demo_network_limiter" || data.old.name === "demo_network_limiter") && (data.op === "INSERT" || data.op === "DELETE" || data.new.value !== data.old.value)) {
+      await this.gameServerNodeService.updateDemoNetworkLimiters();
+    }
   }
 }

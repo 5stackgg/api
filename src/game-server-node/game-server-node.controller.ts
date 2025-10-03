@@ -1,5 +1,5 @@
 import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
-import { HasuraAction } from "../hasura/hasura.controller";
+import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
 import { TailscaleService } from "../tailscale/tailscale.service";
 import { HasuraService } from "../hasura/hasura.service";
@@ -16,6 +16,8 @@ import { EventPattern } from "@nestjs/microservices";
 import { NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
+import { HasuraEventData } from "src/hasura/types/HasuraEventData";
+import { game_server_nodes_set_input } from "generated/schema";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -59,6 +61,10 @@ export class GameServerNodeController {
 
     if (!payload.labels?.["5stack-id"]) {
       await this.gameServerNodeService.updateIdLabel(payload.node);
+    }
+
+    if (payload.labels?.["5stack-network-limiter"]) {
+      await this.gameServerNodeService.updateDemoNetworkLimiterLabel(payload.node);
     }
 
     await this.gameServerNodeService.updateStatus(
@@ -201,6 +207,11 @@ export class GameServerNodeController {
       gameServerId: gameServer.id,
       link: `curl -o- ${this.appConfig.apiDomain}/game-server-node/script/${gameServer.id}.sh?token=${gameServer.token} | bash`,
     };
+  }
+
+  @HasuraEvent()
+  public async demo_network_limiter(data: HasuraEventData<game_server_nodes_set_input>) {
+    await this.gameServerNodeService.updateDemoNetworkLimiterLabel(data.new.id, data.new.demo_network_limiter);
   }
 
   @Get("/ping/:serverId")

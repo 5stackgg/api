@@ -50,11 +50,11 @@ export class S3Controller {
   public async getTestUploadLink() {
     try {
       const data = await fetch(
-        await this.s3.getPresignedUrl("hello.txt", 60, "get"),
+        await this.s3.getPresignedUrl("hello.txt", undefined, 60, "get"),
       );
 
       return {
-        link: await this.s3.getPresignedUrl("hello.txt", 60, "get"),
+        link: await this.s3.getPresignedUrl("hello.txt", undefined, 60, "get"),
       };
     } catch (error) {
       this.logger.error(`Failed to get presigned URL: ${error.message}`);

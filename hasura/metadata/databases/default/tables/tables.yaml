@@ -2,6 +2,7 @@
 - "!include public__map_pool.yaml"
 - "!include public_abandoned_matches.yaml"
 - "!include public_api_keys.yaml"
+- "!include public_db_backups.yaml"
 - "!include public_e_friend_status.yaml"
 - "!include public_e_game_cfg_types.yaml"
 - "!include public_e_game_server_node_statuses.yaml"
