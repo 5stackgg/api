@@ -6260,6 +6260,7 @@ type game_server_nodes {
     """JSON select path"""
     path: String
   ): jsonb
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
 
@@ -6432,6 +6433,7 @@ type game_server_nodes_avg_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -6450,6 +6452,7 @@ order by avg() on columns of table "game_server_nodes"
 input game_server_nodes_avg_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -6468,6 +6471,7 @@ input game_server_nodes_bool_exp {
   build_id: Int_comparison_exp
   cpu_cores_per_socket: Int_comparison_exp
   cpu_governor_info: jsonb_comparison_exp
+  cpu_sockets: Int_comparison_exp
   cpu_threads_per_core: Int_comparison_exp
   demo_network_limiter: Int_comparison_exp
   e_region: server_regions_bool_exp
@@ -6535,6 +6539,7 @@ input type for incrementing numeric columns in table "game_server_nodes"
 input game_server_nodes_inc_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   end_port_range: Int
@@ -6549,6 +6554,7 @@ input game_server_nodes_insert_input {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_governor_info: jsonb
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   e_region: server_regions_obj_rel_insert_input
@@ -6584,6 +6590,7 @@ type game_server_nodes_max_fields {
   available_server_count: Int
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   end_port_range: Int
@@ -6609,6 +6616,7 @@ order by max() on columns of table "game_server_nodes"
 input game_server_nodes_max_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -6631,6 +6639,7 @@ type game_server_nodes_min_fields {
   available_server_count: Int
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   end_port_range: Int
@@ -6656,6 +6665,7 @@ order by min() on columns of table "game_server_nodes"
 input game_server_nodes_min_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -6706,6 +6716,7 @@ input game_server_nodes_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
   cpu_governor_info: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   e_region: server_regions_order_by
@@ -6757,6 +6768,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   cpu_governor_info
+
+  """column name"""
+  cpu_sockets
 
   """column name"""
   cpu_threads_per_core
@@ -6860,6 +6874,7 @@ input game_server_nodes_set_input {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_governor_info: jsonb
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   enabled: Boolean
@@ -6890,6 +6905,7 @@ type game_server_nodes_stddev_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -6908,6 +6924,7 @@ order by stddev() on columns of table "game_server_nodes"
 input game_server_nodes_stddev_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -6923,6 +6940,7 @@ type game_server_nodes_stddev_pop_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -6941,6 +6959,7 @@ order by stddev_pop() on columns of table "game_server_nodes"
 input game_server_nodes_stddev_pop_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -6956,6 +6975,7 @@ type game_server_nodes_stddev_samp_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -6974,6 +6994,7 @@ order by stddev_samp() on columns of table "game_server_nodes"
 input game_server_nodes_stddev_samp_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -6997,6 +7018,7 @@ input game_server_nodes_stream_cursor_value_input {
   build_id: Int
   cpu_cores_per_socket: Int
   cpu_governor_info: jsonb
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   enabled: Boolean
@@ -7027,6 +7049,7 @@ type game_server_nodes_sum_fields {
   available_server_count: Int
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_sockets: Int
   cpu_threads_per_core: Int
   demo_network_limiter: Int
   end_port_range: Int
@@ -7045,6 +7068,7 @@ order by sum() on columns of table "game_server_nodes"
 input game_server_nodes_sum_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -7064,6 +7088,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   cpu_governor_info
+
+  """column name"""
+  cpu_sockets
 
   """column name"""
   cpu_threads_per_core
@@ -7166,6 +7193,7 @@ type game_server_nodes_var_pop_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -7184,6 +7212,7 @@ order by var_pop() on columns of table "game_server_nodes"
 input game_server_nodes_var_pop_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -7199,6 +7228,7 @@ type game_server_nodes_var_samp_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -7217,6 +7247,7 @@ order by var_samp() on columns of table "game_server_nodes"
 input game_server_nodes_var_samp_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
@@ -7232,6 +7263,7 @@ type game_server_nodes_variance_fields {
   available_server_count: Int
   build_id: Float
   cpu_cores_per_socket: Float
+  cpu_sockets: Float
   cpu_threads_per_core: Float
   demo_network_limiter: Float
   end_port_range: Float
@@ -7250,6 +7282,7 @@ order by variance() on columns of table "game_server_nodes"
 input game_server_nodes_variance_order_by {
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_sockets: order_by
   cpu_threads_per_core: order_by
   demo_network_limiter: order_by
   end_port_range: order_by

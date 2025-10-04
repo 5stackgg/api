@@ -5,6 +5,7 @@ import { NetworkStat } from "./NetworkStat";
 export class NodeStats {
   nvidiaGPU: boolean;
   cpuInfo: {
+    sockets: number;
     coresPerSocket: number;
     threadsPerCore: number;
   };

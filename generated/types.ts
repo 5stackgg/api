@@ -8192,6 +8192,9 @@ export default {
                     ]
                 }
             ],
+            "cpu_sockets": [
+                9
+            ],
             "cpu_threads_per_core": [
                 9
             ],
@@ -8508,6 +8511,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -8535,6 +8541,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -8577,6 +8586,9 @@ export default {
             ],
             "cpu_governor_info": [
                 732
+            ],
+            "cpu_sockets": [
+                10
             ],
             "cpu_threads_per_core": [
                 10
@@ -8698,6 +8710,9 @@ export default {
             "cpu_cores_per_socket": [
                 9
             ],
+            "cpu_sockets": [
+                9
+            ],
             "cpu_threads_per_core": [
                 9
             ],
@@ -8726,6 +8741,9 @@ export default {
             ],
             "cpu_governor_info": [
                 730
+            ],
+            "cpu_sockets": [
+                9
             ],
             "cpu_threads_per_core": [
                 9
@@ -8816,6 +8834,9 @@ export default {
             "cpu_cores_per_socket": [
                 9
             ],
+            "cpu_sockets": [
+                9
+            ],
             "cpu_threads_per_core": [
                 9
             ],
@@ -8864,6 +8885,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -8916,6 +8940,9 @@ export default {
             "cpu_cores_per_socket": [
                 9
             ],
+            "cpu_sockets": [
+                9
+            ],
             "cpu_threads_per_core": [
                 9
             ],
@@ -8964,6 +8991,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9053,6 +9083,9 @@ export default {
                 1385
             ],
             "cpu_governor_info": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9169,6 +9202,9 @@ export default {
             "cpu_governor_info": [
                 730
             ],
+            "cpu_sockets": [
+                9
+            ],
             "cpu_threads_per_core": [
                 9
             ],
@@ -9243,6 +9279,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -9270,6 +9309,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9301,6 +9343,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -9328,6 +9373,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9359,6 +9407,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -9386,6 +9437,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9427,6 +9481,9 @@ export default {
             ],
             "cpu_governor_info": [
                 730
+            ],
+            "cpu_sockets": [
+                9
             ],
             "cpu_threads_per_core": [
                 9
@@ -9502,6 +9559,9 @@ export default {
             "cpu_cores_per_socket": [
                 9
             ],
+            "cpu_sockets": [
+                9
+            ],
             "cpu_threads_per_core": [
                 9
             ],
@@ -9529,6 +9589,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9590,6 +9653,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -9617,6 +9683,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9648,6 +9717,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -9675,6 +9747,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [
@@ -9706,6 +9781,9 @@ export default {
             "cpu_cores_per_socket": [
                 7
             ],
+            "cpu_sockets": [
+                7
+            ],
             "cpu_threads_per_core": [
                 7
             ],
@@ -9733,6 +9811,9 @@ export default {
                 1385
             ],
             "cpu_cores_per_socket": [
+                1385
+            ],
+            "cpu_sockets": [
                 1385
             ],
             "cpu_threads_per_core": [

@@ -133,6 +133,7 @@ export class GameServerNodeService {
     supportsCpuPinning: boolean,
     supportsLowLatency: boolean,
     cpuInfo: {
+      sockets: number;
       coresPerSocket: number;
       threadsPerCore: number;
     },
@@ -155,6 +156,7 @@ export class GameServerNodeService {
         build_id: true,
         public_ip: true,
         gpu: true,
+        cpu_sockets: true,
         cpu_cores_per_socket: true,
         cpu_threads_per_core: true,
         supports_low_latency: true,
@@ -176,6 +178,7 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
       game_server_nodes_by_pk.gpu !== nvidiaGPU ||
+      game_server_nodes_by_pk.cpu_sockets !== cpuInfo.sockets ||
       game_server_nodes_by_pk.cpu_cores_per_socket !== cpuInfo.coresPerSocket ||
       game_server_nodes_by_pk.cpu_threads_per_core !== cpuInfo.threadsPerCore ||
       !isJsonEqual(
@@ -200,6 +203,7 @@ export class GameServerNodeService {
               supports_cpu_pinning: supportsCpuPinning,
               build_id: csBulid || null,
               gpu: nvidiaGPU,
+              cpu_sockets: cpuInfo.sockets,
               cpu_cores_per_socket: cpuInfo.coresPerSocket,
               cpu_threads_per_core: cpuInfo.threadsPerCore,
               cpu_governor_info: cpuGovernorInfo,
