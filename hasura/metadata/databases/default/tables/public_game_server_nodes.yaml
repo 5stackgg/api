@@ -57,6 +57,7 @@ select_permissions:
         - build_id
         - cpu_cores_per_socket
         - cpu_governor_info
+        - cpu_sockets
         - cpu_threads_per_core
         - demo_network_limiter
         - enabled
