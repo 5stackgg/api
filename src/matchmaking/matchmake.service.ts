@@ -566,13 +566,17 @@ export class MatchmakeService {
       },
       {
         delay: 30 * 1000,
-        jobId: `matchmaking.cancel.${confirmationId}`,
+        jobId: this.getMatchMakingCancelJobId(confirmationId),
       },
     );
   }
 
   private async removeCancelMatchMakingJob(confirmationId: string) {
-    await this.queue.remove(`matchmaking:cancel:${confirmationId}`);
+    await this.queue.remove(this.getMatchMakingCancelJobId(confirmationId));
+  }
+
+  private getMatchMakingCancelJobId(confirmationId: string) {
+    return `matchmaking.cancel.${confirmationId}`;
   }
 
   private async setConfirmationDetails(

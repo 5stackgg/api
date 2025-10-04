@@ -6,7 +6,7 @@ import { DiscordBotMessagingService } from "../discord-bot-messaging/discord-bot
 import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../../matches/match-assistant/match-assistant.service";
 import { DiscordBotVetoService } from "../discord-bot-veto/discord-bot-veto.service";
-import { BULL_CONFIG_DEFAULT_TOKEN, InjectQueue } from "@nestjs/bullmq";
+import { InjectQueue } from "@nestjs/bullmq";
 import { DiscordBotQueues } from "../enums/DiscordBotQueues";
 import { Queue } from "bullmq";
 import { MapSelectionTimeoutSeconds } from "../constants/MapBanSelectionTimeout";
@@ -60,10 +60,6 @@ export class DiscordBotOverviewService {
       this.config.get<AppConfig>("app").webDomain
     }/matches/${match.id}`;
 
-    const matchConnectLink = `${
-      this.config.get<AppConfig>("app").webDomain
-    }${match.connection_link}`;
-
     const matchControls = {
       ViewMatch: new ButtonBuilder()
         .setLabel(`View on 5Stack`)
@@ -72,7 +68,7 @@ export class DiscordBotOverviewService {
       JoinMatch: new ButtonBuilder()
         .setLabel(`Join Match`)
         .setStyle(ButtonStyle.Link)
-        .setURL(matchConnectLink),
+        .setURL(this.getMatchConnectLink(match.connection_link)),
     };
 
     let color = 3948353;
@@ -165,7 +161,7 @@ export class DiscordBotOverviewService {
       });
 
       if (match.connection_link) {
-        details.url = matchConnectLink;
+        details.url = this.getMatchConnectLink(match.connection_link);
       }
     }
     embeds.push(details);
@@ -384,5 +380,9 @@ export class DiscordBotOverviewService {
         },
       },
     };
+  }
+
+  private getMatchConnectLink(link: string) {
+    return `${this.config.get<AppConfig>("app").webDomain}/quick-connect?link=${encodeURIComponent(link)}`;
   }
 }
