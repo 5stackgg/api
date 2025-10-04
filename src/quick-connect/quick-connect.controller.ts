@@ -1,31 +1,23 @@
 import { Request, Response } from "express";
-import { Controller, Get, Req, Res, Logger } from "@nestjs/common";
-import { resolve4 } from "dns/promises";
+import { Controller, Get, Req, Res } from "@nestjs/common";
 
 @Controller("quick-connect")
 export class QuickConnectController {
-  constructor(private readonly logger: Logger) {}
-
   @Get()
   public async quickConnect(
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    let link: string = request.query.link as string;
-
-    const host = link.match(/steam:\/\/connect\/(.*):/)?.[1];
-
-    if (!host) {
-      return response.status(500);
-    }
-
-    try {
-      const [address] = await resolve4(host);
-      link = link.replace(host, address);
-    } catch (error) {
-      this.logger.warn("unable to get address from host", error.message);
-    }
-
-    return response.redirect(307, link);
+    const link = request.query.link as string;
+    return response.send(`
+      <html>
+        <body>
+          <script>
+            window.location.href = ${JSON.stringify(link)};
+            setTimeout(() => window.close(), 10);
+          </script>
+        </body>
+      </html>
+    `);
   }
 }

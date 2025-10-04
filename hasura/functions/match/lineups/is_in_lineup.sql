@@ -3,6 +3,11 @@ CREATE OR REPLACE FUNCTION public.is_in_lineup(match public.matches, hasura_sess
     AS $$
 DECLARE
 BEGIN
+
+    IF(hasura_session ->> 'x-hasura-role' = 'admin') THEN
+        RETURN true;
+    END IF;
+
     RETURN EXISTS (
         SELECT 1
         FROM match_lineups ml
