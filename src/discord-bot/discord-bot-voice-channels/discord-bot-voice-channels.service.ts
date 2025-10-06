@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
-import { ChannelType, GuildChannel } from "discord.js";
+import { ChannelType, GuildChannel, PermissionsBitField } from "discord.js";
 import { CacheService } from "../../cache/cache.service";
 import { DiscordBotService } from "../discord-bot.service";
 import { CachedDiscordUser } from "../types/CachedDiscordUser";
@@ -26,6 +26,22 @@ export class DiscordBotVoiceChannelsService {
       name: `${lineupId} [${matchId}]`,
       parent: categoryChannelId,
       type: ChannelType.GuildVoice,
+      permissionOverwrites: [
+        {
+          id: guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: this.bot.client.user.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.Connect,
+            PermissionsBitField.Flags.Speak,
+            PermissionsBitField.Flags.MoveMembers,
+            PermissionsBitField.Flags.ManageChannels,
+          ],
+        },
+      ],
     });
 
     await this.setVoiceCache(
@@ -90,6 +106,16 @@ export class DiscordBotVoiceChannelsService {
       if (!voiceCache.originalChannelId) {
         return;
       }
+
+      const channel = (await guild.channels.fetch(
+        voiceCache.voiceChannelId,
+      )) as GuildChannel;
+
+      await channel.permissionOverwrites.edit(member.id, {
+        Speak: true,
+        Connect: true,
+        ViewChannel: true,
+      });
 
       await member.voice.setChannel(voiceCache.voiceChannelId);
     } catch (error) {
