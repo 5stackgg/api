@@ -120,14 +120,36 @@ export class MatchmakingGateway {
       },
     });
 
+    const { game_server_nodes_aggregate } = await this.hasura.query({
+      game_server_nodes_aggregate: {
+        __args: {
+          where: {
+            enabled: {
+              _eq: true,
+            },
+            status: {
+              _eq: "Online",
+            },
+          },
+        },
+        aggregate: {
+          count: true,
+        },
+      },
+    });
+
     try {
       const latencyResults = await this.getLatencyResults(client);
 
-      if (Object.keys(latencyResults).length === 0) {
-        throw new JoinQueueError("Unable to get latency results");
+      let checkLatency = false;
+      if (game_server_nodes_aggregate.aggregate.count !== 0) {
+        checkLatency = true;
+        if (Object.keys(latencyResults).length === 0) {
+          throw new JoinQueueError("Unable to get latency results");
+        }
       }
-      // TODO - rather adding all regions at once we should add them when expanding the search
 
+      // TODO - rather adding all regions at once we should add them when expanding the search
       let regions = [];
       let pingTooHigh = false;
       for (const region of data.regions) {
@@ -142,7 +164,11 @@ export class MatchmakingGateway {
         const latency =
           latencyResults[region.toLocaleLowerCase().replace(" ", "_")];
 
-        if (!server_region.is_lan || latency?.isLan === true) {
+        if (
+          checkLatency == false ||
+          !server_region.is_lan ||
+          latency?.isLan === true
+        ) {
           if (latency && latency.latency > maxAcceptableLatency) {
             pingTooHigh = true;
             continue;
