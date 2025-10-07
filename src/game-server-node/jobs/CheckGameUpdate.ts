@@ -81,7 +81,9 @@ export class CheckGameUpdate extends WorkerHost {
     for (const version in data.depots.branches) {
       const branch = data.depots.branches[version];
 
-      versions.push(branch.buildid);
+      const buildId = branch.buildid;
+
+      versions.push(buildId);
 
       let downloadable = true;
       const downloads: Array<{
@@ -110,15 +112,35 @@ export class CheckGameUpdate extends WorkerHost {
           __args: {
             where: {
               build_id: {
-                _eq: branch.buildid,
+                _eq: buildId,
               },
             },
           },
           build_id: true,
+          version: true,
+          description: true,
         },
       });
 
       if (game_versions.length > 0) {
+        const foundVersion = game_versions.at(0);
+        if (
+          foundVersion.version !== version ||
+          foundVersion.description !== branch.description
+        ) {
+          await this.hasuraService.mutation({
+            update_game_versions_by_pk: {
+              __args: {
+                pk_columns: { build_id: buildId },
+                _set: {
+                  version,
+                  description: branch.description || buildId.toString(),
+                },
+              },
+              __typename: true,
+            },
+          });
+        }
         continue;
       }
 
@@ -128,8 +150,8 @@ export class CheckGameUpdate extends WorkerHost {
             object: {
               current: false,
               version,
-              build_id: branch.buildid,
-              description: branch.description || branch.buildid.toString(),
+              build_id: buildId,
+              description: branch.description || buildId.toString(),
               downloads,
               updated_at: branch.timeupdated
                 ? new Date(Number(branch.timeupdated) * 1000)
