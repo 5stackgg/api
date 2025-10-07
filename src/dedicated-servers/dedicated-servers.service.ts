@@ -8,7 +8,8 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { e_server_types_enum } from "../../generated";
 import { RconService } from "src/rcon/rcon.service";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
-import { Redis, Command } from "ioredis";
+import { Redis } from "ioredis";
+import { SystemService } from "src/system/system.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -28,6 +29,7 @@ export class DedicatedServersService {
     private readonly encryption: EncryptionService,
     private readonly RconService: RconService,
     private readonly redisManager: RedisManagerService,
+    private readonly systemService: SystemService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -128,7 +130,9 @@ export class DedicatedServersService {
         );
       }
 
-      const dedicatedServerDeploymentName = `dedicated-server-${serverId}`;
+      const dedicatedServerDeploymentName =
+        this.getDedicatedServerDeploymentName(serverId);
+
       await this.apps.createNamespacedDeployment({
         namespace: this.namespace,
         body: {
@@ -509,6 +513,13 @@ export class DedicatedServersService {
     await this.RconService.disconnect(serverId);
   }
 
+  public async restartDedicatedServer(serverId: string): Promise<void> {
+    await this.systemService.restartDeployment(
+      this.getDedicatedServerDeploymentName(serverId),
+      this.namespace,
+    );
+  }
+
   public async getAllDedicatedServerStats(): Promise<
     Array<{
       id: string;
@@ -552,5 +563,9 @@ export class DedicatedServersService {
       );
       return [];
     }
+  }
+
+  private getDedicatedServerDeploymentName(serverId: string): string {
+    return `dedicated-server-${serverId}`;
   }
 }

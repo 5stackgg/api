@@ -157,6 +157,7 @@ export class GameServerNodeService {
         supports_low_latency: true,
         supports_cpu_pinning: true,
         cpu_governor_info: true,
+        update_status: true,
       },
     });
 
@@ -169,7 +170,8 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.lan_ip !== lanIP ||
       game_server_nodes_by_pk.public_ip !== publicIP ||
       game_server_nodes_by_pk.status !== status ||
-      game_server_nodes_by_pk.build_id !== csBulid ||
+      (game_server_nodes_by_pk.build_id !== csBulid &&
+        game_server_nodes_by_pk.update_status === null) ||
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
       game_server_nodes_by_pk.gpu !== nvidiaGPU ||
@@ -196,7 +198,9 @@ export class GameServerNodeService {
               public_ip: publicIP,
               supports_low_latency: supportsLowLatency,
               supports_cpu_pinning: supportsCpuPinning,
-              build_id: csBulid || null,
+              ...(game_server_nodes_by_pk.update_status === null
+                ? { build_id: csBulid }
+                : {}),
               gpu: nvidiaGPU,
               cpu_sockets: cpuInfo.sockets,
               cpu_cores_per_socket: cpuInfo.coresPerSocket,
@@ -276,6 +280,7 @@ export class GameServerNodeService {
           build_id: true,
           downloads: true,
         },
+        update_status: true,
       },
     });
 
@@ -334,6 +339,22 @@ export class GameServerNodeService {
     );
 
     if (pod) {
+      if (game_server_nodes_by_pk.update_status === null) {
+        await this.hasura.mutation({
+          update_game_server_nodes_by_pk: {
+            __args: {
+              pk_columns: {
+                id: gameServerNodeId,
+              },
+              _set: {
+                update_status: "Initializing",
+              },
+            },
+            update_status: true,
+          },
+        });
+      }
+
       await this.moitorUpdateStatus(gameServerNodeId);
       return;
     }

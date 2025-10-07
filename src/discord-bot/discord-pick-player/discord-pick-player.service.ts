@@ -221,7 +221,7 @@ export class DiscordPickPlayerService {
         });
 
       await result.deferUpdate().catch(() => {
-        console.log("Unable to defer update");
+        this.logger.log("Unable to defer update");
       });
       pickedUserIds = result.values;
     } catch (error) {

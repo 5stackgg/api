@@ -5,6 +5,7 @@ import { server_regions_set_input, servers_set_input } from "generated";
 import { DedicatedServersService } from "./dedicated-servers.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
+import { game_server_nodes_set_input } from "generated/schema";
 
 @Controller("dedicated-servers")
 export class DedicatedServersController {
@@ -68,6 +69,35 @@ export class DedicatedServersController {
     for (const server of servers) {
       await this.dedicatedServersService.removeDedicatedServer(server.id);
       await this.dedicatedServersService.setupDedicatedServer(server.id);
+    }
+  }
+
+  @HasuraEvent()
+  public async game_server_cs_build_changed(
+    data: HasuraEventData<game_server_nodes_set_input>,
+  ) {
+    if (data.new.build_id && data.old.build_id !== data.new.build_id) {
+      const { servers } = await this.hasura.query({
+        servers: {
+          __args: {
+            where: {
+              game_server_node_id: {
+                _eq: data.new.id,
+              },
+              enabled: {
+                _eq: true,
+              },
+              is_dedicated: {
+                _eq: true,
+              },
+            },
+          },
+          id: true,
+        },
+      });
+      for (const server of servers) {
+        await this.dedicatedServersService.restartDedicatedServer(server.id);
+      }
     }
   }
 

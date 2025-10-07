@@ -13,6 +13,7 @@ import { Queue } from "bullmq";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
+import { SystemModule } from "src/system/system.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RedisModule } from "src/redis/redis.module";
     EncryptionModule,
     RconModule,
     RedisModule,
+    SystemModule,
   ],
   providers: [
     DedicatedServersService,

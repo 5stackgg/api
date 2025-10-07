@@ -1,7 +1,13 @@
 import fetch from "node-fetch";
 import { Injectable, Logger } from "@nestjs/common";
 import { CacheService } from "src/cache/cache.service";
-import { CoreV1Api, KubeConfig, AppsV1Api } from "@kubernetes/client-node";
+import {
+  CoreV1Api,
+  KubeConfig,
+  AppsV1Api,
+  setHeaderOptions,
+  PatchStrategy,
+} from "@kubernetes/client-node";
 import { HasuraService } from "src/hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
@@ -133,7 +139,7 @@ export class SystemService {
     try {
       await this.restartDeployment(service);
     } catch (error) {
-      console.log(
+      this.logger.log(
         `Failed to rollout deployment ${service}, restarting pod ${pod}`,
         error,
       );
@@ -249,18 +255,25 @@ export class SystemService {
     this.logger.log(`Successfully restarted pod ${pod}`);
   }
 
-  public async restartDeployment(deploymentName: string) {
-    await this.appsClient.patchNamespacedDeployment({
-      name: deploymentName,
-      namespace: "5stack",
-      body: [
-        {
-          op: "add",
-          path: "/spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt",
-          value: new Date().toISOString(),
+  public async restartDeployment(deploymentName: string, namespace = "5stack") {
+    await this.appsClient.patchNamespacedDeployment(
+      {
+        name: deploymentName,
+        namespace,
+        body: {
+          spec: {
+            template: {
+              metadata: {
+                annotations: {
+                  "kubectl.kubernetes.io/restartedAt": new Date().toISOString(),
+                },
+              },
+            },
+          },
         },
-      ],
-    });
+      },
+      setHeaderOptions("Content-Type", PatchStrategy.StrategicMergePatch),
+    );
 
     this.logger.log(`Successfully restarted deployment ${deploymentName}`);
   }

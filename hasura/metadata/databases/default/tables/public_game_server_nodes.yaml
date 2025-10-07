@@ -116,6 +116,17 @@ event_triggers:
       num_retries: 0
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  - name: game_server_cs_build_changed
+    definition:
+      enable_manual: false
+      update:
+        columns:
+          - build_id
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
   - name: node_server_availability
     definition:
       enable_manual: false
