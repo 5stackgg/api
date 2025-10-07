@@ -7,6 +7,7 @@ import {
 import { ChatService } from "./chat.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
+import { isRoleAbove } from "@utilities/isRoleAbove";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -79,7 +80,7 @@ export class ChatGateway {
 
     await this.chat.sendChatToServer(
       data.id,
-      `${client.user.role ? `[${client.user.role}] ` : ""}${client.user.name}: ${data.message}`.replaceAll(
+      `${isRoleAbove(client.user.role, "match_organizer") ? `[organizer] ` : ""}${client.user.name}: ${data.message}`.replaceAll(
         `"`,
         `'`,
       ),
