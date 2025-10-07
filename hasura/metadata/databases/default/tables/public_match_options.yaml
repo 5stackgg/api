@@ -98,6 +98,44 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - best_of
+        - check_in_setting
+        - coaches
+        - knife_round
+        - lobby_access
+        - map_pool_id
+        - map_veto
+        - mr
+        - number_of_substitutes
+        - overtime
+        - prefer_dedicated_server
+        - ready_setting
+        - region_veto
+        - regions
+        - tech_timeout_setting
+        - timeout_setting
+        - tv_delay
+        - type
+      filter:
+        _or:
+          - matches:
+              is_organizer:
+                _eq: true
+          - tournament:
+              is_organizer:
+                _eq: true
+      check:
+        _or:
+          - matches:
+              is_organizer:
+                _eq: true
+          - tournament:
+              is_organizer:
+                _eq: true
+    comment: ""
   - role: user
     permission:
       columns:
