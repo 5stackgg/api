@@ -9,7 +9,6 @@ import {
   V1Pod,
   BatchV1Api,
 } from "@kubernetes/client-node";
-import { FetchError } from "@kubernetes/client-node";
 
 @Injectable()
 export class LoggingServiceService {
@@ -251,7 +250,7 @@ export class LoggingServiceService {
 
       return pods.items.at(0);
     } catch (error) {
-      if (error instanceof FetchError && error.code !== "404") {
+      if (error.code.toString() !== "404") {
         throw error;
       }
     }

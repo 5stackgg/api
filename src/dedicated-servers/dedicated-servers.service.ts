@@ -7,7 +7,6 @@ import { EncryptionService } from "src/encryption/encryption.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { e_server_types_enum } from "../../generated";
 import { RconService } from "src/rcon/rcon.service";
-import { FetchError } from "@kubernetes/client-node";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Redis, Command } from "ioredis";
 
@@ -139,6 +138,10 @@ export class DedicatedServersService {
             name: dedicatedServerDeploymentName,
           },
           spec: {
+            replicas: 1,
+            strategy: {
+              type: "Recreate",
+            },
             selector: {
               matchLabels: {
                 app: dedicatedServerDeploymentName,
@@ -180,12 +183,14 @@ export class DedicatedServersService {
                           },
                         }
                       : {}),
-                    ports: [
-                      { containerPort: server.port, protocol: "TCP" },
-                      { containerPort: server.port, protocol: "UDP" },
-                      { containerPort: server.tv_port, protocol: "TCP" },
-                      { containerPort: server.tv_port, protocol: "UDP" },
-                    ],
+                    ports: steamRelay
+                      ? []
+                      : [
+                          { containerPort: server.port },
+                          { containerPort: server.port, protocol: "UDP" },
+                          { containerPort: server.tv_port, protocol: "TCP" },
+                          { containerPort: server.tv_port, protocol: "UDP" },
+                        ],
                     env: [
                       {
                         name: "SERVER_TYPE",
@@ -288,52 +293,54 @@ export class DedicatedServersService {
 
       this.logger.verbose(`[${serverId}] create service for dedicated server`);
 
-      await this.core.createNamespacedService({
-        namespace: this.namespace,
-        body: {
-          apiVersion: "v1",
-          kind: "Service",
-          metadata: {
-            name: dedicatedServerDeploymentName,
-          },
-          spec: {
-            type: "NodePort",
-            ports: [
-              {
-                port: server.port,
-                targetPort: server.port,
-                nodePort: server.port,
-                name: "rcon",
-                protocol: "TCP",
+      if (!steamRelay) {
+        await this.core.createNamespacedService({
+          namespace: this.namespace,
+          body: {
+            apiVersion: "v1",
+            kind: "Service",
+            metadata: {
+              name: dedicatedServerDeploymentName,
+            },
+            spec: {
+              type: "NodePort",
+              ports: [
+                {
+                  port: server.port,
+                  targetPort: server.port,
+                  nodePort: server.port,
+                  name: "rcon",
+                  protocol: "TCP",
+                },
+                {
+                  port: server.port,
+                  targetPort: server.port,
+                  nodePort: server.port,
+                  name: "game",
+                  protocol: "UDP",
+                },
+                {
+                  port: server.tv_port,
+                  targetPort: server.tv_port,
+                  nodePort: server.tv_port,
+                  name: "tv",
+                  protocol: "TCP",
+                },
+                {
+                  port: server.tv_port,
+                  targetPort: server.tv_port,
+                  nodePort: server.tv_port,
+                  name: "tv-udp",
+                  protocol: "UDP",
+                },
+              ],
+              selector: {
+                app: dedicatedServerDeploymentName,
               },
-              {
-                port: server.port,
-                targetPort: server.port,
-                nodePort: server.port,
-                name: "game",
-                protocol: "UDP",
-              },
-              {
-                port: server.tv_port,
-                targetPort: server.tv_port,
-                nodePort: server.tv_port,
-                name: "tv",
-                protocol: "TCP",
-              },
-              {
-                port: server.tv_port,
-                targetPort: server.tv_port,
-                nodePort: server.tv_port,
-                name: "tv-udp",
-                protocol: "UDP",
-              },
-            ],
-            selector: {
-              app: dedicatedServerDeploymentName,
             },
           },
-        },
-      });
+        });
+      }
 
       await this.hasura.mutation({
         update_servers_by_pk: {
@@ -365,28 +372,30 @@ export class DedicatedServersService {
   }
 
   public async removeDedicatedServer(serverId: string): Promise<void> {
+    this.logger.log(`[${serverId}] removing dedicated server`);
+
+    const dedicatedServerDeploymentName = `dedicated-server-${serverId}`;
+
     try {
-      this.logger.log(`[${serverId}] removing dedicated server`);
-
-      const dedicatedServerDeploymentName = `dedicated-server-${serverId}`;
-
       await this.core.deleteNamespacedService({
         namespace: this.namespace,
         name: dedicatedServerDeploymentName,
       });
+    } catch (error) {
+      if (error.code.toString() !== "404") {
+        throw error;
+      }
+    }
 
+    try {
       await this.apps.deleteNamespacedDeployment({
         namespace: this.namespace,
         name: dedicatedServerDeploymentName,
       });
-    } catch (error: FetchError | any) {
-      if (error instanceof FetchError && error.code === "404") {
-        return;
+    } catch (error) {
+      if (error.code.toString() !== "404") {
+        throw error;
       }
-      this.logger.error(
-        `[${serverId}] unable to remove dedicated server`,
-        error?.response?.body?.message || error,
-      );
     } finally {
       await this.redis.hdel("dedicated-servers:stats", serverId);
 
