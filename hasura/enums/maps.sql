@@ -48,7 +48,7 @@ WITH map_data AS (
         ('de_golden', null, '/img/maps/screenshots/de_golden.webp', '/img/maps/icons/de_golden.svg', null),
         ('de_palacio', null, '/img/maps/screenshots/de_palacio.webp', '/img/maps/icons/de_palacio.svg', null),
         ('de_rooftop', null, '/img/maps/screenshots/de_rooftop.webp', '/img/maps/icons/de_rooftop.svg', null),
-        ('de_transit', null, '/img/maps/screenshots/de_transit.webp', '/img/maps/icons/de_transit.svg', null)
+        ('de_transit', '3542662073', '/img/maps/screenshots/de_transit.webp', '/img/maps/icons/de_transit.svg', null)
     ) AS data(name, workshop_map_id, poster, patch, label)
 ),
 map_type_config AS (
@@ -89,7 +89,7 @@ map_type_config AS (
         ('de_whistle', 'Wingman', false),
         ('de_dogtown', 'Wingman', false),
         ('de_rooftop', 'Wingman', true),
-        ('de_transit', 'Wingman', true),
+        ('de_transit', 'Wingman', false),
         -- Duel maps
         ('de_inferno', 'Duel', true),
         ('de_nuke', 'Duel', true),
@@ -102,7 +102,7 @@ map_type_config AS (
         ('de_whistle', 'Duel', false),
         ('de_dogtown', 'Duel', false),
         ('de_rooftop', 'Duel', true),
-        ('de_transit', 'Duel', true)
+        ('de_transit', 'Duel', false)
     ) AS data(name, type, active_pool)
 ),
 all_maps AS (
@@ -173,7 +173,11 @@ returns boolean as $$
 declare
     update_map_pools text;
 begin
-    select COALESCE(value, 'true') into update_map_pools from settings where name = 'update_map_pools';
+    SELECT value INTO update_map_pools FROM settings WHERE name = 'update_map_pools';
+
+    IF NOT FOUND OR update_map_pools = '' THEN
+        update_map_pools := 'true';
+    END IF;
 
     if(select COUNT(*) from _map_pool) = 0 then 
         update_map_pools = 'true';
