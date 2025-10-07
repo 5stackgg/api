@@ -6,7 +6,12 @@ import {
   Message,
   TextChannel,
   ThreadChannel,
+  Guild,
+  CategoryChannel,
+  ChannelType,
 } from "discord.js";
+import { ConfigService } from "@nestjs/config";
+import { AppConfig } from "src/configs/types/AppConfig";
 
 @Injectable()
 export class DiscordBotMessagingService {
@@ -15,6 +20,7 @@ export class DiscordBotMessagingService {
     private readonly cache: CacheService,
     @Inject(forwardRef(() => DiscordBotService))
     private readonly bot: DiscordBotService,
+    protected readonly config: ConfigService,
   ) {}
 
   public async getMatchChannel(matchId: string): Promise<TextChannel> {
@@ -39,7 +45,11 @@ export class DiscordBotMessagingService {
       const channel = await this.getMatchChannel(matchId);
 
       if (channel) {
-        await channel.delete();
+        const categoryChannel = await this.getCategory(
+          this.getArchiveCategoryName(),
+          channel.guild,
+        );
+        await channel.setParent(categoryChannel);
       }
 
       await this.forgetMatchReplyCache(matchId);
@@ -47,6 +57,28 @@ export class DiscordBotMessagingService {
     } catch (error) {
       this.logger.warn(`[${matchId}] unable to remove thread`, error.message);
     }
+  }
+
+  public async getCategory(
+    channelName: string,
+    guild: Guild,
+  ): Promise<CategoryChannel> {
+    let category: CategoryChannel;
+    for (const [, channel] of guild.channels.cache) {
+      if (channel.name === channelName) {
+        category = channel as CategoryChannel;
+        break;
+      }
+    }
+
+    if (!category) {
+      return (await guild.channels.create({
+        name: channelName,
+        type: ChannelType.GuildCategory,
+      })) as CategoryChannel;
+    }
+
+    return category;
   }
 
   private async getMatchReply(matchId: string): Promise<Message | void> {
@@ -170,5 +202,30 @@ export class DiscordBotMessagingService {
 
   private getMatchThreadCacheKey(matchId: string) {
     return `bot:${matchId}:thread`;
+  }
+
+  private getArchiveCategoryName() {
+    return `${this.config.get<AppConfig>("app").name} Matches Archive`;
+  }
+
+  public async removeArchivedThreads() {
+    const guilds = await this.bot.client.guilds.cache.values();
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    for (const guild of guilds) {
+      const categoryChannel = await this.getCategory(
+        this.getArchiveCategoryName(),
+        guild,
+      );
+      const channels = categoryChannel.children.cache.values();
+      for (const channel of channels) {
+        if (channel.createdAt.getTime() < oneWeekAgo.getTime()) {
+          void channel.delete().catch((error) => {
+            this.logger.warn(`[${channel.id}] unable to delete channel`, error);
+          });
+        }
+      }
+    }
   }
 }

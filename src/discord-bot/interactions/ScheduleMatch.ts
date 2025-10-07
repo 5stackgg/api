@@ -5,13 +5,13 @@ import {
   CommandInteractionOption,
   GuildChannel,
   User as DiscordUser,
-  ThreadAutoArchiveDuration,
   PermissionsBitField,
   StringSelectMenuBuilder,
   ActionRowBuilder,
   ButtonStyle,
   ButtonBuilder,
   MessageFlags,
+  Guild,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -187,6 +187,25 @@ export default class ScheduleMatch extends DiscordInteraction {
       return;
     }
 
+    let captain1: DiscordUser;
+    let captain2: DiscordUser;
+
+    if (options.captains) {
+      const captains = await this.getCaptains(options, usersInChannel);
+
+      captain1 = captains.captain1;
+      captain2 = captains.captain2;
+
+      if (!captain1 || !captain2) {
+        await interaction.reply({
+          flags: MessageFlags.Ephemeral,
+          content: "Unable to assign captains",
+        });
+
+        return;
+      }
+    }
+
     const match = await this.matchAssistant.createMatchBasedOnType(
       matchType,
       mapPoolType,
@@ -209,23 +228,23 @@ export default class ScheduleMatch extends DiscordInteraction {
       usersInChannel,
     );
 
-    const categoryChannel = await this.createMatchesCategory(interaction);
-
-    const matchThread = await this.createMatchThread(
-      categoryChannel,
-      matchId,
-      usersInChannel,
+    const categoryChannel = await this.discordBotMessaging.getCategory(
+      `${this.config.get<AppConfig>("app").name} Matches`,
+      interaction.guild,
     );
+
+    const { textChannel: matchTextChannel, reply: matchThreadReply } =
+      await this.createMatchThread(categoryChannel, matchId, usersInChannel);
 
     if (interaction.replied) {
       await interaction.followUp({
         flags: MessageFlags.Ephemeral,
-        content: `Match Created: ${matchThread}`,
+        content: `Match Created: ${matchTextChannel}`,
       });
     } else {
       await interaction.reply({
         flags: MessageFlags.Ephemeral,
-        content: `Match Created: ${matchThread}`,
+        content: `Match Created: ${matchTextChannel}`,
       });
     }
 
@@ -235,12 +254,24 @@ export default class ScheduleMatch extends DiscordInteraction {
       match,
     );
 
-    if (options.captains) {
-      const { captain1, captain2 } = await this.getCaptains(
-        options,
-        usersInChannel,
-      );
+    for (const member of usersInChannel) {
+      await member
+        .send({
+          forward: {
+            message: matchThreadReply,
+          },
+        })
+        .catch((error) => {
+          if (error.code !== 50007) {
+            this.logger.warn(
+              `[${matchId}] unable to send message to user`,
+              error,
+            );
+          }
+        });
+    }
 
+    if (options.captains) {
       await this.discordPickPlayer.addDiscordUserToLineup(
         matchId,
         match.lineup_1_id,
@@ -314,29 +345,6 @@ export default class ScheduleMatch extends DiscordInteraction {
     return options;
   }
 
-  private async createMatchesCategory(
-    interaction: ChatInputCommandInteraction,
-  ): Promise<CategoryChannel> {
-    const channelName = `${this.config.get<AppConfig>("app").name} Matches`;
-
-    let category: CategoryChannel;
-    for (const [, channel] of interaction.guild.channels.cache) {
-      if (channel.name === channelName) {
-        category = channel as CategoryChannel;
-        break;
-      }
-    }
-
-    if (!category) {
-      return (await interaction.guild.channels.create({
-        name: channelName,
-        type: ChannelType.GuildCategory,
-      })) as CategoryChannel;
-    }
-
-    return category;
-  }
-
   private async createMatchThread(
     categoryChannel: CategoryChannel,
     matchId: string,
@@ -374,7 +382,7 @@ export default class ScheduleMatch extends DiscordInteraction {
     });
 
     const reply = await textChannel.send({
-      content: `Setting up match ${matchId}`,
+      content: `Match Created: ${matchId}`,
     });
 
     await this.discordBotMessaging.setMatchReplyCache(matchId, reply);
@@ -382,12 +390,14 @@ export default class ScheduleMatch extends DiscordInteraction {
     const thread = await textChannel.threads.create({
       name: `Match ${matchId}`,
       reason: `Match ${matchId}`,
-      autoArchiveDuration: ThreadAutoArchiveDuration.OneDay,
     });
 
     await this.discordBotMessaging.setMatchThreadCache(matchId, thread);
 
-    return textChannel;
+    return {
+      reply,
+      textChannel,
+    };
   }
 
   private async createVoiceChannelsForMatch(

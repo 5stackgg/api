@@ -1,1 +1,1 @@
-export const MapSelectionTimeoutSeconds = process.env.DEV ? 10 : 15;
+export const MapSelectionTimeoutSeconds = 30;

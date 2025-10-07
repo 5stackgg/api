@@ -52,7 +52,7 @@ export class DiscordBotVetoService {
       DiscordBotVetoService.UPDATE_MAP_BANS_JOB_ID(matchId),
     );
     if (!job) {
-      return 10;
+      return 30;
     }
 
     const { delay, timestamp } = job;
@@ -92,12 +92,17 @@ export class DiscordBotVetoService {
         __args: {
           id: matchId,
         },
+        status: true,
         map_veto_picking_lineup_id: true,
       },
     });
 
     if (!match) {
       throw Error("unable to find match");
+    }
+
+    if (match.status === "Canceled") {
+      return;
     }
 
     await this.hasura.mutation({

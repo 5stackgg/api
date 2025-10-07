@@ -4,6 +4,7 @@ import {
   ActionRowBuilder,
   ComponentType,
   Message,
+  StringSelectMenuInteraction,
   StringSelectMenuBuilder,
   User,
 } from "discord.js";
@@ -19,7 +20,7 @@ import { CachedDiscordUser } from "../types/CachedDiscordUser";
 
 @Injectable()
 export class DiscordPickPlayerService {
-  private PlayerSelectionTimeoutSeconds = process.env.DEV ? 15 : 30;
+  private PlayerSelectionTimeoutSeconds = 30;
 
   constructor(
     private readonly logger: Logger,
@@ -55,34 +56,30 @@ export class DiscordPickPlayerService {
   public async pickMember(matchId: string, lineupId: string, picks: number) {
     const match = await this.matchAssistant.getMatchLineups(matchId);
 
-    const lineup =
+    const pickingLineup =
       match.lineup_1.id == lineupId ? match.lineup_1 : match.lineup_2;
-    const otherLineup =
-      match.lineup_1.id == lineupId ? match.lineup_2 : match.lineup_1;
 
-    const currentCaptain = lineup.lineup_players.find((player) => {
+    const currentCaptain = pickingLineup.lineup_players.find((player) => {
       return player.captain;
     });
 
-    const otherCaptain = otherLineup.lineup_players.find((player) => {
-      return player.captain;
-    });
-
-    if (!currentCaptain || !otherCaptain) {
-      throw Error("Unable to find other captain");
+    if (!currentCaptain) {
+      throw Error("Unable to find captain");
     }
 
     const captain = await this.bot.client.users.fetch(
       currentCaptain.discord_id,
     );
 
-    const otherCaptainDiscordUser = await this.bot.client.users.fetch(
-      otherCaptain.discord_id,
-    );
+    if (!captain) {
+      throw Error("Unable to find captain");
+    }
 
-    const otherCaptainMessage = await otherCaptainDiscordUser.send(
-      `Other captain is picking ${picks} ${picks > 1 ? "people" : "person"}`,
-    );
+    const matchThread = await this.discordBotMessaging.getMatchThread(matchId);
+
+    if (!matchThread) {
+      throw Error("Unable to find match thread");
+    }
 
     const users = await this.getAvailablePlayerPool(matchId);
 
@@ -94,7 +91,6 @@ export class DiscordPickPlayerService {
       .filter((user) => {
         return !pickedDiscordUserIds.includes(user.id);
       })
-      // we don't user actual player names cause the discord name may not match
       .map((user) => {
         return {
           value: user.id,
@@ -120,54 +116,14 @@ export class DiscordPickPlayerService {
     let pickedUserIds: Array<string> = [];
 
     if (availableUsers.length === 1) {
-      pickedUserIds.push(availableUsers[0].value);
-    }
-
-    let captainMessage: Message;
-
-    if (pickedUserIds.length === 0) {
-      const UserSelector = new StringSelectMenuBuilder({
-        custom_id: "captain-select",
-        placeholder: "Pick Player for your Team",
-        minValues: picks,
-        maxValues: picks,
-      }).addOptions(availableUsers);
-
-      captainMessage = await captain.send({
-        components: [
-          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-            UserSelector,
-          ),
-        ],
-      });
-
-      try {
-        const result =
-          await captainMessage.awaitMessageComponent<ComponentType.StringSelect>(
-            {
-              time: this.PlayerSelectionTimeoutSeconds * 1000,
-            },
-          );
-
-        pickedUserIds = result.values;
-      } catch (error) {
-        if (
-          !error.message.includes(
-            "Collector received no interactions before ending with reason: time",
-          )
-        ) {
-          // TODO - we should be able to detect this.
-          this.logger.warn(`[${matchId}] unable to send user to pick`, captain);
-        }
-        pickedUserIds = [];
-        while (pickedUserIds.length < picks) {
-          const { value } =
-            availableUsers[getRandomNumber(0, availableUsers.length - 1)];
-          if (!pickedUserIds.includes(value)) {
-            pickedUserIds.push(value);
-          }
-        }
-      }
+      pickedUserIds.push(availableUsers.at(0).value);
+    } else {
+      pickedUserIds = await this.captainPick(
+        picks,
+        availableUsers,
+        captain,
+        matchId,
+      );
     }
 
     const pickedUsers: Array<CachedDiscordUser> = [];
@@ -178,29 +134,18 @@ export class DiscordPickPlayerService {
         return user.id === userId;
       });
 
-      await this.addDiscordUserToLineup(matchId, lineup.id, user);
+      await this.addDiscordUserToLineup(matchId, pickingLineup.id, user);
 
       pickedUsers.push(user);
     }
 
-    const pickedMsg = `picked ${pickedUsers.map((user) => {
-      return getDiscordDisplayName(user);
-    })}`;
-
     await this.discordBotMessaging.sendToMatchThread(
       matchId,
-      `**${captain.globalName || captain.username}** ${pickedMsg}`,
-    );
-
-    if (captainMessage) {
-      await captainMessage.edit({
-        content: pickedMsg,
-        components: [],
-      });
-    }
-
-    await otherCaptainMessage.edit(
-      `**${captain.globalName || captain.username}** ${pickedMsg}`,
+      `**${captain.globalName || captain.username}** ${`picked ${pickedUsers.map(
+        (user) => {
+          return getDiscordDisplayName(user);
+        },
+      )}`}`,
     );
 
     if (
@@ -209,12 +154,6 @@ export class DiscordPickPlayerService {
       [...new Set(pickedDiscordUserIds)].length ===
         ExpectedPlayers[match.options.type]
     ) {
-      const mapVotingLink = `Map Voting is starting: ${await this.discordBotMessaging.getMatchChannel(
-        matchId,
-      )}`;
-      await captain.send(mapVotingLink);
-      await otherCaptainDiscordUser.send(mapVotingLink);
-
       await this.startMatch(matchId);
 
       return;
@@ -222,7 +161,9 @@ export class DiscordPickPlayerService {
 
     await this.pickMember(
       matchId,
-      otherLineup.id,
+      pickingLineup.id === match.lineup_1.id
+        ? match.lineup_2.id
+        : match.lineup_1.id,
       match.options.type != "Competitive"
         ? 1
         : /**
@@ -233,6 +174,74 @@ export class DiscordPickPlayerService {
           ? 2
           : 1,
     );
+  }
+
+  private async captainPick(
+    picks: number,
+    availableUsers: Array<{ value: string; label: string }>,
+    captain: CachedDiscordUser,
+    matchId: string,
+  ) {
+    let pickedUserIds: string[] = [];
+
+    const pickingReply = await this.discordBotMessaging.updateMatchReply(
+      matchId,
+      {
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            new StringSelectMenuBuilder({
+              custom_id: "captain-select",
+              placeholder: `It's ${getDiscordDisplayName(captain)}'s turn to pick a player for their team`,
+              minValues: picks,
+              maxValues: picks,
+            }).addOptions(availableUsers),
+          ),
+        ],
+      },
+    );
+
+    try {
+      const result =
+        await pickingReply.awaitMessageComponent<ComponentType.StringSelect>({
+          time: this.PlayerSelectionTimeoutSeconds * 1000,
+          componentType: ComponentType.StringSelect,
+          filter: (interaction: StringSelectMenuInteraction) => {
+            if (interaction.user.id !== captain.id) {
+              // Politely inform non-captains they cannot pick
+              interaction
+                .reply({
+                  content: "It's not your turn to pick.",
+                  ephemeral: true,
+                })
+                .catch(() => {});
+              return false;
+            }
+            return true;
+          },
+        });
+
+      await result.deferUpdate().catch(() => {
+        console.log("Unable to defer update");
+      });
+      pickedUserIds = result.values;
+    } catch (error) {
+      if (
+        !error.message.includes(
+          "Collector received no interactions before ending with reason: time",
+        )
+      ) {
+        this.logger.warn(`[${matchId}] unable to send user to pick`);
+      }
+      while (pickedUserIds.length < picks) {
+        const { value } =
+          availableUsers[getRandomNumber(0, availableUsers.length - 1)];
+        if (!pickedUserIds.includes(value)) {
+          pickedUserIds.push(value);
+        }
+      }
+    }
+
+    return pickedUserIds;
   }
 
   public async addDiscordUserToLineup(
