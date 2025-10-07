@@ -48,6 +48,7 @@ insert_permissions:
         - timeout_setting
         - tv_delay
         - type
+        - check_in_setting
     comment: ""
   - role: user
     permission:
@@ -93,6 +94,7 @@ select_permissions:
         - timeout_setting
         - tv_delay
         - type
+        - check_in_setting
       filter: {}
     comment: ""
 update_permissions:

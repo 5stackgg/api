@@ -1,0 +1,4 @@
+table:
+  name: e_check_in_settings
+  schema: public
+is_enum: true

@@ -601,6 +601,71 @@ export interface db_backups_variance_fields {
 }
 
 
+/** columns and relationships of "e_check_in_settings" */
+export interface e_check_in_settings {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_check_in_settings'
+}
+
+
+/** aggregated selection of "e_check_in_settings" */
+export interface e_check_in_settings_aggregate {
+    aggregate: (e_check_in_settings_aggregate_fields | null)
+    nodes: e_check_in_settings[]
+    __typename: 'e_check_in_settings_aggregate'
+}
+
+
+/** aggregate fields of "e_check_in_settings" */
+export interface e_check_in_settings_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_check_in_settings_max_fields | null)
+    min: (e_check_in_settings_min_fields | null)
+    __typename: 'e_check_in_settings_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_check_in_settings" */
+export type e_check_in_settings_constraint = 'e_veto_setting_pkey'
+
+export type e_check_in_settings_enum = 'Admin' | 'Captains' | 'Players'
+
+
+/** aggregate max on columns */
+export interface e_check_in_settings_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_check_in_settings_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_check_in_settings_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_check_in_settings_min_fields'
+}
+
+
+/** response of any mutation on the table "e_check_in_settings" */
+export interface e_check_in_settings_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_check_in_settings[]
+    __typename: 'e_check_in_settings_mutation_response'
+}
+
+
+/** select columns of table "e_check_in_settings" */
+export type e_check_in_settings_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_check_in_settings" */
+export type e_check_in_settings_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_friend_status" */
 export interface e_friend_status {
     description: Scalars['String']
@@ -4321,6 +4386,7 @@ export interface match_maps_variance_fields {
 /** columns and relationships of "match_options" */
 export interface match_options {
     best_of: Scalars['Int']
+    check_in_setting: e_check_in_settings_enum
     coaches: Scalars['Boolean']
     /** A computed field, executes function "has_active_matches" */
     has_active_matches: (Scalars['Boolean'] | null)
@@ -4431,7 +4497,7 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'best_of' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_select_column = 'best_of' | 'check_in_setting' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -4475,7 +4541,7 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'best_of' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_update_column = 'best_of' | 'check_in_setting' | 'coaches' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -5248,6 +5314,10 @@ export interface mutation_root {
     delete_db_backups: (db_backups_mutation_response | null)
     /** delete single row from the table: "db_backups" */
     delete_db_backups_by_pk: (db_backups | null)
+    /** delete data from the table: "e_check_in_settings" */
+    delete_e_check_in_settings: (e_check_in_settings_mutation_response | null)
+    /** delete single row from the table: "e_check_in_settings" */
+    delete_e_check_in_settings_by_pk: (e_check_in_settings | null)
     /** delete data from the table: "e_friend_status" */
     delete_e_friend_status: (e_friend_status_mutation_response | null)
     /** delete single row from the table: "e_friend_status" */
@@ -5533,6 +5603,10 @@ export interface mutation_root {
     insert_db_backups: (db_backups_mutation_response | null)
     /** insert a single row into the table: "db_backups" */
     insert_db_backups_one: (db_backups | null)
+    /** insert data into the table: "e_check_in_settings" */
+    insert_e_check_in_settings: (e_check_in_settings_mutation_response | null)
+    /** insert a single row into the table: "e_check_in_settings" */
+    insert_e_check_in_settings_one: (e_check_in_settings | null)
     /** insert data into the table: "e_friend_status" */
     insert_e_friend_status: (e_friend_status_mutation_response | null)
     /** insert a single row into the table: "e_friend_status" */
@@ -5863,6 +5937,12 @@ export interface mutation_root {
     update_db_backups_by_pk: (db_backups | null)
     /** update multiples rows of table: "db_backups" */
     update_db_backups_many: ((db_backups_mutation_response | null)[] | null)
+    /** update data of the table: "e_check_in_settings" */
+    update_e_check_in_settings: (e_check_in_settings_mutation_response | null)
+    /** update single row of the table: "e_check_in_settings" */
+    update_e_check_in_settings_by_pk: (e_check_in_settings | null)
+    /** update multiples rows of table: "e_check_in_settings" */
+    update_e_check_in_settings_many: ((e_check_in_settings_mutation_response | null)[] | null)
     /** update data of the table: "e_friend_status" */
     update_e_friend_status: (e_friend_status_mutation_response | null)
     /** update single row of the table: "e_friend_status" */
@@ -8666,6 +8746,12 @@ export interface query_root {
     db_backups_aggregate: db_backups_aggregate
     /** fetch data from the table: "db_backups" using primary key columns */
     db_backups_by_pk: (db_backups | null)
+    /** fetch data from the table: "e_check_in_settings" */
+    e_check_in_settings: e_check_in_settings[]
+    /** fetch aggregated fields from the table: "e_check_in_settings" */
+    e_check_in_settings_aggregate: e_check_in_settings_aggregate
+    /** fetch data from the table: "e_check_in_settings" using primary key columns */
+    e_check_in_settings_by_pk: (e_check_in_settings | null)
     /** fetch data from the table: "e_friend_status" */
     e_friend_status: e_friend_status[]
     /** fetch aggregated fields from the table: "e_friend_status" */
@@ -9624,6 +9710,14 @@ export interface subscription_root {
     db_backups_by_pk: (db_backups | null)
     /** fetch data from the table in a streaming manner: "db_backups" */
     db_backups_stream: db_backups[]
+    /** fetch data from the table: "e_check_in_settings" */
+    e_check_in_settings: e_check_in_settings[]
+    /** fetch aggregated fields from the table: "e_check_in_settings" */
+    e_check_in_settings_aggregate: e_check_in_settings_aggregate
+    /** fetch data from the table: "e_check_in_settings" using primary key columns */
+    e_check_in_settings_by_pk: (e_check_in_settings | null)
+    /** fetch data from the table in a streaming manner: "e_check_in_settings" */
+    e_check_in_settings_stream: e_check_in_settings[]
     /** fetch data from the table: "e_friend_status" */
     e_friend_status: e_friend_status[]
     /** fetch aggregated fields from the table: "e_friend_status" */
@@ -14006,6 +14100,109 @@ export interface db_backups_variance_fieldsGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "e_check_in_settings" */
+export interface e_check_in_settingsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_check_in_settings" */
+export interface e_check_in_settings_aggregateGenqlSelection{
+    aggregate?: e_check_in_settings_aggregate_fieldsGenqlSelection
+    nodes?: e_check_in_settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_check_in_settings" */
+export interface e_check_in_settings_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_check_in_settings_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_check_in_settings_max_fieldsGenqlSelection
+    min?: e_check_in_settings_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_check_in_settings". All fields are combined with a logical 'AND'. */
+export interface e_check_in_settings_bool_exp {_and?: (e_check_in_settings_bool_exp[] | null),_not?: (e_check_in_settings_bool_exp | null),_or?: (e_check_in_settings_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_check_in_settings_enum". All fields are combined with logical 'AND'. */
+export interface e_check_in_settings_enum_comparison_exp {_eq?: (e_check_in_settings_enum | null),_in?: (e_check_in_settings_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_check_in_settings_enum | null),_nin?: (e_check_in_settings_enum[] | null)}
+
+
+/** input type for inserting data into table "e_check_in_settings" */
+export interface e_check_in_settings_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_check_in_settings_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_check_in_settings_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_check_in_settings" */
+export interface e_check_in_settings_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_check_in_settingsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_check_in_settings" */
+export interface e_check_in_settings_on_conflict {constraint: e_check_in_settings_constraint,update_columns?: e_check_in_settings_update_column[],where?: (e_check_in_settings_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_check_in_settings". */
+export interface e_check_in_settings_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_check_in_settings */
+export interface e_check_in_settings_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_check_in_settings" */
+export interface e_check_in_settings_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_check_in_settings" */
+export interface e_check_in_settings_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_check_in_settings_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_check_in_settings_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_check_in_settings_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_check_in_settings_set_input | null),
+/** filter the rows which have to be updated */
+where: e_check_in_settings_bool_exp}
 
 
 /** columns and relationships of "e_friend_status" */
@@ -20526,6 +20723,7 @@ export interface match_maps_variance_order_by {lineup_1_timeouts_available?: (or
 /** columns and relationships of "match_options" */
 export interface match_optionsGenqlSelection{
     best_of?: boolean | number
+    check_in_setting?: boolean | number
     coaches?: boolean | number
     /** A computed field, executes function "has_active_matches" */
     has_active_matches?: boolean | number
@@ -20618,7 +20816,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -20626,7 +20824,7 @@ export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?:
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -20681,7 +20879,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {best_of?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
+export interface match_options_order_by {best_of?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -20689,7 +20887,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_set_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -20734,7 +20932,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -22173,6 +22371,12 @@ export interface mutation_rootGenqlSelection{
     where: db_backups_bool_exp} })
     /** delete single row from the table: "db_backups" */
     delete_db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "e_check_in_settings" */
+    delete_e_check_in_settings?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_check_in_settings_bool_exp} })
+    /** delete single row from the table: "e_check_in_settings" */
+    delete_e_check_in_settings_by_pk?: (e_check_in_settingsGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_friend_status" */
     delete_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -22632,6 +22836,18 @@ export interface mutation_rootGenqlSelection{
     object: db_backups_insert_input, 
     /** upsert condition */
     on_conflict?: (db_backups_on_conflict | null)} })
+    /** insert data into the table: "e_check_in_settings" */
+    insert_e_check_in_settings?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_check_in_settings_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_check_in_settings_on_conflict | null)} })
+    /** insert a single row into the table: "e_check_in_settings" */
+    insert_e_check_in_settings_one?: (e_check_in_settingsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_check_in_settings_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_check_in_settings_on_conflict | null)} })
     /** insert data into the table: "e_friend_status" */
     insert_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -23538,6 +23754,20 @@ export interface mutation_rootGenqlSelection{
     update_db_backups_many?: (db_backups_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: db_backups_updates[]} })
+    /** update data of the table: "e_check_in_settings" */
+    update_e_check_in_settings?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_check_in_settings_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_check_in_settings_bool_exp} })
+    /** update single row of the table: "e_check_in_settings" */
+    update_e_check_in_settings_by_pk?: (e_check_in_settingsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_check_in_settings_set_input | null), pk_columns: e_check_in_settings_pk_columns_input} })
+    /** update multiples rows of table: "e_check_in_settings" */
+    update_e_check_in_settings_many?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_check_in_settings_updates[]} })
     /** update data of the table: "e_friend_status" */
     update_e_friend_status?: (e_friend_status_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -28924,6 +29154,32 @@ export interface query_rootGenqlSelection{
     where?: (db_backups_bool_exp | null)} })
     /** fetch data from the table: "db_backups" using primary key columns */
     db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "e_check_in_settings" */
+    e_check_in_settings?: (e_check_in_settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_check_in_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_check_in_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_check_in_settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_check_in_settings" */
+    e_check_in_settings_aggregate?: (e_check_in_settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_check_in_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_check_in_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_check_in_settings_bool_exp | null)} })
+    /** fetch data from the table: "e_check_in_settings" using primary key columns */
+    e_check_in_settings_by_pk?: (e_check_in_settingsGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_friend_status" */
     e_friend_status?: (e_friend_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -31779,6 +32035,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (db_backups_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (db_backups_bool_exp | null)} })
+    /** fetch data from the table: "e_check_in_settings" */
+    e_check_in_settings?: (e_check_in_settingsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_check_in_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_check_in_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_check_in_settings_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_check_in_settings" */
+    e_check_in_settings_aggregate?: (e_check_in_settings_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_check_in_settings_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_check_in_settings_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_check_in_settings_bool_exp | null)} })
+    /** fetch data from the table: "e_check_in_settings" using primary key columns */
+    e_check_in_settings_by_pk?: (e_check_in_settingsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_check_in_settings" */
+    e_check_in_settings_stream?: (e_check_in_settingsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_check_in_settings_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_check_in_settings_bool_exp | null)} })
     /** fetch data from the table: "e_friend_status" */
     e_friend_status?: (e_friend_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -39519,6 +39809,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_check_in_settings_possibleTypes: string[] = ['e_check_in_settings']
+    export const ise_check_in_settings = (obj?: { __typename?: any } | null): obj is e_check_in_settings => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_check_in_settings"')
+      return e_check_in_settings_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_check_in_settings_aggregate_possibleTypes: string[] = ['e_check_in_settings_aggregate']
+    export const ise_check_in_settings_aggregate = (obj?: { __typename?: any } | null): obj is e_check_in_settings_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_check_in_settings_aggregate"')
+      return e_check_in_settings_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_check_in_settings_aggregate_fields_possibleTypes: string[] = ['e_check_in_settings_aggregate_fields']
+    export const ise_check_in_settings_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_check_in_settings_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_check_in_settings_aggregate_fields"')
+      return e_check_in_settings_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_check_in_settings_max_fields_possibleTypes: string[] = ['e_check_in_settings_max_fields']
+    export const ise_check_in_settings_max_fields = (obj?: { __typename?: any } | null): obj is e_check_in_settings_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_check_in_settings_max_fields"')
+      return e_check_in_settings_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_check_in_settings_min_fields_possibleTypes: string[] = ['e_check_in_settings_min_fields']
+    export const ise_check_in_settings_min_fields = (obj?: { __typename?: any } | null): obj is e_check_in_settings_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_check_in_settings_min_fields"')
+      return e_check_in_settings_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_check_in_settings_mutation_response_possibleTypes: string[] = ['e_check_in_settings_mutation_response']
+    export const ise_check_in_settings_mutation_response = (obj?: { __typename?: any } | null): obj is e_check_in_settings_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_check_in_settings_mutation_response"')
+      return e_check_in_settings_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_friend_status_possibleTypes: string[] = ['e_friend_status']
     export const ise_friend_status = (obj?: { __typename?: any } | null): obj is e_friend_status => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_friend_status"')
@@ -46247,6 +46585,26 @@ export const enumDbBackupsUpdateColumn = {
    size: 'size' as const
 }
 
+export const enumECheckInSettingsConstraint = {
+   e_veto_setting_pkey: 'e_veto_setting_pkey' as const
+}
+
+export const enumECheckInSettingsEnum = {
+   Admin: 'Admin' as const,
+   Captains: 'Captains' as const,
+   Players: 'Players' as const
+}
+
+export const enumECheckInSettingsSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumECheckInSettingsUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumEFriendStatusConstraint = {
    e_friend_status_pkey: 'e_friend_status_pkey' as const
 }
@@ -47173,6 +47531,7 @@ export const enumMatchOptionsConstraint = {
 
 export const enumMatchOptionsSelectColumn = {
    best_of: 'best_of' as const,
+   check_in_setting: 'check_in_setting' as const,
    coaches: 'coaches' as const,
    id: 'id' as const,
    invite_code: 'invite_code' as const,
@@ -47195,6 +47554,7 @@ export const enumMatchOptionsSelectColumn = {
 
 export const enumMatchOptionsUpdateColumn = {
    best_of: 'best_of' as const,
+   check_in_setting: 'check_in_setting' as const,
    coaches: 'coaches' as const,
    id: 'id' as const,
    invite_code: 'invite_code' as const,

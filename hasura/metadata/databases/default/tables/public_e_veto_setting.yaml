@@ -1,0 +1,4 @@
+table:
+  name: e_veto_setting
+  schema: public
+is_enum: true

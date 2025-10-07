@@ -1237,6 +1237,180 @@ type db_backups_variance_fields {
 }
 
 """
+columns and relationships of "e_check_in_settings"
+"""
+type e_check_in_settings {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_check_in_settings"
+"""
+type e_check_in_settings_aggregate {
+  aggregate: e_check_in_settings_aggregate_fields
+  nodes: [e_check_in_settings!]!
+}
+
+"""
+aggregate fields of "e_check_in_settings"
+"""
+type e_check_in_settings_aggregate_fields {
+  count(columns: [e_check_in_settings_select_column!], distinct: Boolean): Int!
+  max: e_check_in_settings_max_fields
+  min: e_check_in_settings_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_check_in_settings". All fields are combined with a logical 'AND'.
+"""
+input e_check_in_settings_bool_exp {
+  _and: [e_check_in_settings_bool_exp!]
+  _not: e_check_in_settings_bool_exp
+  _or: [e_check_in_settings_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_check_in_settings"
+"""
+enum e_check_in_settings_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_veto_setting_pkey
+}
+
+enum e_check_in_settings_enum {
+  """Admins Only"""
+  Admin
+
+  """Captains Only"""
+  Captains
+
+  """All Players"""
+  Players
+}
+
+"""
+Boolean expression to compare columns of type "e_check_in_settings_enum". All fields are combined with logical 'AND'.
+"""
+input e_check_in_settings_enum_comparison_exp {
+  _eq: e_check_in_settings_enum
+  _in: [e_check_in_settings_enum!]
+  _is_null: Boolean
+  _neq: e_check_in_settings_enum
+  _nin: [e_check_in_settings_enum!]
+}
+
+"""
+input type for inserting data into table "e_check_in_settings"
+"""
+input e_check_in_settings_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_check_in_settings_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_check_in_settings_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_check_in_settings"
+"""
+type e_check_in_settings_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_check_in_settings!]!
+}
+
+"""
+on_conflict condition type for table "e_check_in_settings"
+"""
+input e_check_in_settings_on_conflict {
+  constraint: e_check_in_settings_constraint!
+  update_columns: [e_check_in_settings_update_column!]! = []
+  where: e_check_in_settings_bool_exp
+}
+
+"""Ordering options when selecting data from "e_check_in_settings"."""
+input e_check_in_settings_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_check_in_settings"""
+input e_check_in_settings_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_check_in_settings"
+"""
+enum e_check_in_settings_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_check_in_settings"
+"""
+input e_check_in_settings_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_check_in_settings"
+"""
+input e_check_in_settings_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_check_in_settings_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_check_in_settings_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_check_in_settings"
+"""
+enum e_check_in_settings_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_check_in_settings_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_check_in_settings_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_check_in_settings_bool_exp!
+}
+
+"""
 columns and relationships of "e_friend_status"
 """
 type e_friend_status {
@@ -12961,6 +13135,7 @@ columns and relationships of "match_options"
 """
 type match_options {
   best_of: Int!
+  check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
 
   """
@@ -13069,6 +13244,7 @@ input match_options_bool_exp {
   _not: match_options_bool_exp
   _or: [match_options_bool_exp!]
   best_of: Int_comparison_exp
+  check_in_setting: e_check_in_settings_enum_comparison_exp
   coaches: Boolean_comparison_exp
   has_active_matches: Boolean_comparison_exp
   id: uuid_comparison_exp
@@ -13119,6 +13295,7 @@ input type for inserting data into table "match_options"
 """
 input match_options_insert_input {
   best_of: Int
+  check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   id: uuid
   invite_code: String
@@ -13199,6 +13376,7 @@ input match_options_on_conflict {
 """Ordering options when selecting data from "match_options"."""
 input match_options_order_by {
   best_of: order_by
+  check_in_setting: order_by
   coaches: order_by
   has_active_matches: order_by
   id: order_by
@@ -13234,6 +13412,9 @@ select columns of table "match_options"
 enum match_options_select_column {
   """column name"""
   best_of
+
+  """column name"""
+  check_in_setting
 
   """column name"""
   coaches
@@ -13295,6 +13476,7 @@ input type for updating data in table "match_options"
 """
 input match_options_set_input {
   best_of: Int
+  check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   id: uuid
   invite_code: String
@@ -13353,6 +13535,7 @@ input match_options_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input match_options_stream_cursor_value_input {
   best_of: Int
+  check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   id: uuid
   invite_code: String
@@ -13387,6 +13570,9 @@ update columns of table "match_options"
 enum match_options_update_column {
   """column name"""
   best_of
+
+  """column name"""
+  check_in_setting
 
   """column name"""
   coaches
@@ -16064,6 +16250,19 @@ type mutation_root {
   delete_db_backups_by_pk(id: uuid!): db_backups
 
   """
+  delete data from the table: "e_check_in_settings"
+  """
+  delete_e_check_in_settings(
+    """filter the rows which have to be deleted"""
+    where: e_check_in_settings_bool_exp!
+  ): e_check_in_settings_mutation_response
+
+  """
+  delete single row from the table: "e_check_in_settings"
+  """
+  delete_e_check_in_settings_by_pk(value: String!): e_check_in_settings
+
+  """
   delete data from the table: "e_friend_status"
   """
   delete_e_friend_status(
@@ -17031,6 +17230,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: db_backups_on_conflict
   ): db_backups
+
+  """
+  insert data into the table: "e_check_in_settings"
+  """
+  insert_e_check_in_settings(
+    """the rows to be inserted"""
+    objects: [e_check_in_settings_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_check_in_settings_on_conflict
+  ): e_check_in_settings_mutation_response
+
+  """
+  insert a single row into the table: "e_check_in_settings"
+  """
+  insert_e_check_in_settings_one(
+    """the row to be inserted"""
+    object: e_check_in_settings_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_check_in_settings_on_conflict
+  ): e_check_in_settings
 
   """
   insert data into the table: "e_friend_status"
@@ -18695,6 +18916,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [db_backups_updates!]!
   ): [db_backups_mutation_response]
+
+  """
+  update data of the table: "e_check_in_settings"
+  """
+  update_e_check_in_settings(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_check_in_settings_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_check_in_settings_bool_exp!
+  ): e_check_in_settings_mutation_response
+
+  """
+  update single row of the table: "e_check_in_settings"
+  """
+  update_e_check_in_settings_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_check_in_settings_set_input
+    pk_columns: e_check_in_settings_pk_columns_input!
+  ): e_check_in_settings
+
+  """
+  update multiples rows of table: "e_check_in_settings"
+  """
+  update_e_check_in_settings_many(
+    """updates to execute, in order"""
+    updates: [e_check_in_settings_updates!]!
+  ): [e_check_in_settings_mutation_response]
 
   """
   update data of the table: "e_friend_status"
@@ -28387,6 +28636,51 @@ type query_root {
   db_backups_by_pk(id: uuid!): db_backups
 
   """
+  fetch data from the table: "e_check_in_settings"
+  """
+  e_check_in_settings(
+    """distinct select on columns"""
+    distinct_on: [e_check_in_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_check_in_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_check_in_settings_bool_exp
+  ): [e_check_in_settings!]!
+
+  """
+  fetch aggregated fields from the table: "e_check_in_settings"
+  """
+  e_check_in_settings_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_check_in_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_check_in_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_check_in_settings_bool_exp
+  ): e_check_in_settings_aggregate!
+
+  """
+  fetch data from the table: "e_check_in_settings" using primary key columns
+  """
+  e_check_in_settings_by_pk(value: String!): e_check_in_settings
+
+  """
   fetch data from the table: "e_friend_status"
   """
   e_friend_status(
@@ -33302,6 +33596,65 @@ type subscription_root {
     """filter the rows returned"""
     where: db_backups_bool_exp
   ): [db_backups!]!
+
+  """
+  fetch data from the table: "e_check_in_settings"
+  """
+  e_check_in_settings(
+    """distinct select on columns"""
+    distinct_on: [e_check_in_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_check_in_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_check_in_settings_bool_exp
+  ): [e_check_in_settings!]!
+
+  """
+  fetch aggregated fields from the table: "e_check_in_settings"
+  """
+  e_check_in_settings_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_check_in_settings_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_check_in_settings_order_by!]
+
+    """filter the rows returned"""
+    where: e_check_in_settings_bool_exp
+  ): e_check_in_settings_aggregate!
+
+  """
+  fetch data from the table: "e_check_in_settings" using primary key columns
+  """
+  e_check_in_settings_by_pk(value: String!): e_check_in_settings
+
+  """
+  fetch data from the table in a streaming manner: "e_check_in_settings"
+  """
+  e_check_in_settings_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_check_in_settings_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_check_in_settings_bool_exp
+  ): [e_check_in_settings!]!
 
   """
   fetch data from the table: "e_friend_status"
