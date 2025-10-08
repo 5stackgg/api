@@ -37,6 +37,12 @@ type Mutation {
 }
 
 type Mutation {
+  deleteMatch(
+    match_id: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   denyInvite(
     invite_id: uuid!
     type: String!

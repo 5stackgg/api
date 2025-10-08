@@ -25,6 +25,7 @@ import { Queue } from "bullmq";
 import { MatchQueues } from "./enums/MatchQueues";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
+import { S3Service } from "src/s3/s3.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -44,6 +45,7 @@ export class MatchesController {
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
+    private s3: S3Service,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -1124,6 +1126,82 @@ export class MatchesController {
         __typename: true,
       },
     });
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async deleteMatch(data: { match_id: string }) {
+    const { match_id } = data;
+    this.logger.log(`[${match_id}] deleting match`);
+
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: match_id,
+        },
+        id: true,
+        status: true,
+      },
+    });
+
+    if (matches_by_pk.status === "Live") {
+      throw Error("cannot delete a live match");
+    }
+
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          limit: 10,
+          where: {
+            match_id: {
+              _eq: match_id,
+            },
+          },
+        },
+        id: true,
+        file: true,
+      },
+    });
+
+    for (const demo of match_map_demos) {
+      await this.s3.remove(demo.file);
+      await this.hasura.mutation({
+        delete_match_map_demos_by_pk: {
+          __args: {
+            id: demo.id,
+          },
+          __typename: true,
+        },
+      });
+    }
+
+    await this.hasura.mutation({
+      delete_matches_by_pk: {
+        __args: {
+          id: match_id,
+        },
+        __typename: true,
+      },
+    });
+
+    try {
+      await this.hasura.mutation({
+        delete_match_options_by_pk: {
+          __args: {
+            id: match_id,
+          },
+          __typename: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `[${match_id}] match options being used by other matches`,
+        error,
+      );
+    }
 
     return {
       success: true,

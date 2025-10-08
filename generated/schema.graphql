@@ -16196,6 +16196,7 @@ type mutation_root {
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
   createApiKey(label: String!): ApiKeyResponse
+  deleteMatch(match_id: String!): SuccessOutput
 
   """
   delete data from the table: "_map_pool"

@@ -52130,6 +52130,15 @@ export default {
                     ]
                 }
             ],
+            "deleteMatch": [
+                21,
+                {
+                    "match_id": [
+                        18,
+                        "String!"
+                    ]
+                }
+            ],
             "delete__map_pool": [
                 32,
                 {

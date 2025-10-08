@@ -5298,6 +5298,7 @@ export interface mutation_root {
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
     createApiKey: (ApiKeyResponse | null)
+    deleteMatch: (SuccessOutput | null)
     /** delete data from the table: "_map_pool" */
     delete__map_pool: (_map_pool_mutation_response | null)
     /** delete single row from the table: "_map_pool" */
@@ -22347,6 +22348,7 @@ export interface mutation_rootGenqlSelection{
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
+    deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** delete data from the table: "_map_pool" */
     delete__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
