@@ -63,7 +63,7 @@ BEGIN
             FROM match_lineup_players
             WHERE match_lineup_id = OLD.match_lineup_id;
 
-        IF (status != 'PickingPlayers' AND (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin') THEN
+        IF ((status != 'PickingPlayers' AND status != 'Canceled') AND (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin') THEN
             SELECT get_match_type_min_players(match_type) INTO _max_players_per_lineup;
 
             IF (lineup_count - 1) >= _max_players_per_lineup THEN
