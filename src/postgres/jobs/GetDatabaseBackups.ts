@@ -28,14 +28,21 @@ export class GetDatabaseBackups extends WorkerHost {
         continue;
       }
 
+      const ts = backup.name.replace("backup-", "").replace(".zip", "");
+
+      const year = parseInt(ts.slice(0, 4));
+      const month = parseInt(ts.slice(4, 6)) - 1;
+      const day = parseInt(ts.slice(6, 8));
+      const hour = parseInt(ts.slice(8, 10));
+      const minute = parseInt(ts.slice(10, 12));
+      const second = parseInt(ts.slice(12, 14));
+
       await this.postgres.query(
         `insert into db_backups (name, size, created_at) values ($1, $2, $3)`,
         [
           backup.name,
           backup.size,
-          new Date(
-            parseInt(backup.name.replace("backup-", "").replace(".zip", "")),
-          ),
+          new Date(Date.UTC(year, month, day, hour, minute, second)),
         ],
       );
     }
