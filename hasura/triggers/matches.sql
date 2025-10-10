@@ -355,6 +355,7 @@ BEGIN
 
     update servers set reserved_by_match_id = null where reserved_by_match_id = OLD.id;
 
+    delete from match_lineups where id = OLD.lineup_1_id or id = OLD.lineup_2_id;
   RETURN NEW;
 END;
 $$;

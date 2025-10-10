@@ -137,7 +137,6 @@ $$;
 DROP TRIGGER IF EXISTS tbu_match_options ON public.match_options;
 CREATE TRIGGER tbu_match_options BEFORE UPDATE ON public.match_options FOR EACH ROW EXECUTE FUNCTION public.tbu_match_options();
 
-
 CREATE OR REPLACE FUNCTION public.tau_match_options() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -169,3 +168,22 @@ $$;
 
 DROP TRIGGER IF EXISTS tau_match_options ON public.match_options;
 CREATE TRIGGER tau_match_options AFTER UPDATE ON public.match_options FOR EACH ROW EXECUTE FUNCTION public.tau_match_options();
+
+CREATE OR REPLACE FUNCTION public.tad_match_options() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _pool_type text;
+BEGIN
+    SELECT type INTO _pool_type FROM map_pools WHERE id = OLD.map_pool_id;
+
+    IF _pool_type = 'Custom' THEN
+        DELETE FROM map_pools WHERE id = OLD.map_pool_id;
+    END IF;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tad_match_options ON public.match_options;
+CREATE TRIGGER tad_match_options AFTER DELETE ON public.match_options FOR EACH ROW EXECUTE FUNCTION public.tad_match_options();
