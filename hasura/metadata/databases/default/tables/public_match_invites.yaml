@@ -19,10 +19,8 @@ insert_permissions:
           _and:
             - status:
                 _eq: PickingPlayers
-            - is_organizer:
-                _eq: true
-            - _and:
-                - is_in_lineup:
+            - _or:
+                - is_organizer:
                     _eq: true
                 - options:
                     lobby_access:
@@ -49,12 +47,9 @@ select_permissions:
         _or:
           - steam_id:
               _eq: X-Hasura-User-Id
-          - _and:
-              - match:
-                  is_in_lineup:
-                    _eq: true
-              - invited_by_player_steam_id:
-                  _eq: X-Hasura-User-Id
+          - match:
+              is_in_lineup:
+                _eq: true
     comment: ""
 delete_permissions:
   - role: user
