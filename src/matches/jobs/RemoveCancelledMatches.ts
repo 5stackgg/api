@@ -76,23 +76,6 @@ export class RemoveCancelledMatches extends WorkerHost {
             },
           });
         }
-
-        for (const round of matchMap.rounds) {
-          await this.s3Service.remove(round.backup_file);
-          await this.hasura.mutation({
-            update_match_map_rounds_by_pk: {
-              __args: {
-                pk_columns: {
-                  id: round.id,
-                },
-                _set: {
-                  backup_file: null,
-                },
-              },
-              __typename: true,
-            },
-          });
-        }
       }
 
       await this.hasura.mutation({
