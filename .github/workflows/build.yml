@@ -79,10 +79,10 @@ jobs:
           docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }} \
             ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}-amd64 \
             ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}-arm64
-      # - name: Delete Package Versions
-      #   uses: actions/delete-package-versions@v5
-      #   with:
-      #     package-name: api
-      #     package-type: container
-      #     min-versions-to-keep: 8
-      #     ignore-versions: '^buildcache-*'
+      - name: Delete Package Versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: api
+          package-type: container
+          min-versions-to-keep: 9
+          ignore-versions: '^buildcache-*'
