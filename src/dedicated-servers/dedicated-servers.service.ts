@@ -67,6 +67,7 @@ export class DedicatedServersService {
           supports_cpu_pinning: true,
         },
         server_region: {
+          is_lan: true,
           steam_relay: true,
         },
       },
@@ -219,7 +220,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)}${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)}${server.connect_password ? ` +sv_password ${server.connect_password}` : ""} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
