@@ -261,6 +261,10 @@ export class DedicatedServersService {
                         name: `custom-plugins-${sanitizedGameServerNodeId}`,
                         mountPath: "/opt/custom-plugins",
                       },
+                      {
+                        name: `dedicated-server-data-${server.id}`,
+                        mountPath: `/opt/custom-data`,
+                      },
                     ],
                   },
                 ],
@@ -289,6 +293,13 @@ export class DedicatedServersService {
                       path: `/opt/5stack/custom-plugins`,
                     },
                   },
+                  {
+                    name: `dedicated-server-data-${server.id}`,
+                    hostPath: {
+                      type: "DirectoryOrCreate",
+                      path: `/opt/5stack/servers/${server.id}`,
+                    },
+                  }
                 ],
               },
             },
