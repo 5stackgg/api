@@ -9,6 +9,7 @@ import { ObjectInfo } from "minio/dist/main/internal/type";
 @Injectable()
 export class S3Service {
   private client: Client;
+  private directClient?: Client;
   private bucket: string;
   private config: S3Config;
 
@@ -26,6 +27,17 @@ export class S3Service {
       accessKey: this.config.key,
       secretKey: this.config.secret,
     });
+
+    // Initialize direct client if configured
+    if (this.config.directEndpoint) {
+      this.directClient = new Client({
+        port: parseInt(this.config.directPort || "443"),
+        endPoint: this.config.directEndpoint,
+        useSSL: this.config.directUseSSL !== false,
+        accessKey: this.config.key,
+        secretKey: this.config.secret,
+      });
+    }
   }
 
   public multerStorage(
@@ -136,5 +148,62 @@ export class S3Service {
     }
 
     return presignedUrl;
+  }
+
+  /**
+   * Get presigned URL for direct upload (bypasses CloudFlare)
+   */
+  public async getDirectPresignedUrl(
+    key: string,
+    bucket: string = this.bucket,
+    expires = 60 * 5,
+    type: "put" | "get" = "put",
+  ) {
+    if (!this.directClient) {
+      throw new Error("Direct client not configured. Set S3_DIRECT_ENDPOINT environment variable.");
+    }
+
+    let presignedUrl: string;
+    if (type === "put") {
+      presignedUrl = await this.directClient.presignedPutObject(bucket, key, expires);
+    } else {
+      presignedUrl = await this.directClient.presignedGetObject(bucket, key, expires);
+    }
+
+    return presignedUrl;
+  }
+
+  /**
+   * Determine if direct upload should be used based on file size
+   */
+  public shouldUseDirectUpload(fileSize?: number): boolean {
+    const FILE_SIZE_THRESHOLD = 50 * 1024 * 1024; // 50MB threshold
+    return !!(this.directClient && (!fileSize || fileSize > FILE_SIZE_THRESHOLD));
+  }
+
+  /**
+   * Get the appropriate presigned URL based on file size
+   */
+  public async getAppropriatePresignedUrl(
+    key: string,
+    fileSize?: number,
+    bucket: string = this.bucket,
+    expires = 60 * 5,
+    type: "put" | "get" = "put",
+  ) {
+    const useDirectUpload = this.shouldUseDirectUpload(fileSize);
+    
+    if (useDirectUpload) {
+      this.logger.log(`Using direct upload for large file: ${key} (${fileSize} bytes)`);
+      return {
+        url: await this.getDirectPresignedUrl(key, bucket, expires, type),
+        method: "direct" as const,
+      };
+    } else {
+      return {
+        url: await this.getPresignedUrl(key, bucket, expires, type),
+        method: "cloudflare" as const,
+      };
+    }
   }
 }

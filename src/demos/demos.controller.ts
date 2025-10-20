@@ -85,7 +85,7 @@ export class DemosController {
     @Res() response: Response,
   ) {
     const { matchId } = request.params;
-    const { mapId, demo } = request.body;
+    const { mapId, demo, fileSize } = request.body;
 
     if (!matchId || !mapId || !demo) {
       return response.status(400).json({
@@ -154,12 +154,30 @@ export class DemosController {
       });
     }
 
-    const presignedUrl = await this.s3.getPresignedUrl(
+    const uploadResult = await this.s3.getAppropriatePresignedUrl(
       `${matchId}/${mapId}/demos/${demo}`,
+      fileSize,
     );
 
     return response.status(200).json({
-      presignedUrl,
+      presignedUrl: uploadResult.url,
+      uploadMethod: uploadResult.method,
+    });
+  }
+
+  @Post("upload-method")
+  public async getUploadMethod(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const { fileSize } = request.body;
+    
+    const useDirectUpload = this.s3.shouldUseDirectUpload(fileSize);
+    
+    return response.status(200).json({
+      method: useDirectUpload ? "direct" : "cloudflare",
+      threshold: 50 * 1024 * 1024, // 50MB
+      fileSize: fileSize || 0,
     });
   }
 
