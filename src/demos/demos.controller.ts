@@ -86,6 +86,7 @@ export class DemosController {
   ) {
     const { matchId } = request.params;
     const { mapId, demo } = request.body;
+    const isGameServerNode = request.query["game-server-node"] === "true";
 
     if (!matchId || !mapId || !demo) {
       return response.status(400).json({
@@ -156,6 +157,10 @@ export class DemosController {
 
     const presignedUrl = await this.s3.getPresignedUrl(
       `${matchId}/${mapId}/demos/${demo}`,
+      undefined,
+      undefined,
+      undefined,
+      isGameServerNode,
     );
 
     return response.status(200).json({

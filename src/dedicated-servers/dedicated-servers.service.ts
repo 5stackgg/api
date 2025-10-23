@@ -299,7 +299,7 @@ export class DedicatedServersService {
                       type: "DirectoryOrCreate",
                       path: `/opt/5stack/servers/${server.id}`,
                     },
-                  }
+                  },
                 ],
               },
             },
