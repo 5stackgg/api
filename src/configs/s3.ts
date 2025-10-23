@@ -7,7 +7,7 @@ export default (): {
     key: process.env.S3_ACCESS_KEY,
     secret: process.env.S3_SECRET,
     bucket: process.env.S3_BUCKET,
-    db_backup_bucket: process.env.S3_DB_BACKUP_BUCKET,
+    db_backup_bucket: process.env.S3_DB_BACKUP_BUCKET || "5stack-db-backups",
     endpoint: process.env.S3_ENDPOINT || process.env.DEMOS_DOMAIN,
     useSSL: process.env.S3_USE_SSL === "false" ? false : true,
     port: process.env.S3_PORT || "443",
