@@ -421,6 +421,7 @@ export class DedicatedServersService {
             pk_columns: { id: serverId },
             _set: {
               connected: false,
+              steam_relay: null,
             },
           },
           id: true,
