@@ -1624,7 +1624,7 @@ export interface e_server_types_aggregate_fields {
 /** unique or primary key constraints on table "e_server_types" */
 export type e_server_types_constraint = 'e_server_types_pkey'
 
-export type e_server_types_enum = 'ArmsRace' | 'Casual' | 'Competitive' | 'Custom' | 'Deathmatch' | 'Ranked' | 'Wingman'
+export type e_server_types_enum = 'ArmsRace' | 'Casual' | 'Competitive' | 'Custom' | 'Deathmatch' | 'Ranked' | 'Retake' | 'Wingman'
 
 
 /** aggregate max on columns */
@@ -46926,6 +46926,7 @@ export const enumEServerTypesEnum = {
    Custom: 'Custom' as const,
    Deathmatch: 'Deathmatch' as const,
    Ranked: 'Ranked' as const,
+   Retake: 'Retake' as const,
    Wingman: 'Wingman' as const
 }
 

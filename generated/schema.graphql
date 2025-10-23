@@ -4277,6 +4277,9 @@ enum e_server_types_enum {
   """5Stack Ranked Server"""
   Ranked
 
+  """Valve Retake"""
+  Retake
+
   """Valve Wingman"""
   Wingman
 }
