@@ -19,6 +19,7 @@ export class S3Service {
     this.config = this.configService.get("s3");
 
     this.bucket = this.config.bucket;
+
     this.client = new Client({
       port: parseInt(this.config.port),
       endPoint: this.config.endpoint,
@@ -116,16 +117,13 @@ export class S3Service {
     }
   }
 
-  public getClientEndpoint() {
-    return `${this.config.endpoint}:${this.config.port}`;
-  }
-
   public async getPresignedUrl(
     key: string,
     bucket: string = this.bucket,
     // 5 minutes
     expires = 60 * 5,
     type: "put" | "get" = "put",
+    useLocal: boolean = false,
   ) {
     let presignedUrl: string;
 
@@ -133,6 +131,13 @@ export class S3Service {
       presignedUrl = await this.client.presignedPutObject(bucket, key, expires);
     } else {
       presignedUrl = await this.client.presignedGetObject(bucket, key, expires);
+    }
+
+    if (!useLocal && this.config.endpoint === "minio") {
+      presignedUrl = presignedUrl.replace(
+        `http://minio:9000`,
+        `https://${process.env.DEMOS_DOMAIN}`,
+      );
     }
 
     return presignedUrl;

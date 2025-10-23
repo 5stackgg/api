@@ -19,7 +19,13 @@ export class S3Controller {
     try {
       const data = `world : ${new Date().toISOString()}`;
       const putResponse = await fetch(
-        await this.s3.getPresignedUrl("hello.txt"),
+        await this.s3.getPresignedUrl(
+          "hello.txt",
+          undefined,
+          undefined,
+          undefined,
+          true,
+        ),
         {
           method: "PUT",
           body: Buffer.from(data),
@@ -49,10 +55,6 @@ export class S3Controller {
   @HasuraAction()
   public async getTestUploadLink() {
     try {
-      const data = await fetch(
-        await this.s3.getPresignedUrl("hello.txt", undefined, 60, "get"),
-      );
-
       return {
         link: await this.s3.getPresignedUrl("hello.txt", undefined, 60, "get"),
       };
