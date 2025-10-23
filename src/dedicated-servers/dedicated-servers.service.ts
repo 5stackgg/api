@@ -220,7 +220,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)}${server.connect_password ? ` +sv_password ${server.connect_password}` : ""} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 13 : 32} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
@@ -439,8 +439,18 @@ export class DedicatedServersService {
       case "Deathmatch":
       case "ArmsRace":
         return 1;
+      case "Retake":
       case "Custom":
         return 3;
+    }
+  }
+
+  private getWarGameType(type: e_server_types_enum): number {
+    switch (type) {
+      case "Retake":
+        return 12;
+      default:
+        return 0;
     }
   }
 
@@ -455,6 +465,7 @@ export class DedicatedServersService {
       case "Wingman":
       case "Deathmatch":
         return 2;
+      case "Retake":
       case "Custom":
         return 0;
     }
