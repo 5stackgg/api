@@ -19,6 +19,7 @@ export class S3Service {
     this.config = this.configService.get("s3");
 
     this.bucket = this.config.bucket;
+
     this.client = new Client({
       port: parseInt(this.config.port),
       endPoint: this.config.endpoint,
