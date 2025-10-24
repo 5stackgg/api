@@ -551,7 +551,23 @@ export class MatchAssistantService {
                         dnsPolicy: "ClusterFirstWithHostNet",
                       }
                     : {}),
-                  nodeName: gameServerNodeId,
+                  affinity: {
+                    nodeAffinity: {
+                      requiredDuringSchedulingIgnoredDuringExecution: {
+                        nodeSelectorTerms: [
+                          {
+                            matchExpressions: [
+                              {
+                                key: "kubernetes.io/hostname",
+                                operator: "In",
+                                values: [gameServerNodeId],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  },
                   containers: [
                     {
                       name: "game-server",

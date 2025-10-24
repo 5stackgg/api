@@ -378,7 +378,23 @@ export class GameServerNodeService {
                 },
               },
               spec: {
-                nodeName: gameServerNodeId,
+                affinity: {
+                  nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                      nodeSelectorTerms: [
+                        {
+                          matchExpressions: [
+                            {
+                              key: "kubernetes.io/hostname",
+                              operator: "In",
+                              values: [gameServerNodeId],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
                 restartPolicy: "Never",
                 dnsConfig: {
                   options: [

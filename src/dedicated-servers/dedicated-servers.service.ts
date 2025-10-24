@@ -175,7 +175,23 @@ export class DedicatedServersService {
                       dnsPolicy: "ClusterFirstWithHostNet",
                     }
                   : {}),
-                nodeName: gameServerNodeId,
+                affinity: {
+                  nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                      nodeSelectorTerms: [
+                        {
+                          matchExpressions: [
+                            {
+                              key: "kubernetes.io/hostname",
+                              operator: "In",
+                              values: [gameServerNodeId],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
                 containers: [
                   {
                     name: "game-server",
@@ -188,14 +204,12 @@ export class DedicatedServersService {
                           },
                         }
                       : {}),
-                    ports: steamRelay
-                      ? []
-                      : [
-                          { containerPort: server.port },
-                          { containerPort: server.port, protocol: "UDP" },
-                          { containerPort: server.tv_port, protocol: "TCP" },
-                          { containerPort: server.tv_port, protocol: "UDP" },
-                        ],
+                    ports: [
+                      { containerPort: server.port },
+                      { containerPort: server.port, protocol: "UDP" },
+                      { containerPort: server.tv_port, protocol: "TCP" },
+                      { containerPort: server.tv_port, protocol: "UDP" },
+                    ],
                     env: [
                       {
                         name: "SERVER_TYPE",
