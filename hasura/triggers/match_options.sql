@@ -18,7 +18,7 @@ lan_count int;
 region_count int;
 BEGIN
     SELECT COUNT(DISTINCT region) INTO region_count
-        FROM servers where enabled = true;
+        FROM servers where enabled = true and type = 'Ranked';
 
     IF NEW.regions IS NOT NULL THEN
         SELECT count(*) INTO lan_count 
