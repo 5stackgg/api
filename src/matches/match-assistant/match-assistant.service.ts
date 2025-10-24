@@ -18,6 +18,7 @@ import {
 import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
 import { AppConfig } from "src/configs/types/AppConfig";
+import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandServer";
 
 @Injectable()
 export class MatchAssistantService {
@@ -218,7 +219,7 @@ export class MatchAssistantService {
     });
   }
 
-  public async assignServer(matchId: string): Promise<boolean> {
+  public async assignServer(matchId: string, tries = 0): Promise<boolean> {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -263,10 +264,20 @@ export class MatchAssistantService {
     });
 
     if (game_server_nodes.length > 0) {
-      const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
+      try {
+        const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
 
-      if (isAssignedOnDemand) {
-        return true;
+        if (isAssignedOnDemand) {
+          return true;
+        }
+      } catch (error) {
+        if (error instanceof FailedToCreateOnDemandServer) {
+          setTimeout(async () => {
+            this.logger.log(`[${matchId}] try retry assign server....`);
+            await this.assignServer(matchId, ++tries);
+          }, tries * 1000);
+          return false;
+        }
       }
     }
 
@@ -438,6 +449,7 @@ export class MatchAssistantService {
             },
           },
           id: true,
+          label: true,
           host: true,
           port: true,
           tv_port: true,
@@ -463,7 +475,24 @@ export class MatchAssistantService {
       }
 
       try {
-        this.logger.verbose(`[${matchId}] create job for on demand server`);
+        this.logger.verbose(
+          `[${matchId}] create job for on demand server (${server.label})`,
+        );
+
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: {
+                id: server.id,
+              },
+              _set: {
+                connected: false,
+                reserved_by_match_id: matchId,
+              },
+            },
+            __typename: true,
+          },
+        });
 
         const gameServerNodeId = server.game_server_node?.id;
         const steamRelay = server.server_region?.steam_relay || false;
@@ -742,21 +771,6 @@ export class MatchAssistantService {
           },
         });
 
-        await this.hasura.mutation({
-          update_servers_by_pk: {
-            __args: {
-              pk_columns: {
-                id: server.id,
-              },
-              _set: {
-                connected: false,
-                reserved_by_match_id: matchId,
-              },
-            },
-            __typename: true,
-          },
-        });
-
         return true;
       } catch (error) {
         await this.stopOnDemandServer(matchId);
@@ -766,9 +780,7 @@ export class MatchAssistantService {
           error?.response?.body?.message || error,
         );
 
-        await this.updateMatchStatus(matchId, "Scheduled");
-
-        return false;
+        throw new FailedToCreateOnDemandServer();
       }
     });
   }
@@ -923,6 +935,23 @@ export class MatchAssistantService {
         error?.response?.body?.message || error,
       );
     }
+
+    await this.hasura.mutation({
+      update_servers: {
+        __args: {
+          where: {
+            reserved_by_match_id: {
+              _eq: matchId,
+            },
+          },
+          _set: {
+            connected: false,
+            reserved_by_match_id: null,
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   public async getAvailableMaps(matchId: string) {
