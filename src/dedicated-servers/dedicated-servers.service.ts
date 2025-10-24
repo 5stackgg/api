@@ -321,9 +321,11 @@ export class DedicatedServersService {
         },
       });
 
-      this.logger.verbose(`[${serverId}] create service for dedicated server`);
-
       if (!steamRelay) {
+        this.logger.verbose(
+          `[${serverId}] create service for dedicated server`,
+        );
+
         await this.core.createNamespacedService({
           namespace: this.namespace,
           body: {
@@ -377,16 +379,27 @@ export class DedicatedServersService {
           __args: {
             pk_columns: { id: serverId },
             _set: {
-              connected: true,
+              connected: false,
+              steam_relay: null,
             },
           },
           id: true,
         },
       });
 
-      setTimeout(() => {
-        this.pingDedicatedServer(serverId);
-      }, 10000);
+      void this.waitForPodReady(serverId)
+        .then(() => {
+          setTimeout(async () => {
+            this.logger.verbose(`[${serverId}] dedicated server is ready`);
+            await this.pingDedicatedServer(serverId);
+          }, 10000);
+        })
+        .catch((error) => {
+          this.logger.error(
+            `[${serverId}] error waiting for pod to be ready`,
+            error,
+          );
+        });
 
       return true;
     } catch (error) {
@@ -491,6 +504,7 @@ export class DedicatedServersService {
       servers_by_pk: {
         __args: { id: serverId },
         connected: true,
+        steam_relay: true,
         server_region: {
           steam_relay: true,
         },
@@ -513,7 +527,8 @@ export class DedicatedServersService {
     let steamId = null;
     const status = JSON.parse(await rcon.send("status_json"));
 
-    if (server.server_region?.steam_relay) {
+    const steamRelayeEnabled = server.server_region?.steam_relay;
+    if (steamRelayeEnabled) {
       steamId = status.server.steamid;
     }
 
@@ -529,19 +544,15 @@ export class DedicatedServersService {
 
     await this.redis.expire("dedicated-servers:stats", 120);
 
-    const { servers_by_pk: currentServer } = await this.hasura.query({
-      servers_by_pk: {
-        __args: { id: serverId },
-        steam_relay: true,
-      },
-    });
-
-    if (currentServer.steam_relay !== steamId) {
+    if (server.steam_relay !== steamId) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
             pk_columns: { id: serverId },
-            _set: { steam_relay: steamId },
+            _set: {
+              steam_relay: steamId,
+              connected: !steamRelayeEnabled || steamId !== null,
+            },
           },
           id: true,
         },
@@ -605,5 +616,62 @@ export class DedicatedServersService {
 
   private getDedicatedServerDeploymentName(serverId: string): string {
     return `dedicated-server-${serverId}`;
+  }
+
+  private async waitForPodReady(
+    serverId: string,
+    maxWaitTime: number = 60 * 1000,
+  ): Promise<void> {
+    const deploymentName = this.getDedicatedServerDeploymentName(serverId);
+    const startTime = Date.now();
+
+    this.logger.log(`[${serverId}] waiting for pod to be ready`);
+
+    return new Promise((resolve, reject) => {
+      const checkPodStatus = async () => {
+        try {
+          const deployment = await this.apps.readNamespacedDeployment({
+            name: deploymentName,
+            namespace: this.namespace,
+          });
+
+          const readyReplicas = deployment.status?.readyReplicas || 0;
+          const desiredReplicas = deployment.spec?.replicas || 1;
+
+          if (readyReplicas >= desiredReplicas) {
+            resolve();
+            return;
+          }
+
+          if (Date.now() - startTime >= maxWaitTime) {
+            reject(
+              new Error(
+                `[${serverId}] timeout waiting for pod to be ready after ${maxWaitTime}ms`,
+              ),
+            );
+            return;
+          }
+
+          setTimeout(checkPodStatus, 5000);
+        } catch (error) {
+          this.logger.warn(
+            `[${serverId}] error checking pod status: ${error.message}`,
+          );
+
+          if (Date.now() - startTime >= maxWaitTime) {
+            reject(
+              new Error(
+                `[${serverId}] timeout waiting for pod to be ready after ${maxWaitTime}ms`,
+              ),
+            );
+            return;
+          }
+
+          setTimeout(checkPodStatus, 5000);
+        }
+      };
+
+      checkPodStatus();
+    });
   }
 }

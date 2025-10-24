@@ -5,7 +5,7 @@ DECLARE
     connection_string text;
     min_role_to_connect text;
 BEGIN
-    IF server.enabled = false OR server.type = 'Ranked' OR server.host IS NULL OR server.port IS NULL THEN
+    IF server.connected = false OR server.enabled = false OR server.type = 'Ranked' OR server.host IS NULL OR server.port IS NULL THEN
         RETURN NULL;
     END IF;
 
@@ -32,7 +32,7 @@ DECLARE
     server_host text;
     min_role_to_connect text;
 BEGIN
-    IF server.enabled = false OR server.type = 'Ranked' OR server.connect_password IS NOT NULL THEN
+    IF server.connected = false OR server.enabled = false OR server.type = 'Ranked' OR server.connect_password IS NOT NULL THEN
         RETURN NULL;
     END IF;
 
