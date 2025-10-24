@@ -733,7 +733,7 @@ export class MatchmakeService {
       type as e_match_types_enum,
       type as e_match_types_enum,
       {
-        mr: 12,
+        mr: type === "Competitive" ? 12 : 8,
         best_of: 1,
         knife: true,
         overtime: true,
