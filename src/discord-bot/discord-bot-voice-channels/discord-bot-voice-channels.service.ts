@@ -155,6 +155,10 @@ export class DiscordBotVoiceChannelsService {
           voiceChannelId,
         )) as GuildChannel;
 
+        if (!channel) {
+          return;
+        }
+
         for (const [, member] of channel.members) {
           await member.voice.setChannel(originalChannelId).catch((error) => {
             if (error.code !== 50013) {

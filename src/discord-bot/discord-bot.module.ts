@@ -9,7 +9,7 @@ import { DiscordBotVetoService } from "./discord-bot-veto/discord-bot-veto.servi
 import { CacheModule } from "../cache/cache.module";
 import { HasuraModule } from "../hasura/hasura.module";
 import { MatchesModule } from "../matches/matches.module";
-import { BullModule, InjectQueue } from "@nestjs/bullmq";
+import { BullModule } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { DiscordBotQueues } from "./enums/DiscordBotQueues";
@@ -18,7 +18,6 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { DiscordBotInteractionModule } from "./interactions/discord-bot-interaction.module";
 import { RemoveArchivedThreads } from "./jobs/RemoveArchivedThreads";
-import { Queue } from "bullmq";
 
 @Module({
   imports: [
@@ -56,20 +55,4 @@ import { Queue } from "bullmq";
   ],
   controllers: [DiscordBotController],
 })
-export class DiscordBotModule {
-  constructor(@InjectQueue(DiscordBotQueues.DiscordBot) private queue: Queue) {
-    if (process.env.RUN_MIGRATIONS) {
-      return;
-    }
-
-    void queue.add(
-      RemoveArchivedThreads.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 * * * *",
-        },
-      },
-    );
-  }
-}
+export class DiscordBotModule {}

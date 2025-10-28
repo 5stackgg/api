@@ -20,6 +20,10 @@ import { interactions } from "./interactions/interactions";
 import DiscordInteraction from "./interactions/abstracts/DiscordInteraction";
 import { Type } from "@nestjs/common";
 import MiniSearch from "minisearch";
+import { Queue } from "bullmq";
+import { DiscordBotQueues } from "./enums/DiscordBotQueues";
+import { InjectQueue } from "@nestjs/bullmq";
+import { RemoveArchivedThreads } from "./jobs/RemoveArchivedThreads";
 
 let client: Client;
 
@@ -45,6 +49,7 @@ export class DiscordBotService {
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
     private readonly moduleRef: ModuleRef,
+    @InjectQueue(DiscordBotQueues.DiscordBot) private queue: Queue,
   ) {
     this.client = client;
     this.discordConfig = config.get<DiscordConfig>("discord");
@@ -143,6 +148,16 @@ export class DiscordBotService {
       this.logger.warn("discord bot not configured");
       return;
     }
+
+    void this.queue.add(
+      RemoveArchivedThreads.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 * * * *",
+        },
+      },
+    );
 
     const rest = new REST({ version: "10" }).setToken(this.discordConfig.token);
 
