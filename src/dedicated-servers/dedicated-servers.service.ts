@@ -168,13 +168,8 @@ export class DedicatedServersService {
                     },
                   ],
                 },
-                // only enable host network if steam relay is enabled
-                ...(steamRelay
-                  ? {
-                      hostNetwork: true,
-                      dnsPolicy: "ClusterFirstWithHostNet",
-                    }
-                  : {}),
+                hostNetwork: true,
+                dnsPolicy: "ClusterFirstWithHostNet",
                 affinity: {
                   nodeAffinity: {
                     requiredDuringSchedulingIgnoredDuringExecution: {
@@ -321,59 +316,6 @@ export class DedicatedServersService {
         },
       });
 
-      if (!steamRelay) {
-        this.logger.verbose(
-          `[${serverId}] create service for dedicated server`,
-        );
-
-        await this.core.createNamespacedService({
-          namespace: this.namespace,
-          body: {
-            apiVersion: "v1",
-            kind: "Service",
-            metadata: {
-              name: dedicatedServerDeploymentName,
-            },
-            spec: {
-              type: "NodePort",
-              ports: [
-                {
-                  port: server.port,
-                  targetPort: server.port,
-                  nodePort: server.port,
-                  name: "rcon",
-                  protocol: "TCP",
-                },
-                {
-                  port: server.port,
-                  targetPort: server.port,
-                  nodePort: server.port,
-                  name: "game",
-                  protocol: "UDP",
-                },
-                {
-                  port: server.tv_port,
-                  targetPort: server.tv_port,
-                  nodePort: server.tv_port,
-                  name: "tv",
-                  protocol: "TCP",
-                },
-                {
-                  port: server.tv_port,
-                  targetPort: server.tv_port,
-                  nodePort: server.tv_port,
-                  name: "tv-udp",
-                  protocol: "UDP",
-                },
-              ],
-              selector: {
-                app: dedicatedServerDeploymentName,
-              },
-            },
-          },
-        });
-      }
-
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -418,17 +360,6 @@ export class DedicatedServersService {
     this.logger.log(`[${serverId}] removing dedicated server`);
 
     const dedicatedServerDeploymentName = `dedicated-server-${serverId}`;
-
-    try {
-      await this.core.deleteNamespacedService({
-        namespace: this.namespace,
-        name: dedicatedServerDeploymentName,
-      });
-    } catch (error) {
-      if (error.code.toString() !== "404") {
-        throw error;
-      }
-    }
 
     try {
       await this.apps.deleteNamespacedDeployment({

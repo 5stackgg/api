@@ -573,13 +573,8 @@ export class MatchAssistantService {
                       },
                     ],
                   },
-                  // only enable host network if steam relay is enabled
-                  ...(steamRelay
-                    ? {
-                        hostNetwork: true,
-                        dnsPolicy: "ClusterFirstWithHostNet",
-                      }
-                    : {}),
+                  hostNetwork: true,
+                  dnsPolicy: "ClusterFirstWithHostNet",
                   affinity: {
                     nodeAffinity: {
                       requiredDuringSchedulingIgnoredDuringExecution: {
@@ -709,53 +704,6 @@ export class MatchAssistantService {
         });
 
         this.logger.verbose(`[${matchId}] create service for on demand server`);
-
-        await core.createNamespacedService({
-          namespace: this.namespace,
-          body: {
-            apiVersion: "v1",
-            kind: "Service",
-            metadata: {
-              name: jobName,
-            },
-            spec: {
-              type: "NodePort",
-              ports: [
-                {
-                  port: server.port,
-                  targetPort: server.port,
-                  nodePort: server.port,
-                  name: "rcon",
-                  protocol: "TCP",
-                },
-                {
-                  port: server.port,
-                  targetPort: server.port,
-                  nodePort: server.port,
-                  name: "game",
-                  protocol: "UDP",
-                },
-                {
-                  port: server.tv_port,
-                  targetPort: server.tv_port,
-                  nodePort: server.tv_port,
-                  name: "tv",
-                  protocol: "TCP",
-                },
-                {
-                  port: server.tv_port,
-                  targetPort: server.tv_port,
-                  nodePort: server.tv_port,
-                  name: "tv-udp",
-                  protocol: "UDP",
-                },
-              ],
-              selector: {
-                job: jobName,
-              },
-            },
-          },
-        });
 
         await this.hasura.mutation({
           update_matches_by_pk: {
@@ -907,18 +855,6 @@ export class MatchAssistantService {
       this.logger.verbose(`[${matchId}] remove job`);
       await batch
         .deleteNamespacedJob({
-          name: jobName,
-          namespace: this.namespace,
-        })
-        .catch((error) => {
-          if (error.code.toString() !== "404") {
-            throw error;
-          }
-        });
-
-      this.logger.verbose(`[${matchId}] remove service`);
-      await core
-        .deleteNamespacedService({
           name: jobName,
           namespace: this.namespace,
         })
