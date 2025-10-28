@@ -75,6 +75,7 @@ export class RconGateway {
         event: "rcon",
         data: {
           uuid: data.uuid,
+          command: data.command,
           result: await rcon.send(data.command),
         },
       }),
