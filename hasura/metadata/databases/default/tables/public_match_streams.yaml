@@ -11,6 +11,7 @@ insert_permissions:
       check: {}
       columns:
         - link
+        - match_id
         - priority
         - title
     comment: ""
@@ -19,6 +20,7 @@ insert_permissions:
       check: {}
       columns:
         - link
+        - match_id
         - priority
         - title
     comment: ""
