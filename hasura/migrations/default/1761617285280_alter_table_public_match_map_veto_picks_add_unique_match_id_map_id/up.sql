@@ -23,6 +23,16 @@ WHERE id IN (
   WHERE row_num > 1
 );
 
+CREATE OR REPLACE FUNCTION public.tbd_match_map_veto_picks()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM match_maps WHERE map_id = OLD.map_id AND match_id = OLD.match_id;
+    RETURN OLD;
+END;
+$$;
+
 CREATE TRIGGER tbd_match_map_veto_picks BEFORE DELETE ON public.match_map_veto_picks FOR EACH ROW EXECUTE FUNCTION public.tbd_match_map_veto_picks();
 
 alter table "public"."match_map_veto_picks" add constraint "match_map_veto_picks_match_id_map_id_key" unique ("match_id", "map_id");
