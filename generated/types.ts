@@ -10056,6 +10056,9 @@ export default {
             "current": [
                 1
             ],
+            "cvars": [
+                1
+            ],
             "description": [
                 18
             ],
@@ -10167,6 +10170,9 @@ export default {
             "current": [
                 2
             ],
+            "cvars": [
+                2
+            ],
             "description": [
                 20
             ],
@@ -10221,6 +10227,9 @@ export default {
                 9
             ],
             "current": [
+                1
+            ],
+            "cvars": [
                 1
             ],
             "description": [
@@ -10316,6 +10325,9 @@ export default {
             "current": [
                 1405
             ],
+            "cvars": [
+                1405
+            ],
             "description": [
                 1405
             ],
@@ -10354,6 +10366,9 @@ export default {
                 9
             ],
             "current": [
+                1
+            ],
+            "cvars": [
                 1
             ],
             "description": [
@@ -10412,6 +10427,9 @@ export default {
                 9
             ],
             "current": [
+                1
+            ],
+            "cvars": [
                 1
             ],
             "description": [

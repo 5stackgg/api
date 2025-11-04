@@ -7473,6 +7473,7 @@ columns and relationships of "game_versions"
 type game_versions {
   build_id: Int!
   current: Boolean
+  cvars: Boolean!
   description: String!
   downloads(
     """JSON select path"""
@@ -7526,6 +7527,7 @@ input game_versions_bool_exp {
   _or: [game_versions_bool_exp!]
   build_id: Int_comparison_exp
   current: Boolean_comparison_exp
+  cvars: Boolean_comparison_exp
   description: String_comparison_exp
   downloads: jsonb_comparison_exp
   updated_at: timestamptz_comparison_exp
@@ -7581,6 +7583,7 @@ input type for inserting data into table "game_versions"
 input game_versions_insert_input {
   build_id: Int
   current: Boolean
+  cvars: Boolean
   description: String
   downloads: jsonb
   updated_at: timestamptz
@@ -7637,6 +7640,7 @@ input game_versions_on_conflict {
 input game_versions_order_by {
   build_id: order_by
   current: order_by
+  cvars: order_by
   description: order_by
   downloads: order_by
   updated_at: order_by
@@ -7664,6 +7668,9 @@ enum game_versions_select_column {
   current
 
   """column name"""
+  cvars
+
+  """column name"""
   description
 
   """column name"""
@@ -7682,6 +7689,7 @@ input type for updating data in table "game_versions"
 input game_versions_set_input {
   build_id: Int
   current: Boolean
+  cvars: Boolean
   description: String
   downloads: jsonb
   updated_at: timestamptz
@@ -7718,6 +7726,7 @@ input game_versions_stream_cursor_input {
 input game_versions_stream_cursor_value_input {
   build_id: Int
   current: Boolean
+  cvars: Boolean
   description: String
   downloads: jsonb
   updated_at: timestamptz
@@ -7738,6 +7747,9 @@ enum game_versions_update_column {
 
   """column name"""
   current
+
+  """column name"""
+  cvars
 
   """column name"""
   description
@@ -11796,6 +11808,11 @@ unique or primary key constraints on table "match_map_veto_picks"
 """
 enum match_map_veto_picks_constraint {
   """
+  unique or primary key constraint on columns "match_id", "map_id"
+  """
+  match_map_veto_picks_match_id_map_id_key
+
+  """
   unique or primary key constraint on columns "id"
   """
   match_map_veto_picks_pkey
@@ -13753,6 +13770,11 @@ input match_region_veto_picks_bool_exp {
 unique or primary key constraints on table "match_region_veto_picks"
 """
 enum match_region_veto_picks_constraint {
+  """
+  unique or primary key constraint on columns "region", "match_id"
+  """
+  match_region_veto_picks_match_id_region_key
+
   """
   unique or primary key constraint on columns "id"
   """

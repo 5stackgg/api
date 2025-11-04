@@ -2652,6 +2652,7 @@ export interface game_server_nodes_variance_fields {
 export interface game_versions {
     build_id: Scalars['Int']
     current: (Scalars['Boolean'] | null)
+    cvars: Scalars['Boolean']
     description: Scalars['String']
     downloads: (Scalars['jsonb'] | null)
     updated_at: Scalars['timestamptz']
@@ -2727,7 +2728,7 @@ export interface game_versions_mutation_response {
 
 
 /** select columns of table "game_versions" */
-export type game_versions_select_column = 'build_id' | 'current' | 'description' | 'downloads' | 'updated_at' | 'version'
+export type game_versions_select_column = 'build_id' | 'current' | 'cvars' | 'description' | 'downloads' | 'updated_at' | 'version'
 
 
 /** aggregate stddev on columns */
@@ -2759,7 +2760,7 @@ export interface game_versions_sum_fields {
 
 
 /** update columns of table "game_versions" */
-export type game_versions_update_column = 'build_id' | 'current' | 'description' | 'downloads' | 'updated_at' | 'version'
+export type game_versions_update_column = 'build_id' | 'current' | 'cvars' | 'description' | 'downloads' | 'updated_at' | 'version'
 
 
 /** aggregate var_pop on columns */
@@ -4048,7 +4049,7 @@ export interface match_map_veto_picks_aggregate_fields {
 
 
 /** unique or primary key constraints on table "match_map_veto_picks" */
-export type match_map_veto_picks_constraint = 'match_map_veto_picks_pkey'
+export type match_map_veto_picks_constraint = 'match_map_veto_picks_match_id_map_id_key' | 'match_map_veto_picks_pkey'
 
 
 /** aggregate max on columns */
@@ -4608,7 +4609,7 @@ export interface match_region_veto_picks_aggregate_fields {
 
 
 /** unique or primary key constraints on table "match_region_veto_picks" */
-export type match_region_veto_picks_constraint = 'match_region_veto_picks_pkey'
+export type match_region_veto_picks_constraint = 'match_region_veto_picks_match_id_region_key' | 'match_region_veto_picks_pkey'
 
 
 /** aggregate max on columns */
@@ -17604,6 +17605,7 @@ export interface game_server_nodes_variance_order_by {build_id?: (order_by | nul
 export interface game_versionsGenqlSelection{
     build_id?: boolean | number
     current?: boolean | number
+    cvars?: boolean | number
     description?: boolean | number
     downloads?: { __args: {
     /** JSON select path */
@@ -17655,7 +17657,7 @@ export interface game_versions_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_versions". All fields are combined with a logical 'AND'. */
-export interface game_versions_bool_exp {_and?: (game_versions_bool_exp[] | null),_not?: (game_versions_bool_exp | null),_or?: (game_versions_bool_exp[] | null),build_id?: (Int_comparison_exp | null),current?: (Boolean_comparison_exp | null),description?: (String_comparison_exp | null),downloads?: (jsonb_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
+export interface game_versions_bool_exp {_and?: (game_versions_bool_exp[] | null),_not?: (game_versions_bool_exp | null),_or?: (game_versions_bool_exp[] | null),build_id?: (Int_comparison_exp | null),current?: (Boolean_comparison_exp | null),cvars?: (Boolean_comparison_exp | null),description?: (String_comparison_exp | null),downloads?: (jsonb_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -17675,7 +17677,7 @@ export interface game_versions_inc_input {build_id?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "game_versions" */
-export interface game_versions_insert_input {build_id?: (Scalars['Int'] | null),current?: (Scalars['Boolean'] | null),description?: (Scalars['String'] | null),downloads?: (Scalars['jsonb'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_versions_insert_input {build_id?: (Scalars['Int'] | null),current?: (Scalars['Boolean'] | null),cvars?: (Scalars['Boolean'] | null),description?: (Scalars['String'] | null),downloads?: (Scalars['jsonb'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -17722,7 +17724,7 @@ export interface game_versions_on_conflict {constraint: game_versions_constraint
 
 
 /** Ordering options when selecting data from "game_versions". */
-export interface game_versions_order_by {build_id?: (order_by | null),current?: (order_by | null),description?: (order_by | null),downloads?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
+export interface game_versions_order_by {build_id?: (order_by | null),current?: (order_by | null),cvars?: (order_by | null),description?: (order_by | null),downloads?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
 
 
 /** primary key columns input for table: game_versions */
@@ -17734,7 +17736,7 @@ export interface game_versions_prepend_input {downloads?: (Scalars['jsonb'] | nu
 
 
 /** input type for updating data in table "game_versions" */
-export interface game_versions_set_input {build_id?: (Scalars['Int'] | null),current?: (Scalars['Boolean'] | null),description?: (Scalars['String'] | null),downloads?: (Scalars['jsonb'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_versions_set_input {build_id?: (Scalars['Int'] | null),current?: (Scalars['Boolean'] | null),cvars?: (Scalars['Boolean'] | null),description?: (Scalars['String'] | null),downloads?: (Scalars['jsonb'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -17770,7 +17772,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_versions_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),current?: (Scalars['Boolean'] | null),description?: (Scalars['String'] | null),downloads?: (Scalars['jsonb'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_versions_stream_cursor_value_input {build_id?: (Scalars['Int'] | null),current?: (Scalars['Boolean'] | null),cvars?: (Scalars['Boolean'] | null),description?: (Scalars['String'] | null),downloads?: (Scalars['jsonb'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -47204,6 +47206,7 @@ export const enumGameVersionsConstraint = {
 export const enumGameVersionsSelectColumn = {
    build_id: 'build_id' as const,
    current: 'current' as const,
+   cvars: 'cvars' as const,
    description: 'description' as const,
    downloads: 'downloads' as const,
    updated_at: 'updated_at' as const,
@@ -47213,6 +47216,7 @@ export const enumGameVersionsSelectColumn = {
 export const enumGameVersionsUpdateColumn = {
    build_id: 'build_id' as const,
    current: 'current' as const,
+   cvars: 'cvars' as const,
    description: 'description' as const,
    downloads: 'downloads' as const,
    updated_at: 'updated_at' as const,
@@ -47468,6 +47472,7 @@ export const enumMatchMapRoundsUpdateColumn = {
 }
 
 export const enumMatchMapVetoPicksConstraint = {
+   match_map_veto_picks_match_id_map_id_key: 'match_map_veto_picks_match_id_map_id_key' as const,
    match_map_veto_picks_pkey: 'match_map_veto_picks_pkey' as const
 }
 
@@ -47579,6 +47584,7 @@ export const enumMatchOptionsUpdateColumn = {
 }
 
 export const enumMatchRegionVetoPicksConstraint = {
+   match_region_veto_picks_match_id_region_key: 'match_region_veto_picks_match_id_region_key' as const,
    match_region_veto_picks_pkey: 'match_region_veto_picks_pkey' as const
 }
 

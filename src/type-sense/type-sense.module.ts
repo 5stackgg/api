@@ -1,4 +1,4 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { TypeSenseService } from "./type-sense.service";
 import { TypeSenseController } from "./type-sense.controller";
 import { HasuraModule } from "../hasura/hasura.module";

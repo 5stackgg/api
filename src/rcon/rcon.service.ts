@@ -3,6 +3,8 @@ import { Rcon as RconClient } from "rcon-client";
 import { HasuraService } from "../hasura/hasura.service";
 import { EncryptionService } from "../encryption/encryption.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { TypeSenseService } from "../type-sense/type-sense.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 
 @Injectable()
 export class RconService {
@@ -11,6 +13,9 @@ export class RconService {
     private readonly encryption: EncryptionService,
     private readonly notifications: NotificationsService,
     private readonly logger: Logger,
+    private readonly cache: RedisManagerService,
+    private readonly typeSenseService: TypeSenseService,
+    private readonly redisManager: RedisManagerService,
   ) {}
 
   private CONNECTION_TIMEOUT = 3 * 1000;
@@ -39,6 +44,10 @@ export class RconService {
         rcon_password: true,
         game_server_node: {
           node_ip: true,
+          version: {
+            cvars: true,
+            current: true,
+          },
         },
       },
     });
@@ -105,6 +114,11 @@ export class RconService {
           },
         });
       }
+
+      const version = server.game_server_node?.version;
+      if (version?.current === true && version?.cvars === false) {
+        await this.genreateCvars(serverId);
+      }
     } catch (error) {
       try {
         if (rcon.authenticated) {
@@ -158,5 +172,159 @@ export class RconService {
       this.connections[serverId].end();
       delete this.connections[serverId];
     }
+  }
+
+  public async genreateCvars(serverId: string) {
+    const { servers_by_pk: server } = await this.hasuraService.query({
+      servers_by_pk: {
+        __args: {
+          id: serverId,
+        },
+        game_server_node: {
+          version: {
+            build_id: true,
+            cvars: true,
+            current: true,
+          },
+        },
+      },
+    });
+
+    if (
+      server.game_server_node?.version?.current === false ||
+      server.game_server_node?.version?.cvars === true
+    ) {
+      return;
+    }
+
+    await this.typeSenseService.resetCvars();
+
+    const buildId = server.game_server_node?.version?.build_id.toString();
+
+    if (!buildId) {
+      throw Error(`unable to find build id for server ${serverId}`);
+    }
+
+    this.logger.log(`generating cvars for build: ${buildId}`);
+
+    const hasLock = await this.aquireCvarsLock(buildId);
+    if (!hasLock) {
+      this.logger.warn(`unable to aquire cvars lock for build: ${buildId}`);
+      return;
+    }
+
+    let totalCvars = 0;
+    try {
+      const rcon = await this.connect(serverId);
+      if (!rcon) {
+        throw Error(`unable to connect to server ${serverId}`);
+      }
+
+      const prefixes = [
+        "+",
+        "-",
+        "_",
+        ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)),
+      ];
+
+      for (const prefix of prefixes) {
+        const parsedCvars = this.parseCvarList(
+          await rcon.send(`Cvarlist ${prefix}`),
+        );
+        await this.typeSenseService.upsertCvars(parsedCvars);
+        totalCvars = totalCvars + parsedCvars.length;
+      }
+
+      await this.hasuraService.mutation({
+        update_game_versions_by_pk: {
+          __args: {
+            pk_columns: { build_id: Number(buildId) },
+            _set: { cvars: true },
+          },
+          cvars: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `unable to generate cvars for build: ${buildId}`,
+        error,
+      );
+      throw error;
+    } finally {
+      await this.releaseCvarsLock(buildId);
+    }
+    this.logger.log(`generated ${totalCvars} cvars for build: ${buildId}`);
+  }
+
+  private parseCvarList(
+    output: string,
+  ): Array<{ name: string; kind: string; flags: string; description: string }> {
+    const lines = output.split(/\r?\n/);
+    const entries: Array<{
+      name: string;
+      kind: string;
+      flags: string;
+      description: string;
+    }> = [];
+
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+      if (!line) {
+        continue;
+      }
+
+      const lower = line.toLowerCase();
+
+      if (
+        lower === "cvar list" ||
+        line.startsWith("---") ||
+        lower.includes("convars/concommands for")
+      ) {
+        continue;
+      }
+
+      // Ignore noisy status lines that sometimes precede results
+      if (/(watching for changes|^list\s*:)/i.test(line)) {
+        continue;
+      }
+
+      // Match 4 columns split by ':' allowing optional spaces and empty description
+      const match = line.match(
+        /^\s*([^:]+)\s*:\s*([^:]+)\s*:\s*([^:]*)\s*:\s*(.*)$/,
+      );
+      if (!match) {
+        this.logger.warn(`unable to parse cvar list: ${line}`);
+        continue;
+      }
+
+      const name = match[1]?.trim();
+      const kind = match[2]?.trim();
+      const flags = match[3]?.trim();
+      const description = (match[4] ?? "").trim();
+
+      if (!name) {
+        this.logger.warn(`unable to parse cvar list: ${line}`);
+        continue;
+      }
+
+      entries.push({ name, kind, flags, description });
+    }
+    return entries;
+  }
+
+  private async aquireCvarsLock(buildId: string): Promise<boolean> {
+    const lockKey = `cvars:lock:${buildId}`;
+    const result = await this.redisManager
+      .getConnection()
+      .set(lockKey, 1, "EX", 60, "NX");
+    if (result === null) {
+      return false;
+    }
+    return true;
+  }
+
+  private async releaseCvarsLock(buildId: string) {
+    const lockKey = `cvars:lock:${buildId}`;
+    await this.redisManager.getConnection().del(lockKey);
   }
 }

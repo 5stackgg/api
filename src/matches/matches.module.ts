@@ -48,7 +48,7 @@ import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 @Module({
   imports: [
     HasuraModule,
-    RconModule,
+    forwardRef(() => RconModule),
     CacheModule,
     RedisModule,
     S3Module,

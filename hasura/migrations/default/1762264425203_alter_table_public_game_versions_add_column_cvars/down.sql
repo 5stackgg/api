@@ -1,0 +1,1 @@
+alter table "public"."game_versions" drop column if exists "cvars";

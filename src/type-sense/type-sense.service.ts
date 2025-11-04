@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { Client } from "typesense";
 import { HasuraService } from "../hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
@@ -13,6 +13,7 @@ export class TypeSenseService {
     private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    @Inject(forwardRef(() => MatchAssistantService))
     private readonly matchAssistant: MatchAssistantService,
   ) {}
 
@@ -32,6 +33,7 @@ export class TypeSenseService {
     let setup = false;
     while (!setup) {
       try {
+        await this.createCvarsCollection();
         await this.createPlayerCollection();
         setup = true;
       } catch (error) {
@@ -59,6 +61,58 @@ export class TypeSenseService {
         default_sorting_field: "name",
       } as any);
     }
+  }
+
+  public async createCvarsCollection() {
+    if (!(await this.client.collections("cvars").exists())) {
+      await this.client.collections().create({
+        name: "cvars",
+        fields: [
+          {
+            name: "name",
+            type: "string",
+            index: true,
+            sort: true,
+            infix: true,
+          },
+          { name: "kind", type: "string" },
+          { name: "flags", type: "string" },
+          { name: "description", type: "string" },
+        ],
+      });
+    }
+  }
+
+  public async upsertCvars(
+    cvars: Array<{
+      name: string;
+      kind: string;
+      flags: string;
+      description: string;
+    }>,
+  ) {
+    if (cvars.length === 0) {
+      return;
+    }
+
+    try {
+      const cvarsWithIds = cvars.map((cvar) => ({
+        id: cvar.name,
+        ...cvar,
+      }));
+
+      return await this.client
+        .collections("cvars")
+        .documents()
+        .import(cvarsWithIds, { action: "upsert" });
+    } catch (error) {
+      this.logger.error(`unable to upsert cvars: ${error}`);
+      throw error;
+    }
+  }
+
+  public async resetCvars() {
+    await this.client.collections("cvars").documents().delete();
   }
 
   public async updatePlayer(steamId: string) {
