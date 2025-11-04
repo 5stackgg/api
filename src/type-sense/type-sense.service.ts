@@ -112,7 +112,13 @@ export class TypeSenseService {
   }
 
   public async resetCvars() {
-    await this.client.collections("cvars").documents().delete();
+    try {
+      await this.client.collections("cvars").delete();
+    } catch (error) {
+      this.logger.error(`unable to delete cvars collection: ${error}`);
+    }
+
+    await this.createCvarsCollection();
   }
 
   public async updatePlayer(steamId: string) {

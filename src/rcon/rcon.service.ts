@@ -117,7 +117,7 @@ export class RconService {
 
       const version = server.game_server_node?.version;
       if (version?.current === true && version?.cvars === false) {
-        await this.genreateCvars(serverId);
+        void this.genreateCvars(serverId);
       }
     } catch (error) {
       try {
@@ -197,8 +197,6 @@ export class RconService {
       return;
     }
 
-    await this.typeSenseService.resetCvars();
-
     const buildId = server.game_server_node?.version?.build_id.toString();
 
     if (!buildId) {
@@ -212,6 +210,8 @@ export class RconService {
       this.logger.warn(`unable to aquire cvars lock for build: ${buildId}`);
       return;
     }
+
+    await this.typeSenseService.resetCvars();
 
     let totalCvars = 0;
     try {
