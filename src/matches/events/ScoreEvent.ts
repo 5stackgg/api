@@ -56,8 +56,6 @@ export default class ScoreEvent extends MatchEventProcessor<{
         __typename: true,
       },
     });
-
-    await this.matchAssistant.uploadBackupRound(this.matchId, this.data.round);
   }
 
   private async cleanupData() {

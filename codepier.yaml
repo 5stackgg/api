@@ -1,6 +1,7 @@
 namespaces: [5stack]
 image: node:22
 deployment: api
+workdir: /opt/5stack
 sync:
   - .:/opt/5stack
 ignore:

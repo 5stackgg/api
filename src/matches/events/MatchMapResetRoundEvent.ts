@@ -34,7 +34,6 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         },
         id: true,
         round: true,
-        backup_file: true,
         lineup_1_timeouts_available: true,
         lineup_2_timeouts_available: true,
       },
