@@ -4,6 +4,11 @@ import { HasuraService } from "../hasura/hasura.service";
 import { ConfigService } from "@nestjs/config";
 import { TypeSenseConfig } from "../configs/types/TypeSenseConfig";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
+import { CollectionFieldSchema } from "typesense/lib/Typesense/Collection";
+import { TypesenseQueues } from "./enums/TypesenseQueues";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 
 @Injectable()
 export class TypeSenseService {
@@ -15,6 +20,7 @@ export class TypeSenseService {
     private readonly hasura: HasuraService,
     @Inject(forwardRef(() => MatchAssistantService))
     private readonly matchAssistant: MatchAssistantService,
+    @InjectQueue(TypesenseQueues.TypeSense) private queue: Queue,
   ) {}
 
   public async setup() {
@@ -44,22 +50,42 @@ export class TypeSenseService {
   }
 
   public async createPlayerCollection() {
-    if (!(await this.client.collections("players").exists())) {
+    const collection = await this.client.collections("players").retrieve();
+
+    const fields: CollectionFieldSchema[] = [
+      {
+        name: "name",
+        type: "string",
+        index: true,
+        sort: true,
+        infix: true,
+      },
+      { name: "steam_id", type: "string", index: true },
+      { name: "teams", type: "string[]", optional: true },
+      { name: "elo", type: "int32", optional: true },
+      { name: "role", type: "string", optional: true },
+    ];
+
+    if (!collection) {
       await this.client.collections().create({
         name: "players",
-        fields: [
-          {
-            name: "name",
-            type: "string",
-            index: true,
-            sort: true,
-            infix: true,
-          },
-          { name: "steam_id", type: "string", index: true },
-          { name: "teams", type: "string[]", optional: true },
-        ],
+        fields,
         default_sorting_field: "name",
       } as any);
+    }
+
+    const missingFields = fields.filter((field) => {
+      return !collection.fields.find((_existingField) => {
+        return _existingField.name === field.name;
+      });
+    });
+
+    if (missingFields.length > 0) {
+      await this.client.collections("players").update({
+        fields: missingFields,
+      });
+
+      await this.queue.add(RefreshAllPlayersJob.name, {});
     }
   }
 
@@ -184,6 +210,8 @@ export class TypeSenseService {
         Object.assign({}, player, {
           id: steamId,
           steam_id: steamId,
+          role: player.role,
+          elo: player.elo,
           teams: player.teams?.map(({ id }) => {
             return id;
           }),

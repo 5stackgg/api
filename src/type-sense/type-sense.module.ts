@@ -11,12 +11,15 @@ import { TypesenseQueues } from "./enums/TypesenseQueues";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RefreshPlayerJob } from "./jobs/RefreshPlayer";
 import { MatchesModule } from "src/matches/matches.module";
+import { PostgresModule } from "../postgres/postgres.module";
+import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 
 @Module({
   imports: [
     HasuraModule,
     CacheModule,
     MatchesModule,
+    PostgresModule,
     BullModule.registerQueue({
       name: TypesenseQueues.TypeSense,
     }),
@@ -29,6 +32,7 @@ import { MatchesModule } from "src/matches/matches.module";
   providers: [
     TypeSenseService,
     RefreshPlayerJob,
+    RefreshAllPlayersJob,
     ...getQueuesProcessors("TypeSense"),
     loggerFactory(),
   ],
