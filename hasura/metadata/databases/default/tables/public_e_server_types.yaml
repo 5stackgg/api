@@ -11,7 +11,7 @@ array_relationships:
           name: servers
           schema: public
 select_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - description

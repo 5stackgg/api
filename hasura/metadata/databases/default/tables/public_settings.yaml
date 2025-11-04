@@ -2,7 +2,7 @@ table:
   name: settings
   schema: public
 insert_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       check: {}
       columns:
@@ -10,7 +10,7 @@ insert_permissions:
         - value
     comment: ""
 select_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - name
@@ -27,7 +27,7 @@ select_permissions:
           _like: public.%
     comment: ""
 update_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - name
@@ -36,7 +36,7 @@ update_permissions:
       check: {}
     comment: ""
 delete_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       filter: {}
     comment: ""

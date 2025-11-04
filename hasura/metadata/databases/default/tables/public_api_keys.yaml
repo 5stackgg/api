@@ -15,7 +15,7 @@ select_permissions:
           _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       filter: {}
     comment: ""

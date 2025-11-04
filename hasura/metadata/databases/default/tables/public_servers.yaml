@@ -64,16 +64,20 @@ insert_permissions:
         - type
     comment: ""
 select_permissions:
-  - role: match_organizer
+  - role: administrator
     permission:
       columns:
+        - api_password
+        - connect_password
         - connected
         - enabled
+        - game_server_node_id
         - host
         - id
         - is_dedicated
         - label
         - max_players
+        - offline_at
         - plugin_version
         - port
         - rcon_status
@@ -89,20 +93,16 @@ select_permissions:
           _eq: true
       allow_aggregations: true
     comment: ""
-  - role: system_administrator
+  - role: match_organizer
     permission:
       columns:
-        - api_password
-        - connect_password
         - connected
         - enabled
-        - game_server_node_id
         - host
         - id
         - is_dedicated
         - label
         - max_players
-        - offline_at
         - plugin_version
         - port
         - rcon_status
@@ -142,7 +142,7 @@ select_permissions:
           _neq: Ranked
     comment: ""
 update_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - connect_password

@@ -51,7 +51,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: denyInvite
     definition:
       kind: synchronous
@@ -77,21 +77,21 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: getServiceStats
     definition:
       kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: getTestUploadLink
     definition:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: joinLineup
     definition:
       kind: synchronous
@@ -149,7 +149,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: scheduleMatch
     definition:
       kind: synchronous
@@ -215,7 +215,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: unlinkDiscord
     definition:
       kind: synchronous
@@ -229,14 +229,14 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
   - name: updateServices
     definition:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: system_administrator
+      - role: administrator
 custom_types:
   enums: []
   input_objects:

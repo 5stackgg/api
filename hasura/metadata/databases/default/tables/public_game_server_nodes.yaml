@@ -51,7 +51,7 @@ computed_fields:
         name: total_node_server_count
         schema: public
 select_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - build_id
@@ -85,7 +85,7 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - demo_network_limiter

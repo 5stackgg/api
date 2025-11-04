@@ -139,7 +139,7 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - captain
@@ -166,7 +166,7 @@ update_permissions:
                 _eq: true
     comment: ""
 delete_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       filter: {}
     comment: ""

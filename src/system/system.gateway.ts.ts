@@ -32,7 +32,7 @@ export class SystemGateway {
   ) {
     let { service, previous } = data;
 
-    if (!isRoleAbove(client.user.role, "system_administrator")) {
+    if (!isRoleAbove(client.user.role, "administrator")) {
       return;
     }
 

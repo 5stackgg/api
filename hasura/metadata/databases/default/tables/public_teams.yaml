@@ -93,15 +93,6 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
-  - role: system_administrator
-    permission:
-      columns:
-        - name
-        - owner_steam_id
-        - short_name
-      filter: {}
-      check: null
-    comment: ""
   - role: user
     permission:
       columns:
@@ -115,10 +106,6 @@ update_permissions:
     comment: ""
 delete_permissions:
   - role: administrator
-    permission:
-      filter: {}
-    comment: ""
-  - role: system_administrator
     permission:
       filter: {}
     comment: ""

@@ -366,17 +366,6 @@ insert_permissions:
         - scheduled_at
         - server_id
     comment: ""
-  - role: system_administrator
-    permission:
-      check: {}
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - label
-        - match_options_id
-        - scheduled_at
-        - server_id
-    comment: ""
   - role: tournament_organizer
     permission:
       check:
@@ -579,18 +568,6 @@ update_permissions:
         is_organizer:
           _eq: true
     comment: ""
-  - role: system_administrator
-    permission:
-      columns:
-        - label
-        - organizer_steam_id
-        - region
-        - scheduled_at
-        - server_id
-        - winning_lineup_id
-      filter: {}
-      check: {}
-    comment: ""
   - role: tournament_organizer
     permission:
       columns:
@@ -632,10 +609,6 @@ delete_permissions:
       filter:
         is_organizer:
           _eq: true
-    comment: ""
-  - role: system_administrator
-    permission:
-      filter: {}
     comment: ""
   - role: tournament_organizer
     permission:

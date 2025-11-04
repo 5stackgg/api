@@ -1,15 +1,12 @@
 - role_name: administrator
   role_set:
-    - system_administrator
+    - tournament_organizer
 - role_name: match_organizer
   role_set:
     - verified_user
 - role_name: streamer
   role_set:
     - verified_user
-- role_name: system_administrator
-  role_set:
-    - tournament_organizer
 - role_name: tournament_organizer
   role_set:
     - match_organizer

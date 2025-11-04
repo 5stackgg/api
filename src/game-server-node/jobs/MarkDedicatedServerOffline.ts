@@ -46,7 +46,7 @@ export class MarkDedicatedServerOffline extends WorkerHost {
     this.notifications.send("DedicatedServerStatus", {
       message: `Dedicated Server (${update_servers_by_pk.label || job.data.serverId}) is Offline.`,
       title: "Dedicated Server Offline",
-      role: "system_administrator",
+      role: "administrator",
       entity_id: job.data.serverId,
     });
   }

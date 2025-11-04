@@ -21,7 +21,7 @@ array_relationships:
           name: match_map_veto_picks
           schema: public
 insert_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       check: {}
       columns:
@@ -50,7 +50,7 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       columns:
         - active_pool
@@ -65,7 +65,7 @@ update_permissions:
       check: {}
     comment: ""
 delete_permissions:
-  - role: system_administrator
+  - role: administrator
     permission:
       filter: {}
     comment: ""

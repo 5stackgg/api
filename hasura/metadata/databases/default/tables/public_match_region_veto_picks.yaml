@@ -9,6 +9,15 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_lineup_id
 insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - match_id
+        - match_lineup_id
+        - region
+        - type
+    comment: ""
   - role: match_organizer
     permission:
       check:
@@ -20,15 +29,6 @@ insert_permissions:
         - match_id
         - match_lineup_id
         - region
-    comment: ""
-  - role: system_administrator
-    permission:
-      check: {}
-      columns:
-        - match_id
-        - match_lineup_id
-        - region
-        - type
     comment: ""
   - role: user
     permission:
