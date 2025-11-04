@@ -210,8 +210,7 @@ export class TypeSenseService {
         Object.assign({}, player, {
           id: steamId,
           steam_id: steamId,
-          role: player.role,
-          elo: player.elo,
+          elo: player.elo ? parseInt(String(player.elo), 10) : 0,
           teams: player.teams?.map(({ id }) => {
             return id;
           }),
