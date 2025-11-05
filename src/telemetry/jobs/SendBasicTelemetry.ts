@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { WorkerHost } from "@nestjs/bullmq";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { TelemetryQueues } from "../enums/TelemetryQueues";
@@ -10,7 +9,7 @@ export class SendBasicTelemetry extends WorkerHost {
     super();
   }
 
-  async process(_job: Job<void>): Promise<void> {
+  async process(): Promise<void> {
     await this.telemetryService.send();
   }
 }

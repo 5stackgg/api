@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -13,7 +12,7 @@ export class CleanAbandonedMatches extends WorkerHost {
   ) {
     super();
   }
-  async process(_job: Job): Promise<number> {
+  async process(): Promise<number> {
     const oneWeekAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
     const { delete_abandoned_matches } = await this.hasura.mutation({

@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { WorkerHost } from "@nestjs/bullmq";
 import { SystemQueues } from "../enums/SystemQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
@@ -10,7 +9,7 @@ export class CheckSystemUpdateJob extends WorkerHost {
     super();
   }
 
-  async process(_job: Job): Promise<void> {
+  async process(): Promise<void> {
     await this.system.setVersions();
   }
 }

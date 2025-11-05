@@ -85,7 +85,7 @@ export class ChatService {
     const userSessions = this.sessions.get(client.user.steam_id);
 
     if (userSessions.length === 0) {
-      this.to(type, id, "joined", {
+      void this.to(type, id, "joined", {
         user: {
           ...userData.user,
           inGame: userData.inGame,
@@ -132,7 +132,7 @@ export class ChatService {
     );
 
     client.on("close", () => {
-      this.removeFromLobby(type, id, client);
+      void this.removeFromLobby(type, id, client);
     });
   }
 
@@ -178,7 +178,7 @@ export class ChatService {
       ]),
     );
 
-    this.to(type, id, "chat", message);
+    void this.to(type, id, "chat", message);
   }
 
   public async to(
@@ -225,7 +225,7 @@ export class ChatService {
     if (updatedSessions.length === 0) {
       this.sessions.delete(client.user.steam_id);
       await this.removeUserData(type, id, client.user.steam_id);
-      this.to(type, id, "left", {
+      void this.to(type, id, "left", {
         user: {
           ...userData.user,
           inGame: userData.inGame,
@@ -237,7 +237,7 @@ export class ChatService {
     this.sessions.set(client.user.steam_id, updatedSessions);
 
     if (userData.inGame) {
-      this.to(type, id, "joined", {
+      void this.to(type, id, "joined", {
         user: {
           ...userData.user,
           inGame: userData.inGame,
@@ -305,7 +305,7 @@ export class ChatService {
       true,
     );
 
-    this.to(ChatLobbyType.Match, matchId, "joined", {
+    void this.to(ChatLobbyType.Match, matchId, "joined", {
       user: {
         ...userData.user,
         inGame: userData.inGame,
@@ -328,7 +328,7 @@ export class ChatService {
 
     const sessions = this.sessions.get(steamId) || [];
     if (sessions.length > 0) {
-      this.to(ChatLobbyType.Match, matchId, "joined", {
+      void this.to(ChatLobbyType.Match, matchId, "joined", {
         user: {
           ...userData.user,
           inGame: userData.inGame,
@@ -339,7 +339,7 @@ export class ChatService {
 
     await this.removeUserData(ChatLobbyType.Match, matchId, steamId);
 
-    this.to(ChatLobbyType.Match, matchId, "left", {
+    void this.to(ChatLobbyType.Match, matchId, "left", {
       user: {
         steam_id: steamId,
       },

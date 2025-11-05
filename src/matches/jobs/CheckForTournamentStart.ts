@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";

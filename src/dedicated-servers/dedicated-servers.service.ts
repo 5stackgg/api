@@ -602,7 +602,7 @@ export class DedicatedServersService {
         }
       };
 
-      checkPodStatus();
+      void checkPodStatus();
     });
   }
 }

@@ -13,7 +13,6 @@ export class RconService {
     private readonly encryption: EncryptionService,
     private readonly notifications: NotificationsService,
     private readonly logger: Logger,
-    private readonly cache: RedisManagerService,
     private readonly typeSenseService: TypeSenseService,
     private readonly redisManager: RedisManagerService,
   ) {}
@@ -169,7 +168,7 @@ export class RconService {
     clearTimeout(this.connectTimeouts[serverId]);
 
     if (this.connections[serverId]) {
-      this.connections[serverId].end();
+      await this.connections[serverId].end();
       delete this.connections[serverId];
     }
   }

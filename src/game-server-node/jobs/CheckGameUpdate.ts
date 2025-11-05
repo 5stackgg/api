@@ -224,7 +224,7 @@ export class CheckGameUpdate extends WorkerHost {
       },
     });
 
-    this.notifications.send("GameUpdate", {
+    void this.notifications.send("GameUpdate", {
       message: `A CS2 Update (${update_game_versions_by_pk.version === "public" ? publicBranch.buildid.toString() : update_game_versions_by_pk.version}) has been detected. The Game Node Servers that do not have a build pin will update automatically.`,
       title: "CS2 Update",
       role: "administrator",

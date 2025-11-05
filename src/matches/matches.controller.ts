@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Req, Res, Post } from "@nestjs/common";
+import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { Request, Response } from "express";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";

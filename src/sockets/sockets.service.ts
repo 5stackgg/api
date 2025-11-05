@@ -36,9 +36,8 @@ export class SocketsService {
     void sub.subscribe("broadcast-message");
     void sub.subscribe("send-message-to-steam-id");
     sub.on("message", (channel, message) => {
-      const { steamId, clientId, event, data } = JSON.parse(message) as {
+      const { steamId, event, data } = JSON.parse(message) as {
         steamId: string;
-        clientId: string;
         event: string;
         data: unknown;
       };

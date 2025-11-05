@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { S3Service } from "../../s3/s3.service";
@@ -16,7 +15,7 @@ export class RemoveCancelledMatches extends WorkerHost {
     super();
   }
 
-  async process(_job: Job): Promise<number> {
+  async process(): Promise<number> {
     const yesterday = new Date();
 
     yesterday.setDate(yesterday.getDate() - 1);

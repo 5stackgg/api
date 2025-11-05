@@ -38,7 +38,7 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       return;
     }
 
-    this.notifications.send("GameNodeStatus", {
+    await this.notifications.send("GameNodeStatus", {
       message: `Game Server Node (${update_game_server_nodes_by_pk.label || job.data.node}) is Offline.`,
       title: "Game Server Node Offline",
       role: "administrator",

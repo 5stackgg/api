@@ -565,7 +565,7 @@ export class GameServerNodeService {
       }
 
       const stream = new PassThrough();
-      this.loggingService.getLogsForPod(pod, stream);
+      void this.loggingService.getLogsForPod(pod, stream);
 
       stream.on("data", async (data) => {
         const { log } = JSON.parse(data.toString());
@@ -919,7 +919,6 @@ export class GameServerNodeService {
 
         totalCpu += cpuUsage;
       }
-      const oneHour = 3600;
       const baseKey = `pod-stats:${nodeId}:${pod.name}`;
 
       await this.redis.lpush(

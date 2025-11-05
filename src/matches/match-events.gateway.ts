@@ -61,7 +61,7 @@ export class MatchEventsGateway {
           });
         }
       }
-    } catch (_error) {
+    } catch {
       client.close();
     }
   }
@@ -77,7 +77,6 @@ export class MatchEventsGateway {
         data: Record<string, unknown>;
       };
     },
-    @ConnectedSocket() _client: WebSocket.WebSocket,
   ) {
     const { matchId, messageId } = message;
 

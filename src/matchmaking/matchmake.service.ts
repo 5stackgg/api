@@ -545,7 +545,13 @@ export class MatchmakeService {
 
     const confirmationId = uuidv4();
 
-    this.setConfirmationDetails(region, type, confirmationId, team1, team2);
+    await this.setConfirmationDetails(
+      region,
+      type,
+      confirmationId,
+      team1,
+      team2,
+    );
 
     for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
       await this.matchmakingLobbyService.setMatchConformationIdForLobby(
@@ -555,7 +561,7 @@ export class MatchmakeService {
       await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
     }
 
-    this.cancelMatchMakingDueToReadyCheck(confirmationId);
+    await this.cancelMatchMakingDueToReadyCheck(confirmationId);
   }
 
   public async cancelMatchMakingDueToReadyCheck(confirmationId: string) {
@@ -715,7 +721,7 @@ export class MatchmakeService {
 
     if (confirmed.length != team1.length + team2.length) {
       for (const lobbyId of lobbyIds) {
-        this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
+        void this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
       }
       return;
     }
