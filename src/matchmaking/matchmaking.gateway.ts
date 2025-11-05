@@ -185,8 +185,8 @@ export class MatchmakingGateway {
 
       const { type } = data;
 
-      if (!type || !regions || regions.length === 0) {
-        throw new JoinQueueError("Missing Type or Regions");
+      if (!type) {
+        throw new JoinQueueError("Missing Type");
       }
 
       lobby = await this.matchmakingLobbyService.getPlayerLobby(user.steam_id);

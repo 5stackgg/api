@@ -1062,7 +1062,7 @@ export class MatchAssistantService {
       options.maps = [options.map];
     }
 
-    if (!map_pool_id && options.maps.length === 0) {
+    if (options.maps.length === 0) {
       const { map_pools } = await this.hasura.query({
         map_pools: {
           __args: {

@@ -40,7 +40,26 @@ export class LoggingServiceService {
         zlib: { level: zlib.constants.Z_NO_COMPRESSION },
       });
 
-      // @ts-ignore
+      archive.on("error", (err) => {
+        this.logger.error("Archive stream error", err);
+
+        try {
+          stream.destroy(err);
+        } catch {
+          stream.end();
+        }
+      });
+
+      stream.on("error", (err) => {
+        this.logger.error("Output stream error", err);
+
+        try {
+          archive.abort();
+        } catch {
+          archive.end();
+        }
+      });
+
       archive.pipe(stream);
     }
 
