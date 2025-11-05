@@ -100,7 +100,7 @@ export class RconService {
       await Promise.race([rcon.connect(), timeoutPromise]);
 
       if (!server.rcon_status && server.is_dedicated) {
-        this.hasuraService.mutation({
+        void this.hasuraService.mutation({
           update_servers_by_pk: {
             __args: {
               pk_columns: {
@@ -119,17 +119,17 @@ export class RconService {
       if (version?.current === true && version?.cvars === false) {
         void this.genreateCvars(serverId);
       }
-    } catch (error) {
+    } catch {
       try {
         if (rcon.authenticated) {
-          rcon.end();
+          void rcon.end();
         }
       } catch (cleanupError) {
         this.logger.warn("Error during RCON cleanup:", cleanupError);
       }
 
       if (server.rcon_status && server.is_dedicated) {
-        this.hasuraService.mutation({
+        void this.hasuraService.mutation({
           update_servers_by_pk: {
             __args: {
               pk_columns: {
@@ -143,7 +143,7 @@ export class RconService {
           },
         });
 
-        this.notifications.send("DedicatedServerRconStatus", {
+        void this.notifications.send("DedicatedServerRconStatus", {
           message: `Dedicated Server (${server.label || serverId}) is not able to connect to the RCON.`,
           title: "Dedicated Server RCON Error",
           role: "administrator",

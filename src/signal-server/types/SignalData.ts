@@ -1,7 +1,3 @@
-type SignalData = {
-  signal: RTCSessionDescriptionInit;
-};
-
 export type RegionSignalData = {
   region: string;
   peerId: string;

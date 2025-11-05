@@ -676,7 +676,7 @@ export class MatchesController {
       };
     }
 
-    this.notifications.send("MatchSupport", {
+    void this.notifications.send("MatchSupport", {
       message: `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
       title: "Match Assistanced Required",
       role: "match_organizer",
