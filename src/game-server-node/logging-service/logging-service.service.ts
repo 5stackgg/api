@@ -95,10 +95,10 @@ export class LoggingServiceService {
   }
 
   private async getPods(namespace = this.namespace) {
-    const postList = await this.coreApi.listNamespacedPod({
+    const podList = await this.coreApi.listNamespacedPod({
       namespace,
     });
-    return postList.items;
+    return podList.items;
   }
 
   private async tryGetPodLogs(

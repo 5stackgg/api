@@ -685,7 +685,7 @@ export class MatchAssistantService {
                         ],
                       },
                     ],
-                    // TODO - mabye we should use host paths, why do we want volumes?
+                    // TODO - should use host paths, why do we want volumes?
                     volumes: [
                       {
                         name: `steamcmd-${sanitizedGameServerNodeId}`,
@@ -774,11 +774,11 @@ export class MatchAssistantService {
         namespace: this.namespace,
       });
       if (job.status?.active) {
-        const postList = await core.listNamespacedPod({
+        const podList = await core.listNamespacedPod({
           namespace: this.namespace,
           labelSelector: `job-name=${jobName}`,
         });
-        for (const pod of postList.items) {
+        for (const pod of podList.items) {
           if (pod.status!.phase !== "Running") {
             return false;
           }
@@ -853,12 +853,12 @@ export class MatchAssistantService {
       const core = kc.makeApiClient(CoreV1Api);
       const batch = kc.makeApiClient(BatchV1Api);
 
-      const postList = await core.listNamespacedPod({
+      const podList = await core.listNamespacedPod({
         namespace: this.namespace,
         labelSelector: `job-name=${jobName}`,
       });
 
-      for (const pod of postList.items) {
+      for (const pod of podList.items) {
         this.logger.verbose(`[${matchId}] remove pod`);
         await core
           .deleteNamespacedPod({

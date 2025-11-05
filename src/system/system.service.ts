@@ -281,11 +281,11 @@ export class SystemService {
   public async getServices() {
     const nodes = await this.apiClient.listNode();
 
-    let postList = await this.apiClient.listNamespacedPod({
+    let podList = await this.apiClient.listNamespacedPod({
       namespace: "5stack",
     });
 
-    const pods = postList.items.filter((pod) => {
+    const pods = podList.items.filter((pod) => {
       if (pod.metadata.labels.codepier) {
         return false;
       }
