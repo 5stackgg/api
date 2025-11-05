@@ -235,7 +235,6 @@ export class MatchAssistantService {
 
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
-
       if (isAssignedOnDemand) {
         return true;
       }
@@ -251,6 +250,10 @@ export class MatchAssistantService {
 
     // we already checked above, so we can skip trying to assign again
     if (match.options.prefer_dedicated_server) {
+      this.logger.log(
+        `[${matchId}] unable to assign dedicated server, trying on demand`,
+      );
+      await this.updateMatchStatus(match.id, "WaitingForServer");
       return false;
     }
 
@@ -258,6 +261,9 @@ export class MatchAssistantService {
       return true;
     }
 
+    this.logger.log(
+      `[${matchId}] unable to assign dedicated server, updating match status to waiting for server`,
+    );
     await this.updateMatchStatus(match.id, "WaitingForServer");
 
     return false;
@@ -336,8 +342,6 @@ export class MatchAssistantService {
   }
 
   private async assignOnDemandServer(matchId: string): Promise<boolean> {
-    this.logger.log(`[${matchId}] assigning on demand server`);
-
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -383,8 +387,8 @@ export class MatchAssistantService {
       },
     });
 
-    if (game_server_nodes.length > 0) {
-      return true;
+    if (game_server_nodes.length === 0) {
+      return false;
     }
 
     if (!match) {
@@ -393,346 +397,360 @@ export class MatchAssistantService {
 
     const map = match.match_maps.at(0).map;
 
-    return this.cache.lock(`get-on-demand-server:${match.region}`, async () => {
-      if (match.server_id) {
-        await this.stopOnDemandServer(matchId);
-      }
+    return this.cache.lock(
+      `get-on-demand-server:${match.region}`,
+      async () => {
+        this.logger.log(`[${matchId}] assigning on demand server`);
 
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
+        if (match.server_id) {
+          await this.stopOnDemandServer(matchId);
+        }
 
-      const batch = kc.makeApiClient(BatchV1Api);
+        const kc = new KubeConfig();
+        kc.loadFromDefault();
 
-      const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
+        const batch = kc.makeApiClient(BatchV1Api);
 
-      const { servers } = await this.hasura.query({
-        servers: {
-          __args: {
-            limit: 1,
-            order_by: [
-              {
-                updated_at: "asc",
-              },
-            ],
-            where: {
-              type: {
-                _eq: "Ranked",
-              },
-              enabled: {
-                _eq: true,
-              },
-              is_dedicated: {
-                _eq: false,
-              },
-              reserved_by_match_id: {
-                _is_null: true,
-              },
-              game_server_node: {
-                _and: [
-                  {
-                    enabled: {
-                      _eq: true,
-                    },
-                    status: {
-                      _eq: "Online",
-                    },
-                  },
-                  ...(match.region
-                    ? [
-                        {
-                          region: {
-                            _eq: match.region,
-                          },
-                        },
-                      ]
-                    : []),
-                ],
-              },
-            },
-          },
-          id: true,
-          label: true,
-          host: true,
-          port: true,
-          tv_port: true,
-          api_password: true,
-          rcon_password: true,
-          game_server_node: {
-            id: true,
-            pin_plugin_version: true,
-            supports_cpu_pinning: true,
-          },
-          server_region: {
-            is_lan: true,
-            steam_relay: true,
-          },
-        },
-      });
+        const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
-      const server = servers.at(-1);
-
-      if (!server) {
-        await this.updateMatchStatus(matchId, "WaitingForServer");
-        return false;
-      }
-
-      try {
-        this.logger.verbose(
-          `[${matchId}] create job for on demand server (${server.label})`,
-        );
-
-        await this.hasura.mutation({
-          update_servers_by_pk: {
+        const { servers } = await this.hasura.query({
+          servers: {
             __args: {
-              pk_columns: {
-                id: server.id,
-              },
-              _set: {
-                connected: false,
-                reserved_by_match_id: matchId,
-              },
-            },
-            __typename: true,
-          },
-        });
-
-        const gameServerNodeId = server.game_server_node?.id;
-        const steamRelay = server.server_region?.steam_relay || false;
-
-        let cpus: string;
-        if (server.game_server_node?.supports_cpu_pinning) {
-          const { settings } = await this.hasura.query({
-            settings: {
-              __args: {
-                where: {
-                  _or: [
+              limit: 1,
+              order_by: [
+                {
+                  updated_at: "asc",
+                },
+              ],
+              where: {
+                type: {
+                  _eq: "Ranked",
+                },
+                enabled: {
+                  _eq: true,
+                },
+                is_dedicated: {
+                  _eq: false,
+                },
+                reserved_by_match_id: {
+                  _is_null: true,
+                },
+                game_server_node: {
+                  _and: [
                     {
-                      name: {
-                        _eq: "enable_cpu_pinning",
+                      enabled: {
+                        _eq: true,
+                      },
+                      status: {
+                        _eq: "Online",
                       },
                     },
-                    {
-                      name: {
-                        _eq: "number_of_cpus_per_server",
-                      },
-                    },
+                    ...(match.region
+                      ? [
+                          {
+                            region: {
+                              _eq: match.region,
+                            },
+                          },
+                        ]
+                      : []),
                   ],
                 },
               },
-              name: true,
-              value: true,
+            },
+            id: true,
+            label: true,
+            host: true,
+            port: true,
+            tv_port: true,
+            api_password: true,
+            rcon_password: true,
+            game_server_node: {
+              id: true,
+              pin_plugin_version: true,
+              supports_cpu_pinning: true,
+            },
+            server_region: {
+              is_lan: true,
+              steam_relay: true,
+            },
+          },
+        });
+
+        const server = servers.at(-1);
+
+        if (!server) {
+          await this.updateMatchStatus(matchId, "WaitingForServer");
+          return false;
+        }
+
+        try {
+          this.logger.verbose(
+            `[${matchId}] create job for on demand server (${server.label})`,
+          );
+
+          await this.hasura.mutation({
+            update_servers_by_pk: {
+              __args: {
+                pk_columns: {
+                  id: server.id,
+                },
+                _set: {
+                  connected: false,
+                  reserved_by_match_id: matchId,
+                },
+              },
+              __typename: true,
             },
           });
 
-          const cpuPinning = settings.find(
-            (setting) => setting.name === "enable_cpu_pinning",
-          );
+          const gameServerNodeId = server.game_server_node?.id;
+          const steamRelay = server.server_region?.steam_relay || false;
 
-          if (cpuPinning?.value === "true") {
-            const numberOfCpus = settings.find(
-              (setting) => setting.name === "number_of_cpus_per_server",
-            );
-            cpus = numberOfCpus?.value || "2";
-          }
-        }
-
-        const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
-
-        let pluginImage = this.gameServerConfig.serverImage;
-
-        const pinPluginVersion = server.game_server_node?.pin_plugin_version;
-
-        if (pinPluginVersion) {
-          pluginImage = this.gameServerConfig.serverImage.replace(
-            /:.+$/,
-            `:v${pinPluginVersion.toString()}`,
-          );
-        }
-
-        await batch.createNamespacedJob({
-          namespace: this.namespace,
-          body: {
-            apiVersion: "batch/v1",
-            kind: "Job",
-            metadata: {
-              name: jobName,
-            },
-            spec: {
-              template: {
-                metadata: {
-                  name: jobName,
-                  labels: {
-                    job: jobName,
-                  },
-                },
-                spec: {
-                  restartPolicy: "Never",
-                  dnsConfig: {
-                    options: [
+          let cpus: string;
+          if (server.game_server_node?.supports_cpu_pinning) {
+            const { settings } = await this.hasura.query({
+              settings: {
+                __args: {
+                  where: {
+                    _or: [
                       {
-                        name: "ndots",
-                        value: "1",
+                        name: {
+                          _eq: "enable_cpu_pinning",
+                        },
+                      },
+                      {
+                        name: {
+                          _eq: "number_of_cpus_per_server",
+                        },
                       },
                     ],
                   },
-                  hostNetwork: true,
-                  dnsPolicy: "ClusterFirstWithHostNet",
-                  affinity: {
-                    nodeAffinity: {
-                      requiredDuringSchedulingIgnoredDuringExecution: {
-                        nodeSelectorTerms: [
-                          {
-                            matchExpressions: [
-                              {
-                                key: "kubernetes.io/hostname",
-                                operator: "In",
-                                values: [gameServerNodeId],
+                },
+                name: true,
+                value: true,
+              },
+            });
+
+            const cpuPinning = settings.find(
+              (setting) => setting.name === "enable_cpu_pinning",
+            );
+
+            if (cpuPinning?.value === "true") {
+              const numberOfCpus = settings.find(
+                (setting) => setting.name === "number_of_cpus_per_server",
+              );
+              cpus = numberOfCpus?.value || "2";
+            }
+          }
+
+          const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(
+            ".",
+            "-",
+          );
+
+          let pluginImage = this.gameServerConfig.serverImage;
+
+          const pinPluginVersion = server.game_server_node?.pin_plugin_version;
+
+          if (pinPluginVersion) {
+            pluginImage = this.gameServerConfig.serverImage.replace(
+              /:.+$/,
+              `:v${pinPluginVersion.toString()}`,
+            );
+          }
+
+          await batch.createNamespacedJob({
+            namespace: this.namespace,
+            body: {
+              apiVersion: "batch/v1",
+              kind: "Job",
+              metadata: {
+                name: jobName,
+              },
+              spec: {
+                template: {
+                  metadata: {
+                    name: jobName,
+                    labels: {
+                      job: jobName,
+                    },
+                  },
+                  spec: {
+                    restartPolicy: "Never",
+                    dnsConfig: {
+                      options: [
+                        {
+                          name: "ndots",
+                          value: "1",
+                        },
+                      ],
+                    },
+                    hostNetwork: true,
+                    dnsPolicy: "ClusterFirstWithHostNet",
+                    affinity: {
+                      nodeAffinity: {
+                        requiredDuringSchedulingIgnoredDuringExecution: {
+                          nodeSelectorTerms: [
+                            {
+                              matchExpressions: [
+                                {
+                                  key: "kubernetes.io/hostname",
+                                  operator: "In",
+                                  values: [gameServerNodeId],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    },
+                    containers: [
+                      {
+                        name: "game-server",
+                        image: pluginImage,
+                        ...(cpus
+                          ? {
+                              resources: {
+                                requests: { cpu: cpus },
+                                limits: { cpu: cpus },
                               },
-                            ],
+                            }
+                          : {}),
+                        ports: [
+                          { containerPort: server.port, protocol: "TCP" },
+                          { containerPort: server.port, protocol: "UDP" },
+                          { containerPort: server.tv_port, protocol: "TCP" },
+                          { containerPort: server.tv_port, protocol: "UDP" },
+                        ],
+                        env: [
+                          {
+                            name: "GAME_NODE_SERVER",
+                            value: "true",
+                          },
+                          {
+                            name: "SERVER_PORT",
+                            value: server.port.toString(),
+                          },
+                          { name: "TV_PORT", value: server.tv_port.toString() },
+                          {
+                            name: "RCON_PASSWORD",
+                            value: await this.encryption.decrypt(
+                              server.rcon_password,
+                            ),
+                          },
+                          {
+                            name: "EXTRA_GAME_PARAMS",
+                            value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +sv_password ${match.password} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
+                          },
+                          { name: "SERVER_ID", value: server.id },
+                          {
+                            name: "SERVER_API_PASSWORD",
+                            value: server.api_password,
+                          },
+                          {
+                            name: "API_DOMAIN",
+                            value: this.appConfig.apiDomain,
+                          },
+                          {
+                            name: "DEMOS_DOMAIN",
+                            value: this.appConfig.demosDomain,
+                          },
+                          {
+                            name: "WS_DOMAIN",
+                            value: this.appConfig.wsDomain,
+                          },
+                          {
+                            name: "STEAM_RELAY",
+                            value: steamRelay ? "true" : "false",
+                          },
+                        ],
+                        volumeMounts: [
+                          {
+                            name: `steamcmd-${sanitizedGameServerNodeId}`,
+                            mountPath: "/serverdata/steamcmd",
+                          },
+                          {
+                            name: `serverfiles-${sanitizedGameServerNodeId}`,
+                            mountPath: "/serverdata/serverfiles",
+                          },
+                          {
+                            name: `demos-${sanitizedGameServerNodeId}`,
+                            mountPath: "/opt/demos",
+                          },
+                          {
+                            name: `custom-plugins-${sanitizedGameServerNodeId}`,
+                            mountPath: "/opt/custom-plugins",
                           },
                         ],
                       },
-                    },
+                    ],
+                    // TODO - mabye we should use host paths, why do we want volumes?
+                    volumes: [
+                      {
+                        name: `steamcmd-${sanitizedGameServerNodeId}`,
+                        persistentVolumeClaim: {
+                          claimName: `steamcmd-${sanitizedGameServerNodeId}-claim`,
+                        },
+                      },
+                      {
+                        name: `serverfiles-${sanitizedGameServerNodeId}`,
+                        persistentVolumeClaim: {
+                          claimName: `serverfiles-${sanitizedGameServerNodeId}-claim`,
+                        },
+                      },
+                      {
+                        name: `demos-${sanitizedGameServerNodeId}`,
+                        persistentVolumeClaim: {
+                          claimName: `demos-${sanitizedGameServerNodeId}-claim`,
+                        },
+                      },
+                      {
+                        name: `custom-plugins-${sanitizedGameServerNodeId}`,
+                        hostPath: {
+                          path: `/opt/5stack/custom-plugins`,
+                        },
+                      },
+                    ],
                   },
-                  containers: [
-                    {
-                      name: "game-server",
-                      image: pluginImage,
-                      ...(cpus
-                        ? {
-                            resources: {
-                              requests: { cpu: cpus },
-                              limits: { cpu: cpus },
-                            },
-                          }
-                        : {}),
-                      ports: [
-                        { containerPort: server.port, protocol: "TCP" },
-                        { containerPort: server.port, protocol: "UDP" },
-                        { containerPort: server.tv_port, protocol: "TCP" },
-                        { containerPort: server.tv_port, protocol: "UDP" },
-                      ],
-                      env: [
-                        {
-                          name: "GAME_NODE_SERVER",
-                          value: "true",
-                        },
-                        { name: "SERVER_PORT", value: server.port.toString() },
-                        { name: "TV_PORT", value: server.tv_port.toString() },
-                        {
-                          name: "RCON_PASSWORD",
-                          value: await this.encryption.decrypt(
-                            server.rcon_password,
-                          ),
-                        },
-                        {
-                          name: "EXTRA_GAME_PARAMS",
-                          value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +sv_password ${match.password} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
-                        },
-                        { name: "SERVER_ID", value: server.id },
-                        {
-                          name: "SERVER_API_PASSWORD",
-                          value: server.api_password,
-                        },
-                        {
-                          name: "API_DOMAIN",
-                          value: this.appConfig.apiDomain,
-                        },
-                        {
-                          name: "DEMOS_DOMAIN",
-                          value: this.appConfig.demosDomain,
-                        },
-                        {
-                          name: "WS_DOMAIN",
-                          value: this.appConfig.wsDomain,
-                        },
-                        {
-                          name: "STEAM_RELAY",
-                          value: steamRelay ? "true" : "false",
-                        },
-                      ],
-                      volumeMounts: [
-                        {
-                          name: `steamcmd-${sanitizedGameServerNodeId}`,
-                          mountPath: "/serverdata/steamcmd",
-                        },
-                        {
-                          name: `serverfiles-${sanitizedGameServerNodeId}`,
-                          mountPath: "/serverdata/serverfiles",
-                        },
-                        {
-                          name: `demos-${sanitizedGameServerNodeId}`,
-                          mountPath: "/opt/demos",
-                        },
-                        {
-                          name: `custom-plugins-${sanitizedGameServerNodeId}`,
-                          mountPath: "/opt/custom-plugins",
-                        },
-                      ],
-                    },
-                  ],
-                  // TODO - mabye we should use host paths, why do we want volumes?
-                  volumes: [
-                    {
-                      name: `steamcmd-${sanitizedGameServerNodeId}`,
-                      persistentVolumeClaim: {
-                        claimName: `steamcmd-${sanitizedGameServerNodeId}-claim`,
-                      },
-                    },
-                    {
-                      name: `serverfiles-${sanitizedGameServerNodeId}`,
-                      persistentVolumeClaim: {
-                        claimName: `serverfiles-${sanitizedGameServerNodeId}-claim`,
-                      },
-                    },
-                    {
-                      name: `demos-${sanitizedGameServerNodeId}`,
-                      persistentVolumeClaim: {
-                        claimName: `demos-${sanitizedGameServerNodeId}-claim`,
-                      },
-                    },
-                    {
-                      name: `custom-plugins-${sanitizedGameServerNodeId}`,
-                      hostPath: {
-                        path: `/opt/5stack/custom-plugins`,
-                      },
-                    },
-                  ],
+                },
+                backoffLimit: 10,
+              },
+            },
+          });
+
+          this.logger.verbose(
+            `[${matchId}] create service for on demand server`,
+          );
+
+          await this.hasura.mutation({
+            update_matches_by_pk: {
+              __args: {
+                pk_columns: {
+                  id: matchId,
+                },
+                _set: {
+                  server_id: server.id,
                 },
               },
-              backoffLimit: 10,
+              __typename: true,
             },
-          },
-        });
+          });
 
-        this.logger.verbose(`[${matchId}] create service for on demand server`);
+          return true;
+        } catch (error) {
+          await this.stopOnDemandServer(matchId);
 
-        await this.hasura.mutation({
-          update_matches_by_pk: {
-            __args: {
-              pk_columns: {
-                id: matchId,
-              },
-              _set: {
-                server_id: server.id,
-              },
-            },
-            __typename: true,
-          },
-        });
+          this.logger.error(
+            `[${matchId}] unable to create on demand server`,
+            error?.response?.body?.message || error,
+          );
 
-        return true;
-      } catch (error) {
-        await this.stopOnDemandServer(matchId);
-
-        this.logger.error(
-          `[${matchId}] unable to create on demand server`,
-          error?.response?.body?.message || error,
-        );
-
-        throw new FailedToCreateOnDemandServer();
-      }
-    });
+          throw new FailedToCreateOnDemandServer();
+        }
+      },
+      10 * 1000,
+    );
   }
 
   public async isOnDemandServerRunning(matchId: string) {
