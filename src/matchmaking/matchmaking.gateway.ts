@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 import { Logger } from "@nestjs/common";
-import { e_match_types_enum, e_player_roles } from "generated";
+import { e_match_types_enum } from "generated";
 import { MatchmakeService } from "./matchmake.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";

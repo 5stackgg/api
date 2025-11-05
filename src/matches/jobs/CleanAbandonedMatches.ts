@@ -13,7 +13,7 @@ export class CleanAbandonedMatches extends WorkerHost {
   ) {
     super();
   }
-  async process(job: Job): Promise<number> {
+  async process(_job: Job): Promise<number> {
     const oneWeekAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
     const { delete_abandoned_matches } = await this.hasura.mutation({

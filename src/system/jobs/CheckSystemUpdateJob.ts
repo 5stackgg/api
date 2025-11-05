@@ -10,7 +10,7 @@ export class CheckSystemUpdateJob extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<void> {
+  async process(_job: Job): Promise<void> {
     await this.system.setVersions();
   }
 }

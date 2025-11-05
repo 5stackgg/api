@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { DemoQueues } from "../enums/DemoQueues";
@@ -20,7 +19,7 @@ export class CleanDemos extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<number> {
+  async process(): Promise<number> {
     const { settings } = await this.hasura.query({
       settings: {
         __args: {

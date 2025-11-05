@@ -13,7 +13,6 @@ import {
   getMatchmakingRankCacheKey,
   getMatchmakingQueueCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
-  getMatchmakingConformationCacheKey,
 } from "./utilities/cacheKeys";
 import { JoinQueueError } from "./utilities/joinQueueError";
 
@@ -222,7 +221,7 @@ export class MatchmakingLobbyService {
     );
   }
 
-  public async getAverageLobbyRank(players: Array<{ steam_id: string }>) {
+  public async getAverageLobbyRank(_players: Array<{ steam_id: string }>) {
     return 0;
   }
 

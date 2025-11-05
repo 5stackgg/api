@@ -1,5 +1,3 @@
-import { e_match_types_enum } from "generated";
-
 export interface PlayerLobby {
   id: string;
   players: Array<{

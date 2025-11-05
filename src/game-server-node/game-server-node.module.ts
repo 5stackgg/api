@@ -1,5 +1,4 @@
 import {
-  Logger,
   MiddlewareConsumer,
   Module,
   OnApplicationBootstrap,

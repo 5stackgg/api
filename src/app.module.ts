@@ -12,7 +12,7 @@ import { CacheModule } from "./cache/cache.module";
 import { S3Module } from "./s3/s3.module";
 import { QuickConnectController } from "./quick-connect/quick-connect.controller";
 import { RedisModule } from "./redis/redis.module";
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigModule } from "@nestjs/config";
 import { DiscordBotService } from "./discord-bot/discord-bot.service";
 import { TypeSenseService } from "./type-sense/type-sense.service";
 import { BullModule } from "@nestjs/bullmq";

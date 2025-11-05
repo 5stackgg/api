@@ -16,7 +16,7 @@ export class RemoveCancelledMatches extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<number> {
+  async process(_job: Job): Promise<number> {
     const yesterday = new Date();
 
     yesterday.setDate(yesterday.getDate() - 1);

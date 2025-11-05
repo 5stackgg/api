@@ -13,7 +13,7 @@ export class CheckForTournamentStart extends WorkerHost {
   ) {
     super();
   }
-  async process(job: Job): Promise<number> {
+  async process(): Promise<number> {
     const fifteenMinutesAhead = new Date();
     fifteenMinutesAhead.setMinutes(fifteenMinutesAhead.getMinutes() + 15);
 

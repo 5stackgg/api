@@ -3,7 +3,6 @@ import { HasuraService } from "../../hasura/hasura.service";
 import {
   ActionRowBuilder,
   ComponentType,
-  Message,
   StringSelectMenuInteraction,
   StringSelectMenuBuilder,
   User,

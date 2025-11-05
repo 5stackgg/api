@@ -132,7 +132,9 @@ export class LoggingServiceService {
 
       this.logger.warn(
         `Failed to get logs for pod ${pod.metadata.name}, container ${containerName}`,
+        error,
       );
+
       stream.end();
     }
   }

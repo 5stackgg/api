@@ -4,8 +4,6 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { e_player_roles_enum } from "generated";
 import jwt from "jsonwebtoken";
 import { ConfigService } from "@nestjs/config";
-import { User } from "./types/User";
-import e from "express";
 
 @Injectable()
 export class ApiKeys {

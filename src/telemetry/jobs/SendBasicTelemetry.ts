@@ -10,7 +10,7 @@ export class SendBasicTelemetry extends WorkerHost {
     super();
   }
 
-  async process(job: Job<void>): Promise<void> {
-    this.telemetryService.send();
+  async process(_job: Job<void>): Promise<void> {
+    await this.telemetryService.send();
   }
 }
