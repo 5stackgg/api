@@ -20,7 +20,7 @@ export class TelemetryController {
   }
 
   @HasuraAction()
-  public async telemetryStats(@Req() request: Request) {
+  public async telemetryStats() {
     return {
       online: await this.telemetryService.getOnlineSystemsCount(),
     };

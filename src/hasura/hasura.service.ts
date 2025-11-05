@@ -1,4 +1,3 @@
-import { User } from "../auth/types/User";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {

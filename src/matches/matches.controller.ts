@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Req, Res, Post } from "@nestjs/common";
+import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { Request, Response } from "express";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
@@ -676,7 +676,7 @@ export class MatchesController {
       };
     }
 
-    this.notifications.send("MatchSupport", {
+    void this.notifications.send("MatchSupport", {
       message: `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
       title: "Match Assistanced Required",
       role: "match_organizer",

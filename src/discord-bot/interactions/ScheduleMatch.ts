@@ -11,7 +11,6 @@ import {
   ButtonStyle,
   ButtonBuilder,
   MessageFlags,
-  Guild,
 } from "discord.js";
 import DiscordInteraction from "./abstracts/DiscordInteraction";
 import { ChatCommands } from "../enums/ChatCommands";
@@ -111,7 +110,7 @@ export default class ScheduleMatch extends DiscordInteraction {
             customMapPools[
               selections.customId as "custom_maps" | "active_duty"
             ] = selections.values;
-            selections.deferUpdate();
+            void selections.deferUpdate();
           }
 
           if (selections.isButton()) {

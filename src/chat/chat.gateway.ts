@@ -44,7 +44,7 @@ export class ChatGateway {
       return;
     }
 
-    this.chat.removeFromLobby(data.type, data.id, client);
+    void this.chat.removeFromLobby(data.type, data.id, client);
   }
 
   @SubscribeMessage("lobby:chat")

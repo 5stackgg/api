@@ -137,6 +137,25 @@ export class InvitesController {
   }
 
   private async denyMatchInvite(invite_id: string, user: User) {
+    const { match_invites_by_pk } = await this.hasura.query({
+      match_invites_by_pk: {
+        __args: {
+          id: invite_id,
+        },
+        steam_id: true,
+      },
+    });
+
+    if (!match_invites_by_pk) {
+      throw Error("unable to find match invite");
+    }
+
+    if (match_invites_by_pk.steam_id !== user.steam_id) {
+      return {
+        success: false,
+      };
+    }
+
     await this.hasura.mutation({
       delete_match_invites_by_pk: {
         __args: {

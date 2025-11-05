@@ -33,22 +33,21 @@ export class SocketsService {
 
     const sub = this.redisManager.getConnection("sub");
 
-    sub.subscribe("broadcast-message");
-    sub.subscribe("send-message-to-steam-id");
+    void sub.subscribe("broadcast-message");
+    void sub.subscribe("send-message-to-steam-id");
     sub.on("message", (channel, message) => {
-      const { steamId, clientId, event, data } = JSON.parse(message) as {
+      const { steamId, event, data } = JSON.parse(message) as {
         steamId: string;
-        clientId: string;
         event: string;
         data: unknown;
       };
 
       switch (channel) {
         case "broadcast-message":
-          this.broadcastMessage(event, data);
+          void this.broadcastMessage(event, data);
           break;
         case "send-message-to-steam-id":
-          this.sendMessageToSteamId(steamId, event, data);
+          void this.sendMessageToSteamId(steamId, event, data);
           break;
       }
     });
@@ -137,7 +136,7 @@ export class SocketsService {
 
             await this.sendPeopleOnline();
 
-            this.matchmaking.markOffline(client.user.steam_id);
+            void this.matchmaking.markOffline(client.user.steam_id);
           }
         });
       });

@@ -16,6 +16,6 @@ export class CancelMatchMaking extends WorkerHost {
     }>,
   ): Promise<void> {
     const { confirmationId } = job.data;
-    this.matchmaking.cancelMatchMaking(confirmationId);
+    await this.matchmaking.cancelMatchMaking(confirmationId);
   }
 }

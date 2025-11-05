@@ -96,7 +96,7 @@ export class CheckServerPluginVersions extends WorkerHost {
       return;
     }
 
-    this.notifications.send("DedicatedServerStatus", {
+    await this.notifications.send("DedicatedServerStatus", {
       entity_id: "plugin_version",
       message: `${servers_aggregate.aggregate.count} servers has out of date plugins.`,
       title: "Plugin Out of Date",

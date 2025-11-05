@@ -1,4 +1,3 @@
-import { Job } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { WorkerHost } from "@nestjs/bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -13,7 +12,7 @@ export class CancelInvalidTournaments extends WorkerHost {
   ) {
     super();
   }
-  async process(job: Job): Promise<number> {
+  async process(): Promise<number> {
     const { update_tournaments } = await this.hasura.mutation({
       update_tournaments: {
         __args: {

@@ -13,7 +13,6 @@ import {
   getMatchmakingRankCacheKey,
   getMatchmakingQueueCacheKey,
   getMatchmakingLobbyDetailsCacheKey,
-  getMatchmakingConformationCacheKey,
 } from "./utilities/cacheKeys";
 import { JoinQueueError } from "./utilities/joinQueueError";
 
@@ -222,8 +221,25 @@ export class MatchmakingLobbyService {
     );
   }
 
-  public async getAverageLobbyRank(players: Array<{ steam_id: string }>) {
-    return 0;
+  public async getAverageLobbyRank(_players: Array<{ steam_id: string }>) {
+    let totalElo = 0;
+    for (const { steam_id } of _players) {
+      const { players_by_pk } = await this.hasura.query({
+        players_by_pk: {
+          __args: {
+            steam_id,
+          },
+          elo: true,
+        },
+      });
+
+      if (!players_by_pk) {
+        continue;
+      }
+
+      totalElo += players_by_pk.elo || 0;
+    }
+    return totalElo / _players.length;
   }
 
   public async getLobbyDetails(lobbyId: string): Promise<MatchmakingLobby> {

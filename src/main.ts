@@ -1,5 +1,3 @@
-import os from "os";
-import cluster from "cluster";
 import session from "express-session";
 import { NestFactory } from "@nestjs/core";
 import { Transport } from "@nestjs/microservices";
@@ -11,7 +9,6 @@ import passport from "passport";
 import { WsAdapter } from "@nestjs/platform-ws";
 import { RedisManagerService } from "./redis/redis-manager/redis-manager.service";
 import { ConfigService } from "@nestjs/config";
-import { RedisConfig } from "./configs/types/RedisConfig";
 import { AppConfig } from "./configs/types/AppConfig";
 import { HasuraService } from "./hasura/hasura.service";
 
@@ -97,7 +94,7 @@ async function bootstrap() {
   await app.listen(5585);
 }
 
-bootstrap();
+void bootstrap();
 
 process.on("unhandledRejection", (reason, p) => {
   console.warn("Unhandled Rejection at: Promise", p, "reason:", reason);

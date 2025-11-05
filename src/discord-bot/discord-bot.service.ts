@@ -2,7 +2,6 @@ import { ModuleRef } from "@nestjs/core";
 import { Logger, Injectable } from "@nestjs/common";
 import {
   AutocompleteInteraction,
-  ButtonInteraction,
   ChannelType,
   Client,
   Events,
