@@ -233,40 +233,19 @@ export class MatchAssistantService {
       }
     }
 
-    const { game_server_nodes } = await this.hasura.query({
-      game_server_nodes: {
-        __args: {
-          where: {
-            status: {
-              _eq: "Online",
-            },
-            enabled: {
-              _eq: true,
-            },
-            region: {
-              _eq: match.region,
-            },
-          },
-        },
-        id: true,
-      },
-    });
+    try {
+      const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
 
-    if (game_server_nodes.length > 0) {
-      try {
-        const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
-
-        if (isAssignedOnDemand) {
-          return true;
-        }
-      } catch (error) {
-        if (error instanceof FailedToCreateOnDemandServer) {
-          setTimeout(async () => {
-            this.logger.log(`[${matchId}] try retry assign server....`);
-            await this.assignServer(matchId, ++tries);
-          }, tries * 1000);
-          return false;
-        }
+      if (isAssignedOnDemand) {
+        return true;
+      }
+    } catch (error) {
+      if (error instanceof FailedToCreateOnDemandServer) {
+        setTimeout(async () => {
+          this.logger.log(`[${matchId}] try retry assign server....`);
+          await this.assignServer(matchId, ++tries);
+        }, tries * 1000);
+        return false;
       }
     }
 
@@ -385,6 +364,29 @@ export class MatchAssistantService {
       },
     });
 
+    const { game_server_nodes } = await this.hasura.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            status: {
+              _eq: "Online",
+            },
+            enabled: {
+              _eq: true,
+            },
+            region: {
+              _eq: match.region,
+            },
+          },
+        },
+        id: true,
+      },
+    });
+
+    if (game_server_nodes.length > 0) {
+      return true;
+    }
+
     if (!match) {
       throw Error("unable to find match");
     }
@@ -399,7 +401,6 @@ export class MatchAssistantService {
       const kc = new KubeConfig();
       kc.loadFromDefault();
 
-      const core = kc.makeApiClient(CoreV1Api);
       const batch = kc.makeApiClient(BatchV1Api);
 
       const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
@@ -426,15 +427,27 @@ export class MatchAssistantService {
               reserved_by_match_id: {
                 _is_null: true,
               },
-              ...(match.region
-                ? {
-                    game_server_node: {
-                      region: {
-                        _eq: match.region,
-                      },
+              game_server_node: {
+                _and: [
+                  {
+                    enabled: {
+                      _eq: true,
                     },
-                  }
-                : {}),
+                    status: {
+                      _eq: "Online",
+                    },
+                  },
+                  ...(match.region
+                    ? [
+                        {
+                          region: {
+                            _eq: match.region,
+                          },
+                        },
+                      ]
+                    : []),
+                ],
+              },
             },
           },
           id: true,

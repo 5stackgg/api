@@ -161,6 +161,10 @@ export class GameServerNodeService {
       },
     });
 
+    if (game_server_nodes_by_pk?.status === "NotAcceptingNewMatches") {
+      status = "NotAcceptingNewMatches";
+    }
+
     if (!game_server_nodes_by_pk) {
       await this.create(undefined, node, status);
       return;

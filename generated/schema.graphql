@@ -18795,6 +18795,7 @@ type mutation_root {
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
+  setGameNodeSchedulingState(enabled: Boolean!, game_server_node_id: String!): SuccessOutput
 
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput

@@ -127,6 +127,46 @@ export class GameServerNodeController {
     };
   }
 
+  @HasuraAction()
+  public async setGameNodeSchedulingState(data: {
+    game_server_node_id: string;
+    enabled: boolean;
+  }) {
+    const { game_server_nodes_by_pk } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: {
+          id: data.game_server_node_id,
+        },
+        status: true,
+      },
+    });
+
+    if (game_server_nodes_by_pk.status === "Setup") {
+      return {
+        success: false,
+      };
+    }
+
+    await this.hasura.mutation({
+      update_game_server_nodes_by_pk: {
+        __args: {
+          pk_columns: {
+            id: data.game_server_node_id,
+          },
+          _set: {
+            // we set it to offline, to allow it to come back online to accept new matches
+            status: data.enabled ? "Online" : "NotAcceptingNewMatches",
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  }
+
   @Get("/script/:gameServerNodeId")
   public async script(@Req() request: Request, @Res() response: Response) {
     const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");

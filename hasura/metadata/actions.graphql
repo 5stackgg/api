@@ -129,6 +129,13 @@ type Mutation {
 }
 
 type Mutation {
+  setGameNodeSchedulingState(
+    game_server_node_id: String!
+    enabled: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   setMatchWinner(
     match_id: uuid!
     winning_lineup_id: uuid!

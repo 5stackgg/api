@@ -55363,6 +55363,19 @@ export default {
                     ]
                 }
             ],
+            "setGameNodeSchedulingState": [
+                21,
+                {
+                    "enabled": [
+                        1,
+                        "Boolean!"
+                    ],
+                    "game_server_node_id": [
+                        18,
+                        "String!"
+                    ]
+                }
+            ],
             "setMatchWinner": [
                 21,
                 {
