@@ -50,8 +50,6 @@ export class TypeSenseService {
   }
 
   public async createPlayerCollection() {
-    const collection = await this.client.collections("players").retrieve();
-
     const fields: CollectionFieldSchema[] = [
       {
         name: "name",
@@ -66,13 +64,18 @@ export class TypeSenseService {
       { name: "role", type: "string", optional: true },
     ];
 
-    if (!collection) {
+    const exists = await this.client.collections("players").exists();
+
+    if (!exists) {
       await this.client.collections().create({
         name: "players",
         fields,
         default_sorting_field: "name",
       } as any);
+      return;
     }
+
+    const collection = await this.client.collections("players").retrieve();
 
     const missingFields = fields.filter((field) => {
       return !collection.fields.find((_existingField) => {
