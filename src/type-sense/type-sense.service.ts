@@ -208,6 +208,9 @@ export class TypeSenseService {
       );
     }
 
+    // this is to allow filtering
+    player.last_sign_in_at = player.last_sign_in_at || "~~";
+
     return await this.client
       .collections("players")
       .documents()
