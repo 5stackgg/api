@@ -79,10 +79,11 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
             name: profile._json.personaname,
             profile_url: profile._json.profileurl,
             avatar_url: profile._json.avatarfull,
+            last_sign_in_at: new Date(),
           },
           on_conflict: {
             constraint: "players_steam_id_key",
-            update_columns: ["avatar_url", "profile_url"],
+            update_columns: ["avatar_url", "profile_url", "last_sign_in_at"],
           },
         },
         name: true,
@@ -92,6 +93,7 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
         avatar_url: true,
         discord_id: true,
         language: true,
+        last_sign_in_at: true,
       },
     });
 

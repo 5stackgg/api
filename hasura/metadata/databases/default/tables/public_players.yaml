@@ -247,6 +247,30 @@ computed_fields:
         name: get_total_player_matches
         schema: public
 select_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - language
+        - last_sign_in_at
+        - name
+        - name_registered
+        - profile_url
+        - role
+        - steam_id
+      computed_fields:
+        - current_lobby_id
+        - elo
+        - is_banned
+        - is_gagged
+        - is_in_another_match
+        - is_in_lobby
+        - is_muted
+        - matchmaking_cooldown
+        - total_matches
+      filter: {}
+    comment: ""
   - role: user
     permission:
       columns:

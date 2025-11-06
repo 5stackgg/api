@@ -32603,6 +32603,9 @@ export default {
             "language": [
                 18
             ],
+            "last_sign_in_at": [
+                2024
+            ],
             "lobby_players": [
                 772,
                 {
@@ -33440,6 +33443,9 @@ export default {
             "language": [
                 20
             ],
+            "last_sign_in_at": [
+                2025
+            ],
             "lobby_players": [
                 783
             ],
@@ -33613,6 +33619,9 @@ export default {
             "language": [
                 18
             ],
+            "last_sign_in_at": [
+                2024
+            ],
             "lobby_players": [
                 780
             ],
@@ -33693,6 +33702,9 @@ export default {
             "language": [
                 18
             ],
+            "last_sign_in_at": [
+                2024
+            ],
             "matchmaking_cooldown": [
                 2024
             ],
@@ -33733,6 +33745,9 @@ export default {
             ],
             "language": [
                 18
+            ],
+            "last_sign_in_at": [
+                2024
             ],
             "matchmaking_cooldown": [
                 2024
@@ -33865,6 +33880,9 @@ export default {
             "language": [
                 1405
             ],
+            "last_sign_in_at": [
+                1405
+            ],
             "lobby_players_aggregate": [
                 779
             ],
@@ -33960,6 +33978,9 @@ export default {
             "language": [
                 18
             ],
+            "last_sign_in_at": [
+                2024
+            ],
             "name": [
                 18
             ],
@@ -34047,6 +34068,9 @@ export default {
             ],
             "language": [
                 18
+            ],
+            "last_sign_in_at": [
+                2024
             ],
             "name": [
                 18

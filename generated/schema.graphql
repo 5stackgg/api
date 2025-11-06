@@ -27179,6 +27179,7 @@ type players {
     where: player_kills_bool_exp
   ): player_kills_aggregate!
   language: String
+  last_sign_in_at: timestamptz
 
   """An array relationship"""
   lobby_players(
@@ -27788,6 +27789,7 @@ input players_bool_exp {
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
   language: String_comparison_exp
+  last_sign_in_at: timestamptz_comparison_exp
   lobby_players: lobby_players_bool_exp
   lobby_players_aggregate: lobby_players_aggregate_bool_exp
   matches: matches_bool_exp
@@ -27874,6 +27876,7 @@ input players_insert_input {
   invited_players: team_invites_arr_rel_insert_input
   kills: player_kills_arr_rel_insert_input
   language: String
+  last_sign_in_at: timestamptz
   lobby_players: lobby_players_arr_rel_insert_input
   multi_kills: v_player_multi_kills_arr_rel_insert_input
   name: String
@@ -27911,6 +27914,7 @@ type players_max_fields {
   """
   elo: numeric
   language: String
+  last_sign_in_at: timestamptz
 
   """
   A computed field, executes function "get_player_matchmaking_cooldown"
@@ -27943,6 +27947,7 @@ type players_min_fields {
   """
   elo: numeric
   language: String
+  last_sign_in_at: timestamptz
 
   """
   A computed field, executes function "get_player_matchmaking_cooldown"
@@ -28015,6 +28020,7 @@ input players_order_by {
   is_muted: order_by
   kills_aggregate: player_kills_aggregate_order_by
   language: order_by
+  last_sign_in_at: order_by
   lobby_players_aggregate: lobby_players_aggregate_order_by
   matches_aggregate: matches_aggregate_order_by
   matchmaking_cooldown: order_by
@@ -28064,6 +28070,9 @@ enum players_select_column {
   language
 
   """column name"""
+  last_sign_in_at
+
+  """column name"""
   name
 
   """column name"""
@@ -28088,6 +28097,7 @@ input players_set_input {
   created_at: timestamptz
   discord_id: String
   language: String
+  last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
   profile_url: String
@@ -28155,6 +28165,7 @@ input players_stream_cursor_value_input {
   created_at: timestamptz
   discord_id: String
   language: String
+  last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
   profile_url: String
@@ -28194,6 +28205,9 @@ enum players_update_column {
 
   """column name"""
   language
+
+  """column name"""
+  last_sign_in_at
 
   """column name"""
   name

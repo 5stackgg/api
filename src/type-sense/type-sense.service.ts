@@ -62,6 +62,7 @@ export class TypeSenseService {
       { name: "teams", type: "string[]", optional: true },
       { name: "elo", type: "int32", optional: true },
       { name: "role", type: "string", optional: true },
+      { name: "last_sign_in_at", type: "string", optional: true },
     ];
 
     const exists = await this.client.collections("players").exists();
@@ -167,6 +168,7 @@ export class TypeSenseService {
         teams: {
           id: true,
         },
+        last_sign_in_at: true,
       },
     });
 
