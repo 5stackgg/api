@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.tbiud_servers() RETURNS TRIGGER
     AS $$
 DECLARE
     enc_secret text;
-    delete_server_id uuid;
+    disable_game_node_server_id uuid;
 BEGIN
     IF TG_OP = 'DELETE' THEN
         -- If the server is dedicated (has a node), revert any other servers with same node/port/tv_port and different id to enabled
@@ -30,16 +30,29 @@ BEGIN
         WHERE gsn.id = NEW.game_server_node_id;
 
         -- Find the lowest port non-dedicated (game node) server on this node to disable
-        SELECT id, port, tv_port INTO delete_server_id, NEW.port, NEW.tv_port FROM servers 
+        SELECT s.id, s.port, s.tv_port INTO disable_game_node_server_id, NEW.port, NEW.tv_port 
+        FROM servers s
         WHERE 
-            game_server_node_id = NEW.game_server_node_id 
-            AND is_dedicated = false
-            AND reserved_by_match_id IS NULL 
-            AND enabled = true
-        ORDER BY port ASC LIMIT 1;
+            s.game_server_node_id = NEW.game_server_node_id 
+            AND s.is_dedicated = false
+            AND s.reserved_by_match_id IS NULL 
+            AND s.enabled = true
+            AND NOT EXISTS (
+                SELECT 1 FROM servers s2 
+                WHERE s2.game_server_node_id = NEW.game_server_node_id
+                  AND s2.port = s.port
+                  AND s2.tv_port = s.tv_port
+                  AND s2.is_dedicated = true
+            )
+        ORDER BY s.port ASC LIMIT 1;
 
-        -- Disable the selected (now replaced) game node server, if one exists
-        UPDATE servers SET enabled = false where id = delete_server_id;
+        -- Fail if no available server was found
+        IF disable_game_node_server_id IS NULL THEN
+            RAISE EXCEPTION 'No available game node server found on this node' USING ERRCODE = '22000';
+        END IF;
+
+        -- Disable the selected (now replaced) game node server
+        UPDATE servers SET enabled = false where id = disable_game_node_server_id;
     END IF;
 
     IF TG_OP = 'UPDATE' THEN
