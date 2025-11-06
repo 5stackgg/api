@@ -62,7 +62,12 @@ export class TypeSenseService {
       { name: "teams", type: "string[]", optional: true },
       { name: "elo", type: "int32", optional: true },
       { name: "role", type: "string", optional: true },
-      { name: "last_sign_in_at", type: "string", symbols_to_index: ["~"] },
+      {
+        name: "last_sign_in_at",
+        type: "string",
+        symbols_to_index: ["~"],
+        optional: true,
+      },
     ];
 
     const exists = await this.client.collections("players").exists();
