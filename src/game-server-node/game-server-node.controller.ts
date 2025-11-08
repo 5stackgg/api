@@ -295,6 +295,7 @@ export class GameServerNodeController {
             id: true,
             map: {
               name: true,
+              workshop_map_id: true,
             },
           },
         },
@@ -326,7 +327,7 @@ export class GameServerNodeController {
         return match_map.id === server.current_match.current_match_map_id;
       });
 
-      if (map !== currentMap?.map.name) {
+      if (map !== currentMap?.map.name && map !== currentMap?.map.workshop_map_id) {
         this.logger.warn(`server is still loading the map`);
         return;
       }
