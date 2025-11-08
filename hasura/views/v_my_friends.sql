@@ -16,7 +16,7 @@ WITH friend_relationships AS (
     f.player_steam_id AS other_player_steam_id,
     f.status,
     f.player_steam_id AS friend_steam_id,
-    f.other_player_steam_id AS invited_by_steam_id
+    f.player_steam_id AS invited_by_steam_id
   FROM friends f
 ),
 latest_elos AS (
