@@ -79,6 +79,9 @@ export class SignalServerGateway {
             status: {
               _eq: "Online",
             },
+            enabled: {
+              _eq: true,
+            },
           },
         },
         id: true,
