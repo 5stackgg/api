@@ -225,6 +225,11 @@ computed_fields:
       function:
         name: is_muted
         schema: public
+  - name: losses
+    definition:
+      function:
+        name: get_total_player_losses
+        schema: public
   - name: matches
     definition:
       function:
@@ -245,6 +250,11 @@ computed_fields:
     definition:
       function:
         name: get_total_player_matches
+        schema: public
+  - name: wins
+    definition:
+      function:
+        name: get_total_player_wins
         schema: public
 select_permissions:
   - role: match_organizer
@@ -267,8 +277,10 @@ select_permissions:
         - is_in_another_match
         - is_in_lobby
         - is_muted
+        - losses
         - matchmaking_cooldown
         - total_matches
+        - wins
       filter: {}
     comment: ""
   - role: user
@@ -290,8 +302,10 @@ select_permissions:
         - is_in_another_match
         - is_in_lobby
         - is_muted
+        - losses
         - matchmaking_cooldown
         - total_matches
+        - wins
       filter: {}
       allow_aggregations: true
     comment: ""

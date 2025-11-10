@@ -62,6 +62,10 @@ export class TypeSenseService {
       { name: "teams", type: "string[]", optional: true },
       { name: "elo", type: "int32", optional: true },
       { name: "role", type: "string", optional: true },
+      { name: "kills", type: "int32", optional: true },
+      { name: "deaths", type: "int32", optional: true },
+      { name: "wins", type: "int32", optional: true },
+      { name: "losses", type: "int32", optional: true },
       {
         name: "last_sign_in_at",
         type: "string",
@@ -174,6 +178,18 @@ export class TypeSenseService {
           id: true,
         },
         last_sign_in_at: true,
+        wins: true,
+        losses: true,
+        kills_aggregate: {
+          aggregate: {
+            count: true,
+          },
+        },
+        deaths_aggregate: {
+          aggregate: {
+            count: true,
+          },
+        },
       },
     });
 
@@ -224,6 +240,14 @@ export class TypeSenseService {
           id: steamId,
           steam_id: steamId,
           elo: player.elo ? parseInt(String(player.elo), 10) : 0,
+          kills: player.kills_aggregate?.aggregate?.count
+            ? parseInt(String(player.kills_aggregate?.aggregate?.count), 10)
+            : 0,
+          deaths: player.deaths_aggregate?.aggregate?.count
+            ? parseInt(String(player.deaths_aggregate?.aggregate?.count), 10)
+            : 0,
+          wins: player.wins ? parseInt(String(player.wins), 10) : 0,
+          losses: player.losses ? parseInt(String(player.losses), 10) : 0,
           teams: player.teams?.map(({ id }) => {
             return id;
           }),

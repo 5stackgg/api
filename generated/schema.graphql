@@ -1279,7 +1279,7 @@ enum e_check_in_settings_constraint {
   """
   unique or primary key constraint on columns "value"
   """
-  e_veto_setting_pkey
+  e_check_in_settings_pkey
 }
 
 enum e_check_in_settings_enum {
@@ -8112,7 +8112,7 @@ type lobby_players {
 
   """An object relationship"""
   player: players!
-  status: e_lobby_player_status_enum
+  status: e_lobby_player_status_enum!
   steam_id: bigint!
 }
 
@@ -8834,9 +8834,6 @@ type maps {
     where: match_map_veto_picks_bool_exp
   ): match_map_veto_picks_aggregate!
   name: String!
-  night_available: Boolean!
-  night_poster: String
-  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum!
@@ -8923,9 +8920,6 @@ input maps_bool_exp {
   match_veto_picks: match_map_veto_picks_bool_exp
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_bool_exp
   name: String_comparison_exp
-  night_available: Boolean_comparison_exp
-  night_poster: String_comparison_exp
-  night_workshop_map_id: String_comparison_exp
   patch: String_comparison_exp
   poster: String_comparison_exp
   type: e_match_types_enum_comparison_exp
@@ -8959,9 +8953,6 @@ input maps_insert_input {
   match_maps: match_maps_arr_rel_insert_input
   match_veto_picks: match_map_veto_picks_arr_rel_insert_input
   name: String
-  night_available: Boolean
-  night_poster: String
-  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum
@@ -8973,8 +8964,6 @@ type maps_max_fields {
   id: uuid
   label: String
   name: String
-  night_poster: String
-  night_workshop_map_id: String
   patch: String
   poster: String
   workshop_map_id: String
@@ -8987,8 +8976,6 @@ input maps_max_order_by {
   id: order_by
   label: order_by
   name: order_by
-  night_poster: order_by
-  night_workshop_map_id: order_by
   patch: order_by
   poster: order_by
   workshop_map_id: order_by
@@ -8999,8 +8986,6 @@ type maps_min_fields {
   id: uuid
   label: String
   name: String
-  night_poster: String
-  night_workshop_map_id: String
   patch: String
   poster: String
   workshop_map_id: String
@@ -9013,8 +8998,6 @@ input maps_min_order_by {
   id: order_by
   label: order_by
   name: order_by
-  night_poster: order_by
-  night_workshop_map_id: order_by
   patch: order_by
   poster: order_by
   workshop_map_id: order_by
@@ -9060,9 +9043,6 @@ input maps_order_by {
   match_maps_aggregate: match_maps_aggregate_order_by
   match_veto_picks_aggregate: match_map_veto_picks_aggregate_order_by
   name: order_by
-  night_available: order_by
-  night_poster: order_by
-  night_workshop_map_id: order_by
   patch: order_by
   poster: order_by
   type: order_by
@@ -9094,15 +9074,6 @@ enum maps_select_column {
   name
 
   """column name"""
-  night_available
-
-  """column name"""
-  night_poster
-
-  """column name"""
-  night_workshop_map_id
-
-  """column name"""
   patch
 
   """column name"""
@@ -9124,9 +9095,6 @@ enum maps_select_column_maps_aggregate_bool_exp_bool_and_arguments_columns {
 
   """column name"""
   enabled
-
-  """column name"""
-  night_available
 }
 
 """
@@ -9138,9 +9106,6 @@ enum maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns {
 
   """column name"""
   enabled
-
-  """column name"""
-  night_available
 }
 
 """
@@ -9152,9 +9117,6 @@ input maps_set_input {
   id: uuid
   label: String
   name: String
-  night_available: Boolean
-  night_poster: String
-  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum
@@ -9179,9 +9141,6 @@ input maps_stream_cursor_value_input {
   id: uuid
   label: String
   name: String
-  night_available: Boolean
-  night_poster: String
-  night_workshop_map_id: String
   patch: String
   poster: String
   type: e_match_types_enum
@@ -9206,15 +9165,6 @@ enum maps_update_column {
 
   """column name"""
   name
-
-  """column name"""
-  night_available
-
-  """column name"""
-  night_poster
-
-  """column name"""
-  night_workshop_map_id
 
   """column name"""
   patch
@@ -16874,12 +16824,22 @@ type mutation_root {
   ): player_assists_mutation_response
 
   """
+  delete single row from the table: "player_assists"
+  """
+  delete_player_assists_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_assists
+
+  """
   delete data from the table: "player_damages"
   """
   delete_player_damages(
     """filter the rows which have to be deleted"""
     where: player_damages_bool_exp!
   ): player_damages_mutation_response
+
+  """
+  delete single row from the table: "player_damages"
+  """
+  delete_player_damages_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
   delete data from the table: "player_elo"
@@ -16903,6 +16863,11 @@ type mutation_root {
   ): player_flashes_mutation_response
 
   """
+  delete single row from the table: "player_flashes"
+  """
+  delete_player_flashes_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_flashes
+
+  """
   delete data from the table: "player_kills"
   """
   delete_player_kills(
@@ -16924,12 +16889,22 @@ type mutation_root {
   ): player_objectives_mutation_response
 
   """
+  delete single row from the table: "player_objectives"
+  """
+  delete_player_objectives_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_objectives
+
+  """
   delete data from the table: "player_sanctions"
   """
   delete_player_sanctions(
     """filter the rows which have to be deleted"""
     where: player_sanctions_bool_exp!
   ): player_sanctions_mutation_response
+
+  """
+  delete single row from the table: "player_sanctions"
+  """
+  delete_player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
 
   """
   delete data from the table: "player_unused_utility"
@@ -16951,6 +16926,11 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: player_utility_bool_exp!
   ): player_utility_mutation_response
+
+  """
+  delete single row from the table: "player_utility"
+  """
+  delete_player_utility_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_utility
 
   """
   delete data from the table: "players"
@@ -18266,6 +18246,9 @@ type mutation_root {
   insert_player_assists(
     """the rows to be inserted"""
     objects: [player_assists_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_assists_on_conflict
   ): player_assists_mutation_response
 
   """
@@ -18274,6 +18257,9 @@ type mutation_root {
   insert_player_assists_one(
     """the row to be inserted"""
     object: player_assists_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_assists_on_conflict
   ): player_assists
 
   """
@@ -18282,6 +18268,9 @@ type mutation_root {
   insert_player_damages(
     """the rows to be inserted"""
     objects: [player_damages_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_damages_on_conflict
   ): player_damages_mutation_response
 
   """
@@ -18290,6 +18279,9 @@ type mutation_root {
   insert_player_damages_one(
     """the row to be inserted"""
     object: player_damages_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_damages_on_conflict
   ): player_damages
 
   """
@@ -18320,6 +18312,9 @@ type mutation_root {
   insert_player_flashes(
     """the rows to be inserted"""
     objects: [player_flashes_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_flashes_on_conflict
   ): player_flashes_mutation_response
 
   """
@@ -18328,6 +18323,9 @@ type mutation_root {
   insert_player_flashes_one(
     """the row to be inserted"""
     object: player_flashes_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_flashes_on_conflict
   ): player_flashes
 
   """
@@ -18358,6 +18356,9 @@ type mutation_root {
   insert_player_objectives(
     """the rows to be inserted"""
     objects: [player_objectives_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_objectives_on_conflict
   ): player_objectives_mutation_response
 
   """
@@ -18366,6 +18367,9 @@ type mutation_root {
   insert_player_objectives_one(
     """the row to be inserted"""
     object: player_objectives_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_objectives_on_conflict
   ): player_objectives
 
   """
@@ -18374,6 +18378,9 @@ type mutation_root {
   insert_player_sanctions(
     """the rows to be inserted"""
     objects: [player_sanctions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_sanctions_on_conflict
   ): player_sanctions_mutation_response
 
   """
@@ -18382,6 +18389,9 @@ type mutation_root {
   insert_player_sanctions_one(
     """the row to be inserted"""
     object: player_sanctions_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_sanctions_on_conflict
   ): player_sanctions
 
   """
@@ -18412,6 +18422,9 @@ type mutation_root {
   insert_player_utility(
     """the rows to be inserted"""
     objects: [player_utility_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_utility_on_conflict
   ): player_utility_mutation_response
 
   """
@@ -18420,6 +18433,9 @@ type mutation_root {
   insert_player_utility_one(
     """the row to be inserted"""
     object: player_utility_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_utility_on_conflict
   ): player_utility
 
   """
@@ -20448,6 +20464,18 @@ type mutation_root {
   ): player_assists_mutation_response
 
   """
+  update single row of the table: "player_assists"
+  """
+  update_player_assists_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_assists_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_assists_set_input
+    pk_columns: player_assists_pk_columns_input!
+  ): player_assists
+
+  """
   update multiples rows of table: "player_assists"
   """
   update_player_assists_many(
@@ -20468,6 +20496,18 @@ type mutation_root {
     """filter the rows which have to be updated"""
     where: player_damages_bool_exp!
   ): player_damages_mutation_response
+
+  """
+  update single row of the table: "player_damages"
+  """
+  update_player_damages_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_damages_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_damages_set_input
+    pk_columns: player_damages_pk_columns_input!
+  ): player_damages
 
   """
   update multiples rows of table: "player_damages"
@@ -20526,6 +20566,18 @@ type mutation_root {
   ): player_flashes_mutation_response
 
   """
+  update single row of the table: "player_flashes"
+  """
+  update_player_flashes_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_flashes_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_flashes_set_input
+    pk_columns: player_flashes_pk_columns_input!
+  ): player_flashes
+
+  """
   update multiples rows of table: "player_flashes"
   """
   update_player_flashes_many(
@@ -20582,6 +20634,18 @@ type mutation_root {
   ): player_objectives_mutation_response
 
   """
+  update single row of the table: "player_objectives"
+  """
+  update_player_objectives_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_objectives_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_objectives_set_input
+    pk_columns: player_objectives_pk_columns_input!
+  ): player_objectives
+
+  """
   update multiples rows of table: "player_objectives"
   """
   update_player_objectives_many(
@@ -20602,6 +20666,18 @@ type mutation_root {
     """filter the rows which have to be updated"""
     where: player_sanctions_bool_exp!
   ): player_sanctions_mutation_response
+
+  """
+  update single row of the table: "player_sanctions"
+  """
+  update_player_sanctions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_sanctions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_sanctions_set_input
+    pk_columns: player_sanctions_pk_columns_input!
+  ): player_sanctions
 
   """
   update multiples rows of table: "player_sanctions"
@@ -20658,6 +20734,18 @@ type mutation_root {
     """filter the rows which have to be updated"""
     where: player_utility_bool_exp!
   ): player_utility_mutation_response
+
+  """
+  update single row of the table: "player_utility"
+  """
+  update_player_utility_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_utility_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_utility_set_input
+    pk_columns: player_utility_pk_columns_input!
+  ): player_utility
 
   """
   update multiples rows of table: "player_utility"
@@ -21261,6 +21349,7 @@ type my_friends {
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
+  last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
 
@@ -21381,6 +21470,7 @@ input my_friends_bool_exp {
   friend_steam_id: bigint_comparison_exp
   invited_by_steam_id: bigint_comparison_exp
   language: String_comparison_exp
+  last_sign_in_at: timestamptz_comparison_exp
   name: String_comparison_exp
   name_registered: Boolean_comparison_exp
   player: players_bool_exp
@@ -21412,6 +21502,7 @@ input my_friends_insert_input {
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
+  last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
   player: players_obj_rel_insert_input
@@ -21431,6 +21522,7 @@ type my_friends_max_fields {
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
+  last_sign_in_at: timestamptz
   name: String
   profile_url: String
   role: String
@@ -21450,6 +21542,7 @@ input my_friends_max_order_by {
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   language: order_by
+  last_sign_in_at: order_by
   name: order_by
   profile_url: order_by
   role: order_by
@@ -21467,6 +21560,7 @@ type my_friends_min_fields {
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
+  last_sign_in_at: timestamptz
   name: String
   profile_url: String
   role: String
@@ -21486,6 +21580,7 @@ input my_friends_min_order_by {
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   language: order_by
+  last_sign_in_at: order_by
   name: order_by
   profile_url: order_by
   role: order_by
@@ -21514,6 +21609,7 @@ input my_friends_order_by {
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   language: order_by
+  last_sign_in_at: order_by
   name: order_by
   name_registered: order_by
   player: players_order_by
@@ -21550,6 +21646,9 @@ enum my_friends_select_column {
 
   """column name"""
   language
+
+  """column name"""
+  last_sign_in_at
 
   """column name"""
   name
@@ -21598,6 +21697,7 @@ input my_friends_set_input {
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
+  last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
   profile_url: String
@@ -21681,6 +21781,7 @@ input my_friends_stream_cursor_value_input {
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
+  last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
   profile_url: String
@@ -22458,6 +22559,9 @@ input type for inserting array relation for remote table "player_assists"
 """
 input player_assists_arr_rel_insert_input {
   data: [player_assists_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_assists_on_conflict
 }
 
 """aggregate avg on columns"""
@@ -22499,6 +22603,16 @@ input player_assists_bool_exp {
   player: players_bool_exp
   round: Int_comparison_exp
   time: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_assists"
+"""
+enum player_assists_constraint {
+  """
+  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  """
+  player_assists_pkey
 }
 
 """
@@ -22602,6 +22716,15 @@ type player_assists_mutation_response {
   returning: [player_assists!]!
 }
 
+"""
+on_conflict condition type for table "player_assists"
+"""
+input player_assists_on_conflict {
+  constraint: player_assists_constraint!
+  update_columns: [player_assists_update_column!]! = []
+  where: player_assists_bool_exp
+}
+
 """Ordering options when selecting data from "player_assists"."""
 input player_assists_order_by {
   attacked_player: players_order_by
@@ -22620,6 +22743,14 @@ input player_assists_order_by {
   player: players_order_by
   round: order_by
   time: order_by
+}
+
+"""primary key columns input for table: player_assists"""
+input player_assists_pk_columns_input {
+  id: uuid!
+  match_id: uuid!
+  match_map_id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -22783,6 +22914,44 @@ input player_assists_sum_order_by {
   round: order_by
 }
 
+"""
+update columns of table "player_assists"
+"""
+enum player_assists_update_column {
+  """column name"""
+  attacked_steam_id
+
+  """column name"""
+  attacked_team
+
+  """column name"""
+  attacker_steam_id
+
+  """column name"""
+  attacker_team
+
+  """column name"""
+  deleted_at
+
+  """column name"""
+  flash
+
+  """column name"""
+  id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  round
+
+  """column name"""
+  time
+}
+
 input player_assists_updates {
   """increments the numeric columns with given value of the filtered values"""
   _inc: player_assists_inc_input
@@ -22943,6 +23112,9 @@ input type for inserting array relation for remote table "player_damages"
 """
 input player_damages_arr_rel_insert_input {
   data: [player_damages_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_damages_on_conflict
 }
 
 """aggregate avg on columns"""
@@ -23001,6 +23173,16 @@ input player_damages_bool_exp {
   team_damage: Boolean_comparison_exp
   time: timestamptz_comparison_exp
   with: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_damages"
+"""
+enum player_damages_constraint {
+  """
+  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  """
+  player_damages_pkey
 }
 
 """
@@ -23157,6 +23339,15 @@ type player_damages_mutation_response {
   returning: [player_damages!]!
 }
 
+"""
+on_conflict condition type for table "player_damages"
+"""
+input player_damages_on_conflict {
+  constraint: player_damages_constraint!
+  update_columns: [player_damages_update_column!]! = []
+  where: player_damages_bool_exp
+}
+
 """Ordering options when selecting data from "player_damages"."""
 input player_damages_order_by {
   armor: order_by
@@ -23184,6 +23375,14 @@ input player_damages_order_by {
   team_damage: order_by
   time: order_by
   with: order_by
+}
+
+"""primary key columns input for table: player_damages"""
+input player_damages_pk_columns_input {
+  id: uuid!
+  match_id: uuid!
+  match_map_id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -23406,6 +23605,71 @@ input player_damages_sum_order_by {
   damage_armor: order_by
   health: order_by
   round: order_by
+}
+
+"""
+update columns of table "player_damages"
+"""
+enum player_damages_update_column {
+  """column name"""
+  armor
+
+  """column name"""
+  attacked_location
+
+  """column name"""
+  attacked_location_coordinates
+
+  """column name"""
+  attacked_steam_id
+
+  """column name"""
+  attacked_team
+
+  """column name"""
+  attacker_location
+
+  """column name"""
+  attacker_location_coordinates
+
+  """column name"""
+  attacker_steam_id
+
+  """column name"""
+  attacker_team
+
+  """column name"""
+  damage
+
+  """column name"""
+  damage_armor
+
+  """column name"""
+  deleted_at
+
+  """column name"""
+  health
+
+  """column name"""
+  hitgroup
+
+  """column name"""
+  id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  round
+
+  """column name"""
+  time
+
+  """column name"""
+  with
 }
 
 input player_damages_updates {
@@ -24008,6 +24272,9 @@ input type for inserting array relation for remote table "player_flashes"
 """
 input player_flashes_arr_rel_insert_input {
   data: [player_flashes_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_flashes_on_conflict
 }
 
 """aggregate avg on columns"""
@@ -24049,6 +24316,16 @@ input player_flashes_bool_exp {
   team_flash: Boolean_comparison_exp
   thrown_by: players_bool_exp
   time: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_flashes"
+"""
+enum player_flashes_constraint {
+  """
+  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  """
+  player_flashes_pkey
 }
 
 """
@@ -24148,6 +24425,15 @@ type player_flashes_mutation_response {
   returning: [player_flashes!]!
 }
 
+"""
+on_conflict condition type for table "player_flashes"
+"""
+input player_flashes_on_conflict {
+  constraint: player_flashes_constraint!
+  update_columns: [player_flashes_update_column!]! = []
+  where: player_flashes_bool_exp
+}
+
 """Ordering options when selecting data from "player_flashes"."""
 input player_flashes_order_by {
   attacked_steam_id: order_by
@@ -24164,6 +24450,14 @@ input player_flashes_order_by {
   team_flash: order_by
   thrown_by: players_order_by
   time: order_by
+}
+
+"""primary key columns input for table: player_flashes"""
+input player_flashes_pk_columns_input {
+  id: uuid!
+  match_id: uuid!
+  match_map_id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -24328,6 +24622,41 @@ input player_flashes_sum_order_by {
   attacker_steam_id: order_by
   duration: order_by
   round: order_by
+}
+
+"""
+update columns of table "player_flashes"
+"""
+enum player_flashes_update_column {
+  """column name"""
+  attacked_steam_id
+
+  """column name"""
+  attacker_steam_id
+
+  """column name"""
+  deleted_at
+
+  """column name"""
+  duration
+
+  """column name"""
+  id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  round
+
+  """column name"""
+  team_flash
+
+  """column name"""
+  time
 }
 
 input player_flashes_updates {
@@ -25247,6 +25576,9 @@ input type for inserting array relation for remote table "player_objectives"
 """
 input player_objectives_arr_rel_insert_input {
   data: [player_objectives_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_objectives_on_conflict
 }
 
 """aggregate avg on columns"""
@@ -25281,6 +25613,16 @@ input player_objectives_bool_exp {
   round: Int_comparison_exp
   time: timestamptz_comparison_exp
   type: e_objective_types_enum_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_objectives"
+"""
+enum player_objectives_constraint {
+  """
+  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  """
+  player_objectives_pkey
 }
 
 """
@@ -25367,6 +25709,15 @@ type player_objectives_mutation_response {
   returning: [player_objectives!]!
 }
 
+"""
+on_conflict condition type for table "player_objectives"
+"""
+input player_objectives_on_conflict {
+  constraint: player_objectives_constraint!
+  update_columns: [player_objectives_update_column!]! = []
+  where: player_objectives_bool_exp
+}
+
 """Ordering options when selecting data from "player_objectives"."""
 input player_objectives_order_by {
   deleted_at: order_by
@@ -25380,6 +25731,14 @@ input player_objectives_order_by {
   round: order_by
   time: order_by
   type: order_by
+}
+
+"""primary key columns input for table: player_objectives"""
+input player_objectives_pk_columns_input {
+  id: uuid!
+  match_id: uuid!
+  match_map_id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -25502,6 +25861,35 @@ order by sum() on columns of table "player_objectives"
 input player_objectives_sum_order_by {
   player_steam_id: order_by
   round: order_by
+}
+
+"""
+update columns of table "player_objectives"
+"""
+enum player_objectives_update_column {
+  """column name"""
+  deleted_at
+
+  """column name"""
+  id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  round
+
+  """column name"""
+  time
+
+  """column name"""
+  type
 }
 
 input player_objectives_updates {
@@ -25630,6 +26018,16 @@ input player_sanctions_bool_exp {
 }
 
 """
+unique or primary key constraints on table "player_sanctions"
+"""
+enum player_sanctions_constraint {
+  """
+  unique or primary key constraint on columns "id", "created_at"
+  """
+  player_sanctions_pkey
+}
+
+"""
 input type for incrementing numeric columns in table "player_sanctions"
 """
 input player_sanctions_inc_input {
@@ -25684,6 +26082,15 @@ type player_sanctions_mutation_response {
   returning: [player_sanctions!]!
 }
 
+"""
+on_conflict condition type for table "player_sanctions"
+"""
+input player_sanctions_on_conflict {
+  constraint: player_sanctions_constraint!
+  update_columns: [player_sanctions_update_column!]! = []
+  where: player_sanctions_bool_exp
+}
+
 """Ordering options when selecting data from "player_sanctions"."""
 input player_sanctions_order_by {
   created_at: order_by
@@ -25696,6 +26103,12 @@ input player_sanctions_order_by {
   sanctioned_by: players_order_by
   sanctioned_by_steam_id: order_by
   type: order_by
+}
+
+"""primary key columns input for table: player_sanctions"""
+input player_sanctions_pk_columns_input {
+  created_at: timestamptz!
+  id: uuid!
 }
 
 """
@@ -25781,6 +26194,32 @@ input player_sanctions_stream_cursor_value_input {
 type player_sanctions_sum_fields {
   player_steam_id: bigint
   sanctioned_by_steam_id: bigint
+}
+
+"""
+update columns of table "player_sanctions"
+"""
+enum player_sanctions_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  reason
+
+  """column name"""
+  remove_sanction_date
+
+  """column name"""
+  sanctioned_by_steam_id
+
+  """column name"""
+  type
 }
 
 input player_sanctions_updates {
@@ -26346,6 +26785,9 @@ input type for inserting array relation for remote table "player_utility"
 """
 input player_utility_arr_rel_insert_input {
   data: [player_utility_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_utility_on_conflict
 }
 
 """aggregate avg on columns"""
@@ -26381,6 +26823,16 @@ input player_utility_bool_exp {
   round: Int_comparison_exp
   time: timestamptz_comparison_exp
   type: e_utility_types_enum_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_utility"
+"""
+enum player_utility_constraint {
+  """
+  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  """
+  player_utility_pkey
 }
 
 """
@@ -26472,6 +26924,15 @@ type player_utility_mutation_response {
   returning: [player_utility!]!
 }
 
+"""
+on_conflict condition type for table "player_utility"
+"""
+input player_utility_on_conflict {
+  constraint: player_utility_constraint!
+  update_columns: [player_utility_update_column!]! = []
+  where: player_utility_bool_exp
+}
+
 """Ordering options when selecting data from "player_utility"."""
 input player_utility_order_by {
   attacker_location_coordinates: order_by
@@ -26486,6 +26947,14 @@ input player_utility_order_by {
   round: order_by
   time: order_by
   type: order_by
+}
+
+"""primary key columns input for table: player_utility"""
+input player_utility_pk_columns_input {
+  id: uuid!
+  match_id: uuid!
+  match_map_id: uuid!
+  time: timestamptz!
 }
 
 """
@@ -26613,6 +27082,38 @@ order by sum() on columns of table "player_utility"
 input player_utility_sum_order_by {
   attacker_steam_id: order_by
   round: order_by
+}
+
+"""
+update columns of table "player_utility"
+"""
+enum player_utility_update_column {
+  """column name"""
+  attacker_location_coordinates
+
+  """column name"""
+  attacker_steam_id
+
+  """column name"""
+  deleted_at
+
+  """column name"""
+  id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  round
+
+  """column name"""
+  time
+
+  """column name"""
+  type
 }
 
 input player_utility_updates {
@@ -27218,6 +27719,11 @@ type players {
   ): lobby_players_aggregate!
 
   """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
+
+  """
   A computed field, executes function "get_player_matches"
   """
   matches(
@@ -27703,6 +28209,11 @@ type players {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """
@@ -27736,12 +28247,22 @@ type players_avg_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """
@@ -27792,6 +28313,7 @@ input players_bool_exp {
   last_sign_in_at: timestamptz_comparison_exp
   lobby_players: lobby_players_bool_exp
   lobby_players_aggregate: lobby_players_aggregate_bool_exp
+  losses: Int_comparison_exp
   matches: matches_bool_exp
   matchmaking_cooldown: timestamptz_comparison_exp
   multi_kills: v_player_multi_kills_bool_exp
@@ -27825,6 +28347,7 @@ input players_bool_exp {
   tournaments_aggregate: tournaments_aggregate_bool_exp
   utility_thrown: player_utility_bool_exp
   utility_thrown_aggregate: player_utility_aggregate_bool_exp
+  wins: Int_comparison_exp
 }
 
 """
@@ -27917,6 +28440,11 @@ type players_max_fields {
   last_sign_in_at: timestamptz
 
   """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
+
+  """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
   matchmaking_cooldown: timestamptz
@@ -27928,6 +28456,11 @@ type players_max_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """aggregate min on columns"""
@@ -27950,6 +28483,11 @@ type players_min_fields {
   last_sign_in_at: timestamptz
 
   """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
+
+  """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
   matchmaking_cooldown: timestamptz
@@ -27961,6 +28499,11 @@ type players_min_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """
@@ -28022,6 +28565,7 @@ input players_order_by {
   language: order_by
   last_sign_in_at: order_by
   lobby_players_aggregate: lobby_players_aggregate_order_by
+  losses: order_by
   matches_aggregate: matches_aggregate_order_by
   matchmaking_cooldown: order_by
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
@@ -28043,6 +28587,7 @@ input players_order_by {
   tournament_rosters_aggregate: tournament_team_roster_aggregate_order_by
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
+  wins: order_by
 }
 
 """primary key columns input for table: players"""
@@ -28111,12 +28656,22 @@ type players_stddev_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """aggregate stddev_pop on columns"""
@@ -28125,12 +28680,22 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """aggregate stddev_samp on columns"""
@@ -28139,12 +28704,22 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """
@@ -28179,12 +28754,22 @@ type players_sum_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: bigint
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """
@@ -28242,12 +28827,22 @@ type players_var_pop_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """aggregate var_samp on columns"""
@@ -28256,12 +28851,22 @@ type players_var_samp_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """aggregate variance on columns"""
@@ -28270,12 +28875,22 @@ type players_variance_fields {
   A computed field, executes function "get_player_elo"
   """
   elo: numeric
+
+  """
+  A computed field, executes function "get_total_player_losses"
+  """
+  losses: Int
   steam_id: Float
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+
+  """
+  A computed field, executes function "get_total_player_wins"
+  """
+  wins: Int
 }
 
 """
@@ -30704,6 +31319,9 @@ type query_root {
     where: player_assists_bool_exp
   ): player_assists_aggregate!
 
+  """fetch data from the table: "player_assists" using primary key columns"""
+  player_assists_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_assists
+
   """An array relationship"""
   player_damages(
     """distinct select on columns"""
@@ -30739,6 +31357,9 @@ type query_root {
     """filter the rows returned"""
     where: player_damages_bool_exp
   ): player_damages_aggregate!
+
+  """fetch data from the table: "player_damages" using primary key columns"""
+  player_damages_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
   fetch data from the table: "player_elo"
@@ -30819,6 +31440,9 @@ type query_root {
     where: player_flashes_bool_exp
   ): player_flashes_aggregate!
 
+  """fetch data from the table: "player_flashes" using primary key columns"""
+  player_flashes_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_flashes
+
   """An array relationship"""
   player_kills(
     """distinct select on columns"""
@@ -30895,6 +31519,11 @@ type query_root {
   ): player_objectives_aggregate!
 
   """
+  fetch data from the table: "player_objectives" using primary key columns
+  """
+  player_objectives_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_objectives
+
+  """
   fetch data from the table: "player_sanctions"
   """
   player_sanctions(
@@ -30933,6 +31562,11 @@ type query_root {
     """filter the rows returned"""
     where: player_sanctions_bool_exp
   ): player_sanctions_aggregate!
+
+  """
+  fetch data from the table: "player_sanctions" using primary key columns
+  """
+  player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
 
   """
   fetch data from the table: "player_unused_utility"
@@ -31014,6 +31648,9 @@ type query_root {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
+
+  """fetch data from the table: "player_utility" using primary key columns"""
+  player_utility_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_utility
 
   """
   fetch data from the table: "players"
@@ -32420,12 +33057,10 @@ type servers {
   """An object relationship"""
   current_match: matches
   enabled: Boolean!
-  game_mode: Int
 
   """An object relationship"""
   game_server_node: game_server_nodes
   game_server_node_id: String
-  game_type: Int
   host: String!
   id: uuid!
   is_dedicated: Boolean!
@@ -32564,8 +33199,6 @@ input servers_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type servers_avg_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -32575,8 +33208,6 @@ type servers_avg_fields {
 order by avg() on columns of table "servers"
 """
 input servers_avg_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -32596,10 +33227,8 @@ input servers_bool_exp {
   connection_string: String_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
-  game_mode: Int_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
-  game_type: Int_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
@@ -32640,8 +33269,6 @@ enum servers_constraint {
 input type for incrementing numeric columns in table "servers"
 """
 input servers_inc_input {
-  game_mode: Int
-  game_type: Int
   max_players: Int
   port: Int
   tv_port: Int
@@ -32656,10 +33283,8 @@ input servers_insert_input {
   connected: Boolean
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
-  game_mode: Int
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
-  game_type: Int
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -32694,9 +33319,7 @@ type servers_max_fields {
   A computed field, executes function "get_server_connection_string"
   """
   connection_string: String
-  game_mode: Int
   game_server_node_id: String
-  game_type: Int
   host: String
   id: uuid
   label: String
@@ -32717,9 +33340,7 @@ order by max() on columns of table "servers"
 input servers_max_order_by {
   api_password: order_by
   connect_password: order_by
-  game_mode: order_by
   game_server_node_id: order_by
-  game_type: order_by
   host: order_by
   id: order_by
   label: order_by
@@ -32748,9 +33369,7 @@ type servers_min_fields {
   A computed field, executes function "get_server_connection_string"
   """
   connection_string: String
-  game_mode: Int
   game_server_node_id: String
-  game_type: Int
   host: String
   id: uuid
   label: String
@@ -32771,9 +33390,7 @@ order by min() on columns of table "servers"
 input servers_min_order_by {
   api_password: order_by
   connect_password: order_by
-  game_mode: order_by
   game_server_node_id: order_by
-  game_type: order_by
   host: order_by
   id: order_by
   label: order_by
@@ -32827,10 +33444,8 @@ input servers_order_by {
   connection_string: order_by
   current_match: matches_order_by
   enabled: order_by
-  game_mode: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
-  game_type: order_by
   host: order_by
   id: order_by
   is_dedicated: order_by
@@ -32873,13 +33488,7 @@ enum servers_select_column {
   enabled
 
   """column name"""
-  game_mode
-
-  """column name"""
   game_server_node_id
-
-  """column name"""
-  game_type
 
   """column name"""
   host
@@ -32972,9 +33581,7 @@ input servers_set_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
-  game_mode: Int
   game_server_node_id: String
-  game_type: Int
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -32995,8 +33602,6 @@ input servers_set_input {
 
 """aggregate stddev on columns"""
 type servers_stddev_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -33006,8 +33611,6 @@ type servers_stddev_fields {
 order by stddev() on columns of table "servers"
 """
 input servers_stddev_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -33015,8 +33618,6 @@ input servers_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type servers_stddev_pop_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -33026,8 +33627,6 @@ type servers_stddev_pop_fields {
 order by stddev_pop() on columns of table "servers"
 """
 input servers_stddev_pop_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -33035,8 +33634,6 @@ input servers_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type servers_stddev_samp_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -33046,8 +33643,6 @@ type servers_stddev_samp_fields {
 order by stddev_samp() on columns of table "servers"
 """
 input servers_stddev_samp_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -33070,9 +33665,7 @@ input servers_stream_cursor_value_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
-  game_mode: Int
   game_server_node_id: String
-  game_type: Int
   host: String
   id: uuid
   is_dedicated: Boolean
@@ -33093,8 +33686,6 @@ input servers_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type servers_sum_fields {
-  game_mode: Int
-  game_type: Int
   max_players: Int
   port: Int
   tv_port: Int
@@ -33104,8 +33695,6 @@ type servers_sum_fields {
 order by sum() on columns of table "servers"
 """
 input servers_sum_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -33128,13 +33717,7 @@ enum servers_update_column {
   enabled
 
   """column name"""
-  game_mode
-
-  """column name"""
   game_server_node_id
-
-  """column name"""
-  game_type
 
   """column name"""
   host
@@ -33198,8 +33781,6 @@ input servers_updates {
 
 """aggregate var_pop on columns"""
 type servers_var_pop_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -33209,8 +33790,6 @@ type servers_var_pop_fields {
 order by var_pop() on columns of table "servers"
 """
 input servers_var_pop_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -33218,8 +33797,6 @@ input servers_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type servers_var_samp_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -33229,8 +33806,6 @@ type servers_var_samp_fields {
 order by var_samp() on columns of table "servers"
 """
 input servers_var_samp_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -33238,8 +33813,6 @@ input servers_var_samp_order_by {
 
 """aggregate variance on columns"""
 type servers_variance_fields {
-  game_mode: Float
-  game_type: Float
   max_players: Float
   port: Float
   tv_port: Float
@@ -33249,8 +33822,6 @@ type servers_variance_fields {
 order by variance() on columns of table "servers"
 """
 input servers_variance_order_by {
-  game_mode: order_by
-  game_type: order_by
   max_players: order_by
   port: order_by
   tv_port: order_by
@@ -36304,6 +36875,9 @@ type subscription_root {
     where: player_assists_bool_exp
   ): player_assists_aggregate!
 
+  """fetch data from the table: "player_assists" using primary key columns"""
+  player_assists_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_assists
+
   """
   fetch data from the table in a streaming manner: "player_assists"
   """
@@ -36353,6 +36927,9 @@ type subscription_root {
     """filter the rows returned"""
     where: player_damages_bool_exp
   ): player_damages_aggregate!
+
+  """fetch data from the table: "player_damages" using primary key columns"""
+  player_damages_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
   fetch data from the table in a streaming manner: "player_damages"
@@ -36461,6 +37038,9 @@ type subscription_root {
     where: player_flashes_bool_exp
   ): player_flashes_aggregate!
 
+  """fetch data from the table: "player_flashes" using primary key columns"""
+  player_flashes_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_flashes
+
   """
   fetch data from the table in a streaming manner: "player_flashes"
   """
@@ -36565,6 +37145,11 @@ type subscription_root {
   ): player_objectives_aggregate!
 
   """
+  fetch data from the table: "player_objectives" using primary key columns
+  """
+  player_objectives_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_objectives
+
+  """
   fetch data from the table in a streaming manner: "player_objectives"
   """
   player_objectives_stream(
@@ -36617,6 +37202,11 @@ type subscription_root {
     """filter the rows returned"""
     where: player_sanctions_bool_exp
   ): player_sanctions_aggregate!
+
+  """
+  fetch data from the table: "player_sanctions" using primary key columns
+  """
+  player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
 
   """
   fetch data from the table in a streaming manner: "player_sanctions"
@@ -36726,6 +37316,9 @@ type subscription_root {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
+
+  """fetch data from the table: "player_utility" using primary key columns"""
+  player_utility_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_utility
 
   """
   fetch data from the table in a streaming manner: "player_utility"
@@ -41360,9 +41953,6 @@ input tournament_team_invites_variance_order_by {
 columns and relationships of "tournament_team_roster"
 """
 type tournament_team_roster {
-  coach: Boolean!
-  core: Boolean!
-
   """An object relationship"""
   e_team_role: e_team_roles!
 
@@ -41370,7 +41960,6 @@ type tournament_team_roster {
   player: players!
   player_steam_id: bigint!
   role: e_team_roles_enum!
-  substitute: Boolean!
 
   """An object relationship"""
   tournament: tournaments!
@@ -41390,23 +41979,7 @@ type tournament_team_roster_aggregate {
 }
 
 input tournament_team_roster_aggregate_bool_exp {
-  bool_and: tournament_team_roster_aggregate_bool_exp_bool_and
-  bool_or: tournament_team_roster_aggregate_bool_exp_bool_or
   count: tournament_team_roster_aggregate_bool_exp_count
-}
-
-input tournament_team_roster_aggregate_bool_exp_bool_and {
-  arguments: tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns!
-  distinct: Boolean
-  filter: tournament_team_roster_bool_exp
-  predicate: Boolean_comparison_exp!
-}
-
-input tournament_team_roster_aggregate_bool_exp_bool_or {
-  arguments: tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns!
-  distinct: Boolean
-  filter: tournament_team_roster_bool_exp
-  predicate: Boolean_comparison_exp!
 }
 
 input tournament_team_roster_aggregate_bool_exp_count {
@@ -41479,13 +42052,10 @@ input tournament_team_roster_bool_exp {
   _and: [tournament_team_roster_bool_exp!]
   _not: tournament_team_roster_bool_exp
   _or: [tournament_team_roster_bool_exp!]
-  coach: Boolean_comparison_exp
-  core: Boolean_comparison_exp
   e_team_role: e_team_roles_bool_exp
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
   role: e_team_roles_enum_comparison_exp
-  substitute: Boolean_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
   tournament_team: tournament_teams_bool_exp
@@ -41518,13 +42088,10 @@ input tournament_team_roster_inc_input {
 input type for inserting data into table "tournament_team_roster"
 """
 input tournament_team_roster_insert_input {
-  coach: Boolean
-  core: Boolean
   e_team_role: e_team_roles_obj_rel_insert_input
   player: players_obj_rel_insert_input
   player_steam_id: bigint
   role: e_team_roles_enum
-  substitute: Boolean
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
   tournament_team: tournament_teams_obj_rel_insert_input
@@ -41585,13 +42152,10 @@ input tournament_team_roster_on_conflict {
 
 """Ordering options when selecting data from "tournament_team_roster"."""
 input tournament_team_roster_order_by {
-  coach: order_by
-  core: order_by
   e_team_role: e_team_roles_order_by
   player: players_order_by
   player_steam_id: order_by
   role: order_by
-  substitute: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
   tournament_team: tournament_teams_order_by
@@ -41609,19 +42173,10 @@ select columns of table "tournament_team_roster"
 """
 enum tournament_team_roster_select_column {
   """column name"""
-  coach
-
-  """column name"""
-  core
-
-  """column name"""
   player_steam_id
 
   """column name"""
   role
-
-  """column name"""
-  substitute
 
   """column name"""
   tournament_id
@@ -41631,42 +42186,11 @@ enum tournament_team_roster_select_column {
 }
 
 """
-select "tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_team_roster"
-"""
-enum tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_and_arguments_columns {
-  """column name"""
-  coach
-
-  """column name"""
-  core
-
-  """column name"""
-  substitute
-}
-
-"""
-select "tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_team_roster"
-"""
-enum tournament_team_roster_select_column_tournament_team_roster_aggregate_bool_exp_bool_or_arguments_columns {
-  """column name"""
-  coach
-
-  """column name"""
-  core
-
-  """column name"""
-  substitute
-}
-
-"""
 input type for updating data in table "tournament_team_roster"
 """
 input tournament_team_roster_set_input {
-  coach: Boolean
-  core: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
-  substitute: Boolean
   tournament_id: uuid
   tournament_team_id: uuid
 }
@@ -41720,11 +42244,8 @@ input tournament_team_roster_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_team_roster_stream_cursor_value_input {
-  coach: Boolean
-  core: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
-  substitute: Boolean
   tournament_id: uuid
   tournament_team_id: uuid
 }
@@ -41746,19 +42267,10 @@ update columns of table "tournament_team_roster"
 """
 enum tournament_team_roster_update_column {
   """column name"""
-  coach
-
-  """column name"""
-  core
-
-  """column name"""
   player_steam_id
 
   """column name"""
   role
-
-  """column name"""
-  substitute
 
   """column name"""
   tournament_id
