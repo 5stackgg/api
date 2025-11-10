@@ -201,6 +201,7 @@ BEGIN
         _actual_score := 1.0;
     ELSE
         _actual_score := 0.0;
+        _performance_multiplier := 2.0 - _performance_multiplier;
     END IF;
 
     -- Calculate the elo change (round to nearest integer)
