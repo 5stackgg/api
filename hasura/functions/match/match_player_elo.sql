@@ -201,7 +201,11 @@ BEGIN
         _actual_score := 1.0;
     ELSE
         _actual_score := 0.0;
-        _performance_multiplier := 2.0 - _performance_multiplier;
+        -- On losses, invert and scale the performance multiplier to protect good performers
+        -- This linear transformation maps the original multiplier (0.8 to 1.2) to a loss reduction multiplier:
+        -- This creates a linear inverse relationship where better performance = less ELO loss
+        _performance_multiplier := 0.9 - 2.125 * (_performance_multiplier - 0.8);
+        _performance_multiplier := GREATEST(0.05, LEAST(1.0, _performance_multiplier));
     END IF;
 
     -- Calculate the elo change (round to nearest integer)
