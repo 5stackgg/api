@@ -142,38 +142,38 @@ BEGIN
     
     SELECT COALESCE(SUM(damage), 0) INTO _player_damage
     FROM player_damages 
-    WHERE match_id = match_record.id AND attacker_steam_id = player_record.steam_id;
+    WHERE match_id = match_record.id AND attacker_steam_id = player_record.steam_id AND attacker_steam_id IS NOT NULL;
     
     -- Get team's total performance metrics
     SELECT COUNT(*) INTO _team_total_kills
     FROM player_kills pk
     JOIN match_lineup_players mlp ON pk.attacker_steam_id = mlp.steam_id
-    WHERE match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
+    WHERE pk.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
     
     SELECT COUNT(*) INTO _team_total_deaths
     FROM player_kills pk
     JOIN match_lineup_players mlp ON pk.attacked_steam_id = mlp.steam_id
-    WHERE match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
+    WHERE pk.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
     
     SELECT COUNT(*) INTO _team_total_assists
     FROM player_assists pa
     JOIN match_lineup_players mlp ON pa.attacker_steam_id = mlp.steam_id
-    WHERE match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
+    WHERE pa.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
     
-    SELECT COALESCE(SUM(damage), 0) INTO _team_total_damage
+    SELECT COALESCE(SUM(pd.damage), 0) INTO _team_total_damage
     FROM player_damages pd
     JOIN match_lineup_players mlp ON pd.attacker_steam_id = mlp.steam_id
-    WHERE match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
+    WHERE pd.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id AND pd.attacker_steam_id IS NOT NULL;
     
     -- Calculate player's KDA (Kills + Assists / Deaths, with a minimum of 1 death to avoid division by zero)
-    _player_kda := (_player_kills + _player_assists) / GREATEST(_player_deaths, 1);
+    _player_kda := (_player_kills + _player_assists)::FLOAT / GREATEST(_player_deaths, 1)::FLOAT;
     
     -- Calculate team's average KDA
-    _team_avg_kda := (_team_total_kills + _team_total_assists) / GREATEST(_team_total_deaths, 1);
+    _team_avg_kda := (_team_total_kills + _team_total_assists)::FLOAT / GREATEST(_team_total_deaths, 1)::FLOAT;
     
     -- Calculate player's damage percentage
     _player_damage_percent := CASE 
-        WHEN _team_total_damage > 0 THEN _player_damage / _team_total_damage
+        WHEN _team_total_damage > 0 THEN _player_damage::FLOAT / _team_total_damage::FLOAT
         ELSE 0
     END;
     
@@ -220,8 +220,8 @@ BEGIN
         'deaths', _player_deaths,
         'assists', _player_assists,
         'damage', _player_damage,
-        'kda', _player_kda,
-        'team_avg_kda', _team_avg_kda,
+        'kda', _player_kda::FLOAT,
+        'team_avg_kda', _team_avg_kda::FLOAT,
         'damage_percent', _player_damage_percent,
         'performance_multiplier', _performance_multiplier
     );
