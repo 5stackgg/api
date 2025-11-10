@@ -46,6 +46,15 @@ array_relationships:
         table:
           name: match_map_demos
           schema: public
+  - name: elo_changes
+    using:
+      manual_configuration:
+        column_mapping:
+          id: match_id
+        insertion_order: null
+        remote_table:
+          name: v_player_elo
+          schema: public
   - name: invites
     using:
       foreign_key_constraint_on:

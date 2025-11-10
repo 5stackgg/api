@@ -18,17 +18,23 @@ export class GetPluginVersions extends WorkerHost {
       "https://api.github.com/repos/5stackgg/game-server/releases",
     );
 
-    const releases = (await response.json()).map(
-      (release: { tag_name: string; body: string; published_at: string }) => {
-        const gameVersion = release.body?.trim();
+    const releases = (await response.json())
+      .map(
+        (release: { tag_name: string; body: string; published_at: string }) => {
+          const gameVersion = release.body?.trim();
 
-        return {
-          version: release.tag_name.replace("v", ""),
-          min_game_build_id: gameVersion.length > 0 ? gameVersion : null,
-          published_at: release.published_at,
-        };
-      },
-    );
+          if (!gameVersion) {
+            return;
+          }
+
+          return {
+            version: release.tag_name.replace("v", ""),
+            min_game_build_id: gameVersion.length > 0 ? gameVersion : null,
+            published_at: release.published_at,
+          };
+        },
+      )
+      .filter((release: any) => release !== undefined);
 
     for (const { version, min_game_build_id, published_at } of releases) {
       const { plugin_versions } = await this.hasuraService.query({

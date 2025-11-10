@@ -53,10 +53,12 @@ array_relationships:
           schema: public
   - name: elo_history
     using:
-      foreign_key_constraint_on:
-        column: steam_id
-        table:
-          name: player_elo
+      manual_configuration:
+        column_mapping:
+          steam_id: player_steam_id
+        insertion_order: null
+        remote_table:
+          name: v_player_elo
           schema: public
   - name: flashed_by_players
     using:
