@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.advance_byes_for_tournament(tournament_id uuid) RETURNS VOID
+CREATE OR REPLACE FUNCTION public.advance_byes_for_tournament(p_tournament_id uuid) RETURNS VOID
     LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -14,7 +14,7 @@ BEGIN
                tb.tournament_team_id_1, tb.tournament_team_id_2
         FROM tournament_brackets tb
         JOIN tournament_stages ts ON tb.tournament_stage_id = ts.id
-        WHERE ts.tournament_id = tournament_id
+        WHERE ts.tournament_id = p_tournament_id
           AND tb.round = 1
           AND (
             (tb.tournament_team_id_1 IS NULL AND tb.tournament_team_id_2 IS NOT NULL) OR
