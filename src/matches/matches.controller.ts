@@ -1215,19 +1215,21 @@ export class MatchesController {
       data.old.match_lineup_id) as string;
     const { matches } = await this.hasura.query({
       matches: {
-        where: {
-          _or: [
-            {
-              lineup_1_id: {
-                _eq: match_lineup_id,
+        __args: {
+          where: {
+            _or: [
+              {
+                lineup_1_id: {
+                  _eq: match_lineup_id,
+                },
               },
-            },
-            {
-              lineup_2_id: {
-                _eq: match_lineup_id,
+              {
+                lineup_2_id: {
+                  _eq: match_lineup_id,
+                },
               },
-            },
-          ],
+            ],
+          },
         },
         id: true,
         status: true,
