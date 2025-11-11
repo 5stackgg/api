@@ -10,14 +10,7 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'Cancelled' OR NEW.status = 'CancelledMinTeams') THEN
-        SELECT array_agg(match_id) INTO tournament_matches from touranment_brackets where tournament_id = NEW.id;
-
-        FOR match IN SELECT * FROM matches WHERE id = ANY(tournament_matches) LOOP
-            delete from matches where id = match.id;
-        END LOOP;
-
-        DELETE FROM tournament_brackets
-        where tournament_stage_id in (select id from tournament_stages where tournament_id = NEW.id);
+        PERFORM delete_tournament_brackets_and_matches(NEW.id);
     END IF;
 
 	RETURN NEW;

@@ -274,9 +274,7 @@ BEGIN
     RAISE NOTICE 'Tournament ID: %', _tournament_id;
     RAISE NOTICE 'Tournament Status: %', tournament_status;
 
-    -- Delete existing brackets for all stages
-    DELETE FROM tournament_brackets WHERE tournament_stage_id IN (SELECT id FROM tournament_stages WHERE tournament_id = _tournament_id);
-    RAISE NOTICE 'Deleted existing brackets for all stages';
+    PERFORM delete_tournament_brackets_and_matches(_tournament_id);
 
     -- Process each stage
     FOR stage IN SELECT * FROM tournament_stages ts WHERE ts.tournament_id = _tournament_id ORDER BY ts."order" LOOP
