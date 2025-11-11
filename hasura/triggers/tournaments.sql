@@ -1,6 +1,8 @@
 CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    tournament_matches uuid[];
 BEGIN
 
     IF (NEW.status IS DISTINCT FROM OLD.status AND NEW.status = 'Live') THEN
@@ -8,8 +10,7 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'Cancelled' OR NEW.status = 'CancelledMinTeams') THEN
-        DELETE FROM tournament_brackets
-        where tournament_stage_id in (select id from tournament_stages where tournament_id = NEW.id);
+        PERFORM delete_tournament_brackets_and_matches(NEW.id);
     END IF;
 
 	RETURN NEW;

@@ -246,7 +246,7 @@ BEGIN
     SELECT * INTO match_record FROM matches WHERE id = match_id;
 
     IF match_record IS NULL THEN
-        RAISE EXCEPTION 'Match with ID % not found', match_id;
+        RETURN 0;
     END IF;
     
     -- Skip matches without a winning_lineup_id
@@ -277,7 +277,7 @@ BEGIN
     SELECT * INTO match_record FROM matches WHERE id = _match_id;
     
     IF match_record IS NULL THEN
-        RAISE EXCEPTION 'Match with ID % not found', _match_id;
+        RETURN 0;
     END IF;
     
     -- Skip matches without a winning_lineup_id
