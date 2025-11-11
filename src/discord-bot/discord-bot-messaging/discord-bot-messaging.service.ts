@@ -209,6 +209,10 @@ export class DiscordBotMessagingService {
   }
 
   public async removeArchivedThreads() {
+    if (!this.bot.client) {
+      return;
+    }
+
     const guilds = await this.bot.client.guilds.cache.values();
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
