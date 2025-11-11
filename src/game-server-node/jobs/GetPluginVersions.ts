@@ -23,13 +23,9 @@ export class GetPluginVersions extends WorkerHost {
         (release: { tag_name: string; body: string; published_at: string }) => {
           const gameVersion = release.body?.trim();
 
-          if (!gameVersion) {
-            return;
-          }
-
           return {
             version: release.tag_name.replace("v", ""),
-            min_game_build_id: gameVersion.length > 0 ? gameVersion : null,
+            min_game_build_id: gameVersion?.length > 0 ? gameVersion : null,
             published_at: release.published_at,
           };
         },
