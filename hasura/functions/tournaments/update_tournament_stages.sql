@@ -263,6 +263,7 @@ DECLARE
     bracket_idx int;
     seed_1 int;
     seed_2 int;
+    stage_target_size int;
 BEGIN
     -- Get tournament status for logging
     SELECT status INTO tournament_status
@@ -291,6 +292,9 @@ BEGIN
         next_stage_max_teams := COALESCE((select max_teams from tournament_stages ts2 where ts2.tournament_id = _tournament_id and ts2."order" = stage."order" + 1), 1);
         teams_per_group := CEIL(effective_teams::float / stage.groups);
         total_rounds := GREATEST(CEIL(LOG(teams_per_group::float / CEIL(next_stage_max_teams::float / stage.groups)) / LOG(2)), 1);
+        
+        -- Ensure round 1 has full bracket count based on next power-of-2 per group
+        stage_target_size := POWER(2, CEIL(LOG(teams_per_group::numeric) / LOG(2)))::int;
 
         IF effective_teams = next_stage_max_teams THEN
             RAISE NOTICE 'Stage % : effective_teams = next_stage_max_teams, skipping', stage."order";
@@ -312,7 +316,12 @@ BEGIN
         
         FOR round_num IN 1..total_rounds LOOP
             -- Calculate total matches needed for this round (each match needs 2 teams)
-            matches_in_round := CEIL(teams_left_to_assign::numeric / 2);
+            IF round_num = 1 THEN
+                -- Create full set of first-round matches across all groups (including byes)
+                matches_in_round := stage.groups * (stage_target_size / 2);
+            ELSE
+                matches_in_round := CEIL(teams_left_to_assign::numeric / 2);
+            END IF;
             
             RAISE NOTICE '  => Process round %: teams_left_to_assign=%, total_matches_in_round=%', round_num, teams_left_to_assign, matches_in_round;
 
