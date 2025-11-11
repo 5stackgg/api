@@ -161,6 +161,11 @@ export class GameServerNodeService {
       },
     });
 
+    if (csBulid && !game_server_nodes_by_pk?.build_id) {
+      await this.createVolumes(node);
+      return;
+    }
+
     if (game_server_nodes_by_pk?.status === "NotAcceptingNewMatches") {
       status = "NotAcceptingNewMatches";
     }
@@ -315,26 +320,7 @@ export class GameServerNodeService {
       }
     }
 
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/demos`,
-      `demos`,
-      "25Gi",
-    );
-
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/steamcmd`,
-      `steamcmd`,
-      "1Gi",
-    );
-
-    await this.createVolume(
-      gameServerNodeId,
-      `/opt/5stack/serverfiles`,
-      `serverfiles`,
-      "75Gi",
-    );
+    await this.createVolumes(gameServerNodeId);
 
     this.logger.log(`Updating CS2 on node ${gameServerNodeId}`);
 
@@ -512,6 +498,29 @@ export class GameServerNodeService {
       );
       throw error;
     }
+  }
+
+  private async createVolumes(gameServerNodeId: string) {
+    await this.createVolume(
+      gameServerNodeId,
+      `/opt/5stack/demos`,
+      `demos`,
+      "25Gi",
+    );
+
+    await this.createVolume(
+      gameServerNodeId,
+      `/opt/5stack/steamcmd`,
+      `steamcmd`,
+      "1Gi",
+    );
+
+    await this.createVolume(
+      gameServerNodeId,
+      `/opt/5stack/serverfiles`,
+      `serverfiles`,
+      "75Gi",
+    );
   }
 
   public async moitorUpdateStatus(gameServerNodeId: string, attempts = 0) {

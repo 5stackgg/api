@@ -183,7 +183,7 @@ export class MatchesModule implements NestModule {
   /**
    * TODO - this is required one time
    */
-  async generatePlayerRatings() {    
+  async generatePlayerRatings() {
     const { player_elo_aggregate } = await this.hasuraService.query({
       player_elo_aggregate: {
         aggregate: {
