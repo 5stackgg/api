@@ -29,7 +29,7 @@ latest_elos AS (
   FROM player_elo
   ORDER BY steam_id, created_at DESC
 )
-SELECT DISTINCT
+SELECT DISTINCT ON (p.steam_id, fr.friend_steam_id)
   p.*,
   fr.status,
   fr.friend_steam_id,
