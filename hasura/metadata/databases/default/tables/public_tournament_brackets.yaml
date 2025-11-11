@@ -27,6 +27,8 @@ select_permissions:
         - parent_bracket_id
         - round
         - scheduled_eta
+        - team_1_seed
+        - team_2_seed
         - tournament_stage_id
         - tournament_team_id_1
         - tournament_team_id_2
