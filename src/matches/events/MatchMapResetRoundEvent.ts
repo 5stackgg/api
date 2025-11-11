@@ -20,22 +20,119 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   public async process() {
     const statsRound = parseInt(this.data.round);
 
-    const { match_map_rounds } = await this.hasura.query({
-      match_map_rounds: {
+    this.logger.log(
+      `[${this.matchId}] marking round ${statsRound + 1} for deletion from match map: ${this.data.match_map_id}`,
+    );
+
+    await this.hasura.mutation({
+      update_player_kills: {
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
             },
           },
+          _set: {
+            deleted_at: null,
+          },
         },
-        id: true,
-        round: true,
-        lineup_1_timeouts_available: true,
-        lineup_2_timeouts_available: true,
+        __typename: true,
+      },
+      update_player_assists: {
+        __args: {
+          where: {
+            round: {
+              _gt: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
+      },
+      update_player_damages: {
+        __args: {
+          where: {
+            round: {
+              _gt: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
+      },
+      update_player_flashes: {
+        __args: {
+          where: {
+            round: {
+              _gt: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
+      },
+      update_player_utility: {
+        __args: {
+          where: {
+            round: {
+              _gt: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
+      },
+      update_player_objectives: {
+        __args: {
+          where: {
+            round: {
+              _gt: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
+      },
+      update_player_unused_utility: {
+        __args: {
+          where: {
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
       },
     });
 
@@ -46,7 +143,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -62,7 +159,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -78,7 +175,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -94,7 +191,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -110,7 +207,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -126,7 +223,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -142,7 +239,7 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         __args: {
           where: {
             round: {
-              _gte: statsRound,
+              _gt: statsRound,
             },
             match_map_id: {
               _eq: this.data.match_map_id,
@@ -153,6 +250,41 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
           },
         },
         __typename: true,
+      },
+    });
+
+    await this.hasura.mutation({
+      update_match_map_rounds: {
+        __args: {
+          where: {
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+          _set: {
+            deleted_at: null,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    const { match_map_rounds } = await this.hasura.query({
+      match_map_rounds: {
+        __args: {
+          where: {
+            round: {
+              _gt: statsRound,
+            },
+            match_map_id: {
+              _eq: this.data.match_map_id,
+            },
+          },
+        },
+        id: true,
+        round: true,
+        lineup_1_timeouts_available: true,
+        lineup_2_timeouts_available: true,
       },
     });
 
@@ -176,9 +308,12 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         });
       }
 
-      if (match_map_round.round < statsRound) {
+      if (match_map_round.round <= statsRound) {
         continue;
       }
+      this.logger.log(
+        `[${this.matchId}] marking round ${match_map_round.round} for deletion from match map: ${this.data.match_map_id}`,
+      );
 
       await this.hasura.mutation({
         update_match_map_rounds_by_pk: {
@@ -194,10 +329,6 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
         },
       });
     }
-
-    this.logger.warn(
-      `deleted ${match_map_rounds.length} rounds from match: ${this.matchId}`,
-    );
 
     await this.matchAssistant.restoreMatchRound(this.matchId, statsRound);
   }
