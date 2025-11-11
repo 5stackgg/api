@@ -14,6 +14,7 @@ import {
   matches_set_input,
   servers_set_input,
   game_server_nodes_set_input,
+  match_lineup_players_set_input,
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
@@ -1204,5 +1205,44 @@ export class MatchesController {
     return {
       success: true,
     };
+  }
+
+  @HasuraEvent()
+  public async match_lineup_players(
+    data: HasuraEventData<match_lineup_players_set_input>,
+  ) {
+    const match_lineup_id = (data.new.match_lineup_id ||
+      data.old.match_lineup_id) as string;
+    const { matches } = await this.hasura.query({
+      matches: {
+        where: {
+          _or: [
+            {
+              lineup_1_id: {
+                _eq: match_lineup_id,
+              },
+            },
+            {
+              lineup_2_id: {
+                _eq: match_lineup_id,
+              },
+            },
+          ],
+        },
+        id: true,
+        status: true,
+      },
+    });
+    const match = matches.at(0);
+
+    if (!match) {
+      return;
+    }
+
+    if (!["Live"].includes(match.status)) {
+      return;
+    }
+
+    await this.matchAssistant.sendServerMatchId(match.id);
   }
 }
