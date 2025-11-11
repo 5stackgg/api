@@ -289,11 +289,9 @@ export class MatchesController {
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
 
-      if (status === "Tie" || status === "Forfeit" || status === "Finished") {
-        await this.eloCalculationQueue.add(EloCalculation.name, {
-          matchId,
-        });
-      }
+      await this.eloCalculationQueue.add(EloCalculation.name, {
+        matchId,
+      });
 
       const serverId = data.new.server_id;
 

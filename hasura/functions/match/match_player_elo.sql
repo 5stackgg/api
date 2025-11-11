@@ -245,6 +245,16 @@ BEGIN
     -- Fetch match record
     SELECT * INTO match_record FROM matches WHERE id = match_id;
 
+    IF match_record IS NULL THEN
+        RAISE EXCEPTION 'Match with ID % not found', match_id;
+    END IF;
+    
+    -- Skip matches without a winning_lineup_id
+    IF match_record.winning_lineup_id IS NULL THEN
+        RAISE NOTICE 'Skipping match % as it has no winning_lineup_id', match_id;
+        RETURN 0;
+    END IF;
+
     -- Fetch player record
     SELECT * INTO player_record FROM players WHERE players.steam_id = input_steam_id;
 
@@ -268,12 +278,6 @@ BEGIN
     
     IF match_record IS NULL THEN
         RAISE EXCEPTION 'Match with ID % not found', _match_id;
-    END IF;
-    
-    -- Skip matches that haven't ended yet
-    IF match_record.ended_at IS NULL THEN
-        RAISE NOTICE 'Skipping match % as it has not ended yet (ended_at is null)', _match_id;
-        RETURN 0;
     END IF;
     
     -- Skip matches without a winning_lineup_id
