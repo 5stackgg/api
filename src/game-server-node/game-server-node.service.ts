@@ -161,9 +161,9 @@ export class GameServerNodeService {
       },
     });
 
-    if (csBulid && !game_server_nodes_by_pk?.build_id) {
+    if (csBulid && game_server_nodes_by_pk?.build_id === undefined) {
+      this.logger.log(`Creating volumes for node ${node}`);
       await this.createVolumes(node);
-      return;
     }
 
     if (game_server_nodes_by_pk?.status === "NotAcceptingNewMatches") {
