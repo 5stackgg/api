@@ -60,12 +60,13 @@ export class TypeSenseService {
       },
       { name: "steam_id", type: "string", index: true },
       { name: "teams", type: "string[]", optional: true },
-      { name: "elo", type: "int32", optional: true },
-      { name: "role", type: "string", optional: true },
+      { name: "elo", type: "int32", optional: true, index: true },
+      { name: "role", type: "string", optional: true, index: true },
       { name: "kills", type: "int32", optional: true },
       { name: "deaths", type: "int32", optional: true },
       { name: "wins", type: "int32", optional: true },
       { name: "losses", type: "int32", optional: true },
+      { name: "country", type: "string", optional: true, index: true },
       {
         name: "last_sign_in_at",
         type: "string",
@@ -116,6 +117,7 @@ export class TypeSenseService {
           },
           { name: "kind", type: "string" },
           { name: "flags", type: "string" },
+          { name: "country", type: "string" },
           { name: "description", type: "string" },
         ],
       });

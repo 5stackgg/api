@@ -17,3 +17,4 @@ declare module "pg-cursor" {
   export = Cursor;
 }
 
+
