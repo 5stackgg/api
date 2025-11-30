@@ -145,7 +145,8 @@ export class MatchmakingGateway {
       if (game_server_nodes_aggregate.aggregate.count !== 0) {
         checkLatency = true;
         if (Object.keys(latencyResults).length === 0) {
-          throw new JoinQueueError("Unable to get latency results");
+          this.logger.warn("Unable to get latency results, skipping latency check");
+          checkLatency = false;
         }
       }
 
