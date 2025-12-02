@@ -78,6 +78,7 @@ BEGIN
             DECLARE
                 prev_stage_record RECORD;
                 max_teams_advancing int;
+                last_round_matches int;
             BEGIN
                 -- Get the previous stage
                 SELECT * INTO prev_stage_record
@@ -85,9 +86,25 @@ BEGIN
                 WHERE tournament_id = NEW.tournament_id AND "order" = current_order - 1;
                 
                 IF prev_stage_record.id IS NOT NULL THEN
-                                    -- Calculate max teams that can advance from previous stage
-                -- Formula: (min_teams / groups) / 2 = max_teams_to_next_round
-                max_teams_advancing := (prev_stage_record.min_teams / prev_stage_record.groups) / 2;
+                    -- Calculate max teams that can advance from previous stage
+                    -- Count matches in the last round of the previous stage (each match produces 1 winner)
+                    SELECT COUNT(*) INTO last_round_matches
+                    FROM tournament_brackets tb
+                    WHERE tb.tournament_stage_id = prev_stage_record.id
+                      AND tb.round = (
+                          SELECT MAX(tb2.round)
+                          FROM tournament_brackets tb2
+                          WHERE tb2.tournament_stage_id = prev_stage_record.id
+                      );
+                    
+                    -- If brackets haven't been created yet, fall back to calculation based on min_teams
+                    IF last_round_matches = 0 THEN
+                        -- Fallback: estimate based on min_teams and groups
+                        max_teams_advancing := (prev_stage_record.min_teams / prev_stage_record.groups) / 2;
+                    ELSE
+                        -- Use actual number of matches in last round (each match = 1 advancing team)
+                        max_teams_advancing := last_round_matches;
+                    END IF;
                     
                     -- This stage must be able to accommodate the advancing teams
                     IF NEW.min_teams < max_teams_advancing THEN
@@ -149,6 +166,7 @@ BEGIN
         DECLARE
             prev_stage_record RECORD;
             max_teams_advancing int;
+            last_round_matches int;
         BEGIN
             -- Get the previous stage
             SELECT * INTO prev_stage_record
@@ -157,8 +175,24 @@ BEGIN
             
             IF prev_stage_record.id IS NOT NULL THEN
                 -- Calculate max teams that can advance from previous stage
-                -- Formula: (min_teams / groups) / 2 = max_teams_to_next_round
-                max_teams_advancing := (prev_stage_record.min_teams / prev_stage_record.groups) / 2;
+                -- Count matches in the last round of the previous stage (each match produces 1 winner)
+                SELECT COUNT(*) INTO last_round_matches
+                FROM tournament_brackets tb
+                WHERE tb.tournament_stage_id = prev_stage_record.id
+                  AND tb.round = (
+                      SELECT MAX(tb2.round)
+                      FROM tournament_brackets tb2
+                      WHERE tb2.tournament_stage_id = prev_stage_record.id
+                  );
+                
+                -- If brackets haven't been created yet, fall back to calculation based on min_teams
+                IF last_round_matches = 0 THEN
+                    -- Fallback: estimate based on min_teams and groups
+                    max_teams_advancing := (prev_stage_record.min_teams / prev_stage_record.groups) / 2;
+                ELSE
+                    -- Use actual number of matches in last round (each match = 1 advancing team)
+                    max_teams_advancing := last_round_matches;
+                END IF;
                 
                 -- This stage must be able to accommodate the advancing teams
                 IF NEW.min_teams < max_teams_advancing THEN
