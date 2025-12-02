@@ -14,6 +14,15 @@ object_relationships:
   - name: match
     using:
       foreign_key_constraint_on: match_id
+  - name: parent_bracket
+    using:
+      manual_configuration:
+        column_mapping:
+          parent_bracket_id: id
+        insertion_order: null
+        remote_table:
+          name: tournament_brackets
+          schema: public
   - name: stage
     using:
       foreign_key_constraint_on: tournament_stage_id

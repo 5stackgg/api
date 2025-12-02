@@ -272,10 +272,14 @@ BEGIN
                         lb_prev_match_ids := lb_match_ids;
                     END LOOP;
 
-                    -- Create Grand Final per group only if next stage needs exactly 1 team (to determine champion)
-                    -- Otherwise, skip Grand Final and both WB and LB champions advance directly
-                    -- Grand Final stays in the winners group (group g) for consistency
+                    -- For stages that produce a single champion, create a consolidation final in LB
+                    -- and a Grand Final in WB:
+                    --  - LB extra round (round = wb_round_count + 1, path='LB'):
+                    --      participants = loser of WB final + winner of LB final
+                    --  - WB extra round (round = wb_round_count + 1, path='WB'):
+                    --      participants = winner of WB final + winner of LB extra round
                     IF wb_round_count > 0 AND next_stage_max_teams = 1 THEN
+                        -- Identify WB and LB finals (last round in each path for this group)
                         SELECT id INTO wb_final_id
                         FROM tournament_brackets
                         WHERE tournament_stage_id = stage.id AND path = 'WB' AND round = wb_round_count AND "group" = g
@@ -287,14 +291,47 @@ BEGIN
                         ORDER BY match_number ASC LIMIT 1;
 
                         IF wb_final_id IS NOT NULL AND lb_final_id IS NOT NULL THEN
+                            -- Create LB consolidation final (extra LB round)
                             INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", path)
-                            VALUES (wb_round_count + 1, stage.id, 1, g, 'GF')
+                            VALUES (wb_round_count + 1, stage.id, 1, loser_group_num, 'LB')
                             RETURNING id INTO gf_id;
 
-                            UPDATE tournament_brackets SET parent_bracket_id = gf_id WHERE id = wb_final_id;
-                            UPDATE tournament_brackets SET parent_bracket_id = gf_id WHERE id = lb_final_id;
-                            
-                            RAISE NOTICE '  => Created Grand Final for group % (next_stage needs 1 team)', g;
+                            -- Winner of LB final advances to LB consolidation via parent_bracket_id
+                            UPDATE tournament_brackets
+                            SET parent_bracket_id = gf_id
+                            WHERE id = lb_final_id;
+
+                            -- Loser of WB final drops into LB consolidation via loser_parent_bracket_id
+                            UPDATE tournament_brackets
+                            SET loser_parent_bracket_id = gf_id
+                            WHERE id = wb_final_id;
+
+                            RAISE NOTICE '  => Created LB consolidation final for group % (round %, path LB)', g, wb_round_count + 1;
+
+                            -- Create WB Grand Final as an extra WB round
+                            INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", path)
+                            VALUES (wb_round_count + 1, stage.id, 1, g, 'WB')
+                            RETURNING id INTO gf_id;
+
+                            -- Winner of WB final advances to Grand Final
+                            UPDATE tournament_brackets
+                            SET parent_bracket_id = gf_id
+                            WHERE id = wb_final_id;
+
+                            -- Winner of LB consolidation final advances to Grand Final
+                            UPDATE tournament_brackets
+                            SET parent_bracket_id = gf_id
+                            WHERE id = (
+                                SELECT id
+                                FROM tournament_brackets
+                                WHERE tournament_stage_id = stage.id
+                                  AND path = 'LB'
+                                  AND round = wb_round_count + 1
+                                  AND "group" = loser_group_num
+                                ORDER BY match_number ASC LIMIT 1
+                            );
+
+                            RAISE NOTICE '  => Created WB Grand Final for group % (round %, path WB)', g, wb_round_count + 1;
                         END IF;
                     ELSE
                         RAISE NOTICE '  => Skipping Grand Final for group % (next_stage_max_teams=%, both WB and LB champions advance directly)', g, next_stage_max_teams;
