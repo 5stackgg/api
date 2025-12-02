@@ -178,10 +178,13 @@ BEGIN
         END LOOP;
 
         -- If DoubleElimination, generate losers bracket and grand final
+        -- Losers bracket uses separate group numbers to make it easier to reason about:
+        -- For N winner groups (1..N), we create N loser groups (N+1..2N) with path='LB'.
         IF stage_type = 'DoubleElimination' THEN
             RAISE NOTICE '  => Generating double elimination structure for stage %', stage."order";
             DECLARE
                 g int;
+                loser_group_num int;
                 wb_round_count int;
                 r int;
                 wb_round_matches int;
@@ -206,8 +209,12 @@ BEGIN
                 -- Calculate teams advancing from this stage (WB champion + LB champion per group)
                 teams_advancing := 2 * stage.groups;
 
-                -- Build losers bracket per group
+                -- Build losers bracket per group (separate loser group id with path='LB')
                 FOR g IN 1..stage.groups LOOP
+                    -- Loser group number: winners_group + stage.groups (e.g. WB group 1 -> LB group N+1)
+                    loser_group_num := g + stage.groups;
+                    RAISE NOTICE '  => Creating loser group % for winners group %', loser_group_num, g;
+                    
                     lb_prev_match_ids := NULL;
                     
                     -- Generate LB rounds (same number as WB rounds)
@@ -231,16 +238,16 @@ BEGIN
                             lb_round_matches := wb_round_matches;
                         END IF;
                         
-                        -- Create LB matches for this round
+                        -- Create LB matches for this round in the loser group
                         lb_match_ids := ARRAY[]::uuid[];
                         FOR i IN 1..lb_round_matches LOOP
                             INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", path)
-                            VALUES (r, stage.id, i, g, 'LB')
+                            VALUES (r, stage.id, i, loser_group_num, 'LB')
                             RETURNING id INTO new_id;
                             lb_match_ids := lb_match_ids || new_id;
                         END LOOP;
                         
-                        -- Link WB losers to LB matches
+                        -- Link WB losers to LB matches in the loser group
                         IF r = 1 THEN
                             -- Pair WB Round 1 losers two-at-a-time into LB Round 1
                             FOR i IN 1..wb_round_matches LOOP
@@ -258,15 +265,8 @@ BEGIN
                                 SET loser_parent_bracket_id = lb_match_ids[i]
                                 WHERE id = wb_match_ids[i];
                             END LOOP;
-                            
-                            -- Link previous LB round winners to this LB round
-                            IF lb_prev_match_ids IS NOT NULL THEN
-                                FOR i IN 1..LEAST(COALESCE(array_length(lb_prev_match_ids, 1), 0), lb_round_matches) LOOP
-                                    UPDATE tournament_brackets
-                                    SET parent_bracket_id = lb_match_ids[i]
-                                    WHERE id = lb_prev_match_ids[i];
-                                END LOOP;
-                            END IF;
+                            -- Note: LB round winners linking is handled by link_tournament_stage_matches
+                            -- which uses 1-to-1 mapping by match number for LB paths
                         END IF;
                         
                         lb_prev_match_ids := lb_match_ids;
@@ -274,6 +274,7 @@ BEGIN
 
                     -- Create Grand Final per group only if next stage needs exactly 1 team (to determine champion)
                     -- Otherwise, skip Grand Final and both WB and LB champions advance directly
+                    -- Grand Final stays in the winners group (group g) for consistency
                     IF wb_round_count > 0 AND next_stage_max_teams = 1 THEN
                         SELECT id INTO wb_final_id
                         FROM tournament_brackets
@@ -282,7 +283,7 @@ BEGIN
 
                         SELECT id INTO lb_final_id
                         FROM tournament_brackets
-                        WHERE tournament_stage_id = stage.id AND path = 'LB' AND round = wb_round_count AND "group" = g
+                        WHERE tournament_stage_id = stage.id AND path = 'LB' AND round = wb_round_count AND "group" = loser_group_num
                         ORDER BY match_number ASC LIMIT 1;
 
                         IF wb_final_id IS NOT NULL AND lb_final_id IS NOT NULL THEN

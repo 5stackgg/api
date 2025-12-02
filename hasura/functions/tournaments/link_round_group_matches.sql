@@ -41,10 +41,17 @@ BEGIN
     END IF;
     
     -- Distribute current round matches to next round matches within the same group
-    -- Each pair of matches in current round links to one match in next round
+    -- For WB: Each pair of matches links to one match (Match 1,2 → Round 2 Match 1; Match 3,4 → Round 2 Match 2)
+    -- For LB: Each match links 1-to-1 by match number (Match 1 → Round 2 Match 1; Match 2 → Round 2 Match 2)
     FOR i IN 1..current_count LOOP
-        -- Calculate target index: every 2 matches go to the same parent match
-        target_idx := ((i - 1) / 2) + 1;
+        -- Calculate target index based on path
+        IF COALESCE(_path, 'WB') = 'LB' THEN
+            -- Losers bracket: 1-to-1 mapping by match number
+            target_idx := i;
+        ELSE
+            -- Winners bracket: pairing pattern (every 2 matches go to the same parent match)
+            target_idx := ((i - 1) / 2) + 1;
+        END IF;
         
         -- Only proceed if we have a valid target
         IF target_idx <= next_count THEN
