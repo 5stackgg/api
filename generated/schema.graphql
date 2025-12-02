@@ -11760,9 +11760,9 @@ unique or primary key constraints on table "match_map_veto_picks"
 """
 enum match_map_veto_picks_constraint {
   """
-  unique or primary key constraint on columns "match_id", "map_id"
+  unique or primary key constraint on columns "type", "match_id", "map_id"
   """
-  match_map_veto_picks_match_id_map_id_key
+  match_map_veto_picks_map_id_match_id_type_key
 
   """
   unique or primary key constraint on columns "id"
@@ -39986,10 +39986,15 @@ type tournament_brackets {
   id: uuid!
 
   """An object relationship"""
+  loser_bracket: tournament_brackets
+  loser_parent_bracket_id: uuid
+
+  """An object relationship"""
   match: matches
   match_id: uuid
   match_number: Int
   parent_bracket_id: uuid
+  path: String
   round: Int!
   scheduled_eta: timestamptz
 
@@ -40118,10 +40123,13 @@ input tournament_brackets_bool_exp {
   created_at: timestamptz_comparison_exp
   group: numeric_comparison_exp
   id: uuid_comparison_exp
+  loser_bracket: tournament_brackets_bool_exp
+  loser_parent_bracket_id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_number: Int_comparison_exp
   parent_bracket_id: uuid_comparison_exp
+  path: String_comparison_exp
   round: Int_comparison_exp
   scheduled_eta: timestamptz_comparison_exp
   stage: tournament_stages_bool_exp
@@ -40168,10 +40176,13 @@ input tournament_brackets_insert_input {
   created_at: timestamptz
   group: numeric
   id: uuid
+  loser_bracket: tournament_brackets_obj_rel_insert_input
+  loser_parent_bracket_id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_number: Int
   parent_bracket_id: uuid
+  path: String
   round: Int
   scheduled_eta: timestamptz
   stage: tournament_stages_obj_rel_insert_input
@@ -40189,9 +40200,11 @@ type tournament_brackets_max_fields {
   created_at: timestamptz
   group: numeric
   id: uuid
+  loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
   parent_bracket_id: uuid
+  path: String
   round: Int
   scheduled_eta: timestamptz
   team_1_seed: Int
@@ -40208,9 +40221,11 @@ input tournament_brackets_max_order_by {
   created_at: order_by
   group: order_by
   id: order_by
+  loser_parent_bracket_id: order_by
   match_id: order_by
   match_number: order_by
   parent_bracket_id: order_by
+  path: order_by
   round: order_by
   scheduled_eta: order_by
   team_1_seed: order_by
@@ -40225,9 +40240,11 @@ type tournament_brackets_min_fields {
   created_at: timestamptz
   group: numeric
   id: uuid
+  loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
   parent_bracket_id: uuid
+  path: String
   round: Int
   scheduled_eta: timestamptz
   team_1_seed: Int
@@ -40244,9 +40261,11 @@ input tournament_brackets_min_order_by {
   created_at: order_by
   group: order_by
   id: order_by
+  loser_parent_bracket_id: order_by
   match_id: order_by
   match_number: order_by
   parent_bracket_id: order_by
+  path: order_by
   round: order_by
   scheduled_eta: order_by
   team_1_seed: order_by
@@ -40268,6 +40287,16 @@ type tournament_brackets_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "tournament_brackets"
+"""
+input tournament_brackets_obj_rel_insert_input {
+  data: tournament_brackets_insert_input!
+
+  """upsert condition"""
+  on_conflict: tournament_brackets_on_conflict
+}
+
+"""
 on_conflict condition type for table "tournament_brackets"
 """
 input tournament_brackets_on_conflict {
@@ -40282,10 +40311,13 @@ input tournament_brackets_order_by {
   created_at: order_by
   group: order_by
   id: order_by
+  loser_bracket: tournament_brackets_order_by
+  loser_parent_bracket_id: order_by
   match: matches_order_by
   match_id: order_by
   match_number: order_by
   parent_bracket_id: order_by
+  path: order_by
   round: order_by
   scheduled_eta: order_by
   stage: tournament_stages_order_by
@@ -40320,6 +40352,9 @@ enum tournament_brackets_select_column {
   id
 
   """column name"""
+  loser_parent_bracket_id
+
+  """column name"""
   match_id
 
   """column name"""
@@ -40327,6 +40362,9 @@ enum tournament_brackets_select_column {
 
   """column name"""
   parent_bracket_id
+
+  """column name"""
+  path
 
   """column name"""
   round
@@ -40374,9 +40412,11 @@ input tournament_brackets_set_input {
   created_at: timestamptz
   group: numeric
   id: uuid
+  loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
   parent_bracket_id: uuid
+  path: String
   round: Int
   scheduled_eta: timestamptz
   team_1_seed: Int
@@ -40463,9 +40503,11 @@ input tournament_brackets_stream_cursor_value_input {
   created_at: timestamptz
   group: numeric
   id: uuid
+  loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
   parent_bracket_id: uuid
+  path: String
   round: Int
   scheduled_eta: timestamptz
   team_1_seed: Int
@@ -40512,6 +40554,9 @@ enum tournament_brackets_update_column {
   id
 
   """column name"""
+  loser_parent_bracket_id
+
+  """column name"""
   match_id
 
   """column name"""
@@ -40519,6 +40564,9 @@ enum tournament_brackets_update_column {
 
   """column name"""
   parent_bracket_id
+
+  """column name"""
+  path
 
   """column name"""
   round

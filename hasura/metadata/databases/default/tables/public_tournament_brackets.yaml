@@ -2,6 +2,15 @@ table:
   name: tournament_brackets
   schema: public
 object_relationships:
+  - name: loser_bracket
+    using:
+      manual_configuration:
+        column_mapping:
+          loser_parent_bracket_id: id
+        insertion_order: null
+        remote_table:
+          name: tournament_brackets
+          schema: public
   - name: match
     using:
       foreign_key_constraint_on: match_id
@@ -22,9 +31,11 @@ select_permissions:
         - created_at
         - group
         - id
+        - loser_parent_bracket_id
         - match_id
         - match_number
         - parent_bracket_id
+        - path
         - round
         - scheduled_eta
         - team_1_seed

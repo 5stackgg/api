@@ -145,7 +145,7 @@ export class MatchmakingGateway {
       if (game_server_nodes_aggregate.aggregate.count !== 0) {
         checkLatency = true;
         if (Object.keys(latencyResults).length === 0) {
-          this.logger.warn("Unable to get latency results, skipping latency check");
+          // TODO - they dont have latency checks, since we dont have a TURN server there is no relaible way to check latency
           checkLatency = false;
         }
       }

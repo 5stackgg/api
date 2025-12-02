@@ -3,7 +3,8 @@
 CREATE OR REPLACE FUNCTION link_round_group_matches(
     _stage_id uuid,
     _current_round int,
-    _group int
+    _group int,
+    _path text
 ) RETURNS void AS $$
 DECLARE
     current_round_matches uuid[];
@@ -19,7 +20,8 @@ BEGIN
     FROM tournament_brackets tb
     WHERE tb.tournament_stage_id = _stage_id 
       AND tb.round = _current_round 
-      AND tb."group" = _group;
+      AND tb."group" = _group
+      AND COALESCE(tb.path, 'WB') = COALESCE(_path, 'WB');
     
     current_count := COALESCE(array_length(current_round_matches, 1), 0);
     
@@ -29,7 +31,8 @@ BEGIN
     FROM tournament_brackets tb
     WHERE tb.tournament_stage_id = _stage_id 
       AND tb.round = _current_round + 1 
-      AND tb."group" = _group;
+      AND tb."group" = _group
+      AND COALESCE(tb.path, 'WB') = COALESCE(_path, 'WB');
     
     next_count := COALESCE(array_length(next_round_matches, 1), 0);
     
@@ -49,8 +52,8 @@ BEGIN
             SET parent_bracket_id = next_round_matches[target_idx]
             WHERE id = current_round_matches[i];
             
-            RAISE NOTICE 'Linked match: Round % Group % Match % -> Parent Round % Group % Match %', 
-                _current_round, _group, i,
+            RAISE NOTICE 'Linked match (%): Round % Group % Match % -> Parent Round % Group % Match %', 
+                COALESCE(_path, 'WB'), _current_round, _group, i,
                 _current_round + 1, _group, target_idx;
         END IF;
     END LOOP;
