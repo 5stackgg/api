@@ -6435,6 +6435,10 @@ type game_server_nodes {
   available_server_count: Int
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_frequency_info(
+    """JSON select path"""
+    path: String
+  ): jsonb
   cpu_governor_info(
     """JSON select path"""
     path: String
@@ -6591,6 +6595,7 @@ input game_server_nodes_aggregate_order_by {
 
 """append existing jsonb value of filtered columns with new jsonb value"""
 input game_server_nodes_append_input {
+  cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
 }
 
@@ -6649,6 +6654,7 @@ input game_server_nodes_bool_exp {
   available_server_count: Int_comparison_exp
   build_id: Int_comparison_exp
   cpu_cores_per_socket: Int_comparison_exp
+  cpu_frequency_info: jsonb_comparison_exp
   cpu_governor_info: jsonb_comparison_exp
   cpu_sockets: Int_comparison_exp
   cpu_threads_per_core: Int_comparison_exp
@@ -6695,6 +6701,7 @@ enum game_server_nodes_constraint {
 delete the field or element with specified path (for JSON arrays, negative integers count from the end)
 """
 input game_server_nodes_delete_at_path_input {
+  cpu_frequency_info: [String!]
   cpu_governor_info: [String!]
 }
 
@@ -6702,6 +6709,7 @@ input game_server_nodes_delete_at_path_input {
 delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
 """
 input game_server_nodes_delete_elem_input {
+  cpu_frequency_info: Int
   cpu_governor_info: Int
 }
 
@@ -6709,6 +6717,7 @@ input game_server_nodes_delete_elem_input {
 delete key/value pair or string element. key/value pairs are matched based on their key value
 """
 input game_server_nodes_delete_key_input {
+  cpu_frequency_info: String
   cpu_governor_info: String
 }
 
@@ -6732,6 +6741,7 @@ input type for inserting data into table "game_server_nodes"
 input game_server_nodes_insert_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
@@ -6894,6 +6904,7 @@ input game_server_nodes_order_by {
   available_server_count: order_by
   build_id: order_by
   cpu_cores_per_socket: order_by
+  cpu_frequency_info: order_by
   cpu_governor_info: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
@@ -6932,6 +6943,7 @@ input game_server_nodes_pk_columns_input {
 
 """prepend existing jsonb value of filtered columns with new jsonb value"""
 input game_server_nodes_prepend_input {
+  cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
 }
 
@@ -6944,6 +6956,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   cpu_cores_per_socket
+
+  """column name"""
+  cpu_frequency_info
 
   """column name"""
   cpu_governor_info
@@ -7052,6 +7067,7 @@ input type for updating data in table "game_server_nodes"
 input game_server_nodes_set_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
@@ -7196,6 +7212,7 @@ input game_server_nodes_stream_cursor_input {
 input game_server_nodes_stream_cursor_value_input {
   build_id: Int
   cpu_cores_per_socket: Int
+  cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
@@ -7264,6 +7281,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   cpu_cores_per_socket
+
+  """column name"""
+  cpu_frequency_info
 
   """column name"""
   cpu_governor_info

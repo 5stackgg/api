@@ -52,6 +52,10 @@ export class GameServerNodeController {
       governor: string;
       cpus: Record<number, string>;
     };
+    cpuFrequencyInfo: {
+      cpus: Record<number, number>;
+      frequency: number;
+    };
     podStats: Array<PodStats>;
     labels: Record<string, string>;
   }): Promise<void> {
@@ -79,6 +83,7 @@ export class GameServerNodeController {
       payload.supportsLowLatency,
       payload.nodeStats.cpuInfo,
       payload.cpuGovernorInfo,
+      payload.cpuFrequencyInfo,
       payload.nodeStats.nvidiaGPU,
       "Online",
     );

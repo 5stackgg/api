@@ -16,5 +16,3 @@ declare module "pg-cursor" {
   const Cursor: CursorConstructor;
   export = Cursor;
 }
-
-

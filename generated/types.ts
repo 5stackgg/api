@@ -8416,6 +8416,14 @@ export default {
             "cpu_cores_per_socket": [
                 9
             ],
+            "cpu_frequency_info": [
+                750,
+                {
+                    "path": [
+                        18
+                    ]
+                }
+            ],
             "cpu_governor_info": [
                 750,
                 {
@@ -8715,6 +8723,9 @@ export default {
             ]
         },
         "game_server_nodes_append_input": {
+            "cpu_frequency_info": [
+                750
+            ],
             "cpu_governor_info": [
                 750
             ],
@@ -8816,6 +8827,9 @@ export default {
             "cpu_cores_per_socket": [
                 10
             ],
+            "cpu_frequency_info": [
+                752
+            ],
             "cpu_governor_info": [
                 752
             ],
@@ -8912,6 +8926,9 @@ export default {
         },
         "game_server_nodes_constraint": {},
         "game_server_nodes_delete_at_path_input": {
+            "cpu_frequency_info": [
+                18
+            ],
             "cpu_governor_info": [
                 18
             ],
@@ -8920,6 +8937,9 @@ export default {
             ]
         },
         "game_server_nodes_delete_elem_input": {
+            "cpu_frequency_info": [
+                9
+            ],
             "cpu_governor_info": [
                 9
             ],
@@ -8928,6 +8948,9 @@ export default {
             ]
         },
         "game_server_nodes_delete_key_input": {
+            "cpu_frequency_info": [
+                18
+            ],
             "cpu_governor_info": [
                 18
             ],
@@ -8970,6 +8993,9 @@ export default {
             ],
             "cpu_cores_per_socket": [
                 9
+            ],
+            "cpu_frequency_info": [
+                750
             ],
             "cpu_governor_info": [
                 750
@@ -9314,6 +9340,9 @@ export default {
             "cpu_cores_per_socket": [
                 1405
             ],
+            "cpu_frequency_info": [
+                1405
+            ],
             "cpu_governor_info": [
                 1405
             ],
@@ -9414,6 +9443,9 @@ export default {
             ]
         },
         "game_server_nodes_prepend_input": {
+            "cpu_frequency_info": [
+                750
+            ],
             "cpu_governor_info": [
                 750
             ],
@@ -9430,6 +9462,9 @@ export default {
             ],
             "cpu_cores_per_socket": [
                 9
+            ],
+            "cpu_frequency_info": [
+                750
             ],
             "cpu_governor_info": [
                 750
@@ -9710,6 +9745,9 @@ export default {
             ],
             "cpu_cores_per_socket": [
                 9
+            ],
+            "cpu_frequency_info": [
+                750
             ],
             "cpu_governor_info": [
                 750
