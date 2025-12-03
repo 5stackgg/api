@@ -3,26 +3,26 @@ RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    max_round int;
-    incomplete_matches int;
+    total_brackets int;
+    unfinished_brackets int;
 BEGIN
-    SELECT MAX(tb.round) INTO max_round
-    FROM tournament_brackets tb
-    INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-    WHERE ts.tournament_id = _tournament_id;
+    select count(*) into total_brackets
+    from tournament_brackets tb
+    inner join tournament_stages ts on ts.id = tb.tournament_stage_id
+    where ts.tournament_id = _tournament_id
+    and tb.bye = false;
 
-    SELECT COUNT(*) INTO incomplete_matches
-    FROM tournament_brackets tb
-    INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-    INNER JOIN matches m ON m.id = tb.match_id
-    WHERE ts.tournament_id = _tournament_id
-      AND tb.round = max_round
-      AND m.winning_lineup_id IS NULL;
+   select count(*) into unfinished_brackets
+    from tournament_brackets tb
+    inner join tournament_stages ts on ts.id = tb.tournament_stage_id
+    where ts.tournament_id = _tournament_id
+    and tb.bye = false
+    and tb.finished = false;
 
-    IF incomplete_matches = 0 THEN
-        UPDATE tournaments
-        SET status = 'Finished'
-        WHERE id = _tournament_id;
-    END IF;
+    if unfinished_brackets = 0 then
+        update tournaments
+        set status = 'Finished'
+        where id = _tournament_id;
+    end if;
 END;
 $$;

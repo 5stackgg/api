@@ -28,6 +28,10 @@ BEGIN
         losing_team_id = bracket.tournament_team_id_1;
     END IF;
 
+    update tournament_brackets
+    SET finished = true
+    WHERE id = bracket.id;
+
     IF bracket.parent_bracket_id IS NOT NULL THEN
         PERFORM public.assign_team_to_bracket_slot(bracket.parent_bracket_id, winning_team_id);
     END IF;

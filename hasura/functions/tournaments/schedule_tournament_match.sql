@@ -40,7 +40,11 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
                  winner_id := COALESCE(bracket.tournament_team_id_1, bracket.tournament_team_id_2);
 
                  IF winner_id IS NOT NULL AND bracket.parent_bracket_id IS NOT NULL THEN
-                     PERFORM public.assign_team_to_bracket_slot(bracket.parent_bracket_id, winner_id);
+                    update tournament_brackets
+                    SET finished = true
+                    WHERE id = bracket.id;
+                    
+                    PERFORM public.assign_team_to_bracket_slot(bracket.parent_bracket_id, winner_id);
                  END IF;
 
                  RETURN NULL;
