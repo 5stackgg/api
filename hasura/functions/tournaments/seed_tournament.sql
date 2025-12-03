@@ -64,12 +64,13 @@ BEGIN
     LOOP
         RAISE NOTICE '--- Processing Stage % (groups: %) ---', stage."order", stage.groups;
         
-        -- Process first round brackets which have seed positions set
+        -- Process first-round *winners* brackets which have seed positions set
         FOR bracket IN 
             SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
             FROM tournament_brackets tb
             WHERE tb.tournament_stage_id = stage.id
               AND tb.round = 1
+              AND COALESCE(tb.path, 'WB') = 'WB'  -- never seed or mark byes on loser brackets
             ORDER BY tb."group" ASC, tb.match_number ASC
         LOOP
             team_1_id := NULL;
@@ -134,6 +135,7 @@ BEGIN
         JOIN tournament_stages ts ON tb.tournament_stage_id = ts.id
         WHERE ts.tournament_id = tournament.id
           AND tb.round = 1
+          AND COALESCE(tb.path, 'WB') = 'WB'  -- byes only apply to winners brackets
           AND (tb.tournament_team_id_1 IS NULL OR tb.tournament_team_id_2 IS NULL)
         ORDER BY tb.match_number ASC
     LOOP

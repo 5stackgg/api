@@ -16,6 +16,7 @@ BEGIN
         JOIN tournament_stages ts ON tb.tournament_stage_id = ts.id
         WHERE ts.tournament_id = p_tournament_id
           AND tb.round = 1
+          AND COALESCE(tb.path, 'WB') = 'WB'  -- only resolve byes in winners brackets
           AND (
             (tb.tournament_team_id_1 IS NULL AND tb.tournament_team_id_2 IS NOT NULL) OR
             (tb.tournament_team_id_1 IS NOT NULL AND tb.tournament_team_id_2 IS NULL)
