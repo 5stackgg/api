@@ -270,12 +270,12 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        NEW.cancels_at = scheduled_at + (auto_cancel_duration)::interval;
+        NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
         NEW.ended_at = null;
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
-        NEW.cancels_at = scheduled_at + (auto_cancel_duration)::interval;
+        NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
         NEW.ended_at = null;
     END IF;
 
@@ -317,7 +317,7 @@ BEGIN
 
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
         NEW.started_at = NOW();
-        NEW.cancels_at = NOW() + INTERVAL '1 day';
+        NEW.cancels_at = null;
         NEW.ended_at = null;
     END IF;
 

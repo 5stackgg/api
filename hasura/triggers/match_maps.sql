@@ -35,9 +35,9 @@ BEGIN
         update matches set cancels_at = NOW() + (auto_cancel_duration)::interval where id = NEW.match_id;
     END IF;
 
-    IF NEW.status = 'Live' THEN
+    IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'OverTime') THEN
         NEW.started_at = NOW();
-        update matches set cancels_at = null where id = NEW.match_id;
+        update matches set cancels_at = NOW() + INTERVAL '3 hours' where id = NEW.match_id;
     END IF;
 
     IF NEW.status = 'Finished' THEN
