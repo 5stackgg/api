@@ -27,6 +27,14 @@ BEGIN
         
         _min_teams := NEW.min_teams;
 
+        -- Validate first stage minimum teams (must be at least 4 * number of groups)
+        IF current_order = 1 AND NEW.groups IS NOT NULL AND NEW.groups > 0 THEN
+            IF NEW.min_teams < 4 * NEW.groups THEN
+                RAISE EXCEPTION 'First stage must have at least % teams given % groups (minimum 4 teams per group)', 
+                    4 * NEW.groups, NEW.groups USING ERRCODE = '22000';
+            END IF;
+        END IF;
+
         FOR stage_record IN 
             SELECT * FROM tournament_stages 
             WHERE tournament_id = NEW.tournament_id 
@@ -158,6 +166,14 @@ BEGIN
     IF OLD.min_teams != NEW.min_teams THEN
         IF NEW.max_teams < NEW.min_teams THEN
             NEW.max_teams = NEW.min_teams;
+        END IF;
+    END IF;
+
+    -- Validate first stage minimum teams (must be at least 4 * number of groups)
+    IF NEW."order" = 1 AND NEW.groups IS NOT NULL AND NEW.groups > 0 THEN
+        IF NEW.min_teams < 4 * NEW.groups THEN
+            RAISE EXCEPTION 'First stage must have at least % teams given % groups (minimum 4 teams per group)', 
+                4 * NEW.groups, NEW.groups USING ERRCODE = '22000';
         END IF;
     END IF;
     
