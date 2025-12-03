@@ -364,6 +364,7 @@ export class MatchmakeService {
     // if they are unable to accuire the lock, it means they are already being matched, or another region is trying to matchmake
     for (const lobby of lobbies) {
       try {
+        // see if team 1 has room for the new lobby
         if (team1.players.length + lobby.players.length <= playersPerTeam) {
           const lock = await this.accquireLobbyLock(lobby.lobbyId);
           if (!lock) {
@@ -381,7 +382,9 @@ export class MatchmakeService {
             (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
             team1.lobbies.length;
           lobbiesAdded.push(lobby.lobbyId);
-        } else if (
+        }
+        // see if team 2 has room for the new lobby
+        else if (
           team2.players.length + lobby.players.length <=
           playersPerTeam
         ) {
