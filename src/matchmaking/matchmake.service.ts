@@ -355,15 +355,14 @@ export class MatchmakeService {
       avgRank: 0,
     };
 
-    const lobbiesAdded: Array<number> = [];
+    const lobbiesAdded: Array<string> = [];
     const playersPerTeam = requiredPlayers / 2;
 
     let lobbyLocks = new Set<string>();
 
     // try to fill teams with available lobbies
     // if they are unable to accuire the lock, it means they are already being matched, or another region is trying to matchmake
-    for (let lobbyIndex = 0; lobbyIndex < lobbies.length; lobbyIndex++) {
-      const lobby = lobbies[lobbyIndex];
+    for (const lobby of lobbies) {
       try {
         if (team1.players.length + lobby.players.length <= playersPerTeam) {
           const lock = await this.accquireLobbyLock(lobby.lobbyId);
@@ -381,7 +380,7 @@ export class MatchmakeService {
           team1.avgRank =
             (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
             team1.lobbies.length;
-          lobbiesAdded.push(lobbyIndex);
+          lobbiesAdded.push(lobby.lobbyId);
         } else if (
           team2.players.length + lobby.players.length <=
           playersPerTeam
@@ -400,7 +399,7 @@ export class MatchmakeService {
           team2.avgRank =
             (team2.avgRank * (team2.lobbies.length - 1) + lobby.avgRank) /
             team2.lobbies.length;
-          lobbiesAdded.push(lobbyIndex);
+          lobbiesAdded.push(lobby.lobbyId);
         }
       } catch (error) {
         this.logger.error(`Error processing lobby ${lobby.lobbyId}:`, error);
@@ -412,8 +411,13 @@ export class MatchmakeService {
       }
     }
 
-    for (const lobbyIndex of lobbiesAdded) {
-      lobbies.splice(lobbyIndex, 1);
+    for (const lobbyId of lobbiesAdded) {
+      const lobbyIndex = lobbies.findIndex(
+        (lobby) => lobby.lobbyId === lobbyId,
+      );
+      if (lobbyIndex !== -1) {
+        lobbies.splice(lobbyIndex, 1);
+      }
     }
 
     let totalPlayerNotQueued = 0;
