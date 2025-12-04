@@ -47,10 +47,12 @@ export default class KillEvent extends MatchEventProcessor<{
             headshot: this.data.headshot,
             assisted: this.data.assisted,
 
-            ...(this.data.attacker_steam_id ? attacker_data : {
-              // self damage
-              attacker_steam_id: this.data.attacked_steam_id,
-            }),
+            ...(this.data.attacker_steam_id
+              ? attacker_data
+              : {
+                  // self damage
+                  attacker_steam_id: this.data.attacked_steam_id,
+                }),
 
             attacked_steam_id: this.data.attacked_steam_id,
             attacked_team: this.data.attacked_team,

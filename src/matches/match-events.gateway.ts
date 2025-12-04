@@ -70,6 +70,7 @@ export class MatchEventsGateway {
   async handleMatchEvent(
     @MessageBody()
     message: {
+      mapId?: string;
       matchId: string;
       messageId: string;
       data: {
@@ -78,13 +79,17 @@ export class MatchEventsGateway {
       };
     },
   ) {
-    const { matchId, messageId } = message;
+    const { matchId, mapId, messageId } = message;
 
-    if (await this.cache.has(`match-event-${matchId}-${messageId}`)) {
+    const cacheKey = mapId
+      ? `match-events:${matchId}:${mapId}:${messageId}`
+      : `match-events:${matchId}:${messageId}`;
+
+    if (await this.cache.has(cacheKey)) {
       return messageId;
     }
 
-    await this.cache.put(`${matchId}-${messageId}`, true, 10);
+    await this.cache.put(cacheKey, true, 10);
 
     const { data, event } = message.data;
 
