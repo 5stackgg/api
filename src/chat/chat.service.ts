@@ -370,7 +370,7 @@ export class ChatService {
   }
 
   private getLobbyKey(type: ChatLobbyType, id: string): string {
-    return `lobby:${type}:${id}`;
+    return `chat:${type}:${id}`;
   }
 
   private async getUserData(type: ChatLobbyType, id: string, steamId: string) {
@@ -406,5 +406,9 @@ export class ChatService {
       steamId,
       ...JSON.parse(data),
     }));
+  }
+
+  public async removeLobby(type: ChatLobbyType, id: string) {
+    await this.redis.del(this.getLobbyKey(type, id));
   }
 }
