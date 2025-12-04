@@ -16891,7 +16891,7 @@ type mutation_root {
   """
   delete single row from the table: "player_assists"
   """
-  delete_player_assists_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_assists
+  delete_player_assists_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_assists
 
   """
   delete data from the table: "player_damages"
@@ -16904,7 +16904,7 @@ type mutation_root {
   """
   delete single row from the table: "player_damages"
   """
-  delete_player_damages_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
+  delete_player_damages_by_pk(id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
   delete data from the table: "player_elo"
@@ -16930,7 +16930,7 @@ type mutation_root {
   """
   delete single row from the table: "player_flashes"
   """
-  delete_player_flashes_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_flashes
+  delete_player_flashes_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_flashes
 
   """
   delete data from the table: "player_kills"
@@ -16943,7 +16943,7 @@ type mutation_root {
   """
   delete single row from the table: "player_kills"
   """
-  delete_player_kills_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_kills
+  delete_player_kills_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_kills
 
   """
   delete data from the table: "player_objectives"
@@ -16956,7 +16956,7 @@ type mutation_root {
   """
   delete single row from the table: "player_objectives"
   """
-  delete_player_objectives_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_objectives
+  delete_player_objectives_by_pk(match_map_id: uuid!, player_steam_id: bigint!, time: timestamptz!): player_objectives
 
   """
   delete data from the table: "player_sanctions"
@@ -16982,7 +16982,7 @@ type mutation_root {
   """
   delete single row from the table: "player_unused_utility"
   """
-  delete_player_unused_utility_by_pk(id: uuid!): player_unused_utility
+  delete_player_unused_utility_by_pk(match_map_id: uuid!, player_steam_id: bigint!): player_unused_utility
 
   """
   delete data from the table: "player_utility"
@@ -16995,7 +16995,7 @@ type mutation_root {
   """
   delete single row from the table: "player_utility"
   """
-  delete_player_utility_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_utility
+  delete_player_utility_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_utility
 
   """
   delete data from the table: "players"
@@ -22529,7 +22529,6 @@ type player_assists {
   attacker_team: String!
   deleted_at: timestamptz
   flash: Boolean!
-  id: uuid!
 
   """
   A computed field, executes function "is_team_assist"
@@ -22659,7 +22658,6 @@ input player_assists_bool_exp {
   attacker_team: String_comparison_exp
   deleted_at: timestamptz_comparison_exp
   flash: Boolean_comparison_exp
-  id: uuid_comparison_exp
   is_team_assist: Boolean_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -22675,7 +22673,7 @@ unique or primary key constraints on table "player_assists"
 """
 enum player_assists_constraint {
   """
-  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  unique or primary key constraint on columns "attacker_steam_id", "attacked_steam_id", "time", "match_map_id"
   """
   player_assists_pkey
 }
@@ -22700,7 +22698,6 @@ input player_assists_insert_input {
   attacker_team: String
   deleted_at: timestamptz
   flash: Boolean
-  id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
@@ -22717,7 +22714,6 @@ type player_assists_max_fields {
   attacker_steam_id: bigint
   attacker_team: String
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -22733,7 +22729,6 @@ input player_assists_max_order_by {
   attacker_steam_id: order_by
   attacker_team: order_by
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -22747,7 +22742,6 @@ type player_assists_min_fields {
   attacker_steam_id: bigint
   attacker_team: String
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -22763,7 +22757,6 @@ input player_assists_min_order_by {
   attacker_steam_id: order_by
   attacker_team: order_by
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -22799,7 +22792,6 @@ input player_assists_order_by {
   attacker_team: order_by
   deleted_at: order_by
   flash: order_by
-  id: order_by
   is_team_assist: order_by
   match: matches_order_by
   match_id: order_by
@@ -22812,8 +22804,8 @@ input player_assists_order_by {
 
 """primary key columns input for table: player_assists"""
 input player_assists_pk_columns_input {
-  id: uuid!
-  match_id: uuid!
+  attacked_steam_id: bigint!
+  attacker_steam_id: bigint!
   match_map_id: uuid!
   time: timestamptz!
 }
@@ -22839,9 +22831,6 @@ enum player_assists_select_column {
 
   """column name"""
   flash
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -22882,7 +22871,6 @@ input player_assists_set_input {
   attacker_team: String
   deleted_at: timestamptz
   flash: Boolean
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -22956,7 +22944,6 @@ input player_assists_stream_cursor_value_input {
   attacker_team: String
   deleted_at: timestamptz
   flash: Boolean
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -23000,9 +22987,6 @@ enum player_assists_update_column {
 
   """column name"""
   flash
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -23245,7 +23229,7 @@ unique or primary key constraints on table "player_damages"
 """
 enum player_damages_constraint {
   """
-  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  unique or primary key constraint on columns "id", "time", "match_map_id"
   """
   player_damages_pkey
 }
@@ -23445,7 +23429,6 @@ input player_damages_order_by {
 """primary key columns input for table: player_damages"""
 input player_damages_pk_columns_input {
   id: uuid!
-  match_id: uuid!
   match_map_id: uuid!
   time: timestamptz!
 }
@@ -24114,7 +24097,6 @@ type player_flashes {
   blinded: players!
   deleted_at: timestamptz
   duration: numeric!
-  id: uuid!
 
   """An object relationship"""
   match: matches!
@@ -24240,7 +24222,6 @@ input player_flashes_bool_exp {
   blinded: players_bool_exp
   deleted_at: timestamptz_comparison_exp
   duration: numeric_comparison_exp
-  id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
@@ -24256,7 +24237,7 @@ unique or primary key constraints on table "player_flashes"
 """
 enum player_flashes_constraint {
   """
-  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  unique or primary key constraint on columns "attacker_steam_id", "attacked_steam_id", "time", "match_map_id"
   """
   player_flashes_pkey
 }
@@ -24280,7 +24261,6 @@ input player_flashes_insert_input {
   blinded: players_obj_rel_insert_input
   deleted_at: timestamptz
   duration: numeric
-  id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
@@ -24297,7 +24277,6 @@ type player_flashes_max_fields {
   attacker_steam_id: bigint
   deleted_at: timestamptz
   duration: numeric
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -24312,7 +24291,6 @@ input player_flashes_max_order_by {
   attacker_steam_id: order_by
   deleted_at: order_by
   duration: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -24325,7 +24303,6 @@ type player_flashes_min_fields {
   attacker_steam_id: bigint
   deleted_at: timestamptz
   duration: numeric
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -24340,7 +24317,6 @@ input player_flashes_min_order_by {
   attacker_steam_id: order_by
   deleted_at: order_by
   duration: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -24374,7 +24350,6 @@ input player_flashes_order_by {
   blinded: players_order_by
   deleted_at: order_by
   duration: order_by
-  id: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
@@ -24387,8 +24362,8 @@ input player_flashes_order_by {
 
 """primary key columns input for table: player_flashes"""
 input player_flashes_pk_columns_input {
-  id: uuid!
-  match_id: uuid!
+  attacked_steam_id: bigint!
+  attacker_steam_id: bigint!
   match_map_id: uuid!
   time: timestamptz!
 }
@@ -24408,9 +24383,6 @@ enum player_flashes_select_column {
 
   """column name"""
   duration
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -24452,7 +24424,6 @@ input player_flashes_set_input {
   attacker_steam_id: bigint
   deleted_at: timestamptz
   duration: numeric
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -24531,7 +24502,6 @@ input player_flashes_stream_cursor_value_input {
   attacker_steam_id: bigint
   deleted_at: timestamptz
   duration: numeric
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -24572,9 +24542,6 @@ enum player_flashes_update_column {
 
   """column name"""
   duration
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -24671,13 +24638,12 @@ type player_kills {
   attacked_team: String!
   attacker_location: String
   attacker_location_coordinates: String
-  attacker_steam_id: bigint
+  attacker_steam_id: bigint!
   attacker_team: String
   blinded: Boolean!
   deleted_at: timestamptz
   headshot: Boolean!
   hitgroup: String!
-  id: uuid!
   in_air: Boolean!
 
   """
@@ -24695,7 +24661,7 @@ type player_kills {
   no_scope: Boolean!
 
   """An object relationship"""
-  player: players
+  player: players!
   round: Int!
 
   """
@@ -24824,7 +24790,6 @@ input player_kills_bool_exp {
   deleted_at: timestamptz_comparison_exp
   headshot: Boolean_comparison_exp
   hitgroup: String_comparison_exp
-  id: uuid_comparison_exp
   in_air: Boolean_comparison_exp
   is_suicide: Boolean_comparison_exp
   match: matches_bool_exp
@@ -24846,7 +24811,7 @@ unique or primary key constraints on table "player_kills"
 """
 enum player_kills_constraint {
   """
-  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  unique or primary key constraint on columns "attacker_steam_id", "attacked_steam_id", "time", "match_map_id"
   """
   player_kills_pkey
 }
@@ -24878,7 +24843,6 @@ input player_kills_insert_input {
   deleted_at: timestamptz
   headshot: Boolean
   hitgroup: String
-  id: uuid
   in_air: Boolean
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -24905,7 +24869,6 @@ type player_kills_max_fields {
   attacker_team: String
   deleted_at: timestamptz
   hitgroup: String
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -24927,7 +24890,6 @@ input player_kills_max_order_by {
   attacker_team: order_by
   deleted_at: order_by
   hitgroup: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -24947,7 +24909,6 @@ type player_kills_min_fields {
   attacker_team: String
   deleted_at: timestamptz
   hitgroup: String
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -24969,7 +24930,6 @@ input player_kills_min_order_by {
   attacker_team: order_by
   deleted_at: order_by
   hitgroup: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -25013,7 +24973,6 @@ input player_kills_order_by {
   deleted_at: order_by
   headshot: order_by
   hitgroup: order_by
-  id: order_by
   in_air: order_by
   is_suicide: order_by
   match: matches_order_by
@@ -25032,8 +24991,8 @@ input player_kills_order_by {
 
 """primary key columns input for table: player_kills"""
 input player_kills_pk_columns_input {
-  id: uuid!
-  match_id: uuid!
+  attacked_steam_id: bigint!
+  attacker_steam_id: bigint!
   match_map_id: uuid!
   time: timestamptz!
 }
@@ -25080,9 +25039,6 @@ enum player_kills_select_column {
 
   """column name"""
   hitgroup
-
-  """column name"""
-  id
 
   """column name"""
   in_air
@@ -25181,7 +25137,6 @@ input player_kills_set_input {
   deleted_at: timestamptz
   headshot: Boolean
   hitgroup: String
-  id: uuid
   in_air: Boolean
   match_id: uuid
   match_map_id: uuid
@@ -25267,7 +25222,6 @@ input player_kills_stream_cursor_value_input {
   deleted_at: timestamptz
   headshot: Boolean
   hitgroup: String
-  id: uuid
   in_air: Boolean
   match_id: uuid
   match_map_id: uuid
@@ -25337,9 +25291,6 @@ enum player_kills_update_column {
 
   """column name"""
   hitgroup
-
-  """column name"""
-  id
 
   """column name"""
   in_air
@@ -25433,7 +25384,6 @@ columns and relationships of "player_objectives"
 """
 type player_objectives {
   deleted_at: timestamptz
-  id: uuid!
 
   """An object relationship"""
   match: matches!
@@ -25536,7 +25486,6 @@ input player_objectives_bool_exp {
   _not: player_objectives_bool_exp
   _or: [player_objectives_bool_exp!]
   deleted_at: timestamptz_comparison_exp
-  id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
@@ -25553,7 +25502,7 @@ unique or primary key constraints on table "player_objectives"
 """
 enum player_objectives_constraint {
   """
-  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  unique or primary key constraint on columns "player_steam_id", "time", "match_map_id"
   """
   player_objectives_pkey
 }
@@ -25571,7 +25520,6 @@ input type for inserting data into table "player_objectives"
 """
 input player_objectives_insert_input {
   deleted_at: timestamptz
-  id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
@@ -25586,7 +25534,6 @@ input player_objectives_insert_input {
 """aggregate max on columns"""
 type player_objectives_max_fields {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -25599,7 +25546,6 @@ order by max() on columns of table "player_objectives"
 """
 input player_objectives_max_order_by {
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   player_steam_id: order_by
@@ -25610,7 +25556,6 @@ input player_objectives_max_order_by {
 """aggregate min on columns"""
 type player_objectives_min_fields {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -25623,7 +25568,6 @@ order by min() on columns of table "player_objectives"
 """
 input player_objectives_min_order_by {
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   player_steam_id: order_by
@@ -25654,7 +25598,6 @@ input player_objectives_on_conflict {
 """Ordering options when selecting data from "player_objectives"."""
 input player_objectives_order_by {
   deleted_at: order_by
-  id: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
@@ -25668,9 +25611,8 @@ input player_objectives_order_by {
 
 """primary key columns input for table: player_objectives"""
 input player_objectives_pk_columns_input {
-  id: uuid!
-  match_id: uuid!
   match_map_id: uuid!
+  player_steam_id: bigint!
   time: timestamptz!
 }
 
@@ -25680,9 +25622,6 @@ select columns of table "player_objectives"
 enum player_objectives_select_column {
   """column name"""
   deleted_at
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -25708,7 +25647,6 @@ input type for updating data in table "player_objectives"
 """
 input player_objectives_set_input {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -25773,7 +25711,6 @@ input player_objectives_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_objectives_stream_cursor_value_input {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -25802,9 +25739,6 @@ update columns of table "player_objectives"
 enum player_objectives_update_column {
   """column name"""
   deleted_at
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -26189,7 +26123,6 @@ columns and relationships of "player_unused_utility"
 """
 type player_unused_utility {
   deleted_at: timestamptz
-  id: uuid!
 
   """An object relationship"""
   match: matches!
@@ -26293,7 +26226,6 @@ input player_unused_utility_bool_exp {
   _not: player_unused_utility_bool_exp
   _or: [player_unused_utility_bool_exp!]
   deleted_at: timestamptz_comparison_exp
-  id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
@@ -26309,7 +26241,7 @@ unique or primary key constraints on table "player_unused_utility"
 """
 enum player_unused_utility_constraint {
   """
-  unique or primary key constraint on columns "id"
+  unique or primary key constraint on columns "player_steam_id", "match_map_id"
   """
   player_unused_utility_pkey
 }
@@ -26328,7 +26260,6 @@ input type for inserting data into table "player_unused_utility"
 """
 input player_unused_utility_insert_input {
   deleted_at: timestamptz
-  id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
@@ -26342,7 +26273,6 @@ input player_unused_utility_insert_input {
 """aggregate max on columns"""
 type player_unused_utility_max_fields {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -26355,7 +26285,6 @@ order by max() on columns of table "player_unused_utility"
 """
 input player_unused_utility_max_order_by {
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   player_steam_id: order_by
@@ -26366,7 +26295,6 @@ input player_unused_utility_max_order_by {
 """aggregate min on columns"""
 type player_unused_utility_min_fields {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -26379,7 +26307,6 @@ order by min() on columns of table "player_unused_utility"
 """
 input player_unused_utility_min_order_by {
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   player_steam_id: order_by
@@ -26410,7 +26337,6 @@ input player_unused_utility_on_conflict {
 """Ordering options when selecting data from "player_unused_utility"."""
 input player_unused_utility_order_by {
   deleted_at: order_by
-  id: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
@@ -26423,7 +26349,8 @@ input player_unused_utility_order_by {
 
 """primary key columns input for table: player_unused_utility"""
 input player_unused_utility_pk_columns_input {
-  id: uuid!
+  match_map_id: uuid!
+  player_steam_id: bigint!
 }
 
 """
@@ -26432,9 +26359,6 @@ select columns of table "player_unused_utility"
 enum player_unused_utility_select_column {
   """column name"""
   deleted_at
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -26457,7 +26381,6 @@ input type for updating data in table "player_unused_utility"
 """
 input player_unused_utility_set_input {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -26527,7 +26450,6 @@ input player_unused_utility_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_unused_utility_stream_cursor_value_input {
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   player_steam_id: bigint
@@ -26557,9 +26479,6 @@ update columns of table "player_unused_utility"
 enum player_unused_utility_update_column {
   """column name"""
   deleted_at
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -26643,7 +26562,6 @@ type player_utility {
   attacker_location_coordinates: String
   attacker_steam_id: bigint!
   deleted_at: timestamptz
-  id: uuid!
 
   """An object relationship"""
   match: matches!
@@ -26747,7 +26665,6 @@ input player_utility_bool_exp {
   attacker_location_coordinates: String_comparison_exp
   attacker_steam_id: bigint_comparison_exp
   deleted_at: timestamptz_comparison_exp
-  id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
@@ -26763,7 +26680,7 @@ unique or primary key constraints on table "player_utility"
 """
 enum player_utility_constraint {
   """
-  unique or primary key constraint on columns "id", "time", "match_map_id", "match_id"
+  unique or primary key constraint on columns "attacker_steam_id", "time", "match_map_id"
   """
   player_utility_pkey
 }
@@ -26783,7 +26700,6 @@ input player_utility_insert_input {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   deleted_at: timestamptz
-  id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
@@ -26799,7 +26715,6 @@ type player_utility_max_fields {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -26813,7 +26728,6 @@ input player_utility_max_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -26825,7 +26739,6 @@ type player_utility_min_fields {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -26839,7 +26752,6 @@ input player_utility_min_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
   deleted_at: order_by
-  id: order_by
   match_id: order_by
   match_map_id: order_by
   round: order_by
@@ -26871,7 +26783,6 @@ input player_utility_order_by {
   attacker_location_coordinates: order_by
   attacker_steam_id: order_by
   deleted_at: order_by
-  id: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
@@ -26884,8 +26795,7 @@ input player_utility_order_by {
 
 """primary key columns input for table: player_utility"""
 input player_utility_pk_columns_input {
-  id: uuid!
-  match_id: uuid!
+  attacker_steam_id: bigint!
   match_map_id: uuid!
   time: timestamptz!
 }
@@ -26902,9 +26812,6 @@ enum player_utility_select_column {
 
   """column name"""
   deleted_at
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -26929,7 +26836,6 @@ input player_utility_set_input {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -26995,7 +26901,6 @@ input player_utility_stream_cursor_value_input {
   attacker_location_coordinates: String
   attacker_steam_id: bigint
   deleted_at: timestamptz
-  id: uuid
   match_id: uuid
   match_map_id: uuid
   round: Int
@@ -27029,9 +26934,6 @@ enum player_utility_update_column {
 
   """column name"""
   deleted_at
-
-  """column name"""
-  id
 
   """column name"""
   match_id
@@ -31253,7 +31155,7 @@ type query_root {
   ): player_assists_aggregate!
 
   """fetch data from the table: "player_assists" using primary key columns"""
-  player_assists_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_assists
+  player_assists_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_assists
 
   """An array relationship"""
   player_damages(
@@ -31292,7 +31194,7 @@ type query_root {
   ): player_damages_aggregate!
 
   """fetch data from the table: "player_damages" using primary key columns"""
-  player_damages_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
+  player_damages_by_pk(id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
   fetch data from the table: "player_elo"
@@ -31374,7 +31276,7 @@ type query_root {
   ): player_flashes_aggregate!
 
   """fetch data from the table: "player_flashes" using primary key columns"""
-  player_flashes_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_flashes
+  player_flashes_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_flashes
 
   """An array relationship"""
   player_kills(
@@ -31413,7 +31315,7 @@ type query_root {
   ): player_kills_aggregate!
 
   """fetch data from the table: "player_kills" using primary key columns"""
-  player_kills_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_kills
+  player_kills_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_kills
 
   """An array relationship"""
   player_objectives(
@@ -31454,7 +31356,7 @@ type query_root {
   """
   fetch data from the table: "player_objectives" using primary key columns
   """
-  player_objectives_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_objectives
+  player_objectives_by_pk(match_map_id: uuid!, player_steam_id: bigint!, time: timestamptz!): player_objectives
 
   """
   fetch data from the table: "player_sanctions"
@@ -31544,7 +31446,7 @@ type query_root {
   """
   fetch data from the table: "player_unused_utility" using primary key columns
   """
-  player_unused_utility_by_pk(id: uuid!): player_unused_utility
+  player_unused_utility_by_pk(match_map_id: uuid!, player_steam_id: bigint!): player_unused_utility
 
   """An array relationship"""
   player_utility(
@@ -31583,7 +31485,7 @@ type query_root {
   ): player_utility_aggregate!
 
   """fetch data from the table: "player_utility" using primary key columns"""
-  player_utility_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_utility
+  player_utility_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_utility
 
   """
   fetch data from the table: "players"
@@ -36809,7 +36711,7 @@ type subscription_root {
   ): player_assists_aggregate!
 
   """fetch data from the table: "player_assists" using primary key columns"""
-  player_assists_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_assists
+  player_assists_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_assists
 
   """
   fetch data from the table in a streaming manner: "player_assists"
@@ -36862,7 +36764,7 @@ type subscription_root {
   ): player_damages_aggregate!
 
   """fetch data from the table: "player_damages" using primary key columns"""
-  player_damages_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
+  player_damages_by_pk(id: uuid!, match_map_id: uuid!, time: timestamptz!): player_damages
 
   """
   fetch data from the table in a streaming manner: "player_damages"
@@ -36972,7 +36874,7 @@ type subscription_root {
   ): player_flashes_aggregate!
 
   """fetch data from the table: "player_flashes" using primary key columns"""
-  player_flashes_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_flashes
+  player_flashes_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_flashes
 
   """
   fetch data from the table in a streaming manner: "player_flashes"
@@ -37025,7 +36927,7 @@ type subscription_root {
   ): player_kills_aggregate!
 
   """fetch data from the table: "player_kills" using primary key columns"""
-  player_kills_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_kills
+  player_kills_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_kills
 
   """
   fetch data from the table in a streaming manner: "player_kills"
@@ -37080,7 +36982,7 @@ type subscription_root {
   """
   fetch data from the table: "player_objectives" using primary key columns
   """
-  player_objectives_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_objectives
+  player_objectives_by_pk(match_map_id: uuid!, player_steam_id: bigint!, time: timestamptz!): player_objectives
 
   """
   fetch data from the table in a streaming manner: "player_objectives"
@@ -37198,7 +37100,7 @@ type subscription_root {
   """
   fetch data from the table: "player_unused_utility" using primary key columns
   """
-  player_unused_utility_by_pk(id: uuid!): player_unused_utility
+  player_unused_utility_by_pk(match_map_id: uuid!, player_steam_id: bigint!): player_unused_utility
 
   """
   fetch data from the table in a streaming manner: "player_unused_utility"
@@ -37251,7 +37153,7 @@ type subscription_root {
   ): player_utility_aggregate!
 
   """fetch data from the table: "player_utility" using primary key columns"""
-  player_utility_by_pk(id: uuid!, match_id: uuid!, match_map_id: uuid!, time: timestamptz!): player_utility
+  player_utility_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_utility
 
   """
   fetch data from the table in a streaming manner: "player_utility"
@@ -40002,6 +39904,7 @@ columns and relationships of "tournament_brackets"
 type tournament_brackets {
   bye: Boolean!
   created_at: timestamptz!
+  finished: Boolean!
   group: numeric
   id: uuid!
 
@@ -40013,6 +39916,9 @@ type tournament_brackets {
   match: matches
   match_id: uuid
   match_number: Int
+
+  """An object relationship"""
+  parent_bracket: tournament_brackets
   parent_bracket_id: uuid
   path: String
   round: Int!
@@ -40141,6 +40047,7 @@ input tournament_brackets_bool_exp {
   _or: [tournament_brackets_bool_exp!]
   bye: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
+  finished: Boolean_comparison_exp
   group: numeric_comparison_exp
   id: uuid_comparison_exp
   loser_bracket: tournament_brackets_bool_exp
@@ -40148,6 +40055,7 @@ input tournament_brackets_bool_exp {
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_number: Int_comparison_exp
+  parent_bracket: tournament_brackets_bool_exp
   parent_bracket_id: uuid_comparison_exp
   path: String_comparison_exp
   round: Int_comparison_exp
@@ -40194,6 +40102,7 @@ input type for inserting data into table "tournament_brackets"
 input tournament_brackets_insert_input {
   bye: Boolean
   created_at: timestamptz
+  finished: Boolean
   group: numeric
   id: uuid
   loser_bracket: tournament_brackets_obj_rel_insert_input
@@ -40201,6 +40110,7 @@ input tournament_brackets_insert_input {
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_number: Int
+  parent_bracket: tournament_brackets_obj_rel_insert_input
   parent_bracket_id: uuid
   path: String
   round: Int
@@ -40329,6 +40239,7 @@ input tournament_brackets_on_conflict {
 input tournament_brackets_order_by {
   bye: order_by
   created_at: order_by
+  finished: order_by
   group: order_by
   id: order_by
   loser_bracket: tournament_brackets_order_by
@@ -40336,6 +40247,7 @@ input tournament_brackets_order_by {
   match: matches_order_by
   match_id: order_by
   match_number: order_by
+  parent_bracket: tournament_brackets_order_by
   parent_bracket_id: order_by
   path: order_by
   round: order_by
@@ -40364,6 +40276,9 @@ enum tournament_brackets_select_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  finished
 
   """column name"""
   group
@@ -40414,6 +40329,9 @@ select "tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns" colum
 enum tournament_brackets_select_column_tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   bye
+
+  """column name"""
+  finished
 }
 
 """
@@ -40422,6 +40340,9 @@ select "tournament_brackets_aggregate_bool_exp_bool_or_arguments_columns" column
 enum tournament_brackets_select_column_tournament_brackets_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   bye
+
+  """column name"""
+  finished
 }
 
 """
@@ -40430,6 +40351,7 @@ input type for updating data in table "tournament_brackets"
 input tournament_brackets_set_input {
   bye: Boolean
   created_at: timestamptz
+  finished: Boolean
   group: numeric
   id: uuid
   loser_parent_bracket_id: uuid
@@ -40521,6 +40443,7 @@ input tournament_brackets_stream_cursor_input {
 input tournament_brackets_stream_cursor_value_input {
   bye: Boolean
   created_at: timestamptz
+  finished: Boolean
   group: numeric
   id: uuid
   loser_parent_bracket_id: uuid
@@ -40566,6 +40489,9 @@ enum tournament_brackets_update_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  finished
 
   """column name"""
   group

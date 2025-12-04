@@ -24545,9 +24545,6 @@ export default {
             "flash": [
                 1
             ],
-            "id": [
-                2336
-            ],
             "is_team_assist": [
                 1
             ],
@@ -24807,9 +24804,6 @@ export default {
             "flash": [
                 2
             ],
-            "id": [
-                2337
-            ],
             "is_team_assist": [
                 2
             ],
@@ -24875,9 +24869,6 @@ export default {
             "flash": [
                 1
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1270
             ],
@@ -24919,9 +24910,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -24952,9 +24940,6 @@ export default {
                 1405
             ],
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -24989,9 +24974,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -25022,9 +25004,6 @@ export default {
                 1405
             ],
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -25090,9 +25069,6 @@ export default {
             "flash": [
                 1405
             ],
-            "id": [
-                1405
-            ],
             "is_team_assist": [
                 1405
             ],
@@ -25122,11 +25098,11 @@ export default {
             ]
         },
         "player_assists_pk_columns_input": {
-            "id": [
-                2336
+            "attacked_steam_id": [
+                110
             ],
-            "match_id": [
-                2336
+            "attacker_steam_id": [
+                110
             ],
             "match_map_id": [
                 2336
@@ -25159,9 +25135,6 @@ export default {
             ],
             "flash": [
                 1
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -25292,9 +25265,6 @@ export default {
             ],
             "flash": [
                 1
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -26263,9 +26233,6 @@ export default {
         },
         "player_damages_pk_columns_input": {
             "id": [
-                2336
-            ],
-            "match_id": [
                 2336
             ],
             "match_map_id": [
@@ -27256,9 +27223,6 @@ export default {
             "duration": [
                 1403
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1252
             ],
@@ -27518,9 +27482,6 @@ export default {
             "duration": [
                 1404
             ],
-            "id": [
-                2337
-            ],
             "match": [
                 1261
             ],
@@ -27583,9 +27544,6 @@ export default {
             "duration": [
                 1403
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1270
             ],
@@ -27627,9 +27585,6 @@ export default {
             "duration": [
                 1403
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -27657,9 +27612,6 @@ export default {
                 1405
             ],
             "duration": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -27691,9 +27643,6 @@ export default {
             "duration": [
                 1403
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -27721,9 +27670,6 @@ export default {
                 1405
             ],
             "duration": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -27783,9 +27729,6 @@ export default {
             "duration": [
                 1405
             ],
-            "id": [
-                1405
-            ],
             "match": [
                 1272
             ],
@@ -27815,11 +27758,11 @@ export default {
             ]
         },
         "player_flashes_pk_columns_input": {
-            "id": [
-                2336
+            "attacked_steam_id": [
+                110
             ],
-            "match_id": [
-                2336
+            "attacker_steam_id": [
+                110
             ],
             "match_map_id": [
                 2336
@@ -27846,9 +27789,6 @@ export default {
             ],
             "duration": [
                 1403
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -27994,9 +27934,6 @@ export default {
             ],
             "duration": [
                 1403
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -28210,9 +28147,6 @@ export default {
             ],
             "hitgroup": [
                 18
-            ],
-            "id": [
-                2336
             ],
             "in_air": [
                 1
@@ -28512,9 +28446,6 @@ export default {
             "hitgroup": [
                 20
             ],
-            "id": [
-                2337
-            ],
             "in_air": [
                 2
             ],
@@ -28619,9 +28550,6 @@ export default {
             "hitgroup": [
                 18
             ],
-            "id": [
-                2336
-            ],
             "in_air": [
                 1
             ],
@@ -28693,9 +28621,6 @@ export default {
             "hitgroup": [
                 18
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -28744,9 +28669,6 @@ export default {
                 1405
             ],
             "hitgroup": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -28799,9 +28721,6 @@ export default {
             "hitgroup": [
                 18
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -28850,9 +28769,6 @@ export default {
                 1405
             ],
             "hitgroup": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -28942,9 +28858,6 @@ export default {
             "hitgroup": [
                 1405
             ],
-            "id": [
-                1405
-            ],
             "in_air": [
                 1405
             ],
@@ -28992,11 +28905,11 @@ export default {
             ]
         },
         "player_kills_pk_columns_input": {
-            "id": [
-                2336
+            "attacked_steam_id": [
+                110
             ],
-            "match_id": [
-                2336
+            "attacker_steam_id": [
+                110
             ],
             "match_map_id": [
                 2336
@@ -29050,9 +28963,6 @@ export default {
             ],
             "hitgroup": [
                 18
-            ],
-            "id": [
-                2336
             ],
             "in_air": [
                 1
@@ -29220,9 +29130,6 @@ export default {
             "hitgroup": [
                 18
             ],
-            "id": [
-                2336
-            ],
             "in_air": [
                 1
             ],
@@ -29384,9 +29291,6 @@ export default {
         "player_objectives": {
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match": [
                 1252
@@ -29586,9 +29490,6 @@ export default {
             "deleted_at": [
                 2035
             ],
-            "id": [
-                2337
-            ],
             "match": [
                 1261
             ],
@@ -29636,9 +29537,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1270
             ],
@@ -29674,9 +29572,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -29698,9 +29593,6 @@ export default {
         },
         "player_objectives_max_order_by": {
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -29726,9 +29618,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -29750,9 +29639,6 @@ export default {
         },
         "player_objectives_min_order_by": {
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -29803,9 +29689,6 @@ export default {
             "deleted_at": [
                 1405
             ],
-            "id": [
-                1405
-            ],
             "match": [
                 1272
             ],
@@ -29838,14 +29721,11 @@ export default {
             ]
         },
         "player_objectives_pk_columns_input": {
-            "id": [
-                2336
-            ],
-            "match_id": [
-                2336
-            ],
             "match_map_id": [
                 2336
+            ],
+            "player_steam_id": [
+                110
             ],
             "time": [
                 2034
@@ -29858,9 +29738,6 @@ export default {
         "player_objectives_set_input": {
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -29964,9 +29841,6 @@ export default {
         "player_objectives_stream_cursor_value_input": {
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -30565,9 +30439,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1252
             ],
@@ -30769,9 +30640,6 @@ export default {
             "deleted_at": [
                 2035
             ],
-            "id": [
-                2337
-            ],
             "match": [
                 1261
             ],
@@ -30819,9 +30687,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1270
             ],
@@ -30854,9 +30719,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -30878,9 +30740,6 @@ export default {
         },
         "player_unused_utility_max_order_by": {
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -30906,9 +30765,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -30930,9 +30786,6 @@ export default {
         },
         "player_unused_utility_min_order_by": {
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -30983,9 +30836,6 @@ export default {
             "deleted_at": [
                 1405
             ],
-            "id": [
-                1405
-            ],
             "match": [
                 1272
             ],
@@ -31015,8 +30865,11 @@ export default {
             ]
         },
         "player_unused_utility_pk_columns_input": {
-            "id": [
+            "match_map_id": [
                 2336
+            ],
+            "player_steam_id": [
+                110
             ],
             "__typename": [
                 18
@@ -31026,9 +30879,6 @@ export default {
         "player_unused_utility_set_input": {
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -31147,9 +30997,6 @@ export default {
         "player_unused_utility_stream_cursor_value_input": {
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -31306,9 +31153,6 @@ export default {
             ],
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match": [
                 1252
@@ -31511,9 +31355,6 @@ export default {
             "deleted_at": [
                 2035
             ],
-            "id": [
-                2337
-            ],
             "match": [
                 1261
             ],
@@ -31564,9 +31405,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match": [
                 1270
             ],
@@ -31605,9 +31443,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -31632,9 +31467,6 @@ export default {
                 1405
             ],
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -31663,9 +31495,6 @@ export default {
             "deleted_at": [
                 2034
             ],
-            "id": [
-                2336
-            ],
             "match_id": [
                 2336
             ],
@@ -31690,9 +31519,6 @@ export default {
                 1405
             ],
             "deleted_at": [
-                1405
-            ],
-            "id": [
                 1405
             ],
             "match_id": [
@@ -31746,9 +31572,6 @@ export default {
             "deleted_at": [
                 1405
             ],
-            "id": [
-                1405
-            ],
             "match": [
                 1272
             ],
@@ -31778,11 +31601,8 @@ export default {
             ]
         },
         "player_utility_pk_columns_input": {
-            "id": [
-                2336
-            ],
-            "match_id": [
-                2336
+            "attacker_steam_id": [
+                110
             ],
             "match_map_id": [
                 2336
@@ -31804,9 +31624,6 @@ export default {
             ],
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -31913,9 +31730,6 @@ export default {
             ],
             "deleted_at": [
                 2034
-            ],
-            "id": [
-                2336
             ],
             "match_id": [
                 2336
@@ -38514,6 +38328,9 @@ export default {
             "created_at": [
                 2034
             ],
+            "finished": [
+                1
+            ],
             "group": [
                 1403
             ],
@@ -38534,6 +38351,9 @@ export default {
             ],
             "match_number": [
                 9
+            ],
+            "parent_bracket": [
+                2036
             ],
             "parent_bracket_id": [
                 2336
@@ -38803,6 +38623,9 @@ export default {
             "created_at": [
                 2035
             ],
+            "finished": [
+                2
+            ],
             "group": [
                 1404
             ],
@@ -38823,6 +38646,9 @@ export default {
             ],
             "match_number": [
                 10
+            ],
+            "parent_bracket": [
+                2047
             ],
             "parent_bracket_id": [
                 2337
@@ -38892,6 +38718,9 @@ export default {
             "created_at": [
                 2034
             ],
+            "finished": [
+                1
+            ],
             "group": [
                 1403
             ],
@@ -38912,6 +38741,9 @@ export default {
             ],
             "match_number": [
                 9
+            ],
+            "parent_bracket": [
+                2056
             ],
             "parent_bracket_id": [
                 2336
@@ -39196,6 +39028,9 @@ export default {
             "created_at": [
                 1405
             ],
+            "finished": [
+                1405
+            ],
             "group": [
                 1405
             ],
@@ -39216,6 +39051,9 @@ export default {
             ],
             "match_number": [
                 1405
+            ],
+            "parent_bracket": [
+                2058
             ],
             "parent_bracket_id": [
                 1405
@@ -39274,6 +39112,9 @@ export default {
             ],
             "created_at": [
                 2034
+            ],
+            "finished": [
+                1
             ],
             "group": [
                 1403
@@ -39458,6 +39299,9 @@ export default {
             ],
             "created_at": [
                 2034
+            ],
+            "finished": [
+                1
             ],
             "group": [
                 1403
@@ -51542,13 +51386,13 @@ export default {
             "player_assists_by_pk": [
                 1406,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -51608,10 +51452,6 @@ export default {
                 1451,
                 {
                     "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
                         2336,
                         "uuid!"
                     ],
@@ -51729,13 +51569,13 @@ export default {
             "player_flashes_by_pk": [
                 1519,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -51794,13 +51634,13 @@ export default {
             "player_kills_by_pk": [
                 1564,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -51859,17 +51699,13 @@ export default {
             "player_objectives_by_pk": [
                 1609,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
-                    ],
                     "match_map_id": [
                         2336,
                         "uuid!"
+                    ],
+                    "player_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "time": [
                         2034,
@@ -51981,9 +51817,13 @@ export default {
             "player_unused_utility_by_pk": [
                 1677,
                 {
-                    "id": [
+                    "match_map_id": [
                         2336,
                         "uuid!"
+                    ],
+                    "player_steam_id": [
+                        110,
+                        "bigint!"
                     ]
                 }
             ],
@@ -52034,13 +51874,9 @@ export default {
             "player_utility_by_pk": [
                 1718,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -54249,13 +54085,13 @@ export default {
             "delete_player_assists_by_pk": [
                 1406,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -54280,10 +54116,6 @@ export default {
                 1451,
                 {
                     "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
                         2336,
                         "uuid!"
                     ],
@@ -54331,13 +54163,13 @@ export default {
             "delete_player_flashes_by_pk": [
                 1519,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -54361,13 +54193,13 @@ export default {
             "delete_player_kills_by_pk": [
                 1564,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -54391,17 +54223,13 @@ export default {
             "delete_player_objectives_by_pk": [
                 1609,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
-                    ],
                     "match_map_id": [
                         2336,
                         "uuid!"
+                    ],
+                    "player_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "time": [
                         2034,
@@ -54443,9 +54271,13 @@ export default {
             "delete_player_unused_utility_by_pk": [
                 1677,
                 {
-                    "id": [
+                    "match_map_id": [
                         2336,
                         "uuid!"
+                    ],
+                    "player_steam_id": [
+                        110,
+                        "bigint!"
                     ]
                 }
             ],
@@ -54461,13 +54293,9 @@ export default {
             "delete_player_utility_by_pk": [
                 1718,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -63110,13 +62938,13 @@ export default {
             "player_assists_by_pk": [
                 1406,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -63192,10 +63020,6 @@ export default {
                 1451,
                 {
                     "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
                         2336,
                         "uuid!"
                     ],
@@ -63345,13 +63169,13 @@ export default {
             "player_flashes_by_pk": [
                 1519,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -63426,13 +63250,13 @@ export default {
             "player_kills_by_pk": [
                 1564,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
+                    "attacked_steam_id": [
+                        110,
+                        "bigint!"
                     ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
@@ -63507,17 +63331,13 @@ export default {
             "player_objectives_by_pk": [
                 1609,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
-                    ],
                     "match_map_id": [
                         2336,
                         "uuid!"
+                    ],
+                    "player_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "time": [
                         2034,
@@ -63661,9 +63481,13 @@ export default {
             "player_unused_utility_by_pk": [
                 1677,
                 {
-                    "id": [
+                    "match_map_id": [
                         2336,
                         "uuid!"
+                    ],
+                    "player_steam_id": [
+                        110,
+                        "bigint!"
                     ]
                 }
             ],
@@ -63730,13 +63554,9 @@ export default {
             "player_utility_by_pk": [
                 1718,
                 {
-                    "id": [
-                        2336,
-                        "uuid!"
-                    ],
-                    "match_id": [
-                        2336,
-                        "uuid!"
+                    "attacker_steam_id": [
+                        110,
+                        "bigint!"
                     ],
                     "match_map_id": [
                         2336,
