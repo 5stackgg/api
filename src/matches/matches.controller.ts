@@ -27,6 +27,8 @@ import { MatchQueues } from "./enums/MatchQueues";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
+import { ChatService } from "src/chat/chat.service";
+import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
 
 @Controller("matches")
 export class MatchesController {
@@ -43,6 +45,7 @@ export class MatchesController {
     private readonly discordMatchOverview: DiscordBotOverviewService,
     private readonly discordBotVoiceChannels: DiscordBotVoiceChannelsService,
     private readonly notifications: NotificationsService,
+    private readonly chatService: ChatService,
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
@@ -275,6 +278,10 @@ export class MatchesController {
     const matchId = (data.new.id || data.old.id) as string;
 
     const status = data.new.status;
+
+    if (data.op === "DELETE") {
+      await this.chatService.removeLobby(ChatLobbyType.Match, matchId);
+    }
 
     /**
      * Match was canceled or finished
