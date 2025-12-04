@@ -56,6 +56,8 @@ BEGIN
         IF is_banned((SELECT p FROM players p WHERE steam_id = NEW.steam_id)) THEN
             RAISE EXCEPTION 'Player is Currently Banned' USING ERRCODE = '22000';
         END IF;
+
+        DELETE FROM match_invites WHERE match_id = (SELECT match_id FROM v_match_lineups WHERE id = NEW.match_lineup_id) and steam_id = NEW.steam_id;
     END IF;
 
     IF TG_OP = 'DELETE' THEN

@@ -96,6 +96,10 @@ export class InvitesController {
       friendsLineup = lineup_2;
     }
 
+    if (!friendsLineup) {
+      friendsLineup = lineup_1;
+    }
+
     let lineupId = friendsLineup.id;
     if (
       friendsLineup.lineup_players.length >=

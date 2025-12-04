@@ -15,19 +15,22 @@ insert_permissions:
   - role: user
     permission:
       check:
-        match:
-          _and:
-            - status:
-                _eq: PickingPlayers
-            - _or:
-                - is_organizer:
-                    _eq: true
-                - options:
-                    lobby_access:
-                      _in:
-                        - Open
-                        - Friends
-                        - Invite
+        _and:
+          - steam_id:
+              _neq: X-Hasura-User-Id
+          - match:
+              _and:
+                - status:
+                    _eq: PickingPlayers
+                - _or:
+                    - is_organizer:
+                        _eq: true
+                    - options:
+                        lobby_access:
+                          _in:
+                            - Open
+                            - Friends
+                            - Invite
       set:
         invited_by_player_steam_id: x-hasura-User-Id
       columns:
@@ -48,8 +51,11 @@ select_permissions:
           - steam_id:
               _eq: X-Hasura-User-Id
           - match:
-              is_in_lineup:
-                _eq: true
+              _or:
+                - is_in_lineup:
+                    _eq: true
+                - is_organizer:
+                    _eq: true
     comment: ""
 delete_permissions:
   - role: user
