@@ -362,48 +362,63 @@ export class MatchmakeService {
 
     // try to fill teams with available lobbies
     // if they are unable to accuire the lock, it means they are already being matched, or another region is trying to matchmake
+    // we assign lobbies to the team that keeps average elo between teams as close as possible
     for (const lobby of lobbies) {
       try {
-        // see if team 1 has room for the new lobby
-        if (team1.players.length + lobby.players.length <= playersPerTeam) {
-          const lock = await this.accquireLobbyLock(lobby.lobbyId);
-          if (!lock) {
-            this.logger.warn(
-              `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
-            );
-            continue;
-          }
+        const lock = await this.accquireLobbyLock(lobby.lobbyId);
 
-          lobbyLocks.add(lobby.lobbyId);
-
-          team1.players.push(...lobby.players);
-          team1.lobbies.push(lobby.lobbyId);
-          team1.avgRank =
-            (team1.avgRank * (team1.lobbies.length - 1) + lobby.avgRank) /
-            team1.lobbies.length;
-          lobbiesAdded.push(lobby.lobbyId);
+        if (!lock) {
+          this.logger.warn(
+            `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
+          );
+          continue;
         }
-        // see if team 2 has room for the new lobby
-        else if (
-          team2.players.length + lobby.players.length <=
-          playersPerTeam
-        ) {
-          const lock = await this.accquireLobbyLock(lobby.lobbyId);
-          if (!lock) {
-            this.logger.warn(
-              `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
-            );
-            continue;
-          }
-          lobbyLocks.add(lobby.lobbyId);
 
-          team2.players.push(...lobby.players);
-          team2.lobbies.push(lobby.lobbyId);
-          team2.avgRank =
-            (team2.avgRank * (team2.lobbies.length - 1) + lobby.avgRank) /
-            team2.lobbies.length;
-          lobbiesAdded.push(lobby.lobbyId);
+        const team1HasRoom =
+          team1.players.length + lobby.players.length <= playersPerTeam;
+        const team2HasRoom =
+          team2.players.length + lobby.players.length <= playersPerTeam;
+
+        if (!team1HasRoom && !team2HasRoom) {
+          await this.releaseLobbyLock(lobby.lobbyId, 0);
+          continue;
         }
+
+        let targetTeam: MatchmakingTeam;
+
+        if (!team1HasRoom) {
+          targetTeam = team2;
+        } else if (!team2HasRoom) {
+          targetTeam = team1;
+        } else {
+          const team1LobbyCount = team1.lobbies.length;
+          const team2LobbyCount = team2.lobbies.length;
+
+          const newTeam1AvgIfAdded =
+            (team1.avgRank * team1LobbyCount + lobby.avgRank) /
+            (team1LobbyCount + 1);
+
+          const newTeam2AvgIfAdded =
+            (team2.avgRank * team2LobbyCount + lobby.avgRank) /
+            (team2LobbyCount + 1);
+
+          const diffIfToTeam1 = Math.abs(newTeam1AvgIfAdded - team2.avgRank);
+          const diffIfToTeam2 = Math.abs(newTeam2AvgIfAdded - team1.avgRank);
+
+          targetTeam = diffIfToTeam1 <= diffIfToTeam2 ? team1 : team2;
+        }
+
+        lobbyLocks.add(lobby.lobbyId);
+
+        targetTeam.players.push(...lobby.players);
+        targetTeam.lobbies.push(lobby.lobbyId);
+
+        targetTeam.avgRank =
+          (targetTeam.avgRank * (targetTeam.lobbies.length - 1) +
+            lobby.avgRank) /
+          targetTeam.lobbies.length;
+
+        lobbiesAdded.push(lobby.lobbyId);
       } catch (error) {
         this.logger.error(`Error processing lobby ${lobby.lobbyId}:`, error);
         // If we acquired a lock but failed to process, release it
