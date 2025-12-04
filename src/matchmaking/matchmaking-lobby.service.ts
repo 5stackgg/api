@@ -237,7 +237,7 @@ export class MatchmakingLobbyService {
         continue;
       }
 
-      totalElo += players_by_pk.elo || 0;
+      totalElo += Number(players_by_pk.elo);
     }
     return totalElo / _players.length;
   }
