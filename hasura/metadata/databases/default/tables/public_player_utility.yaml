@@ -17,7 +17,6 @@ select_permissions:
       columns:
         - attacker_location_coordinates
         - attacker_steam_id
-        - id
         - match_id
         - match_map_id
         - round

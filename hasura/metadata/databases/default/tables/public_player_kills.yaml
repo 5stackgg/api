@@ -41,7 +41,6 @@ select_permissions:
         - blinded
         - headshot
         - hitgroup
-        - id
         - in_air
         - match_id
         - match_map_id

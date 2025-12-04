@@ -15,12 +15,11 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - match_id
+        - match_map_id
         - player_steam_id
         - round
         - unused
-        - id
-        - match_id
-        - match_map_id
       filter: {}
       allow_aggregations: true
     comment: ""

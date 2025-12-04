@@ -15,7 +15,6 @@ select_permissions:
   - role: user
     permission:
       columns:
-        - id
         - match_id
         - match_map_id
         - player_steam_id
@@ -23,4 +22,5 @@ select_permissions:
         - time
         - type
       filter: {}
+      allow_aggregations: true
     comment: ""

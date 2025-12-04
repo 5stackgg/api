@@ -21,7 +21,6 @@ select_permissions:
         - attacked_steam_id
         - attacker_steam_id
         - duration
-        - id
         - match_id
         - match_map_id
         - round
