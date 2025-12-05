@@ -117,8 +117,7 @@ export class TypeSenseService {
           },
           { name: "kind", type: "string" },
           { name: "flags", type: "string" },
-          { name: "country", type: "string" },
-          { name: "description", type: "string" },
+          { name: "description", type: "string", index: true, infix: true },
         ],
       });
     }
