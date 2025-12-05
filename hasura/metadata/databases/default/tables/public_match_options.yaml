@@ -32,7 +32,9 @@ insert_permissions:
       check: {}
       columns:
         - best_of
+        - check_in_setting
         - coaches
+        - default_skins
         - knife_round
         - lobby_access
         - map_pool_id
@@ -48,7 +50,6 @@ insert_permissions:
         - timeout_setting
         - tv_delay
         - type
-        - check_in_setting
     comment: ""
   - role: user
     permission:
@@ -56,6 +57,7 @@ insert_permissions:
       columns:
         - best_of
         - coaches
+        - default_skins
         - knife_round
         - lobby_access
         - map_pool_id
@@ -77,7 +79,9 @@ select_permissions:
     permission:
       columns:
         - best_of
+        - check_in_setting
         - coaches
+        - default_skins
         - id
         - knife_round
         - lobby_access
@@ -94,7 +98,6 @@ select_permissions:
         - timeout_setting
         - tv_delay
         - type
-        - check_in_setting
       filter: {}
     comment: ""
 update_permissions:
@@ -104,6 +107,7 @@ update_permissions:
         - best_of
         - check_in_setting
         - coaches
+        - default_skins
         - knife_round
         - lobby_access
         - map_pool_id
@@ -141,6 +145,7 @@ update_permissions:
       columns:
         - best_of
         - coaches
+        - default_skins
         - knife_round
         - lobby_access
         - map_pool_id

@@ -110,6 +110,7 @@ export class MatchesController {
           overtime: true,
           tv_delay: true,
           knife_round: true,
+          default_skins: true,
           ready_setting: true,
           timeout_setting: true,
           tech_timeout_setting: true,

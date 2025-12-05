@@ -13129,6 +13129,7 @@ type match_options {
   best_of: Int!
   check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
+  default_skins: Boolean!
 
   """
   A computed field, executes function "has_active_matches"
@@ -13238,6 +13239,7 @@ input match_options_bool_exp {
   best_of: Int_comparison_exp
   check_in_setting: e_check_in_settings_enum_comparison_exp
   coaches: Boolean_comparison_exp
+  default_skins: Boolean_comparison_exp
   has_active_matches: Boolean_comparison_exp
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
@@ -13289,6 +13291,7 @@ input match_options_insert_input {
   best_of: Int
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
+  default_skins: Boolean
   id: uuid
   invite_code: String
   knife_round: Boolean
@@ -13370,6 +13373,7 @@ input match_options_order_by {
   best_of: order_by
   check_in_setting: order_by
   coaches: order_by
+  default_skins: order_by
   has_active_matches: order_by
   id: order_by
   invite_code: order_by
@@ -13410,6 +13414,9 @@ enum match_options_select_column {
 
   """column name"""
   coaches
+
+  """column name"""
+  default_skins
 
   """column name"""
   id
@@ -13470,6 +13477,7 @@ input match_options_set_input {
   best_of: Int
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
+  default_skins: Boolean
   id: uuid
   invite_code: String
   knife_round: Boolean
@@ -13529,6 +13537,7 @@ input match_options_stream_cursor_value_input {
   best_of: Int
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
+  default_skins: Boolean
   id: uuid
   invite_code: String
   knife_round: Boolean
@@ -13568,6 +13577,9 @@ enum match_options_update_column {
 
   """column name"""
   coaches
+
+  """column name"""
+  default_skins
 
   """column name"""
   id

@@ -18375,6 +18375,9 @@ export default {
             "coaches": [
                 1
             ],
+            "default_skins": [
+                1
+            ],
             "has_active_matches": [
                 1
             ],
@@ -18577,6 +18580,9 @@ export default {
             "coaches": [
                 2
             ],
+            "default_skins": [
+                2
+            ],
             "has_active_matches": [
                 2
             ],
@@ -18673,6 +18679,9 @@ export default {
                 147
             ],
             "coaches": [
+                1
+            ],
+            "default_skins": [
                 1
             ],
             "id": [
@@ -18843,6 +18852,9 @@ export default {
             "coaches": [
                 1405
             ],
+            "default_skins": [
+                1405
+            ],
             "has_active_matches": [
                 1405
             ],
@@ -18927,6 +18939,9 @@ export default {
                 147
             ],
             "coaches": [
+                1
+            ],
+            "default_skins": [
                 1
             ],
             "id": [
@@ -19054,6 +19069,9 @@ export default {
                 147
             ],
             "coaches": [
+                1
+            ],
+            "default_skins": [
                 1
             ],
             "id": [
