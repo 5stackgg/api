@@ -1,3 +1,15 @@
+DELETE FROM player_objectives WHERE id IN (
+    select id from (
+        SELECT id,
+               ROW_NUMBER() OVER (
+                   PARTITION BY match_map_id, time, player_steam_id
+                   ORDER BY id
+               ) as rn
+        FROM player_objectives
+    ) t
+    WHERE t.rn > 1
+);
+
 ALTER TABLE "public"."player_objectives" DROP CONSTRAINT "player_objectives_pkey";
 
 ALTER TABLE "public"."player_objectives"
