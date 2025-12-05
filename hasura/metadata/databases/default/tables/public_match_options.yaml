@@ -34,7 +34,7 @@ insert_permissions:
         - best_of
         - check_in_setting
         - coaches
-        - default_skins
+        - default_models
         - knife_round
         - lobby_access
         - map_pool_id
@@ -57,7 +57,7 @@ insert_permissions:
       columns:
         - best_of
         - coaches
-        - default_skins
+        - default_models
         - knife_round
         - lobby_access
         - map_pool_id
@@ -81,7 +81,7 @@ select_permissions:
         - best_of
         - check_in_setting
         - coaches
-        - default_skins
+        - default_models
         - id
         - knife_round
         - lobby_access
@@ -107,7 +107,7 @@ update_permissions:
         - best_of
         - check_in_setting
         - coaches
-        - default_skins
+        - default_models
         - knife_round
         - lobby_access
         - map_pool_id
@@ -145,7 +145,7 @@ update_permissions:
       columns:
         - best_of
         - coaches
-        - default_skins
+        - default_models
         - knife_round
         - lobby_access
         - map_pool_id
