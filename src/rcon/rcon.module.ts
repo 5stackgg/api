@@ -7,6 +7,7 @@ import { EncryptionModule } from "../encryption/encryption.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { TypeSenseModule } from "../type-sense/type-sense.module";
 import { RedisModule } from "../redis/redis.module";
+import { CacheModule } from "../cache/cache.module";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RedisModule } from "../redis/redis.module";
     NotificationsModule,
     TypeSenseModule,
     RedisModule,
+    CacheModule,
   ],
   exports: [RconService],
   providers: [RconGateway, RconService, loggerFactory()],

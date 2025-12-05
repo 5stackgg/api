@@ -5,6 +5,7 @@ import { EncryptionService } from "../encryption/encryption.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { TypeSenseService } from "../type-sense/type-sense.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { CacheService } from "../cache/cache.service";
 
 @Injectable()
 export class RconService {
@@ -15,6 +16,7 @@ export class RconService {
     private readonly logger: Logger,
     private readonly typeSenseService: TypeSenseService,
     private readonly redisManager: RedisManagerService,
+    private readonly cache: CacheService,
   ) {}
 
   private CONNECTION_TIMEOUT = 3 * 1000;
@@ -115,7 +117,11 @@ export class RconService {
       }
 
       const version = server.game_server_node?.version;
-      if (version?.current === true && version?.cvars === false) {
+      if (server.is_dedicated && !version) {
+        if (!(await this.cache.has("cvars"))) {
+          void this.genreateCvars(serverId);
+        }
+      } else if (version?.current === true && version?.cvars === false) {
         void this.genreateCvars(serverId);
       }
     } catch {
@@ -179,6 +185,7 @@ export class RconService {
         __args: {
           id: serverId,
         },
+        is_dedicated: true,
         game_server_node: {
           version: {
             build_id: true,
@@ -189,17 +196,35 @@ export class RconService {
       },
     });
 
-    if (
-      server.game_server_node?.version?.current === false ||
-      server.game_server_node?.version?.cvars === true
-    ) {
-      return;
+    let buildId: string | undefined;
+    if (server.is_dedicated) {
+      const { game_versions } = await this.hasuraService.query({
+        game_versions: {
+          __args: {
+            where: {
+              current: {
+                _eq: true,
+              },
+            },
+          },
+          build_id: true,
+          cvars: true,
+        },
+      });
+      buildId = game_versions.at(0)?.build_id.toString();
+    } else {
+      if (
+        server.game_server_node?.version?.current === false ||
+        server.game_server_node?.version?.cvars === true
+      ) {
+        return;
+      }
+
+      buildId = server.game_server_node?.version?.build_id.toString();
     }
 
-    const buildId = server.game_server_node?.version?.build_id.toString();
-
     if (!buildId) {
-      throw Error(`unable to find build id for server ${serverId}`);
+      return;
     }
 
     this.logger.log(`generating cvars for build: ${buildId}`);
@@ -243,6 +268,8 @@ export class RconService {
           cvars: true,
         },
       });
+
+      await this.cache.put("cvars", true);
     } catch (error) {
       this.logger.error(
         `unable to generate cvars for build: ${buildId}`,
