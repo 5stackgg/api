@@ -42,11 +42,11 @@ BEGIN
         SELECT array_agg(sr.value) INTO available_regions 
         FROM server_regions sr
         WHERE sr.value = ANY(_regions)
-        AND available_region_server_count(sr) > 0;
+        AND total_region_server_count(sr) > 0;
     ELSE
         SELECT array_agg(sr.value) INTO available_regions 
         FROM server_regions sr
-        WHERE available_region_server_count(sr) > 0
+        WHERE total_region_server_count(sr) > 0
         and sr.is_lan = false;
     END IF;
 
