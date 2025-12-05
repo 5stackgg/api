@@ -239,6 +239,10 @@ export class MatchAssistantService {
         return true;
       }
     } catch (error) {
+      this.logger.error(
+        `[${matchId}] unable to assign on demand server`,
+        error,
+      );
       if (error instanceof FailedToCreateOnDemandServer) {
         setTimeout(async () => {
           this.logger.log(`[${matchId}] try retry assign server....`);
@@ -1128,40 +1132,5 @@ export class MatchAssistantService {
     });
 
     return insert_matches_one;
-  }
-
-  public async getNextPhase(matchId: string) {
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: matchId,
-        },
-        server_id: true,
-        region: true,
-        options: {
-          map_veto: true,
-          region_veto: true,
-          best_of: true,
-        },
-        match_maps: {
-          id: true,
-        },
-      },
-    });
-
-    if (!match || !match.options) {
-      throw Error("unable to find match");
-    }
-    const { region_veto, map_veto, best_of } = match.options;
-
-    let nextPhase: e_match_status_enum = "Live";
-    if (
-      (region_veto && !match.region) ||
-      (map_veto && match.match_maps.length !== best_of)
-    ) {
-      nextPhase = "Veto";
-    }
-
-    return nextPhase;
   }
 }

@@ -511,8 +511,6 @@ export class MatchesController {
       );
     }
 
-    const nextPhase = await this.matchAssistant.getNextPhase(match_id);
-
     const { update_matches_by_pk: updated_match } = await this.hasura.mutation({
       update_matches_by_pk: {
         __args: {
@@ -520,7 +518,7 @@ export class MatchesController {
             id: match_id,
           },
           _set: {
-            status: nextPhase,
+            status: "Live",
             ...(server_id && { server_id }),
           },
         },
@@ -537,14 +535,13 @@ export class MatchesController {
       throw Error("unable to update match");
     }
 
-    if (nextPhase === "Veto") {
+    if (updated_match.status === "Veto") {
       return {
         success: true,
       };
     }
 
-    // TODO - right now the DB doesn't have an idea how many on demands servers we allow
-    if (updated_match.status !== nextPhase) {
+    if (updated_match.status !== "Live") {
       throw Error(
         "Server is not available, another match is using this server currently",
       );
@@ -742,13 +739,11 @@ export class MatchesController {
       },
     });
 
-    const nextPhase = await this.matchAssistant.getNextPhase(data.match_id);
-
     await this.hasura.mutation({
       update_matches: {
         __args: {
           _set: {
-            status: nextPhase,
+            status: "Live",
           },
           where: {
             _and: [

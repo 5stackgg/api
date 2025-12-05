@@ -287,10 +287,7 @@ export class DiscordPickPlayerService {
   public async startMatch(matchId: string) {
     await this.cache.forget(this.getAvailableUsersCacheKey(matchId));
 
-    await this.matchAssistant.updateMatchStatus(
-      matchId,
-      await this.matchAssistant.getNextPhase(matchId),
-    );
+    await this.matchAssistant.updateMatchStatus(matchId, "Live");
   }
 
   private getAvailableUsersCacheKey(matchId: string) {

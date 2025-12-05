@@ -794,7 +794,7 @@ export class MatchmakeService {
       },
     });
 
-    await this.matchAssistant.updateMatchStatus(match.id, "Veto");
+    await this.matchAssistant.updateMatchStatus(match.id, "Live");
 
     // add match id to the confirmation details
     await this.redis.hset(

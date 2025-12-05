@@ -237,6 +237,8 @@ DECLARE
     _regions text[];
     auto_cancel_duration text;
     scheduled_at timestamptz;
+    _match_map_count int;
+    _match_options match_options%ROWTYPE;
 BEGIN
     auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes'; 
 
@@ -246,6 +248,21 @@ BEGIN
 
     IF (NEW.status = 'WaitingForServer' AND OLD.status = 'WaitingForServer') AND (NEW.region != OLD.region OR NEW.server_id != OLD.server_id) THEN
         NEW.status = 'Live';
+    END IF;
+
+    IF(NEW.status = 'Live') THEN
+        SELECT COUNT(*) INTO _match_map_count FROM match_maps WHERE match_id = NEW.id;
+        SELECT * INTO _match_options FROM match_options WHERE id = NEW.match_options_id;
+       
+        -- Check if region veto is needed (no region selected and no maps yet)
+        IF NEW.region IS NULL AND _match_map_count = 0 AND _match_options.region_veto = true THEN
+            NEW.status = 'Veto';
+        END IF;
+
+        -- Check if map veto is enabled and we don't have enough maps for best_of
+        IF _match_options.map_veto = true AND _match_map_count < _match_options.best_of THEN
+            NEW.status = 'Veto';
+        END IF;
     END IF;
 
     IF(OLD.status = 'Finished' AND NEW.status = 'Canceled') THEN
