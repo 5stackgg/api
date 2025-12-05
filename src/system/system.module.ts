@@ -15,6 +15,7 @@ import { SystemGateway } from "./system.gateway.ts";
 import { GameServerNodeModule } from "src/game-server-node/game-server-node.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { S3Module } from "src/s3/s3.module";
+import { PostgresModule } from "src/postgres/postgres.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { S3Module } from "src/s3/s3.module";
     GameServerNodeModule,
     NotificationsModule,
     S3Module,
+    PostgresModule,
     BullModule.registerQueue({
       name: SystemQueues.Version,
     }),

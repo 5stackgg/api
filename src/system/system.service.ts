@@ -13,6 +13,7 @@ import { ConfigService } from "@nestjs/config";
 import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
 import { DiscordConfig } from "src/configs/types/DiscordConfig";
 import { SteamConfig } from "src/configs/types/SteamConfig";
+import { PostgresService } from "src/postgres/postgres.service";
 
 @Injectable()
 export class SystemService {
@@ -26,6 +27,7 @@ export class SystemService {
     private readonly hasura: HasuraService,
     private readonly config: ConfigService,
     private readonly logger: Logger,
+    private readonly postgres: PostgresService,
   ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -395,5 +397,26 @@ export class SystemService {
       },
       300,
     );
+  }
+
+  public async updateDefaultOptions() {
+    const { settings } = await this.hasura.query({
+      settings: {
+        name: true,
+        value: true,
+      },
+    });
+
+    for (const setting of settings) {
+      switch (setting.name) {
+        case "public.default_models":
+          await this.postgres.query(
+            `ALTER TABLE "public"."match_options" ALTER COLUMN "default_models" SET DEFAULT ${setting.value === "true" ? true : false}`,
+          );
+          break;
+        default:
+          break;
+      }
+    }
   }
 }

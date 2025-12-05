@@ -166,5 +166,7 @@ export class SystemController {
     ) {
       await this.gameServerNodeService.updateDemoNetworkLimiters();
     }
+
+    await this.system.updateDefaultOptions();
   }
 }
