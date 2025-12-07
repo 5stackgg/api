@@ -23,8 +23,8 @@ export class PingDedicatedServers extends WorkerHost {
             type: {
               _neq: "Ranked",
             },
-            game_server_node_id: {
-              _is_null: false,
+            is_dedicated: {
+              _eq: true,
             },
           },
         },
@@ -38,7 +38,7 @@ export class PingDedicatedServers extends WorkerHost {
     await Promise.all(
       servers.map(async (server) => {
         if (
-          !server.game_server_node ||
+          server.game_server_node &&
           server.game_server_node.status !== "Online"
         ) {
           await this.hasura.mutation({
