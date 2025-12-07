@@ -47,7 +47,7 @@ async function bootstrap() {
       console.warn("hasura is not able to be setup, exiting", error);
       process.exit(1);
     }
-    if (!process.env.DEV) {
+    if (process.env.RUN_MIGRATIONS) {
       process.exit(0);
     }
   }
