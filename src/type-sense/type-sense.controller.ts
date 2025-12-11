@@ -51,6 +51,16 @@ export class TypeSenseController {
   public async player_sanctions(
     data: HasuraEventData<player_sanctions_set_input>,
   ) {
+    if (data.op === "DELETE") {
+      const jobId = `player-sanctions.${data.old.type}.${data.old.player_steam_id}`;
+      await this.queue.remove(jobId);
+
+      await this.queue.add(RefreshPlayerJob.name, {
+        steamId: data.old.player_steam_id,
+      });
+      return;
+    }
+
     const endOfSanction = data.new.remove_sanction_date;
 
     if (endOfSanction) {

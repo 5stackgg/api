@@ -234,9 +234,11 @@ export class MatchesModule implements NestModule {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(MatchServerMiddlewareMiddleware).forRoutes(
-      { path: "matches/current-match/:serverId", method: RequestMethod.ALL },
-      { path: "demos/:matchId/*splat", method: RequestMethod.POST },
-    );
+    consumer
+      .apply(MatchServerMiddlewareMiddleware)
+      .forRoutes(
+        { path: "matches/current-match/:serverId", method: RequestMethod.ALL },
+        { path: "demos/:matchId/*splat", method: RequestMethod.POST },
+      );
   }
 }
