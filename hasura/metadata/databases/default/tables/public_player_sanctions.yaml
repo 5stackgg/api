@@ -44,6 +44,11 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
+delete_permissions:
+  - role: match_organizer
+    permission:
+      filter: {}
+    comment: ""
 event_triggers:
   - name: player_sanctions
     definition:
