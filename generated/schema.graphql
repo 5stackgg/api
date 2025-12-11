@@ -13129,7 +13129,7 @@ type match_options {
   best_of: Int!
   check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
-  default_models: Boolean!
+  default_models: Boolean
 
   """
   A computed field, executes function "has_active_matches"
@@ -25854,6 +25854,17 @@ type player_sanctions_aggregate {
   nodes: [player_sanctions!]!
 }
 
+input player_sanctions_aggregate_bool_exp {
+  count: player_sanctions_aggregate_bool_exp_count
+}
+
+input player_sanctions_aggregate_bool_exp_count {
+  arguments: [player_sanctions_select_column!]
+  distinct: Boolean
+  filter: player_sanctions_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "player_sanctions"
 """
@@ -25871,10 +25882,45 @@ type player_sanctions_aggregate_fields {
   variance: player_sanctions_variance_fields
 }
 
+"""
+order by aggregate values of table "player_sanctions"
+"""
+input player_sanctions_aggregate_order_by {
+  avg: player_sanctions_avg_order_by
+  count: order_by
+  max: player_sanctions_max_order_by
+  min: player_sanctions_min_order_by
+  stddev: player_sanctions_stddev_order_by
+  stddev_pop: player_sanctions_stddev_pop_order_by
+  stddev_samp: player_sanctions_stddev_samp_order_by
+  sum: player_sanctions_sum_order_by
+  var_pop: player_sanctions_var_pop_order_by
+  var_samp: player_sanctions_var_samp_order_by
+  variance: player_sanctions_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "player_sanctions"
+"""
+input player_sanctions_arr_rel_insert_input {
+  data: [player_sanctions_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_sanctions_on_conflict
+}
+
 """aggregate avg on columns"""
 type player_sanctions_avg_fields {
   player_steam_id: Float
   sanctioned_by_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "player_sanctions"
+"""
+input player_sanctions_avg_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
 }
 
 """
@@ -25940,6 +25986,18 @@ type player_sanctions_max_fields {
   sanctioned_by_steam_id: bigint
 }
 
+"""
+order by max() on columns of table "player_sanctions"
+"""
+input player_sanctions_max_order_by {
+  created_at: order_by
+  id: order_by
+  player_steam_id: order_by
+  reason: order_by
+  remove_sanction_date: order_by
+  sanctioned_by_steam_id: order_by
+}
+
 """aggregate min on columns"""
 type player_sanctions_min_fields {
   created_at: timestamptz
@@ -25948,6 +26006,18 @@ type player_sanctions_min_fields {
   reason: String
   remove_sanction_date: timestamptz
   sanctioned_by_steam_id: bigint
+}
+
+"""
+order by min() on columns of table "player_sanctions"
+"""
+input player_sanctions_min_order_by {
+  created_at: order_by
+  id: order_by
+  player_steam_id: order_by
+  reason: order_by
+  remove_sanction_date: order_by
+  sanctioned_by_steam_id: order_by
 }
 
 """
@@ -26035,16 +26105,40 @@ type player_sanctions_stddev_fields {
   sanctioned_by_steam_id: Float
 }
 
+"""
+order by stddev() on columns of table "player_sanctions"
+"""
+input player_sanctions_stddev_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type player_sanctions_stddev_pop_fields {
   player_steam_id: Float
   sanctioned_by_steam_id: Float
 }
 
+"""
+order by stddev_pop() on columns of table "player_sanctions"
+"""
+input player_sanctions_stddev_pop_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type player_sanctions_stddev_samp_fields {
   player_steam_id: Float
   sanctioned_by_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "player_sanctions"
+"""
+input player_sanctions_stddev_samp_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
 }
 
 """
@@ -26073,6 +26167,14 @@ input player_sanctions_stream_cursor_value_input {
 type player_sanctions_sum_fields {
   player_steam_id: bigint
   sanctioned_by_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "player_sanctions"
+"""
+input player_sanctions_sum_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
 }
 
 """
@@ -26118,16 +26220,40 @@ type player_sanctions_var_pop_fields {
   sanctioned_by_steam_id: Float
 }
 
+"""
+order by var_pop() on columns of table "player_sanctions"
+"""
+input player_sanctions_var_pop_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
+}
+
 """aggregate var_samp on columns"""
 type player_sanctions_var_samp_fields {
   player_steam_id: Float
   sanctioned_by_steam_id: Float
 }
 
+"""
+order by var_samp() on columns of table "player_sanctions"
+"""
+input player_sanctions_var_samp_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
+}
+
 """aggregate variance on columns"""
 type player_sanctions_variance_fields {
   player_steam_id: Float
   sanctioned_by_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "player_sanctions"
+"""
+input player_sanctions_variance_order_by {
+  player_steam_id: order_by
+  sanctioned_by_steam_id: order_by
 }
 
 """
@@ -27814,6 +27940,42 @@ type players {
   ): player_unused_utility_aggregate!
   profile_url: String
   role: e_player_roles_enum!
+
+  """An array relationship"""
+  sanctions(
+    """distinct select on columns"""
+    distinct_on: [player_sanctions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_sanctions_order_by!]
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): [player_sanctions!]!
+
+  """An aggregate relationship"""
+  sanctions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_sanctions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_sanctions_order_by!]
+
+    """filter the rows returned"""
+    where: player_sanctions_bool_exp
+  ): player_sanctions_aggregate!
   steam_id: bigint!
 
   """An array relationship"""
@@ -28179,6 +28341,8 @@ input players_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   profile_url: String_comparison_exp
   role: e_player_roles_enum_comparison_exp
+  sanctions: player_sanctions_bool_exp
+  sanctions_aggregate: player_sanctions_aggregate_bool_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -28258,6 +28422,7 @@ input players_insert_input {
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   profile_url: String
   role: e_player_roles_enum
+  sanctions: player_sanctions_arr_rel_insert_input
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -28425,6 +28590,7 @@ input players_order_by {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   profile_url: order_by
   role: order_by
+  sanctions_aggregate: player_sanctions_aggregate_order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
   team_members_aggregate: team_roster_aggregate_order_by

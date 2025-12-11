@@ -67,6 +67,10 @@ export class TypeSenseService {
       { name: "wins", type: "int32", optional: true },
       { name: "losses", type: "int32", optional: true },
       { name: "country", type: "string", optional: true, index: true },
+      { name: "sanctions", type: "int32", optional: true, index: true },
+      { name: "is_banned", type: "bool", optional: true, index: true },
+      { name: "is_gagged", type: "bool", optional: true, index: true },
+      { name: "is_muted", type: "bool", optional: true, index: true },
       {
         name: "last_sign_in_at",
         type: "string",
@@ -83,6 +87,8 @@ export class TypeSenseService {
         fields,
         default_sorting_field: "name",
       } as any);
+      await this.queue.add(RefreshAllPlayersJob.name, {});
+
       return;
     }
 
@@ -191,6 +197,11 @@ export class TypeSenseService {
             count: true,
           },
         },
+        sanctions_aggregate: {
+          aggregate: {
+            count: true,
+          },
+        },
       },
     });
 
@@ -252,6 +263,10 @@ export class TypeSenseService {
           teams: player.teams?.map(({ id }) => {
             return id;
           }),
+          sanctions: player.sanctions_aggregate?.aggregate?.count || 0,
+          is_banned: player.is_banned,
+          is_gagged: player.is_gagged,
+          is_muted: player.is_muted,
         }),
       );
   }
