@@ -49,6 +49,11 @@ export class AuthController {
   public async me(@Req() request: Request) {
     const user = request.user;
 
+    user.name = await this.cache.get(
+      HasuraService.PLAYER_NAME_CACHE_KEY(request.user.steam_id),
+      request.user.name,
+    );
+
     user.role = await this.cache.get(
       HasuraService.PLAYER_ROLE_CACHE_KEY(request.user.steam_id),
     );

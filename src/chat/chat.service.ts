@@ -6,6 +6,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { RconService } from "../rcon/rcon.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
+import { e_player_roles_enum } from "generated/schema";
 
 @Injectable()
 export class ChatService {
@@ -151,13 +152,21 @@ export class ChatService {
       }
     }
 
+    const name = await this.redis.get(
+      HasuraService.PLAYER_NAME_CACHE_KEY(player.steam_id),
+    );
+
+    const role: e_player_roles_enum = (await this.redis.get(
+      HasuraService.PLAYER_ROLE_CACHE_KEY(player.steam_id),
+    )) as unknown as e_player_roles_enum;
+
     const timestamp = new Date();
     const message = {
       message: _message,
       timestamp: timestamp.toISOString(),
       from: {
-        role: player.role,
-        name: player.name,
+        role: name ? JSON.parse(role) : player.role,
+        name: name ? JSON.parse(name) : player.name,
         steam_id: player.steam_id,
         avatar_url: player.avatar_url,
         profile_url: player.profile_url,

@@ -31,8 +31,12 @@ export class HasuraService {
     this.config = configService.get<HasuraConfig>("hasura");
   }
 
+  public static PLAYER_NAME_CACHE_KEY(steamId: bigint | string) {
+    return `user:name:${steamId.toString()}`;
+  }
+
   public static PLAYER_ROLE_CACHE_KEY(steamId: bigint | string) {
-    return `user:${steamId.toString()}`;
+    return `user:role:${steamId.toString()}`;
   }
 
   public checkSecret(secret: string) {

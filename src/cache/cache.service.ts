@@ -15,12 +15,13 @@ export class CacheService {
     this.connection = redis.getConnection();
   }
 
-  public async get(key: string) {
+  public async get(key: string, defaultValue?: any) {
     const value = await this.connection.get(key);
 
     if (value !== null && value !== undefined) {
       return JSON.parse(value);
     }
+    return defaultValue;
   }
 
   public async has(key: string) {

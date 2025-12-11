@@ -39,6 +39,15 @@ export class TypeSenseController {
       ),
     );
 
+    if (data.new.name && data.new.name !== data.old.name) {
+      await this.cache.put(
+        HasuraService.PLAYER_NAME_CACHE_KEY(
+          `${data.new.steam_id || data.old.steam_id}`,
+        ),
+        data.new.name,
+      );
+    }
+
     if (data.op === "DELETE") {
       await this.typeSense.removePlayer(data.old.steam_id);
       return;
