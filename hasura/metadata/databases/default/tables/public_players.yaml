@@ -148,6 +148,13 @@ array_relationships:
         table:
           name: player_unused_utility
           schema: public
+  - name: sanctions
+    using:
+      foreign_key_constraint_on:
+        column: player_steam_id
+        table:
+          name: player_sanctions
+          schema: public
   - name: team_invites
     using:
       foreign_key_constraint_on:

@@ -5,7 +5,7 @@ DECLARE
 changing_player_role text;
 BEGIN
 	IF TG_OP = 'UPDATE' AND NEW.role != OLD.role THEN
-		SELECT current_setting('hasura.user')::jsonb ->> 'x-hasura-role' INTO changing_player_role;
+		SELECT current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role' INTO changing_player_role;
 
 		IF NOT is_role_below(OLD.role, changing_player_role) THEN
 			RAISE EXCEPTION 'You cannot change the role of a player above your own' USING ERRCODE = '22000';
