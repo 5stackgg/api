@@ -235,10 +235,12 @@ export class TypeSenseService {
       },
     });
 
-    for (const matchLineupPlayer of match_lineup_players) {
-      await this.matchAssistant.sendServerMatchId(
-        matchLineupPlayer.lineup.v_match_lineup.match_id,
-      );
+    if (player.is_banned || player.is_gagged || player.is_muted) {
+      for (const matchLineupPlayer of match_lineup_players) {
+        await this.matchAssistant.sendServerMatchId(
+          matchLineupPlayer.lineup.v_match_lineup.match_id,
+        );
+      }
     }
 
     // this is to allow filtering

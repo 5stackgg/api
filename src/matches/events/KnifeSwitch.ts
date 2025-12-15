@@ -27,6 +27,7 @@ export default class KnifeSwitch extends MatchEventProcessor<void> {
             id: match.current_match_map_id,
           },
           _set: {
+            status: "Live",
             lineup_1_side: currentMap.lineup_2_side,
             lineup_2_side: currentMap.lineup_1_side,
           },

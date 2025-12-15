@@ -154,7 +154,9 @@ export class MatchAssistantService {
     return matches_by_pk.server;
   }
 
-  public async isDedicatedServerAvailable(matchId: string): Promise<boolean> {
+  public async isDedicatedServerAvailable(
+    matchId: string,
+  ): Promise<string | undefined> {
     const server = await this.getMatchServer(matchId);
 
     if (!server) {
@@ -189,7 +191,9 @@ export class MatchAssistantService {
       throw Error("unable to find server");
     }
 
-    return servers_by_pk.matches_aggregate.aggregate?.count === 0;
+    return (
+      servers_by_pk.matches_aggregate.aggregate?.count === 0 && servers_by_pk.id
+    );
   }
 
   public async updateMatchStatus(matchId: string, status: e_match_status_enum) {
@@ -208,7 +212,7 @@ export class MatchAssistantService {
     });
   }
 
-  public async assignServer(matchId: string, tries = 0): Promise<boolean> {
+  public async assignServer(matchId: string, tries = 0): Promise<void> {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -229,14 +233,16 @@ export class MatchAssistantService {
       );
 
       if (assignedDedicated) {
-        return true;
+        await this.startMatch(matchId);
+        return;
       }
     }
 
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
       if (isAssignedOnDemand) {
-        return true;
+        await this.startMatch(matchId);
+        return;
       }
     } catch (error) {
       this.logger.error(
@@ -248,7 +254,7 @@ export class MatchAssistantService {
           this.logger.log(`[${matchId}] try retry assign server....`);
           await this.assignServer(matchId, ++tries);
         }, tries * 1000);
-        return false;
+        return;
       }
     }
 
@@ -258,19 +264,53 @@ export class MatchAssistantService {
         `[${matchId}] unable to assign dedicated server, trying on demand`,
       );
       await this.updateMatchStatus(match.id, "WaitingForServer");
-      return false;
+      return;
     }
 
     if (await this.assignDedicatedServer(match.id, match.region)) {
-      return true;
+      await this.startMatch(matchId);
+      return;
     }
 
     this.logger.log(
       `[${matchId}] unable to assign dedicated server, updating match status to waiting for server`,
     );
-    await this.updateMatchStatus(match.id, "WaitingForServer");
 
-    return false;
+    await this.updateMatchStatus(match.id, "WaitingForServer");
+  }
+
+  private async startMatch(matchId: string) {
+    await this.updateMatchStatus(matchId, "Live");
+
+    await this.sendServerMatchId(matchId);
+  }
+
+  public async reserveDedicatedServer(matchId: string) {
+    const serverId = await this.isDedicatedServerAvailable(matchId);
+    if (!serverId) {
+      this.logger.warn(
+        `[${matchId}] another match is currently live, moving back to scheduled`,
+      );
+      await this.updateMatchStatus(matchId, "WaitingForServer");
+
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_servers_by_pk: {
+        __args: {
+          pk_columns: {
+            id: serverId,
+          },
+          _set: {
+            reserved_by_match_id: matchId,
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    await this.startMatch(matchId);
   }
 
   private async assignDedicatedServer(

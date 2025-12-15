@@ -388,6 +388,7 @@ export class MatchesController {
         server: {
           id: true,
           is_dedicated: true,
+          reserved_by_match_id: true,
           game_server_node_id: true,
         },
       },
@@ -399,43 +400,19 @@ export class MatchesController {
 
     if (status === "Live" && data.old.status !== "WaitingForServer") {
       if (match.server) {
-        if (
-          match.server.is_dedicated &&
-          !(await this.matchAssistant.isDedicatedServerAvailable(matchId))
-        ) {
-          this.logger.warn(
-            `[${matchId}] another match is currently live, moving back to scheduled`,
-          );
-          await this.matchAssistant.updateMatchStatus(
-            match.id,
-            "WaitingForServer",
-          );
+        if (match.server.reserved_by_match_id === matchId) {
           return;
         }
 
-        await this.hasura.mutation({
-          update_servers_by_pk: {
-            __args: {
-              pk_columns: {
-                id: match.server.id,
-              },
-              _set: {
-                reserved_by_match_id: matchId,
-              },
-            },
-            __typename: true,
-          },
-        });
+        if (match.server.is_dedicated) {
+          await this.matchAssistant.reserveDedicatedServer(matchId);
+        }
       } else {
         /**
          * if we don't have a server id it means we need to assign it one
          */
         await this.matchAssistant.assignServer(matchId);
       }
-    }
-
-    if (match.server?.id) {
-      await this.matchAssistant.sendServerMatchId(matchId);
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);
@@ -545,10 +522,6 @@ export class MatchesController {
       throw Error(
         "Server is not available, another match is using this server currently",
       );
-    }
-
-    if (updated_match.server?.game_server_node_id === null) {
-      await this.matchAssistant.sendServerMatchId(match_id);
     }
 
     return {
@@ -825,11 +798,7 @@ export class MatchesController {
       return;
     }
 
-    if (!(await this.matchAssistant.assignServer(match.id))) {
-      return;
-    }
-
-    await this.matchAssistant.updateMatchStatus(match.id, "Live");
+    await this.matchAssistant.assignServer(match.id);
   }
 
   @HasuraEvent()
@@ -895,10 +864,7 @@ export class MatchesController {
     });
 
     for (const match of matches) {
-      if (!(await this.matchAssistant.assignServer(match.id))) {
-        break;
-      }
-      await this.matchAssistant.updateMatchStatus(match.id, "Live");
+      await this.matchAssistant.assignServer(match.id);
     }
   }
 
