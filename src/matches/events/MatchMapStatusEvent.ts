@@ -3,6 +3,7 @@ import { e_match_map_status_enum } from "../../../generated";
 
 export default class MatchMapStatusEvent extends MatchEventProcessor<{
   status: e_match_map_status_enum;
+  winning_lineup_id?: string;
 }> {
   public async process() {
     const { matches_by_pk: match } = await this.hasura.query({
@@ -18,6 +19,8 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
       return;
     }
 
+    const isFinished = this.data.status === "Finished";
+
     const { update_match_maps_by_pk } = await this.hasura.mutation({
       update_match_maps_by_pk: {
         __args: {
@@ -26,6 +29,9 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
           },
           _set: {
             status: this.data.status,
+            ...(isFinished
+              ? { winning_lineup_id: this.data.winning_lineup_id }
+              : {}),
           },
         },
         id: true,
@@ -35,7 +41,7 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
       },
     });
 
-    if (this.data.status === "Finished") {
+    if (isFinished) {
       if (update_match_maps_by_pk.match.current_match_map_id !== null) {
         await this.matchAssistant.sendServerMatchId(this.matchId);
         return;

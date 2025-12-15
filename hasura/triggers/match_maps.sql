@@ -42,8 +42,6 @@ BEGIN
 
     IF NEW.status = 'Finished' THEN
         NEW.ended_at = NOW();
-
-        NEW.winning_lineup_id = get_match_map_winning_lineup_id(NEW);
     END IF;
 
 	RETURN NEW;
