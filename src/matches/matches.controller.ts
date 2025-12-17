@@ -148,6 +148,7 @@ export class MatchesController {
             placeholder_name: true,
             player: {
               name: true,
+              role: true,
               is_banned: true,
               is_gagged: true,
               is_muted: true,
@@ -168,6 +169,7 @@ export class MatchesController {
             placeholder_name: true,
             player: {
               name: true,
+              role: true,
               is_banned: true,
               is_gagged: true,
               is_muted: true,
@@ -249,6 +251,7 @@ export class MatchesController {
       (player) => ({
         ...player,
         name: player.player?.name || player.placeholder_name,
+        role: player.player?.role || "user",
         is_banned: player.player?.is_banned || false,
         is_gagged: player.player?.is_gagged || false,
         is_muted: player.player?.is_muted || false,
@@ -262,6 +265,7 @@ export class MatchesController {
       (player) => ({
         ...player,
         name: player.player?.name || player.placeholder_name,
+        role: player.player?.role || "user",
         is_banned: player.player?.is_banned || false,
         is_gagged: player.player?.is_gagged || false,
         is_muted: player.player?.is_muted || false,
