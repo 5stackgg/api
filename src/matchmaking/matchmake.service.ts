@@ -324,171 +324,289 @@ export class MatchmakeService {
     return lobbyDetails;
   }
 
+  // --- Global fairness helpers (no lobby splitting) ---
+  // Approximate a lobby's total "rank points" as avgRank * playerCount.
+  private lobbyTotalRank(lobby: MatchmakingLobby): number {
+    return lobby.avgRank * lobby.players.length;
+  }
+
+  private computeTeamAvgRankFromLobbies(lobbies: MatchmakingLobby[]): number {
+    const totalPlayers = lobbies.reduce((a, l) => a + l.players.length, 0);
+    if (totalPlayers === 0) return 0;
+
+    const totalRank = lobbies.reduce((a, l) => a + this.lobbyTotalRank(l), 0);
+    return totalRank / totalPlayers;
+  }
+
+  /**
+   * Pick exactly `requiredPlayers` players (10 for Competitive) from the available lobbies,
+   * and split them into 2 teams of `requiredPlayers/2` players in the most balanced way,
+   * WITHOUT splitting any lobby.
+   *
+   * Returns the chosen lobbies per team (team1Lobbies/team2Lobbies) and usedLobbyIds.
+   * If no exact 5v5 split is possible under the no-split constraint, returns null.
+   */
+  private findBestGlobalMatchSplit(
+    lockableLobbies: MatchmakingLobby[],
+    requiredPlayers: number,
+  ): {
+    team1Lobbies: MatchmakingLobby[];
+    team2Lobbies: MatchmakingLobby[];
+    usedLobbyIds: string[];
+  } | null {
+    const playersPerTeam = requiredPlayers / 2;
+
+    // Small optimization: larger lobbies first helps pruning.
+    const lobbies = [...lockableLobbies].sort(
+      (a, b) => b.players.length - a.players.length,
+    );
+
+    const sizes = lobbies.map((l) => l.players.length);
+    const ranks = lobbies.map((l) => this.lobbyTotalRank(l));
+
+    // Suffix sum of remaining players for pruning.
+    const suffixPlayers = new Array(lobbies.length + 1).fill(0);
+    for (let i = lobbies.length - 1; i >= 0; i--) {
+      suffixPlayers[i] = suffixPlayers[i + 1] + sizes[i];
+    }
+
+    type Best = { score: number; team1Idx: number[]; team2Idx: number[] };
+    let best: Best | null = null;
+
+    const dfs = (
+      i: number,
+      pickedPlayers: number,
+      team1Players: number,
+      team2Players: number,
+      team1Rank: number,
+      team2Rank: number,
+      team1Idx: number[],
+      team2Idx: number[],
+    ) => {
+      if (pickedPlayers > requiredPlayers) return;
+      if (team1Players > playersPerTeam) return;
+      if (team2Players > playersPerTeam) return;
+
+      // Even if we take everything remaining, we still can't reach requiredPlayers.
+      const remainingMax = suffixPlayers[i] ?? 0;
+      if (pickedPlayers + remainingMax < requiredPlayers) return;
+
+      // Success: exact 5v5.
+      if (
+        pickedPlayers === requiredPlayers &&
+        team1Players === playersPerTeam &&
+        team2Players === playersPerTeam
+      ) {
+        const avg1 = team1Rank / team1Players;
+        const avg2 = team2Rank / team2Players;
+        const score = Math.abs(avg1 - avg2);
+
+        if (!best || score < best.score) {
+          best = {
+            score,
+            team1Idx: [...team1Idx],
+            team2Idx: [...team2Idx],
+          };
+        }
+        return;
+      }
+
+      if (i >= lobbies.length) return;
+
+      const sz = sizes[i];
+      const rk = ranks[i];
+
+      // Option 1: skip this lobby (leave it in queue for future).
+      dfs(
+        i + 1,
+        pickedPlayers,
+        team1Players,
+        team2Players,
+        team1Rank,
+        team2Rank,
+        team1Idx,
+        team2Idx,
+      );
+
+      // Option 2: take this lobby into team1.
+      if (
+        pickedPlayers + sz <= requiredPlayers &&
+        team1Players + sz <= playersPerTeam
+      ) {
+        team1Idx.push(i);
+        dfs(
+          i + 1,
+          pickedPlayers + sz,
+          team1Players + sz,
+          team2Players,
+          team1Rank + rk,
+          team2Rank,
+          team1Idx,
+          team2Idx,
+        );
+        team1Idx.pop();
+      }
+
+      // Option 3: take this lobby into team2.
+      if (
+        pickedPlayers + sz <= requiredPlayers &&
+        team2Players + sz <= playersPerTeam
+      ) {
+        team2Idx.push(i);
+        dfs(
+          i + 1,
+          pickedPlayers + sz,
+          team1Players,
+          team2Players + sz,
+          team1Rank,
+          team2Rank + rk,
+          team1Idx,
+          team2Idx,
+        );
+        team2Idx.pop();
+      }
+    };
+
+    dfs(0, 0, 0, 0, 0, 0, [], []);
+
+    if (!best) return null;
+
+    const team1Lobbies = best.team1Idx.map((idx) => lobbies[idx]);
+    const team2Lobbies = best.team2Idx.map((idx) => lobbies[idx]);
+    const usedLobbyIds = [...team1Lobbies, ...team2Lobbies].map(
+      (l) => l.lobbyId,
+    );
+
+    return { team1Lobbies, team2Lobbies, usedLobbyIds };
+  }
+
   private async createMatches(
     region: string,
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
   ): Promise<number> {
     const requiredPlayers = ExpectedPlayers[type];
-    const totalPlayers = lobbies.reduce(
-      (acc, lobby) => acc + lobby.players.length,
-      0,
-    );
+    const playersPerTeam = requiredPlayers / 2;
 
     if (lobbies.length === 0) {
       return 0;
     }
 
+    // If we don't have enough total players across these lobbies, keep them queued.
+    const totalPlayers = lobbies.reduce(
+      (acc, lobby) => acc + lobby.players.length,
+      0,
+    );
     if (totalPlayers < requiredPlayers) {
       return totalPlayers;
     }
 
-    // try to make as many valid matches as possible
-    const team1: MatchmakingTeam = {
-      players: [],
-      lobbies: [],
-      avgRank: 0,
-    };
-    const team2: MatchmakingTeam = {
-      players: [],
-      lobbies: [],
-      avgRank: 0,
-    };
+    // We will keep creating matches as long as we can pick an exact `requiredPlayers` set (e.g. 10),
+    // WITHOUT splitting any lobby. Extra players (10~19, 11+, etc.) remain in the queue.
+    let remainingLobbies = [...lobbies];
 
-    const lobbiesAdded: Array<string> = [];
-    const playersPerTeam = requiredPlayers / 2;
-
-    let lobbyLocks = new Set<string>();
-
-    // try to fill teams with available lobbies
-    // if they are unable to accuire the lock, it means they are already being matched, or another region is trying to matchmake
-    // we assign lobbies to the team that keeps average elo between teams as close as possible
-    for (const lobby of lobbies) {
-      try {
-        const lock = await this.accquireLobbyLock(lobby.lobbyId);
-
-        if (!lock) {
-          this.logger.warn(
-            `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
-          );
-          continue;
-        }
-
-        const team1HasRoom =
-          team1.players.length + lobby.players.length <= playersPerTeam;
-        const team2HasRoom =
-          team2.players.length + lobby.players.length <= playersPerTeam;
-
-        if (!team1HasRoom && !team2HasRoom) {
-          await this.releaseLobbyLock(lobby.lobbyId, 0);
-          continue;
-        }
-
-        let targetTeam: MatchmakingTeam;
-
-        if (!team1HasRoom) {
-          targetTeam = team2;
-        } else if (!team2HasRoom) {
-          targetTeam = team1;
-        } else {
-          const team1LobbyCount = team1.lobbies.length;
-          const team2LobbyCount = team2.lobbies.length;
-
-          const newTeam1AvgIfAdded =
-            (team1.avgRank * team1LobbyCount + lobby.avgRank) /
-            (team1LobbyCount + 1);
-
-          const newTeam2AvgIfAdded =
-            (team2.avgRank * team2LobbyCount + lobby.avgRank) /
-            (team2LobbyCount + 1);
-
-          const diffIfToTeam1 = Math.abs(newTeam1AvgIfAdded - team2.avgRank);
-          const diffIfToTeam2 = Math.abs(newTeam2AvgIfAdded - team1.avgRank);
-
-          targetTeam = diffIfToTeam1 <= diffIfToTeam2 ? team1 : team2;
-        }
-
-        lobbyLocks.add(lobby.lobbyId);
-
-        targetTeam.players.push(...lobby.players);
-        targetTeam.lobbies.push(lobby.lobbyId);
-
-        targetTeam.avgRank =
-          (targetTeam.avgRank * (targetTeam.lobbies.length - 1) +
-            lobby.avgRank) /
-          targetTeam.lobbies.length;
-
-        lobbiesAdded.push(lobby.lobbyId);
-      } catch (error) {
-        this.logger.error(`Error processing lobby ${lobby.lobbyId}:`, error);
-        // If we acquired a lock but failed to process, release it
-        if (lobbyLocks.has(lobby.lobbyId)) {
-          await this.releaseLobbyLock(lobby.lobbyId, 0);
-          lobbyLocks.delete(lobby.lobbyId);
-        }
-      }
-    }
-
-    for (const lobbyId of lobbiesAdded) {
-      const lobbyIndex = lobbies.findIndex(
-        (lobby) => lobby.lobbyId === lobbyId,
+    while (true) {
+      const remainingPlayers = remainingLobbies.reduce(
+        (acc, lobby) => acc + lobby.players.length,
+        0,
       );
-      if (lobbyIndex !== -1) {
-        lobbies.splice(lobbyIndex, 1);
+
+      if (remainingPlayers < requiredPlayers) {
+        // Not enough left for another match; leave remaining in queue.
+        return remainingPlayers;
       }
-    }
 
-    let totalPlayerNotQueued = 0;
-    // check if we have valid teams for this match
-    if (
-      team1.players.length === playersPerTeam &&
-      team2.players.length === playersPerTeam
-    ) {
-      try {
-        // lobby locks will be released after confimrmation
-        for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-          lobbyLocks.delete(lobbyId);
+      // Acquire locks for the lobbies we're allowed to consider this iteration.
+      const lockableLobbies: MatchmakingLobby[] = [];
+      const lobbyLocks = new Set<string>();
+
+      for (const lobby of remainingLobbies) {
+        const lock = await this.accquireLobbyLock(lobby.lobbyId);
+        if (!lock) {
+          continue;
         }
+        lobbyLocks.add(lobby.lobbyId);
+        lockableLobbies.push(lobby);
+      }
 
-        await this.createMatchConfirmation(region, type, {
-          team1,
-          team2,
-        });
+      const lockablePlayers = lockableLobbies.reduce(
+        (acc, lobby) => acc + lobby.players.length,
+        0,
+      );
+
+      // If we can't even lock enough players, release and stop.
+      if (lockablePlayers < requiredPlayers) {
+        for (const id of lobbyLocks) {
+          await this.releaseLobbyLock(id, 0);
+        }
+        return remainingPlayers;
+      }
+
+      // Pick the best possible exact match (e.g. best 10 players) and split into 5v5,
+      // WITHOUT splitting any lobby.
+      const best = this.findBestGlobalMatchSplit(
+        lockableLobbies,
+        requiredPlayers,
+      );
+
+      if (!best) {
+        // Under the no-split constraint, we couldn't form an exact 5v5 with `requiredPlayers`.
+        for (const id of lobbyLocks) {
+          await this.releaseLobbyLock(id, 0);
+        }
+        return remainingPlayers;
+      }
+
+      const { team1Lobbies, team2Lobbies, usedLobbyIds } = best;
+
+      // Release locks for all lobbies not used in this match so they remain in queue.
+      for (const id of lobbyLocks) {
+        if (!usedLobbyIds.includes(id)) {
+          await this.releaseLobbyLock(id, 0);
+        }
+      }
+
+      const team1: MatchmakingTeam = {
+        lobbies: team1Lobbies.map((l) => l.lobbyId),
+        players: team1Lobbies.flatMap((l) => l.players),
+        avgRank: this.computeTeamAvgRankFromLobbies(team1Lobbies),
+      };
+
+      const team2: MatchmakingTeam = {
+        lobbies: team2Lobbies.map((l) => l.lobbyId),
+        players: team2Lobbies.flatMap((l) => l.players),
+        avgRank: this.computeTeamAvgRankFromLobbies(team2Lobbies),
+      };
+
+      // Safety check.
+      if (
+        team1.players.length !== playersPerTeam ||
+        team2.players.length !== playersPerTeam
+      ) {
+        for (const id of usedLobbyIds) {
+          await this.releaseLobbyLock(id, 0);
+        }
+        return remainingPlayers;
+      }
+
+      try {
+        // createMatchConfirmation() will remove used lobbies from queue and extend their locks
+        // for the ready-check window.
+        await this.createMatchConfirmation(region, type, { team1, team2 });
       } catch (error) {
         this.logger.error(`Error creating match confirmation:`, error);
-        // Release all locks if match confirmation fails
-        for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-          await this.releaseLobbyLock(lobbyId, 0);
+        for (const id of usedLobbyIds) {
+          await this.releaseLobbyLock(id, 0);
         }
-        totalPlayerNotQueued = team1.players.length + team2.players.length;
+        return remainingPlayers;
       }
-    } else {
-      totalPlayerNotQueued = team1.players.length + team2.players.length;
-      // Release all acquired locks since we can't create a match
-      for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-        await this.releaseLobbyLock(lobbyId, 0);
-      }
-    }
 
-    // only try to re-matchmake lobbies that we were able to accuire a lock for
-    const lobbiesToMatch = lobbies.filter((lobby) =>
-      lobbyLocks.has(lobby.lobbyId),
-    );
-    if (lobbiesToMatch.length > 0) {
-      for (const lobby of lobbiesToMatch) {
-        await this.releaseLobbyLock(lobby.lobbyId, 0);
-      }
-      await this.createMatches(region, type, lobbiesToMatch);
+      // Remove used lobbies from this iteration's remaining pool and try to create another match
+      // (e.g., 20 players => 2 matches).
+      remainingLobbies = remainingLobbies.filter(
+        (lobby) => !usedLobbyIds.includes(lobby.lobbyId),
+      );
     }
-
-    // Safety check: ensure all remaining locks are released
-    if (lobbyLocks.size > 0) {
-      for (const lobbyId of lobbyLocks) {
-        await this.releaseLobbyLock(lobbyId, 0);
-      }
-    }
-
-    return totalPlayerNotQueued;
   }
 
   private async aquireMatchmakeRegionLock(region: string): Promise<boolean> {
