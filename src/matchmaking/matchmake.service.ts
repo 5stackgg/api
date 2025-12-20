@@ -427,9 +427,6 @@ export class MatchmakeService {
               ? team2TotalRank / team2.players.length
               : 0;
 
-          // Calculate the difference between the two teams after assignment
-          // If we add to team1: compare (team1 + lobby) vs team2 (unchanged)
-          // If we add to team2: compare team1 (unchanged) vs (team2 + lobby)
           const diffIfToTeam1 = Math.abs(team1NewAvg - team2CurrentAvg);
           const diffIfToTeam2 = Math.abs(team1CurrentAvg - team2NewAvg);
 
