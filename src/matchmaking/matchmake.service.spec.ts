@@ -365,13 +365,6 @@ describe("MatchmakeService", () => {
       // Low rank group: (5100+5200+5300+5400+5500)/5 = 5300
       const lowRankAvg = (5100 + 5200 + 5300 + 5400 + 5500) / 5;
 
-      // Combine all lobbies (20 players total = 2 matches)
-      // Note: The method processes lobbies in order and creates matches.
-      // When teams are full, remaining lobbies need to be processed recursively.
-      // However, the current implementation only recursively processes lobbies that have locks.
-      // For this test, we'll call createMatches twice - once for each group.
-      const allLobbies = [...highRankGroup, ...lowRankGroup];
-
       // Mock lock acquisition - all locks should succeed
       mockRedis.set.mockResolvedValue("OK");
 
