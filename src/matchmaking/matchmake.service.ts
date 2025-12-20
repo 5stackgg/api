@@ -295,8 +295,12 @@ export class MatchmakeService {
           team1.lobbies.push(details.lobbyId);
           team2.lobbies.push(details.lobbyId);
 
-          team1.avgRank = details.avgRank;
-          team2.avgRank = details.avgRank;
+          team1.avgRank =
+            team1.players.reduce((acc, player) => acc + player.rank, 0) /
+            team1.players.length;
+          team2.avgRank =
+            team2.players.reduce((acc, player) => acc + player.rank, 0) /
+            team2.players.length;
 
           const region = details.regions.at(0);
 
@@ -391,19 +395,43 @@ export class MatchmakeService {
         } else if (!team2HasRoom) {
           targetTeam = team1;
         } else {
-          const team1LobbyCount = team1.lobbies.length;
-          const team2LobbyCount = team2.lobbies.length;
+          // Calculate current team totals and player counts
+          const team1TotalRank = team1.players.reduce(
+            (acc, player) => acc + player.rank,
+            0,
+          );
+          const team2TotalRank = team2.players.reduce(
+            (acc, player) => acc + player.rank,
+            0,
+          );
+          const lobbyTotalRank = lobby.players.reduce(
+            (acc, player) => acc + player.rank,
+            0,
+          );
 
-          const newTeam1AvgIfAdded =
-            (team1.avgRank * team1LobbyCount + lobby.avgRank) /
-            (team1LobbyCount + 1);
+          // Calculate what the new averages would be if we add this lobby to each team
+          const team1NewAvg =
+            (team1TotalRank + lobbyTotalRank) /
+            (team1.players.length + lobby.players.length);
+          const team2NewAvg =
+            (team2TotalRank + lobbyTotalRank) /
+            (team2.players.length + lobby.players.length);
 
-          const newTeam2AvgIfAdded =
-            (team2.avgRank * team2LobbyCount + lobby.avgRank) /
-            (team2LobbyCount + 1);
+          // Calculate current team averages
+          const team1CurrentAvg =
+            team1.players.length > 0
+              ? team1TotalRank / team1.players.length
+              : 0;
+          const team2CurrentAvg =
+            team2.players.length > 0
+              ? team2TotalRank / team2.players.length
+              : 0;
 
-          const diffIfToTeam1 = Math.abs(newTeam1AvgIfAdded - team2.avgRank);
-          const diffIfToTeam2 = Math.abs(newTeam2AvgIfAdded - team1.avgRank);
+          // Calculate the difference between the two teams after assignment
+          // If we add to team1: compare (team1 + lobby) vs team2 (unchanged)
+          // If we add to team2: compare team1 (unchanged) vs (team2 + lobby)
+          const diffIfToTeam1 = Math.abs(team1NewAvg - team2CurrentAvg);
+          const diffIfToTeam2 = Math.abs(team1CurrentAvg - team2NewAvg);
 
           targetTeam = diffIfToTeam1 <= diffIfToTeam2 ? team1 : team2;
         }
@@ -414,9 +442,8 @@ export class MatchmakeService {
         targetTeam.lobbies.push(lobby.lobbyId);
 
         targetTeam.avgRank =
-          (targetTeam.avgRank * (targetTeam.lobbies.length - 1) +
-            lobby.avgRank) /
-          targetTeam.lobbies.length;
+          targetTeam.players.reduce((acc, player) => acc + player.rank, 0) /
+          targetTeam.players.length;
 
         lobbiesAdded.push(lobby.lobbyId);
       } catch (error) {
@@ -635,8 +662,8 @@ export class MatchmakeService {
     type: e_match_types_enum;
     region: string;
     lobbyIds: string[];
-    team1: string[];
-    team2: string[];
+    team1: { steam_id: string; rank: number }[];
+    team2: { steam_id: string; rank: number }[];
     matchId: string;
     expiresAt: string;
     confirmed: string[];
@@ -688,10 +715,10 @@ export class MatchmakeService {
 
       let requeue = !hasMatch;
       if (!hasMatch) {
-        for (const steamId of lobby.players) {
+        for (const player of lobby.players) {
           const wasReady = await this.redis.hget(
             `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
-            steamId,
+            player.steam_id,
           );
 
           if (!wasReady) {
@@ -773,8 +800,8 @@ export class MatchmakeService {
     await this.hasura.mutation({
       insert_match_lineup_players: {
         __args: {
-          objects: team1.map((steamId: string) => ({
-            steam_id: steamId,
+          objects: team1.map((player) => ({
+            steam_id: player.steam_id,
             match_lineup_id: match.lineup_1_id,
           })),
         },
@@ -785,8 +812,8 @@ export class MatchmakeService {
     await this.hasura.mutation({
       insert_match_lineup_players: {
         __args: {
-          objects: team2.map((steamId: string) => ({
-            steam_id: steamId,
+          objects: team2.map((player) => ({
+            steam_id: player.steam_id,
             match_lineup_id: match.lineup_2_id,
           })),
         },
