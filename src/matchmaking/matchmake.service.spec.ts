@@ -568,8 +568,16 @@ describe("MatchmakeService", () => {
       const team2PlayerIds = team2.players.map((p) =>
         typeof p === "string" ? p : p.steam_id,
       );
-      console.log(`Team 1 players: ${team1PlayerIds.join(", ")}`);
-      console.log(`Team 2 players: ${team2PlayerIds.join(", ")}`);
+      console.log(
+        `Team 1 players: ${team1PlayerIds.join(", ")} | ranks: ${team1.players
+          .map((p) => (typeof p === "object" ? p.rank : "N/A"))
+          .join(", ")}`
+      );
+      console.log(
+        `Team 2 players: ${team2PlayerIds.join(", ")} | ranks: ${team2.players
+          .map((p) => (typeof p === "object" ? p.rank : "N/A"))
+          .join(", ")}`
+      );
       console.log(`Team 1 avg rank: ${team1.avgRank}`);
       console.log(`Team 2 avg rank: ${team2.avgRank}`);
       console.log(`Team 1 lobbies: ${team1.lobbies.join(", ")}`);
