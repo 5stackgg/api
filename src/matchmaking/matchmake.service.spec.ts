@@ -609,9 +609,7 @@ describe("MatchmakeService", () => {
       // Verify that steam-2 and steam-3 (from lobby-2 with avgRank 4500) are on team 2
       expect(team2SteamIds).toContain("steam-2");
       expect(team2SteamIds).toContain("steam-3");
-      // Note: steam-4 assignment depends on ELO balancing algorithm
-      // Currently algorithm assigns it to team1 for better immediate balance
-      // expect(team2SteamIds).toContain("steam-4");
+      expect(team2SteamIds).toContain("steam-4");
       //   expect(team2SteamIds).toContain("steam-6");
       //   expect(team2SteamIds).toContain("steam-7");
 
