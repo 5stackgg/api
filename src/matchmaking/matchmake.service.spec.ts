@@ -564,12 +564,12 @@ describe("MatchmakeService", () => {
       console.log(
         `Team 1 players: ${team1PlayerIds.join(", ")} | ranks: ${team1.players
           .map((p) => (typeof p === "object" ? p.rank : "N/A"))
-          .join(", ")}`
+          .join(", ")}`,
       );
       console.log(
         `Team 2 players: ${team2PlayerIds.join(", ")} | ranks: ${team2.players
           .map((p) => (typeof p === "object" ? p.rank : "N/A"))
-          .join(", ")}`
+          .join(", ")}`,
       );
       console.log(`Team 1 avg rank: ${team1.avgRank}`);
       console.log(`Team 2 avg rank: ${team2.avgRank}`);

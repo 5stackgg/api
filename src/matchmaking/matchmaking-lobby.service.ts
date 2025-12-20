@@ -173,11 +173,11 @@ export class MatchmakingLobbyService {
         },
       });
 
-      if (!players_by_pk) {
-        _players.push({ steam_id, rank: 5000 });
-        continue;
+      let elo = 5000;
+      if (players_by_pk?.elo) {
+        elo = Number(players_by_pk.elo);
       }
-      _players.push({ steam_id, rank: Number(players_by_pk.elo) });
+      _players.push({ steam_id, rank: elo });
     }
 
     const matchmakingLobby: MatchmakingLobby = {
