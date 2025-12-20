@@ -230,7 +230,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 13 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""} ${server.server_region.is_lan ? `+sv_lan 1` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
