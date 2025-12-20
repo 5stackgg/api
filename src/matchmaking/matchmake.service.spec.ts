@@ -609,9 +609,9 @@ describe("MatchmakeService", () => {
       // Verify that steam-2 and steam-3 (from lobby-2 with avgRank 4500) are on team 2
       expect(team2SteamIds).toContain("steam-2");
       expect(team2SteamIds).toContain("steam-3");
-    expect(team1SteamIds).toContain("steam-8");
-    expect(team1SteamIds).toContain("steam-9");
-    expect(team1SteamIds).toContain("steam-10")
+      expect(team1SteamIds).toContain("steam-8");
+      expect(team1SteamIds).toContain("steam-9");
+      expect(team1SteamIds).toContain("steam-10");
 
       // Result should be 0 since all players were matched
       expect(result).toBe(0);
