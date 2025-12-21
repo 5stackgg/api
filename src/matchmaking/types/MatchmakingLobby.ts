@@ -5,7 +5,10 @@ export interface MatchmakingLobby {
   regions: string[];
   joinedAt: Date;
   lobbyId: string;
-  players: string[];
+  players: Array<{
+    steam_id: string;
+    rank: number;
+  }>;
   regionPositions: Record<string, number>;
   avgRank: number;
 }

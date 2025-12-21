@@ -1,6 +1,6 @@
 import { e_match_types_enum } from "generated";
 
-const version = "v18";
+const version = "v20";
 
 export function getMatchmakingQueueCacheKey(
   type: e_match_types_enum,

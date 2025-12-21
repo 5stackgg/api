@@ -162,17 +162,40 @@ export class MatchmakingLobbyService {
       }>;
     },
   ) {
+    const _players = [];
+    for (const { steam_id } of lobby.players) {
+      const { players_by_pk } = await this.hasura.query({
+        players_by_pk: {
+          __args: {
+            steam_id,
+          },
+          elo: true,
+        },
+      });
+
+      let elo = 5000;
+      if (players_by_pk?.elo) {
+        elo = Number(players_by_pk.elo);
+      }
+      _players.push({ steam_id, rank: elo });
+    }
+
+    const matchmakingLobby: MatchmakingLobby = {
+      type,
+      regions,
+      joinedAt: new Date(),
+      lobbyId: lobby.id,
+      players: _players,
+      avgRank:
+        _players.reduce((acc, player) => acc + player.rank, 0) /
+        _players.length,
+      regionPositions: {},
+    };
+
     await this.redis.hset(
       getMatchmakingLobbyDetailsCacheKey(lobby.id),
       "details",
-      JSON.stringify({
-        type,
-        regions,
-        joinedAt: new Date(),
-        lobbyId: lobby.id,
-        players: lobby.players.map(({ steam_id }) => steam_id),
-        avgRank: await this.getAverageLobbyRank(lobby.players),
-      }),
+      JSON.stringify(matchmakingLobby),
     );
   }
 
@@ -195,7 +218,7 @@ export class MatchmakingLobbyService {
       await this.redis.publish(
         "send-message-to-steam-id",
         JSON.stringify({
-          steamId: player,
+          steamId: player.steam_id,
           event: "matchmaking:details",
           data: {},
         }),
@@ -219,27 +242,6 @@ export class MatchmakingLobbyService {
       getMatchmakingLobbyDetailsCacheKey(lobbyId),
       "confirmationId",
     );
-  }
-
-  public async getAverageLobbyRank(_players: Array<{ steam_id: string }>) {
-    let totalElo = 0;
-    for (const { steam_id } of _players) {
-      const { players_by_pk } = await this.hasura.query({
-        players_by_pk: {
-          __args: {
-            steam_id,
-          },
-          elo: true,
-        },
-      });
-
-      if (!players_by_pk) {
-        continue;
-      }
-
-      totalElo += Number(players_by_pk.elo);
-    }
-    return totalElo / _players.length;
   }
 
   public async getLobbyDetails(lobbyId: string): Promise<MatchmakingLobby> {
@@ -370,7 +372,7 @@ export class MatchmakingLobbyService {
       await this.redis.publish(
         `send-message-to-steam-id`,
         JSON.stringify({
-          steamId: player,
+          steamId: player.steam_id,
           event: "matchmaking:details",
           data: {
             details: await this.getLobbyDetails(lobbyId),
@@ -380,7 +382,7 @@ export class MatchmakingLobbyService {
               isReady:
                 confirmationId &&
                 confirmationDetails.confirmed.find((steamId) => {
-                  return steamId === player;
+                  return steamId === player.steam_id;
                 }),
             },
           },
