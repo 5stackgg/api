@@ -122,8 +122,8 @@ export class DemosController {
     }
 
     if (
-      !["Finished", "Forfeit", "Surrender", "Tie"].includes(
-        match_maps_by_pk.match.status,
+      !["Finished", "Surrendered", "UploadingDemo"].includes(
+        match_maps_by_pk.status,
       )
     ) {
       return response.status(409).json({

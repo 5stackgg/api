@@ -9,6 +9,8 @@ import { ObjectInfo } from "minio/dist/main/internal/type";
 @Injectable()
 export class S3Service {
   private client: Client;
+  private externalClient: Client;
+
   private bucket: string;
   private config: S3Config;
 
@@ -23,6 +25,14 @@ export class S3Service {
       port: parseInt(this.config.port),
       endPoint: this.config.endpoint,
       useSSL: this.config.useSSL,
+      accessKey: this.config.key,
+      secretKey: this.config.secret,
+    });
+
+    this.externalClient = new Client({
+      port: 443,
+      endPoint: process.env.DEMOS_DOMAIN,
+      useSSL: true,
       accessKey: this.config.key,
       secretKey: this.config.secret,
     });
@@ -126,17 +136,15 @@ export class S3Service {
   ) {
     let presignedUrl: string;
 
-    if (type === "put") {
-      presignedUrl = await this.client.presignedPutObject(bucket, key, expires);
-    } else {
-      presignedUrl = await this.client.presignedGetObject(bucket, key, expires);
-    }
+    const client =
+      !useLocal && this.config.endpoint === "minio"
+        ? this.externalClient
+        : this.client;
 
-    if (!useLocal && this.config.endpoint === "minio") {
-      presignedUrl = presignedUrl.replace(
-        `http://minio:9000`,
-        `https://${process.env.DEMOS_DOMAIN}`,
-      );
+    if (type === "put") {
+      presignedUrl = await client.presignedPutObject(bucket, key, expires);
+    } else {
+      presignedUrl = await client.presignedGetObject(bucket, key, expires);
     }
 
     return presignedUrl;
