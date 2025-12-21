@@ -197,7 +197,7 @@ export class MatchesController {
     const match = matches_by_pk as typeof matches_by_pk & {
       is_lan: boolean;
       options: typeof matches_by_pk.options & {
-        cfg_override: string;
+        cfg_overrides: Record<string, string>;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
         tag: string;
@@ -231,18 +231,26 @@ export class MatchesController {
         __args: {
           where: {
             type: {
-              _in: ["Base", "Live", match.options.type],
+              _in: ["Lan", match.options.type],
             },
           },
         },
         cfg: true,
+        type: true,
       },
     });
 
     if (match_type_cfgs) {
-      match.options.cfg_override = match_type_cfgs
-        .map((cfg) => cfg.cfg)
-        .join("\n");
+      match.options.cfg_overrides = {
+        Lan: "",
+        Competitive: "",
+        Duel: "",
+        Wingman: "",
+      };
+
+      for (const cfg of match_type_cfgs) {
+        match.options.cfg_overrides[cfg.type] = cfg.cfg;
+      }
     }
 
     match.lineup_1.tag = match.lineup_1.team?.short_name;
