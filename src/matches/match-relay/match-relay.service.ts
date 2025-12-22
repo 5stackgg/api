@@ -216,11 +216,13 @@ export class MatchRelayService {
   }
 
   private getMatchBroadcastEndTick(broadcast: any[]): number {
-    return (
-      [...broadcast].reverse().find((frag) => {
-        return frag?.endtick != null;
-      })?.endtick ?? 0
-    );
+    for (let i = broadcast.length - 1; i >= 0; i--) {
+      const frag = broadcast[i];
+      if (frag?.endtick != null) {
+        return frag.endtick;
+      }
+    }
+    return 0;
   }
 
   private serveBlob(response: Response, fragmentRec: any, field: string): void {
