@@ -35,7 +35,7 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
     use_playcast := get_setting('use_playcast', 'false');
 
     if(use_playcast = 'true' and relay_domain is not null) then
-        return CONCAT('playcast ', '"', relay_domain, match_id, '"');
+        return CONCAT('playcast "', relay_domain, '/', match_id, '"');
     else
         return CONCAT('connect ', CONCAT(server_host, ':', tv_port), '; password ', password);
     end if;
