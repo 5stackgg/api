@@ -244,9 +244,19 @@ export class MatchesModule implements NestModule {
         { path: "matches/current-match/:serverId", method: RequestMethod.ALL },
         { path: "demos/:matchId/*splat", method: RequestMethod.POST },
       );
-    consumer.apply(RawBodyMiddleware).forRoutes({
-      path: "matches/:id/relay/*path",
-      method: RequestMethod.POST,
-    });
+    consumer.apply(RawBodyMiddleware).forRoutes(
+      {
+        path: "matches/:id/relay/:token/:fragment/start",
+        method: RequestMethod.POST,
+      },
+      {
+        path: "matches/:id/relay/:token/:fragment/full",
+        method: RequestMethod.POST,
+      },
+      {
+        path: "matches/:id/relay/:token/:fragment/delta",
+        method: RequestMethod.POST,
+      },
+    );
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { IncomingMessage, ServerResponse } from "http";
+import { Request, Response } from "express";
 import zlib from "zlib";
 import url from "url";
 import { promisify } from "util";
@@ -13,186 +13,39 @@ export class MatchRelayService {
   // Example of how to support token_redirect (for CDN, unified playcast URL for the whole event, etc.)
   private token_redirect: string | null = null;
 
-  private readonly stats = {
-    post_field: 0,
-    get_field: 0,
-    get_start: 0,
-    get_frag_meta: 0,
-    sync: 0,
-    not_found: 0,
-    new_match_broadcasts: 0,
-    err: [0, 0, 0, 0],
-    requests: 0,
-    started: Date.now(),
-    version: 1,
-  };
-
   constructor(private readonly logger: Logger) {}
 
   public processRequest(
-    request: IncomingMessage,
-    response: ServerResponse,
-    matchIdAlias?: string,
+    request: Request,
+    response: Response,
+    matchId: string,
+    fragment: number,
+    field: string,
+    token?: string,
   ) {
     try {
+      if (token) {
+        console.info("token", token);
+      }
       const uri = decodeURI(request.url || "");
       const param = url.parse(uri, true);
       const path = param.pathname?.split("/").filter(Boolean) || [];
       (response as any).httpVersion = "1.0";
 
-      if (request.method != "POST" && request.method != "GET") {
-        this.respondSimpleError(
-          uri,
-          response,
-          404,
-          "Only POST or GET in this API",
-        );
-        return;
-      }
+      console.info(`Processing request`, {
+        uri,
+        path,
+      });
 
-      const isPost = request.method == "POST";
-      const prime = path[0];
-
-      // Handle sync endpoint (GET only)
-      if (prime === "sync") {
-        if (isPost) {
-          this.respondSimpleError(
-            uri,
-            response,
-            405,
-            "Sync endpoint is GET only",
-          );
-          return;
-        }
-
-        const tokenRedirect = this.token_redirect;
-        if (tokenRedirect && this.match_broadcasts[tokenRedirect]) {
-          this.respondMatchBroadcastSync(
-            param,
-            response,
-            this.match_broadcasts[tokenRedirect],
-            tokenRedirect,
-          );
-          this.stats.sync++;
-        } else {
-          this.respondSimpleError(
-            uri,
-            response,
-            404,
-            "match_broadcast not found and no valid token_redirect",
-          );
-          this.stats.err[0]++;
-        }
-        return;
-      }
-
-      // Validate prime exists
-      if (!prime) {
-        this.respondSimpleError(uri, response, 401, "Unauthorized");
-        return;
-      }
-
-      // Get or create broadcasted_match
-      let broadcasted_match = this.match_broadcasts[prime];
-      if (broadcasted_match == null) {
-        if (isPost) {
-          this.logger.log(`Creating match_broadcast '${prime}'`);
-          this.token_redirect = prime;
-          broadcasted_match = [];
-          this.match_broadcasts[prime] = broadcasted_match;
-          this.stats.new_match_broadcasts++;
-
-          // If matchIdAlias is provided and different from prime (token),
-          // also create an alias so GET requests can find it by matchId
-          if (matchIdAlias && matchIdAlias !== prime) {
-            this.match_broadcasts[matchIdAlias] = broadcasted_match;
-          }
-        } else {
-          // For GET requests, if prime (matchId) not found, try token_redirect
-          const tokenRedirect = this.token_redirect;
-          if (tokenRedirect && this.match_broadcasts[tokenRedirect]) {
-            broadcasted_match = this.match_broadcasts[tokenRedirect];
-            // Also create alias under matchId for future requests
-            this.match_broadcasts[prime] = broadcasted_match;
-          } else {
-            this.respondSimpleError(
-              uri,
-              response,
-              404,
-              `match_broadcast ${prime} not found`,
-            );
-            this.stats.err[0]++;
-            return;
-          }
-        }
-      }
-
-      // Parse fragment and field from path: /prime/fragment/field
-      if (path.length < 3) {
-        if (isPost) {
-          this.respondSimpleError(
-            uri,
-            response,
-            405,
-            "Invalid POST: no fragment or field",
-          );
-          this.stats.err[1]++;
-        } else {
-          this.respondSimpleError(uri, response, 401, "Unauthorized");
-        }
-        return;
-      }
-
-      this.stats.requests++;
-
-      const fragmentStr = path[1];
-      const fragment = parseInt(fragmentStr);
-      if (isNaN(fragment) || String(fragment) !== fragmentStr) {
-        this.respondSimpleError(
-          uri,
-          response,
-          405,
-          "Fragment is not a valid integer",
-        );
-        this.stats.err[2]++;
-        return;
-      }
-
-      const field = path[2];
-
-      if (isPost) {
-        this.stats.post_field++;
-        if (!field) {
-          this.respondSimpleError(
-            uri,
-            response,
-            405,
-            "Cannot post fragment without field name",
-          );
-          this.stats.err[3]++;
-          return;
-        }
-
-        this.postField(
-          request,
-          param,
-          response,
-          broadcasted_match,
-          fragment,
-          field,
-        );
-        return;
-      }
+      const broadcasted_match = this.match_broadcasts[matchId];
 
       // GET requests
       if (field === "start") {
         this.getStart(request, response, broadcasted_match, fragment, field);
-        this.stats.get_start++;
         return;
       }
 
       if (broadcasted_match[fragment] == null) {
-        this.stats.err[4]++;
         response.writeHead(404, `Fragment ${fragment} not found`);
         response.end();
         return;
@@ -200,12 +53,10 @@ export class MatchRelayService {
 
       if (!field || field === "") {
         this.getFragmentMetadata(response, broadcasted_match, fragment);
-        this.stats.get_frag_meta++;
         return;
       }
 
       this.getField(request, response, broadcasted_match, fragment, field);
-      this.stats.get_field++;
     } catch (error) {
       this.logger.error(
         `Exception when processing request ${request.url}`,
@@ -226,13 +77,8 @@ export class MatchRelayService {
     this.token_redirect = value;
   }
 
-  public getStats() {
-    return this.stats;
-  }
-
   private respondSimpleError(
-    uri: string,
-    response: ServerResponse,
+    response: Response,
     code: number,
     explanation: string,
   ): void {
@@ -285,25 +131,30 @@ export class MatchRelayService {
     return 0;
   }
 
-  private respondMatchBroadcastSync(
-    param: url.UrlWithParsedQuery,
-    response: ServerResponse,
-    broadcasted_match: any[],
+  public respondMatchBroadcastSync(
+    request: Request,
+    response: Response,
+    matchId: string,
     token_redirect?: string | null,
   ): void {
     const nowMs = Date.now();
     response.setHeader("Cache-Control", "public, max-age=3");
     response.setHeader("Expires", new Date(nowMs + 3000).toUTCString());
 
+    const broadcasted_match = this.match_broadcasts[matchId];
     const match_field_0 = broadcasted_match[0];
     if (match_field_0 == null || match_field_0.start == null) {
+      console.info(
+        `Broadcast has not started yet for matchId ${matchId}`,
+        match_field_0,
+      );
       response.writeHead(404, "Broadcast has not started yet");
       response.end();
       return;
     }
 
     let fragment: number | null = null;
-    const fragmentParam = param.query.fragment as string | undefined;
+    const fragmentParam = request.query.fragment as string | undefined;
     let frag: any = null;
 
     if (fragmentParam == null) {
@@ -318,6 +169,7 @@ export class MatchRelayService {
     } else {
       fragment = parseInt(fragmentParam);
       if (isNaN(fragment)) {
+        console.info(`Fragment is not an int for matchId ${matchId}`, fragment);
         response.writeHead(405, "Fragment is not an int");
         response.end();
         return;
@@ -337,6 +189,7 @@ export class MatchRelayService {
     }
 
     if (!frag) {
+      console.info(`Fragment not found for matchId ${matchId}`, fragment);
       response.writeHead(405, "Fragment not found, please check back soon");
       response.end();
       return;
@@ -370,14 +223,20 @@ export class MatchRelayService {
     response.end(JSON.stringify(jso));
   }
 
-  private postField(
-    request: IncomingMessage,
-    param: url.UrlWithParsedQuery,
-    response: ServerResponse,
-    broadcasted_match: any[],
-    fragment: number,
+  public postField(
+    request: Request,
+    response: Response,
     field: string,
+    matchId: string,
+    fragment: number,
+    token?: string,
   ): void {
+    if (!this.match_broadcasts[matchId]) {
+      console.info(`Creating new match broadcast for matchId ${matchId}`);
+      this.match_broadcasts[matchId] = [];
+    }
+    const broadcasted_match = this.match_broadcasts[matchId];
+
     if (field == "start") {
       response.writeHead(200);
 
@@ -402,8 +261,9 @@ export class MatchRelayService {
       }
     }
 
-    for (const q in param.query) {
-      const v = param.query[q] as string;
+    // console.log(`query`, request.query);
+    for (const q in request.query) {
+      const v = request.query[q] as string;
       const n = parseInt(v);
       broadcasted_match[fragment][q] = v == String(n) ? n : v;
     }
@@ -420,6 +280,8 @@ export class MatchRelayService {
       if (originCdnDelay && parseInt(originCdnDelay) > 0) {
         broadcasted_match[fragment].cdndelay = parseInt(originCdnDelay);
       }
+
+      console.info("SETTING", `${fragment}[${field}]`, totalBuffer.length);
 
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
@@ -438,8 +300,8 @@ export class MatchRelayService {
   }
 
   private serveBlob(
-    request: IncomingMessage,
-    response: ServerResponse,
+    request: Request,
+    response: Response,
     fragmentRec: any,
     field: string,
   ): void {
@@ -474,8 +336,8 @@ export class MatchRelayService {
   }
 
   private getStart(
-    request: IncomingMessage,
-    response: ServerResponse,
+    request: Request,
+    response: Response,
     broadcasted_match: any[],
     fragment: number,
     field: string,
@@ -485,7 +347,6 @@ export class MatchRelayService {
       broadcasted_match[0].signup_fragment != fragment
     ) {
       return this.respondSimpleError(
-        request.url || "",
         response,
         404,
         "Invalid or expired start fragment, please re-sync",
@@ -496,8 +357,8 @@ export class MatchRelayService {
   }
 
   private getField(
-    request: IncomingMessage,
-    response: ServerResponse,
+    request: Request,
+    response: Response,
     broadcasted_match: any[],
     fragment: number,
     field: string,
@@ -506,7 +367,7 @@ export class MatchRelayService {
   }
 
   private getFragmentMetadata(
-    response: ServerResponse,
+    response: Response,
     broadcasted_match: any[],
     fragment: number,
   ) {

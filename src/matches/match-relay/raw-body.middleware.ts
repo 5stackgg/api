@@ -1,6 +1,5 @@
 import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
-import * as express from "express";
 import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
 
@@ -39,13 +38,6 @@ export class RawBodyMiddleware implements NestMiddleware {
       return response.status(401).end();
     }
 
-    express.raw({
-      type: "*/*",
-      limit: "50mb",
-      verify: (_request: any, _response: any, buf: Buffer) => {
-        (_request as any).rawBody = buf;
-        _request.body = buf;
-      },
-    })(request, response, next);
+    next();
   }
 }
