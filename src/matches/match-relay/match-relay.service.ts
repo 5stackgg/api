@@ -189,7 +189,6 @@ export class MatchRelayService {
     }
 
     if (!frag) {
-      console.info(`Fragment not found for matchId ${matchId}`, fragment);
       response.writeHead(405, "Fragment not found, please check back soon");
       response.end();
       return;
@@ -280,8 +279,6 @@ export class MatchRelayService {
       if (originCdnDelay && parseInt(originCdnDelay) > 0) {
         broadcasted_match[fragment].cdndelay = parseInt(originCdnDelay);
       }
-
-      console.info("SETTING", `${fragment}[${field}]`, totalBuffer.length);
 
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
