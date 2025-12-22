@@ -17,6 +17,10 @@ export class MatchRelayService {
 
   constructor(private readonly logger: Logger) {}
 
+  public removeBroadcast(matchId: string) {
+    delete this.broadcasts[matchId];
+  }
+
   public getStart(response: Response, matchId: string, fragmentIndex: number) {
     const broadcast = this.broadcasts[matchId];
 

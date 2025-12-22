@@ -29,6 +29,7 @@ import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
+import { MatchRelayService } from "./match-relay/match-relay.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -50,6 +51,7 @@ export class MatchesController {
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
     private s3: S3Service,
+    private readonly matchRelayService: MatchRelayService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -307,6 +309,7 @@ export class MatchesController {
       status === "Finished" ||
       status === "Surrendered"
     ) {
+      this.matchRelayService.removeBroadcast(matchId);
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
 
