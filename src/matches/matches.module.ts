@@ -45,6 +45,7 @@ import { EloCalculation } from "./jobs/EloCalculation";
 import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { MatchRelayController } from './match-relay/match-relay.controller';
+import { MatchRelayService } from './match-relay/match-relay.service';
 import { RawBodyMiddleware } from './match-relay/raw-body.middleware';
 
 @Module({
@@ -92,6 +93,7 @@ import { RawBodyMiddleware } from './match-relay/raw-body.middleware';
   providers: [
     MatchEventsGateway,
     MatchAssistantService,
+    MatchRelayService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,

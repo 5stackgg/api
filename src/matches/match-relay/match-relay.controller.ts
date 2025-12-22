@@ -8,12 +8,11 @@ import {
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { EventEmitter } from "events";
-
-// Load the playcast reference functions
-import { processRequest, match_broadcasts, token_redirect_for_example } from "./playcast-reference";
+import { MatchRelayService } from "./match-relay.service";
 
 @Controller("matches/:id/relay")
 export class MatchRelayController {
+  constructor(private readonly matchRelayService: MatchRelayService) {}
   @Post("*path")
   public async handlePost(
     @Param("id") matchId: string,
@@ -38,8 +37,11 @@ export class MatchRelayController {
     if (afterRelay.length === 1 && afterRelay[0] === "sync") {
       newPath = "/sync" + (originalUrl.includes("?") ? originalUrl.substring(originalUrl.indexOf("?")) : "");
       // Set token_redirect_for_example to matchId so sync can find it
-      if (!token_redirect_for_example.value && match_broadcasts[matchId]) {
-        token_redirect_for_example.value = matchId;
+      if (
+        !this.matchRelayService.getTokenRedirect() &&
+        this.matchRelayService.getMatchBroadcasts()[matchId]
+      ) {
+        this.matchRelayService.setTokenRedirect(matchId);
       }
     } else {
       // Check if first part after relay looks like a token (starts with 's' and has 't')
@@ -95,8 +97,11 @@ export class MatchRelayController {
     adaptedRequest.removeAllListeners = emitter.removeAllListeners.bind(emitter);
     adaptedRequest.addListener = emitter.addListener.bind(emitter);
     
-    // Call the reference implementation first - it will set up listeners
-    processRequest(adaptedRequest as any, response as any);
+    // Call the service to process the request
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
     
     // Then emit body data asynchronously (after listeners are set up)
     // Use setImmediate to ensure listeners are registered first
@@ -131,8 +136,11 @@ export class MatchRelayController {
     if (afterRelay.length === 1 && afterRelay[0] === "sync") {
       newPath = "/sync" + (originalUrl.includes("?") ? originalUrl.substring(originalUrl.indexOf("?")) : "");
       // Set token_redirect_for_example to matchId so sync can find it
-      if (!token_redirect_for_example.value && match_broadcasts[matchId]) {
-        token_redirect_for_example.value = matchId;
+      if (
+        !this.matchRelayService.getTokenRedirect() &&
+        this.matchRelayService.getMatchBroadcasts()[matchId]
+      ) {
+        this.matchRelayService.setTokenRedirect(matchId);
       }
     } else {
       // Check if first part after relay looks like a token (starts with 's' and has 't')
@@ -156,6 +164,9 @@ export class MatchRelayController {
     const adaptedRequest = Object.create(request);
     adaptedRequest.url = newPath;
     
-    processRequest(adaptedRequest as any, response as any);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
   }
 }
