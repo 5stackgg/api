@@ -217,9 +217,9 @@ export class MatchRelayService {
 
   private getMatchBroadcastEndTick(broadcast: any[]): number {
     for (let i = broadcast.length - 1; i >= 0; i--) {
-      const frag = broadcast[i];
-      if (frag?.endtick != null) {
-        return frag.endtick;
+      const fragment = broadcast[i];
+      if (fragment?.endtick != null) {
+        return fragment.endtick;
       }
     }
     return 0;
