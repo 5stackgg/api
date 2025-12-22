@@ -1,14 +1,14 @@
-import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
+import { CacheService } from "src/cache/cache.service";
 import { Request, Response, NextFunction } from "express";
 import { HasuraService } from "src/hasura/hasura.service";
-import { CacheService } from "src/cache/cache.service";
+import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
 
 @Injectable()
 export class MatchRelayAuthMiddleware implements NestMiddleware {
   constructor(
-    private readonly hasura: HasuraService,
     private readonly logger: Logger,
     private readonly cache: CacheService,
+    private readonly hasura: HasuraService,
   ) {}
 
   async use(request: Request, response: Response, next: NextFunction) {
@@ -17,20 +17,26 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
         request.headers["x-origin-auth"] as string
       )?.split(":");
 
-      const { matches_by_pk: match } = await this.hasura.query({
-        matches_by_pk: {
-          __args: {
-            id: matchId,
-          },
-          password: true,
-        },
-      });
+      const token = request.url.split("/")?.[3];
 
-      if (match?.password !== apiPassword) {
-        this.logger.warn("invalid api password", {
-          matchId,
-          apiPassword,
-        });
+      const matchPassword = await this.cache.remember(
+        `match-relay-auth:${matchId}:${token}`,
+        async () => {
+          const { matches_by_pk: match } = await this.hasura.query({
+            matches_by_pk: {
+              __args: {
+                id: matchId,
+              },
+              password: true,
+            },
+          });
+
+          return match?.password;
+        },
+        60 * 60 * 1000,
+      );
+
+      if (matchPassword !== apiPassword) {
         return response.status(401).end();
       }
     } catch (error) {
