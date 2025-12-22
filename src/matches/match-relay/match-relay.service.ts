@@ -269,13 +269,6 @@ export class MatchRelayService {
       return;
     }
 
-    if (!Buffer.isBuffer(blob)) {
-      response.writeHead(404, "Unexpected field type " + typeof blob);
-      this.logger.warn(`Unexpected Field type ${typeof blob}`);
-      response.end();
-      return;
-    }
-
     const headers: { [key: string]: string } = {
       "Content-Type": "application/octet-stream",
     };
