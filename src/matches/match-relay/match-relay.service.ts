@@ -71,9 +71,9 @@ export class MatchRelayService {
       return;
     }
 
-    const match_field_0 = broadcast[0];
+    const startFragment = broadcast[0];
 
-    if (match_field_0 == null || match_field_0.start?.data == null) {
+    if (startFragment == null || startFragment.start?.data == null) {
       this.relayError(response, 404, `broadcast has not started yet`);
       return;
     }
@@ -87,7 +87,7 @@ export class MatchRelayService {
 
       if (
         fragmentIndex >= 0 &&
-        fragmentIndex >= (match_field_0.start.signup_fragment || 0)
+        fragmentIndex >= (startFragment.start.signup_fragment || 0)
       ) {
         const _fragment = broadcast[fragmentIndex];
         if (this.isSyncReady(_fragment)) {
@@ -97,8 +97,8 @@ export class MatchRelayService {
     } else {
       fragmentIndex = parseInt(fragmentParam);
 
-      if (fragmentIndex < (match_field_0.start?.signup_fragment || 0)) {
-        fragmentIndex = match_field_0.start?.signup_fragment || 0;
+      if (fragmentIndex < (startFragment.start?.signup_fragment || 0)) {
+        fragmentIndex = startFragment.start?.signup_fragment || 0;
       }
 
       for (let i = fragmentIndex; i < broadcast.length; i++) {
@@ -121,11 +121,11 @@ export class MatchRelayService {
     }
 
     response.writeHead(200, { "Content-Type": "application/json" });
-    if (match_field_0.start?.protocol == null) {
-      if (!match_field_0.start) {
-        match_field_0.start = {};
+    if (startFragment.start?.protocol == null) {
+      if (!startFragment.start) {
+        startFragment.start = {};
       }
-      match_field_0.start.protocol = 5;
+      startFragment.start.protocol = 5;
     }
 
     const fragTick = fragment.full?.tick;
@@ -143,11 +143,11 @@ export class MatchRelayService {
             (broadcast[broadcast.length - 1]?.delta?.timestamp || nowMs)) /
           1000,
         fragment: fragmentIndex,
-        signup_fragment: match_field_0.start?.signup_fragment,
-        tps: match_field_0.start?.tps,
-        keyframe_interval: match_field_0.start?.keyframe_interval,
-        map: match_field_0.start?.map,
-        protocol: match_field_0.start?.protocol,
+        signup_fragment: startFragment.start?.signup_fragment,
+        tps: startFragment.start?.tps,
+        keyframe_interval: startFragment.start?.keyframe_interval,
+        map: startFragment.start?.map,
+        protocol: startFragment.start?.protocol,
       }),
     );
   }
