@@ -250,8 +250,6 @@ export class MatchRelayService {
         !isNaN(numValue) && strValue === String(numValue) ? numValue : value;
     });
 
-    console.info(`${fragmentIndex} ${field}`, broadcast[fragmentIndex][field]);
-
     const body: Buffer[] = [];
     request.on("data", function (data: Buffer) {
       body.push(data);
