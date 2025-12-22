@@ -9,10 +9,12 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
      tv_port int;
      started_at timestamp;
      tv_delay int;
+     match_id uuid;
      use_playcast text;
+     relay_domain text;
  BEGIN
-     SELECT s.host, s.tv_port, m.started_at, mo.tv_delay
-     INTO server_host, tv_port, started_at, tv_delay
+     SELECT s.host, s.tv_port, m.started_at, mo.tv_delay, m.id
+     INTO server_host, tv_port, started_at, tv_delay, match_id
      FROM matches m
         INNER JOIN servers s ON s.id = m.server_id
         INNER JOIN match_options mo on mo.id = m.match_options_id
@@ -29,10 +31,11 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
         return null;
     end if;
     
+    relay_domain := get_setting('relay_domain');
     use_playcast := get_setting('use_playcast', 'false');
 
-    if(use_playcast = 'true') then
-        return CONCAT('playcast ', '"https://relay.5stack.gg/', match_id, '"');
+    if(use_playcast = 'true' and relay_url is not null) then
+        return CONCAT('playcast ', '"', relay_domain, match_id, '"');
     else
         return CONCAT('connect ', CONCAT(server_host, ':', tv_port), '; password ', password);
     end if;
