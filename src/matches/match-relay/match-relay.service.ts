@@ -38,21 +38,17 @@ export class MatchRelayService {
     response: Response,
     matchId: string,
     fragmentIndex: number,
-    field: string,
+    field: "start" | "full" | "delta",
   ) {
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
-      this.relayError(
-        response,
-        404,
-        `Broadcast not found for matchId ${matchId}`,
-      );
+      this.relayError(response, 404, `broadcast not found`);
       return;
     }
 
     const fragment = broadcast[fragmentIndex];
     if (!fragment) {
-      response.writeHead(404, "Fragment not found");
+      response.writeHead(404, "fragment not found");
       response.end();
       return;
     }
@@ -71,19 +67,14 @@ export class MatchRelayService {
 
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
-      this.relayError(
-        response,
-        404,
-        `Broadcast not found for matchId ${matchId}`,
-      );
+      this.relayError(response, 404, `broadcast not found`);
       return;
     }
 
     const match_field_0 = broadcast[0];
     // Check if start fragment exists at index 0
     if (match_field_0 == null || match_field_0.start?.data == null) {
-      response.writeHead(404, "Broadcast has not started yet");
-      response.end();
+      this.relayError(response, 404, `broadcast has not started yet`);
       return;
     }
 
@@ -121,8 +112,11 @@ export class MatchRelayService {
     }
 
     if (!fragment) {
-      response.writeHead(405, "Fragment not found, please check back soon");
-      response.end();
+      this.relayError(
+        response,
+        405,
+        `fragment not found, please check back soon`,
+      );
       return;
     }
 
@@ -161,7 +155,7 @@ export class MatchRelayService {
   public postField(
     request: Request,
     response: Response,
-    field: string,
+    field: "start" | "full" | "delta",
     matchId: string,
     fragmentIndex: number,
   ): void {
