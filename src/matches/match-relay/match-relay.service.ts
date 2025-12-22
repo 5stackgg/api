@@ -311,7 +311,6 @@ export class MatchRelayService {
       return;
     }
 
-    this.logger.log(`Sync fragment ${fragment}`);
     response.writeHead(200, { "Content-Type": "application/json" });
     if (match_field_0.protocol == null) {
       match_field_0.protocol = 5;
@@ -349,26 +348,20 @@ export class MatchRelayService {
     field: string,
   ): void {
     if (field == "start") {
-      this.logger.log(`Start tick ${param.query.tick} in fragment ${fragment}`);
       response.writeHead(200);
 
       if (broadcasted_match[0] == null) {
         broadcasted_match[0] = {};
-      }
-      if (broadcasted_match[0].signup_fragment > fragment) {
-        this.logger.warn(
-          `UNEXPECTED new start fragment ${fragment} after ${broadcasted_match[0].signup_fragment}`,
-        );
       }
 
       broadcasted_match[0].signup_fragment = fragment;
       fragment = 0;
     } else {
       if (broadcasted_match[0] == null) {
-        this.logger.log("205 - need start fragment");
+        // need start fragment
         response.writeHead(205);
       } else if (broadcasted_match[0].start == null) {
-        this.logger.log("205 - need start data");
+        // need start data
         response.writeHead(205);
       } else {
         response.writeHead(200);
@@ -390,11 +383,6 @@ export class MatchRelayService {
     });
     request.on("end", () => {
       const totalBuffer = Buffer.concat(body);
-      if (field == "start") {
-        this.logger.log(
-          `Received [${fragment}].${field}, ${totalBuffer.length} bytes in ${body.length} pieces`,
-        );
-      }
       response.end();
 
       const originCdnDelay = request.headers["x-origin-delay"] as string;
