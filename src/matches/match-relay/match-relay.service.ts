@@ -1,8 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Request, Response } from "express";
-import zlib from "zlib";
 import url from "url";
+import zlib from "zlib";
 import { promisify } from "util";
+import { Request, Response } from "express";
+import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class MatchRelayService {
@@ -25,7 +25,7 @@ export class MatchRelayService {
   ) {
     try {
       if (token) {
-        console.info("token", token);
+        this.logger.log("token", token);
       }
       const uri = decodeURI(request.url || "");
       const param = url.parse(uri, true);
@@ -230,8 +230,11 @@ export class MatchRelayService {
     fragment: number,
     token?: string,
   ): void {
+    if (token) {
+      this.logger.log(`Token provided for matchId ${matchId}`);
+    }
     if (!this.match_broadcasts[matchId]) {
-      console.info(`Creating new match broadcast for matchId ${matchId}`);
+      this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
       this.match_broadcasts[matchId] = [];
     }
     const broadcasted_match = this.match_broadcasts[matchId];
