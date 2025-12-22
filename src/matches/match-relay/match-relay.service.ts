@@ -2,48 +2,18 @@ import zlib from "zlib";
 import { promisify } from "util";
 import { Request, Response } from "express";
 import { Injectable, Logger } from "@nestjs/common";
-
-type StartFieldData = {
-  data?: Buffer;
-  gipped?: boolean;
-  signup_fragment?: number;
-  tick?: number;
-  tps?: number;
-  map?: string;
-  keyframe_interval?: number;
-  protocol?: number;
-  [key: string]: any;
-};
-
-type FullFieldData = {
-  data?: Buffer;
-  gipped?: boolean;
-  tick?: number;
-  [key: string]: any;
-};
-
-type DeltaFieldData = {
-  data?: Buffer;
-  gipped?: boolean;
-  timestamp?: number;
-  endtick?: number;
-  [key: string]: any;
-};
-
-type Fragment = {
-  start?: StartFieldData;
-  full?: FullFieldData;
-  delta?: DeltaFieldData;
-  [key: string]: any;
-};
-
-type Broadcast = Fragment[];
+import {
+  Fragment,
+  StartFieldData,
+  FullFieldData,
+  DeltaFieldData,
+} from "./types/fragment.types";
 
 @Injectable()
 export class MatchRelayService {
   private readonly gzip = promisify(zlib.gzip);
 
-  private readonly broadcasts: { [key: string]: Broadcast } = {};
+  private readonly broadcasts: { [key: string]: Fragment[] } = {};
 
   constructor(private readonly logger: Logger) {}
 
@@ -246,9 +216,7 @@ export class MatchRelayService {
           broadcast[fragmentIndex][field].data = compressedBlob;
         })
         .catch((error: Error) => {
-          this.logger.error(
-            `cannot gzip: ${error}`,
-          );
+          this.logger.error(`cannot gzip: ${error}`);
           broadcast[fragmentIndex][field].gipped = false;
           broadcast[fragmentIndex][field].data = totalBuffer;
         })
@@ -280,8 +248,7 @@ export class MatchRelayService {
     );
   }
 
-  private getMatchBroadcastEndTick(broadcast: Broadcast): number {
-    // Only delta fields have endtick, full fields don't
+  private getMatchBroadcastEndTick(broadcast: Fragment[]): number {
     for (let i = broadcast.length - 1; i >= 0; i--) {
       const fragment = broadcast[i];
       if (fragment?.delta?.endtick != null) {

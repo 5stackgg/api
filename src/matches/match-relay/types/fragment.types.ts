@@ -33,4 +33,3 @@ export type Fragment = {
 };
 
 export type Broadcast = Fragment[];
-
