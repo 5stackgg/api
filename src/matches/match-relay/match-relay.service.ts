@@ -121,18 +121,18 @@ export class MatchRelayService {
 
     let fragmentIndex: number | null = null;
     const fragmentParam = request.query.fragment as string | undefined;
-    let frag: Fragment | null = null;
+    let fragment: Fragment | null = null;
 
     if (fragmentParam == null) {
       fragmentIndex = Math.max(0, broadcast.length - 8);
 
       if (
         fragmentIndex >= 0 &&
-        fragmentIndex >= (match_field_0.start?.signup_fragment || 0)
+        fragmentIndex >= (match_field_0.start.signup_fragment || 0)
       ) {
         const _fragment = broadcast[fragmentIndex];
         if (this.isSyncReady(_fragment)) {
-          frag = _fragment;
+          fragment = _fragment;
         }
       }
     } else {
@@ -145,14 +145,14 @@ export class MatchRelayService {
       for (let i = fragmentIndex; i < broadcast.length; i++) {
         const _fragment = broadcast[i];
         if (this.isSyncReady(_fragment)) {
-          frag = _fragment;
+          fragment = _fragment;
           fragmentIndex = i;
           break;
         }
       }
     }
 
-    if (!frag) {
+    if (!fragment) {
       response.writeHead(405, "Fragment not found, please check back soon");
       response.end();
       return;
@@ -167,9 +167,9 @@ export class MatchRelayService {
     }
 
     // Get tick/endtick from delta field (delta has endtick, full only has tick)
-    const fragTick = frag.full?.tick;
-    const fragEndtick = frag.delta?.endtick;
-    const fragTimestamp = frag.delta?.timestamp;
+    const fragTick = fragment.full?.tick;
+    const fragEndtick = fragment.delta?.endtick;
+    const fragTimestamp = fragment.delta?.timestamp;
 
     response.end(
       JSON.stringify({
