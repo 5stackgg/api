@@ -44,6 +44,9 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
+import { MatchRelayController } from "./match-relay/match-relay.controller";
+import { MatchRelayService } from "./match-relay/match-relay.service";
+import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middleware";
 
 @Module({
   imports: [
@@ -85,11 +88,12 @@ import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
       },
     ),
   ],
-  controllers: [MatchesController],
+  controllers: [MatchesController, MatchRelayController],
   exports: [MatchAssistantService],
   providers: [
     MatchEventsGateway,
     MatchAssistantService,
+    MatchRelayService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,
@@ -240,5 +244,19 @@ export class MatchesModule implements NestModule {
         { path: "matches/current-match/:serverId", method: RequestMethod.ALL },
         { path: "demos/:matchId/*splat", method: RequestMethod.POST },
       );
+    consumer.apply(MatchRelayAuthMiddleware).forRoutes(
+      {
+        path: "match-relay/:id/:token/:fragment/start",
+        method: RequestMethod.POST,
+      },
+      {
+        path: "match-relay/:id/:token/:fragment/full",
+        method: RequestMethod.POST,
+      },
+      {
+        path: "match-relay/:id/:token/:fragment/delta",
+        method: RequestMethod.POST,
+      },
+    );
   }
 }

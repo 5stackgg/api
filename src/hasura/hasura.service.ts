@@ -127,6 +127,11 @@ export class HasuraService {
       "insert into settings (name, value) values ('demos_domain', $1) on conflict (name) do update set value = $1",
       [this.appConfig.demosDomain],
     );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('relay_domain', $1) on conflict (name) do update set value = $1",
+      [this.appConfig.relayDomain],
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

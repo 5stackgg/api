@@ -5,6 +5,7 @@ export type AppConfig = {
   wsDomain: string;
   webDomain: string;
   apiDomain: string;
+  relayDomain: string;
   demosDomain: string;
   authCookieDomain: string;
 };
