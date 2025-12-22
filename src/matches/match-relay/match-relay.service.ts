@@ -29,165 +29,189 @@ export class MatchRelayService {
 
   constructor(private readonly logger: Logger) {}
 
-  public processRequest(request: IncomingMessage, response: ServerResponse) {
-    const uri = decodeURI(request.url || "");
-    const param = url.parse(uri, true);
-    const path = param.pathname?.split("/") || [];
-    path.shift();
-    (response as any).httpVersion = "1.0";
+  public processRequest(
+    request: IncomingMessage,
+    response: ServerResponse,
+    matchIdAlias?: string,
+  ) {
+    try {
+      const uri = decodeURI(request.url || "");
+      const param = url.parse(uri, true);
+      const path = param.pathname?.split("/").filter(Boolean) || [];
+      (response as any).httpVersion = "1.0";
 
-    const prime = path.shift();
+      if (request.method != "POST" && request.method != "GET") {
+        this.respondSimpleError(
+          uri,
+          response,
+          404,
+          "Only POST or GET in this API",
+        );
+        return;
+      }
 
-    console.info("prime", prime);
+      const isPost = request.method == "POST";
+      const prime = path[0];
 
-    if (prime == null || prime == "" || prime == "index.html") {
-      this.respondSimpleError(uri, response, 401, "Unauthorized");
-      return;
-    }
-
-    if (request.method != "POST" && request.method != "GET") {
-      this.respondSimpleError(
-        uri,
-        response,
-        404,
-        "Only POST or GET in this API",
-      );
-      return;
-    }
-
-    const isPost = request.method == "POST";
-
-    let broadcasted_match = this.match_broadcasts[prime];
-    if (broadcasted_match == null) {
-      if (isPost) {
-        this.logger.log(`Creating match_broadcast '${prime}'`);
-        this.token_redirect = prime;
-        this.match_broadcasts[prime] = broadcasted_match = [];
-        this.stats.new_match_broadcasts++;
-      } else {
-        if (prime == "sync") {
-          console.info({
+      // Handle sync endpoint (GET only)
+      if (prime === "sync") {
+        if (isPost) {
+          this.respondSimpleError(
             uri,
+            response,
+            405,
+            "Sync endpoint is GET only",
+          );
+          return;
+        }
+
+        const tokenRedirect = this.token_redirect;
+        if (tokenRedirect && this.match_broadcasts[tokenRedirect]) {
+          this.respondMatchBroadcastSync(
             param,
-            path,
-          });
-          if (
-            this.token_redirect &&
-            this.match_broadcasts[this.token_redirect]
-          ) {
-            this.respondMatchBroadcastSync(
-              param,
-              response,
-              this.match_broadcasts[this.token_redirect],
-              this.token_redirect,
-            );
-            this.stats.sync++;
-          } else {
-            this.respondSimpleError(
-              uri,
-              response,
-              404,
-              "match_broadcast " +
-                prime +
-                " not found and no valid token_redirect",
-            );
-            this.stats.err[0]++;
-          }
+            response,
+            this.match_broadcasts[tokenRedirect],
+            tokenRedirect,
+          );
+          this.stats.sync++;
         } else {
           this.respondSimpleError(
             uri,
             response,
             404,
-            "match_broadcast " + prime + " not found",
+            "match_broadcast not found and no valid token_redirect",
           );
           this.stats.err[0]++;
         }
         return;
       }
-    }
 
-    const requestFragmentOrKey = path.shift();
-    if (requestFragmentOrKey == null || requestFragmentOrKey == "") {
-      if (isPost) {
-        this.respondSimpleError(
-          uri,
-          response,
-          405,
-          "Invalid POST: no fragment or field",
-        );
-        this.stats.err[1]++;
-      } else {
+      // Validate prime exists
+      if (!prime) {
         this.respondSimpleError(uri, response, 401, "Unauthorized");
-      }
-      return;
-    }
-
-    this.stats.requests++;
-
-    const fragment = parseInt(requestFragmentOrKey);
-
-    if (String(fragment) != requestFragmentOrKey) {
-      if (requestFragmentOrKey == "sync") {
-        this.respondMatchBroadcastSync(param, response, broadcasted_match);
-        this.stats.sync++;
-      } else {
-        this.respondSimpleError(
-          uri,
-          response,
-          405,
-          "Fragment is not an int or sync",
-        );
-        this.stats.err[2]++;
-      }
-      return;
-    }
-
-    const field = path.shift();
-    if (isPost) {
-      this.stats.post_field++;
-      if (field == null) {
-        this.respondSimpleError(
-          uri,
-          response,
-          405,
-          "Cannot post fragment without field name",
-        );
-        this.stats.err[3]++;
         return;
       }
 
-      this.postField(
-        request,
-        param,
-        response,
-        broadcasted_match,
-        fragment,
-        field,
+      // Get or create broadcasted_match
+      let broadcasted_match = this.match_broadcasts[prime];
+      if (broadcasted_match == null) {
+        if (isPost) {
+          this.logger.log(`Creating match_broadcast '${prime}'`);
+          this.token_redirect = prime;
+          broadcasted_match = [];
+          this.match_broadcasts[prime] = broadcasted_match;
+          this.stats.new_match_broadcasts++;
+
+          // If matchIdAlias is provided and different from prime (token),
+          // also create an alias so GET requests can find it by matchId
+          if (matchIdAlias && matchIdAlias !== prime) {
+            this.match_broadcasts[matchIdAlias] = broadcasted_match;
+          }
+        } else {
+          // For GET requests, if prime (matchId) not found, try token_redirect
+          const tokenRedirect = this.token_redirect;
+          if (tokenRedirect && this.match_broadcasts[tokenRedirect]) {
+            broadcasted_match = this.match_broadcasts[tokenRedirect];
+            // Also create alias under matchId for future requests
+            this.match_broadcasts[prime] = broadcasted_match;
+          } else {
+            this.respondSimpleError(
+              uri,
+              response,
+              404,
+              `match_broadcast ${prime} not found`,
+            );
+            this.stats.err[0]++;
+            return;
+          }
+        }
+      }
+
+      // Parse fragment and field from path: /prime/fragment/field
+      if (path.length < 3) {
+        if (isPost) {
+          this.respondSimpleError(
+            uri,
+            response,
+            405,
+            "Invalid POST: no fragment or field",
+          );
+          this.stats.err[1]++;
+        } else {
+          this.respondSimpleError(uri, response, 401, "Unauthorized");
+        }
+        return;
+      }
+
+      this.stats.requests++;
+
+      const fragmentStr = path[1];
+      const fragment = parseInt(fragmentStr);
+      if (isNaN(fragment) || String(fragment) !== fragmentStr) {
+        this.respondSimpleError(
+          uri,
+          response,
+          405,
+          "Fragment is not a valid integer",
+        );
+        this.stats.err[2]++;
+        return;
+      }
+
+      const field = path[2];
+
+      if (isPost) {
+        this.stats.post_field++;
+        if (!field) {
+          this.respondSimpleError(
+            uri,
+            response,
+            405,
+            "Cannot post fragment without field name",
+          );
+          this.stats.err[3]++;
+          return;
+        }
+
+        this.postField(
+          request,
+          param,
+          response,
+          broadcasted_match,
+          fragment,
+          field,
+        );
+        return;
+      }
+
+      // GET requests
+      if (field === "start") {
+        this.getStart(request, response, broadcasted_match, fragment, field);
+        this.stats.get_start++;
+        return;
+      }
+
+      if (broadcasted_match[fragment] == null) {
+        this.stats.err[4]++;
+        response.writeHead(404, `Fragment ${fragment} not found`);
+        response.end();
+        return;
+      }
+
+      if (!field || field === "") {
+        this.getFragmentMetadata(response, broadcasted_match, fragment);
+        this.stats.get_frag_meta++;
+        return;
+      }
+
+      this.getField(request, response, broadcasted_match, fragment, field);
+      this.stats.get_field++;
+    } catch (error) {
+      this.logger.error(
+        `Exception when processing request ${request.url}`,
+        error,
       );
-      return;
     }
-
-    if (field == "start") {
-      this.getStart(request, response, broadcasted_match, fragment, field);
-      this.stats.get_start++;
-      return;
-    }
-
-    if (broadcasted_match[fragment] == null) {
-      this.stats.err[4]++;
-      response.writeHead(404, "Fragment " + fragment + " not found");
-      response.end();
-      return;
-    }
-
-    if (field == null || field == "") {
-      this.getFragmentMetadata(response, broadcasted_match, fragment);
-      this.stats.get_frag_meta++;
-      return;
-    }
-
-    this.getField(request, response, broadcasted_match, fragment, field);
-    this.stats.get_field++;
   }
 
   public getMatchBroadcasts() {

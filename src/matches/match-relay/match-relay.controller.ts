@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, Res, Param } from "@nestjs/common";
+import { Controller, Get, Post, Req, Res, Param, Query } from "@nestjs/common";
 import { Request, Response } from "express";
 import { EventEmitter } from "events";
 import { MatchRelayService } from "./match-relay.service";
@@ -6,64 +6,224 @@ import { MatchRelayService } from "./match-relay.service";
 @Controller("matches/:id/relay")
 export class MatchRelayController {
   constructor(private readonly matchRelayService: MatchRelayService) {}
-  @Post("*path")
-  public async handlePost(
+
+  @Get("sync")
+  public handleSyncGet(
     @Param("id") matchId: string,
     @Req() request: Request,
     @Res() response: Response,
+    @Query() query: Record<string, any>,
   ) {
-    // Rewrite URL: /matches/:id/relay/fragment/field -> /:id/fragment/field
-    // Or: /matches/:id/relay/token/fragment/field -> /token/fragment/field (if token present)
-    const originalUrl = request.url;
-    const urlPath = originalUrl.split("?")[0];
-    const pathParts = urlPath.split("/").filter(Boolean);
+    const queryString = this.buildQueryString(query);
+    const newPath = `/sync${queryString}`;
 
-    const relayIndex = pathParts.indexOf("relay");
-    if (relayIndex === -1) {
-      return response.status(405).send("Invalid path");
+    // Set token_redirect to matchId so sync can find it
+    if (
+      !this.matchRelayService.getTokenRedirect() &&
+      this.matchRelayService.getMatchBroadcasts()[matchId]
+    ) {
+      this.matchRelayService.setTokenRedirect(matchId);
     }
 
-    const afterRelay = pathParts.slice(relayIndex + 1);
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
 
-    // Handle /sync endpoint specially
-    let newPath: string;
-    if (afterRelay.length === 1 && afterRelay[0] === "sync") {
-      newPath =
-        "/sync" +
-        (originalUrl.includes("?")
-          ? originalUrl.substring(originalUrl.indexOf("?"))
-          : "");
-      // Set token_redirect_for_example to matchId so sync can find it
-      if (
-        !this.matchRelayService.getTokenRedirect() &&
-        this.matchRelayService.getMatchBroadcasts()[matchId]
-      ) {
-        this.matchRelayService.setTokenRedirect(matchId);
-      }
-    } else {
-      // Check if first part after relay looks like a token (starts with 's' and has 't')
-      // If not, use matchId as the prime identifier
-      let prime: string;
-      let fragmentAndField: string[];
+  @Get(":fragment/start")
+  public handleGetStart(
+    @Param("id") matchId: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${matchId}/${fragment}/start${queryString}`;
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
 
-      if (afterRelay.length > 0 && /^s\d+t\d+/.test(afterRelay[0])) {
-        // Token present: use token as prime
-        prime = afterRelay[0];
-        fragmentAndField = afterRelay.slice(1);
-      } else {
-        // No token: use matchId as prime
-        prime = matchId;
-        fragmentAndField = afterRelay;
-      }
+  @Get(":fragment/full")
+  public handleGetFull(
+    @Param("id") matchId: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${matchId}/${fragment}/full${queryString}`;
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
 
-      newPath =
-        "/" +
-        [prime, ...fragmentAndField].join("/") +
-        (originalUrl.includes("?")
-          ? originalUrl.substring(originalUrl.indexOf("?"))
-          : "");
+  @Get(":fragment/delta")
+  public handleGetDelta(
+    @Param("id") matchId: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${matchId}/${fragment}/delta${queryString}`;
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
+
+  @Get(":token/:fragment/start")
+  public handleGetStartWithToken(
+    @Param("id") matchId: string,
+    @Param("token") token: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${token}/${fragment}/start${queryString}`;
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
+
+  @Get(":token/:fragment/full")
+  public handleGetFullWithToken(
+    @Param("id") matchId: string,
+    @Param("token") token: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${token}/${fragment}/full${queryString}`;
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
+
+  @Get(":token/:fragment/delta")
+  public handleGetDeltaWithToken(
+    @Param("id") matchId: string,
+    @Param("token") token: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${token}/${fragment}/delta${queryString}`;
+    const adaptedRequest = this.createAdaptedRequest(request, newPath);
+    this.matchRelayService.processRequest(
+      adaptedRequest as any,
+      response as any,
+    );
+  }
+
+  @Post(":token/:fragment/start")
+  public async handlePostStart(
+    @Param("id") matchId: string,
+    @Param("token") token: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${token}/${fragment}/start${queryString}`;
+    await this.handlePostWithBody(request, response, newPath, matchId);
+  }
+
+  @Post(":token/:fragment/full")
+  public async handlePostFull(
+    @Param("id") matchId: string,
+    @Param("token") token: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${token}/${fragment}/full${queryString}`;
+    await this.handlePostWithBody(request, response, newPath, matchId);
+  }
+
+  @Post(":token/:fragment/delta")
+  public async handlePostDelta(
+    @Param("id") matchId: string,
+    @Param("token") token: string,
+    @Param("fragment") fragment: string,
+    @Req() request: Request,
+    @Res() response: Response,
+    @Query() query: Record<string, any>,
+  ) {
+    const queryString = this.buildQueryString(query);
+    const newPath = `/${token}/${fragment}/delta${queryString}`;
+    await this.handlePostWithBody(request, response, newPath, matchId);
+  }
+
+  @Get("*path")
+  public handleGetWildcard(
+    @Param("id") matchId: string,
+    @Param("path") path: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    console.warn(
+      `Unmatched GET request pattern: ${request.url} (path: ${path})`,
+    );
+    return response.status(404).send("Not found");
+  }
+
+  @Post("*path")
+  public handlePostWildcard(
+    @Param("id") matchId: string,
+    @Param("path") path: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    console.warn(
+      `Unmatched POST request pattern: ${request.url} (path: ${path})`,
+    );
+    return response.status(404).send("Not found");
+  }
+
+  private buildQueryString(query: Record<string, any>): string {
+    if (Object.keys(query).length === 0) {
+      return "";
     }
+    return "?" + new URLSearchParams(query).toString();
+  }
 
+  private createAdaptedRequest(request: Request, newPath: string): any {
+    const adaptedRequest = Object.create(request);
+    adaptedRequest.url = newPath;
+    return adaptedRequest;
+  }
+
+  private async handlePostWithBody(
+    request: Request,
+    response: Response,
+    newPath: string,
+    matchId?: string,
+  ): Promise<void> {
     // Get raw body - must be Buffer from middleware
     const rawBody = (request as any).rawBody || request.body;
     const bodyBuffer = Buffer.isBuffer(rawBody)
@@ -75,23 +235,19 @@ export class MatchRelayController {
         : Buffer.alloc(0);
 
     // Create adapted request that emits body as stream
-    // Copy all properties from original request
     const adaptedRequest = Object.create(request);
-    // Override url but keep everything else
     Object.defineProperty(adaptedRequest, "url", {
       value: newPath,
       writable: true,
       enumerable: true,
       configurable: true,
     });
-    // Ensure method is set
     if (!adaptedRequest.method) {
       adaptedRequest.method = request.method;
     }
 
     // Make it streamable with EventEmitter
     const emitter = new EventEmitter();
-    // Set up event listeners on the emitter
     adaptedRequest.on = emitter.on.bind(emitter);
     adaptedRequest.once = emitter.once.bind(emitter);
     adaptedRequest.emit = emitter.emit.bind(emitter);
@@ -104,81 +260,15 @@ export class MatchRelayController {
     this.matchRelayService.processRequest(
       adaptedRequest as any,
       response as any,
+      matchId,
     );
 
     // Then emit body data asynchronously (after listeners are set up)
-    // Use setImmediate to ensure listeners are registered first
     setImmediate(() => {
       if (bodyBuffer.length > 0) {
         emitter.emit("data", bodyBuffer);
       }
       emitter.emit("end");
     });
-  }
-
-  @Get("*path")
-  public handleGet(
-    @Param("id") matchId: string,
-    @Req() request: Request,
-    @Res() response: Response,
-  ) {
-    // Same URL rewriting as POST
-    const originalUrl = request.url;
-    const urlPath = originalUrl.split("?")[0];
-    const pathParts = urlPath.split("/").filter(Boolean);
-
-    const relayIndex = pathParts.indexOf("relay");
-    if (relayIndex === -1) {
-      return response.status(405).send("Invalid path");
-    }
-
-    const afterRelay = pathParts.slice(relayIndex + 1);
-
-    // Handle /sync endpoint specially
-    let newPath: string;
-    if (afterRelay.length === 1 && afterRelay[0] === "sync") {
-      newPath =
-        "/sync" +
-        (originalUrl.includes("?")
-          ? originalUrl.substring(originalUrl.indexOf("?"))
-          : "");
-      // Set token_redirect_for_example to matchId so sync can find it
-      if (
-        !this.matchRelayService.getTokenRedirect() &&
-        this.matchRelayService.getMatchBroadcasts()[matchId]
-      ) {
-        this.matchRelayService.setTokenRedirect(matchId);
-      }
-    } else {
-      // Check if first part after relay looks like a token (starts with 's' and has 't')
-      // If not, use matchId as the prime identifier
-      let prime: string;
-      let fragmentAndField: string[];
-
-      if (afterRelay.length > 0 && /^s\d+t\d+/.test(afterRelay[0])) {
-        // Token present: use token as prime
-        prime = afterRelay[0];
-        fragmentAndField = afterRelay.slice(1);
-      } else {
-        // No token: use matchId as prime
-        prime = matchId;
-        fragmentAndField = afterRelay;
-      }
-
-      newPath =
-        "/" +
-        [prime, ...fragmentAndField].join("/") +
-        (originalUrl.includes("?")
-          ? originalUrl.substring(originalUrl.indexOf("?"))
-          : "");
-    }
-
-    const adaptedRequest = Object.create(request);
-    adaptedRequest.url = newPath;
-
-    this.matchRelayService.processRequest(
-      adaptedRequest as any,
-      response as any,
-    );
   }
 }
