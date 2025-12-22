@@ -33,7 +33,7 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
 
           return match?.password;
         },
-        60 * 60 * 1000,
+        60 * 1000,
       );
 
       if (matchPassword !== apiPassword) {
