@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { IncomingMessage, ServerResponse } from "http";
-import * as zlib from "zlib";
-import * as url from "url";
+import zlib from "zlib";
+import url from "url";
 import { promisify } from "util";
 
 @Injectable()
@@ -29,7 +29,7 @@ export class MatchRelayService {
 
   constructor(private readonly logger: Logger) {}
 
-  processRequest(request: IncomingMessage, response: ServerResponse): void {
+  public processRequest(request: IncomingMessage, response: ServerResponse) {
     try {
       this.processRequestUnprotected(request, response);
     } catch (error) {
@@ -40,19 +40,19 @@ export class MatchRelayService {
     }
   }
 
-  getMatchBroadcasts() {
+  public getMatchBroadcasts() {
     return this.match_broadcasts;
   }
 
-  getTokenRedirect() {
+  public getTokenRedirect() {
     return this.token_redirect;
   }
 
-  setTokenRedirect(value: string) {
+  public setTokenRedirect(value: string) {
     this.token_redirect = value;
   }
 
-  getStats() {
+  public getStats() {
     return this.stats;
   }
 
@@ -67,22 +67,25 @@ export class MatchRelayService {
   }
 
   private checkFragmentCdnDelayElapsed(fragmentRec: any): boolean {
-    if (fragmentRec.cdndelay) {
-      if (!fragmentRec.timestamp) {
-        this.logger.warn("Refusing to serve cdndelay without timestamp");
-        return false;
-      } else {
-        const iusElapsedLiveMilliseconds =
-          Date.now().valueOf() -
-          (fragmentRec.cdndelay + fragmentRec.timestamp.valueOf());
-        if (iusElapsedLiveMilliseconds < 0) {
-          this.logger.warn(
-            `Refusing to serve cdndelay due to ${iusElapsedLiveMilliseconds} ms of delay remaining`,
-          );
-          return false;
-        }
-      }
+    if (!fragmentRec.cdndelay) {
+      return true;
     }
+
+    if (!fragmentRec.timestamp) {
+      this.logger.warn("Refusing to serve cdndelay without timestamp");
+      return false;
+    }
+
+    const iusElapsedLiveMilliseconds =
+      Date.now().valueOf() -
+      (fragmentRec.cdndelay + fragmentRec.timestamp.valueOf());
+    if (iusElapsedLiveMilliseconds < 0) {
+      this.logger.warn(
+        `Refusing to serve cdndelay due to ${iusElapsedLiveMilliseconds} ms of delay remaining`,
+      );
+      return false;
+    }
+
     return true;
   }
 
@@ -101,7 +104,9 @@ export class MatchRelayService {
 
   private getMatchBroadcastEndTick(broadcasted_match: any[]): number {
     for (let f = broadcasted_match.length - 1; f >= 0; f--) {
-      if (broadcasted_match[f].endtick) return broadcasted_match[f].endtick;
+      if (broadcasted_match[f].endtick) {
+        return broadcasted_match[f].endtick;
+      }
     }
     return 0;
   }
@@ -117,73 +122,79 @@ export class MatchRelayService {
     response.setHeader("Expires", new Date(nowMs + 3000).toUTCString());
 
     const match_field_0 = broadcasted_match[0];
-    if (match_field_0 != null && match_field_0.start != null) {
-      let fragment: number | null = null;
-      const fragmentParam = param.query.fragment as string | undefined;
-      let frag: any = null;
+    if (match_field_0 == null || match_field_0.start == null) {
+      response.writeHead(404, "Broadcast has not started yet");
+      response.end();
+      return;
+    }
 
-      if (fragmentParam == null) {
-        fragment = Math.max(0, broadcasted_match.length - 8);
+    let fragment: number | null = null;
+    const fragmentParam = param.query.fragment as string | undefined;
+    let frag: any = null;
 
-        if (fragment >= 0 && fragment >= match_field_0.signup_fragment) {
-          const f = broadcasted_match[fragment];
-          if (this.isSyncReady(f)) frag = f;
-        }
-      } else {
-        fragment = parseInt(fragmentParam);
-        if (isNaN(fragment)) {
-          response.writeHead(405, "Fragment is not an int");
-          response.end();
-          return;
-        }
+    if (fragmentParam == null) {
+      fragment = Math.max(0, broadcasted_match.length - 8);
 
-        if (fragment < match_field_0.signup_fragment) {
-          fragment = match_field_0.signup_fragment;
-        }
-
-        for (; fragment < broadcasted_match.length; fragment++) {
-          const f = broadcasted_match[fragment];
-          if (this.isSyncReady(f)) {
-            frag = f;
-            break;
-          }
+      if (fragment >= 0 && fragment >= match_field_0.signup_fragment) {
+        const f = broadcasted_match[fragment];
+        if (this.isSyncReady(f)) {
+          frag = f;
         }
       }
-
-      if (frag) {
-        this.logger.log(`Sync fragment ${fragment}`);
-        response.writeHead(200, { "Content-Type": "application/json" });
-        if (match_field_0.protocol == null) match_field_0.protocol = 5;
-
-        const jso: any = {
-          tick: frag.tick,
-          endtick: frag.endtick,
-          maxtick: this.getMatchBroadcastEndTick(broadcasted_match),
-          rtdelay: (nowMs - frag.timestamp) / 1000,
-          rcvage:
-            (nowMs -
-              broadcasted_match[broadcasted_match.length - 1].timestamp) /
-            1000,
-          fragment: fragment,
-          signup_fragment: match_field_0.signup_fragment,
-          tps: match_field_0.tps,
-          keyframe_interval: match_field_0.keyframe_interval,
-          map: match_field_0.map,
-          protocol: match_field_0.protocol,
-        };
-
-        if (token_redirect) jso.token_redirect = token_redirect;
-
-        response.end(JSON.stringify(jso));
+    } else {
+      fragment = parseInt(fragmentParam);
+      if (isNaN(fragment)) {
+        response.writeHead(405, "Fragment is not an int");
+        response.end();
         return;
       }
 
-      response.writeHead(405, "Fragment not found, please check back soon");
-    } else {
-      response.writeHead(404, "Broadcast has not started yet");
+      if (fragment < match_field_0.signup_fragment) {
+        fragment = match_field_0.signup_fragment;
+      }
+
+      for (; fragment < broadcasted_match.length; fragment++) {
+        const f = broadcasted_match[fragment];
+        if (this.isSyncReady(f)) {
+          frag = f;
+          break;
+        }
+      }
     }
 
-    response.end();
+    if (!frag) {
+      response.writeHead(405, "Fragment not found, please check back soon");
+      response.end();
+      return;
+    }
+
+    this.logger.log(`Sync fragment ${fragment}`);
+    response.writeHead(200, { "Content-Type": "application/json" });
+    if (match_field_0.protocol == null) {
+      match_field_0.protocol = 5;
+    }
+
+    const jso: any = {
+      tick: frag.tick,
+      endtick: frag.endtick,
+      maxtick: this.getMatchBroadcastEndTick(broadcasted_match),
+      rtdelay: (nowMs - frag.timestamp) / 1000,
+      rcvage:
+        (nowMs - broadcasted_match[broadcasted_match.length - 1].timestamp) /
+        1000,
+      fragment: fragment,
+      signup_fragment: match_field_0.signup_fragment,
+      tps: match_field_0.tps,
+      keyframe_interval: match_field_0.keyframe_interval,
+      map: match_field_0.map,
+      protocol: match_field_0.protocol,
+    };
+
+    if (token_redirect) {
+      jso.token_redirect = token_redirect;
+    }
+
+    response.end(JSON.stringify(jso));
   }
 
   private postField(
@@ -198,11 +209,14 @@ export class MatchRelayService {
       this.logger.log(`Start tick ${param.query.tick} in fragment ${fragment}`);
       response.writeHead(200);
 
-      if (broadcasted_match[0] == null) broadcasted_match[0] = {};
-      if (broadcasted_match[0].signup_fragment > fragment)
+      if (broadcasted_match[0] == null) {
+        broadcasted_match[0] = {};
+      }
+      if (broadcasted_match[0].signup_fragment > fragment) {
         this.logger.warn(
           `UNEXPECTED new start fragment ${fragment} after ${broadcasted_match[0].signup_fragment}`,
         );
+      }
 
       broadcasted_match[0].signup_fragment = fragment;
       fragment = 0;
@@ -210,13 +224,11 @@ export class MatchRelayService {
       if (broadcasted_match[0] == null) {
         this.logger.log("205 - need start fragment");
         response.writeHead(205);
+      } else if (broadcasted_match[0].start == null) {
+        this.logger.log("205 - need start data");
+        response.writeHead(205);
       } else {
-        if (broadcasted_match[0].start == null) {
-          this.logger.log("205 - need start data");
-          response.writeHead(205);
-        } else {
-          response.writeHead(200);
-        }
+        response.writeHead(200);
       }
       if (broadcasted_match[fragment] == null) {
         broadcasted_match[fragment] = {};
@@ -235,10 +247,11 @@ export class MatchRelayService {
     });
     request.on("end", () => {
       const totalBuffer = Buffer.concat(body);
-      if (field == "start")
+      if (field == "start") {
         this.logger.log(
           `Received [${fragment}].${field}, ${totalBuffer.length} bytes in ${body.length} pieces`,
         );
+      }
       response.end();
 
       const originCdnDelay = request.headers["x-origin-delay"] as string;
@@ -278,22 +291,24 @@ export class MatchRelayService {
     if (blob == null) {
       response.writeHead(404, "Field not found");
       response.end();
-    } else {
-      if (Buffer.isBuffer(blob)) {
-        const headers: { [key: string]: string } = {
-          "Content-Type": "application/octet-stream",
-        };
-        if (ungzipped_length) {
-          headers["Content-Encoding"] = "gzip";
-        }
-        response.writeHead(200, headers);
-        response.end(blob);
-      } else {
-        response.writeHead(404, "Unexpected field type " + typeof blob);
-        this.logger.warn(`Unexpected Field type ${typeof blob}`);
-        response.end();
-      }
+      return;
     }
+
+    if (!Buffer.isBuffer(blob)) {
+      response.writeHead(404, "Unexpected field type " + typeof blob);
+      this.logger.warn(`Unexpected Field type ${typeof blob}`);
+      response.end();
+      return;
+    }
+
+    const headers: { [key: string]: string } = {
+      "Content-Type": "application/octet-stream",
+    };
+    if (ungzipped_length) {
+      headers["Content-Encoding"] = "gzip";
+    }
+    response.writeHead(200, headers);
+    response.end(blob);
   }
 
   private getStart(
@@ -365,12 +380,7 @@ export class MatchRelayService {
       return;
     }
 
-    let isPost: boolean;
-    if (request.method == "POST") {
-      isPost = true;
-    } else if (request.method == "GET") {
-      isPost = false;
-    } else {
+    if (request.method != "POST" && request.method != "GET") {
       this.respondSimpleError(
         uri,
         response,
@@ -379,6 +389,8 @@ export class MatchRelayService {
       );
       return;
     }
+
+    const isPost = request.method == "POST";
 
     let broadcasted_match = this.match_broadcasts[prime];
     if (broadcasted_match == null) {
@@ -463,16 +475,7 @@ export class MatchRelayService {
     const field = path.shift();
     if (isPost) {
       this.stats.post_field++;
-      if (field != null) {
-        this.postField(
-          request,
-          param,
-          response,
-          broadcasted_match,
-          fragment,
-          field,
-        );
-      } else {
+      if (field == null) {
         this.respondSimpleError(
           uri,
           response,
@@ -480,22 +483,40 @@ export class MatchRelayService {
           "Cannot post fragment without field name",
         );
         this.stats.err[3]++;
+        return;
       }
-    } else {
-      if (field == "start") {
-        this.getStart(request, response, broadcasted_match, fragment, field);
-        this.stats.get_start++;
-      } else if (broadcasted_match[fragment] == null) {
-        this.stats.err[4]++;
-        response.writeHead(404, "Fragment " + fragment + " not found");
-        response.end();
-      } else if (field == null || field == "") {
-        this.getFragmentMetadata(response, broadcasted_match, fragment);
-        this.stats.get_frag_meta++;
-      } else {
-        this.getField(request, response, broadcasted_match, fragment, field);
-        this.stats.get_field++;
-      }
+
+      this.postField(
+        request,
+        param,
+        response,
+        broadcasted_match,
+        fragment,
+        field,
+      );
+      return;
     }
+
+    if (field == "start") {
+      this.getStart(request, response, broadcasted_match, fragment, field);
+      this.stats.get_start++;
+      return;
+    }
+
+    if (broadcasted_match[fragment] == null) {
+      this.stats.err[4]++;
+      response.writeHead(404, "Fragment " + fragment + " not found");
+      response.end();
+      return;
+    }
+
+    if (field == null || field == "") {
+      this.getFragmentMetadata(response, broadcasted_match, fragment);
+      this.stats.get_frag_meta++;
+      return;
+    }
+
+    this.getField(request, response, broadcasted_match, fragment, field);
+    this.stats.get_field++;
   }
 }
