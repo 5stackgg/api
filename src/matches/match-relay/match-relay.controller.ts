@@ -173,28 +173,4 @@ export class MatchRelayController {
       token,
     );
   }
-
-  @Get("*path")
-  public handleGetWildcard(
-    @Param("id") matchId: string,
-    @Param("path") path: string,
-    @Req() request: Request,
-    @Res() response: Response,
-  ) {
-    console.warn(
-      `Unmatched GET request pattern: ${request.url} (path: ${request.url})`,
-    );
-    return response.status(404).send("Not found");
-  }
-
-  @Post("*path")
-  public handlePostWildcard(
-    @Req() request: Request,
-    @Res() response: Response,
-  ) {
-    console.warn(
-      `Unmatched POST request pattern: ${request.url} (path: ${request.url})`,
-    );
-    return response.status(404).send("Not found");
-  }
 }
