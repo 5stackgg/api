@@ -112,21 +112,21 @@ export class MatchRelayService {
       match_field_0.protocol = 5;
     }
 
-    const jso: any = {
-      tick: frag.tick,
-      endtick: frag.endtick,
-      maxtick: this.getMatchBroadcastEndTick(broadcast),
-      rtdelay: (nowMs - frag.timestamp) / 1000,
-      rcvage: (nowMs - broadcast[broadcast.length - 1].timestamp) / 1000,
-      fragment: fragment,
-      signup_fragment: match_field_0.signup_fragment,
-      tps: match_field_0.tps,
-      keyframe_interval: match_field_0.keyframe_interval,
-      map: match_field_0.map,
-      protocol: match_field_0.protocol,
-    };
-
-    response.end(JSON.stringify(jso));
+    response.end(
+      JSON.stringify({
+        tick: frag.tick,
+        endtick: frag.endtick,
+        maxtick: this.getMatchBroadcastEndTick(broadcast),
+        rtdelay: (nowMs - frag.timestamp) / 1000,
+        rcvage: (nowMs - broadcast[broadcast.length - 1].timestamp) / 1000,
+        fragment: fragment,
+        signup_fragment: match_field_0.signup_fragment,
+        tps: match_field_0.tps,
+        keyframe_interval: match_field_0.keyframe_interval,
+        map: match_field_0.map,
+        protocol: match_field_0.protocol,
+      }),
+    );
   }
 
   public postField(
@@ -143,6 +143,7 @@ export class MatchRelayService {
     const broadcast = this.broadcasts[matchId];
 
     if (field == "start") {
+      console.info("start");
       response.writeHead(200);
 
       if (broadcast[0] == null) {
