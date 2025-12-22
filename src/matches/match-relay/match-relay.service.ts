@@ -143,7 +143,6 @@ export class MatchRelayService {
     const broadcast = this.broadcasts[matchId];
 
     if (field == "start") {
-      console.info("start");
       response.writeHead(200);
 
       if (broadcast[0] == null) {

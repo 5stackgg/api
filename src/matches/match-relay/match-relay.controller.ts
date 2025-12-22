@@ -2,7 +2,7 @@ import { Controller, Get, Post, Req, Res, Param } from "@nestjs/common";
 import { Request, Response } from "express";
 import { MatchRelayService } from "./match-relay.service";
 
-@Controller("matches/:id/relay")
+@Controller("match-relay/:id")
 export class MatchRelayController {
   constructor(private readonly matchRelayService: MatchRelayService) {}
 

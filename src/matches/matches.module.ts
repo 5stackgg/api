@@ -246,15 +246,15 @@ export class MatchesModule implements NestModule {
       );
     consumer.apply(MatchRelayAuthMiddleware).forRoutes(
       {
-        path: "matches/:id/relay/:token/:fragment/start",
+        path: "match-relay/:id/:token/:fragment/start",
         method: RequestMethod.POST,
       },
       {
-        path: "matches/:id/relay/:token/:fragment/full",
+        path: "match-relay/:id/:token/:fragment/full",
         method: RequestMethod.POST,
       },
       {
-        path: "matches/:id/relay/:token/:fragment/delta",
+        path: "match-relay/:id/:token/:fragment/delta",
         method: RequestMethod.POST,
       },
     );
