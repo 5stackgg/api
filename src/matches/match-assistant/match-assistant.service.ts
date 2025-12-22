@@ -697,6 +697,10 @@ export class MatchAssistantService {
                             value: this.appConfig.apiDomain,
                           },
                           {
+                            name: "RELAY_DOMAIN",
+                            value: this.appConfig.relayDomain,
+                          },
+                          {
                             name: "DEMOS_DOMAIN",
                             value: this.appConfig.demosDomain,
                           },
