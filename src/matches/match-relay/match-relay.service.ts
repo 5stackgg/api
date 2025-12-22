@@ -1,4 +1,3 @@
-import url from "url";
 import zlib from "zlib";
 import { promisify } from "util";
 import { Request, Response } from "express";
@@ -14,56 +13,6 @@ export class MatchRelayService {
   private token_redirect: string | null = null;
 
   constructor(private readonly logger: Logger) {}
-
-  public processRequest(
-    request: Request,
-    response: Response,
-    matchId: string,
-    fragment: number,
-    field: string,
-    token?: string,
-  ) {
-    try {
-      if (token) {
-        this.logger.log("token", token);
-      }
-      const uri = decodeURI(request.url || "");
-      const param = url.parse(uri, true);
-      const path = param.pathname?.split("/").filter(Boolean) || [];
-      (response as any).httpVersion = "1.0";
-
-      console.info(`Processing request`, {
-        uri,
-        path,
-      });
-
-      const broadcasted_match = this.match_broadcasts[matchId];
-
-      // GET requests
-      if (field === "start") {
-        this.getStart(request, response, broadcasted_match, fragment, field);
-        return;
-      }
-
-      if (broadcasted_match[fragment] == null) {
-        response.writeHead(404, `Fragment ${fragment} not found`);
-        response.end();
-        return;
-      }
-
-      if (!field || field === "") {
-        this.getFragmentMetadata(response, broadcasted_match, fragment);
-        return;
-      }
-
-      this.getField(request, response, broadcasted_match, fragment, field);
-    } catch (error) {
-      this.logger.error(
-        `Exception when processing request ${request.url}`,
-        error,
-      );
-    }
-  }
 
   public getMatchBroadcasts() {
     return this.match_broadcasts;
@@ -142,12 +91,18 @@ export class MatchRelayService {
     response.setHeader("Expires", new Date(nowMs + 3000).toUTCString());
 
     const broadcasted_match = this.match_broadcasts[matchId];
+    if (!broadcasted_match) {
+      this.logger.error(`Broadcast not found for matchId ${matchId}`);
+      this.respondSimpleError(
+        response,
+        404,
+        `Broadcast not found for matchId ${matchId}`,
+      );
+      return;
+    }
+
     const match_field_0 = broadcasted_match[0];
     if (match_field_0 == null || match_field_0.start == null) {
-      console.info(
-        `Broadcast has not started yet for matchId ${matchId}`,
-        match_field_0,
-      );
       response.writeHead(404, "Broadcast has not started yet");
       response.end();
       return;
@@ -168,12 +123,6 @@ export class MatchRelayService {
       }
     } else {
       fragment = parseInt(fragmentParam);
-      if (isNaN(fragment)) {
-        console.info(`Fragment is not an int for matchId ${matchId}`, fragment);
-        response.writeHead(405, "Fragment is not an int");
-        response.end();
-        return;
-      }
 
       if (fragment < match_field_0.signup_fragment) {
         fragment = match_field_0.signup_fragment;
@@ -299,12 +248,7 @@ export class MatchRelayService {
     });
   }
 
-  private serveBlob(
-    request: Request,
-    response: Response,
-    fragmentRec: any,
-    field: string,
-  ): void {
+  private serveBlob(response: Response, fragmentRec: any, field: string): void {
     let blob = fragmentRec[field];
     const ungzipped_length = fragmentRec[field + "_ungzlen"];
 
@@ -335,15 +279,16 @@ export class MatchRelayService {
     response.end(blob);
   }
 
-  private getStart(
+  public getStart(
     request: Request,
     response: Response,
-    broadcasted_match: any[],
+    matchId: string,
     fragment: number,
-    field: string,
   ) {
+    const broadcasted_match = this.match_broadcasts[matchId];
+
     if (
-      broadcasted_match[0] == null ||
+      broadcasted_match?.[0] == null ||
       broadcasted_match[0].signup_fragment != fragment
     ) {
       return this.respondSimpleError(
@@ -353,36 +298,32 @@ export class MatchRelayService {
       );
     }
 
-    this.serveBlob(request, response, broadcasted_match[0], field);
+    this.serveBlob(response, broadcasted_match[0], "start");
   }
 
-  private getField(
+  public getField(
     request: Request,
     response: Response,
-    broadcasted_match: any[],
+    matchId: string,
     fragment: number,
     field: string,
+    token?: string,
   ) {
-    this.serveBlob(request, response, broadcasted_match[fragment], field);
-  }
-
-  private getFragmentMetadata(
-    response: Response,
-    broadcasted_match: any[],
-    fragment: number,
-  ) {
-    const res: any = {};
-
-    for (const field in broadcasted_match[fragment]) {
-      const f = broadcasted_match[fragment][field];
-      if (typeof f == "number") {
-        res[field] = f;
-      } else if (Buffer.isBuffer(f)) {
-        res[field] = f.length;
-      }
+    if (token) {
+      this.logger.log(`Token provided for matchId ${matchId}`);
     }
 
-    response.writeHead(200, { "Content-Type": "application/json" });
-    response.end(JSON.stringify(res));
+    const broadcasted_match = this.match_broadcasts[matchId];
+    if (!broadcasted_match) {
+      this.logger.error(`Broadcast not found for matchId ${matchId}`);
+      this.respondSimpleError(
+        response,
+        404,
+        `Broadcast not found for matchId ${matchId}`,
+      );
+      return;
+    }
+
+    this.serveBlob(response, broadcasted_match[fragment], field);
   }
 }

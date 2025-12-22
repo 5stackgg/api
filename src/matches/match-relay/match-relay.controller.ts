@@ -6,8 +6,6 @@ import { MatchRelayService } from "./match-relay.service";
 export class MatchRelayController {
   constructor(private readonly matchRelayService: MatchRelayService) {}
 
-  // TODO - get requests need to check if match otherwise throw 404
-
   @Get("sync")
   public handleSyncGet(
     @Param("id") matchId: string,
@@ -28,12 +26,11 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.processRequest(
+    this.matchRelayService.getStart(
       request,
       response,
       matchId,
       parseInt(fragment),
-      "start",
     );
   }
 
@@ -44,7 +41,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.processRequest(
+    this.matchRelayService.getField(
       request,
       response,
       matchId,
@@ -60,7 +57,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.processRequest(
+    this.matchRelayService.getField(
       request,
       response,
       matchId,
@@ -77,12 +74,12 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.processRequest(
+    this.matchRelayService.getField(
       request,
       response,
       matchId,
       parseInt(fragment),
-      "full",
+      "start",
       token,
     );
   }
@@ -95,12 +92,12 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.processRequest(
+    this.matchRelayService.getField(
       request,
       response,
       matchId,
       parseInt(fragment),
-      "delta",
+      "full",
       token,
     );
   }
@@ -113,7 +110,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.processRequest(
+    this.matchRelayService.getField(
       request,
       response,
       matchId,
