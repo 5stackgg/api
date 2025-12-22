@@ -3,23 +3,37 @@ import { promisify } from "util";
 import { Request, Response } from "express";
 import { Injectable, Logger } from "@nestjs/common";
 
-type FieldData = {
+type StartFieldData = {
   data?: Buffer;
   gipped?: boolean;
+  signup_fragment?: number;
+  tick?: number;
+  tps?: number;
+  map?: string;
+  keyframe_interval?: number;
+  protocol?: number;
+  [key: string]: any;
+};
+
+type FullFieldData = {
+  data?: Buffer;
+  gipped?: boolean;
+  tick?: number;
+  [key: string]: any;
+};
+
+type DeltaFieldData = {
+  data?: Buffer;
+  gipped?: boolean;
+  timestamp?: number;
+  endtick?: number;
+  [key: string]: any;
 };
 
 type Fragment = {
-  start?: FieldData;
-  full?: FieldData;
-  delta?: FieldData;
-  tick?: number;
-  endtick?: number;
-  timestamp?: number;
-  signup_fragment?: number;
-  tps?: number;
-  keyframe_interval?: number;
-  map?: string;
-  protocol?: number;
+  start?: StartFieldData;
+  full?: FullFieldData;
+  delta?: DeltaFieldData;
   [key: string]: any;
 };
 
@@ -38,7 +52,7 @@ export class MatchRelayService {
 
     if (
       broadcast?.[0] == null ||
-      broadcast[0].signup_fragment != fragmentIndex
+      broadcast[0].start?.signup_fragment != fragmentIndex
     ) {
       return this.relayError(
         response,
@@ -114,7 +128,7 @@ export class MatchRelayService {
 
       if (
         fragmentIndex >= 0 &&
-        fragmentIndex >= match_field_0.signup_fragment
+        fragmentIndex >= (match_field_0.start?.signup_fragment || 0)
       ) {
         const _fragment = broadcast[fragmentIndex];
         if (this.isSyncReady(_fragment)) {
@@ -124,8 +138,8 @@ export class MatchRelayService {
     } else {
       fragmentIndex = parseInt(fragmentParam);
 
-      if (fragmentIndex < match_field_0.signup_fragment) {
-        fragmentIndex = match_field_0.signup_fragment;
+      if (fragmentIndex < (match_field_0.start?.signup_fragment || 0)) {
+        fragmentIndex = match_field_0.start?.signup_fragment || 0;
       }
 
       for (let i = fragmentIndex; i < broadcast.length; i++) {
@@ -145,25 +159,34 @@ export class MatchRelayService {
     }
 
     response.writeHead(200, { "Content-Type": "application/json" });
-    if (match_field_0.protocol == null) {
-      match_field_0.protocol = 5;
+    if (match_field_0.start?.protocol == null) {
+      if (!match_field_0.start) {
+        match_field_0.start = {};
+      }
+      match_field_0.start.protocol = 5;
     }
+
+    // Get tick/endtick from delta field (delta has endtick, full only has tick)
+    const fragTick = frag.full?.tick;
+    const fragEndtick = frag.delta?.endtick;
+    const fragTimestamp = frag.delta?.timestamp;
 
     response.end(
       JSON.stringify({
-        tick: frag.tick,
-        endtick: frag.endtick,
+        tick: fragTick,
+        endtick: fragEndtick,
         maxtick: this.getMatchBroadcastEndTick(broadcast),
-        rtdelay: (nowMs - frag.timestamp) / 1000,
+        rtdelay: (nowMs - (fragTimestamp || nowMs)) / 1000,
         rcvage:
-          (nowMs - (broadcast[broadcast.length - 1]?.timestamp || nowMs)) /
+          (nowMs -
+            (broadcast[broadcast.length - 1]?.delta?.timestamp || nowMs)) /
           1000,
         fragment: fragmentIndex,
-        signup_fragment: match_field_0.signup_fragment,
-        tps: match_field_0.tps,
-        keyframe_interval: match_field_0.keyframe_interval,
-        map: match_field_0.map,
-        protocol: match_field_0.protocol,
+        signup_fragment: match_field_0.start?.signup_fragment,
+        tps: match_field_0.start?.tps,
+        keyframe_interval: match_field_0.start?.keyframe_interval,
+        map: match_field_0.start?.map,
+        protocol: match_field_0.start?.protocol,
       }),
     );
   }
@@ -175,7 +198,6 @@ export class MatchRelayService {
     matchId: string,
     fragmentIndex: number,
   ): void {
-    console.info(`${fragmentIndex} ${field}`);
     if (!this.broadcasts[matchId]) {
       this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
       this.broadcasts[matchId] = [];
@@ -188,10 +210,13 @@ export class MatchRelayService {
       if (broadcast[0] == null) {
         broadcast[0] = {};
       }
+      if (!broadcast[0].start) {
+        broadcast[0].start = {};
+      }
 
       // Start fragments are always stored at index 0
       // Store the original fragment number in signup_fragment
-      broadcast[0].signup_fragment = fragmentIndex;
+      broadcast[0].start.signup_fragment = fragmentIndex;
       fragmentIndex = 0;
     } else {
       // For non-start fields, ensure start fragment exists at index 0
@@ -212,24 +237,31 @@ export class MatchRelayService {
       }
     }
 
+    // Initialize field data object if it doesn't exist (for start field)
+    if (broadcast[fragmentIndex][field] == null) {
+      broadcast[fragmentIndex][field] = {};
+    }
+
     Object.entries(request.query).forEach(([key, value]) => {
       const strValue = String(value);
       const numValue = Number(strValue);
-      broadcast[fragmentIndex][key] =
+      // Store query params directly in the field data object
+      broadcast[fragmentIndex][field][key] =
         !isNaN(numValue) && strValue === String(numValue) ? numValue : value;
     });
+
+    console.info(`${fragmentIndex} ${field}`, broadcast[fragmentIndex][field]);
 
     const body: Buffer[] = [];
     request.on("data", function (data: Buffer) {
       body.push(data);
     });
+
     request.on("end", () => {
       const totalBuffer = Buffer.concat(body);
 
-      // Send response immediately (like old code)
       response.end();
 
-      // Initialize field data object if it doesn't exist
       if (broadcast[fragmentIndex][field] == null) {
         broadcast[fragmentIndex][field] = {};
       }
@@ -238,7 +270,6 @@ export class MatchRelayService {
         .then((compressedBlob: Buffer) => {
           broadcast[fragmentIndex][field].gipped = true;
           broadcast[fragmentIndex][field].data = compressedBlob;
-          broadcast[fragmentIndex].timestamp = Date.now();
         })
         .catch((error: Error) => {
           this.logger.error(
@@ -246,7 +277,11 @@ export class MatchRelayService {
           );
           broadcast[fragmentIndex][field].gipped = false;
           broadcast[fragmentIndex][field].data = totalBuffer;
-          broadcast[fragmentIndex].timestamp = Date.now();
+        })
+        .finally(() => {
+          if (field === "delta") {
+            broadcast[fragmentIndex][field].timestamp = Date.now();
+          }
         });
     });
   }
@@ -265,17 +300,18 @@ export class MatchRelayService {
       fragment != null &&
       fragment.full?.data != null &&
       fragment.delta?.data != null &&
-      fragment.tick != null &&
-      fragment.endtick != null &&
-      fragment.timestamp != null
+      (fragment.full?.tick != null || fragment.delta?.tick != null) &&
+      fragment.delta?.endtick != null &&
+      fragment.delta?.timestamp != null
     );
   }
 
   private getMatchBroadcastEndTick(broadcast: Broadcast): number {
+    // Only delta fields have endtick, full fields don't
     for (let i = broadcast.length - 1; i >= 0; i--) {
       const fragment = broadcast[i];
-      if (fragment?.endtick != null) {
-        return fragment.endtick;
+      if (fragment?.delta?.endtick != null) {
+        return fragment.delta.endtick;
       }
     }
     return 0;
@@ -286,7 +322,11 @@ export class MatchRelayService {
     fragmentRec: Fragment | undefined,
     field: string,
   ): void {
-    const fieldData = fragmentRec?.[field] as FieldData | undefined;
+    const fieldData = fragmentRec?.[field] as
+      | StartFieldData
+      | FullFieldData
+      | DeltaFieldData
+      | undefined;
     const blob = fieldData?.data;
 
     if (!blob) {
