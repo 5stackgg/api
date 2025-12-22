@@ -32,7 +32,6 @@ export class MatchRelayController {
   public handleGetFull(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
@@ -47,7 +46,6 @@ export class MatchRelayController {
   public handleGetDelta(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
@@ -61,24 +59,16 @@ export class MatchRelayController {
   @Get(":token/:fragment/start")
   public handleGetStartWithToken(
     @Param("id") matchId: string,
-    @Param("token") token: string,
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getStart(
-      response,
-      matchId,
-      parseInt(fragment),
-      token,
-    );
+    this.matchRelayService.getStart(response, matchId, parseInt(fragment));
   }
 
   @Get(":token/:fragment/full")
   public handleGetFullWithToken(
     @Param("id") matchId: string,
-    @Param("token") token: string,
     @Param("fragment") fragment: string,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
@@ -86,16 +76,13 @@ export class MatchRelayController {
       matchId,
       parseInt(fragment),
       "full",
-      token,
     );
   }
 
   @Get(":token/:fragment/delta")
   public handleGetDeltaWithToken(
     @Param("id") matchId: string,
-    @Param("token") token: string,
     @Param("fragment") fragment: string,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
@@ -103,14 +90,12 @@ export class MatchRelayController {
       matchId,
       parseInt(fragment),
       "delta",
-      token,
     );
   }
 
   @Post(":token/:fragment/start")
   public async handlePostStart(
     @Param("id") matchId: string,
-    @Param("token") token: string,
     @Param("fragment") fragment: string,
     @Req() request: Request,
     @Res() response: Response,
@@ -121,14 +106,12 @@ export class MatchRelayController {
       "start",
       matchId,
       parseInt(fragment),
-      token,
     );
   }
 
   @Post(":token/:fragment/full")
   public async handlePostFull(
     @Param("id") matchId: string,
-    @Param("token") token: string,
     @Param("fragment") fragment: string,
     @Req() request: Request,
     @Res() response: Response,
@@ -139,14 +122,12 @@ export class MatchRelayController {
       "full",
       matchId,
       parseInt(fragment),
-      token,
     );
   }
 
   @Post(":token/:fragment/delta")
   public async handlePostDelta(
     @Param("id") matchId: string,
-    @Param("token") token: string,
     @Param("fragment") fragment: string,
     @Req() request: Request,
     @Res() response: Response,
@@ -157,7 +138,6 @@ export class MatchRelayController {
       "delta",
       matchId,
       parseInt(fragment),
-      token,
     );
   }
 }

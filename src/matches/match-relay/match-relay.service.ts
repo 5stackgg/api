@@ -11,16 +11,7 @@ export class MatchRelayService {
 
   constructor(private readonly logger: Logger) {}
 
-  public getStart(
-    response: Response,
-    matchId: string,
-    fragment: number,
-    token?: string,
-  ) {
-    if (token) {
-      this.logger.log(`Token provided for matchId ${matchId}`);
-    }
-
+  public getStart(response: Response, matchId: string, fragment: number) {
     const broadcasted_match = this.match_broadcasts[matchId];
 
     if (
@@ -42,12 +33,7 @@ export class MatchRelayService {
     matchId: string,
     fragment: number,
     field: string,
-    token?: string,
   ) {
-    if (token) {
-      this.logger.log(`Token provided for matchId ${matchId}`);
-    }
-
     const broadcasted_match = this.match_broadcasts[matchId];
     if (!broadcasted_match) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
@@ -154,11 +140,7 @@ export class MatchRelayService {
     field: string,
     matchId: string,
     fragment: number,
-    token?: string,
   ): void {
-    if (token) {
-      this.logger.log(`Token provided for matchId ${matchId}`);
-    }
     if (!this.match_broadcasts[matchId]) {
       this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
       this.match_broadcasts[matchId] = [];
