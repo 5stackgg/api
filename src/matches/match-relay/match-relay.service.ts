@@ -166,7 +166,6 @@ export class MatchRelayService {
       match_field_0.start.protocol = 5;
     }
 
-    // Get tick/endtick from delta field (delta has endtick, full only has tick)
     const fragTick = fragment.full?.tick;
     const fragEndtick = fragment.delta?.endtick;
     const fragTimestamp = fragment.delta?.timestamp;
@@ -202,48 +201,32 @@ export class MatchRelayService {
       this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
       this.broadcasts[matchId] = [];
     }
+
     const broadcast = this.broadcasts[matchId];
 
     if (field == "start") {
-      response.writeHead(200);
-
-      if (broadcast[0] == null) {
-        broadcast[0] = {};
-        broadcast[0].start = {};
-      }
-
-      broadcast[0].start.signup_fragment = fragmentIndex;
       fragmentIndex = 0;
-    } else {
-      // For non-start fields, ensure start fragment exists at index 0
-      // Start fragment is always at index 0, check if the start data exists
-      if (broadcast[0] == null || broadcast[0].start?.data == null) {
-        response.writeHead(205);
-        response.end();
-        return;
-      } else {
-        response.writeHead(200);
-      }
-      if (broadcast[fragmentIndex] == null) {
-        broadcast[fragmentIndex] = {};
-      }
-      // Initialize field data object if it doesn't exist
-      if (broadcast[fragmentIndex][field] == null) {
-        broadcast[fragmentIndex][field] = {};
-      }
     }
 
-    // Initialize field data object if it doesn't exist (for start field)
+    if (field != "start" && broadcast[0] == null) {
+      response.writeHead(205);
+      response.end();
+      return;
+    }
+
+    response.writeHead(200);
+    if (broadcast[fragmentIndex] == null) {
+      broadcast[fragmentIndex] = {};
+    }
+
     if (broadcast[fragmentIndex][field] == null) {
-      broadcast[fragmentIndex][field] = {};
+      broadcast[fragmentIndex][field] = {
+        ...(field === "start" ? { signup_fragment: fragmentIndex } : {}),
+      };
     }
 
     Object.entries(request.query).forEach(([key, value]) => {
-      const strValue = String(value);
-      const numValue = Number(strValue);
-      // Store query params directly in the field data object
-      broadcast[fragmentIndex][field][key] =
-        !isNaN(numValue) && strValue === String(numValue) ? numValue : value;
+      broadcast[fragmentIndex][field][key] = value;
     });
 
     const body: Buffer[] = [];
