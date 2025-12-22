@@ -209,13 +209,9 @@ export class MatchRelayService {
 
       if (broadcast[0] == null) {
         broadcast[0] = {};
-      }
-      if (!broadcast[0].start) {
         broadcast[0].start = {};
       }
 
-      // Start fragments are always stored at index 0
-      // Store the original fragment number in signup_fragment
       broadcast[0].start.signup_fragment = fragmentIndex;
       fragmentIndex = 0;
     } else {
