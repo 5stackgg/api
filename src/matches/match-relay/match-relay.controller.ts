@@ -23,7 +23,6 @@ export class MatchRelayController {
   public handleGetStart(
     @Param("id") matchId: string,
     @Param("fragment") fragment: string,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.matchRelayService.getStart(response, matchId, parseInt(fragment));
@@ -66,7 +65,6 @@ export class MatchRelayController {
     @Param("id") matchId: string,
     @Param("token") token: string,
     @Param("fragment") fragment: string,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.matchRelayService.getStart(
