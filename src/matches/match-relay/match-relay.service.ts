@@ -157,11 +157,7 @@ export class MatchRelayService {
       broadcasted_match[0].signup_fragment = fragment;
       fragment = 0;
     } else {
-      if (broadcasted_match[0] == null) {
-        // need start fragment
-        response.writeHead(205);
-      } else if (broadcasted_match[0].start == null) {
-        // need start data
+      if (broadcasted_match[0] == null || broadcasted_match[0].start == null) {
         response.writeHead(205);
       } else {
         response.writeHead(200);
@@ -171,12 +167,12 @@ export class MatchRelayService {
       }
     }
 
-    // console.log(`query`, request.query);
-    for (const q in request.query) {
-      const v = request.query[q] as string;
-      const n = parseInt(v);
-      broadcasted_match[fragment][q] = v == String(n) ? n : v;
-    }
+    Object.entries(request.query).forEach(([key, value]) => {
+      const strValue = String(value);
+      const numValue = Number(strValue);
+      broadcasted_match[fragment][key] =
+        !isNaN(numValue) && strValue === String(numValue) ? numValue : value;
+    });
 
     const body: Buffer[] = [];
     request.on("data", function (data: Buffer) {
