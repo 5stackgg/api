@@ -44,9 +44,9 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
-import { MatchRelayController } from './match-relay/match-relay.controller';
-import { MatchRelayService } from './match-relay/match-relay.service';
-import { RawBodyMiddleware } from './match-relay/raw-body.middleware';
+import { MatchRelayController } from "./match-relay/match-relay.controller";
+import { MatchRelayService } from "./match-relay/match-relay.service";
+import { RawBodyMiddleware } from "./match-relay/raw-body.middleware";
 
 @Module({
   imports: [
@@ -246,8 +246,9 @@ export class MatchesModule implements NestModule {
       );
     consumer
       .apply(RawBodyMiddleware)
-      .forRoutes(
-        { path: "matches/:id/relay/*path", method: RequestMethod.POST },
-      );
+      .forRoutes({
+        path: "matches/:id/relay/*path",
+        method: RequestMethod.POST,
+      });
   }
 }
