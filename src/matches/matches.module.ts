@@ -46,7 +46,7 @@ import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
 import { MatchRelayService } from "./match-relay/match-relay.service";
-import { RawBodyMiddleware } from "./match-relay/raw-body.middleware";
+import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middleware";
 
 @Module({
   imports: [
@@ -244,7 +244,7 @@ export class MatchesModule implements NestModule {
         { path: "matches/current-match/:serverId", method: RequestMethod.ALL },
         { path: "demos/:matchId/*splat", method: RequestMethod.POST },
       );
-    consumer.apply(RawBodyMiddleware).forRoutes(
+    consumer.apply(MatchRelayAuthMiddleware).forRoutes(
       {
         path: "matches/:id/relay/:token/:fragment/start",
         method: RequestMethod.POST,

@@ -4,7 +4,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
 
 @Injectable()
-export class RawBodyMiddleware implements NestMiddleware {
+export class MatchRelayAuthMiddleware implements NestMiddleware {
   constructor(
     private readonly hasura: HasuraService,
     private readonly logger: Logger,
