@@ -72,7 +72,6 @@ export class MatchRelayService {
   ) {
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
-      this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.relayError(
         response,
         404,
@@ -102,7 +101,6 @@ export class MatchRelayService {
 
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
-      this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.relayError(
         response,
         404,
@@ -198,7 +196,6 @@ export class MatchRelayService {
     fragmentIndex: number,
   ): void {
     if (!this.broadcasts[matchId]) {
-      this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
       this.broadcasts[matchId] = [];
     }
 
@@ -250,7 +247,7 @@ export class MatchRelayService {
         })
         .catch((error: Error) => {
           this.logger.error(
-            `Cannot gzip ${totalBuffer.length} bytes: ${error}`,
+            `cannot gzip: ${error}`,
           );
           broadcast[fragmentIndex][field].gipped = false;
           broadcast[fragmentIndex][field].data = totalBuffer;
