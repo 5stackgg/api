@@ -7,12 +7,12 @@ import { Injectable, Logger } from "@nestjs/common";
 export class MatchRelayService {
   private readonly gzip = promisify(zlib.gzip);
 
-  private readonly match_broadcasts: { [key: string]: any[] } = {};
+  private readonly broadcasts: { [key: string]: any[] } = {};
 
   constructor(private readonly logger: Logger) {}
 
   public getStart(response: Response, matchId: string, fragment: number) {
-    const broadcast = this.match_broadcasts[matchId];
+    const broadcast = this.broadcasts[matchId];
 
     if (broadcast?.[0] == null || broadcast[0].signup_fragment != fragment) {
       return this.respondSimpleError(
@@ -31,7 +31,7 @@ export class MatchRelayService {
     fragment: number,
     field: string,
   ) {
-    const broadcast = this.match_broadcasts[matchId];
+    const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.respondSimpleError(
@@ -54,7 +54,7 @@ export class MatchRelayService {
     response.setHeader("Cache-Control", "public, max-age=3");
     response.setHeader("Expires", new Date(nowMs + 3000).toUTCString());
 
-    const broadcast = this.match_broadcasts[matchId];
+    const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.respondSimpleError(
@@ -136,11 +136,11 @@ export class MatchRelayService {
     matchId: string,
     fragment: number,
   ): void {
-    if (!this.match_broadcasts[matchId]) {
+    if (!this.broadcasts[matchId]) {
       this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
-      this.match_broadcasts[matchId] = [];
+      this.broadcasts[matchId] = [];
     }
-    const broadcast = this.match_broadcasts[matchId];
+    const broadcast = this.broadcasts[matchId];
 
     if (field == "start") {
       response.writeHead(200);
