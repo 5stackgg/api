@@ -3,33 +3,18 @@ import { promisify } from "util";
 import { Request, Response } from "express";
 import { Injectable, Logger } from "@nestjs/common";
 
-type Fragment = {
-  data?: Buffer;
-  gipped: boolean;
-  [key: string]: any;
-};
-
 @Injectable()
 export class MatchRelayService {
   private readonly gzip = promisify(zlib.gzip);
 
-  private readonly broadcasts: {
-    [key: string]: {
-      start: number;
-      fragments: Fragment[];
-    };
-  } = {};
+  private readonly broadcasts: { [key: string]: any[] } = {};
 
   constructor(private readonly logger: Logger) {}
 
-  public getStart(response: Response, matchId: string, fragmentIndex: number) {
+  public getStart(response: Response, matchId: string, fragment: number) {
     const broadcast = this.broadcasts[matchId];
 
-    console.info(`request`, {
-      fragmentIndex,
-      start_fragment: broadcast?.start,
-    });
-    if (broadcast?.start == null || broadcast.start != fragmentIndex) {
+    if (broadcast?.[0] == null || broadcast[0].signup_fragment != fragment) {
       return this.relayError(
         response,
         404,
@@ -37,13 +22,14 @@ export class MatchRelayService {
       );
     }
 
-    this.getFragment(response, matchId, fragmentIndex);
+    this.serveBlob(response, broadcast[0], "start");
   }
 
   public getFragment(
     response: Response,
     matchId: string,
     fragmentIndex: number,
+    field: "start" | "full" | "delta",
   ) {
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
@@ -56,22 +42,7 @@ export class MatchRelayService {
       return;
     }
 
-    const fragment = broadcast.fragments[fragmentIndex];
-
-    if (fragment == null) {
-      response.writeHead(404, "Field not found");
-      response.end();
-      return;
-    }
-    const headers: { [key: string]: string } = {
-      "Content-Type": "application/octet-stream",
-    };
-
-    if (fragment.gipped) {
-      headers["Content-Encoding"] = "gzip";
-    }
-    response.writeHead(200, headers);
-    response.end(fragment.data);
+    this.serveBlob(response, broadcast[fragmentIndex], field);
   }
 
   public getSyncInfo(
@@ -84,63 +55,77 @@ export class MatchRelayService {
     response.setHeader("Expires", new Date(nowMs + 3000).toUTCString());
 
     const broadcast = this.broadcasts[matchId];
-    if (!broadcast || broadcast.start == null) {
+    if (!broadcast) {
+      this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.relayError(
         response,
         404,
-        `[${matchId}] broadcast not found or not started`,
+        `Broadcast not found for matchId ${matchId}`,
       );
       return;
     }
 
-    let fragment: Fragment;
-    let fragmentIndex: number;
+    const match_field_0 = broadcast[0];
+    if (match_field_0 == null || match_field_0.start == null) {
+      response.writeHead(404, "Broadcast has not started yet");
+      response.end();
+      return;
+    }
+
+    let fragment: number | null = null;
     const fragmentParam = request.query.fragment as string | undefined;
+    let frag: any = null;
 
     if (fragmentParam == null) {
-      fragment = broadcast.fragments[broadcast.start];
-    } else {
-      fragmentIndex = parseInt(fragmentParam);
+      fragment = Math.max(0, broadcast.length - 8);
 
-      if (fragmentIndex < broadcast.start) {
-        fragmentIndex = broadcast.start;
+      if (fragment >= 0 && fragment >= match_field_0.signup_fragment) {
+        const _fragment = broadcast[fragment];
+        if (this.isSyncReady(_fragment)) {
+          frag = _fragment;
+        }
+      }
+    } else {
+      fragment = parseInt(fragmentParam);
+
+      if (fragment < match_field_0.signup_fragment) {
+        fragment = match_field_0.signup_fragment;
       }
 
-      for (let i = fragmentIndex; i < broadcast.fragments.length; i++) {
-        const _fragment = broadcast.fragments[i];
+      for (let i = fragment; i < broadcast.length; i++) {
+        const _fragment = broadcast[i];
         if (this.isSyncReady(_fragment)) {
-          fragment = _fragment;
+          frag = _fragment;
+          fragment = i;
           break;
         }
       }
     }
 
-    if (!fragment) {
-      console.info(`fragment not found`, fragmentIndex);
+    if (!frag) {
       response.writeHead(405, "Fragment not found, please check back soon");
       response.end();
       return;
     }
 
     response.writeHead(200, { "Content-Type": "application/json" });
-
-    const startFragment = broadcast.fragments[broadcast.start];
+    if (match_field_0.protocol == null) {
+      match_field_0.protocol = 5;
+    }
 
     response.end(
       JSON.stringify({
-        tick: fragment.tick,
-        endtick: fragment.endtick,
-        maxtick: this.getMatchBroadcastEndTick(
-          Object.values(broadcast.fragments),
-        ),
-        rtdelay: (nowMs - fragment.timestamp) / 1000,
-        rcvage: (nowMs - startFragment.timestamp) / 1000,
-        fragment: fragmentIndex || broadcast.start,
-        signup_fragment: broadcast.start,
-        tps: startFragment.tps,
-        keyframe_interval: startFragment.keyframe_interval,
-        map: startFragment.map,
-        protocol: startFragment.protocol,
+        tick: frag.tick,
+        endtick: frag.endtick,
+        maxtick: this.getMatchBroadcastEndTick(broadcast),
+        rtdelay: (nowMs - frag.timestamp) / 1000,
+        rcvage: (nowMs - (broadcast[broadcast.length - 1]?.timestamp || nowMs)) / 1000,
+        fragment: fragment,
+        signup_fragment: match_field_0.signup_fragment,
+        tps: match_field_0.tps,
+        keyframe_interval: match_field_0.keyframe_interval,
+        map: match_field_0.map,
+        protocol: match_field_0.protocol,
       }),
     );
   }
@@ -150,68 +135,65 @@ export class MatchRelayService {
     response: Response,
     field: string,
     matchId: string,
-    fragmentIndex: number,
+    fragment: number,
   ): void {
     if (!this.broadcasts[matchId]) {
       this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
-      this.broadcasts[matchId] = { start: null, fragments: [] };
+      this.broadcasts[matchId] = [];
     }
     const broadcast = this.broadcasts[matchId];
 
     if (field == "start") {
-      if (broadcast.start == null) {
-        broadcast.start = fragmentIndex;
+      response.writeHead(200);
+
+      if (broadcast[0] == null) {
+        broadcast[0] = {};
+      }
+
+      broadcast[0].signup_fragment = fragment;
+      fragment = 0;
+    } else {
+      if (broadcast[0] == null || broadcast[0].start == null) {
+        response.writeHead(205);
+        response.end();
+        return;
+      } else {
+        response.writeHead(200);
+      }
+      if (broadcast[fragment] == null) {
+        broadcast[fragment] = {};
       }
     }
-
-    if (broadcast.start == null) {
-      response.writeHead(205);
-      response.end();
-      return;
-    }
-
-    response.writeHead(200);
-
-    broadcast.fragments[fragmentIndex] = {
-      gipped: false,
-    };
 
     Object.entries(request.query).forEach(([key, value]) => {
       const strValue = String(value);
       const numValue = Number(strValue);
-      broadcast.fragments[fragmentIndex][key] =
+      broadcast[fragment][key] =
         !isNaN(numValue) && strValue === String(numValue) ? numValue : value;
     });
 
     const body: Buffer[] = [];
-
     request.on("data", function (data: Buffer) {
       body.push(data);
     });
-
     request.on("end", () => {
       const totalBuffer = Buffer.concat(body);
-
-      broadcast.fragments[fragmentIndex].timestamp = Date.now();
+      
+      // Send response immediately (like old code)
+      response.end();
 
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
-          broadcast.fragments[fragmentIndex].gipped = true;
-          broadcast.fragments[fragmentIndex].data = compressedBlob;
-
-          if (field === "start") {
-            broadcast.start = fragmentIndex;
-          }
+          broadcast[fragment][field + "_ungzlen"] = totalBuffer.length;
+          broadcast[fragment][field] = compressedBlob;
+          broadcast[fragment].timestamp = Date.now();
         })
         .catch((error: Error) => {
           this.logger.error(
             `Cannot gzip ${totalBuffer.length} bytes: ${error}`,
           );
-          broadcast.fragments[fragmentIndex].data = totalBuffer;
-        })
-        .finally(() => {
-          console.info(`${fragmentIndex}:${field}`);
-          response.end();
+          broadcast[fragment][field] = totalBuffer;
+          broadcast[fragment].timestamp = Date.now();
         });
     });
   }
@@ -237,13 +219,34 @@ export class MatchRelayService {
     );
   }
 
-  private getMatchBroadcastEndTick(fragments: any[]): number {
-    for (let i = fragments.length - 1; i >= 0; i--) {
-      const fragment = fragments[i];
+  private getMatchBroadcastEndTick(broadcast: any[]): number {
+    for (let i = broadcast.length - 1; i >= 0; i--) {
+      const fragment = broadcast[i];
       if (fragment?.endtick != null) {
         return fragment.endtick;
       }
     }
     return 0;
+  }
+
+  private serveBlob(response: Response, fragmentRec: any, field: string): void {
+    const blob = fragmentRec?.[field];
+
+    if (!blob) {
+      response.writeHead(404, "Field not found");
+      response.end();
+      return;
+    }
+
+    const ungzipped_length = fragmentRec[field + "_ungzlen"];
+
+    const headers: { [key: string]: string } = {
+      "Content-Type": "application/octet-stream",
+    };
+    if (ungzipped_length) {
+      headers["Content-Encoding"] = "gzip";
+    }
+    response.writeHead(200, headers);
+    response.end(blob);
   }
 }

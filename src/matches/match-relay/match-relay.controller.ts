@@ -30,7 +30,12 @@ export class MatchRelayController {
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(response, matchId, parseInt(fragment));
+    this.matchRelayService.getFragment(
+      response,
+      matchId,
+      parseInt(fragment),
+      "full",
+    );
   }
 
   @Get(":fragment/delta")
@@ -39,7 +44,12 @@ export class MatchRelayController {
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(response, matchId, parseInt(fragment));
+    this.matchRelayService.getFragment(
+      response,
+      matchId,
+      parseInt(fragment),
+      "delta",
+    );
   }
 
   @Get(":token/:fragment/start")
@@ -57,7 +67,12 @@ export class MatchRelayController {
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(response, matchId, parseInt(fragment));
+    this.matchRelayService.getFragment(
+      response,
+      matchId,
+      parseInt(fragment),
+      "full",
+    );
   }
 
   @Get(":token/:fragment/delta")
@@ -66,7 +81,12 @@ export class MatchRelayController {
     @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getFragment(response, matchId, parseInt(fragment));
+    this.matchRelayService.getFragment(
+      response,
+      matchId,
+      parseInt(fragment),
+      "delta",
+    );
   }
 
   @Post(":token/:fragment/start")
