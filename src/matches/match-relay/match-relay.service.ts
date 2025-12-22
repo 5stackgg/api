@@ -4,12 +4,15 @@ import { Request, Response } from "express";
 import { Injectable, Logger } from "@nestjs/common";
 
 type Fragment = {
-  start?: Buffer;
-  full?: Buffer;
-  delta?: Buffer;
-  start_ungzlen?: number;
-  full_ungzlen?: number;
-  delta_ungzlen?: number;
+  data?: {
+    start?: Buffer;
+    full?: Buffer;
+    delta?: Buffer;
+    start_ungzlen?: number;
+    full_ungzlen?: number;
+    delta_ungzlen?: number;
+    [key: string]: Buffer | number | undefined;
+  };
   tick?: number;
   endtick?: number;
   timestamp?: number;
@@ -65,7 +68,14 @@ export class MatchRelayService {
       return;
     }
 
-    this.serveBlob(response, broadcast[fragmentIndex], field);
+    const fragment = broadcast[fragmentIndex];
+    if (!fragment) {
+      response.writeHead(404, "Fragment not found");
+      response.end();
+      return;
+    }
+
+    this.serveBlob(response, fragment, field);
   }
 
   public getSyncInfo(
@@ -89,8 +99,8 @@ export class MatchRelayService {
     }
 
     const match_field_0 = broadcast[0];
-    // Check if start fragment exists at index 0 (start is a Buffer, so check if it exists)
-    if (match_field_0 == null || match_field_0.start == null) {
+    // Check if start fragment exists at index 0
+    if (match_field_0 == null || match_field_0.data?.start == null) {
       response.writeHead(404, "Broadcast has not started yet");
       response.end();
       return;
@@ -185,8 +195,8 @@ export class MatchRelayService {
       fragmentIndex = 0;
     } else {
       // For non-start fields, ensure start fragment exists at index 0
-      // Start fragment is always at index 0, check if the start Buffer exists
-      if (broadcast[0] == null || broadcast[0].start == null) {
+      // Start fragment is always at index 0, check if the start data exists
+      if (broadcast[0] == null || broadcast[0].data?.start == null) {
         response.writeHead(205);
         response.end();
         return;
@@ -195,6 +205,10 @@ export class MatchRelayService {
       }
       if (broadcast[fragmentIndex] == null) {
         broadcast[fragmentIndex] = {};
+      }
+      // Initialize data object if it doesn't exist
+      if (broadcast[fragmentIndex].data == null) {
+        broadcast[fragmentIndex].data = {};
       }
     }
 
@@ -215,17 +229,22 @@ export class MatchRelayService {
       // Send response immediately (like old code)
       response.end();
 
+      // Initialize data object if it doesn't exist
+      if (broadcast[fragmentIndex].data == null) {
+        broadcast[fragmentIndex].data = {};
+      }
+
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
-          broadcast[fragmentIndex][field + "_ungzlen"] = totalBuffer.length;
-          broadcast[fragmentIndex][field] = compressedBlob;
+          broadcast[fragmentIndex].data![field + "_ungzlen"] = totalBuffer.length;
+          broadcast[fragmentIndex].data![field] = compressedBlob;
           broadcast[fragmentIndex].timestamp = Date.now();
         })
         .catch((error: Error) => {
           this.logger.error(
             `Cannot gzip ${totalBuffer.length} bytes: ${error}`,
           );
-          broadcast[fragmentIndex][field] = totalBuffer;
+          broadcast[fragmentIndex].data![field] = totalBuffer;
           broadcast[fragmentIndex].timestamp = Date.now();
         });
     });
@@ -243,8 +262,8 @@ export class MatchRelayService {
   private isSyncReady(fragment: Fragment | undefined): boolean {
     return (
       fragment != null &&
-      fragment.full != null &&
-      fragment.delta != null &&
+      fragment.data?.full != null &&
+      fragment.data?.delta != null &&
       fragment.tick != null &&
       fragment.endtick != null &&
       fragment.timestamp != null
@@ -266,7 +285,7 @@ export class MatchRelayService {
     fragmentRec: Fragment | undefined,
     field: string,
   ): void {
-    const blob = fragmentRec?.[field];
+    const blob = fragmentRec?.data?.[field];
 
     if (!blob) {
       response.writeHead(404, "Field not found");
@@ -274,7 +293,7 @@ export class MatchRelayService {
       return;
     }
 
-    const ungzipped_length = fragmentRec[field + "_ungzlen"];
+    const ungzipped_length = fragmentRec.data?.[field + "_ungzlen"];
 
     const headers: { [key: string]: string } = {
       "Content-Type": "application/octet-stream",
