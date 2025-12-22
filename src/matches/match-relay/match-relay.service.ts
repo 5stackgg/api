@@ -12,12 +12,9 @@ export class MatchRelayService {
   constructor(private readonly logger: Logger) {}
 
   public getStart(response: Response, matchId: string, fragment: number) {
-    const broadcasted_match = this.match_broadcasts[matchId];
+    const broadcast = this.match_broadcasts[matchId];
 
-    if (
-      broadcasted_match?.[0] == null ||
-      broadcasted_match[0].signup_fragment != fragment
-    ) {
+    if (broadcast?.[0] == null || broadcast[0].signup_fragment != fragment) {
       return this.respondSimpleError(
         response,
         404,
@@ -25,7 +22,7 @@ export class MatchRelayService {
       );
     }
 
-    this.serveBlob(response, broadcasted_match[0], "start");
+    this.serveBlob(response, broadcast[0], "start");
   }
 
   public getField(
@@ -34,8 +31,8 @@ export class MatchRelayService {
     fragment: number,
     field: string,
   ) {
-    const broadcasted_match = this.match_broadcasts[matchId];
-    if (!broadcasted_match) {
+    const broadcast = this.match_broadcasts[matchId];
+    if (!broadcast) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.respondSimpleError(
         response,
@@ -45,7 +42,7 @@ export class MatchRelayService {
       return;
     }
 
-    this.serveBlob(response, broadcasted_match[fragment], field);
+    this.serveBlob(response, broadcast[fragment], field);
   }
 
   public respondMatchBroadcastSync(
@@ -57,8 +54,8 @@ export class MatchRelayService {
     response.setHeader("Cache-Control", "public, max-age=3");
     response.setHeader("Expires", new Date(nowMs + 3000).toUTCString());
 
-    const broadcasted_match = this.match_broadcasts[matchId];
-    if (!broadcasted_match) {
+    const broadcast = this.match_broadcasts[matchId];
+    if (!broadcast) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
       this.respondSimpleError(
         response,
@@ -68,7 +65,7 @@ export class MatchRelayService {
       return;
     }
 
-    const match_field_0 = broadcasted_match[0];
+    const match_field_0 = broadcast[0];
     if (match_field_0 == null || match_field_0.start == null) {
       response.writeHead(404, "Broadcast has not started yet");
       response.end();
@@ -80,12 +77,12 @@ export class MatchRelayService {
     let frag: any = null;
 
     if (fragmentParam == null) {
-      fragment = Math.max(0, broadcasted_match.length - 8);
+      fragment = Math.max(0, broadcast.length - 8);
 
       if (fragment >= 0 && fragment >= match_field_0.signup_fragment) {
-        const f = broadcasted_match[fragment];
-        if (this.isSyncReady(f)) {
-          frag = f;
+        const _fragment = broadcast[fragment];
+        if (this.isSyncReady(_fragment)) {
+          frag = _fragment;
         }
       }
     } else {
@@ -95,10 +92,10 @@ export class MatchRelayService {
         fragment = match_field_0.signup_fragment;
       }
 
-      for (; fragment < broadcasted_match.length; fragment++) {
-        const f = broadcasted_match[fragment];
-        if (this.isSyncReady(f)) {
-          frag = f;
+      for (let i = fragment; i < broadcast.length; i++) {
+        const _fragment = broadcast[fragment];
+        if (this.isSyncReady(_fragment)) {
+          frag = _fragment;
           break;
         }
       }
@@ -118,11 +115,9 @@ export class MatchRelayService {
     const jso: any = {
       tick: frag.tick,
       endtick: frag.endtick,
-      maxtick: this.getMatchBroadcastEndTick(broadcasted_match),
+      maxtick: this.getMatchBroadcastEndTick(broadcast),
       rtdelay: (nowMs - frag.timestamp) / 1000,
-      rcvage:
-        (nowMs - broadcasted_match[broadcasted_match.length - 1].timestamp) /
-        1000,
+      rcvage: (nowMs - broadcast[broadcast.length - 1].timestamp) / 1000,
       fragment: fragment,
       signup_fragment: match_field_0.signup_fragment,
       tps: match_field_0.tps,
@@ -145,32 +140,32 @@ export class MatchRelayService {
       this.logger.log(`Creating new match broadcast for matchId ${matchId}`);
       this.match_broadcasts[matchId] = [];
     }
-    const broadcasted_match = this.match_broadcasts[matchId];
+    const broadcast = this.match_broadcasts[matchId];
 
     if (field == "start") {
       response.writeHead(200);
 
-      if (broadcasted_match[0] == null) {
-        broadcasted_match[0] = {};
+      if (broadcast[0] == null) {
+        broadcast[0] = {};
       }
 
-      broadcasted_match[0].signup_fragment = fragment;
+      broadcast[0].signup_fragment = fragment;
       fragment = 0;
     } else {
-      if (broadcasted_match[0] == null || broadcasted_match[0].start == null) {
+      if (broadcast[0] == null || broadcast[0].start == null) {
         response.writeHead(205);
       } else {
         response.writeHead(200);
       }
-      if (broadcasted_match[fragment] == null) {
-        broadcasted_match[fragment] = {};
+      if (broadcast[fragment] == null) {
+        broadcast[fragment] = {};
       }
     }
 
     Object.entries(request.query).forEach(([key, value]) => {
       const strValue = String(value);
       const numValue = Number(strValue);
-      broadcasted_match[fragment][key] =
+      broadcast[fragment][key] =
         !isNaN(numValue) && strValue === String(numValue) ? numValue : value;
     });
 
@@ -184,16 +179,16 @@ export class MatchRelayService {
 
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
-          broadcasted_match[fragment][field + "_ungzlen"] = totalBuffer.length;
-          broadcasted_match[fragment][field] = compressedBlob;
-          broadcasted_match[fragment].timestamp = Date.now();
+          broadcast[fragment][field + "_ungzlen"] = totalBuffer.length;
+          broadcast[fragment][field] = compressedBlob;
+          broadcast[fragment].timestamp = Date.now();
         })
         .catch((error: Error) => {
           this.logger.error(
             `Cannot gzip ${totalBuffer.length} bytes: ${error}`,
           );
-          broadcasted_match[fragment][field] = totalBuffer;
-          broadcasted_match[fragment].timestamp = Date.now();
+          broadcast[fragment][field] = totalBuffer;
+          broadcast[fragment].timestamp = Date.now();
         });
     });
   }
@@ -207,22 +202,22 @@ export class MatchRelayService {
     response.end();
   }
 
-  private isSyncReady(f: any): boolean {
+  private isSyncReady(fragment: any): boolean {
     return (
-      f != null &&
-      typeof f === "object" &&
-      f.full != null &&
-      f.delta != null &&
-      f.tick != null &&
-      f.endtick != null &&
-      f.timestamp
+      fragment != null &&
+      typeof fragment === "object" &&
+      fragment.full != null &&
+      fragment.delta != null &&
+      fragment.tick != null &&
+      fragment.endtick != null &&
+      fragment.timestamp
     );
   }
 
-  private getMatchBroadcastEndTick(broadcasted_match: any[]): number {
-    for (let f = broadcasted_match.length - 1; f >= 0; f--) {
-      if (broadcasted_match[f].endtick) {
-        return broadcasted_match[f].endtick;
+  private getMatchBroadcastEndTick(broadcast: any[]): number {
+    for (let f = broadcast.length - 1; f >= 0; f--) {
+      if (broadcast[f].endtick) {
+        return broadcast[f].endtick;
       }
     }
     return 0;
