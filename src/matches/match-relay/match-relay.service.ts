@@ -45,7 +45,7 @@ export class MatchRelayService {
     this.serveBlob(response, broadcast[fragment], field);
   }
 
-  public respondMatchBroadcastSync(
+  public getSyncInfo(
     request: Request,
     response: Response,
     matchId: string,

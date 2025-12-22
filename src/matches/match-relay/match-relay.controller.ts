@@ -12,11 +12,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.respondMatchBroadcastSync(
-      request,
-      response,
-      matchId,
-    );
+    this.matchRelayService.getSyncInfo(request, response, matchId);
   }
 
   @Get(":fragment/start")
