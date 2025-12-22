@@ -36,7 +36,6 @@ export class MatchRelayController {
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
-      request,
       response,
       matchId,
       parseInt(fragment),
@@ -52,7 +51,6 @@ export class MatchRelayController {
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
-      request,
       response,
       matchId,
       parseInt(fragment),
@@ -84,7 +82,6 @@ export class MatchRelayController {
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
-      request,
       response,
       matchId,
       parseInt(fragment),
@@ -102,7 +99,6 @@ export class MatchRelayController {
     @Res() response: Response,
   ) {
     this.matchRelayService.getField(
-      request,
       response,
       matchId,
       parseInt(fragment),

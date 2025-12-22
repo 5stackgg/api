@@ -9,82 +9,63 @@ export class MatchRelayService {
 
   private readonly match_broadcasts: { [key: string]: any[] } = {};
 
-  // Example of how to support token_redirect (for CDN, unified playcast URL for the whole event, etc.)
-  private token_redirect: string | null = null;
-
   constructor(private readonly logger: Logger) {}
 
-  public getMatchBroadcasts() {
-    return this.match_broadcasts;
-  }
-
-  public getTokenRedirect() {
-    return this.token_redirect;
-  }
-
-  public setTokenRedirect(value: string) {
-    this.token_redirect = value;
-  }
-
-  private respondSimpleError(
+  public getStart(
     response: Response,
-    code: number,
-    explanation: string,
-  ): void {
-    response.writeHead(code, { "X-Reason": explanation });
-    response.end();
-  }
-
-  private checkFragmentCdnDelayElapsed(fragmentRec: any): boolean {
-    if (!fragmentRec.cdndelay) {
-      return true;
+    matchId: string,
+    fragment: number,
+    token?: string,
+  ) {
+    if (token) {
+      this.logger.log(`Token provided for matchId ${matchId}`);
     }
 
-    if (!fragmentRec.timestamp) {
-      this.logger.warn("Refusing to serve cdndelay without timestamp");
-      return false;
-    }
+    const broadcasted_match = this.match_broadcasts[matchId];
 
-    const iusElapsedLiveMilliseconds =
-      Date.now().valueOf() -
-      (fragmentRec.cdndelay + fragmentRec.timestamp.valueOf());
-    if (iusElapsedLiveMilliseconds < 0) {
-      this.logger.warn(
-        `Refusing to serve cdndelay due to ${iusElapsedLiveMilliseconds} ms of delay remaining`,
+    if (
+      broadcasted_match?.[0] == null ||
+      broadcasted_match[0].signup_fragment != fragment
+    ) {
+      return this.respondSimpleError(
+        response,
+        404,
+        "Invalid or expired start fragment, please re-sync",
       );
-      return false;
     }
 
-    return true;
+    this.serveBlob(response, broadcasted_match[0], "start");
   }
 
-  private isSyncReady(f: any): boolean {
-    return (
-      f != null &&
-      typeof f === "object" &&
-      f.full != null &&
-      f.delta != null &&
-      f.tick != null &&
-      f.endtick != null &&
-      f.timestamp &&
-      this.checkFragmentCdnDelayElapsed(f)
-    );
-  }
-
-  private getMatchBroadcastEndTick(broadcasted_match: any[]): number {
-    for (let f = broadcasted_match.length - 1; f >= 0; f--) {
-      if (broadcasted_match[f].endtick) {
-        return broadcasted_match[f].endtick;
-      }
+  public getField(
+    response: Response,
+    matchId: string,
+    fragment: number,
+    field: string,
+    token?: string,
+  ) {
+    if (token) {
+      this.logger.log(`Token provided for matchId ${matchId}`);
     }
-    return 0;
+
+    const broadcasted_match = this.match_broadcasts[matchId];
+    if (!broadcasted_match) {
+      this.logger.error(`Broadcast not found for matchId ${matchId}`);
+      this.respondSimpleError(
+        response,
+        404,
+        `Broadcast not found for matchId ${matchId}`,
+      );
+      return;
+    }
+
+    this.serveBlob(response, broadcasted_match[fragment], field);
   }
 
   public respondMatchBroadcastSync(
     request: Request,
     response: Response,
     matchId: string,
-    token_redirect?: string | null,
   ): void {
     const nowMs = Date.now();
     response.setHeader("Cache-Control", "public, max-age=3");
@@ -164,10 +145,6 @@ export class MatchRelayService {
       protocol: match_field_0.protocol,
     };
 
-    if (token_redirect) {
-      jso.token_redirect = token_redirect;
-    }
-
     response.end(JSON.stringify(jso));
   }
 
@@ -227,11 +204,6 @@ export class MatchRelayService {
       const totalBuffer = Buffer.concat(body);
       response.end();
 
-      const originCdnDelay = request.headers["x-origin-delay"] as string;
-      if (originCdnDelay && parseInt(originCdnDelay) > 0) {
-        broadcasted_match[fragment].cdndelay = parseInt(originCdnDelay);
-      }
-
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
           broadcasted_match[fragment][field + "_ungzlen"] = totalBuffer.length;
@@ -248,8 +220,38 @@ export class MatchRelayService {
     });
   }
 
+  private respondSimpleError(
+    response: Response,
+    code: number,
+    explanation: string,
+  ): void {
+    response.writeHead(code, { "X-Reason": explanation });
+    response.end();
+  }
+
+  private isSyncReady(f: any): boolean {
+    return (
+      f != null &&
+      typeof f === "object" &&
+      f.full != null &&
+      f.delta != null &&
+      f.tick != null &&
+      f.endtick != null &&
+      f.timestamp
+    );
+  }
+
+  private getMatchBroadcastEndTick(broadcasted_match: any[]): number {
+    for (let f = broadcasted_match.length - 1; f >= 0; f--) {
+      if (broadcasted_match[f].endtick) {
+        return broadcasted_match[f].endtick;
+      }
+    }
+    return 0;
+  }
+
   private serveBlob(response: Response, fragmentRec: any, field: string): void {
-    let blob = fragmentRec?.[field];
+    const blob = fragmentRec?.[field];
 
     if (!blob) {
       response.writeHead(404, "Field not found");
@@ -259,16 +261,6 @@ export class MatchRelayService {
 
     const ungzipped_length = fragmentRec[field + "_ungzlen"];
 
-    if (!this.checkFragmentCdnDelayElapsed(fragmentRec)) {
-      blob = null;
-    }
-
-    if (blob == null) {
-      response.writeHead(404, "Field not found");
-      response.end();
-      return;
-    }
-
     const headers: { [key: string]: string } = {
       "Content-Type": "application/octet-stream",
     };
@@ -277,57 +269,5 @@ export class MatchRelayService {
     }
     response.writeHead(200, headers);
     response.end(blob);
-  }
-
-  public getStart(
-    response: Response,
-    matchId: string,
-    fragment: number,
-    token?: string,
-  ) {
-    if (token) {
-      this.logger.log(`Token provided for matchId ${matchId}`);
-    }
-
-    const broadcasted_match = this.match_broadcasts[matchId];
-
-    if (
-      broadcasted_match?.[0] == null ||
-      broadcasted_match[0].signup_fragment != fragment
-    ) {
-      return this.respondSimpleError(
-        response,
-        404,
-        "Invalid or expired start fragment, please re-sync",
-      );
-    }
-
-    this.serveBlob(response, broadcasted_match[0], "start");
-  }
-
-  public getField(
-    request: Request,
-    response: Response,
-    matchId: string,
-    fragment: number,
-    field: string,
-    token?: string,
-  ) {
-    if (token) {
-      this.logger.log(`Token provided for matchId ${matchId}`);
-    }
-
-    const broadcasted_match = this.match_broadcasts[matchId];
-    if (!broadcasted_match) {
-      this.logger.error(`Broadcast not found for matchId ${matchId}`);
-      this.respondSimpleError(
-        response,
-        404,
-        `Broadcast not found for matchId ${matchId}`,
-      );
-      return;
-    }
-
-    this.serveBlob(response, broadcasted_match[fragment], field);
   }
 }
