@@ -96,10 +96,6 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    console.info(`post start`, {
-      matchId,
-      fragment: parseInt(fragment),
-    });
     this.matchRelayService.postField(
       request,
       response,
@@ -116,10 +112,6 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    console.info(`post full`, {
-      matchId,
-      fragment: parseInt(fragment),
-    });
     this.matchRelayService.postField(
       request,
       response,
@@ -136,10 +128,6 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    console.info(`post delta`, {
-      matchId,
-      fragment: parseInt(fragment),
-    });
     this.matchRelayService.postField(
       request,
       response,
