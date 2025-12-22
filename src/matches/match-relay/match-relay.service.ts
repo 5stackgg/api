@@ -249,7 +249,14 @@ export class MatchRelayService {
   }
 
   private serveBlob(response: Response, fragmentRec: any, field: string): void {
-    let blob = fragmentRec[field];
+    let blob = fragmentRec?.[field];
+
+    if (!blob) {
+      response.writeHead(404, "Field not found");
+      response.end();
+      return;
+    }
+
     const ungzipped_length = fragmentRec[field + "_ungzlen"];
 
     if (!this.checkFragmentCdnDelayElapsed(fragmentRec)) {
