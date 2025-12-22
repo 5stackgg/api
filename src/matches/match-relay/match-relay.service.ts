@@ -15,7 +15,7 @@ export class MatchRelayService {
     const broadcast = this.broadcasts[matchId];
 
     if (broadcast?.[0] == null || broadcast[0].signup_fragment != fragment) {
-      return this.respondSimpleError(
+      return this.relayError(
         response,
         404,
         "Invalid or expired start fragment, please re-sync",
@@ -34,7 +34,7 @@ export class MatchRelayService {
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
-      this.respondSimpleError(
+      this.relayError(
         response,
         404,
         `Broadcast not found for matchId ${matchId}`,
@@ -57,7 +57,7 @@ export class MatchRelayService {
     const broadcast = this.broadcasts[matchId];
     if (!broadcast) {
       this.logger.error(`Broadcast not found for matchId ${matchId}`);
-      this.respondSimpleError(
+      this.relayError(
         response,
         404,
         `Broadcast not found for matchId ${matchId}`,
@@ -194,7 +194,7 @@ export class MatchRelayService {
     });
   }
 
-  private respondSimpleError(
+  private relayError(
     response: Response,
     code: number,
     explanation: string,
