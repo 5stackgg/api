@@ -31,10 +31,10 @@ CREATE OR REPLACE FUNCTION public.get_match_tv_connection_string(match public.ma
         return null;
     end if;
     
-    relay_domain := get_setting('relay_domain');
+    relay_domain := get_setting('relay_domain', 'https://relay.5stack.gg');
     use_playcast := get_setting('use_playcast', 'false');
 
-    if(use_playcast = 'true' and relay_url is not null) then
+    if(use_playcast = 'true' and relay_domain is not null) then
         return CONCAT('playcast ', '"', relay_domain, match_id, '"');
     else
         return CONCAT('connect ', CONCAT(server_host, ':', tv_port), '; password ', password);
