@@ -38,6 +38,8 @@ export class MatchRelayService {
 
     const prime = path.shift();
 
+    console.info("prime", prime);
+
     if (prime == null || prime == "" || prime == "index.html") {
       this.respondSimpleError(uri, response, 401, "Unauthorized");
       return;
@@ -64,6 +66,11 @@ export class MatchRelayService {
         this.stats.new_match_broadcasts++;
       } else {
         if (prime == "sync") {
+          console.info({
+            uri,
+            param,
+            path,
+          });
           if (
             this.token_redirect &&
             this.match_broadcasts[this.token_redirect]
