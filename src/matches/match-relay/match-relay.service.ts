@@ -280,11 +280,15 @@ export class MatchRelayService {
   }
 
   public getStart(
-    request: Request,
     response: Response,
     matchId: string,
     fragment: number,
+    token?: string,
   ) {
+    if (token) {
+      this.logger.log(`Token provided for matchId ${matchId}`);
+    }
+
     const broadcasted_match = this.match_broadcasts[matchId];
 
     if (

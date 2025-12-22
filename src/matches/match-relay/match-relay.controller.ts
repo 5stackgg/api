@@ -26,12 +26,7 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getStart(
-      request,
-      response,
-      matchId,
-      parseInt(fragment),
-    );
+    this.matchRelayService.getStart(response, matchId, parseInt(fragment));
   }
 
   @Get(":fragment/full")
@@ -74,12 +69,10 @@ export class MatchRelayController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getField(
-      request,
+    this.matchRelayService.getStart(
       response,
       matchId,
       parseInt(fragment),
-      "start",
       token,
     );
   }
