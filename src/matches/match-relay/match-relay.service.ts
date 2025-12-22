@@ -72,7 +72,7 @@ export class MatchRelayService {
     }
 
     const match_field_0 = broadcast[0];
-    // Check if start fragment exists at index 0
+
     if (match_field_0 == null || match_field_0.start?.data == null) {
       this.relayError(response, 404, `broadcast has not started yet`);
       return;
