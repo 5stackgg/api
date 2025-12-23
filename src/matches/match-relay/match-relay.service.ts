@@ -13,7 +13,7 @@ import {
 export class MatchRelayService {
   private readonly gzip = promisify(zlib.gzip);
 
-  private readonly broadcasts: { [key: string]: Fragment[] } = {};
+  private readonly broadcasts: { [key: string]: Map<number, Fragment> } = {};
 
   constructor(private readonly logger: Logger) {}
 
@@ -23,10 +23,11 @@ export class MatchRelayService {
 
   public getStart(response: Response, matchId: string, fragmentIndex: number) {
     const broadcast = this.broadcasts[matchId];
+    const startFragment = broadcast?.get(0);
 
     if (
-      broadcast?.[0] == null ||
-      broadcast[0].start?.signup_fragment != fragmentIndex
+      startFragment == null ||
+      startFragment.start?.signup_fragment != fragmentIndex
     ) {
       return this.relayError(
         response,
@@ -35,7 +36,7 @@ export class MatchRelayService {
       );
     }
 
-    this.serveBlob(response, broadcast[0], "start");
+    this.serveBlob(response, startFragment, "start");
   }
 
   public getFragment(
@@ -50,7 +51,7 @@ export class MatchRelayService {
       return;
     }
 
-    const fragment = broadcast[fragmentIndex];
+    const fragment = broadcast.get(fragmentIndex);
     if (!fragment) {
       response.writeHead(404, "fragment not found");
       response.end();
@@ -75,7 +76,7 @@ export class MatchRelayService {
       return;
     }
 
-    const startFragment = broadcast[0];
+    const startFragment = broadcast.get(0);
 
     if (startFragment == null || startFragment.start?.data == null) {
       this.relayError(response, 404, `broadcast has not started yet`);
@@ -86,14 +87,18 @@ export class MatchRelayService {
     const fragmentParam = request.query.fragment as string | undefined;
     let fragment: Fragment | null = null;
 
+    // Get max fragment index for length calculation
+    const maxIndex =
+      broadcast.size > 0 ? Math.max(...Array.from(broadcast.keys())) : 0;
+
     if (fragmentParam == null) {
-      fragmentIndex = Math.max(0, broadcast.length - 8);
+      fragmentIndex = Math.max(0, maxIndex - 7);
 
       if (
         fragmentIndex >= 0 &&
         fragmentIndex >= (startFragment.start.signup_fragment || 0)
       ) {
-        const _fragment = broadcast[fragmentIndex];
+        const _fragment = broadcast.get(fragmentIndex);
         if (this.isSyncReady(_fragment)) {
           fragment = _fragment;
         }
@@ -105,8 +110,9 @@ export class MatchRelayService {
         fragmentIndex = startFragment.start?.signup_fragment || 0;
       }
 
-      for (let i = fragmentIndex; i < broadcast.length; i++) {
-        const _fragment = broadcast[i];
+      // Iterate from fragmentIndex to maxIndex
+      for (let i = fragmentIndex; i <= maxIndex; i++) {
+        const _fragment = broadcast.get(i);
         if (this.isSyncReady(_fragment)) {
           fragment = _fragment;
           fragmentIndex = i;
@@ -144,7 +150,7 @@ export class MatchRelayService {
         rtdelay: (nowMs - (fragTimestamp || nowMs)) / 1000,
         rcvage:
           (nowMs -
-            (broadcast[broadcast.length - 1]?.delta?.timestamp || nowMs)) /
+            (this.getLastFragment(broadcast)?.delta?.timestamp || nowMs)) /
           1000,
         fragment: fragmentIndex,
         signup_fragment: startFragment.start?.signup_fragment,
@@ -164,7 +170,7 @@ export class MatchRelayService {
     fragmentIndex: number,
   ): void {
     if (!this.broadcasts[matchId]) {
-      this.broadcasts[matchId] = [];
+      this.broadcasts[matchId] = new Map();
     }
 
     const broadcast = this.broadcasts[matchId];
@@ -173,25 +179,27 @@ export class MatchRelayService {
       fragmentIndex = 0;
     }
 
-    if (field != "start" && broadcast[0] == null) {
+    if (field != "start" && !broadcast.has(0)) {
       response.writeHead(205);
       response.end();
       return;
     }
 
     response.writeHead(200);
-    if (broadcast[fragmentIndex] == null) {
-      broadcast[fragmentIndex] = {};
+    if (!broadcast.has(fragmentIndex)) {
+      broadcast.set(fragmentIndex, {});
     }
 
-    if (broadcast[fragmentIndex][field] == null) {
-      broadcast[fragmentIndex][field] = {
+    const fragment = broadcast.get(fragmentIndex)!;
+
+    if (fragment[field] == null) {
+      fragment[field] = {
         ...(field === "start" ? { signup_fragment: fragmentIndex } : {}),
       };
     }
 
     Object.entries(request.query).forEach(([key, value]) => {
-      broadcast[fragmentIndex][field][key] = value;
+      fragment[field]![key] = value;
     });
 
     const body: Buffer[] = [];
@@ -202,23 +210,23 @@ export class MatchRelayService {
     request.on("end", () => {
       const totalBuffer = Buffer.concat(body);
 
-      if (broadcast[fragmentIndex][field] == null) {
-        broadcast[fragmentIndex][field] = {};
+      if (fragment[field] == null) {
+        fragment[field] = {};
       }
 
       this.gzip(totalBuffer)
         .then((compressedBlob: Buffer) => {
-          broadcast[fragmentIndex][field].gipped = true;
-          broadcast[fragmentIndex][field].data = compressedBlob;
+          fragment[field]!.gipped = true;
+          fragment[field]!.data = compressedBlob;
         })
         .catch((error: Error) => {
           this.logger.error(`cannot gzip: ${error}`);
-          broadcast[fragmentIndex][field].gipped = false;
-          broadcast[fragmentIndex][field].data = totalBuffer;
+          fragment[field]!.gipped = false;
+          fragment[field]!.data = totalBuffer;
         })
         .finally(() => {
           response.end();
-          broadcast[fragmentIndex][field].timestamp = Date.now();
+          fragment[field]!.timestamp = Date.now();
           this.cleanupOldFragments(matchId);
         });
     });
@@ -250,28 +258,48 @@ export class MatchRelayService {
       return;
     }
 
-    for (const index in broadcast) {
-      if (index == "0") {
+    const now = Date.now();
+    const indicesToDelete: number[] = [];
+
+    // Collect indices to delete (skip index 0 - the start fragment)
+    for (const [index, fragment] of broadcast.entries()) {
+      if (index === 0) {
         continue;
       }
-      const fragment = broadcast[index];
       if (fragment?.delta?.timestamp != null) {
-        const timeDiff = Date.now() - fragment.delta.timestamp;
+        const timeDiff = now - fragment.delta.timestamp;
         if (timeDiff > 60000) {
-          delete broadcast[index];
+          indicesToDelete.push(index);
         }
       }
     }
+
+    // Delete old fragments - Map.delete() properly releases memory
+    for (const index of indicesToDelete) {
+      broadcast.delete(index);
+    }
   }
 
-  private getMatchBroadcastEndTick(broadcast: Fragment[]): number {
-    for (let i = broadcast.length - 1; i >= 0; i--) {
-      const fragment = broadcast[i];
+  private getMatchBroadcastEndTick(broadcast: Map<number, Fragment>): number {
+    // Iterate in reverse order of indices
+    const sortedIndices = Array.from(broadcast.keys()).sort((a, b) => b - a);
+    for (const index of sortedIndices) {
+      const fragment = broadcast.get(index);
       if (fragment?.delta?.endtick != null) {
         return fragment.delta.endtick;
       }
     }
     return 0;
+  }
+
+  private getLastFragment(
+    broadcast: Map<number, Fragment>,
+  ): Fragment | undefined {
+    if (broadcast.size === 0) {
+      return undefined;
+    }
+    const maxIndex = Math.max(...Array.from(broadcast.keys()));
+    return broadcast.get(maxIndex);
   }
 
   private serveBlob(
