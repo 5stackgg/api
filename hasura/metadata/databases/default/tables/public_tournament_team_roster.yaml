@@ -64,7 +64,7 @@ insert_permissions:
                         _eq: X-Hasura-User-Id
           - tournament:
               status:
-                _nin:
+                _in:
                   - Setup
                   - RegistrationOpen
       columns:

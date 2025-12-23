@@ -181,7 +181,7 @@ delete_permissions:
                 _eq: true
           - tournament:
               status:
-                _nin:
+                _in:
                   - Setup
                   - RegistrationOpen
                   - RegistrationClosed
