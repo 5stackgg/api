@@ -199,6 +199,7 @@ export class MatchesController {
     const match = matches_by_pk as typeof matches_by_pk & {
       is_lan: boolean;
       options: typeof matches_by_pk.options & {
+        use_playcast: boolean;
         cfg_overrides: Record<string, string>;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
@@ -282,6 +283,18 @@ export class MatchesController {
         player: undefined as undefined,
       }),
     );
+
+    const { settings_by_pk: usePlaycast } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name: "use_playcast",
+        },
+        name: true,
+        value: true,
+      },
+    });
+
+    match.options.use_playcast = usePlaycast?.value === "true" ? true : false;
 
     const data = JSON.parse(safeJsonStringify(match));
 
