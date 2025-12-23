@@ -202,8 +202,6 @@ export class MatchRelayService {
     request.on("end", () => {
       const totalBuffer = Buffer.concat(body);
 
-      response.end();
-
       if (broadcast[fragmentIndex][field] == null) {
         broadcast[fragmentIndex][field] = {};
       }
@@ -219,9 +217,9 @@ export class MatchRelayService {
           broadcast[fragmentIndex][field].data = totalBuffer;
         })
         .finally(() => {
-          if (field === "delta") {
-            broadcast[fragmentIndex][field].timestamp = Date.now();
-          }
+          response.end();
+          broadcast[fragmentIndex][field].timestamp = Date.now();
+          this.cleanupOldFragments(matchId);
         });
     });
   }
@@ -244,6 +242,26 @@ export class MatchRelayService {
       fragment.delta?.endtick != null &&
       fragment.delta?.timestamp != null
     );
+  }
+
+  private cleanupOldFragments(matchId: string): void {
+    const broadcast = this.broadcasts[matchId];
+    if (!broadcast) {
+      return;
+    }
+
+    for (const index in broadcast) {
+      if (index == "0") {
+        continue;
+      }
+      const fragment = broadcast[index];
+      if (fragment?.delta?.timestamp != null) {
+        const timeDiff = Date.now() - fragment.delta.timestamp;
+        if (timeDiff > 60000) {
+          delete broadcast[index];
+        }
+      }
+    }
   }
 
   private getMatchBroadcastEndTick(broadcast: Fragment[]): number {
