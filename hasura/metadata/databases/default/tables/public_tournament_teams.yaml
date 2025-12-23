@@ -36,7 +36,14 @@ computed_fields:
 insert_permissions:
   - role: tournament_organizer
     permission:
-      check: {}
+      check:
+        _and:
+          - tournament:
+              status:
+                _nin:
+                  - Cancelled
+                  - CancelledMinTeams
+                  - Finished
       columns:
         - name
         - owner_steam_id
@@ -144,7 +151,14 @@ update_permissions:
 delete_permissions:
   - role: tournament_organizer
     permission:
-      filter: {}
+      filter:
+        _and:
+          - tournament:
+              status:
+                _nin:
+                  - Cancelled
+                  - CancelledMinTeams
+                  - Finished
     comment: ""
   - role: user
     permission:
@@ -165,4 +179,10 @@ delete_permissions:
           - tournament:
               is_organizer:
                 _eq: true
+          - tournament:
+              status:
+                _nin:
+                  - Setup
+                  - RegistrationOpen
+                  - RegistrationClosed
     comment: ""
