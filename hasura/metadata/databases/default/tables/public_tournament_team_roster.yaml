@@ -15,6 +15,34 @@ object_relationships:
     using:
       foreign_key_constraint_on: tournament_team_id
 insert_permissions:
+  - role: tournament_organizer
+    permission:
+      check:
+        _or:
+          - tournament:
+              is_organizer:
+                _eq: true
+          - tournament_team:
+              _or:
+                - roster:
+                    _and:
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - role:
+                          _eq: Admin
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+          - tournament:
+              status:
+                _in:
+                  - Cancelled
+                  - CancelledMinTeams
+                  - Finished
+      columns:
+        - player_steam_id
+        - tournament_id
+        - tournament_team_id
+    comment: ""
   - role: user
     permission:
       check:
@@ -32,6 +60,11 @@ insert_permissions:
                           _eq: Admin
                 - owner_steam_id:
                     _eq: X-Hasura-User-Id
+          - tournament:
+              status:
+                _nin:
+                  - Setup
+                  - RegistrationOpen
       columns:
         - player_steam_id
         - tournament_id
@@ -49,6 +82,24 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
+  - role: tournament_organizer
+    permission:
+      columns:
+        - role
+      filter:
+        _or:
+          - tournament_team:
+              roster:
+                _and:
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+                  - role:
+                      _eq: Admin
+          - tournament:
+              is_organizer:
+                _eq: true
+      check: null
+    comment: ""
   - role: user
     permission:
       columns:
@@ -79,6 +130,30 @@ update_permissions:
                 _eq: true
     comment: ""
 delete_permissions:
+  - role: tournament_organizer
+    permission:
+      filter:
+        _or:
+          - tournament:
+              is_organizer:
+                _eq: true
+          - tournament_team:
+              _or:
+                - roster:
+                    _and:
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - role:
+                          _eq: Admin
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+          - tournament:
+              status:
+                _in:
+                  - Cancelled
+                  - CancelledMinTeams
+                  - Finished
+    comment: ""
   - role: user
     permission:
       filter:
@@ -95,4 +170,9 @@ delete_permissions:
                 _eq: true
           - player_steam_id:
               _eq: X-Hasura-User-Id
+          - tournament:
+              status:
+                _nin:
+                  - Setup
+                  - RegistrationOpen
     comment: ""
