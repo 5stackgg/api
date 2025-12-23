@@ -13,7 +13,13 @@ import {
 export class MatchRelayService {
   private readonly gzip = promisify(zlib.gzip);
 
-  private readonly broadcasts: { [key: string]: Map<number, Fragment> } = {};
+  private readonly broadcasts: {
+    [key: string]: {
+      steamId: string;
+      masterCookie: string;
+      fragments: Map<number, Fragment>;
+    };
+  } = {};
 
   constructor(private readonly logger: Logger) {}
 
@@ -23,7 +29,7 @@ export class MatchRelayService {
 
   public getStart(response: Response, matchId: string, fragmentIndex: number) {
     const broadcast = this.broadcasts[matchId];
-    const startFragment = broadcast?.get(0);
+    const startFragment = broadcast?.fragments.get(0);
 
     if (
       startFragment == null ||
@@ -51,7 +57,7 @@ export class MatchRelayService {
       return;
     }
 
-    const fragment = broadcast.get(fragmentIndex);
+    const fragment = broadcast.fragments.get(fragmentIndex);
     if (!fragment) {
       response.writeHead(404, "fragment not found");
       response.end();
@@ -76,7 +82,7 @@ export class MatchRelayService {
       return;
     }
 
-    const startFragment = broadcast.get(0);
+    const startFragment = broadcast.fragments.get(0);
 
     if (startFragment == null || startFragment.start?.data == null) {
       this.relayError(response, 404, `broadcast has not started yet`);
@@ -88,7 +94,9 @@ export class MatchRelayService {
     let fragment: Fragment | null = null;
 
     const maxIndex =
-      broadcast.size > 0 ? Math.max(...Array.from(broadcast.keys())) : 0;
+      broadcast.fragments.size > 0
+        ? Math.max(...Array.from(broadcast.fragments.keys()))
+        : 0;
 
     if (fragmentParam == null) {
       fragmentIndex = Math.max(0, maxIndex - 7);
@@ -97,7 +105,7 @@ export class MatchRelayService {
         fragmentIndex >= 0 &&
         fragmentIndex >= (startFragment.start.signup_fragment || 0)
       ) {
-        const _fragment = broadcast.get(fragmentIndex);
+        const _fragment = broadcast.fragments.get(fragmentIndex);
         if (this.isSyncReady(_fragment)) {
           fragment = _fragment;
         }
@@ -110,7 +118,7 @@ export class MatchRelayService {
       }
 
       for (let i = fragmentIndex; i <= maxIndex; i++) {
-        const _fragment = broadcast.get(i);
+        const _fragment = broadcast.fragments.get(i);
         if (this.isSyncReady(_fragment)) {
           fragment = _fragment;
           fragmentIndex = i;
@@ -144,11 +152,12 @@ export class MatchRelayService {
       JSON.stringify({
         tick: fragTick,
         endtick: fragEndtick,
-        maxtick: this.getMatchBroadcastEndTick(broadcast),
+        maxtick: this.getMatchBroadcastEndTick(broadcast.fragments),
         rtdelay: (nowMs - (fragTimestamp || nowMs)) / 1000,
         rcvage:
           (nowMs -
-            (this.getLastFragment(broadcast)?.delta?.timestamp || nowMs)) /
+            (this.getLastFragment(broadcast.fragments)?.delta?.timestamp ||
+              nowMs)) /
           1000,
         fragment: fragmentIndex,
         signup_fragment: startFragment.start?.signup_fragment,
@@ -163,32 +172,48 @@ export class MatchRelayService {
   public postField(
     request: Request,
     response: Response,
+    token: string,
     field: "start" | "full" | "delta",
     matchId: string,
     fragmentIndex: number,
   ): void {
+    const [steamId, masterCookie] = token.split("t");
+
     if (!this.broadcasts[matchId]) {
-      this.broadcasts[matchId] = new Map();
+      this.broadcasts[matchId] = {
+        steamId,
+        masterCookie,
+        fragments: new Map(),
+      };
     }
 
     const broadcast = this.broadcasts[matchId];
+
+    if (
+      broadcast.steamId !== steamId ||
+      broadcast.masterCookie !== masterCookie
+    ) {
+      broadcast.steamId = steamId;
+      broadcast.masterCookie = masterCookie;
+      broadcast.fragments.clear();
+    }
 
     if (field == "start") {
       fragmentIndex = 0;
     }
 
-    if (field != "start" && !broadcast.has(0)) {
+    if (field != "start" && !broadcast.fragments.has(0)) {
       response.writeHead(205);
       response.end();
       return;
     }
 
     response.writeHead(200);
-    if (!broadcast.has(fragmentIndex)) {
-      broadcast.set(fragmentIndex, {});
+    if (!broadcast.fragments.has(fragmentIndex)) {
+      broadcast.fragments.set(fragmentIndex, {});
     }
 
-    const fragment = broadcast.get(fragmentIndex)!;
+    const fragment = broadcast.fragments.get(fragmentIndex)!;
 
     if (fragment[field] == null) {
       fragment[field] = {
@@ -259,7 +284,7 @@ export class MatchRelayService {
     const now = Date.now();
     const indicesToDelete: number[] = [];
 
-    for (const [index, fragment] of broadcast.entries()) {
+    for (const [index, fragment] of broadcast.fragments.entries()) {
       if (index === 0) {
         continue;
       }
@@ -272,7 +297,7 @@ export class MatchRelayService {
     }
 
     for (const index of indicesToDelete) {
-      broadcast.delete(index);
+      broadcast.fragments.delete(index);
     }
   }
 
