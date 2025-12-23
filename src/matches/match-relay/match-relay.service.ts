@@ -87,7 +87,6 @@ export class MatchRelayService {
     const fragmentParam = request.query.fragment as string | undefined;
     let fragment: Fragment | null = null;
 
-    // Get max fragment index for length calculation
     const maxIndex =
       broadcast.size > 0 ? Math.max(...Array.from(broadcast.keys())) : 0;
 
@@ -110,7 +109,6 @@ export class MatchRelayService {
         fragmentIndex = startFragment.start?.signup_fragment || 0;
       }
 
-      // Iterate from fragmentIndex to maxIndex
       for (let i = fragmentIndex; i <= maxIndex; i++) {
         const _fragment = broadcast.get(i);
         if (this.isSyncReady(_fragment)) {
@@ -261,7 +259,6 @@ export class MatchRelayService {
     const now = Date.now();
     const indicesToDelete: number[] = [];
 
-    // Collect indices to delete (skip index 0 - the start fragment)
     for (const [index, fragment] of broadcast.entries()) {
       if (index === 0) {
         continue;
@@ -274,14 +271,12 @@ export class MatchRelayService {
       }
     }
 
-    // Delete old fragments - Map.delete() properly releases memory
     for (const index of indicesToDelete) {
       broadcast.delete(index);
     }
   }
 
   private getMatchBroadcastEndTick(broadcast: Map<number, Fragment>): number {
-    // Iterate in reverse order of indices
     const sortedIndices = Array.from(broadcast.keys()).sort((a, b) => b - a);
     for (const index of sortedIndices) {
       const fragment = broadcast.get(index);
