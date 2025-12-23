@@ -65,6 +65,12 @@ computed_fields:
         name: can_open_tournament_registration
         schema: public
       session_argument: hasura_session
+  - name: can_start
+    definition:
+      function:
+        name: can_start_tournament
+        schema: public
+      session_argument: hasura_session
   - name: has_min_teams
     definition:
       function:
@@ -279,6 +285,7 @@ select_permissions:
         - can_close_registration
         - can_join
         - can_open_registration
+        - can_start
         - has_min_teams
         - is_organizer
         - max_players_per_lineup
