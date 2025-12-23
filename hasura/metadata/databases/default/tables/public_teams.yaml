@@ -58,6 +58,12 @@ computed_fields:
       function:
         name: get_team_matches
         schema: public
+  - name: role
+    definition:
+      function:
+        name: team_role
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: user
     permission:
@@ -80,6 +86,7 @@ select_permissions:
         - can_change_role
         - can_invite
         - can_remove
+        - role
       filter: {}
       allow_aggregations: true
     comment: ""
