@@ -9,11 +9,6 @@ BEGIN
     FROM tournaments
     WHERE id = NEW.tournament_id;
 
-    IF NOT can_join_tournament(tournament, current_setting('hasura.user', true)::json) THEN
-        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot join the tournament';
-    END IF;
-
-
     IF NEW.team_id IS NOT NULL THEN
        select owner_steam_id into NEW.owner_steam_id from teams where id = NEW.team_id;
     END IF;

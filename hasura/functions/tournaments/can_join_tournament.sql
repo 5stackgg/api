@@ -10,10 +10,6 @@ BEGIN
         RETURN false;
     END IF;
 
-    IF hasura_session ->> 'x-hasura-role' = 'administrator' OR hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
-        RETURN true;
-    END IF;
-
     IF tournament.status != 'RegistrationOpen' THEN
         RETURN false;
     END IF;
@@ -26,7 +22,15 @@ BEGIN
             tournament_id = tournament.id
             AND player_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
     ) INTO on_roster;
+
+    if(on_roster) THEN
+        RETURN false;
+    END IF;
     
+    IF hasura_session ->> 'x-hasura-role' = 'administrator' OR hasura_session ->> 'x-hasura-role' = 'tournament_organizer' THEN
+        RETURN true;
+    END IF;
+
     -- Check if the player is a team admin for this tournament
     SELECT EXISTS (
         SELECT 1
@@ -37,6 +41,6 @@ BEGIN
     ) INTO is_team_admin;
 
     -- Player can join if they are not on a roster and not a team admin
-    RETURN NOT (on_roster OR is_team_admin);
+    RETURN NOT is_team_admin;
 END;
 $$;
