@@ -19,3 +19,21 @@ $$;
 
 DROP TRIGGER IF EXISTS tau_tournament_brackets ON public.tournament_brackets;
 CREATE TRIGGER tau_tournament_brackets AFTER UPDATE ON public.tournament_brackets FOR EACH ROW EXECUTE FUNCTION public.tau_tournament_brackets();
+
+CREATE OR REPLACE FUNCTION public.tbd_tournament_brackets() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF OLD.match_id IS NOT NULL THEN
+        DELETE FROM matches WHERE id = OLD.match_id;
+    END IF;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbd_tournament_brackets ON public.tournament_brackets;
+CREATE TRIGGER tbd_tournament_brackets
+    BEFORE DELETE ON public.tournament_brackets
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbd_tournament_brackets();

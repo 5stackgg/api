@@ -227,3 +227,20 @@ $$;
 DROP TRIGGER IF EXISTS tbu_tournament_stages ON public.tournament_stages;
 CREATE TRIGGER tbu_tournament_stages BEFORE UPDATE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tbu_tournament_stages();
 
+CREATE OR REPLACE FUNCTION public.tbd_tournament_stages() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM tournament_brackets
+        WHERE tournament_stage_id = OLD.id;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbd_tournament_stages ON public.tournament_stages;
+CREATE TRIGGER tbd_tournament_stages
+    BEFORE DELETE ON public.tournament_stages
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbd_tournament_stages();
+
