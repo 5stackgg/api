@@ -71,3 +71,36 @@ CREATE TRIGGER tbu_tournaments
     BEFORE UPDATE ON public.tournaments
     FOR EACH ROW
     EXECUTE FUNCTION public.tbu_tournaments();
+
+CREATE OR REPLACE FUNCTION public.tbd_tournaments() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    tournament_matches uuid[];
+BEGIN
+    SELECT array_agg(DISTINCT tb.match_id) INTO tournament_matches
+    FROM tournament_brackets tb
+    JOIN tournament_stages ts ON tb.tournament_stage_id = ts.id
+    WHERE ts.tournament_id = OLD.id AND tb.match_id IS NOT NULL;
+
+    DELETE FROM tournament_brackets
+    WHERE tournament_stage_id IN (SELECT id FROM tournament_stages WHERE tournament_id = OLD.id);
+
+    IF tournament_matches IS NOT NULL THEN
+        DELETE FROM matches WHERE id = ANY(tournament_matches);
+    END IF;
+
+    DELETE FROM matches WHERE match_options_id = OLD.match_options_id;
+
+    DELETE FROM tournament_stages
+    WHERE tournament_id = OLD.id;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbd_tournaments ON public.tournaments;
+CREATE TRIGGER tbd_tournaments
+    BEFORE DELETE ON public.tournaments
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbd_tournaments();
