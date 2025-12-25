@@ -100,12 +100,13 @@ insert_permissions:
         - team_id
     comment: ""
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - coach_steam_id
         - id
         - team_id
+        - team_name
       computed_fields:
         - can_pick_map_veto
         - can_pick_region_veto

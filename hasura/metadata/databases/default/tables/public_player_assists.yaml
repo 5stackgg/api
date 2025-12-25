@@ -21,7 +21,7 @@ computed_fields:
         name: is_team_assist
         schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - attacked_steam_id

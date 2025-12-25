@@ -18,7 +18,7 @@ array_relationships:
           name: tournament_team_roster
           schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - description

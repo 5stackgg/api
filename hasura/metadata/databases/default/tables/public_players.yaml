@@ -266,6 +266,28 @@ computed_fields:
         name: get_total_player_wins
         schema: public
 select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - avatar_url
+        - country
+        - language
+        - name
+        - name_registered
+        - profile_url
+        - role
+        - steam_id
+      computed_fields:
+        - elo
+        - is_banned
+        - is_gagged
+        - is_muted
+        - losses
+        - matchmaking_cooldown
+        - total_matches
+        - wins
+      filter: {}
+    comment: ""
   - role: match_organizer
     permission:
       columns:

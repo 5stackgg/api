@@ -2,3 +2,11 @@ table:
   name: e_game_cfg_types
   schema: public
 is_enum: true
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

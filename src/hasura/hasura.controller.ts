@@ -49,13 +49,15 @@ export class HasuraController {
     private readonly modulesContainer: ModulesContainer,
   ) {}
 
-  @UseGuards(ApiKeyGuard, SteamGuard)
   @Get()
   public async hasura(@Req() request: Request) {
     const user = request.user;
 
     if (!user) {
-      return;
+      return {  
+        "x-hasura-user-id": "0",
+        "x-hasura-role": "guest",
+      };
     }
 
     return this.hasuraService.getHasuraHeaders(user.steam_id);

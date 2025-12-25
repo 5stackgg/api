@@ -11,7 +11,7 @@ array_relationships:
           name: player_utility
           schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - description

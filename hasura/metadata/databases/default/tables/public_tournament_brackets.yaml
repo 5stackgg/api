@@ -33,7 +33,7 @@ object_relationships:
     using:
       foreign_key_constraint_on: tournament_team_id_2
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - bye
