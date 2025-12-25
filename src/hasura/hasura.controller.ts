@@ -72,13 +72,6 @@ export class HasuraController {
     const resolver = this.getResolver(_actions[action.name]);
 
     input.user = request.user;
-
-    if (!request.user) {
-      return response.status(401).json({
-        message: "Unauthorized",
-      });
-    }
-
     input.session = request.session;
 
     try {

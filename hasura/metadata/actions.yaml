@@ -70,7 +70,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: user
+      - role: guest
   - name: getNodeStats
     definition:
       kind: ""
