@@ -103,7 +103,6 @@ export class DedicatedServersController {
 
   @HasuraAction()
   public async getDedicatedServerInfo() {
-    console.log("getDedicatedServerInfo");
     return await this.dedicatedServersService.getAllDedicatedServerStats();
   }
 }
