@@ -15,7 +15,7 @@ computed_fields:
         name: demo_download_url
         schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - id
