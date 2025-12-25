@@ -270,6 +270,31 @@ insert_permissions:
         - start
     comment: ""
 select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - id
+        - match_options_id
+        - name
+        - organizer_steam_id
+        - start
+        - status
+      computed_fields:
+        - can_cancel
+        - can_close_registration
+        - can_join
+        - can_open_registration
+        - can_start
+        - has_min_teams
+        - is_organizer
+        - max_players_per_lineup
+        - min_players_per_lineup
+      filter:
+        status:
+          _neq: Setup
+      allow_aggregations: true
+    comment: ""
   - role: user
     permission:
       columns:

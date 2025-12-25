@@ -35,18 +35,18 @@ insert_permissions:
         - workshop_map_id
     comment: ""
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - active_pool
         - enabled
-        - id
         - label
         - name
         - patch
         - poster
         - type
         - workshop_map_id
+        - id
       filter: {}
     comment: ""
 update_permissions:

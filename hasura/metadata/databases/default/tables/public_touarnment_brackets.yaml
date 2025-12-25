@@ -2,7 +2,7 @@ table:
   name: touarnment_brackets
   schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - id

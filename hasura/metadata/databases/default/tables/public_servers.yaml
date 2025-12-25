@@ -93,6 +93,29 @@ select_permissions:
           _eq: true
       allow_aggregations: true
     comment: ""
+  - role: guest
+    permission:
+      columns:
+        - connected
+        - enabled
+        - host
+        - id
+        - label
+        - max_players
+        - plugin_version
+        - port
+        - rcon_status
+        - region
+        - reserved_by_match_id
+        - tv_port
+        - type
+      computed_fields:
+        - connection_link
+        - connection_string
+      filter:
+        type:
+          _neq: Ranked
+    comment: ""
   - role: match_organizer
     permission:
       columns:
@@ -117,29 +140,6 @@ select_permissions:
         is_dedicated:
           _eq: true
       allow_aggregations: true
-    comment: ""
-  - role: user
-    permission:
-      columns:
-        - connected
-        - enabled
-        - host
-        - id
-        - label
-        - max_players
-        - plugin_version
-        - port
-        - rcon_status
-        - region
-        - reserved_by_match_id
-        - tv_port
-        - type
-      computed_fields:
-        - connection_link
-        - connection_string
-      filter:
-        type:
-          _neq: Ranked
     comment: ""
 update_permissions:
   - role: administrator

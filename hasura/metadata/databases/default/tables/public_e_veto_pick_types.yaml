@@ -11,7 +11,7 @@ array_relationships:
           name: match_map_veto_picks
           schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - description

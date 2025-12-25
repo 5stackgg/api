@@ -2,7 +2,7 @@ table:
   name: v_player_multi_kills
   schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - attacker_steam_id

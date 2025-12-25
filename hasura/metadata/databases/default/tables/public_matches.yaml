@@ -473,6 +473,58 @@ insert_permissions:
         - server_id
     comment: ""
 select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - cancels_at
+        - created_at
+        - ended_at
+        - id
+        - label
+        - lineup_1_id
+        - lineup_2_id
+        - match_options_id
+        - organizer_steam_id
+        - region
+        - scheduled_at
+        - server_id
+        - started_at
+        - status
+        - winning_lineup_id
+      computed_fields:
+        - can_assign_server
+        - can_cancel
+        - can_check_in
+        - can_schedule
+        - can_start
+        - connection_link
+        - connection_string
+        - current_match_map_id
+        - invite_code
+        - is_captain
+        - is_coach
+        - is_in_lineup
+        - is_match_server_available
+        - is_organizer
+        - is_server_online
+        - is_tournament_match
+        - lineup_counts
+        - map_veto_picking_lineup_id
+        - map_veto_type
+        - max_players_per_lineup
+        - min_players_per_lineup
+        - region_veto_picking_lineup_id
+        - requested_organizer
+        - server_region
+        - server_type
+        - tv_connection_string
+      filter:
+        status:
+          _nin:
+            - PickingPlayers
+            - Canceled
+      allow_aggregations: true
+    comment: ""
   - role: user
     permission:
       columns:

@@ -17,7 +17,7 @@ select_permissions:
         - value
       filter: {}
     comment: ""
-  - role: user
+  - role: guest
     permission:
       columns:
         - name

@@ -26,7 +26,7 @@ computed_fields:
         name: is_team_kill
         schema: public
 select_permissions:
-  - role: user
+  - role: guest
     permission:
       columns:
         - assisted

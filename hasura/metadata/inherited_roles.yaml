@@ -10,6 +10,9 @@
 - role_name: tournament_organizer
   role_set:
     - match_organizer
+- role_name: user
+  role_set:
+    - guest
 - role_name: verified_user
   role_set:
     - user
