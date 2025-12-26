@@ -37891,6 +37891,9 @@ export default {
             "owner_steam_id": [
                 110
             ],
+            "role": [
+                18
+            ],
             "roster": [
                 1960,
                 {
@@ -38180,6 +38183,9 @@ export default {
             "owner_steam_id": [
                 111
             ],
+            "role": [
+                20
+            ],
             "roster": [
                 1971
             ],
@@ -38250,6 +38256,9 @@ export default {
             "owner_steam_id": [
                 110
             ],
+            "role": [
+                18
+            ],
             "short_name": [
                 18
             ],
@@ -38283,6 +38292,9 @@ export default {
             ],
             "owner_steam_id": [
                 110
+            ],
+            "role": [
+                18
             ],
             "short_name": [
                 18
@@ -38373,6 +38385,9 @@ export default {
                 1786
             ],
             "owner_steam_id": [
+                1405
+            ],
+            "role": [
                 1405
             ],
             "roster_aggregate": [
@@ -43224,6 +43239,12 @@ export default {
             "can_open_registration": [
                 1
             ],
+            "can_start": [
+                1
+            ],
+            "created_at": [
+                2048
+            ],
             "description": [
                 18
             ],
@@ -43622,6 +43643,12 @@ export default {
             "can_open_registration": [
                 2
             ],
+            "can_start": [
+                2
+            ],
+            "created_at": [
+                2049
+            ],
             "description": [
                 20
             ],
@@ -43702,6 +43729,9 @@ export default {
             "admin": [
                 1784
             ],
+            "created_at": [
+                2048
+            ],
             "description": [
                 18
             ],
@@ -43746,6 +43776,9 @@ export default {
             ]
         },
         "tournaments_max_fields": {
+            "created_at": [
+                2048
+            ],
             "description": [
                 18
             ],
@@ -43775,6 +43808,9 @@ export default {
             ]
         },
         "tournaments_max_order_by": {
+            "created_at": [
+                1405
+            ],
             "description": [
                 1405
             ],
@@ -43798,6 +43834,9 @@ export default {
             ]
         },
         "tournaments_min_fields": {
+            "created_at": [
+                2048
+            ],
             "description": [
                 18
             ],
@@ -43827,6 +43866,9 @@ export default {
             ]
         },
         "tournaments_min_order_by": {
+            "created_at": [
+                1405
+            ],
             "description": [
                 1405
             ],
@@ -43901,6 +43943,12 @@ export default {
             "can_open_registration": [
                 1405
             ],
+            "can_start": [
+                1405
+            ],
+            "created_at": [
+                1405
+            ],
             "description": [
                 1405
             ],
@@ -43966,6 +44014,9 @@ export default {
         },
         "tournaments_select_column": {},
         "tournaments_set_input": {
+            "created_at": [
+                2048
+            ],
             "description": [
                 18
             ],
@@ -44069,6 +44120,9 @@ export default {
             ]
         },
         "tournaments_stream_cursor_value_input": {
+            "created_at": [
+                2048
+            ],
             "description": [
                 18
             ],

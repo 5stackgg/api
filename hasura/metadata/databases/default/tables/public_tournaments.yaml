@@ -273,6 +273,7 @@ select_permissions:
   - role: guest
     permission:
       columns:
+        - created_at
         - description
         - id
         - match_options_id
@@ -298,6 +299,7 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - created_at
         - description
         - id
         - match_options_id

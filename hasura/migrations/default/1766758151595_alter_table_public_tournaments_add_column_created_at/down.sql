@@ -1,0 +1,1 @@
+alter table "public"."tournaments" drop column if exists "created_at";  
