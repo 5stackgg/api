@@ -5360,6 +5360,9 @@ enum e_tournament_stage_types_enum {
   """Double Elimination"""
   DoubleElimination
 
+  """Round Robin"""
+  RoundRobin
+
   """Single Elimination"""
   SingleElimination
 }
@@ -32654,6 +32657,86 @@ type query_root {
     """filter the rows returned"""
     where: v_pool_maps_bool_exp
   ): v_pool_maps_aggregate!
+
+  """
+  fetch data from the table: "v_team_stage_results"
+  """
+  v_team_stage_results(
+    """distinct select on columns"""
+    distinct_on: [v_team_stage_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_stage_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): [v_team_stage_results!]!
+
+  """
+  fetch aggregated fields from the table: "v_team_stage_results"
+  """
+  v_team_stage_results_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_team_stage_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_stage_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): v_team_stage_results_aggregate!
+
+  """
+  fetch data from the table: "v_team_tournament_results"
+  """
+  v_team_tournament_results(
+    """distinct select on columns"""
+    distinct_on: [v_team_tournament_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_tournament_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): [v_team_tournament_results!]!
+
+  """
+  fetch aggregated fields from the table: "v_team_tournament_results"
+  """
+  v_team_tournament_results_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_team_tournament_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_tournament_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): v_team_tournament_results_aggregate!
 }
 
 """
@@ -38671,6 +38754,114 @@ type subscription_root {
     """filter the rows returned"""
     where: v_pool_maps_bool_exp
   ): [v_pool_maps!]!
+
+  """
+  fetch data from the table: "v_team_stage_results"
+  """
+  v_team_stage_results(
+    """distinct select on columns"""
+    distinct_on: [v_team_stage_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_stage_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): [v_team_stage_results!]!
+
+  """
+  fetch aggregated fields from the table: "v_team_stage_results"
+  """
+  v_team_stage_results_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_team_stage_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_stage_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): v_team_stage_results_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_team_stage_results"
+  """
+  v_team_stage_results_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_team_stage_results_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): [v_team_stage_results!]!
+
+  """
+  fetch data from the table: "v_team_tournament_results"
+  """
+  v_team_tournament_results(
+    """distinct select on columns"""
+    distinct_on: [v_team_tournament_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_tournament_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): [v_team_tournament_results!]!
+
+  """
+  fetch aggregated fields from the table: "v_team_tournament_results"
+  """
+  v_team_tournament_results_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_team_tournament_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_tournament_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): v_team_tournament_results_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_team_tournament_results"
+  """
+  v_team_tournament_results_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_team_tournament_results_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): [v_team_tournament_results!]!
 }
 
 """
@@ -41181,6 +41372,42 @@ type tournament_stages {
   max_teams: Int!
   min_teams: Int!
   order: Int!
+
+  """An array relationship"""
+  results(
+    """distinct select on columns"""
+    distinct_on: [v_team_stage_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_stage_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): [v_team_stage_results!]!
+
+  """An aggregate relationship"""
+  results_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_team_stage_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_stage_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_stage_results_bool_exp
+  ): v_team_stage_results_aggregate!
   settings(
     """JSON select path"""
     path: String
@@ -41293,6 +41520,8 @@ input tournament_stages_bool_exp {
   max_teams: Int_comparison_exp
   min_teams: Int_comparison_exp
   order: Int_comparison_exp
+  results: v_team_stage_results_bool_exp
+  results_aggregate: v_team_stage_results_aggregate_bool_exp
   settings: jsonb_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
@@ -41351,6 +41580,7 @@ input tournament_stages_insert_input {
   max_teams: Int
   min_teams: Int
   order: Int
+  results: v_team_stage_results_arr_rel_insert_input
   settings: jsonb
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
@@ -41440,6 +41670,7 @@ input tournament_stages_order_by {
   max_teams: order_by
   min_teams: order_by
   order: order_by
+  results_aggregate: v_team_stage_results_aggregate_order_by
   settings: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
@@ -42547,6 +42778,9 @@ type tournament_teams {
   name: String
   owner_steam_id: bigint!
 
+  """An object relationship"""
+  results: v_team_stage_results
+
   """An array relationship"""
   roster(
     """distinct select on columns"""
@@ -42686,6 +42920,7 @@ input tournament_teams_bool_exp {
   invites_aggregate: tournament_team_invites_aggregate_bool_exp
   name: String_comparison_exp
   owner_steam_id: bigint_comparison_exp
+  results: v_team_stage_results_bool_exp
   roster: tournament_team_roster_bool_exp
   roster_aggregate: tournament_team_roster_aggregate_bool_exp
   seed: Int_comparison_exp
@@ -42739,6 +42974,7 @@ input tournament_teams_insert_input {
   invites: tournament_team_invites_arr_rel_insert_input
   name: String
   owner_steam_id: bigint
+  results: v_team_stage_results_obj_rel_insert_input
   roster: tournament_team_roster_arr_rel_insert_input
   seed: Int
   team: teams_obj_rel_insert_input
@@ -42839,6 +43075,7 @@ input tournament_teams_order_by {
   invites_aggregate: tournament_team_invites_aggregate_order_by
   name: order_by
   owner_steam_id: order_by
+  results: v_team_stage_results_order_by
   roster_aggregate: tournament_team_roster_aggregate_order_by
   seed: order_by
   team: teams_order_by
@@ -43157,6 +43394,42 @@ type tournaments {
   ): tournament_organizers_aggregate!
 
   """An array relationship"""
+  results(
+    """distinct select on columns"""
+    distinct_on: [v_team_tournament_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_tournament_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): [v_team_tournament_results!]!
+
+  """An aggregate relationship"""
+  results_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_team_tournament_results_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_team_tournament_results_order_by!]
+
+    """filter the rows returned"""
+    where: v_team_tournament_results_bool_exp
+  ): v_team_tournament_results_aggregate!
+
+  """An array relationship"""
   rosters(
     """distinct select on columns"""
     distinct_on: [tournament_team_roster_select_column!]
@@ -43378,6 +43651,8 @@ input tournaments_bool_exp {
   organizer_steam_id: bigint_comparison_exp
   organizers: tournament_organizers_bool_exp
   organizers_aggregate: tournament_organizers_aggregate_bool_exp
+  results: v_team_tournament_results_bool_exp
+  results_aggregate: v_team_tournament_results_aggregate_bool_exp
   rosters: tournament_team_roster_bool_exp
   rosters_aggregate: tournament_team_roster_aggregate_bool_exp
   stages: tournament_stages_bool_exp
@@ -43424,6 +43699,7 @@ input tournaments_insert_input {
   options: match_options_obj_rel_insert_input
   organizer_steam_id: bigint
   organizers: tournament_organizers_arr_rel_insert_input
+  results: v_team_tournament_results_arr_rel_insert_input
   rosters: tournament_team_roster_arr_rel_insert_input
   stages: tournament_stages_arr_rel_insert_input
   start: timestamptz
@@ -43550,6 +43826,7 @@ input tournaments_order_by {
   options: match_options_order_by
   organizer_steam_id: order_by
   organizers_aggregate: tournament_organizers_aggregate_order_by
+  results_aggregate: v_team_tournament_results_aggregate_order_by
   rosters_aggregate: tournament_team_roster_aggregate_order_by
   stages_aggregate: tournament_stages_aggregate_order_by
   start: order_by
@@ -46536,4 +46813,829 @@ input v_pool_maps_updates {
 
   """filter the rows which have to be updated"""
   where: v_pool_maps_bool_exp!
+}
+
+"""
+columns and relationships of "v_team_stage_results"
+"""
+type v_team_stage_results {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+
+  """An object relationship"""
+  stage: tournament_stages
+
+  """An object relationship"""
+  team: tournament_teams
+  tournament_stage_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""
+aggregated selection of "v_team_stage_results"
+"""
+type v_team_stage_results_aggregate {
+  aggregate: v_team_stage_results_aggregate_fields
+  nodes: [v_team_stage_results!]!
+}
+
+input v_team_stage_results_aggregate_bool_exp {
+  count: v_team_stage_results_aggregate_bool_exp_count
+}
+
+input v_team_stage_results_aggregate_bool_exp_count {
+  arguments: [v_team_stage_results_select_column!]
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "v_team_stage_results"
+"""
+type v_team_stage_results_aggregate_fields {
+  avg: v_team_stage_results_avg_fields
+  count(columns: [v_team_stage_results_select_column!], distinct: Boolean): Int!
+  max: v_team_stage_results_max_fields
+  min: v_team_stage_results_min_fields
+  stddev: v_team_stage_results_stddev_fields
+  stddev_pop: v_team_stage_results_stddev_pop_fields
+  stddev_samp: v_team_stage_results_stddev_samp_fields
+  sum: v_team_stage_results_sum_fields
+  var_pop: v_team_stage_results_var_pop_fields
+  var_samp: v_team_stage_results_var_samp_fields
+  variance: v_team_stage_results_variance_fields
+}
+
+"""
+order by aggregate values of table "v_team_stage_results"
+"""
+input v_team_stage_results_aggregate_order_by {
+  avg: v_team_stage_results_avg_order_by
+  count: order_by
+  max: v_team_stage_results_max_order_by
+  min: v_team_stage_results_min_order_by
+  stddev: v_team_stage_results_stddev_order_by
+  stddev_pop: v_team_stage_results_stddev_pop_order_by
+  stddev_samp: v_team_stage_results_stddev_samp_order_by
+  sum: v_team_stage_results_sum_order_by
+  var_pop: v_team_stage_results_var_pop_order_by
+  var_samp: v_team_stage_results_var_samp_order_by
+  variance: v_team_stage_results_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "v_team_stage_results"
+"""
+input v_team_stage_results_arr_rel_insert_input {
+  data: [v_team_stage_results_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type v_team_stage_results_avg_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by avg() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_avg_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "v_team_stage_results". All fields are combined with a logical 'AND'.
+"""
+input v_team_stage_results_bool_exp {
+  _and: [v_team_stage_results_bool_exp!]
+  _not: v_team_stage_results_bool_exp
+  _or: [v_team_stage_results_bool_exp!]
+  losses: Int_comparison_exp
+  matches_played: Int_comparison_exp
+  matches_remaining: Int_comparison_exp
+  rounds_lost: Int_comparison_exp
+  rounds_won: Int_comparison_exp
+  stage: tournament_stages_bool_exp
+  team: tournament_teams_bool_exp
+  tournament_stage_id: uuid_comparison_exp
+  tournament_team_id: uuid_comparison_exp
+  wins: Int_comparison_exp
+}
+
+"""
+input type for inserting data into table "v_team_stage_results"
+"""
+input v_team_stage_results_insert_input {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  stage: tournament_stages_obj_rel_insert_input
+  team: tournament_teams_obj_rel_insert_input
+  tournament_stage_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""aggregate max on columns"""
+type v_team_stage_results_max_fields {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  tournament_stage_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""
+order by max() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_max_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  tournament_stage_id: order_by
+  tournament_team_id: order_by
+  wins: order_by
+}
+
+"""aggregate min on columns"""
+type v_team_stage_results_min_fields {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  tournament_stage_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""
+order by min() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_min_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  tournament_stage_id: order_by
+  tournament_team_id: order_by
+  wins: order_by
+}
+
+"""
+input type for inserting object relation for remote table "v_team_stage_results"
+"""
+input v_team_stage_results_obj_rel_insert_input {
+  data: v_team_stage_results_insert_input!
+}
+
+"""Ordering options when selecting data from "v_team_stage_results"."""
+input v_team_stage_results_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  stage: tournament_stages_order_by
+  team: tournament_teams_order_by
+  tournament_stage_id: order_by
+  tournament_team_id: order_by
+  wins: order_by
+}
+
+"""
+select columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column {
+  """column name"""
+  losses
+
+  """column name"""
+  matches_played
+
+  """column name"""
+  matches_remaining
+
+  """column name"""
+  rounds_lost
+
+  """column name"""
+  rounds_won
+
+  """column name"""
+  tournament_stage_id
+
+  """column name"""
+  tournament_team_id
+
+  """column name"""
+  wins
+}
+
+"""aggregate stddev on columns"""
+type v_team_stage_results_stddev_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by stddev() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_stddev_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type v_team_stage_results_stddev_pop_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by stddev_pop() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_stddev_pop_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type v_team_stage_results_stddev_samp_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by stddev_samp() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_stddev_samp_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""
+Streaming cursor of the table "v_team_stage_results"
+"""
+input v_team_stage_results_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_team_stage_results_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_team_stage_results_stream_cursor_value_input {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  tournament_stage_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""aggregate sum on columns"""
+type v_team_stage_results_sum_fields {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  wins: Int
+}
+
+"""
+order by sum() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_sum_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate var_pop on columns"""
+type v_team_stage_results_var_pop_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by var_pop() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_var_pop_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate var_samp on columns"""
+type v_team_stage_results_var_samp_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by var_samp() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_var_samp_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate variance on columns"""
+type v_team_stage_results_variance_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by variance() on columns of table "v_team_stage_results"
+"""
+input v_team_stage_results_variance_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""
+columns and relationships of "v_team_tournament_results"
+"""
+type v_team_tournament_results {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+
+  """An object relationship"""
+  team: tournament_teams
+
+  """An object relationship"""
+  tournament: tournaments
+  tournament_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""
+aggregated selection of "v_team_tournament_results"
+"""
+type v_team_tournament_results_aggregate {
+  aggregate: v_team_tournament_results_aggregate_fields
+  nodes: [v_team_tournament_results!]!
+}
+
+input v_team_tournament_results_aggregate_bool_exp {
+  count: v_team_tournament_results_aggregate_bool_exp_count
+}
+
+input v_team_tournament_results_aggregate_bool_exp_count {
+  arguments: [v_team_tournament_results_select_column!]
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "v_team_tournament_results"
+"""
+type v_team_tournament_results_aggregate_fields {
+  avg: v_team_tournament_results_avg_fields
+  count(columns: [v_team_tournament_results_select_column!], distinct: Boolean): Int!
+  max: v_team_tournament_results_max_fields
+  min: v_team_tournament_results_min_fields
+  stddev: v_team_tournament_results_stddev_fields
+  stddev_pop: v_team_tournament_results_stddev_pop_fields
+  stddev_samp: v_team_tournament_results_stddev_samp_fields
+  sum: v_team_tournament_results_sum_fields
+  var_pop: v_team_tournament_results_var_pop_fields
+  var_samp: v_team_tournament_results_var_samp_fields
+  variance: v_team_tournament_results_variance_fields
+}
+
+"""
+order by aggregate values of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_aggregate_order_by {
+  avg: v_team_tournament_results_avg_order_by
+  count: order_by
+  max: v_team_tournament_results_max_order_by
+  min: v_team_tournament_results_min_order_by
+  stddev: v_team_tournament_results_stddev_order_by
+  stddev_pop: v_team_tournament_results_stddev_pop_order_by
+  stddev_samp: v_team_tournament_results_stddev_samp_order_by
+  sum: v_team_tournament_results_sum_order_by
+  var_pop: v_team_tournament_results_var_pop_order_by
+  var_samp: v_team_tournament_results_var_samp_order_by
+  variance: v_team_tournament_results_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "v_team_tournament_results"
+"""
+input v_team_tournament_results_arr_rel_insert_input {
+  data: [v_team_tournament_results_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type v_team_tournament_results_avg_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by avg() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_avg_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "v_team_tournament_results". All fields are combined with a logical 'AND'.
+"""
+input v_team_tournament_results_bool_exp {
+  _and: [v_team_tournament_results_bool_exp!]
+  _not: v_team_tournament_results_bool_exp
+  _or: [v_team_tournament_results_bool_exp!]
+  losses: Int_comparison_exp
+  matches_played: Int_comparison_exp
+  matches_remaining: Int_comparison_exp
+  rounds_lost: Int_comparison_exp
+  rounds_won: Int_comparison_exp
+  team: tournament_teams_bool_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+  tournament_team_id: uuid_comparison_exp
+  wins: Int_comparison_exp
+}
+
+"""
+input type for inserting data into table "v_team_tournament_results"
+"""
+input v_team_tournament_results_insert_input {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  team: tournament_teams_obj_rel_insert_input
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""aggregate max on columns"""
+type v_team_tournament_results_max_fields {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  tournament_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""
+order by max() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_max_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  tournament_id: order_by
+  tournament_team_id: order_by
+  wins: order_by
+}
+
+"""aggregate min on columns"""
+type v_team_tournament_results_min_fields {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  tournament_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""
+order by min() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_min_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  tournament_id: order_by
+  tournament_team_id: order_by
+  wins: order_by
+}
+
+"""Ordering options when selecting data from "v_team_tournament_results"."""
+input v_team_tournament_results_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  team: tournament_teams_order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+  tournament_team_id: order_by
+  wins: order_by
+}
+
+"""
+select columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column {
+  """column name"""
+  losses
+
+  """column name"""
+  matches_played
+
+  """column name"""
+  matches_remaining
+
+  """column name"""
+  rounds_lost
+
+  """column name"""
+  rounds_won
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  tournament_team_id
+
+  """column name"""
+  wins
+}
+
+"""aggregate stddev on columns"""
+type v_team_tournament_results_stddev_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by stddev() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_stddev_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type v_team_tournament_results_stddev_pop_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by stddev_pop() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_stddev_pop_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type v_team_tournament_results_stddev_samp_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by stddev_samp() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_stddev_samp_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""
+Streaming cursor of the table "v_team_tournament_results"
+"""
+input v_team_tournament_results_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_team_tournament_results_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_team_tournament_results_stream_cursor_value_input {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  tournament_id: uuid
+  tournament_team_id: uuid
+  wins: Int
+}
+
+"""aggregate sum on columns"""
+type v_team_tournament_results_sum_fields {
+  losses: Int
+  matches_played: Int
+  matches_remaining: Int
+  rounds_lost: Int
+  rounds_won: Int
+  wins: Int
+}
+
+"""
+order by sum() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_sum_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate var_pop on columns"""
+type v_team_tournament_results_var_pop_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by var_pop() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_var_pop_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate var_samp on columns"""
+type v_team_tournament_results_var_samp_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by var_samp() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_var_samp_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
+}
+
+"""aggregate variance on columns"""
+type v_team_tournament_results_variance_fields {
+  losses: Float
+  matches_played: Float
+  matches_remaining: Float
+  rounds_lost: Float
+  rounds_won: Float
+  wins: Float
+}
+
+"""
+order by variance() on columns of table "v_team_tournament_results"
+"""
+input v_team_tournament_results_variance_order_by {
+  losses: order_by
+  matches_played: order_by
+  matches_remaining: order_by
+  rounds_lost: order_by
+  rounds_won: order_by
+  wins: order_by
 }

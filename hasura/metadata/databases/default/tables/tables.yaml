@@ -81,3 +81,5 @@
 - "!include public_v_player_map_wins.yaml"
 - "!include public_v_player_multi_kills.yaml"
 - "!include public_v_pool_maps.yaml"
+- "!include public_v_team_stage_results.yaml"
+- "!include public_v_team_tournament_results.yaml"

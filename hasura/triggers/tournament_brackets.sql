@@ -1,8 +1,25 @@
 CREATE OR REPLACE FUNCTION public.tau_tournament_brackets() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    stage_type text;
 BEGIN
+     IF OLD.match_id IS NOT NULL THEN
+        return NEW;
+     END IF;
+
      IF NEW.match_id IS NULL THEN
+         -- Check if this is a RoundRobin stage
+         SELECT ts.type INTO stage_type
+         FROM tournament_stages ts
+         WHERE ts.id = NEW.tournament_stage_id;
+         
+         -- For RoundRobin stages, only schedule round 1 matches initially
+         -- Later rounds will be scheduled progressively when previous rounds complete
+         IF stage_type = 'RoundRobin' AND NEW.round > 1 THEN
+             RETURN NEW;  -- Skip scheduling for round > 1 in RoundRobin
+         END IF;
+         
          -- Normal case: schedule when both teams are present
          IF NEW.tournament_team_id_1 IS NOT NULL AND NEW.tournament_team_id_2 IS NOT NULL THEN
              PERFORM schedule_tournament_match(NEW);

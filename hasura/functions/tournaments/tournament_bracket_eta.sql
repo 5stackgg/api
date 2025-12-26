@@ -19,54 +19,93 @@ BEGIN
     
     -- Process stages for the specific tournament
     FOR stage_record IN 
-        SELECT ts."order", ts.id as tournament_stage_id
+        SELECT ts."order", ts.id as tournament_stage_id, ts.type as stage_type
         FROM tournament_stages ts
         WHERE ts.tournament_id = _tournament_id 
         ORDER BY ts."order"
     LOOP
-        -- Process rounds within each stage
-        FOR round_record IN 
-            SELECT DISTINCT tb.round 
-            FROM tournament_brackets tb
-            WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
-            ORDER BY tb.round
-        LOOP
-            -- Process all brackets in this specific round
-            FOR bracket_record IN 
-                SELECT * FROM tournament_brackets 
-                WHERE tournament_stage_id = stage_record.tournament_stage_id 
-                AND round = round_record.round
-                ORDER BY match_number
+        -- For RoundRobin stages, calculate ETAs based on round number (each round +1 hour)
+        IF stage_record.stage_type = 'RoundRobin' THEN
+            -- Process rounds within RoundRobin stage
+            FOR round_record IN 
+                SELECT DISTINCT tb.round 
+                FROM tournament_brackets tb
+                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
+                ORDER BY tb.round
             LOOP
-                -- Case A: If bracket has a match, use its actual start time
-                IF bracket_record.match_id IS NOT NULL THEN
-                    UPDATE tournament_brackets 
-                    SET scheduled_eta = (
-                        SELECT COALESCE(m.started_at, m.scheduled_at)
-                        FROM matches m
-                        WHERE m.id = bracket_record.match_id
-                    )
-                    WHERE id = bracket_record.id;
-                ELSE
-                    -- Case B: Check if this bracket has children
-                    SELECT MAX(child.scheduled_eta + interval '1 hour') INTO child_finish_time
-                    FROM tournament_brackets child
-                    WHERE child.parent_bracket_id = bracket_record.id;
+                -- Round 1 starts at tournament start time
+                -- Each subsequent round starts 1 hour after the previous round
+                DECLARE
+                    round_start_time timestamptz;
+                BEGIN
+                    IF round_record.round = 1 THEN
+                        round_start_time := base_start_time;
+                    ELSE
+                        -- Previous round's start time + 1 hour
+                        round_start_time := base_start_time + ((round_record.round - 1) * interval '1 hour');
+                    END IF;
                     
-                    IF child_finish_time IS NOT NULL THEN
-                        -- Use children completion time + 1 hour
+                    -- Update all brackets in this round
+                    UPDATE tournament_brackets 
+                    SET scheduled_eta = CASE 
+                        -- If bracket has a match, use its actual start time
+                        WHEN match_id IS NOT NULL THEN (
+                            SELECT COALESCE(m.started_at, m.scheduled_at)
+                            FROM matches m
+                            WHERE m.id = tournament_brackets.match_id
+                        )
+                        -- Otherwise use the calculated round start time
+                        ELSE round_start_time
+                    END
+                    WHERE tournament_stage_id = stage_record.tournament_stage_id 
+                      AND round = round_record.round;
+                END;
+            END LOOP;
+        ELSE
+            -- For elimination brackets, use the existing logic (parent bracket based)
+            FOR round_record IN 
+                SELECT DISTINCT tb.round 
+                FROM tournament_brackets tb
+                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
+                ORDER BY tb.round
+            LOOP
+                -- Process all brackets in this specific round
+                FOR bracket_record IN 
+                    SELECT * FROM tournament_brackets 
+                    WHERE tournament_stage_id = stage_record.tournament_stage_id 
+                    AND round = round_record.round
+                    ORDER BY match_number
+                LOOP
+                    -- Case A: If bracket has a match, use its actual start time
+                    IF bracket_record.match_id IS NOT NULL THEN
                         UPDATE tournament_brackets 
-                        SET scheduled_eta = child_finish_time
+                        SET scheduled_eta = (
+                            SELECT COALESCE(m.started_at, m.scheduled_at)
+                            FROM matches m
+                            WHERE m.id = bracket_record.match_id
+                        )
                         WHERE id = bracket_record.id;
                     ELSE
-                        -- Case C: No children, use tournament start time
-                        UPDATE tournament_brackets 
-                        SET scheduled_eta = base_start_time
-                        WHERE id = bracket_record.id;
+                        -- Case B: Check if this bracket has children
+                        SELECT MAX(child.scheduled_eta + interval '1 hour') INTO child_finish_time
+                        FROM tournament_brackets child
+                        WHERE child.parent_bracket_id = bracket_record.id;
+                        
+                        IF child_finish_time IS NOT NULL THEN
+                            -- Use children completion time + 1 hour
+                            UPDATE tournament_brackets 
+                            SET scheduled_eta = child_finish_time
+                            WHERE id = bracket_record.id;
+                        ELSE
+                            -- Case C: No children, use tournament start time
+                            UPDATE tournament_brackets 
+                            SET scheduled_eta = base_start_time
+                            WHERE id = bracket_record.id;
+                        END IF;
                     END IF;
-                END IF;
+                END LOOP;
             END LOOP;
-        END LOOP;
+        END IF;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
