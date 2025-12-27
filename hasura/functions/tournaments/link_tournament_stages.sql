@@ -1,5 +1,4 @@
--- Function to link advancing matches between consecutive tournament stages
--- This function automatically distributes top-round matches from each stage to the next stage
+-- Automatically distributes top-round matches from each stage to the next stage
 -- using a round-robin approach that scales to any number of groups and stages
 CREATE OR REPLACE FUNCTION link_tournament_stages(_tournament_id uuid)
 RETURNS void AS $$

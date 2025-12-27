@@ -1,4 +1,4 @@
--- Function to link brackets between two consecutive tournament stages
+-- RoundRobin stages advance teams based on standings, not bracket results
 CREATE OR REPLACE FUNCTION link_stage_brackets(
     current_stage_id uuid, 
     next_stage_id uuid, 
@@ -21,7 +21,16 @@ DECLARE
     max_matches int;
     j int;
     match_info text;
+    current_stage_type text;
 BEGIN
+    SELECT ts.type INTO current_stage_type
+    FROM tournament_stages ts
+    WHERE ts.id = current_stage_id;
+    
+    IF current_stage_type = 'RoundRobin' THEN
+        RETURN;
+    END IF;
+    
     -- Collect next stage round-1 matches in order
     SELECT array_agg(tb.id ORDER BY tb.match_number ASC)
     INTO next_round1_ids

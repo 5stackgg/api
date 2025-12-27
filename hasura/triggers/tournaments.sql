@@ -3,10 +3,21 @@ CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
     AS $$
 DECLARE
     tournament_matches uuid[];
+    first_stage_id uuid;
 BEGIN
 
     IF (NEW.status IS DISTINCT FROM OLD.status AND NEW.status = 'Live') THEN
-        PERFORM seed_tournament(NEW);
+        PERFORM update_tournament_stages(NEW.id);
+        PERFORM assign_seeds_to_teams(NEW);
+        
+        SELECT id INTO first_stage_id
+        FROM tournament_stages
+        WHERE tournament_id = NEW.id AND "order" = 1
+        LIMIT 1;
+        
+        IF first_stage_id IS NOT NULL THEN
+            PERFORM seed_stage(first_stage_id);
+        END IF;
     END IF;
 
     IF (NEW.status = 'Cancelled' OR NEW.status = 'CancelledMinTeams') THEN

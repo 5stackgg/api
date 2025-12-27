@@ -5,6 +5,15 @@ object_relationships:
   - name: creator
     using:
       foreign_key_constraint_on: owner_steam_id
+  - name: results
+    using:
+      manual_configuration:
+        column_mapping:
+          id: tournament_team_id
+        insertion_order: null
+        remote_table:
+          name: v_team_stage_results
+          schema: public
   - name: team
     using:
       foreign_key_constraint_on: team_id

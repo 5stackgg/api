@@ -6,6 +6,7 @@ DECLARE
     winning_team_id UUID;
     losing_team_id UUID;
     tournament_id UUID;
+    stage_type text;
 BEGIN
     IF match.winning_lineup_id IS NULL THEN
         RETURN;
@@ -40,11 +41,19 @@ BEGIN
         PERFORM public.assign_team_to_bracket_slot(bracket.loser_parent_bracket_id, losing_team_id);
     END IF;
 
-    SELECT ts.tournament_id INTO tournament_id
+    SELECT ts.tournament_id, ts.type INTO tournament_id, stage_type
     FROM tournament_stages ts 
     WHERE ts.id = bracket.tournament_stage_id;
     
     IF tournament_id IS NOT NULL THEN
+        IF stage_type = 'RoundRobin' THEN
+            PERFORM schedule_next_round_robin_matches(bracket.id);
+            
+            IF check_round_robin_stage_complete(bracket.tournament_stage_id) THEN
+                PERFORM advance_round_robin_teams(bracket.tournament_stage_id);
+            END IF;
+        END IF;
+        
         PERFORM check_tournament_finished(tournament_id);
     END IF;
 

@@ -16,6 +16,15 @@ array_relationships:
         table:
           name: tournament_brackets
           schema: public
+  - name: results
+    using:
+      manual_configuration:
+        column_mapping:
+          id: tournament_stage_id
+        insertion_order: null
+        remote_table:
+          name: v_team_stage_results
+          schema: public
 insert_permissions:
   - role: user
     permission:

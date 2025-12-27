@@ -218,6 +218,8 @@ BEGIN
         UPDATE servers SET reserved_by_match_id = null WHERE id = _server_id;
     END IF;
 
+    -- No refresh needed - v_team_stage_results is now a regular view that's always up-to-date
+
 	RETURN NEW;
 END;
 $$;

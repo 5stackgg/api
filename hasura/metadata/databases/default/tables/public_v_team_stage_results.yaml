@@ -1,0 +1,43 @@
+table:
+  name: v_team_stage_results
+  schema: public
+object_relationships:
+  - name: stage
+    using:
+      manual_configuration:
+        column_mapping:
+          tournament_stage_id: id
+        insertion_order: null
+        remote_table:
+          name: tournament_stages
+          schema: public
+  - name: team
+    using:
+      manual_configuration:
+        column_mapping:
+          tournament_team_id: id
+        insertion_order: null
+        remote_table:
+          name: tournament_teams
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - team_kdr
+        - head_to_head_match_wins
+        - head_to_head_rounds_won
+        - losses
+        - maps_lost
+        - maps_won
+        - matches_played
+        - matches_remaining
+        - rounds_lost
+        - rounds_won
+        - total_deaths
+        - total_kills
+        - wins
+        - tournament_stage_id
+        - tournament_team_id
+      filter: {}
+    comment: ""

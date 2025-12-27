@@ -13,7 +13,6 @@ insert into e_game_cfg_types ("value", "description") values
     ('Duel', 'Duel game configuration')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
--- Define map data in CTEs for reuse
 WITH map_data AS (
     SELECT * FROM (VALUES
         -- Valve maps
