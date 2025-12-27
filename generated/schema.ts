@@ -13429,7 +13429,11 @@ export type v_pool_maps_select_column_v_pool_maps_aggregate_bool_exp_bool_or_arg
 
 /** columns and relationships of "v_team_stage_results" */
 export interface v_team_stage_results {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
@@ -13438,6 +13442,9 @@ export interface v_team_stage_results {
     stage: (tournament_stages | null)
     /** An object relationship */
     team: (tournament_teams | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     tournament_stage_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
     wins: (Scalars['Int'] | null)
@@ -13472,11 +13479,18 @@ export interface v_team_stage_results_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface v_team_stage_results_avg_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_avg_fields'
 }
@@ -13484,11 +13498,18 @@ export interface v_team_stage_results_avg_fields {
 
 /** aggregate max on columns */
 export interface v_team_stage_results_max_fields {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     tournament_stage_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
     wins: (Scalars['Int'] | null)
@@ -13498,11 +13519,18 @@ export interface v_team_stage_results_max_fields {
 
 /** aggregate min on columns */
 export interface v_team_stage_results_min_fields {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     tournament_stage_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
     wins: (Scalars['Int'] | null)
@@ -13511,16 +13539,55 @@ export interface v_team_stage_results_min_fields {
 
 
 /** select columns of table "v_team_stage_results" */
-export type v_team_stage_results_select_column = 'losses' | 'matches_played' | 'matches_remaining' | 'rounds_lost' | 'rounds_won' | 'tournament_stage_id' | 'tournament_team_id' | 'wins'
+export type v_team_stage_results_select_column = 'head_to_head_match_wins' | 'head_to_head_rounds_won' | 'losses' | 'maps_lost' | 'maps_won' | 'matches_played' | 'matches_remaining' | 'rounds_lost' | 'rounds_won' | 'team_kdr' | 'total_deaths' | 'total_kills' | 'tournament_stage_id' | 'tournament_team_id' | 'wins'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_avg_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_avg_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_corr_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_max_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_max_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_min_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_min_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_sum_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_sum_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_team_stage_results" */
+export type v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns = 'team_kdr'
 
 
 /** aggregate stddev on columns */
 export interface v_team_stage_results_stddev_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_stddev_fields'
 }
@@ -13528,11 +13595,18 @@ export interface v_team_stage_results_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface v_team_stage_results_stddev_pop_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_stddev_pop_fields'
 }
@@ -13540,11 +13614,18 @@ export interface v_team_stage_results_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface v_team_stage_results_stddev_samp_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_stddev_samp_fields'
 }
@@ -13552,11 +13633,18 @@ export interface v_team_stage_results_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface v_team_stage_results_sum_fields {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     wins: (Scalars['Int'] | null)
     __typename: 'v_team_stage_results_sum_fields'
 }
@@ -13564,11 +13652,18 @@ export interface v_team_stage_results_sum_fields {
 
 /** aggregate var_pop on columns */
 export interface v_team_stage_results_var_pop_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_var_pop_fields'
 }
@@ -13576,11 +13671,18 @@ export interface v_team_stage_results_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface v_team_stage_results_var_samp_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_var_samp_fields'
 }
@@ -13588,11 +13690,18 @@ export interface v_team_stage_results_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface v_team_stage_results_variance_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_stage_results_variance_fields'
 }
@@ -13600,13 +13709,20 @@ export interface v_team_stage_results_variance_fields {
 
 /** columns and relationships of "v_team_tournament_results" */
 export interface v_team_tournament_results {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
     /** An object relationship */
     team: (tournament_teams | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     /** An object relationship */
     tournament: (tournaments | null)
     tournament_id: (Scalars['uuid'] | null)
@@ -13643,11 +13759,18 @@ export interface v_team_tournament_results_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface v_team_tournament_results_avg_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_avg_fields'
 }
@@ -13655,11 +13778,18 @@ export interface v_team_tournament_results_avg_fields {
 
 /** aggregate max on columns */
 export interface v_team_tournament_results_max_fields {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     tournament_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
     wins: (Scalars['Int'] | null)
@@ -13669,11 +13799,18 @@ export interface v_team_tournament_results_max_fields {
 
 /** aggregate min on columns */
 export interface v_team_tournament_results_min_fields {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     tournament_id: (Scalars['uuid'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
     wins: (Scalars['Int'] | null)
@@ -13682,16 +13819,55 @@ export interface v_team_tournament_results_min_fields {
 
 
 /** select columns of table "v_team_tournament_results" */
-export type v_team_tournament_results_select_column = 'losses' | 'matches_played' | 'matches_remaining' | 'rounds_lost' | 'rounds_won' | 'tournament_id' | 'tournament_team_id' | 'wins'
+export type v_team_tournament_results_select_column = 'head_to_head_match_wins' | 'head_to_head_rounds_won' | 'losses' | 'maps_lost' | 'maps_won' | 'matches_played' | 'matches_remaining' | 'rounds_lost' | 'rounds_won' | 'team_kdr' | 'total_deaths' | 'total_kills' | 'tournament_id' | 'tournament_team_id' | 'wins'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_max_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_max_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_min_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_min_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns = 'team_kdr'
+
+
+/** select "v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_team_tournament_results" */
+export type v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns = 'team_kdr'
 
 
 /** aggregate stddev on columns */
 export interface v_team_tournament_results_stddev_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_stddev_fields'
 }
@@ -13699,11 +13875,18 @@ export interface v_team_tournament_results_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface v_team_tournament_results_stddev_pop_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_stddev_pop_fields'
 }
@@ -13711,11 +13894,18 @@ export interface v_team_tournament_results_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface v_team_tournament_results_stddev_samp_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_stddev_samp_fields'
 }
@@ -13723,11 +13913,18 @@ export interface v_team_tournament_results_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface v_team_tournament_results_sum_fields {
+    head_to_head_match_wins: (Scalars['Int'] | null)
+    head_to_head_rounds_won: (Scalars['Int'] | null)
     losses: (Scalars['Int'] | null)
+    maps_lost: (Scalars['Int'] | null)
+    maps_won: (Scalars['Int'] | null)
     matches_played: (Scalars['Int'] | null)
     matches_remaining: (Scalars['Int'] | null)
     rounds_lost: (Scalars['Int'] | null)
     rounds_won: (Scalars['Int'] | null)
+    team_kdr: (Scalars['float8'] | null)
+    total_deaths: (Scalars['Int'] | null)
+    total_kills: (Scalars['Int'] | null)
     wins: (Scalars['Int'] | null)
     __typename: 'v_team_tournament_results_sum_fields'
 }
@@ -13735,11 +13932,18 @@ export interface v_team_tournament_results_sum_fields {
 
 /** aggregate var_pop on columns */
 export interface v_team_tournament_results_var_pop_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_var_pop_fields'
 }
@@ -13747,11 +13951,18 @@ export interface v_team_tournament_results_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface v_team_tournament_results_var_samp_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_var_samp_fields'
 }
@@ -13759,11 +13970,18 @@ export interface v_team_tournament_results_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface v_team_tournament_results_variance_fields {
+    head_to_head_match_wins: (Scalars['Float'] | null)
+    head_to_head_rounds_won: (Scalars['Float'] | null)
     losses: (Scalars['Float'] | null)
+    maps_lost: (Scalars['Float'] | null)
+    maps_won: (Scalars['Float'] | null)
     matches_played: (Scalars['Float'] | null)
     matches_remaining: (Scalars['Float'] | null)
     rounds_lost: (Scalars['Float'] | null)
     rounds_won: (Scalars['Float'] | null)
+    team_kdr: (Scalars['Float'] | null)
+    total_deaths: (Scalars['Float'] | null)
+    total_kills: (Scalars['Float'] | null)
     wins: (Scalars['Float'] | null)
     __typename: 'v_team_tournament_results_variance_fields'
 }
@@ -40341,7 +40559,11 @@ where: v_pool_maps_bool_exp}
 
 /** columns and relationships of "v_team_stage_results" */
 export interface v_team_stage_resultsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
@@ -40350,6 +40572,9 @@ export interface v_team_stage_resultsGenqlSelection{
     stage?: tournament_stagesGenqlSelection
     /** An object relationship */
     team?: tournament_teamsGenqlSelection
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     tournament_stage_id?: boolean | number
     tournament_team_id?: boolean | number
     wins?: boolean | number
@@ -40366,9 +40591,29 @@ export interface v_team_stage_results_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface v_team_stage_results_aggregate_bool_exp {count?: (v_team_stage_results_aggregate_bool_exp_count | null)}
+export interface v_team_stage_results_aggregate_bool_exp {avg?: (v_team_stage_results_aggregate_bool_exp_avg | null),corr?: (v_team_stage_results_aggregate_bool_exp_corr | null),count?: (v_team_stage_results_aggregate_bool_exp_count | null),covar_samp?: (v_team_stage_results_aggregate_bool_exp_covar_samp | null),max?: (v_team_stage_results_aggregate_bool_exp_max | null),min?: (v_team_stage_results_aggregate_bool_exp_min | null),stddev_samp?: (v_team_stage_results_aggregate_bool_exp_stddev_samp | null),sum?: (v_team_stage_results_aggregate_bool_exp_sum | null),var_samp?: (v_team_stage_results_aggregate_bool_exp_var_samp | null)}
+
+export interface v_team_stage_results_aggregate_bool_exp_avg {arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_corr {arguments: v_team_stage_results_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_corr_arguments {X: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns,Y: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns}
 
 export interface v_team_stage_results_aggregate_bool_exp_count {arguments?: (v_team_stage_results_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_covar_samp {arguments: v_team_stage_results_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_covar_samp_arguments {X: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns,Y: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface v_team_stage_results_aggregate_bool_exp_max {arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_min {arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_stddev_samp {arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_sum {arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_stage_results_aggregate_bool_exp_var_samp {arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_stage_results_bool_exp | null),predicate: float8_comparison_exp}
 
 
 /** aggregate fields of "v_team_stage_results" */
@@ -40399,11 +40644,18 @@ export interface v_team_stage_results_arr_rel_insert_input {data: v_team_stage_r
 
 /** aggregate avg on columns */
 export interface v_team_stage_results_avg_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40411,24 +40663,31 @@ export interface v_team_stage_results_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_avg_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_avg_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "v_team_stage_results". All fields are combined with a logical 'AND'. */
-export interface v_team_stage_results_bool_exp {_and?: (v_team_stage_results_bool_exp[] | null),_not?: (v_team_stage_results_bool_exp | null),_or?: (v_team_stage_results_bool_exp[] | null),losses?: (Int_comparison_exp | null),matches_played?: (Int_comparison_exp | null),matches_remaining?: (Int_comparison_exp | null),rounds_lost?: (Int_comparison_exp | null),rounds_won?: (Int_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team?: (tournament_teams_bool_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id?: (uuid_comparison_exp | null),wins?: (Int_comparison_exp | null)}
+export interface v_team_stage_results_bool_exp {_and?: (v_team_stage_results_bool_exp[] | null),_not?: (v_team_stage_results_bool_exp | null),_or?: (v_team_stage_results_bool_exp[] | null),head_to_head_match_wins?: (Int_comparison_exp | null),head_to_head_rounds_won?: (Int_comparison_exp | null),losses?: (Int_comparison_exp | null),maps_lost?: (Int_comparison_exp | null),maps_won?: (Int_comparison_exp | null),matches_played?: (Int_comparison_exp | null),matches_remaining?: (Int_comparison_exp | null),rounds_lost?: (Int_comparison_exp | null),rounds_won?: (Int_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team?: (tournament_teams_bool_exp | null),team_kdr?: (float8_comparison_exp | null),total_deaths?: (Int_comparison_exp | null),total_kills?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id?: (uuid_comparison_exp | null),wins?: (Int_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_team_stage_results" */
-export interface v_team_stage_results_insert_input {losses?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),stage?: (tournament_stages_obj_rel_insert_input | null),team?: (tournament_teams_obj_rel_insert_input | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
+export interface v_team_stage_results_insert_input {head_to_head_match_wins?: (Scalars['Int'] | null),head_to_head_rounds_won?: (Scalars['Int'] | null),losses?: (Scalars['Int'] | null),maps_lost?: (Scalars['Int'] | null),maps_won?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),stage?: (tournament_stages_obj_rel_insert_input | null),team?: (tournament_teams_obj_rel_insert_input | null),team_kdr?: (Scalars['float8'] | null),total_deaths?: (Scalars['Int'] | null),total_kills?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
 export interface v_team_stage_results_max_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     tournament_stage_id?: boolean | number
     tournament_team_id?: boolean | number
     wins?: boolean | number
@@ -40438,16 +40697,23 @@ export interface v_team_stage_results_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_max_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_max_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface v_team_stage_results_min_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     tournament_stage_id?: boolean | number
     tournament_team_id?: boolean | number
     wins?: boolean | number
@@ -40457,7 +40723,7 @@ export interface v_team_stage_results_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_min_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_min_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
 
 
 /** input type for inserting object relation for remote table "v_team_stage_results" */
@@ -40465,16 +40731,23 @@ export interface v_team_stage_results_obj_rel_insert_input {data: v_team_stage_r
 
 
 /** Ordering options when selecting data from "v_team_stage_results". */
-export interface v_team_stage_results_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),stage?: (tournament_stages_order_by | null),team?: (tournament_teams_order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),stage?: (tournament_stages_order_by | null),team?: (tournament_teams_order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
 export interface v_team_stage_results_stddev_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40482,16 +40755,23 @@ export interface v_team_stage_results_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_stddev_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_stddev_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface v_team_stage_results_stddev_pop_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40499,16 +40779,23 @@ export interface v_team_stage_results_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_stddev_pop_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_stddev_pop_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface v_team_stage_results_stddev_samp_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40516,7 +40803,7 @@ export interface v_team_stage_results_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_stddev_samp_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_stddev_samp_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** Streaming cursor of the table "v_team_stage_results" */
@@ -40528,16 +40815,23 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_team_stage_results_stream_cursor_value_input {losses?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
+export interface v_team_stage_results_stream_cursor_value_input {head_to_head_match_wins?: (Scalars['Int'] | null),head_to_head_rounds_won?: (Scalars['Int'] | null),losses?: (Scalars['Int'] | null),maps_lost?: (Scalars['Int'] | null),maps_won?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),team_kdr?: (Scalars['float8'] | null),total_deaths?: (Scalars['Int'] | null),total_kills?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
 export interface v_team_stage_results_sum_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40545,16 +40839,23 @@ export interface v_team_stage_results_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_sum_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_sum_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate var_pop on columns */
 export interface v_team_stage_results_var_pop_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40562,16 +40863,23 @@ export interface v_team_stage_results_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_var_pop_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_var_pop_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface v_team_stage_results_var_samp_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40579,16 +40887,23 @@ export interface v_team_stage_results_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_var_samp_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_var_samp_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface v_team_stage_results_variance_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40596,18 +40911,25 @@ export interface v_team_stage_results_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "v_team_stage_results" */
-export interface v_team_stage_results_variance_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_stage_results_variance_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** columns and relationships of "v_team_tournament_results" */
 export interface v_team_tournament_resultsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
     /** An object relationship */
     team?: tournament_teamsGenqlSelection
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     /** An object relationship */
     tournament?: tournamentsGenqlSelection
     tournament_id?: boolean | number
@@ -40626,9 +40948,29 @@ export interface v_team_tournament_results_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface v_team_tournament_results_aggregate_bool_exp {count?: (v_team_tournament_results_aggregate_bool_exp_count | null)}
+export interface v_team_tournament_results_aggregate_bool_exp {avg?: (v_team_tournament_results_aggregate_bool_exp_avg | null),corr?: (v_team_tournament_results_aggregate_bool_exp_corr | null),count?: (v_team_tournament_results_aggregate_bool_exp_count | null),covar_samp?: (v_team_tournament_results_aggregate_bool_exp_covar_samp | null),max?: (v_team_tournament_results_aggregate_bool_exp_max | null),min?: (v_team_tournament_results_aggregate_bool_exp_min | null),stddev_samp?: (v_team_tournament_results_aggregate_bool_exp_stddev_samp | null),sum?: (v_team_tournament_results_aggregate_bool_exp_sum | null),var_samp?: (v_team_tournament_results_aggregate_bool_exp_var_samp | null)}
+
+export interface v_team_tournament_results_aggregate_bool_exp_avg {arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_corr {arguments: v_team_tournament_results_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_corr_arguments {X: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns,Y: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns}
 
 export interface v_team_tournament_results_aggregate_bool_exp_count {arguments?: (v_team_tournament_results_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_covar_samp {arguments: v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments {X: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns,Y: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface v_team_tournament_results_aggregate_bool_exp_max {arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_min {arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_stddev_samp {arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_sum {arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface v_team_tournament_results_aggregate_bool_exp_var_samp {arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (v_team_tournament_results_bool_exp | null),predicate: float8_comparison_exp}
 
 
 /** aggregate fields of "v_team_tournament_results" */
@@ -40659,11 +41001,18 @@ export interface v_team_tournament_results_arr_rel_insert_input {data: v_team_to
 
 /** aggregate avg on columns */
 export interface v_team_tournament_results_avg_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40671,24 +41020,31 @@ export interface v_team_tournament_results_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_avg_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_avg_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "v_team_tournament_results". All fields are combined with a logical 'AND'. */
-export interface v_team_tournament_results_bool_exp {_and?: (v_team_tournament_results_bool_exp[] | null),_not?: (v_team_tournament_results_bool_exp | null),_or?: (v_team_tournament_results_bool_exp[] | null),losses?: (Int_comparison_exp | null),matches_played?: (Int_comparison_exp | null),matches_remaining?: (Int_comparison_exp | null),rounds_lost?: (Int_comparison_exp | null),rounds_won?: (Int_comparison_exp | null),team?: (tournament_teams_bool_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team_id?: (uuid_comparison_exp | null),wins?: (Int_comparison_exp | null)}
+export interface v_team_tournament_results_bool_exp {_and?: (v_team_tournament_results_bool_exp[] | null),_not?: (v_team_tournament_results_bool_exp | null),_or?: (v_team_tournament_results_bool_exp[] | null),head_to_head_match_wins?: (Int_comparison_exp | null),head_to_head_rounds_won?: (Int_comparison_exp | null),losses?: (Int_comparison_exp | null),maps_lost?: (Int_comparison_exp | null),maps_won?: (Int_comparison_exp | null),matches_played?: (Int_comparison_exp | null),matches_remaining?: (Int_comparison_exp | null),rounds_lost?: (Int_comparison_exp | null),rounds_won?: (Int_comparison_exp | null),team?: (tournament_teams_bool_exp | null),team_kdr?: (float8_comparison_exp | null),total_deaths?: (Int_comparison_exp | null),total_kills?: (Int_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team_id?: (uuid_comparison_exp | null),wins?: (Int_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_team_tournament_results" */
-export interface v_team_tournament_results_insert_input {losses?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),team?: (tournament_teams_obj_rel_insert_input | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
+export interface v_team_tournament_results_insert_input {head_to_head_match_wins?: (Scalars['Int'] | null),head_to_head_rounds_won?: (Scalars['Int'] | null),losses?: (Scalars['Int'] | null),maps_lost?: (Scalars['Int'] | null),maps_won?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),team?: (tournament_teams_obj_rel_insert_input | null),team_kdr?: (Scalars['float8'] | null),total_deaths?: (Scalars['Int'] | null),total_kills?: (Scalars['Int'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
 export interface v_team_tournament_results_max_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     tournament_id?: boolean | number
     tournament_team_id?: boolean | number
     wins?: boolean | number
@@ -40698,16 +41054,23 @@ export interface v_team_tournament_results_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_max_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_max_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface v_team_tournament_results_min_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     tournament_id?: boolean | number
     tournament_team_id?: boolean | number
     wins?: boolean | number
@@ -40717,20 +41080,27 @@ export interface v_team_tournament_results_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_min_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_min_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
 
 
 /** Ordering options when selecting data from "v_team_tournament_results". */
-export interface v_team_tournament_results_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team?: (tournament_teams_order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team?: (tournament_teams_order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
 export interface v_team_tournament_results_stddev_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40738,16 +41108,23 @@ export interface v_team_tournament_results_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_stddev_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_stddev_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface v_team_tournament_results_stddev_pop_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40755,16 +41132,23 @@ export interface v_team_tournament_results_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_stddev_pop_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_stddev_pop_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface v_team_tournament_results_stddev_samp_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40772,7 +41156,7 @@ export interface v_team_tournament_results_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_stddev_samp_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_stddev_samp_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** Streaming cursor of the table "v_team_tournament_results" */
@@ -40784,16 +41168,23 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_team_tournament_results_stream_cursor_value_input {losses?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
+export interface v_team_tournament_results_stream_cursor_value_input {head_to_head_match_wins?: (Scalars['Int'] | null),head_to_head_rounds_won?: (Scalars['Int'] | null),losses?: (Scalars['Int'] | null),maps_lost?: (Scalars['Int'] | null),maps_won?: (Scalars['Int'] | null),matches_played?: (Scalars['Int'] | null),matches_remaining?: (Scalars['Int'] | null),rounds_lost?: (Scalars['Int'] | null),rounds_won?: (Scalars['Int'] | null),team_kdr?: (Scalars['float8'] | null),total_deaths?: (Scalars['Int'] | null),total_kills?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null),wins?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
 export interface v_team_tournament_results_sum_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40801,16 +41192,23 @@ export interface v_team_tournament_results_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_sum_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_sum_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate var_pop on columns */
 export interface v_team_tournament_results_var_pop_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40818,16 +41216,23 @@ export interface v_team_tournament_results_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_var_pop_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_var_pop_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface v_team_tournament_results_var_samp_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40835,16 +41240,23 @@ export interface v_team_tournament_results_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_var_samp_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_var_samp_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface v_team_tournament_results_variance_fieldsGenqlSelection{
+    head_to_head_match_wins?: boolean | number
+    head_to_head_rounds_won?: boolean | number
     losses?: boolean | number
+    maps_lost?: boolean | number
+    maps_won?: boolean | number
     matches_played?: boolean | number
     matches_remaining?: boolean | number
     rounds_lost?: boolean | number
     rounds_won?: boolean | number
+    team_kdr?: boolean | number
+    total_deaths?: boolean | number
+    total_kills?: boolean | number
     wins?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40852,7 +41264,7 @@ export interface v_team_tournament_results_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "v_team_tournament_results" */
-export interface v_team_tournament_results_variance_order_by {losses?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),wins?: (order_by | null)}
+export interface v_team_tournament_results_variance_order_by {head_to_head_match_wins?: (order_by | null),head_to_head_rounds_won?: (order_by | null),losses?: (order_by | null),maps_lost?: (order_by | null),maps_won?: (order_by | null),matches_played?: (order_by | null),matches_remaining?: (order_by | null),rounds_lost?: (order_by | null),rounds_won?: (order_by | null),team_kdr?: (order_by | null),total_deaths?: (order_by | null),total_kills?: (order_by | null),wins?: (order_by | null)}
 
 export type QueryGenqlSelection = query_rootGenqlSelection
 export type MutationGenqlSelection = mutation_rootGenqlSelection
@@ -50443,23 +50855,101 @@ export const enumVPoolMapsSelectColumnVPoolMapsAggregateBoolExpBoolOrArgumentsCo
 }
 
 export const enumVTeamStageResultsSelectColumn = {
+   head_to_head_match_wins: 'head_to_head_match_wins' as const,
+   head_to_head_rounds_won: 'head_to_head_rounds_won' as const,
    losses: 'losses' as const,
+   maps_lost: 'maps_lost' as const,
+   maps_won: 'maps_won' as const,
    matches_played: 'matches_played' as const,
    matches_remaining: 'matches_remaining' as const,
    rounds_lost: 'rounds_lost' as const,
    rounds_won: 'rounds_won' as const,
+   team_kdr: 'team_kdr' as const,
+   total_deaths: 'total_deaths' as const,
+   total_kills: 'total_kills' as const,
    tournament_stage_id: 'tournament_stage_id' as const,
    tournament_team_id: 'tournament_team_id' as const,
    wins: 'wins' as const
 }
 
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpAvgArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpCorrArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpCovarSampArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpMaxArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpMinArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpStddevSampArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpSumArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamStageResultsSelectColumnVTeamStageResultsAggregateBoolExpVarSampArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
 export const enumVTeamTournamentResultsSelectColumn = {
+   head_to_head_match_wins: 'head_to_head_match_wins' as const,
+   head_to_head_rounds_won: 'head_to_head_rounds_won' as const,
    losses: 'losses' as const,
+   maps_lost: 'maps_lost' as const,
+   maps_won: 'maps_won' as const,
    matches_played: 'matches_played' as const,
    matches_remaining: 'matches_remaining' as const,
    rounds_lost: 'rounds_lost' as const,
    rounds_won: 'rounds_won' as const,
+   team_kdr: 'team_kdr' as const,
+   total_deaths: 'total_deaths' as const,
+   total_kills: 'total_kills' as const,
    tournament_id: 'tournament_id' as const,
    tournament_team_id: 'tournament_team_id' as const,
    wins: 'wins' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpAvgArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpCorrArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpCovarSampArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpMaxArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpMinArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpStddevSampArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpSumArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
+}
+
+export const enumVTeamTournamentResultsSelectColumnVTeamTournamentResultsAggregateBoolExpVarSampArgumentsColumns = {
+   team_kdr: 'team_kdr' as const
 }

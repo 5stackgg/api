@@ -303,8 +303,24 @@ export default {
         2569,
         2570,
         2571,
-        2593,
-        2626
+        2603,
+        2604,
+        2605,
+        2606,
+        2607,
+        2608,
+        2609,
+        2610,
+        2611,
+        2654,
+        2655,
+        2656,
+        2657,
+        2658,
+        2659,
+        2660,
+        2661,
+        2662
     ],
     "types": {
         "ApiKeyResponse": {
@@ -40365,7 +40381,7 @@ export default {
                 2576,
                 {
                     "distinct_on": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "limit": [
@@ -40375,11 +40391,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2592,
+                        2602,
                         "[v_team_stage_results_order_by!]"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
@@ -40387,7 +40403,7 @@ export default {
                 2577,
                 {
                     "distinct_on": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "limit": [
@@ -40397,11 +40413,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2592,
+                        2602,
                         "[v_team_stage_results_order_by!]"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
@@ -40635,7 +40651,7 @@ export default {
                 10
             ],
             "results": [
-                2585
+                2595
             ],
             "results_aggregate": [
                 2578
@@ -40721,7 +40737,7 @@ export default {
                 9
             ],
             "results": [
-                2582
+                2592
             ],
             "settings": [
                 750
@@ -40890,7 +40906,7 @@ export default {
                 1405
             ],
             "results_aggregate": [
-                2581
+                2591
             ],
             "settings": [
                 1405
@@ -42758,7 +42774,7 @@ export default {
                 111
             ],
             "results": [
-                2585
+                2595
             ],
             "roster": [
                 2234
@@ -42820,7 +42836,7 @@ export default {
                 110
             ],
             "results": [
-                2591
+                2601
             ],
             "roster": [
                 2231
@@ -43022,7 +43038,7 @@ export default {
                 1405
             ],
             "results": [
-                2592
+                2602
             ],
             "roster_aggregate": [
                 2230
@@ -43393,10 +43409,10 @@ export default {
                 }
             ],
             "results": [
-                2610,
+                2628,
                 {
                     "distinct_on": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "limit": [
@@ -43406,19 +43422,19 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2625,
+                        2653,
                         "[v_team_tournament_results_order_by!]"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],
             "results_aggregate": [
-                2611,
+                2629,
                 {
                     "distinct_on": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "limit": [
@@ -43428,11 +43444,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2625,
+                        2653,
                         "[v_team_tournament_results_order_by!]"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],
@@ -43803,10 +43819,10 @@ export default {
                 2098
             ],
             "results": [
-                2619
+                2647
             ],
             "results_aggregate": [
-                2612
+                2630
             ],
             "rosters": [
                 2234
@@ -43877,7 +43893,7 @@ export default {
                 2102
             ],
             "results": [
-                2616
+                2644
             ],
             "rosters": [
                 2231
@@ -44109,7 +44125,7 @@ export default {
                 2101
             ],
             "results_aggregate": [
-                2615
+                2643
             ],
             "rosters_aggregate": [
                 2230
@@ -49130,7 +49146,19 @@ export default {
             ]
         },
         "v_team_stage_results": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49151,6 +49179,15 @@ export default {
             "team": [
                 2266
             ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
+                9
+            ],
             "tournament_stage_id": [
                 2350
             ],
@@ -49166,7 +49203,7 @@ export default {
         },
         "v_team_stage_results_aggregate": {
             "aggregate": [
-                2580
+                2590
             ],
             "nodes": [
                 2576
@@ -49176,8 +49213,77 @@ export default {
             ]
         },
         "v_team_stage_results_aggregate_bool_exp": {
-            "count": [
+            "avg": [
                 2579
+            ],
+            "corr": [
+                2580
+            ],
+            "count": [
+                2582
+            ],
+            "covar_samp": [
+                2583
+            ],
+            "max": [
+                2585
+            ],
+            "min": [
+                2586
+            ],
+            "stddev_samp": [
+                2587
+            ],
+            "sum": [
+                2588
+            ],
+            "var_samp": [
+                2589
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_avg": {
+            "arguments": [
+                2604
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_corr": {
+            "arguments": [
+                2581
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_corr_arguments": {
+            "X": [
+                2605
+            ],
+            "Y": [
+                2605
             ],
             "__typename": [
                 18
@@ -49185,13 +49291,13 @@ export default {
         },
         "v_team_stage_results_aggregate_bool_exp_count": {
             "arguments": [
-                2593
+                2603
             ],
             "distinct": [
                 1
             ],
             "filter": [
-                2585
+                2595
             ],
             "predicate": [
                 10
@@ -49200,15 +49306,128 @@ export default {
                 18
             ]
         },
+        "v_team_stage_results_aggregate_bool_exp_covar_samp": {
+            "arguments": [
+                2584
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_covar_samp_arguments": {
+            "X": [
+                2606
+            ],
+            "Y": [
+                2606
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_max": {
+            "arguments": [
+                2607
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_min": {
+            "arguments": [
+                2608
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_stddev_samp": {
+            "arguments": [
+                2609
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_sum": {
+            "arguments": [
+                2610
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_stage_results_aggregate_bool_exp_var_samp": {
+            "arguments": [
+                2611
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2595
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
         "v_team_stage_results_aggregate_fields": {
             "avg": [
-                2583
+                2593
             ],
             "count": [
                 9,
                 {
                     "columns": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "distinct": [
@@ -49217,31 +49436,31 @@ export default {
                 }
             ],
             "max": [
-                2587
+                2597
             ],
             "min": [
-                2589
+                2599
             ],
             "stddev": [
-                2594
+                2612
             ],
             "stddev_pop": [
-                2596
+                2614
             ],
             "stddev_samp": [
-                2598
+                2616
             ],
             "sum": [
-                2602
+                2620
             ],
             "var_pop": [
-                2604
+                2622
             ],
             "var_samp": [
-                2606
+                2624
             ],
             "variance": [
-                2608
+                2626
             ],
             "__typename": [
                 18
@@ -49249,37 +49468,37 @@ export default {
         },
         "v_team_stage_results_aggregate_order_by": {
             "avg": [
-                2584
+                2594
             ],
             "count": [
                 1405
             ],
             "max": [
-                2588
+                2598
             ],
             "min": [
-                2590
+                2600
             ],
             "stddev": [
-                2595
+                2613
             ],
             "stddev_pop": [
-                2597
+                2615
             ],
             "stddev_samp": [
-                2599
+                2617
             ],
             "sum": [
-                2603
+                2621
             ],
             "var_pop": [
-                2605
+                2623
             ],
             "var_samp": [
-                2607
+                2625
             ],
             "variance": [
-                2609
+                2627
             ],
             "__typename": [
                 18
@@ -49287,14 +49506,26 @@ export default {
         },
         "v_team_stage_results_arr_rel_insert_input": {
             "data": [
-                2586
+                2596
             ],
             "__typename": [
                 18
             ]
         },
         "v_team_stage_results_avg_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49307,6 +49538,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49317,7 +49557,19 @@ export default {
             ]
         },
         "v_team_stage_results_avg_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49330,6 +49582,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49341,15 +49602,27 @@ export default {
         },
         "v_team_stage_results_bool_exp": {
             "_and": [
-                2585
+                2595
             ],
             "_not": [
-                2585
+                2595
             ],
             "_or": [
-                2585
+                2595
+            ],
+            "head_to_head_match_wins": [
+                10
+            ],
+            "head_to_head_rounds_won": [
+                10
             ],
             "losses": [
+                10
+            ],
+            "maps_lost": [
+                10
+            ],
+            "maps_won": [
                 10
             ],
             "matches_played": [
@@ -49370,6 +49643,15 @@ export default {
             "team": [
                 2275
             ],
+            "team_kdr": [
+                634
+            ],
+            "total_deaths": [
+                10
+            ],
+            "total_kills": [
+                10
+            ],
             "tournament_stage_id": [
                 2351
             ],
@@ -49384,7 +49666,19 @@ export default {
             ]
         },
         "v_team_stage_results_insert_input": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49405,6 +49699,15 @@ export default {
             "team": [
                 2284
             ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
+                9
+            ],
             "tournament_stage_id": [
                 2350
             ],
@@ -49419,7 +49722,19 @@ export default {
             ]
         },
         "v_team_stage_results_max_fields": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49432,6 +49747,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "tournament_stage_id": [
@@ -49448,7 +49772,19 @@ export default {
             ]
         },
         "v_team_stage_results_max_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49461,6 +49797,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "tournament_stage_id": [
@@ -49477,7 +49822,19 @@ export default {
             ]
         },
         "v_team_stage_results_min_fields": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49490,6 +49847,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "tournament_stage_id": [
@@ -49506,7 +49872,19 @@ export default {
             ]
         },
         "v_team_stage_results_min_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49519,6 +49897,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "tournament_stage_id": [
@@ -49536,14 +49923,26 @@ export default {
         },
         "v_team_stage_results_obj_rel_insert_input": {
             "data": [
-                2586
+                2596
             ],
             "__typename": [
                 18
             ]
         },
         "v_team_stage_results_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49564,6 +49963,15 @@ export default {
             "team": [
                 2286
             ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
+                1405
+            ],
             "tournament_stage_id": [
                 1405
             ],
@@ -49578,8 +49986,28 @@ export default {
             ]
         },
         "v_team_stage_results_select_column": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_avg_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_max_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_min_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_sum_arguments_columns": {},
+        "v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns": {},
         "v_team_stage_results_stddev_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49592,6 +50020,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49602,7 +50039,19 @@ export default {
             ]
         },
         "v_team_stage_results_stddev_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49615,6 +50064,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49625,7 +50083,19 @@ export default {
             ]
         },
         "v_team_stage_results_stddev_pop_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49638,6 +50108,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49648,7 +50127,19 @@ export default {
             ]
         },
         "v_team_stage_results_stddev_pop_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49661,6 +50152,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49671,7 +50171,19 @@ export default {
             ]
         },
         "v_team_stage_results_stddev_samp_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49684,6 +50196,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49694,7 +50215,19 @@ export default {
             ]
         },
         "v_team_stage_results_stddev_samp_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49707,6 +50240,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49718,7 +50260,7 @@ export default {
         },
         "v_team_stage_results_stream_cursor_input": {
             "initial_value": [
-                2601
+                2619
             ],
             "ordering": [
                 114
@@ -49728,7 +50270,19 @@ export default {
             ]
         },
         "v_team_stage_results_stream_cursor_value_input": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49741,6 +50295,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "tournament_stage_id": [
@@ -49757,7 +50320,19 @@ export default {
             ]
         },
         "v_team_stage_results_sum_fields": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49770,6 +50345,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "wins": [
@@ -49780,7 +50364,19 @@ export default {
             ]
         },
         "v_team_stage_results_sum_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49793,6 +50389,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49803,7 +50408,19 @@ export default {
             ]
         },
         "v_team_stage_results_var_pop_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49816,6 +50433,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49826,7 +50452,19 @@ export default {
             ]
         },
         "v_team_stage_results_var_pop_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49839,6 +50477,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49849,7 +50496,19 @@ export default {
             ]
         },
         "v_team_stage_results_var_samp_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49862,6 +50521,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49872,7 +50540,19 @@ export default {
             ]
         },
         "v_team_stage_results_var_samp_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49885,6 +50565,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -49895,7 +50584,19 @@ export default {
             ]
         },
         "v_team_stage_results_variance_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -49908,6 +50609,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -49918,7 +50628,19 @@ export default {
             ]
         },
         "v_team_stage_results_variance_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -49933,6 +50655,15 @@ export default {
             "rounds_won": [
                 1405
             ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
+                1405
+            ],
             "wins": [
                 1405
             ],
@@ -49941,7 +50672,19 @@ export default {
             ]
         },
         "v_team_tournament_results": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -49958,6 +50701,15 @@ export default {
             ],
             "team": [
                 2266
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
+                9
             ],
             "tournament": [
                 2308
@@ -49977,18 +50729,87 @@ export default {
         },
         "v_team_tournament_results_aggregate": {
             "aggregate": [
-                2614
+                2642
             ],
             "nodes": [
-                2610
+                2628
             ],
             "__typename": [
                 18
             ]
         },
         "v_team_tournament_results_aggregate_bool_exp": {
+            "avg": [
+                2631
+            ],
+            "corr": [
+                2632
+            ],
             "count": [
-                2613
+                2634
+            ],
+            "covar_samp": [
+                2635
+            ],
+            "max": [
+                2637
+            ],
+            "min": [
+                2638
+            ],
+            "stddev_samp": [
+                2639
+            ],
+            "sum": [
+                2640
+            ],
+            "var_samp": [
+                2641
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_avg": {
+            "arguments": [
+                2655
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_corr": {
+            "arguments": [
+                2633
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_corr_arguments": {
+            "X": [
+                2656
+            ],
+            "Y": [
+                2656
             ],
             "__typename": [
                 18
@@ -49996,13 +50817,13 @@ export default {
         },
         "v_team_tournament_results_aggregate_bool_exp_count": {
             "arguments": [
-                2626
+                2654
             ],
             "distinct": [
                 1
             ],
             "filter": [
-                2619
+                2647
             ],
             "predicate": [
                 10
@@ -50011,15 +50832,128 @@ export default {
                 18
             ]
         },
+        "v_team_tournament_results_aggregate_bool_exp_covar_samp": {
+            "arguments": [
+                2636
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments": {
+            "X": [
+                2657
+            ],
+            "Y": [
+                2657
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_max": {
+            "arguments": [
+                2658
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_min": {
+            "arguments": [
+                2659
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_stddev_samp": {
+            "arguments": [
+                2660
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_sum": {
+            "arguments": [
+                2661
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
+        "v_team_tournament_results_aggregate_bool_exp_var_samp": {
+            "arguments": [
+                2662
+            ],
+            "distinct": [
+                1
+            ],
+            "filter": [
+                2647
+            ],
+            "predicate": [
+                634
+            ],
+            "__typename": [
+                18
+            ]
+        },
         "v_team_tournament_results_aggregate_fields": {
             "avg": [
-                2617
+                2645
             ],
             "count": [
                 9,
                 {
                     "columns": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "distinct": [
@@ -50028,31 +50962,31 @@ export default {
                 }
             ],
             "max": [
-                2621
+                2649
             ],
             "min": [
-                2623
+                2651
             ],
             "stddev": [
-                2627
+                2663
             ],
             "stddev_pop": [
-                2629
+                2665
             ],
             "stddev_samp": [
-                2631
+                2667
             ],
             "sum": [
-                2635
+                2671
             ],
             "var_pop": [
-                2637
+                2673
             ],
             "var_samp": [
-                2639
+                2675
             ],
             "variance": [
-                2641
+                2677
             ],
             "__typename": [
                 18
@@ -50060,37 +50994,37 @@ export default {
         },
         "v_team_tournament_results_aggregate_order_by": {
             "avg": [
-                2618
+                2646
             ],
             "count": [
                 1405
             ],
             "max": [
-                2622
+                2650
             ],
             "min": [
-                2624
+                2652
             ],
             "stddev": [
-                2628
+                2664
             ],
             "stddev_pop": [
-                2630
+                2666
             ],
             "stddev_samp": [
-                2632
+                2668
             ],
             "sum": [
-                2636
+                2672
             ],
             "var_pop": [
-                2638
+                2674
             ],
             "var_samp": [
-                2640
+                2676
             ],
             "variance": [
-                2642
+                2678
             ],
             "__typename": [
                 18
@@ -50098,14 +51032,26 @@ export default {
         },
         "v_team_tournament_results_arr_rel_insert_input": {
             "data": [
-                2620
+                2648
             ],
             "__typename": [
                 18
             ]
         },
         "v_team_tournament_results_avg_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50118,6 +51064,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50128,7 +51083,19 @@ export default {
             ]
         },
         "v_team_tournament_results_avg_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50141,6 +51108,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50152,15 +51128,27 @@ export default {
         },
         "v_team_tournament_results_bool_exp": {
             "_and": [
-                2619
+                2647
             ],
             "_not": [
-                2619
+                2647
             ],
             "_or": [
-                2619
+                2647
+            ],
+            "head_to_head_match_wins": [
+                10
+            ],
+            "head_to_head_rounds_won": [
+                10
             ],
             "losses": [
+                10
+            ],
+            "maps_lost": [
+                10
+            ],
+            "maps_won": [
                 10
             ],
             "matches_played": [
@@ -50177,6 +51165,15 @@ export default {
             ],
             "team": [
                 2275
+            ],
+            "team_kdr": [
+                634
+            ],
+            "total_deaths": [
+                10
+            ],
+            "total_kills": [
+                10
             ],
             "tournament": [
                 2317
@@ -50195,7 +51192,19 @@ export default {
             ]
         },
         "v_team_tournament_results_insert_input": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -50212,6 +51221,15 @@ export default {
             ],
             "team": [
                 2284
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
+                9
             ],
             "tournament": [
                 2326
@@ -50230,7 +51248,19 @@ export default {
             ]
         },
         "v_team_tournament_results_max_fields": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -50243,6 +51273,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "tournament_id": [
@@ -50259,7 +51298,19 @@ export default {
             ]
         },
         "v_team_tournament_results_max_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50272,6 +51323,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "tournament_id": [
@@ -50288,7 +51348,19 @@ export default {
             ]
         },
         "v_team_tournament_results_min_fields": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -50301,6 +51373,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "tournament_id": [
@@ -50317,7 +51398,19 @@ export default {
             ]
         },
         "v_team_tournament_results_min_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50330,6 +51423,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "tournament_id": [
@@ -50346,7 +51448,19 @@ export default {
             ]
         },
         "v_team_tournament_results_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50363,6 +51477,15 @@ export default {
             ],
             "team": [
                 2286
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
+                1405
             ],
             "tournament": [
                 2328
@@ -50381,8 +51504,28 @@ export default {
             ]
         },
         "v_team_tournament_results_select_column": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_max_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_min_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns": {},
+        "v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns": {},
         "v_team_tournament_results_stddev_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50395,6 +51538,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50405,7 +51557,19 @@ export default {
             ]
         },
         "v_team_tournament_results_stddev_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50418,6 +51582,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50428,7 +51601,19 @@ export default {
             ]
         },
         "v_team_tournament_results_stddev_pop_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50441,6 +51626,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50451,7 +51645,19 @@ export default {
             ]
         },
         "v_team_tournament_results_stddev_pop_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50464,6 +51670,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50474,7 +51689,19 @@ export default {
             ]
         },
         "v_team_tournament_results_stddev_samp_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50487,6 +51714,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50497,7 +51733,19 @@ export default {
             ]
         },
         "v_team_tournament_results_stddev_samp_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50510,6 +51758,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50521,7 +51778,7 @@ export default {
         },
         "v_team_tournament_results_stream_cursor_input": {
             "initial_value": [
-                2634
+                2670
             ],
             "ordering": [
                 114
@@ -50531,7 +51788,19 @@ export default {
             ]
         },
         "v_team_tournament_results_stream_cursor_value_input": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -50544,6 +51813,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "tournament_id": [
@@ -50560,7 +51838,19 @@ export default {
             ]
         },
         "v_team_tournament_results_sum_fields": {
+            "head_to_head_match_wins": [
+                9
+            ],
+            "head_to_head_rounds_won": [
+                9
+            ],
             "losses": [
+                9
+            ],
+            "maps_lost": [
+                9
+            ],
+            "maps_won": [
                 9
             ],
             "matches_played": [
@@ -50573,6 +51863,15 @@ export default {
                 9
             ],
             "rounds_won": [
+                9
+            ],
+            "team_kdr": [
+                633
+            ],
+            "total_deaths": [
+                9
+            ],
+            "total_kills": [
                 9
             ],
             "wins": [
@@ -50583,7 +51882,19 @@ export default {
             ]
         },
         "v_team_tournament_results_sum_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50596,6 +51907,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50606,7 +51926,19 @@ export default {
             ]
         },
         "v_team_tournament_results_var_pop_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50619,6 +51951,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50629,7 +51970,19 @@ export default {
             ]
         },
         "v_team_tournament_results_var_pop_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50642,6 +51995,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50652,7 +52014,19 @@ export default {
             ]
         },
         "v_team_tournament_results_var_samp_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50665,6 +52039,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50675,7 +52058,19 @@ export default {
             ]
         },
         "v_team_tournament_results_var_samp_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50688,6 +52083,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -50698,7 +52102,19 @@ export default {
             ]
         },
         "v_team_tournament_results_variance_fields": {
+            "head_to_head_match_wins": [
+                7
+            ],
+            "head_to_head_rounds_won": [
+                7
+            ],
             "losses": [
+                7
+            ],
+            "maps_lost": [
+                7
+            ],
+            "maps_won": [
                 7
             ],
             "matches_played": [
@@ -50711,6 +52127,15 @@ export default {
                 7
             ],
             "rounds_won": [
+                7
+            ],
+            "team_kdr": [
+                7
+            ],
+            "total_deaths": [
+                7
+            ],
+            "total_kills": [
                 7
             ],
             "wins": [
@@ -50721,7 +52146,19 @@ export default {
             ]
         },
         "v_team_tournament_results_variance_order_by": {
+            "head_to_head_match_wins": [
+                1405
+            ],
+            "head_to_head_rounds_won": [
+                1405
+            ],
             "losses": [
+                1405
+            ],
+            "maps_lost": [
+                1405
+            ],
+            "maps_won": [
                 1405
             ],
             "matches_played": [
@@ -50734,6 +52171,15 @@ export default {
                 1405
             ],
             "rounds_won": [
+                1405
+            ],
+            "team_kdr": [
+                1405
+            ],
+            "total_deaths": [
+                1405
+            ],
+            "total_kills": [
                 1405
             ],
             "wins": [
@@ -55174,7 +56620,7 @@ export default {
                 2576,
                 {
                     "distinct_on": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "limit": [
@@ -55184,11 +56630,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2592,
+                        2602,
                         "[v_team_stage_results_order_by!]"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
@@ -55196,7 +56642,7 @@ export default {
                 2577,
                 {
                     "distinct_on": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "limit": [
@@ -55206,19 +56652,19 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2592,
+                        2602,
                         "[v_team_stage_results_order_by!]"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
             "v_team_tournament_results": [
-                2610,
+                2628,
                 {
                     "distinct_on": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "limit": [
@@ -55228,19 +56674,19 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2625,
+                        2653,
                         "[v_team_tournament_results_order_by!]"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],
             "v_team_tournament_results_aggregate": [
-                2611,
+                2629,
                 {
                     "distinct_on": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "limit": [
@@ -55250,11 +56696,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2625,
+                        2653,
                         "[v_team_tournament_results_order_by!]"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],
@@ -67339,7 +68785,7 @@ export default {
                 2576,
                 {
                     "distinct_on": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "limit": [
@@ -67349,11 +68795,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2592,
+                        2602,
                         "[v_team_stage_results_order_by!]"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
@@ -67361,7 +68807,7 @@ export default {
                 2577,
                 {
                     "distinct_on": [
-                        2593,
+                        2603,
                         "[v_team_stage_results_select_column!]"
                     ],
                     "limit": [
@@ -67371,11 +68817,11 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2592,
+                        2602,
                         "[v_team_stage_results_order_by!]"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
@@ -67387,19 +68833,19 @@ export default {
                         "Int!"
                     ],
                     "cursor": [
-                        2600,
+                        2618,
                         "[v_team_stage_results_stream_cursor_input]!"
                     ],
                     "where": [
-                        2585
+                        2595
                     ]
                 }
             ],
             "v_team_tournament_results": [
-                2610,
+                2628,
                 {
                     "distinct_on": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "limit": [
@@ -67409,19 +68855,19 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2625,
+                        2653,
                         "[v_team_tournament_results_order_by!]"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],
             "v_team_tournament_results_aggregate": [
-                2611,
+                2629,
                 {
                     "distinct_on": [
-                        2626,
+                        2654,
                         "[v_team_tournament_results_select_column!]"
                     ],
                     "limit": [
@@ -67431,27 +68877,27 @@ export default {
                         9
                     ],
                     "order_by": [
-                        2625,
+                        2653,
                         "[v_team_tournament_results_order_by!]"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],
             "v_team_tournament_results_stream": [
-                2610,
+                2628,
                 {
                     "batch_size": [
                         9,
                         "Int!"
                     ],
                     "cursor": [
-                        2633,
+                        2669,
                         "[v_team_tournament_results_stream_cursor_input]!"
                     ],
                     "where": [
-                        2619
+                        2647
                     ]
                 }
             ],

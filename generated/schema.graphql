@@ -46819,7 +46819,11 @@ input v_pool_maps_updates {
 columns and relationships of "v_team_stage_results"
 """
 type v_team_stage_results {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
@@ -46830,6 +46834,9 @@ type v_team_stage_results {
 
   """An object relationship"""
   team: tournament_teams
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_stage_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -46844,7 +46851,34 @@ type v_team_stage_results_aggregate {
 }
 
 input v_team_stage_results_aggregate_bool_exp {
+  avg: v_team_stage_results_aggregate_bool_exp_avg
+  corr: v_team_stage_results_aggregate_bool_exp_corr
   count: v_team_stage_results_aggregate_bool_exp_count
+  covar_samp: v_team_stage_results_aggregate_bool_exp_covar_samp
+  max: v_team_stage_results_aggregate_bool_exp_max
+  min: v_team_stage_results_aggregate_bool_exp_min
+  stddev_samp: v_team_stage_results_aggregate_bool_exp_stddev_samp
+  sum: v_team_stage_results_aggregate_bool_exp_sum
+  var_samp: v_team_stage_results_aggregate_bool_exp_var_samp
+}
+
+input v_team_stage_results_aggregate_bool_exp_avg {
+  arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_avg_arguments_columns!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_corr {
+  arguments: v_team_stage_results_aggregate_bool_exp_corr_arguments!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_corr_arguments {
+  X: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns!
+  Y: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns!
 }
 
 input v_team_stage_results_aggregate_bool_exp_count {
@@ -46852,6 +46886,53 @@ input v_team_stage_results_aggregate_bool_exp_count {
   distinct: Boolean
   filter: v_team_stage_results_bool_exp
   predicate: Int_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_covar_samp {
+  arguments: v_team_stage_results_aggregate_bool_exp_covar_samp_arguments!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_covar_samp_arguments {
+  X: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns!
+  Y: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns!
+}
+
+input v_team_stage_results_aggregate_bool_exp_max {
+  arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_max_arguments_columns!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_min {
+  arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_min_arguments_columns!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_stddev_samp {
+  arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_sum {
+  arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_sum_arguments_columns!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_stage_results_aggregate_bool_exp_var_samp {
+  arguments: v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns!
+  distinct: Boolean
+  filter: v_team_stage_results_bool_exp
+  predicate: float8_comparison_exp!
 }
 
 """
@@ -46897,11 +46978,18 @@ input v_team_stage_results_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type v_team_stage_results_avg_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -46909,11 +46997,18 @@ type v_team_stage_results_avg_fields {
 order by avg() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_avg_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
@@ -46924,13 +47019,20 @@ input v_team_stage_results_bool_exp {
   _and: [v_team_stage_results_bool_exp!]
   _not: v_team_stage_results_bool_exp
   _or: [v_team_stage_results_bool_exp!]
+  head_to_head_match_wins: Int_comparison_exp
+  head_to_head_rounds_won: Int_comparison_exp
   losses: Int_comparison_exp
+  maps_lost: Int_comparison_exp
+  maps_won: Int_comparison_exp
   matches_played: Int_comparison_exp
   matches_remaining: Int_comparison_exp
   rounds_lost: Int_comparison_exp
   rounds_won: Int_comparison_exp
   stage: tournament_stages_bool_exp
   team: tournament_teams_bool_exp
+  team_kdr: float8_comparison_exp
+  total_deaths: Int_comparison_exp
+  total_kills: Int_comparison_exp
   tournament_stage_id: uuid_comparison_exp
   tournament_team_id: uuid_comparison_exp
   wins: Int_comparison_exp
@@ -46940,13 +47042,20 @@ input v_team_stage_results_bool_exp {
 input type for inserting data into table "v_team_stage_results"
 """
 input v_team_stage_results_insert_input {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
   stage: tournament_stages_obj_rel_insert_input
   team: tournament_teams_obj_rel_insert_input
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_stage_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -46954,11 +47063,18 @@ input v_team_stage_results_insert_input {
 
 """aggregate max on columns"""
 type v_team_stage_results_max_fields {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_stage_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -46968,11 +47084,18 @@ type v_team_stage_results_max_fields {
 order by max() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_max_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   tournament_stage_id: order_by
   tournament_team_id: order_by
   wins: order_by
@@ -46980,11 +47103,18 @@ input v_team_stage_results_max_order_by {
 
 """aggregate min on columns"""
 type v_team_stage_results_min_fields {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_stage_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -46994,11 +47124,18 @@ type v_team_stage_results_min_fields {
 order by min() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_min_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   tournament_stage_id: order_by
   tournament_team_id: order_by
   wins: order_by
@@ -47013,13 +47150,20 @@ input v_team_stage_results_obj_rel_insert_input {
 
 """Ordering options when selecting data from "v_team_stage_results"."""
 input v_team_stage_results_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
   stage: tournament_stages_order_by
   team: tournament_teams_order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   tournament_stage_id: order_by
   tournament_team_id: order_by
   wins: order_by
@@ -47030,7 +47174,19 @@ select columns of table "v_team_stage_results"
 """
 enum v_team_stage_results_select_column {
   """column name"""
+  head_to_head_match_wins
+
+  """column name"""
+  head_to_head_rounds_won
+
+  """column name"""
   losses
+
+  """column name"""
+  maps_lost
+
+  """column name"""
+  maps_won
 
   """column name"""
   matches_played
@@ -47045,6 +47201,15 @@ enum v_team_stage_results_select_column {
   rounds_won
 
   """column name"""
+  team_kdr
+
+  """column name"""
+  total_deaths
+
+  """column name"""
+  total_kills
+
+  """column name"""
   tournament_stage_id
 
   """column name"""
@@ -47054,13 +47219,84 @@ enum v_team_stage_results_select_column {
   wins
 }
 
+"""
+select "v_team_stage_results_aggregate_bool_exp_avg_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_avg_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_corr_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_corr_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_covar_samp_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_max_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_max_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_min_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_min_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_stddev_samp_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_sum_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_sum_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
 """aggregate stddev on columns"""
 type v_team_stage_results_stddev_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47068,21 +47304,35 @@ type v_team_stage_results_stddev_fields {
 order by stddev() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_stddev_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type v_team_stage_results_stddev_pop_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47090,21 +47340,35 @@ type v_team_stage_results_stddev_pop_fields {
 order by stddev_pop() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_stddev_pop_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type v_team_stage_results_stddev_samp_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47112,11 +47376,18 @@ type v_team_stage_results_stddev_samp_fields {
 order by stddev_samp() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_stddev_samp_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
@@ -47133,11 +47404,18 @@ input v_team_stage_results_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input v_team_stage_results_stream_cursor_value_input {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_stage_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -47145,11 +47423,18 @@ input v_team_stage_results_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type v_team_stage_results_sum_fields {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   wins: Int
 }
 
@@ -47157,21 +47442,35 @@ type v_team_stage_results_sum_fields {
 order by sum() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_sum_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate var_pop on columns"""
 type v_team_stage_results_var_pop_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47179,21 +47478,35 @@ type v_team_stage_results_var_pop_fields {
 order by var_pop() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_var_pop_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate var_samp on columns"""
 type v_team_stage_results_var_samp_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47201,21 +47514,35 @@ type v_team_stage_results_var_samp_fields {
 order by var_samp() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_var_samp_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate variance on columns"""
 type v_team_stage_results_variance_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47223,11 +47550,18 @@ type v_team_stage_results_variance_fields {
 order by variance() on columns of table "v_team_stage_results"
 """
 input v_team_stage_results_variance_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
@@ -47235,7 +47569,11 @@ input v_team_stage_results_variance_order_by {
 columns and relationships of "v_team_tournament_results"
 """
 type v_team_tournament_results {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
@@ -47243,6 +47581,9 @@ type v_team_tournament_results {
 
   """An object relationship"""
   team: tournament_teams
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
 
   """An object relationship"""
   tournament: tournaments
@@ -47260,7 +47601,34 @@ type v_team_tournament_results_aggregate {
 }
 
 input v_team_tournament_results_aggregate_bool_exp {
+  avg: v_team_tournament_results_aggregate_bool_exp_avg
+  corr: v_team_tournament_results_aggregate_bool_exp_corr
   count: v_team_tournament_results_aggregate_bool_exp_count
+  covar_samp: v_team_tournament_results_aggregate_bool_exp_covar_samp
+  max: v_team_tournament_results_aggregate_bool_exp_max
+  min: v_team_tournament_results_aggregate_bool_exp_min
+  stddev_samp: v_team_tournament_results_aggregate_bool_exp_stddev_samp
+  sum: v_team_tournament_results_aggregate_bool_exp_sum
+  var_samp: v_team_tournament_results_aggregate_bool_exp_var_samp
+}
+
+input v_team_tournament_results_aggregate_bool_exp_avg {
+  arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_corr {
+  arguments: v_team_tournament_results_aggregate_bool_exp_corr_arguments!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_corr_arguments {
+  X: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns!
+  Y: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns!
 }
 
 input v_team_tournament_results_aggregate_bool_exp_count {
@@ -47268,6 +47636,53 @@ input v_team_tournament_results_aggregate_bool_exp_count {
   distinct: Boolean
   filter: v_team_tournament_results_bool_exp
   predicate: Int_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_covar_samp {
+  arguments: v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments {
+  X: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns!
+  Y: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_max {
+  arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_max_arguments_columns!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_min {
+  arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_min_arguments_columns!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_stddev_samp {
+  arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_sum {
+  arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_team_tournament_results_aggregate_bool_exp_var_samp {
+  arguments: v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns!
+  distinct: Boolean
+  filter: v_team_tournament_results_bool_exp
+  predicate: float8_comparison_exp!
 }
 
 """
@@ -47313,11 +47728,18 @@ input v_team_tournament_results_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type v_team_tournament_results_avg_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47325,11 +47747,18 @@ type v_team_tournament_results_avg_fields {
 order by avg() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_avg_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
@@ -47340,12 +47769,19 @@ input v_team_tournament_results_bool_exp {
   _and: [v_team_tournament_results_bool_exp!]
   _not: v_team_tournament_results_bool_exp
   _or: [v_team_tournament_results_bool_exp!]
+  head_to_head_match_wins: Int_comparison_exp
+  head_to_head_rounds_won: Int_comparison_exp
   losses: Int_comparison_exp
+  maps_lost: Int_comparison_exp
+  maps_won: Int_comparison_exp
   matches_played: Int_comparison_exp
   matches_remaining: Int_comparison_exp
   rounds_lost: Int_comparison_exp
   rounds_won: Int_comparison_exp
   team: tournament_teams_bool_exp
+  team_kdr: float8_comparison_exp
+  total_deaths: Int_comparison_exp
+  total_kills: Int_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
   tournament_team_id: uuid_comparison_exp
@@ -47356,12 +47792,19 @@ input v_team_tournament_results_bool_exp {
 input type for inserting data into table "v_team_tournament_results"
 """
 input v_team_tournament_results_insert_input {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
   team: tournament_teams_obj_rel_insert_input
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
   tournament_team_id: uuid
@@ -47370,11 +47813,18 @@ input v_team_tournament_results_insert_input {
 
 """aggregate max on columns"""
 type v_team_tournament_results_max_fields {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -47384,11 +47834,18 @@ type v_team_tournament_results_max_fields {
 order by max() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_max_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   tournament_id: order_by
   tournament_team_id: order_by
   wins: order_by
@@ -47396,11 +47853,18 @@ input v_team_tournament_results_max_order_by {
 
 """aggregate min on columns"""
 type v_team_tournament_results_min_fields {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -47410,11 +47874,18 @@ type v_team_tournament_results_min_fields {
 order by min() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_min_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   tournament_id: order_by
   tournament_team_id: order_by
   wins: order_by
@@ -47422,12 +47893,19 @@ input v_team_tournament_results_min_order_by {
 
 """Ordering options when selecting data from "v_team_tournament_results"."""
 input v_team_tournament_results_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
   team: tournament_teams_order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
   tournament_team_id: order_by
@@ -47439,7 +47917,19 @@ select columns of table "v_team_tournament_results"
 """
 enum v_team_tournament_results_select_column {
   """column name"""
+  head_to_head_match_wins
+
+  """column name"""
+  head_to_head_rounds_won
+
+  """column name"""
   losses
+
+  """column name"""
+  maps_lost
+
+  """column name"""
+  maps_won
 
   """column name"""
   matches_played
@@ -47454,6 +47944,15 @@ enum v_team_tournament_results_select_column {
   rounds_won
 
   """column name"""
+  team_kdr
+
+  """column name"""
+  total_deaths
+
+  """column name"""
+  total_kills
+
+  """column name"""
   tournament_id
 
   """column name"""
@@ -47463,13 +47962,84 @@ enum v_team_tournament_results_select_column {
   wins
 }
 
+"""
+select "v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_avg_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_corr_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_covar_samp_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_max_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_max_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_min_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_min_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_stddev_samp_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_sum_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
+"""
+select "v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_team_tournament_results"
+"""
+enum v_team_tournament_results_select_column_v_team_tournament_results_aggregate_bool_exp_var_samp_arguments_columns {
+  """column name"""
+  team_kdr
+}
+
 """aggregate stddev on columns"""
 type v_team_tournament_results_stddev_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47477,21 +48047,35 @@ type v_team_tournament_results_stddev_fields {
 order by stddev() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_stddev_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type v_team_tournament_results_stddev_pop_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47499,21 +48083,35 @@ type v_team_tournament_results_stddev_pop_fields {
 order by stddev_pop() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_stddev_pop_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type v_team_tournament_results_stddev_samp_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47521,11 +48119,18 @@ type v_team_tournament_results_stddev_samp_fields {
 order by stddev_samp() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_stddev_samp_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
@@ -47542,11 +48147,18 @@ input v_team_tournament_results_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input v_team_tournament_results_stream_cursor_value_input {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   tournament_id: uuid
   tournament_team_id: uuid
   wins: Int
@@ -47554,11 +48166,18 @@ input v_team_tournament_results_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type v_team_tournament_results_sum_fields {
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
   losses: Int
+  maps_lost: Int
+  maps_won: Int
   matches_played: Int
   matches_remaining: Int
   rounds_lost: Int
   rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
   wins: Int
 }
 
@@ -47566,21 +48185,35 @@ type v_team_tournament_results_sum_fields {
 order by sum() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_sum_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate var_pop on columns"""
 type v_team_tournament_results_var_pop_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47588,21 +48221,35 @@ type v_team_tournament_results_var_pop_fields {
 order by var_pop() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_var_pop_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate var_samp on columns"""
 type v_team_tournament_results_var_samp_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47610,21 +48257,35 @@ type v_team_tournament_results_var_samp_fields {
 order by var_samp() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_var_samp_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
 
 """aggregate variance on columns"""
 type v_team_tournament_results_variance_fields {
+  head_to_head_match_wins: Float
+  head_to_head_rounds_won: Float
   losses: Float
+  maps_lost: Float
+  maps_won: Float
   matches_played: Float
   matches_remaining: Float
   rounds_lost: Float
   rounds_won: Float
+  team_kdr: Float
+  total_deaths: Float
+  total_kills: Float
   wins: Float
 }
 
@@ -47632,10 +48293,17 @@ type v_team_tournament_results_variance_fields {
 order by variance() on columns of table "v_team_tournament_results"
 """
 input v_team_tournament_results_variance_order_by {
+  head_to_head_match_wins: order_by
+  head_to_head_rounds_won: order_by
   losses: order_by
+  maps_lost: order_by
+  maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
   rounds_lost: order_by
   rounds_won: order_by
+  team_kdr: order_by
+  total_deaths: order_by
+  total_kills: order_by
   wins: order_by
 }
