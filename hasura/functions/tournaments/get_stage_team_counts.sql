@@ -1,4 +1,3 @@
--- Helper function to get stage max teams and effective teams for a given stage
 CREATE OR REPLACE FUNCTION get_stage_team_counts(
     _tournament_id uuid,
     _stage_order int,

@@ -1,4 +1,3 @@
--- Function to schedule next round RoundRobin matches when both teams are ready
 -- Called when a RoundRobin match finishes to check if next round matches can be scheduled
 CREATE OR REPLACE FUNCTION public.schedule_next_round_robin_matches(_finished_bracket_id uuid)
 RETURNS void

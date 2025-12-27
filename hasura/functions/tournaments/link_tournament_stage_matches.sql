@@ -1,5 +1,4 @@
--- Function to link matches within a single tournament stage
--- This function connects matches in consecutive rounds within the same stage
+-- Connects matches in consecutive rounds within the same stage
 -- Winners of round N advance to round N+1 in the same stage
 -- Note: RoundRobin stages don't have parent brackets (all matches are independent)
 CREATE OR REPLACE FUNCTION link_tournament_stage_matches(_stage_id uuid)

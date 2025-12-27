@@ -1,4 +1,3 @@
--- View to calculate team statistics per tournament stage
 -- Tracks: matches played, matches remaining, wins, losses, rounds won, rounds lost
 CREATE OR REPLACE VIEW public.v_team_stage_results AS
 WITH team_brackets AS (

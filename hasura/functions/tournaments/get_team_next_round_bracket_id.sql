@@ -1,4 +1,3 @@
--- Helper function to get a team's next round bracket ID in a RoundRobin stage
 CREATE OR REPLACE FUNCTION public.get_team_next_round_bracket_id(
     _team_id uuid,
     _stage_id uuid,

@@ -1,4 +1,3 @@
--- Reusable function to create round robin matches
 -- Can work with either team IDs (for decider matches) or seeds (for initial tournament setup)
 CREATE OR REPLACE FUNCTION public.create_round_robin_matches(
     _stage_id uuid,

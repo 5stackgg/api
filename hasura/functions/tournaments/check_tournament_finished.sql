@@ -6,9 +6,6 @@ DECLARE
     total_brackets int;
     unfinished_brackets int;
 BEGIN
-    -- Note: RoundRobin stage advancement is handled in update_tournament_bracket
-    -- when individual matches finish, so we don't need to handle it here
-
     select count(*) into total_brackets
     from tournament_brackets tb
     inner join tournament_stages ts on ts.id = tb.tournament_stage_id

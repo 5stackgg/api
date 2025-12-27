@@ -1,4 +1,3 @@
--- Helper function to check if an opponent has finished their previous round match
 CREATE OR REPLACE FUNCTION public.opponent_finished_previous_round(
     _opponent_team_id uuid,
     _stage_id uuid,

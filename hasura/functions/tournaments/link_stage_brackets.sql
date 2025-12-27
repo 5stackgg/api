@@ -1,5 +1,4 @@
--- Function to link brackets between two consecutive tournament stages
--- Note: RoundRobin stages advance teams based on standings, not bracket results
+-- RoundRobin stages advance teams based on standings, not bracket results
 CREATE OR REPLACE FUNCTION link_stage_brackets(
     current_stage_id uuid, 
     next_stage_id uuid, 
