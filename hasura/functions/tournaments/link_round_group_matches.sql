@@ -1,5 +1,4 @@
--- Function to link matches within a specific round and group
--- This function handles the group-based pairing logic for a single round and group
+-- Handles group-based pairing logic for a single round and group
 CREATE OR REPLACE FUNCTION link_round_group_matches(
     _stage_id uuid,
     _current_round int,

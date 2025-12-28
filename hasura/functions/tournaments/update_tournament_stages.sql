@@ -46,6 +46,89 @@ BEGIN
         next_stage_max_teams := COALESCE((select max_teams from tournament_stages ts2 where ts2.tournament_id = _tournament_id and ts2."order" = stage."order" + 1), 1);
         teams_per_group := CEIL(effective_teams::float / stage.groups);
         
+        IF stage_type = 'RoundRobin' THEN
+            RAISE NOTICE 'Stage % : RoundRobin detected, teams_per_group=%, groups=%', 
+                stage."order", teams_per_group, stage.groups;
+            
+            -- For round robin, we generate all pairings
+            -- Each group needs (teams_per_group * (teams_per_group - 1)) / 2 matches total
+            -- We organize them into rounds for scheduling
+            -- For N teams: N-1 rounds if N is even, N rounds if N is odd
+            -- Each round has floor(N/2) matches
+            
+            DECLARE
+                g int;
+                team_seeds int[];
+                total_matches_per_group int;
+                matches_per_round int;
+                round_count int;
+                match_counter int;
+                i int;
+                j int;
+                round_num int;
+                team_1_seed int;
+                team_2_seed int;
+            BEGIN
+                total_matches_per_group := (teams_per_group * (teams_per_group - 1)) / 2;
+                
+                -- Calculate rounds: N-1 rounds if even, N rounds if odd (to handle bye if odd)
+                IF teams_per_group % 2 = 0 THEN
+                    round_count := teams_per_group - 1;
+                    matches_per_round := teams_per_group / 2;
+                ELSE
+                    round_count := teams_per_group;
+                    matches_per_round := (teams_per_group - 1) / 2;
+                END IF;
+                
+                RAISE NOTICE '  => RoundRobin: total_matches_per_group=%, round_count=%, matches_per_round=%', 
+                    total_matches_per_group, round_count, matches_per_round;
+                
+                -- Generate round robin matches for each group
+                FOR g IN 1..stage.groups LOOP
+                    RAISE NOTICE '  => Generating RoundRobin matches for group %', g;
+                    
+                    -- Calculate which seeds belong to this group
+                    DECLARE
+                        group_start_seed int;
+                        group_end_seed int;
+                        team_seeds int[];
+                    BEGIN
+                        group_start_seed := (g - 1) * teams_per_group + 1;
+                        group_end_seed := g * teams_per_group;
+                        
+                        -- Build array of seeds for this group
+                        -- Teams are distributed: group 1 gets seeds 1-N, group 2 gets seeds N+1-2N, etc.
+                        team_seeds := ARRAY[]::int[];
+                        FOR i IN group_start_seed..LEAST(group_end_seed, effective_teams) LOOP
+                            team_seeds := team_seeds || i;
+                        END LOOP;
+                        
+                        IF array_length(team_seeds, 1) < 2 THEN
+                            RAISE NOTICE '  => Skipping group %: only % teams (need at least 2)', 
+                                g, COALESCE(array_length(team_seeds, 1), 0);
+                            CONTINUE;
+                        END IF;
+                        
+                        RAISE NOTICE '  => Group %: % teams (seeds % to %)', 
+                            g, array_length(team_seeds, 1), group_start_seed, LEAST(group_end_seed, effective_teams);
+                        
+                        -- Use reusable function to create all round robin matches with seeds
+                        -- Teams will be assigned later in seed_tournament
+                        PERFORM create_round_robin_matches(
+                            stage.id,
+                            g,
+                            1,  -- Start at round 1
+                            NULL,  -- team_ids
+                            team_seeds,  -- team_seeds
+                            false  -- Don't schedule yet, teams not assigned
+                        );
+                    END;
+                END LOOP;
+            END;
+            
+            CONTINUE;
+        END IF;
+        
         -- For double elimination, calculate rounds based on teams needed
         -- Standard double elim produces 2 teams (WB champion + LB champion)
         -- If we need more than 2, we stop earlier to get more teams from earlier rounds

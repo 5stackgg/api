@@ -124,7 +124,19 @@ BEGIN
             END;
         END IF;
         
-        PERFORM update_tournament_stages(NEW.tournament_id);
+        -- Check if we're creating a decider stage (skip regeneration in that case)
+        BEGIN
+            PERFORM 1 FROM pg_temp.creating_decider_stage WHERE stage_id = NEW.id;
+            IF FOUND THEN
+                RAISE NOTICE 'Skipping update_tournament_stages for decider stage %', NEW.id;
+            ELSE
+                PERFORM update_tournament_stages(NEW.tournament_id);
+            END IF;
+        EXCEPTION
+            WHEN undefined_table THEN
+                -- Temp table doesn't exist, proceed normally
+                PERFORM update_tournament_stages(NEW.tournament_id);
+        END;
     EXCEPTION
         WHEN OTHERS THEN
             DROP TABLE IF EXISTS pg_temp.taiu_running_flag;

@@ -1,6 +1,6 @@
--- Function to link matches within a single tournament stage
--- This function connects matches in consecutive rounds within the same stage
+-- Connects matches in consecutive rounds within the same stage
 -- Winners of round N advance to round N+1 in the same stage
+-- Note: RoundRobin stages don't have parent brackets (all matches are independent)
 CREATE OR REPLACE FUNCTION link_tournament_stage_matches(_stage_id uuid)
 RETURNS void AS $$
 DECLARE
@@ -8,7 +8,16 @@ DECLARE
     group_record record;
     path_record record;
     max_round int;
+    stage_type text;
 BEGIN
+    SELECT ts.type INTO stage_type
+    FROM tournament_stages ts
+    WHERE ts.id = _stage_id;
+    
+    IF stage_type = 'RoundRobin' THEN
+        RETURN;
+    END IF;
+    
     -- For each path within the stage, link rounds within that path
     FOR path_record IN
         SELECT DISTINCT COALESCE(path, 'WB') AS path

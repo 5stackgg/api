@@ -19,6 +19,15 @@ array_relationships:
         table:
           name: tournament_organizers
           schema: public
+  - name: results
+    using:
+      manual_configuration:
+        column_mapping:
+          id: tournament_id
+        insertion_order: null
+        remote_table:
+          name: v_team_tournament_results
+          schema: public
   - name: rosters
     using:
       foreign_key_constraint_on:
