@@ -1969,7 +1969,7 @@ export interface e_tournament_stage_types_aggregate_fields {
 /** unique or primary key constraints on table "e_tournament_stage_types" */
 export type e_tournament_stage_types_constraint = 'e_tournament_stage_types_pkey'
 
-export type e_tournament_stage_types_enum = 'DoubleElimination' | 'RoundRobin' | 'SingleElimination'
+export type e_tournament_stage_types_enum = 'DoubleElimination' | 'RoundRobin' | 'SingleElimination' | 'Swiss'
 
 
 /** aggregate max on columns */
@@ -49208,7 +49208,8 @@ export const enumETournamentStageTypesConstraint = {
 export const enumETournamentStageTypesEnum = {
    DoubleElimination: 'DoubleElimination' as const,
    RoundRobin: 'RoundRobin' as const,
-   SingleElimination: 'SingleElimination' as const
+   SingleElimination: 'SingleElimination' as const,
+   Swiss: 'Swiss' as const
 }
 
 export const enumETournamentStageTypesSelectColumn = {

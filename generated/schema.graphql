@@ -5365,6 +5365,9 @@ enum e_tournament_stage_types_enum {
 
   """Single Elimination"""
   SingleElimination
+
+  """Swiss"""
+  Swiss
 }
 
 """

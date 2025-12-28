@@ -60,10 +60,10 @@ BEGIN
             IF next_stage_id IS NOT NULL THEN
                 RAISE NOTICE 'Advancing % teams to next stage', array_length(advanced_teams, 1);
                 
-                -- If stage is complete, seed the next stage
+                -- If stage is complete, advance teams to next stage (similar to RoundRobin)
                 IF stage_complete THEN
-                    RAISE NOTICE 'Swiss stage complete, seeding next stage';
-                    PERFORM seed_stage(next_stage_id);
+                    RAISE NOTICE 'Swiss stage complete, advancing teams to next stage';
+                    PERFORM advance_swiss_teams_to_next_stage(_stage_id);
                 END IF;
             ELSE
                 RAISE NOTICE 'No next stage found - teams have won the tournament';

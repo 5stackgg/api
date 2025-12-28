@@ -31,12 +31,14 @@ BEGIN
     RAISE NOTICE '--- Processing Stage % (groups: %, type: %) ---', stage."order", stage.groups, stage.type;
     
     IF stage.type = 'Swiss' THEN
-        -- Process first round brackets which have seed positions set
+        -- For Swiss, assign teams to first round (round 1, pool 0-0)
+        -- The brackets are already created by generate_swiss_bracket, just need to assign teams by seed
         FOR bracket IN 
             SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
             FROM tournament_brackets tb
             WHERE tb.tournament_stage_id = stage.id
                 AND tb.round = 1
+                AND tb."group" = 0  -- 0-0 pool
                 AND COALESCE(tb.path, 'WB') = 'WB'
                 AND (tb.team_1_seed IS NOT NULL OR tb.team_2_seed IS NOT NULL)
             ORDER BY tb.match_number ASC
@@ -81,7 +83,7 @@ BEGIN
                 bye = false
             WHERE id = bracket.id;
             
-            RAISE NOTICE '  Swiss Round 1 Match %: Seed % (team %) vs Seed % (team %)', 
+            RAISE NOTICE '  Swiss Round 1 Pool 0-0 Match %: Seed % (team %) vs Seed % (team %)', 
                 bracket.match_number,
                 team_1_seed_val, team_1_id,
                 team_2_seed_val, team_2_id;
