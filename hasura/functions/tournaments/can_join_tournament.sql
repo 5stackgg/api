@@ -4,13 +4,10 @@ CREATE OR REPLACE FUNCTION public.can_join_tournament(tournament public.tourname
 DECLARE
     on_roster boolean;
     is_team_admin boolean;
+    is_organizer boolean;
 BEGIN
     -- Check if tournament is cancelled or registration is not open
     IF tournament.status IN ('Cancelled', 'CancelledMinTeams') THEN
-        RETURN false;
-    END IF;
-
-    IF tournament.status != 'RegistrationOpen' THEN
         RETURN false;
     END IF;
 
@@ -24,6 +21,16 @@ BEGIN
     ) INTO on_roster;
 
     if(on_roster) THEN
+        RETURN false;
+    END IF;
+
+    is_organizer = hasura_session ->> 'x-hasura-role' = 'administrator' OR hasura_session ->> 'x-hasura-role' = 'tournament_organizer' ;
+     
+    IF is_organizer AND tournament.status = 'Setup' THEN
+        RETURN true;
+    END IF;
+    
+    IF tournament.status != 'RegistrationOpen' THEN
         RETURN false;
     END IF;
     
