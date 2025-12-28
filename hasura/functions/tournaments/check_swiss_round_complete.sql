@@ -1,0 +1,26 @@
+CREATE OR REPLACE FUNCTION public.check_swiss_round_complete(_stage_id uuid, _round int)
+RETURNS boolean
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    unfinished_count int;
+    total_matches int;
+BEGIN
+    -- Count unfinished matches in the specified round
+    SELECT COUNT(*) INTO unfinished_count
+    FROM tournament_brackets tb
+    WHERE tb.tournament_stage_id = _stage_id
+      AND tb.round = _round
+      AND tb.finished = false;
+    
+    -- Count total matches in the round
+    SELECT COUNT(*) INTO total_matches
+    FROM tournament_brackets tb
+    WHERE tb.tournament_stage_id = _stage_id
+      AND tb.round = _round;
+    
+    -- Round is complete if all matches are finished (or no matches exist)
+    RETURN unfinished_count = 0 AND total_matches > 0;
+END;
+$$;
+

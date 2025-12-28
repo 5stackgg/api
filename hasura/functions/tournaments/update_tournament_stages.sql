@@ -129,6 +129,69 @@ BEGIN
             CONTINUE;
         END IF;
         
+        -- For Swiss tournaments, only create first round (subsequent rounds created dynamically)
+        IF stage_type = 'Swiss' THEN
+            RAISE NOTICE 'Stage % : Swiss detected, creating first round only', stage."order";
+            
+            -- First round requires even number (all teams start at 0-0, same pool)
+            IF effective_teams % 2 != 0 THEN
+                RAISE EXCEPTION 'Swiss tournament first round must have an even number of teams. Current: %', effective_teams;
+            END IF;
+            
+            -- Note: Odd numbers in later rounds are handled by pairing with adjacent pools
+            
+            -- Generate bracket order for first round pairing
+            bracket_order := generate_bracket_order(effective_teams);
+            RAISE NOTICE 'Generated bracket order for Swiss first round: %', bracket_order;
+            
+            -- Create first round matches using seed-based pairing
+            DECLARE
+                matches_in_round int;
+                match_idx int;
+                group_num int;
+                swiss_bracket_idx int;
+            BEGIN
+                -- Swiss uses single group (groups = 1)
+                group_num := 1;
+                matches_in_round := effective_teams / 2;
+                swiss_bracket_idx := 0;
+                
+                FOR match_idx IN 1..matches_in_round LOOP
+                    -- Get seed positions from bracket order
+                    IF swiss_bracket_idx * 2 + 1 <= array_length(bracket_order, 1) THEN
+                        seed_1 := bracket_order[swiss_bracket_idx * 2 + 1];
+                    ELSE
+                        seed_1 := NULL;
+                    END IF;
+                    
+                    IF swiss_bracket_idx * 2 + 2 <= array_length(bracket_order, 1) THEN
+                        seed_2 := bracket_order[swiss_bracket_idx * 2 + 2];
+                    ELSE
+                        seed_2 := NULL;
+                    END IF;
+                    
+                    -- Set to NULL if seed position is beyond effective_teams
+                    IF seed_1 IS NOT NULL AND seed_1 > effective_teams THEN
+                        seed_1 := NULL;
+                    END IF;
+                    IF seed_2 IS NOT NULL AND seed_2 > effective_teams THEN
+                        seed_2 := NULL;
+                    END IF;
+                    
+                    INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", team_1_seed, team_2_seed, path)
+                    VALUES (1, stage.id, match_idx, group_num, seed_1, seed_2, 'WB')
+                    RETURNING id INTO new_id;
+                    
+                    RAISE NOTICE '      => Created Swiss round 1 match %: id=%, seeds: % vs %', 
+                        match_idx, new_id, seed_1, seed_2;
+                    
+                    swiss_bracket_idx := swiss_bracket_idx + 1;
+                END LOOP;
+            END;
+            
+            CONTINUE;
+        END IF;
+        
         -- For double elimination, calculate rounds based on teams needed
         -- Standard double elim produces 2 teams (WB champion + LB champion)
         -- If we need more than 2, we stop earlier to get more teams from earlier rounds

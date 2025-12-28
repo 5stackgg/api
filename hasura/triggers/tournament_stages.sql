@@ -27,8 +27,18 @@ BEGIN
         
         _min_teams := NEW.min_teams;
 
+        -- Validate Swiss tournament requirements
+        IF NEW.type = 'Swiss' THEN
+            -- Swiss tournaments use single group
+            IF NEW.groups IS NOT NULL AND NEW.groups != 1 THEN
+                RAISE EXCEPTION 'Swiss tournaments must use a single group (groups = 1). Current: %', 
+                    NEW.groups USING ERRCODE = '22000';
+            END IF;
+            -- Note: Odd numbers are handled by pairing with adjacent pools
+        END IF;
+
         -- Validate first stage minimum teams (must be at least 4 * number of groups)
-        IF current_order = 1 AND NEW.groups IS NOT NULL AND NEW.groups > 0 THEN
+        IF current_order = 1 AND NEW.groups IS NOT NULL AND NEW.groups > 0 AND NEW.type != 'Swiss' THEN
             IF NEW.min_teams < 4 * NEW.groups THEN
                 RAISE EXCEPTION 'First stage must have at least % teams given % groups (minimum 4 teams per group)', 
                     4 * NEW.groups, NEW.groups USING ERRCODE = '22000';
@@ -181,8 +191,18 @@ BEGIN
         END IF;
     END IF;
 
+    -- Validate Swiss tournament requirements
+    IF NEW.type = 'Swiss' THEN
+        -- Swiss tournaments use single group
+        IF NEW.groups IS NOT NULL AND NEW.groups != 1 THEN
+            RAISE EXCEPTION 'Swiss tournaments must use a single group (groups = 1). Current: %', 
+                NEW.groups USING ERRCODE = '22000';
+        END IF;
+        -- Note: Odd numbers are handled by pairing with adjacent pools
+    END IF;
+
     -- Validate first stage minimum teams (must be at least 4 * number of groups)
-    IF NEW."order" = 1 AND NEW.groups IS NOT NULL AND NEW.groups > 0 THEN
+    IF NEW."order" = 1 AND NEW.groups IS NOT NULL AND NEW.groups > 0 AND NEW.type != 'Swiss' THEN
         IF NEW.min_teams < 4 * NEW.groups THEN
             RAISE EXCEPTION 'First stage must have at least % teams given % groups (minimum 4 teams per group)', 
                 4 * NEW.groups, NEW.groups USING ERRCODE = '22000';

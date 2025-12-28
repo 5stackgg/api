@@ -29,8 +29,64 @@ BEGIN
     teams_assigned_count := 0;
 
     RAISE NOTICE '--- Processing Stage % (groups: %, type: %) ---', stage."order", stage.groups, stage.type;
-        
-    IF stage.type = 'RoundRobin' THEN
+    
+    IF stage.type = 'Swiss' THEN
+        -- Process first round brackets which have seed positions set
+        FOR bracket IN 
+            SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
+            FROM tournament_brackets tb
+            WHERE tb.tournament_stage_id = stage.id
+                AND tb.round = 1
+                AND COALESCE(tb.path, 'WB') = 'WB'
+                AND (tb.team_1_seed IS NOT NULL OR tb.team_2_seed IS NOT NULL)
+            ORDER BY tb.match_number ASC
+        LOOP
+            team_1_id := NULL;
+            team_2_id := NULL;
+            team_1_seed_val := bracket.team_1_seed;
+            team_2_seed_val := bracket.team_2_seed;
+            
+            -- Find team with matching seed for position 1
+            IF team_1_seed_val IS NOT NULL THEN
+                SELECT id INTO team_1_id
+                FROM tournament_teams
+                WHERE tournament_id = stage.tournament_id 
+                    AND eligible_at IS NOT NULL
+                    AND seed = team_1_seed_val
+                LIMIT 1;
+                
+                IF team_1_id IS NOT NULL THEN
+                    teams_assigned_count := teams_assigned_count + 1;
+                END IF;
+            END IF;
+            
+            -- Find team with matching seed for position 2
+            IF team_2_seed_val IS NOT NULL THEN
+                SELECT id INTO team_2_id
+                FROM tournament_teams
+                WHERE tournament_id = stage.tournament_id 
+                    AND eligible_at IS NOT NULL
+                    AND seed = team_2_seed_val
+                LIMIT 1;
+                
+                IF team_2_id IS NOT NULL THEN
+                    teams_assigned_count := teams_assigned_count + 1;
+                END IF;
+            END IF;
+            
+            -- Update bracket with teams (Swiss should never have byes)
+            UPDATE tournament_brackets 
+            SET tournament_team_id_1 = team_1_id,
+                tournament_team_id_2 = team_2_id,
+                bye = false
+            WHERE id = bracket.id;
+            
+            RAISE NOTICE '  Swiss Round 1 Match %: Seed % (team %) vs Seed % (team %)', 
+                bracket.match_number,
+                team_1_seed_val, team_1_id,
+                team_2_seed_val, team_2_id;
+        END LOOP;
+    ELSIF stage.type = 'RoundRobin' THEN
         -- Process all RoundRobin brackets which have seed positions set
         FOR bracket IN 
             SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
@@ -100,7 +156,7 @@ BEGIN
             team_1_seed_val := bracket.team_1_seed;
             team_2_seed_val := bracket.team_2_seed;
             
-            IF previous_stage.id IS NOT NULL AND previous_stage.type = 'RoundRobin' THEN
+            IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
                 IF team_1_seed_val IS NOT NULL THEN
                     SELECT tournament_team_id INTO team_1_id
                     FROM v_team_stage_results
