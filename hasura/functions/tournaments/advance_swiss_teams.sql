@@ -57,7 +57,7 @@ BEGIN
                 
                 IF stage_complete THEN
                     RAISE NOTICE 'Swiss stage complete, advancing teams to next stage';
-                    PERFORM advance_swiss_teams_to_next_stage(_stage_id);
+                    PERFORM seed_stage(next_stage_id);
                 END IF;
             ELSE
                 RAISE NOTICE 'No next stage found - teams have won the tournament';
