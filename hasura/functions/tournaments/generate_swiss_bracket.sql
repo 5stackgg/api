@@ -141,65 +141,26 @@ BEGIN
                     binomial_coefficient := public.binomial_coefficient(n, k);
                     
                     -- Expected teams = team_count * C(n, k) / 2^n
+                    -- This gives the theoretical expected number of teams in this W/L pool
                     expected_teams_in_pool := _team_count::numeric * binomial_coefficient / POWER(2, n);
                     
-                    -- Adjust for teams that may have advanced (wins_needed wins) or been eliminated (wins_needed losses) in previous rounds
-                    -- Calculate reduction factor based on expected teams that have advanced/eliminated by this round
-                    IF round_num >= wins_needed + 1 THEN
-                        -- Calculate expected number of teams that have advanced or been eliminated by this round
-                        -- Teams advance with wins_needed wins and < wins_needed losses
-                        -- Teams are eliminated with wins_needed losses and < wins_needed wins
-                        teams_advanced_eliminated := 0;
-                        
-                        -- Count teams that advanced (wins_needed wins, 0 to wins_needed-1 losses)
-                        -- For each possible loss count i from 0 to wins_needed-1, calculate expected teams
-                        FOR i IN 0..(wins_needed - 1) LOOP
-                            DECLARE
-                                rounds_for_advance int;
-                                binomial_adv numeric;
-                            BEGIN
-                                rounds_for_advance := wins_needed + i;
-                                IF n >= rounds_for_advance THEN
-                                    -- Teams with wins_needed wins and i losses after rounds_for_advance rounds
-                                    binomial_adv := public.binomial_coefficient(rounds_for_advance, wins_needed);
-                                    teams_advanced_eliminated := teams_advanced_eliminated + 
-                                        (_team_count::numeric * binomial_adv / POWER(2, rounds_for_advance));
-                                END IF;
-                            END;
-                        END LOOP;
-                        
-                        -- Count teams that were eliminated (wins_needed losses, 0 to wins_needed-1 wins)
-                        -- For each possible win count i from 0 to wins_needed-1, calculate expected teams
-                        FOR i IN 0..(wins_needed - 1) LOOP
-                            DECLARE
-                                rounds_for_elim int;
-                                binomial_elim numeric;
-                            BEGIN
-                                rounds_for_elim := wins_needed + i;
-                                IF n >= rounds_for_elim THEN
-                                    -- Teams with i wins and wins_needed losses after rounds_for_elim rounds
-                                    binomial_elim := public.binomial_coefficient(rounds_for_elim, i);
-                                    teams_advanced_eliminated := teams_advanced_eliminated + 
-                                        (_team_count::numeric * binomial_elim / POWER(2, rounds_for_elim));
-                                END IF;
-                            END;
-                        END LOOP;
-                        
-                        -- Calculate reduction factor based on remaining teams
-                        -- Cap the advanced/eliminated count to not exceed total teams
-                        teams_advanced_eliminated := LEAST(teams_advanced_eliminated, _team_count::numeric * 0.95);
-                        total_expected_remaining := _team_count::numeric - teams_advanced_eliminated;
-                        
-                        IF total_expected_remaining > 0 AND _team_count > 0 THEN
-                            -- Scale down expected teams proportionally to remaining teams
-                            reduction_factor := total_expected_remaining / _team_count::numeric;
-                        ELSE
-                            -- Fallback: use conservative estimate based on round progression
-                            -- Each round after wins_needed removes approximately 25% more teams
-                            reduction_factor := GREATEST(0.1, 1.0 - (round_num - wins_needed) * 0.25);
-                        END IF;
-                        
-                        expected_teams_in_pool := expected_teams_in_pool * reduction_factor;
+                    -- For later rounds, we need to account for teams that have already advanced or been eliminated
+                    -- However, the binomial distribution already accounts for the natural distribution
+                    -- We only apply a light adjustment for very late rounds to account for edge cases
+                    -- Note: Round (wins_needed + 2) is the final round, so we don't apply reduction there
+                    IF round_num > wins_needed + 2 THEN
+                        -- For rounds beyond wins_needed + 2, apply a conservative reduction
+                        -- This accounts for the fact that some teams have advanced/eliminated
+                        -- But we use a much lighter touch to avoid over-reduction
+                        DECLARE
+                            rounds_past_threshold int;
+                            light_reduction numeric;
+                        BEGIN
+                            rounds_past_threshold := round_num - (wins_needed + 2);
+                            -- Apply a very light reduction: 5% per round past threshold, max 20%
+                            light_reduction := GREATEST(0.8, 1.0 - (rounds_past_threshold * 0.05));
+                            expected_teams_in_pool := expected_teams_in_pool * light_reduction;
+                        END;
                     END IF;
                     
                     -- Round to nearest integer, but ensure at least 2 for a match
