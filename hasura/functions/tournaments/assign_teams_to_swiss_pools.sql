@@ -22,7 +22,6 @@ BEGIN
     
     used_teams := ARRAY[]::uuid[];
     
-    -- Get all pools for this round, ordered by wins DESC, losses ASC
     FOR pool_record IN 
         SELECT * FROM get_swiss_team_pools(_stage_id, used_teams)
         ORDER BY wins DESC, losses ASC
@@ -60,71 +59,39 @@ BEGIN
                 END IF;
             END IF;
             
-            -- Calculate matches needed
             matches_needed := array_length(teams_to_pair, 1) / 2;
             
-            -- Generate bracket order for pairing
             bracket_order := generate_bracket_order(array_length(teams_to_pair, 1));
             
-            -- Assign teams to brackets
             match_counter := 1;
             FOR i IN 1..matches_needed LOOP
-                -- Get indices from bracket order
                 seed_1_idx := bracket_order[(i - 1) * 2 + 1];
                 seed_2_idx := bracket_order[(i - 1) * 2 + 2];
                 
-                -- Get team IDs
                 team_1_id := teams_to_pair[seed_1_idx];
                 team_2_id := teams_to_pair[seed_2_idx];
                 
-                -- Find or create bracket for this match
                 SELECT id INTO bracket_record
-                FROM tournament_brackets
-                WHERE tournament_stage_id = _stage_id
-                  AND round = _round
-                  AND "group" = pool_group
-                  AND match_number = match_counter
-                LIMIT 1;
+                    FROM tournament_brackets
+                    WHERE tournament_stage_id = _stage_id
+                    AND round = _round
+                    AND "group" = pool_group
+                    AND match_number = match_counter
+                    LIMIT 1;
                 
-                IF bracket_record IS NOT NULL THEN
-                    -- Update existing bracket
-                    UPDATE tournament_brackets
+                IF bracket_record IS NULL THEN
+                    RAISE EXCEPTION 'Bracket record not found for match %', match_counter;
+                END IF;
+
+                UPDATE tournament_brackets
                     SET tournament_team_id_1 = team_1_id,
                         tournament_team_id_2 = team_2_id,
                         bye = false
                     WHERE id = bracket_record.id;
-                ELSE
-                    -- Create new bracket if needed
-                    INSERT INTO tournament_brackets (
-                        round,
-                        tournament_stage_id,
-                        match_number,
-                        "group",
-                        tournament_team_id_1,
-                        tournament_team_id_2,
-                        path
-                    )
-                    VALUES (
-                        _round,
-                        _stage_id,
-                        match_counter,
-                        pool_group,
-                        team_1_id,
-                        team_2_id,
-                        'WB'
-                    );
-                END IF;
-                
+            
                 RAISE NOTICE '    Match %: Team % vs Team %', match_counter, team_1_id, team_2_id;
                 match_counter := match_counter + 1;
             END LOOP;
-            
-            -- Remove unused brackets for this pool
-            DELETE FROM tournament_brackets
-            WHERE tournament_stage_id = _stage_id
-              AND round = _round
-              AND "group" = pool_group
-              AND match_number >= match_counter;
         END;
     END LOOP;
     
