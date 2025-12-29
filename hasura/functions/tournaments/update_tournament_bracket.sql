@@ -53,14 +53,11 @@ BEGIN
                 PERFORM advance_round_robin_teams(bracket.tournament_stage_id);
             END IF;
         ELSIF stage_type = 'Swiss' THEN
-            -- Check if current round is complete
             IF check_swiss_round_complete(bracket.tournament_stage_id, bracket.round) THEN
                 RAISE NOTICE 'Swiss round % complete, assigning teams to next round pools', bracket.round;
                 
-                -- Advance/eliminate teams based on 3 wins/losses
                 PERFORM advance_swiss_teams(bracket.tournament_stage_id);
                 
-                -- Assign teams to next round pools (brackets already exist, just need to assign teams)
                 PERFORM assign_teams_to_swiss_pools(bracket.tournament_stage_id, bracket.round + 1);
             END IF;
         END IF;

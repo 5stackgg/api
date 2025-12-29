@@ -31,6 +31,7 @@ BEGIN
     RAISE NOTICE '--- Processing Stage % (groups: %, type: %) ---', stage."order", stage.groups, stage.type;
     
     IF stage.type = 'Swiss' THEN
+        -- TODO - i think this is the same as single / double elimination seeding
         -- For Swiss, assign teams to first round (round 1, pool 0-0)
         -- The brackets are already created by generate_swiss_bracket, just need to assign teams by seed
         FOR bracket IN 

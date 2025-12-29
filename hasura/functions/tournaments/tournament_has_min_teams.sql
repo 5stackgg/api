@@ -1,3 +1,4 @@
+-- TODO 
 CREATE OR REPLACE FUNCTION public.tournament_has_min_teams(tournament public.tournaments)
 RETURNS boolean
 LANGUAGE plpgsql STABLE

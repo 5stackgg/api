@@ -19,6 +19,7 @@ BEGIN
     -- In Swiss, teams play until they reach 3 wins or 3 losses
     -- Maximum rounds would be if teams alternate wins/losses: 6 rounds (0-0 -> 1-0 -> 1-1 -> 2-1 -> 2-2 -> 3-2 or 2-3)
     -- But we'll generate up to 6 rounds to be safe
+    -- TODO - this is bad
     max_rounds := 6;
     
     RAISE NOTICE '=== Generating Swiss Bracket for % teams ===', _team_count;

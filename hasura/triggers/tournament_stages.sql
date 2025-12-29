@@ -1,3 +1,4 @@
+-- TODO - is this duplicated code?
 CREATE OR REPLACE FUNCTION public.taiu_tournament_stages()
 RETURNS TRIGGER
 LANGUAGE plpgsql

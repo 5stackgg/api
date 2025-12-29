@@ -138,7 +138,6 @@ BEGIN
                 RAISE EXCEPTION 'Swiss tournament first round must have an even number of teams. Current: %', effective_teams;
             END IF;
             
-            -- Generate entire Swiss bracket with all rounds and pools
             PERFORM generate_swiss_bracket(stage.id, effective_teams);
             
             CONTINUE;
