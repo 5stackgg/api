@@ -110,7 +110,7 @@ BEGIN
                     BEGIN
                         -- If we have a finished round, calculate from its finish time
                         IF latest_finished_round IS NOT NULL AND latest_finished_round_time IS NOT NULL AND round_record.round > latest_finished_round THEN
-                            round_diff := round_record.round - latest_finished_round - 1;
+                            round_diff := round_record.round - latest_finished_round;
                             round_start_time := latest_finished_round_time + (round_diff * interval '1 hour');
                         ELSE
                             -- No finished rounds yet, use base calculation (round * 1 hour)
