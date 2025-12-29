@@ -29,7 +29,7 @@ BEGIN
     teams_assigned_count := 0;
 
     RAISE NOTICE '--- Processing Stage % (groups: %, type: %) ---', stage."order", stage.groups, stage.type;
-        
+    
     IF stage.type = 'RoundRobin' THEN
         -- Process all RoundRobin brackets which have seed positions set
         FOR bracket IN 
@@ -85,14 +85,20 @@ BEGIN
                 team_1_seed_val, team_1_id,
                 team_2_seed_val, team_2_id;
         END LOOP;
+    ELSIF stage.type = 'Swiss' THEN
+        -- Delegate Swiss seeding to dedicated function
+        PERFORM public.seed_swiss_stage(stage_id);
+        RETURN;
     ELSE
-        -- Process first-round *winners* brackets which have seed positions set (for elimination brackets)
+        -- Process first-round brackets for elimination tournaments
+        -- For elimination: process first-round winners brackets
         FOR bracket IN 
             SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
             FROM tournament_brackets tb
             WHERE tb.tournament_stage_id = stage.id
                 AND tb.round = 1
                 AND COALESCE(tb.path, 'WB') = 'WB'  -- never seed or mark byes on loser brackets
+                AND (tb.team_1_seed IS NOT NULL OR tb.team_2_seed IS NOT NULL)
             ORDER BY tb."group" ASC, tb.match_number ASC
         LOOP
             team_1_id := NULL;
@@ -100,7 +106,9 @@ BEGIN
             team_1_seed_val := bracket.team_1_seed;
             team_2_seed_val := bracket.team_2_seed;
             
-            IF previous_stage.id IS NOT NULL AND previous_stage.type = 'RoundRobin' THEN
+            -- For elimination brackets coming from RoundRobin/Swiss stages, use stage results
+            -- Otherwise, lookup teams by seed
+            IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
                 IF team_1_seed_val IS NOT NULL THEN
                     SELECT tournament_team_id INTO team_1_id
                     FROM v_team_stage_results
@@ -142,11 +150,12 @@ BEGIN
                 teams_assigned_count := teams_assigned_count + 1;
             END IF;
             
-             IF team_2_id IS NOT NULL THEN
+            IF team_2_id IS NOT NULL THEN
                 teams_assigned_count := teams_assigned_count + 1;
             END IF;
 
             -- Update bracket with teams
+            -- Elimination brackets can have byes
             UPDATE tournament_brackets 
             SET tournament_team_id_1 = team_1_id,
                 tournament_team_id_2 = team_2_id,

@@ -129,6 +129,20 @@ BEGIN
             CONTINUE;
         END IF;
         
+        -- For Swiss tournaments, generate entire bracket upfront with all rounds and pools
+        IF stage_type = 'Swiss' THEN
+            RAISE NOTICE 'Stage % : Swiss detected, generating entire bracket', stage."order";
+            
+            -- First round requires even number (all teams start at 0-0, same pool)
+            IF effective_teams % 2 != 0 THEN
+                RAISE EXCEPTION 'Swiss tournament first round must have an even number of teams. Current: %', effective_teams;
+            END IF;
+            
+            PERFORM generate_swiss_bracket(stage.id, effective_teams);
+            
+            CONTINUE;
+        END IF;
+        
         -- For double elimination, calculate rounds based on teams needed
         -- Standard double elim produces 2 teams (WB champion + LB champion)
         -- If we need more than 2, we stop earlier to get more teams from earlier rounds
