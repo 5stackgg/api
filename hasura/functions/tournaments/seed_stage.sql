@@ -85,21 +85,21 @@ BEGIN
                 team_1_seed_val, team_1_id,
                 team_2_seed_val, team_2_id;
         END LOOP;
+    ELSIF stage.type = 'Swiss' THEN
+        -- Delegate Swiss seeding to dedicated function
+        PERFORM public.seed_swiss_stage(stage_id);
+        RETURN;
     ELSE
-        -- Process first-round brackets for Swiss and elimination tournaments
-        -- For Swiss: assign teams to first round (round 1, pool 0-0)
+        -- Process first-round brackets for elimination tournaments
         -- For elimination: process first-round winners brackets
         FOR bracket IN 
             SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
             FROM tournament_brackets tb
             WHERE tb.tournament_stage_id = stage.id
                 AND tb.round = 1
-                AND (stage.type != 'Swiss' OR tb."group" = 0)  -- Swiss filters to group 0 (0-0 pool)
                 AND COALESCE(tb.path, 'WB') = 'WB'  -- never seed or mark byes on loser brackets
                 AND (tb.team_1_seed IS NOT NULL OR tb.team_2_seed IS NOT NULL)
-            ORDER BY 
-                CASE WHEN stage.type = 'Swiss' THEN tb.match_number ELSE tb."group" END ASC,
-                CASE WHEN stage.type = 'Swiss' THEN 0 ELSE tb.match_number END ASC
+            ORDER BY tb."group" ASC, tb.match_number ASC
         LOOP
             team_1_id := NULL;
             team_2_id := NULL;
@@ -107,8 +107,8 @@ BEGIN
             team_2_seed_val := bracket.team_2_seed;
             
             -- For elimination brackets coming from RoundRobin/Swiss stages, use stage results
-            -- Otherwise (including Swiss first round), lookup teams by seed
-            IF stage.type != 'Swiss' AND previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
+            -- Otherwise, lookup teams by seed
+            IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
                 IF team_1_seed_val IS NOT NULL THEN
                     SELECT tournament_team_id INTO team_1_id
                     FROM v_team_stage_results
@@ -155,24 +155,17 @@ BEGIN
             END IF;
 
             -- Update bracket with teams
-            -- Swiss should never have byes, elimination brackets can have byes
+            -- Elimination brackets can have byes
             UPDATE tournament_brackets 
             SET tournament_team_id_1 = team_1_id,
                 tournament_team_id_2 = team_2_id,
-                bye = CASE WHEN stage.type = 'Swiss' THEN false ELSE (team_1_id IS NULL OR team_2_id IS NULL) END
+                bye = (team_1_id IS NULL OR team_2_id IS NULL)
             WHERE id = bracket.id;
             
-            IF stage.type = 'Swiss' THEN
-                RAISE NOTICE '  Swiss Round 1 Pool 0-0 Match %: Seed % (team %) vs Seed % (team %)', 
-                    bracket.match_number,
-                    team_1_seed_val, team_1_id,
-                    team_2_seed_val, team_2_id;
-            ELSE
-                RAISE NOTICE '  Bracket %: Seed % (team %) vs Seed % (team %)', 
-                    bracket.match_number, 
-                    team_1_seed_val, team_1_id,
-                    team_2_seed_val, team_2_id;
-            END IF;
+            RAISE NOTICE '  Bracket %: Seed % (team %) vs Seed % (team %)', 
+                bracket.match_number, 
+                team_1_seed_val, team_1_id,
+                team_2_seed_val, team_2_id;
         END LOOP;
     END IF;
 

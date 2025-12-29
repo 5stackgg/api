@@ -55,6 +55,7 @@ BEGIN
             IF next_stage_id IS NOT NULL THEN
                 RAISE NOTICE 'Advancing % teams to next stage', array_length(advanced_teams, 1);
                 
+                -- Only seed the next stage if the current stage is complete AND we have teams to advance
                 IF stage_complete THEN
                     RAISE NOTICE 'Swiss stage complete, advancing teams to next stage';
                     PERFORM seed_stage(next_stage_id);
@@ -62,6 +63,9 @@ BEGIN
             ELSE
                 RAISE NOTICE 'No next stage found - teams have won the tournament';
             END IF;
+        ELSIF stage_complete THEN
+            -- Stage is complete but no teams advanced (shouldn't happen in normal Swiss, but handle gracefully)
+            RAISE NOTICE 'Swiss stage complete but no teams advanced';
         END IF;
         
     END;
