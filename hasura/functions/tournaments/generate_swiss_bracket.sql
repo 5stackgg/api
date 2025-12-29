@@ -4,6 +4,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     max_rounds int;
+    wins_needed int;  -- Number of wins needed to advance (Valve-style: 3)
     round_num int;
     wins int;
     losses int;
@@ -15,12 +16,11 @@ DECLARE
     seed_2 int;
     bracket_idx int;
 BEGIN
-    -- Calculate maximum rounds needed
-    -- In Swiss, teams play until they reach 3 wins or 3 losses
-    -- Maximum rounds would be if teams alternate wins/losses: 6 rounds (0-0 -> 1-0 -> 1-1 -> 2-1 -> 2-2 -> 3-2 or 2-3)
-    -- But we'll generate up to 6 rounds to be safe
-    -- TODO - this is bad
-    max_rounds := 6;
+    -- Valve-style Swiss system: teams need 3 wins to advance or 3 losses to be eliminated
+    -- Max rounds formula: 2 × wins_needed - 1
+    -- This ensures all teams will either advance or be eliminated
+    wins_needed := 3;
+    max_rounds := 2 * wins_needed - 1;  -- For 3 wins: 2 × 3 - 1 = 5 rounds
     
     RAISE NOTICE '=== Generating Swiss Bracket for % teams ===', _team_count;
     RAISE NOTICE 'Will generate rounds 1 through %', max_rounds;
@@ -80,7 +80,7 @@ BEGIN
         bracket_idx := bracket_idx + 1;
     END LOOP;
     
-    -- Generate subsequent rounds (2-6)
+    -- Generate subsequent rounds
     -- For each round, create pools for all possible W/L combinations
     RAISE NOTICE 'Starting generation of rounds 2 through %', max_rounds;
     RAISE NOTICE 'About to enter loop for rounds 2 to %', max_rounds;
@@ -91,30 +91,30 @@ BEGIN
         RAISE NOTICE '=== Round %: Generating pools ===', round_num;
         
         -- Generate all possible W/L combinations for this round
-        -- Teams can have 0-3 wins and 0-3 losses, but total wins+losses = round_num - 1
+        -- Teams can have 0 to wins_needed wins and 0 to wins_needed losses, but total wins+losses = round_num - 1
         DECLARE
             pools_created int := 0;
             matches_created int := 0;
         BEGIN
-            FOR wins IN 0..LEAST(3, round_num - 1) LOOP
+            FOR wins IN 0..LEAST(wins_needed, round_num - 1) LOOP
                 losses := (round_num - 1) - wins;
                 
-                -- Skip if losses > 3 (team would be eliminated)
-                IF losses > 3 THEN
-                    RAISE NOTICE '  Skipping pool %-% (losses > 3)', wins, losses;
+                -- Skip if losses > wins_needed (team would be eliminated)
+                IF losses > wins_needed THEN
+                    RAISE NOTICE '  Skipping pool %-% (losses > %)', wins, losses, wins_needed;
                     CONTINUE;
                 END IF;
                 
-                -- Skip pools where teams would have advanced (3 wins, < 3 losses)
+                -- Skip pools where teams would have advanced (wins_needed wins, < wins_needed losses)
                 -- These teams won't play more matches
-                IF wins = 3 AND losses < 3 THEN
+                IF wins = wins_needed AND losses < wins_needed THEN
                     RAISE NOTICE '  Skipping pool %-% (advanced)', wins, losses;
                     CONTINUE;
                 END IF;
                 
-                -- Skip pools where teams would be eliminated (3 losses)
+                -- Skip pools where teams would be eliminated (wins_needed losses)
                 -- These teams won't play more matches
-                IF losses = 3 THEN
+                IF losses = wins_needed THEN
                     RAISE NOTICE '  Skipping pool %-% (eliminated)', wins, losses;
                     CONTINUE;
                 END IF;
@@ -175,11 +175,11 @@ BEGIN
                     -- Expected teams = team_count * C(n, k) / 2^n
                     expected_teams_in_pool := _team_count::numeric * binomial_coefficient / POWER(2, n);
                     
-                    -- Adjust for teams that may have advanced (3 wins) or been eliminated (3 losses) in previous rounds
-                    -- After round 3, teams with 3-0 advance, teams with 0-3 are eliminated
-                    -- After round 4, teams with 3-1 advance, teams with 1-3 are eliminated
+                    -- Adjust for teams that may have advanced (wins_needed wins) or been eliminated (wins_needed losses) in previous rounds
+                    -- After round wins_needed, teams with wins_needed-0 advance, teams with 0-wins_needed are eliminated
+                    -- After round wins_needed+1, teams with wins_needed-1 advance, teams with 1-wins_needed are eliminated
                     -- So we need to reduce expected teams for later rounds
-                    IF round_num >= 4 THEN
+                    IF round_num >= wins_needed + 1 THEN
                         -- Rough estimate: by round 4, ~25% of teams may have advanced/eliminated
                         -- Adjust based on round
                         DECLARE
