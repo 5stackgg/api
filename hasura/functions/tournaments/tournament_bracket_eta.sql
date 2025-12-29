@@ -61,6 +61,79 @@ BEGIN
                       AND round = round_record.round;
                 END;
             END LOOP;
+        ELSIF stage_record.stage_type = 'Swiss' THEN
+            -- For Swiss stages: find latest finished round, then calculate based on round difference
+            DECLARE
+                latest_finished_round int;
+                latest_finished_round_time timestamptz;
+                swiss_base_start_time timestamptz;
+            BEGIN
+                -- Find the latest round that has finished
+                SELECT MAX(tb.round)
+                INTO latest_finished_round
+                FROM tournament_brackets tb
+                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id
+                  AND tb.finished = true;
+                
+                -- Get the finish time of the latest finished round
+                IF latest_finished_round IS NOT NULL THEN
+                    SELECT MAX(COALESCE(m.ended_at, m.started_at + interval '1 hour'))
+                    INTO latest_finished_round_time
+                    FROM tournament_brackets tb
+                    INNER JOIN matches m ON m.id = tb.match_id
+                    WHERE tb.tournament_stage_id = stage_record.tournament_stage_id
+                      AND tb.round = latest_finished_round
+                      AND m.id IS NOT NULL;
+                END IF;
+                
+                -- Get base start time (earliest match start or tournament start)
+                SELECT MIN(COALESCE(m.started_at, m.scheduled_at))
+                INTO swiss_base_start_time
+                FROM tournament_brackets tb
+                INNER JOIN matches m ON m.id = tb.match_id
+                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id
+                  AND (m.started_at IS NOT NULL OR (m.scheduled_at IS NOT NULL AND m.scheduled_at <= now()));
+                
+                IF swiss_base_start_time IS NULL THEN
+                    swiss_base_start_time := base_start_time;
+                END IF;
+                
+                FOR round_record IN 
+                    SELECT DISTINCT tb.round 
+                    FROM tournament_brackets tb
+                    WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
+                    ORDER BY tb.round
+                LOOP
+                    DECLARE
+                        round_start_time timestamptz;
+                        round_diff int;
+                    BEGIN
+                        -- If we have a finished round, calculate from its finish time
+                        IF latest_finished_round IS NOT NULL AND latest_finished_round_time IS NOT NULL AND round_record.round > latest_finished_round THEN
+                            round_diff := round_record.round - latest_finished_round - 1;
+                            round_start_time := latest_finished_round_time + (round_diff * interval '1 hour');
+                        ELSE
+                            -- No finished rounds yet, use base calculation (round * 1 hour)
+                            round_start_time := swiss_base_start_time + (round_record.round * interval '1 hour');
+                        END IF;
+                    
+                    -- Update all brackets in this round
+                    UPDATE tournament_brackets 
+                    SET scheduled_eta = CASE 
+                        -- If bracket has a match, use its actual start time
+                        WHEN match_id IS NOT NULL THEN (
+                            SELECT COALESCE(m.started_at, m.scheduled_at)
+                            FROM matches m
+                            WHERE m.id = tournament_brackets.match_id
+                        )
+                        -- Otherwise use the calculated round start time
+                        ELSE round_start_time
+                    END
+                    WHERE tournament_stage_id = stage_record.tournament_stage_id 
+                      AND round = round_record.round;
+                    END;
+                END LOOP;
+            END;
         ELSE
             -- For elimination brackets, use the existing logic (parent bracket based)
             FOR round_record IN 
