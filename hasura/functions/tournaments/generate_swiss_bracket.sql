@@ -122,67 +122,48 @@ BEGIN
                 -- Calculate pool group: wins * 100 + losses
                 pool_group := wins * 100 + losses;
                 
-                -- Calculate expected number of teams in this pool using binomial distribution
-                -- For round N, with W wins and L losses (W+L = N-1):
-                -- Expected teams = team_count * C(N-1, W) / 2^(N-1)
+                -- Use the unified formula for matches: matches(N, r, w, l)
+                -- If r <= 3: matches = (1/2) * C(r-1, w) * (N / 2^(r-1))
+                -- If r = 4 AND (w,l) ∈ {(2,1), (1,2)}: matches = 3N / 16
+                -- If r = 5 AND (w,l) = (2,2): matches = 3N / 16
+                -- Otherwise: 0 (advanced/eliminated pools)
                 DECLARE
-                    n int;
-                    k int;
-                    expected_teams_in_pool numeric;
-                    binomial_coefficient numeric;
-                    reduction_factor numeric;
-                    teams_advanced_eliminated numeric;
-                    total_expected_remaining numeric;
+                    matches_calc numeric;
                 BEGIN
-                    n := round_num - 1;
-                    k := wins;
-                    
-                    -- Calculate binomial coefficient using helper function
-                    binomial_coefficient := public.binomial_coefficient(n, k);
-                    
-                    -- Expected teams = team_count * C(n, k) / 2^n
-                    -- This gives the theoretical expected number of teams in this W/L pool
-                    expected_teams_in_pool := _team_count::numeric * binomial_coefficient / POWER(2, n);
-                    
-                    -- For later rounds, we need to account for teams that have already advanced or been eliminated
-                    -- However, the binomial distribution already accounts for the natural distribution
-                    -- We only apply a light adjustment for very late rounds to account for edge cases
-                    -- Note: Round (wins_needed + 2) is the final round, so we don't apply reduction there
-                    IF round_num > wins_needed + 2 THEN
-                        -- For rounds beyond wins_needed + 2, apply a conservative reduction
-                        -- This accounts for the fact that some teams have advanced/eliminated
-                        -- But we use a much lighter touch to avoid over-reduction
+                    IF round_num <= 3 THEN
+                        -- Use binomial distribution for early rounds
                         DECLARE
-                            rounds_past_threshold int;
-                            light_reduction numeric;
+                            n int;
+                            k int;
+                            binomial_coefficient numeric;
                         BEGIN
-                            rounds_past_threshold := round_num - (wins_needed + 2);
-                            -- Apply a very light reduction: 5% per round past threshold, max 20%
-                            light_reduction := GREATEST(0.8, 1.0 - (rounds_past_threshold * 0.05));
-                            expected_teams_in_pool := expected_teams_in_pool * light_reduction;
+                            n := round_num - 1;
+                            k := wins;
+                            binomial_coefficient := public.binomial_coefficient(n, k);
+                            -- Formula: (1/2) * C(r-1, w) * (N / 2^(r-1))
+                            matches_calc := (1.0 / 2.0) * binomial_coefficient * (_team_count::numeric / POWER(2, n));
                         END;
-                    END IF;
-                    
-                    -- Round to nearest integer, but ensure at least 2 for a match
-                    IF expected_teams_in_pool < 2 THEN
-                        matches_needed := 0;
+                    ELSIF round_num = 4 AND ((wins = 2 AND losses = 1) OR (wins = 1 AND losses = 2)) THEN
+                        -- Round 4: pools (2,1) and (1,2) get 3N/16 matches
+                        matches_calc := 3.0 * _team_count::numeric / 16.0;
+                    ELSIF round_num = 5 AND wins = 2 AND losses = 2 THEN
+                        -- Round 5: pool (2,2) gets 3N/16 matches
+                        matches_calc := 3.0 * _team_count::numeric / 16.0;
                     ELSE
-                        matches_needed := CEIL(expected_teams_in_pool / 2.0)::int;
+                        -- All other pools in rounds 4+ are advanced/eliminated
+                        matches_calc := 0;
                     END IF;
                     
-                    -- Cap at reasonable maximum (half of team count per pool)
+                    -- Round up to get integer matches
+                    matches_needed := CEIL(matches_calc)::int;
+                    
+                    -- Ensure we don't exceed reasonable bounds
                     IF matches_needed > _team_count / 2 THEN
                         matches_needed := _team_count / 2;
                     END IF;
                     
-                    -- Ensure minimum of 1 match if we expect teams (for odd numbers handled later)
-                    IF matches_needed = 0 AND expected_teams_in_pool >= 1.5 THEN
-                        matches_needed := 1;
-                    END IF;
-                    
-                    RAISE NOTICE '  Creating pool %-% (group %): % matches (expected ~% teams, binomial C(%,%)=%)', 
-                        wins, losses, pool_group, matches_needed, 
-                        ROUND(expected_teams_in_pool, 1), n, k, binomial_coefficient;
+                    RAISE NOTICE '  Creating pool %-% (group %): % matches (calculated: ~%)', 
+                        wins, losses, pool_group, matches_needed, ROUND(matches_calc, 2);
                 END;
                 
                 -- Create placeholder matches for this pool
