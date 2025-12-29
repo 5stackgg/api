@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      AS $$
  DECLARE
      tournament tournaments;
+     stage tournament_stages;
      member RECORD;
      _lineup_1_id UUID;
      _lineup_2_id UUID;
@@ -10,6 +11,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      feeder RECORD;
      feeders_with_team int := 0;
      winner_id UUID;
+     _match_options_id UUID;
  BEGIN
    	IF bracket.match_id IS NOT NULL THEN
    	 RETURN bracket.match_id;
@@ -57,11 +59,18 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          RETURN NULL;
      END IF;
      
-     SELECT t.* INTO tournament
+     SELECT ts.*, t.* INTO stage, tournament
      FROM tournament_brackets tb
      INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
      INNER JOIN tournaments t ON t.id = ts.tournament_id
      WHERE tb.id = bracket.id;
+
+     -- Check if stage has match_options_id first, otherwise use tournament match_options_id
+     IF stage.match_options_id IS NOT NULL THEN
+         _match_options_id := stage.match_options_id;
+     ELSE
+         _match_options_id := tournament.match_options_id;
+     END IF;
 
      -- Create the match first
      INSERT INTO matches (
@@ -73,7 +82,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      VALUES (
          'PickingPlayers',
          tournament.organizer_steam_id,
-         tournament.match_options_id,
+         _match_options_id,
          now()
      )
      RETURNING id INTO _match_id;

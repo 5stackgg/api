@@ -5,6 +5,15 @@ object_relationships:
   - name: e_tournament_stage_type
     using:
       foreign_key_constraint_on: type
+  - name: match_options
+    using:
+      manual_configuration:
+        column_mapping:
+          match_options_id: id
+        insertion_order: null
+        remote_table:
+          name: match_options
+          schema: public
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
@@ -34,10 +43,11 @@ insert_permissions:
             _eq: true
       columns:
         - groups
+        - match_options_id
         - max_teams
         - min_teams
-        - settings
         - order
+        - settings
         - tournament_id
         - type
     comment: ""
@@ -47,10 +57,11 @@ select_permissions:
       columns:
         - groups
         - id
+        - match_options_id
         - max_teams
         - min_teams
-        - settings
         - order
+        - settings
         - tournament_id
         - type
       filter: {}
@@ -61,10 +72,11 @@ update_permissions:
     permission:
       columns:
         - groups
+        - match_options_id
         - max_teams
         - min_teams
-        - settings
         - order
+        - settings
         - type
       filter:
         tournament:

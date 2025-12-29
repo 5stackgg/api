@@ -192,6 +192,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     tournament_status text;
+    stage_has_matches boolean;
 BEGIN
     SELECT status
     INTO tournament_status
@@ -200,6 +201,19 @@ BEGIN
 
     IF tournament_status != 'Setup' THEN
         RAISE EXCEPTION 'Unable to modify stage since the tournament has been started';
+    END IF;
+
+    -- Check if stage has started (has at least one match created)
+    SELECT EXISTS (
+        SELECT 1 
+        FROM tournament_brackets tb 
+        WHERE tb.tournament_stage_id = NEW.id 
+        AND tb.match_id IS NOT NULL
+    ) INTO stage_has_matches;
+
+    -- Prevent match_options_id changes once stage has started
+    IF stage_has_matches AND OLD.match_options_id IS DISTINCT FROM NEW.match_options_id THEN
+        RAISE EXCEPTION 'Unable to modify match options for a stage that has already started';
     END IF;
 
     IF OLD.max_teams != NEW.max_teams THEN

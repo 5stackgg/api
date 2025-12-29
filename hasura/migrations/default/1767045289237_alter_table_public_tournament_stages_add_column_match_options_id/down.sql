@@ -1,0 +1,1 @@
+alter table "public"."tournament_stages" drop column if exists "match_options_id";
