@@ -58,8 +58,15 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      IF bracket.tournament_team_id_1 IS NULL OR bracket.tournament_team_id_2 IS NULL THEN
          RETURN NULL;
      END IF;
-     
-     SELECT ts.*, t.* INTO stage, tournament
+
+     -- Fetch stage values
+     SELECT ts.* INTO stage
+     FROM tournament_brackets tb
+     INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+     WHERE tb.id = bracket.id;
+
+     -- Fetch tournament values
+     SELECT t.* INTO tournament
      FROM tournament_brackets tb
      INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
      INNER JOIN tournaments t ON t.id = ts.tournament_id
