@@ -84,23 +84,33 @@ BEGIN
                     total_matches_per_group, round_count, matches_per_round;
                 
                 -- Generate round robin matches for each group
+                -- Distribute seeds evenly across groups using round-robin pattern:
+                -- Group 1: seeds 1, 1+groups, 1+2*groups, ...
+                -- Group 2: seeds 2, 2+groups, 2+2*groups, ...
+                -- etc.
                 FOR g IN 1..stage.groups LOOP
                     RAISE NOTICE '  => Generating RoundRobin matches for group %', g;
                     
-                    -- Calculate which seeds belong to this group
+                    -- Calculate which seeds belong to this group using round-robin distribution
                     DECLARE
-                        group_start_seed int;
-                        group_end_seed int;
                         team_seeds int[];
+                        seed_val int;
+                        round_num int;
                     BEGIN
-                        group_start_seed := (g - 1) * teams_per_group + 1;
-                        group_end_seed := g * teams_per_group;
-                        
-                        -- Build array of seeds for this group
-                        -- Teams are distributed: group 1 gets seeds 1-N, group 2 gets seeds N+1-2N, etc.
                         team_seeds := ARRAY[]::int[];
-                        FOR i IN group_start_seed..LEAST(group_end_seed, effective_teams) LOOP
-                            team_seeds := team_seeds || i;
+                        round_num := 0;
+                        
+                        -- Loop through rounds, assigning seeds: g, g+groups, g+2*groups, ...
+                        LOOP
+                            seed_val := g + round_num * stage.groups;
+                            
+                            -- Stop if seed exceeds effective_teams
+                            IF seed_val > effective_teams THEN
+                                EXIT;
+                            END IF;
+                            
+                            team_seeds := team_seeds || seed_val;
+                            round_num := round_num + 1;
                         END LOOP;
                         
                         IF array_length(team_seeds, 1) < 2 THEN
@@ -109,8 +119,8 @@ BEGIN
                             CONTINUE;
                         END IF;
                         
-                        RAISE NOTICE '  => Group %: % teams (seeds % to %)', 
-                            g, array_length(team_seeds, 1), group_start_seed, LEAST(group_end_seed, effective_teams);
+                        RAISE NOTICE '  => Group %: % teams (seeds: %)', 
+                            g, array_length(team_seeds, 1), team_seeds;
                         
                         -- Use reusable function to create all round robin matches with seeds
                         -- Teams will be assigned later in seed_tournament
