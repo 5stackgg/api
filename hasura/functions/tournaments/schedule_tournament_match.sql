@@ -17,6 +17,11 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
    	 RETURN bracket.match_id;
    	END IF;
     
+    -- If bracket is already finished, don't try to schedule it
+    IF bracket.finished = true THEN
+        RETURN NULL;
+    END IF;
+    
     IF bracket.tournament_team_id_1 IS NULL AND bracket.tournament_team_id_2 IS NULL THEN
         RETURN NULL;
     END IF;

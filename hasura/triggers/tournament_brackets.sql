@@ -7,6 +7,11 @@ BEGIN
      IF OLD.match_id IS NOT NULL THEN
         return NEW;
      END IF;
+     
+     -- Don't schedule if bracket is already finished
+     IF NEW.finished = true THEN
+        return NEW;
+     END IF;
 
      IF NEW.match_id IS NULL THEN
          -- Check if this is a RoundRobin stage
