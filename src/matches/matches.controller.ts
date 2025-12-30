@@ -30,6 +30,7 @@ import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
 import { MatchRelayService } from "./match-relay/match-relay.service";
+import { RestartDedicatedServer } from "./jobs/RestartDedicatedServer";
 
 @Controller("matches")
 export class MatchesController {
@@ -345,40 +346,32 @@ export class MatchesController {
         },
       });
 
-      if (server.is_dedicated) {
-        await this.matchAssistant.restartDedicatedServer(serverId);
-      } else {
-        if (status === "Canceled" || data.op === "DELETE") {
-          await this.matchAssistant.stopOnDemandServer(matchId);
-        } else {
-          const { match_options_by_pk: matchOptions } = await this.hasura.query(
-            {
-              match_options_by_pk: {
-                __args: {
-                  id: data.new.match_options_id,
-                },
-                tv_delay: true,
-              },
-            },
-          );
+      const { match_options_by_pk: matchOptions } = await this.hasura.query({
+        match_options_by_pk: {
+          __args: {
+            id: data.new.match_options_id,
+          },
+          tv_delay: true,
+        },
+      });
 
-          if (!matchOptions) {
-            await this.matchAssistant.stopOnDemandServer(matchId);
-          } else {
-            const tvDelay = matchOptions.tv_delay || 0;
+      let delay = matchOptions?.tv_delay || 1;
 
-            this.logger.log(
-              `[${matchId}] adding stop on demand server job in ${tvDelay} seconds`,
-            );
-
-            await this.scheduledMatchesQueue.add(
-              StopOnDemandServer.name,
-              { matchId },
-              tvDelay ? { delay: tvDelay * 1000 } : undefined,
-            );
-          }
-        }
+      if (status === "Canceled" || data.op === "DELETE") {
+        delay = 0;
       }
+
+      this.logger.log(
+        `[${matchId}] adding stop / restart server job in ${delay} seconds`,
+      );
+
+      await this.scheduledMatchesQueue.add(
+        server.is_dedicated
+          ? RestartDedicatedServer.name
+          : StopOnDemandServer.name,
+        { serverId },
+        delay ? { delay: delay * 1000 } : undefined,
+      );
 
       await this.hasura.mutation({
         update_matches_by_pk: {
