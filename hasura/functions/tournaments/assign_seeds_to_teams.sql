@@ -13,7 +13,7 @@ BEGIN
     ),
     teams_to_seed AS (
         SELECT id,
-               mes.max_seed + ROW_NUMBER() OVER (ORDER BY eligible_at) as assigned_seed
+               mes.max_seed + ROW_NUMBER() OVER (ORDER BY RANDOM()) as assigned_seed
         FROM tournament_teams
         CROSS JOIN max_existing_seed mes
         WHERE tournament_id = tournament.id 
