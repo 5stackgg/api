@@ -261,12 +261,14 @@ BEGIN
                             seed_2 := NULL;
                         END IF;
                         
-                        INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", team_1_seed, team_2_seed, path)
-                        VALUES (round_num, stage.id, match_idx, group_num, seed_1, seed_2, 'WB')
-                        RETURNING id INTO new_id;
-                        
-                        RAISE NOTICE '      => Created round % group % match %: id=%, seeds: % vs % (effective_teams: %, bracket_idx: %)', 
-                            round_num, group_num, match_idx, new_id, seed_1, seed_2, effective_teams, bracket_idx;
+                        IF seed_1 IS NOT NULL AND seed_2 IS NOT NULL THEN
+                            INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", team_1_seed, team_2_seed, path)
+                            VALUES (round_num, stage.id, match_idx, group_num, seed_1, seed_2, 'WB')
+                            RETURNING id INTO new_id;
+                                
+                            RAISE NOTICE '      => Created round % group % match %: id=%, seeds: % vs % (effective_teams: %, bracket_idx: %)', 
+                                round_num, group_num, match_idx, new_id, seed_1, seed_2, effective_teams, bracket_idx;
+                        END IF;
                         
                         bracket_idx := bracket_idx + 1;
                     ELSE
