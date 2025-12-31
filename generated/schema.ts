@@ -4409,6 +4409,10 @@ export interface match_options {
     timeout_setting: e_timeout_settings_enum
     /** An object relationship */
     tournament: (tournaments | null)
+    /** An object relationship */
+    tournament_bracket: (tournament_brackets | null)
+    /** An object relationship */
+    tournament_stage: (tournament_stages | null)
     tv_delay: Scalars['Int']
     type: e_match_types_enum
     __typename: 'match_options'
@@ -10917,6 +10921,9 @@ export interface tournament_brackets {
     match: (matches | null)
     match_id: (Scalars['uuid'] | null)
     match_number: (Scalars['Int'] | null)
+    match_options_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    options: (match_options | null)
     /** An object relationship */
     parent_bracket: (tournament_brackets | null)
     parent_bracket_id: (Scalars['uuid'] | null)
@@ -10986,6 +10993,7 @@ export interface tournament_brackets_max_fields {
     loser_parent_bracket_id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_number: (Scalars['Int'] | null)
+    match_options_id: (Scalars['uuid'] | null)
     parent_bracket_id: (Scalars['uuid'] | null)
     path: (Scalars['String'] | null)
     round: (Scalars['Int'] | null)
@@ -11007,6 +11015,7 @@ export interface tournament_brackets_min_fields {
     loser_parent_bracket_id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     match_number: (Scalars['Int'] | null)
+    match_options_id: (Scalars['uuid'] | null)
     parent_bracket_id: (Scalars['uuid'] | null)
     path: (Scalars['String'] | null)
     round: (Scalars['Int'] | null)
@@ -11031,7 +11040,7 @@ export interface tournament_brackets_mutation_response {
 
 
 /** select columns of table "tournament_brackets" */
-export type tournament_brackets_select_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
+export type tournament_brackets_select_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'match_options_id' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
 
 
 /** select "tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_brackets" */
@@ -11087,7 +11096,7 @@ export interface tournament_brackets_sum_fields {
 
 
 /** update columns of table "tournament_brackets" */
-export type tournament_brackets_update_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
+export type tournament_brackets_update_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'match_options_id' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
 
 
 /** aggregate var_pop on columns */
@@ -11264,8 +11273,11 @@ export interface tournament_stages {
     e_tournament_stage_type: e_tournament_stage_types
     groups: (Scalars['Int'] | null)
     id: Scalars['uuid']
+    match_options_id: (Scalars['uuid'] | null)
     max_teams: Scalars['Int']
     min_teams: Scalars['Int']
+    /** An object relationship */
+    options: (match_options | null)
     order: Scalars['Int']
     /** An array relationship */
     results: v_team_stage_results[]
@@ -11323,6 +11335,7 @@ export type tournament_stages_constraint = 'tournament_stages_pkey'
 export interface tournament_stages_max_fields {
     groups: (Scalars['Int'] | null)
     id: (Scalars['uuid'] | null)
+    match_options_id: (Scalars['uuid'] | null)
     max_teams: (Scalars['Int'] | null)
     min_teams: (Scalars['Int'] | null)
     order: (Scalars['Int'] | null)
@@ -11335,6 +11348,7 @@ export interface tournament_stages_max_fields {
 export interface tournament_stages_min_fields {
     groups: (Scalars['Int'] | null)
     id: (Scalars['uuid'] | null)
+    match_options_id: (Scalars['uuid'] | null)
     max_teams: (Scalars['Int'] | null)
     min_teams: (Scalars['Int'] | null)
     order: (Scalars['Int'] | null)
@@ -11354,7 +11368,7 @@ export interface tournament_stages_mutation_response {
 
 
 /** select columns of table "tournament_stages" */
-export type tournament_stages_select_column = 'groups' | 'id' | 'max_teams' | 'min_teams' | 'order' | 'settings' | 'tournament_id' | 'type'
+export type tournament_stages_select_column = 'groups' | 'id' | 'match_options_id' | 'max_teams' | 'min_teams' | 'order' | 'settings' | 'tournament_id' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -11398,7 +11412,7 @@ export interface tournament_stages_sum_fields {
 
 
 /** update columns of table "tournament_stages" */
-export type tournament_stages_update_column = 'groups' | 'id' | 'max_teams' | 'min_teams' | 'order' | 'settings' | 'tournament_id' | 'type'
+export type tournament_stages_update_column = 'groups' | 'id' | 'match_options_id' | 'max_teams' | 'min_teams' | 'order' | 'settings' | 'tournament_id' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -11786,7 +11800,7 @@ export interface tournament_teams_avg_fields {
 
 
 /** unique or primary key constraints on table "tournament_teams" */
-export type tournament_teams_constraint = 'tournament_teams_creator_steam_id_tournament_id_key' | 'tournament_teams_pkey' | 'tournament_teams_tournament_id_name_key' | 'tournament_teams_tournament_id_team_id_key'
+export type tournament_teams_constraint = 'tournament_teams_creator_steam_id_tournament_id_key' | 'tournament_teams_pkey' | 'tournament_teams_tournament_id_name_key' | 'tournament_teams_tournament_id_seed_key' | 'tournament_teams_tournament_id_team_id_key'
 
 
 /** aggregate max on columns */
@@ -21537,6 +21551,10 @@ export interface match_optionsGenqlSelection{
     timeout_setting?: boolean | number
     /** An object relationship */
     tournament?: tournamentsGenqlSelection
+    /** An object relationship */
+    tournament_bracket?: tournament_bracketsGenqlSelection
+    /** An object relationship */
+    tournament_stage?: tournament_stagesGenqlSelection
     tv_delay?: boolean | number
     type?: boolean | number
     __typename?: boolean | number
@@ -21583,7 +21601,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -21591,7 +21609,7 @@ export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?:
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -21646,7 +21664,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {best_of?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
+export interface match_options_order_by {best_of?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -36666,6 +36684,9 @@ export interface tournament_bracketsGenqlSelection{
     match?: matchesGenqlSelection
     match_id?: boolean | number
     match_number?: boolean | number
+    match_options_id?: boolean | number
+    /** An object relationship */
+    options?: match_optionsGenqlSelection
     /** An object relationship */
     parent_bracket?: tournament_bracketsGenqlSelection
     parent_bracket_id?: boolean | number
@@ -36750,7 +36771,7 @@ export interface tournament_brackets_avg_order_by {group?: (order_by | null),mat
 
 
 /** Boolean expression to filter rows from the table "tournament_brackets". All fields are combined with a logical 'AND'. */
-export interface tournament_brackets_bool_exp {_and?: (tournament_brackets_bool_exp[] | null),_not?: (tournament_brackets_bool_exp | null),_or?: (tournament_brackets_bool_exp[] | null),bye?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),finished?: (Boolean_comparison_exp | null),group?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),loser_bracket?: (tournament_brackets_bool_exp | null),loser_parent_bracket_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_number?: (Int_comparison_exp | null),parent_bracket?: (tournament_brackets_bool_exp | null),parent_bracket_id?: (uuid_comparison_exp | null),path?: (String_comparison_exp | null),round?: (Int_comparison_exp | null),scheduled_eta?: (timestamptz_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team_1?: (tournament_teams_bool_exp | null),team_1_seed?: (Int_comparison_exp | null),team_2?: (tournament_teams_bool_exp | null),team_2_seed?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id_1?: (uuid_comparison_exp | null),tournament_team_id_2?: (uuid_comparison_exp | null)}
+export interface tournament_brackets_bool_exp {_and?: (tournament_brackets_bool_exp[] | null),_not?: (tournament_brackets_bool_exp | null),_or?: (tournament_brackets_bool_exp[] | null),bye?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),finished?: (Boolean_comparison_exp | null),group?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),loser_bracket?: (tournament_brackets_bool_exp | null),loser_parent_bracket_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_number?: (Int_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),options?: (match_options_bool_exp | null),parent_bracket?: (tournament_brackets_bool_exp | null),parent_bracket_id?: (uuid_comparison_exp | null),path?: (String_comparison_exp | null),round?: (Int_comparison_exp | null),scheduled_eta?: (timestamptz_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team_1?: (tournament_teams_bool_exp | null),team_1_seed?: (Int_comparison_exp | null),team_2?: (tournament_teams_bool_exp | null),team_2_seed?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id_1?: (uuid_comparison_exp | null),tournament_team_id_2?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_brackets" */
@@ -36758,7 +36779,7 @@ export interface tournament_brackets_inc_input {group?: (Scalars['numeric'] | nu
 
 
 /** input type for inserting data into table "tournament_brackets" */
-export interface tournament_brackets_insert_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_bracket?: (tournament_brackets_obj_rel_insert_input | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),parent_bracket?: (tournament_brackets_obj_rel_insert_input | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),stage?: (tournament_stages_obj_rel_insert_input | null),team_1?: (tournament_teams_obj_rel_insert_input | null),team_1_seed?: (Scalars['Int'] | null),team_2?: (tournament_teams_obj_rel_insert_input | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
+export interface tournament_brackets_insert_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_bracket?: (tournament_brackets_obj_rel_insert_input | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),options?: (match_options_obj_rel_insert_input | null),parent_bracket?: (tournament_brackets_obj_rel_insert_input | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),stage?: (tournament_stages_obj_rel_insert_input | null),team_1?: (tournament_teams_obj_rel_insert_input | null),team_1_seed?: (Scalars['Int'] | null),team_2?: (tournament_teams_obj_rel_insert_input | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -36769,6 +36790,7 @@ export interface tournament_brackets_max_fieldsGenqlSelection{
     loser_parent_bracket_id?: boolean | number
     match_id?: boolean | number
     match_number?: boolean | number
+    match_options_id?: boolean | number
     parent_bracket_id?: boolean | number
     path?: boolean | number
     round?: boolean | number
@@ -36784,7 +36806,7 @@ export interface tournament_brackets_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "tournament_brackets" */
-export interface tournament_brackets_max_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_max_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -36795,6 +36817,7 @@ export interface tournament_brackets_min_fieldsGenqlSelection{
     loser_parent_bracket_id?: boolean | number
     match_id?: boolean | number
     match_number?: boolean | number
+    match_options_id?: boolean | number
     parent_bracket_id?: boolean | number
     path?: boolean | number
     round?: boolean | number
@@ -36810,7 +36833,7 @@ export interface tournament_brackets_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "tournament_brackets" */
-export interface tournament_brackets_min_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_min_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_brackets" */
@@ -36835,7 +36858,7 @@ export interface tournament_brackets_on_conflict {constraint: tournament_bracket
 
 
 /** Ordering options when selecting data from "tournament_brackets". */
-export interface tournament_brackets_order_by {bye?: (order_by | null),created_at?: (order_by | null),finished?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_bracket?: (tournament_brackets_order_by | null),loser_parent_bracket_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),parent_bracket?: (tournament_brackets_order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),stage?: (tournament_stages_order_by | null),team_1?: (tournament_teams_order_by | null),team_1_seed?: (order_by | null),team_2?: (tournament_teams_order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_order_by {bye?: (order_by | null),created_at?: (order_by | null),finished?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_bracket?: (tournament_brackets_order_by | null),loser_parent_bracket_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),options?: (match_options_order_by | null),parent_bracket?: (tournament_brackets_order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),stage?: (tournament_stages_order_by | null),team_1?: (tournament_teams_order_by | null),team_1_seed?: (order_by | null),team_2?: (tournament_teams_order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_brackets */
@@ -36843,7 +36866,7 @@ export interface tournament_brackets_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournament_brackets" */
-export interface tournament_brackets_set_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
+export interface tournament_brackets_set_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -36903,7 +36926,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_brackets_stream_cursor_value_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
+export interface tournament_brackets_stream_cursor_value_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -37243,8 +37266,11 @@ export interface tournament_stagesGenqlSelection{
     e_tournament_stage_type?: e_tournament_stage_typesGenqlSelection
     groups?: boolean | number
     id?: boolean | number
+    match_options_id?: boolean | number
     max_teams?: boolean | number
     min_teams?: boolean | number
+    /** An object relationship */
+    options?: match_optionsGenqlSelection
     order?: boolean | number
     /** An array relationship */
     results?: (v_team_stage_resultsGenqlSelection & { __args?: {
@@ -37343,7 +37369,7 @@ export interface tournament_stages_avg_order_by {groups?: (order_by | null),max_
 
 
 /** Boolean expression to filter rows from the table "tournament_stages". All fields are combined with a logical 'AND'. */
-export interface tournament_stages_bool_exp {_and?: (tournament_stages_bool_exp[] | null),_not?: (tournament_stages_bool_exp | null),_or?: (tournament_stages_bool_exp[] | null),brackets?: (tournament_brackets_bool_exp | null),brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),e_tournament_stage_type?: (e_tournament_stage_types_bool_exp | null),groups?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),max_teams?: (Int_comparison_exp | null),min_teams?: (Int_comparison_exp | null),order?: (Int_comparison_exp | null),results?: (v_team_stage_results_bool_exp | null),results_aggregate?: (v_team_stage_results_aggregate_bool_exp | null),settings?: (jsonb_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),type?: (e_tournament_stage_types_enum_comparison_exp | null)}
+export interface tournament_stages_bool_exp {_and?: (tournament_stages_bool_exp[] | null),_not?: (tournament_stages_bool_exp | null),_or?: (tournament_stages_bool_exp[] | null),brackets?: (tournament_brackets_bool_exp | null),brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),e_tournament_stage_type?: (e_tournament_stage_types_bool_exp | null),groups?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_teams?: (Int_comparison_exp | null),min_teams?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),order?: (Int_comparison_exp | null),results?: (v_team_stage_results_bool_exp | null),results_aggregate?: (v_team_stage_results_aggregate_bool_exp | null),settings?: (jsonb_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),type?: (e_tournament_stage_types_enum_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -37363,13 +37389,14 @@ export interface tournament_stages_inc_input {groups?: (Scalars['Int'] | null),m
 
 
 /** input type for inserting data into table "tournament_stages" */
-export interface tournament_stages_insert_input {brackets?: (tournament_brackets_arr_rel_insert_input | null),e_tournament_stage_type?: (e_tournament_stage_types_obj_rel_insert_input | null),groups?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),max_teams?: (Scalars['Int'] | null),min_teams?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null),results?: (v_team_stage_results_arr_rel_insert_input | null),settings?: (Scalars['jsonb'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),type?: (e_tournament_stage_types_enum | null)}
+export interface tournament_stages_insert_input {brackets?: (tournament_brackets_arr_rel_insert_input | null),e_tournament_stage_type?: (e_tournament_stage_types_obj_rel_insert_input | null),groups?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),max_teams?: (Scalars['Int'] | null),min_teams?: (Scalars['Int'] | null),options?: (match_options_obj_rel_insert_input | null),order?: (Scalars['Int'] | null),results?: (v_team_stage_results_arr_rel_insert_input | null),settings?: (Scalars['jsonb'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),type?: (e_tournament_stage_types_enum | null)}
 
 
 /** aggregate max on columns */
 export interface tournament_stages_max_fieldsGenqlSelection{
     groups?: boolean | number
     id?: boolean | number
+    match_options_id?: boolean | number
     max_teams?: boolean | number
     min_teams?: boolean | number
     order?: boolean | number
@@ -37380,13 +37407,14 @@ export interface tournament_stages_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "tournament_stages" */
-export interface tournament_stages_max_order_by {groups?: (order_by | null),id?: (order_by | null),max_teams?: (order_by | null),min_teams?: (order_by | null),order?: (order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_stages_max_order_by {groups?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),max_teams?: (order_by | null),min_teams?: (order_by | null),order?: (order_by | null),tournament_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface tournament_stages_min_fieldsGenqlSelection{
     groups?: boolean | number
     id?: boolean | number
+    match_options_id?: boolean | number
     max_teams?: boolean | number
     min_teams?: boolean | number
     order?: boolean | number
@@ -37397,7 +37425,7 @@ export interface tournament_stages_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "tournament_stages" */
-export interface tournament_stages_min_order_by {groups?: (order_by | null),id?: (order_by | null),max_teams?: (order_by | null),min_teams?: (order_by | null),order?: (order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_stages_min_order_by {groups?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),max_teams?: (order_by | null),min_teams?: (order_by | null),order?: (order_by | null),tournament_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_stages" */
@@ -37422,7 +37450,7 @@ export interface tournament_stages_on_conflict {constraint: tournament_stages_co
 
 
 /** Ordering options when selecting data from "tournament_stages". */
-export interface tournament_stages_order_by {brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),e_tournament_stage_type?: (e_tournament_stage_types_order_by | null),groups?: (order_by | null),id?: (order_by | null),max_teams?: (order_by | null),min_teams?: (order_by | null),order?: (order_by | null),results_aggregate?: (v_team_stage_results_aggregate_order_by | null),settings?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),type?: (order_by | null)}
+export interface tournament_stages_order_by {brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),e_tournament_stage_type?: (e_tournament_stage_types_order_by | null),groups?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),max_teams?: (order_by | null),min_teams?: (order_by | null),options?: (match_options_order_by | null),order?: (order_by | null),results_aggregate?: (v_team_stage_results_aggregate_order_by | null),settings?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_stages */
@@ -37434,7 +37462,7 @@ export interface tournament_stages_prepend_input {settings?: (Scalars['jsonb'] |
 
 
 /** input type for updating data in table "tournament_stages" */
-export interface tournament_stages_set_input {groups?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),max_teams?: (Scalars['Int'] | null),min_teams?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null),settings?: (Scalars['jsonb'] | null),tournament_id?: (Scalars['uuid'] | null),type?: (e_tournament_stage_types_enum | null)}
+export interface tournament_stages_set_input {groups?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),max_teams?: (Scalars['Int'] | null),min_teams?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null),settings?: (Scalars['jsonb'] | null),tournament_id?: (Scalars['uuid'] | null),type?: (e_tournament_stage_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -37491,7 +37519,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_stages_stream_cursor_value_input {groups?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),max_teams?: (Scalars['Int'] | null),min_teams?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null),settings?: (Scalars['jsonb'] | null),tournament_id?: (Scalars['uuid'] | null),type?: (e_tournament_stage_types_enum | null)}
+export interface tournament_stages_stream_cursor_value_input {groups?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),max_teams?: (Scalars['Int'] | null),min_teams?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null),settings?: (Scalars['jsonb'] | null),tournament_id?: (Scalars['uuid'] | null),type?: (e_tournament_stage_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -50495,6 +50523,7 @@ export const enumTournamentBracketsSelectColumn = {
    loser_parent_bracket_id: 'loser_parent_bracket_id' as const,
    match_id: 'match_id' as const,
    match_number: 'match_number' as const,
+   match_options_id: 'match_options_id' as const,
    parent_bracket_id: 'parent_bracket_id' as const,
    path: 'path' as const,
    round: 'round' as const,
@@ -50525,6 +50554,7 @@ export const enumTournamentBracketsUpdateColumn = {
    loser_parent_bracket_id: 'loser_parent_bracket_id' as const,
    match_id: 'match_id' as const,
    match_number: 'match_number' as const,
+   match_options_id: 'match_options_id' as const,
    parent_bracket_id: 'parent_bracket_id' as const,
    path: 'path' as const,
    round: 'round' as const,
@@ -50557,6 +50587,7 @@ export const enumTournamentStagesConstraint = {
 export const enumTournamentStagesSelectColumn = {
    groups: 'groups' as const,
    id: 'id' as const,
+   match_options_id: 'match_options_id' as const,
    max_teams: 'max_teams' as const,
    min_teams: 'min_teams' as const,
    order: 'order' as const,
@@ -50568,6 +50599,7 @@ export const enumTournamentStagesSelectColumn = {
 export const enumTournamentStagesUpdateColumn = {
    groups: 'groups' as const,
    id: 'id' as const,
+   match_options_id: 'match_options_id' as const,
    max_teams: 'max_teams' as const,
    min_teams: 'min_teams' as const,
    order: 'order' as const,
@@ -50620,6 +50652,7 @@ export const enumTournamentTeamsConstraint = {
    tournament_teams_creator_steam_id_tournament_id_key: 'tournament_teams_creator_steam_id_tournament_id_key' as const,
    tournament_teams_pkey: 'tournament_teams_pkey' as const,
    tournament_teams_tournament_id_name_key: 'tournament_teams_tournament_id_name_key' as const,
+   tournament_teams_tournament_id_seed_key: 'tournament_teams_tournament_id_seed_key' as const,
    tournament_teams_tournament_id_team_id_key: 'tournament_teams_tournament_id_team_id_key' as const
 }
 

@@ -18494,6 +18494,12 @@ export default {
             "tournament": [
                 2308
             ],
+            "tournament_bracket": [
+                2050
+            ],
+            "tournament_stage": [
+                2137
+            ],
             "tv_delay": [
                 9
             ],
@@ -18661,6 +18667,12 @@ export default {
             "tournament": [
                 2317
             ],
+            "tournament_bracket": [
+                2061
+            ],
+            "tournament_stage": [
+                2147
+            ],
             "tv_delay": [
                 10
             ],
@@ -18755,6 +18767,12 @@ export default {
             ],
             "tournament": [
                 2326
+            ],
+            "tournament_bracket": [
+                2070
+            ],
+            "tournament_stage": [
+                2159
             ],
             "tv_delay": [
                 9
@@ -18929,6 +18947,12 @@ export default {
             ],
             "tournament": [
                 2328
+            ],
+            "tournament_bracket": [
+                2072
+            ],
+            "tournament_stage": [
+                2161
             ],
             "tv_delay": [
                 1405
@@ -38667,6 +38691,12 @@ export default {
             "match_number": [
                 9
             ],
+            "match_options_id": [
+                2350
+            ],
+            "options": [
+                1141
+            ],
             "parent_bracket": [
                 2050
             ],
@@ -38962,6 +38992,12 @@ export default {
             "match_number": [
                 10
             ],
+            "match_options_id": [
+                2351
+            ],
+            "options": [
+                1145
+            ],
             "parent_bracket": [
                 2061
             ],
@@ -39057,6 +39093,12 @@ export default {
             "match_number": [
                 9
             ],
+            "match_options_id": [
+                2350
+            ],
+            "options": [
+                1152
+            ],
             "parent_bracket": [
                 2070
             ],
@@ -39119,6 +39161,9 @@ export default {
             "match_number": [
                 9
             ],
+            "match_options_id": [
+                2350
+            ],
             "parent_bracket_id": [
                 2350
             ],
@@ -39167,6 +39212,9 @@ export default {
                 1405
             ],
             "match_number": [
+                1405
+            ],
+            "match_options_id": [
                 1405
             ],
             "parent_bracket_id": [
@@ -39219,6 +39267,9 @@ export default {
             "match_number": [
                 9
             ],
+            "match_options_id": [
+                2350
+            ],
             "parent_bracket_id": [
                 2350
             ],
@@ -39267,6 +39318,9 @@ export default {
                 1405
             ],
             "match_number": [
+                1405
+            ],
+            "match_options_id": [
                 1405
             ],
             "parent_bracket_id": [
@@ -39367,6 +39421,12 @@ export default {
             "match_number": [
                 1405
             ],
+            "match_options_id": [
+                1405
+            ],
+            "options": [
+                1154
+            ],
             "parent_bracket": [
                 2072
             ],
@@ -39445,6 +39505,9 @@ export default {
             ],
             "match_number": [
                 9
+            ],
+            "match_options_id": [
+                2350
             ],
             "parent_bracket_id": [
                 2350
@@ -39632,6 +39695,9 @@ export default {
             ],
             "match_number": [
                 9
+            ],
+            "match_options_id": [
+                2350
             ],
             "parent_bracket_id": [
                 2350
@@ -40368,11 +40434,17 @@ export default {
             "id": [
                 2350
             ],
+            "match_options_id": [
+                2350
+            ],
             "max_teams": [
                 9
             ],
             "min_teams": [
                 9
+            ],
+            "options": [
+                1141
             ],
             "order": [
                 9
@@ -40641,11 +40713,17 @@ export default {
             "id": [
                 2351
             ],
+            "match_options_id": [
+                2351
+            ],
             "max_teams": [
                 10
             ],
             "min_teams": [
                 10
+            ],
+            "options": [
+                1145
             ],
             "order": [
                 10
@@ -40727,11 +40805,17 @@ export default {
             "id": [
                 2350
             ],
+            "match_options_id": [
+                2350
+            ],
             "max_teams": [
                 9
             ],
             "min_teams": [
                 9
+            ],
+            "options": [
+                1152
             ],
             "order": [
                 9
@@ -40762,6 +40846,9 @@ export default {
             "id": [
                 2350
             ],
+            "match_options_id": [
+                2350
+            ],
             "max_teams": [
                 9
             ],
@@ -40783,6 +40870,9 @@ export default {
                 1405
             ],
             "id": [
+                1405
+            ],
+            "match_options_id": [
                 1405
             ],
             "max_teams": [
@@ -40808,6 +40898,9 @@ export default {
             "id": [
                 2350
             ],
+            "match_options_id": [
+                2350
+            ],
             "max_teams": [
                 9
             ],
@@ -40829,6 +40922,9 @@ export default {
                 1405
             ],
             "id": [
+                1405
+            ],
+            "match_options_id": [
                 1405
             ],
             "max_teams": [
@@ -40896,11 +40992,17 @@ export default {
             "id": [
                 1405
             ],
+            "match_options_id": [
+                1405
+            ],
             "max_teams": [
                 1405
             ],
             "min_teams": [
                 1405
+            ],
+            "options": [
+                1154
             ],
             "order": [
                 1405
@@ -40946,6 +41048,9 @@ export default {
                 9
             ],
             "id": [
+                2350
+            ],
+            "match_options_id": [
                 2350
             ],
             "max_teams": [
@@ -41088,6 +41193,9 @@ export default {
                 9
             ],
             "id": [
+                2350
+            ],
+            "match_options_id": [
                 2350
             ],
             "max_teams": [
