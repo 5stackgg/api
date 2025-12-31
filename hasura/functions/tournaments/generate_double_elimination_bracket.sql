@@ -129,10 +129,10 @@ BEGIN
                 SET parent_bracket_id = gf_id
                 WHERE id = lb_final_id;
 
-            -- Reset Final
-            INSERT INTO tournament_brackets(round, tournament_stage_id, match_number, "group", path)
-                VALUES (wb_rounds+2, _stage_id, 1, g, 'WB')
-                RETURNING id INTO reset_final_id;
+            -- -- Reset Final
+            -- INSERT INTO tournament_brackets(round, tournament_stage_id, match_number, "group", path)
+            --     VALUES (wb_rounds+2, _stage_id, 1, g, 'WB')
+            --     RETURNING id INTO reset_final_id;
 
             RAISE NOTICE 'Group %: LB consolidation round % and WB Grand Final created', g, lb_rounds+1;
         END IF;
