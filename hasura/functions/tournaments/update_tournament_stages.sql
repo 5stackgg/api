@@ -18,6 +18,7 @@ DECLARE
     seed_1 int;
     seed_2 int;
     stage_target_size int;
+    match_counter int;
 BEGIN
     -- Get tournament status for logging
     SELECT status INTO tournament_status
@@ -62,7 +63,6 @@ BEGIN
                 total_matches_per_group int;
                 matches_per_round int;
                 round_count int;
-                match_counter int;
                 i int;
                 j int;
                 round_num int;
@@ -224,6 +224,7 @@ BEGIN
                 RAISE NOTICE '  => Round 1: Reset bracket_idx to 0, bracket_order length: %', array_length(bracket_order, 1);
             END IF;
 
+            match_counter := 0;
             -- Create matches alternating between groups
             FOR match_idx IN 1..matches_in_round LOOP
 
@@ -262,8 +263,9 @@ BEGIN
                         END IF;
                         
                         IF seed_1 IS NOT NULL AND seed_2 IS NOT NULL THEN
+                            match_counter := match_counter + 1;
                             INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", team_1_seed, team_2_seed, path)
-                            VALUES (round_num, stage.id, match_idx, group_num, seed_1, seed_2, 'WB')
+                            VALUES (round_num, stage.id, match_counter, group_num, seed_1, seed_2, 'WB')
                             RETURNING id INTO new_id;
                                 
                             RAISE NOTICE '      => Created round % group % match %: id=%, seeds: % vs % (effective_teams: %, bracket_idx: %)', 
