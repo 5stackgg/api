@@ -232,3 +232,24 @@ update_permissions:
                   is_organizer:
                     _eq: true
     comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        _or:
+          - matches:
+              is_organizer:
+                _eq: true
+          - tournament:
+              is_organizer:
+                _eq: true
+          - tournament_stage:
+              tournament:
+                is_organizer:
+                  _eq: true
+          - tournament_bracket:
+              stage:
+                tournament:
+                  is_organizer:
+                    _eq: true
+    comment: ""
