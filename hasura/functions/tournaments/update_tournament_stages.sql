@@ -240,16 +240,17 @@ BEGIN
                     raise notice 'round %: unassigned_seeds: %, bracket_idx: %', round_num, unassigned_seeds, bracket_idx;
 
                     -- Get seed positions from bracket order (1-based array indexing)
-                    IF bracket_order IS NOT NULL AND bracket_idx * 2 + 1 <= array_length(bracket_order, 1) THEN
-                        seed_1 := bracket_order[bracket_idx * 2 + 1];
-                        unassigned_seeds := array_remove(unassigned_seeds, seed_1);
+                    raise notice 'seed 1 index: %', bracket_idx * 2 + 1;
+                    raise notice 'seed 2 index: %', bracket_idx * 2 + 2;
+
+                    IF unassigned_seeds IS NOT NULL AND bracket_idx * 2 + 1 <= array_length(unassigned_seeds, 1) THEN
+                        seed_1 := unassigned_seeds[bracket_idx * 2 + 1];
                     ELSE
                         seed_1 := NULL;
                     END IF;
                     
-                    IF bracket_order IS NOT NULL AND bracket_idx * 2 + 2 <= array_length(bracket_order, 1) THEN
-                        seed_2 := bracket_order[bracket_idx * 2 + 2];
-                        unassigned_seeds := array_remove(unassigned_seeds, seed_2);
+                    IF unassigned_seeds IS NOT NULL AND bracket_idx * 2 + 2 <= array_length(unassigned_seeds, 1) THEN
+                        seed_2 := unassigned_seeds[bracket_idx * 2 + 2];
                     ELSE
                         seed_2 := NULL;
                     END IF;
@@ -272,14 +273,7 @@ BEGIN
                                 
                             RAISE NOTICE '      => Created round % group % match %: id=%, seeds: % vs % (effective_teams: %, bracket_idx: %)', 
                                 round_num, group_num, match_idx, new_id, seed_1, seed_2, effective_teams, bracket_idx;
-                        ELSE
-                            IF seed_1 IS NOT NULL THEN
-                                unassigned_seeds := unassigned_seeds || seed_1;
-                            END IF;
-                            IF seed_2 IS NOT NULL THEN
-                                unassigned_seeds := unassigned_seeds || seed_2;
-                            END IF;
-                        END IF;       
+                        END IF;
                     ELSE
                         -- For other rounds: no seed positions yet (will be set when teams advance)
                         INSERT INTO tournament_brackets (round, tournament_stage_id, match_number, "group", path, team_1_seed, team_2_seed)
@@ -287,6 +281,11 @@ BEGIN
                         RETURNING id INTO new_id;
                         RAISE NOTICE '      => Created round % group % match %: id=%', round_num, group_num, match_idx, new_id;
                     END IF;
+
+                    if(seed_1 IS NOT NULL AND seed_1 IS NOT NULL) then
+                        unassigned_seeds := array_remove(unassigned_seeds, seed_1);
+                        unassigned_seeds := array_remove(unassigned_seeds, seed_2);
+                    end if;
 
                     bracket_idx := bracket_idx + 1;
                 END;
