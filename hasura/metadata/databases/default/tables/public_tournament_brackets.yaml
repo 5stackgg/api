@@ -47,11 +47,13 @@ select_permissions:
       columns:
         - bye
         - created_at
+        - finished
         - group
         - id
         - loser_parent_bracket_id
         - match_id
         - match_number
+        - match_options_id
         - parent_bracket_id
         - path
         - round
@@ -63,4 +65,16 @@ select_permissions:
         - tournament_team_id_2
       filter: {}
       allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - match_options_id
+      filter: {}
+      check:
+        stage:
+          tournament:
+            is_organizer:
+              _eq: true
     comment: ""
