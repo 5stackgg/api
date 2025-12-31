@@ -5,7 +5,7 @@ object_relationships:
   - name: e_tournament_stage_type
     using:
       foreign_key_constraint_on: type
-  - name: match_options
+  - name: options
     using:
       manual_configuration:
         column_mapping:

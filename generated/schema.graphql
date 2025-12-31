@@ -13198,6 +13198,12 @@ type match_options {
 
   """An object relationship"""
   tournament: tournaments
+
+  """An object relationship"""
+  tournament_bracket: tournament_brackets
+
+  """An object relationship"""
+  tournament_stage: tournament_stages
   tv_delay: Int!
   type: e_match_types_enum!
 }
@@ -13266,6 +13272,8 @@ input match_options_bool_exp {
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
+  tournament_bracket: tournament_brackets_bool_exp
+  tournament_stage: tournament_stages_bool_exp
   tv_delay: Int_comparison_exp
   type: e_match_types_enum_comparison_exp
 }
@@ -13316,6 +13324,8 @@ input match_options_insert_input {
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
+  tournament_bracket: tournament_brackets_obj_rel_insert_input
+  tournament_stage: tournament_stages_obj_rel_insert_input
   tv_delay: Int
   type: e_match_types_enum
 }
@@ -13399,6 +13409,8 @@ input match_options_order_by {
   tech_timeout_setting: order_by
   timeout_setting: order_by
   tournament: tournaments_order_by
+  tournament_bracket: tournament_brackets_order_by
+  tournament_stage: tournament_stages_order_by
   tv_delay: order_by
   type: order_by
 }
@@ -40305,6 +40317,10 @@ type tournament_brackets {
   match: matches
   match_id: uuid
   match_number: Int
+  match_options_id: uuid
+
+  """An object relationship"""
+  options: match_options
 
   """An object relationship"""
   parent_bracket: tournament_brackets
@@ -40444,6 +40460,8 @@ input tournament_brackets_bool_exp {
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_number: Int_comparison_exp
+  match_options_id: uuid_comparison_exp
+  options: match_options_bool_exp
   parent_bracket: tournament_brackets_bool_exp
   parent_bracket_id: uuid_comparison_exp
   path: String_comparison_exp
@@ -40499,6 +40517,8 @@ input tournament_brackets_insert_input {
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_number: Int
+  match_options_id: uuid
+  options: match_options_obj_rel_insert_input
   parent_bracket: tournament_brackets_obj_rel_insert_input
   parent_bracket_id: uuid
   path: String
@@ -40522,6 +40542,7 @@ type tournament_brackets_max_fields {
   loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
+  match_options_id: uuid
   parent_bracket_id: uuid
   path: String
   round: Int
@@ -40543,6 +40564,7 @@ input tournament_brackets_max_order_by {
   loser_parent_bracket_id: order_by
   match_id: order_by
   match_number: order_by
+  match_options_id: order_by
   parent_bracket_id: order_by
   path: order_by
   round: order_by
@@ -40562,6 +40584,7 @@ type tournament_brackets_min_fields {
   loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
+  match_options_id: uuid
   parent_bracket_id: uuid
   path: String
   round: Int
@@ -40583,6 +40606,7 @@ input tournament_brackets_min_order_by {
   loser_parent_bracket_id: order_by
   match_id: order_by
   match_number: order_by
+  match_options_id: order_by
   parent_bracket_id: order_by
   path: order_by
   round: order_by
@@ -40636,6 +40660,8 @@ input tournament_brackets_order_by {
   match: matches_order_by
   match_id: order_by
   match_number: order_by
+  match_options_id: order_by
+  options: match_options_order_by
   parent_bracket: tournament_brackets_order_by
   parent_bracket_id: order_by
   path: order_by
@@ -40683,6 +40709,9 @@ enum tournament_brackets_select_column {
 
   """column name"""
   match_number
+
+  """column name"""
+  match_options_id
 
   """column name"""
   parent_bracket_id
@@ -40746,6 +40775,7 @@ input tournament_brackets_set_input {
   loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
+  match_options_id: uuid
   parent_bracket_id: uuid
   path: String
   round: Int
@@ -40838,6 +40868,7 @@ input tournament_brackets_stream_cursor_value_input {
   loser_parent_bracket_id: uuid
   match_id: uuid
   match_number: Int
+  match_options_id: uuid
   parent_bracket_id: uuid
   path: String
   round: Int
@@ -40896,6 +40927,9 @@ enum tournament_brackets_update_column {
 
   """column name"""
   match_number
+
+  """column name"""
+  match_options_id
 
   """column name"""
   parent_bracket_id
@@ -41372,8 +41406,12 @@ type tournament_stages {
   e_tournament_stage_type: e_tournament_stage_types!
   groups: Int
   id: uuid!
+  match_options_id: uuid
   max_teams: Int!
   min_teams: Int!
+
+  """An object relationship"""
+  options: match_options
   order: Int!
 
   """An array relationship"""
@@ -41520,8 +41558,10 @@ input tournament_stages_bool_exp {
   e_tournament_stage_type: e_tournament_stage_types_bool_exp
   groups: Int_comparison_exp
   id: uuid_comparison_exp
+  match_options_id: uuid_comparison_exp
   max_teams: Int_comparison_exp
   min_teams: Int_comparison_exp
+  options: match_options_bool_exp
   order: Int_comparison_exp
   results: v_team_stage_results_bool_exp
   results_aggregate: v_team_stage_results_aggregate_bool_exp
@@ -41580,8 +41620,10 @@ input tournament_stages_insert_input {
   e_tournament_stage_type: e_tournament_stage_types_obj_rel_insert_input
   groups: Int
   id: uuid
+  match_options_id: uuid
   max_teams: Int
   min_teams: Int
+  options: match_options_obj_rel_insert_input
   order: Int
   results: v_team_stage_results_arr_rel_insert_input
   settings: jsonb
@@ -41594,6 +41636,7 @@ input tournament_stages_insert_input {
 type tournament_stages_max_fields {
   groups: Int
   id: uuid
+  match_options_id: uuid
   max_teams: Int
   min_teams: Int
   order: Int
@@ -41606,6 +41649,7 @@ order by max() on columns of table "tournament_stages"
 input tournament_stages_max_order_by {
   groups: order_by
   id: order_by
+  match_options_id: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -41616,6 +41660,7 @@ input tournament_stages_max_order_by {
 type tournament_stages_min_fields {
   groups: Int
   id: uuid
+  match_options_id: uuid
   max_teams: Int
   min_teams: Int
   order: Int
@@ -41628,6 +41673,7 @@ order by min() on columns of table "tournament_stages"
 input tournament_stages_min_order_by {
   groups: order_by
   id: order_by
+  match_options_id: order_by
   max_teams: order_by
   min_teams: order_by
   order: order_by
@@ -41670,8 +41716,10 @@ input tournament_stages_order_by {
   e_tournament_stage_type: e_tournament_stage_types_order_by
   groups: order_by
   id: order_by
+  match_options_id: order_by
   max_teams: order_by
   min_teams: order_by
+  options: match_options_order_by
   order: order_by
   results_aggregate: v_team_stage_results_aggregate_order_by
   settings: order_by
@@ -41701,6 +41749,9 @@ enum tournament_stages_select_column {
   id
 
   """column name"""
+  match_options_id
+
+  """column name"""
   max_teams
 
   """column name"""
@@ -41725,6 +41776,7 @@ input type for updating data in table "tournament_stages"
 input tournament_stages_set_input {
   groups: Int
   id: uuid
+  match_options_id: uuid
   max_teams: Int
   min_teams: Int
   order: Int
@@ -41802,6 +41854,7 @@ input tournament_stages_stream_cursor_input {
 input tournament_stages_stream_cursor_value_input {
   groups: Int
   id: uuid
+  match_options_id: uuid
   max_teams: Int
   min_teams: Int
   order: Int
@@ -41837,6 +41890,9 @@ enum tournament_stages_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  match_options_id
 
   """column name"""
   max_teams
@@ -42951,6 +43007,11 @@ enum tournament_teams_constraint {
   unique or primary key constraint on columns "tournament_id", "name"
   """
   tournament_teams_tournament_id_name_key
+
+  """
+  unique or primary key constraint on columns "tournament_id", "seed"
+  """
+  tournament_teams_tournament_id_seed_key
 
   """
   unique or primary key constraint on columns "tournament_id", "team_id"

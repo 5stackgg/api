@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION public.tau_tournament_brackets() RETURNS TRIGGER
     AS $$
 DECLARE
     stage_type text;
+    stage_has_matches boolean;
 BEGIN
      IF OLD.match_id IS NOT NULL THEN
         return NEW;
@@ -34,6 +35,19 @@ BEGIN
              PERFORM schedule_tournament_match(NEW);
          END IF;
      END IF;
+
+    -- Check if stage has started (has at least one match created)
+    SELECT EXISTS (
+        SELECT 1 
+        FROM tournament_brackets tb 
+        WHERE tb.tournament_stage_id = NEW.tournament_stage_id
+        AND tb.match_id IS NOT NULL
+    ) INTO stage_has_matches;
+
+    -- Prevent match_options_id changes once bracket has started
+    IF stage_has_matches AND OLD.match_options_id IS DISTINCT FROM NEW.match_options_id THEN
+        RAISE EXCEPTION 'Unable to modify match options for a bracket that has already started';
+    END IF;
 
 	RETURN NEW;
 END;

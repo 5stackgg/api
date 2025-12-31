@@ -14,6 +14,15 @@ object_relationships:
   - name: match
     using:
       foreign_key_constraint_on: match_id
+  - name: options
+    using:
+      manual_configuration:
+        column_mapping:
+          match_options_id: id
+        insertion_order: null
+        remote_table:
+          name: match_options
+          schema: public
   - name: parent_bracket
     using:
       manual_configuration:
@@ -38,11 +47,13 @@ select_permissions:
       columns:
         - bye
         - created_at
+        - finished
         - group
         - id
         - loser_parent_bracket_id
         - match_id
         - match_number
+        - match_options_id
         - parent_bracket_id
         - path
         - round
@@ -54,4 +65,16 @@ select_permissions:
         - tournament_team_id_2
       filter: {}
       allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - match_options_id
+      filter: {}
+      check:
+        stage:
+          tournament:
+            is_organizer:
+              _eq: true
     comment: ""
