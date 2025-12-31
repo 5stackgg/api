@@ -97,7 +97,6 @@ BEGIN
                 bye_seed, bye_match.id, bye_match.match_number, bye_match.parent_bracket_id;
         END LOOP;
         
-        -- Now delete the bye matches
         DELETE FROM tournament_brackets
         WHERE tournament_stage_id = _stage_id
           AND round = 1
