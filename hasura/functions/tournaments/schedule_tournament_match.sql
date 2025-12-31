@@ -80,6 +80,8 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      -- Check if stage has match_options_id first, otherwise use tournament match_options_id
      IF stage.match_options_id IS NOT NULL THEN
          _match_options_id := stage.match_options_id;
+     ELSE IF bracket.match_options_id IS NOT NULL THEN
+         _match_options_id := bracket.match_options_id;
      ELSE
          _match_options_id := tournament.match_options_id;
      END IF;

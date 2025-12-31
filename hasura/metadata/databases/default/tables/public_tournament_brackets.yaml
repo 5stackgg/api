@@ -14,6 +14,15 @@ object_relationships:
   - name: match
     using:
       foreign_key_constraint_on: match_id
+  - name: options
+    using:
+      manual_configuration:
+        column_mapping:
+          match_options_id: id
+        insertion_order: null
+        remote_table:
+          name: match_options
+          schema: public
   - name: parent_bracket
     using:
       manual_configuration:

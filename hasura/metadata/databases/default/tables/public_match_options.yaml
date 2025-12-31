@@ -12,6 +12,15 @@ object_relationships:
         table:
           name: tournaments
           schema: public
+  - name: tournament_bracket
+    using:
+      manual_configuration:
+        column_mapping:
+          id: match_options_id
+        insertion_order: null
+        remote_table:
+          name: tournament_brackets
+          schema: public
   - name: tournament_stage
     using:
       manual_configuration:
@@ -144,6 +153,11 @@ update_permissions:
               tournament:
                 is_organizer:
                   _eq: true
+          - tournament_bracket:
+              stage:
+                tournament:
+                  is_organizer:
+                    _eq: true
       check:
         _or:
           - matches:
@@ -156,6 +170,11 @@ update_permissions:
               tournament:
                 is_organizer:
                   _eq: true
+          - tournament_bracket:
+              stage:
+                tournament:
+                  is_organizer:
+                    _eq: true
     comment: ""
   - role: user
     permission:
@@ -190,6 +209,11 @@ update_permissions:
               tournament:
                 is_organizer:
                   _eq: true
+          - tournament_bracket:
+              stage:
+                tournament:
+                  is_organizer:
+                    _eq: true
       check:
         _or:
           - matches:
@@ -202,4 +226,9 @@ update_permissions:
               tournament:
                 is_organizer:
                   _eq: true
+          - tournament_bracket:
+              stage:
+                tournament:
+                  is_organizer:
+                    _eq: true
     comment: ""
