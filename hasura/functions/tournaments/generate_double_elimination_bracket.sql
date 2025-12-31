@@ -140,6 +140,3 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-
-
-update tournament_stages set max_teams = 8 where id = '1f09d465-1dfe-47b3-a839-deb7e5a68257'

@@ -1,4 +1,4 @@
-alter table "public"."tournament_brackets" add column "match_options_id" uuid
+alter table "public"."tournament_brackets" add column if not exists "match_options_id" uuid
  null;
 
 alter table "public"."tournament_brackets"
