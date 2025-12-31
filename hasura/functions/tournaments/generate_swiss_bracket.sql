@@ -15,6 +15,9 @@ DECLARE
     seed_1 int;
     seed_2 int;
     bracket_idx int;
+    match_options_id uuid;
+    is_elimination_match boolean;
+    is_advancement_match boolean;
 BEGIN
     -- Valve-style Swiss system: teams need 3 wins to advance or 3 losses to be eliminated
     -- Max rounds formula: 2 × wins_needed - 1
@@ -166,6 +169,19 @@ BEGIN
                         wins, losses, pool_group, matches_needed, ROUND(matches_calc, 2);
                 END;
                 
+                -- Check if this is an elimination or advancement match
+                -- Elimination: losses = wins_needed - 1 (next loss eliminates)
+                -- Advancement: wins = wins_needed - 1 (next win advances)
+                is_elimination_match := (losses = wins_needed - 1);
+                is_advancement_match := (wins = wins_needed - 1);
+                
+                -- Get match_options_id, creating a new one with best_of=3 if it's elimination/advancement
+                IF is_elimination_match OR is_advancement_match THEN
+                    match_options_id := update_match_options_best_of(_stage_id);
+                ELSE
+                    match_options_id := NULL;
+                END IF;
+                
                 -- Create placeholder matches for this pool
                 -- Each pool gets its own match_number sequence starting from 1
                 FOR match_num IN 1..matches_needed LOOP
@@ -174,14 +190,16 @@ BEGIN
                         tournament_stage_id,
                         match_number,
                         "group",
-                        path
+                        path,
+                        match_options_id
                     )
                     VALUES (
                         round_num,
                         _stage_id,
                         match_num,
                         pool_group,
-                        'WB'
+                        'WB',
+                        match_options_id
                     );
                     matches_created := matches_created + 1;
                 END LOOP;

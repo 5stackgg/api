@@ -116,7 +116,6 @@ BEGIN
 
         -- Create Grand Final / Reset Final if needed
         IF wb_rounds > 0 AND _next_stage_max_teams=1 THEN
-            -- Get match_options_id, creating a new one with best_of=3 if original has best_of=1
             grand_finals_match_options_id := update_match_options_best_of(_stage_id);
         
             -- WB Grand Final
