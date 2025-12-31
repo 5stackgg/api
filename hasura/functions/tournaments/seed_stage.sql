@@ -96,7 +96,6 @@ BEGIN
             SELECT tb.id, tb.round, tb."group", tb.match_number, tb.team_1_seed, tb.team_2_seed
             FROM tournament_brackets tb
             WHERE tb.tournament_stage_id = stage.id
-                AND tb.round = 1
                 AND COALESCE(tb.path, 'WB') = 'WB'  -- never seed or mark byes on loser brackets
                 AND (tb.team_1_seed IS NOT NULL OR tb.team_2_seed IS NOT NULL)
             ORDER BY tb."group" ASC, tb.match_number ASC
@@ -160,7 +159,7 @@ BEGIN
             SET tournament_team_id_1 = team_1_id,
                 tournament_team_id_2 = team_2_id,
                 bye = (team_1_id IS NULL OR team_2_id IS NULL)
-            WHERE id = bracket.id;
+            WHERE id = bracket.id and round = 1;
             
             RAISE NOTICE '  Bracket %: Seed % (team %) vs Seed % (team %)', 
                 bracket.match_number, 
