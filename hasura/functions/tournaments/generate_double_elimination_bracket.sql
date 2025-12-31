@@ -52,11 +52,9 @@ BEGIN
             IF r = 1 THEN
                 lb_match_count := P / 4; -- WB R1 losers, paired 2-at-a-time
             ELSE
-                if r % 2 = 0 then
-                    lb_match_count := P / POWER(2, ((r / 2) + 1));
-                else
-                    lb_match_count := P / POWER(2, ((r + 1) / 2));
-                end if;
+                -- Pattern: rounds 1-2 use 2^2, rounds 3-4 use 2^3, rounds 5-6 use 2^4, etc.
+                -- Formula: exponent = CEIL((r+2)/2)
+                lb_match_count := P / POWER(2, CEIL((r + 2)::numeric / 2)::int);
             END IF;
 
             RAISE NOTICE 'LB round %: % matches', r, lb_match_count;
