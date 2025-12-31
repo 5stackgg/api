@@ -28,6 +28,7 @@ DECLARE
     lb_consolidation_id uuid;
     gf_id uuid;
     reset_final_id uuid;
+    grand_finals_match_options_id uuid;
 BEGIN
     P := POWER(2, CEIL(LOG(_teams_per_group::numeric) / LOG(2)))::int;
 
@@ -115,9 +116,12 @@ BEGIN
 
         -- Create Grand Final / Reset Final if needed
         IF wb_rounds > 0 AND _next_stage_max_teams=1 THEN
+            -- Get match_options_id, creating a new one with best_of=3 if original has best_of=1
+            grand_finals_match_options_id := update_match_options_best_of(_stage_id);
+        
             -- WB Grand Final
-            INSERT INTO tournament_brackets(round, tournament_stage_id, match_number, "group", path)
-            VALUES (wb_rounds+1, _stage_id, 1, g, 'WB')
+            INSERT INTO tournament_brackets(round, tournament_stage_id, match_number, "group", path, match_options_id)
+            VALUES (wb_rounds+1, _stage_id, 1, g, 'WB', grand_finals_match_options_id)
             RETURNING id INTO gf_id;
 
             SELECT id INTO lb_final_id
