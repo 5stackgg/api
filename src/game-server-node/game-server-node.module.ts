@@ -20,13 +20,13 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
 import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
-import { LoggingServiceService } from "./logging-service/logging-service.service";
 import { RedisModule } from "src/redis/redis.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { RconModule } from "src/rcon/rcon.module";
 import { CheckServerPluginVersions } from "./jobs/CheckServerPluginVersions";
 import { HasuraService } from "src/hasura/hasura.service";
 import { GetPluginVersions } from "./jobs/GetPluginVersions";
+import { K8sModule } from "src/k8s/k8s.module";
 
 @Module({
   providers: [
@@ -38,7 +38,6 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
     CheckServerPluginVersions,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
-    LoggingServiceService,
   ],
   imports: [
     RedisModule,
@@ -47,6 +46,7 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
     CacheModule,
     NotificationsModule,
     RconModule,
+    K8sModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,
@@ -73,7 +73,7 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
       },
     ),
   ],
-  exports: [LoggingServiceService, GameServerNodeService],
+  exports: [GameServerNodeService],
   controllers: [GameServerNodeController],
 })
 export class GameServerNodeModule implements OnApplicationBootstrap {

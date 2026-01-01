@@ -10,7 +10,7 @@ import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
-import { LoggingServiceService } from "./logging-service/logging-service.service";
+import { LoggingService } from "src/k8s/logging/logging.service";
 import { RconService } from "src/rcon/rcon.service";
 import { EventPattern } from "@nestjs/microservices";
 import { NodeStats } from "./interfaces/NodeStats";
@@ -29,7 +29,7 @@ export class GameServerNodeController {
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
     protected readonly tailscale: TailscaleService,
-    protected readonly loggingService: LoggingServiceService,
+    protected readonly loggingService: LoggingService,
     protected readonly gameServerNodeService: GameServerNodeService,
     @InjectQueue(GameServerQueues.GameUpdate) private gameUpdateQueue: Queue,
     @InjectQueue(GameServerQueues.NodeOffline)

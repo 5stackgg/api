@@ -47,6 +47,7 @@ import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
 import { MatchRelayService } from "./match-relay/match-relay.service";
 import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middleware";
+import { K8sModule } from "src/k8s/k8s.module";
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middlew
     SocketsModule,
     PostgresModule,
     NotificationsModule,
+    K8sModule,
     forwardRef(() => DiscordBotModule),
     MatchMaking,
     ChatModule,

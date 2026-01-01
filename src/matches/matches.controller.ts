@@ -369,7 +369,7 @@ export class MatchesController {
         server.is_dedicated
           ? RestartDedicatedServer.name
           : StopOnDemandServer.name,
-        { serverId },
+        { serverId, matchId },
         delay ? { delay: delay * 1000 } : undefined,
       );
 

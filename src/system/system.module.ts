@@ -16,12 +16,14 @@ import { GameServerNodeModule } from "src/game-server-node/game-server-node.modu
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { S3Module } from "src/s3/s3.module";
 import { PostgresModule } from "src/postgres/postgres.module";
+import { K8sModule } from "src/k8s/k8s.module";
 
 @Module({
   imports: [
     CacheModule,
     HasuraModule,
     GameServerNodeModule,
+    K8sModule,
     NotificationsModule,
     S3Module,
     PostgresModule,

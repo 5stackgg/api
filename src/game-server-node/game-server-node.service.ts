@@ -8,7 +8,7 @@ import { NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Redis } from "ioredis";
-import { LoggingServiceService } from "./logging-service/logging-service.service";
+import { LoggingService } from "src/k8s/logging/logging.service";
 import { PassThrough } from "stream";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { isJsonEqual } from "@utilities/isJsonEqual";
@@ -33,7 +33,7 @@ export class GameServerNodeService {
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
     redisManager: RedisManagerService,
-    protected readonly loggingService: LoggingServiceService,
+    protected readonly loggingService: LoggingService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.namespace = this.gameServerConfig.namespace;

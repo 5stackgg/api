@@ -39,6 +39,7 @@ import { SystemService } from "./system/system.service";
 import { ClientsModule } from "@nestjs/microservices";
 import { Transport } from "@nestjs/microservices";
 import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.module";
+import { K8sModule } from "./k8s/k8s.module";
 
 @Module({
   imports: [
@@ -118,6 +119,7 @@ import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.mo
     InvitesModule,
     DemosModule,
     DedicatedServersModule,
+    K8sModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

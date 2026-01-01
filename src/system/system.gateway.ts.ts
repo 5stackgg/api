@@ -1,6 +1,5 @@
 import { PassThrough } from "stream";
 import { Logger } from "@nestjs/common";
-import { LoggingServiceService } from "src/game-server-node/logging-service/logging-service.service";
 
 import {
   MessageBody,
@@ -11,6 +10,7 @@ import {
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
+import { LoggingService } from "src/k8s/logging/logging.service";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -18,7 +18,7 @@ import { GameServerNodeService } from "src/game-server-node/game-server-node.ser
 export class SystemGateway {
   constructor(
     protected readonly logger: Logger,
-    protected readonly loggingService: LoggingServiceService,
+    protected readonly loggingService: LoggingService,
   ) {}
 
   @SubscribeMessage("logs")

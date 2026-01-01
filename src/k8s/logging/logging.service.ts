@@ -11,7 +11,7 @@ import {
 } from "@kubernetes/client-node";
 
 @Injectable()
-export class LoggingServiceService {
+export class LoggingService {
   private coreApi: CoreV1Api;
   private batchApi: BatchV1Api;
   private namespace = "5stack";
@@ -73,11 +73,21 @@ export class LoggingServiceService {
       pods = await this.getPodsFromService(service);
     }
 
+    const podLogs: Promise<void>[] = [];
     for (const pod of pods) {
-      await Promise.all([
-        this.getLogsForPod(pod, stream, download, previous, 250, archive),
-      ]);
+      podLogs.push(
+        this.getLogsForPod(
+          pod,
+          stream,
+          download,
+          previous,
+          archive,
+          download ? undefined : 250,
+        ),
+      );
     }
+
+    await Promise.all(podLogs);
 
     if (pods.length === 0) {
       stream.end();
@@ -163,8 +173,8 @@ export class LoggingServiceService {
     stream: Writable,
     download = false,
     previous = false,
-    tailLines = 1,
     archive?: archiver.Archiver,
+    tailLines?: number,
   ) {
     let totalAdded = 0;
     let streamEnded = false;
