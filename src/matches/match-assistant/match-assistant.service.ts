@@ -797,7 +797,7 @@ export class MatchAssistantService {
           throw new FailedToCreateOnDemandServer();
         }
       },
-      10 * 1000,
+      10,
     );
   }
 
