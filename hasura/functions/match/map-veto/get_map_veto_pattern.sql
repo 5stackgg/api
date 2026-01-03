@@ -27,6 +27,8 @@ BEGIN
 
     IF best_of = 1 THEN
         base_pattern := ARRAY['Ban'];
+    ELSIF pool_size = best_of THEN
+        base_pattern := ARRAY['Pick'];
     ELSIF pool_size <= best_of + 2 THEN
         base_pattern := ARRAY['Ban', 'Pick', 'Pick'];
     ELSE
