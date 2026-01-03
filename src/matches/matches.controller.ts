@@ -365,13 +365,13 @@ export class MatchesController {
         `[${matchId}] adding stop / restart server job in ${delay} seconds`,
       );
 
-      await this.scheduledMatchesQueue.add(
-        server.is_dedicated
-          ? RestartDedicatedServer.name
-          : StopOnDemandServer.name,
-        { serverId, matchId },
-        delay ? { delay: delay * 1000 } : undefined,
-      );
+      if (!server.is_dedicated) {
+        await this.scheduledMatchesQueue.add(
+          StopOnDemandServer.name,
+          { matchId },
+          delay ? { delay: delay * 1000 } : undefined,
+        );
+      }
 
       await this.hasura.mutation({
         update_matches_by_pk: {
