@@ -3792,6 +3792,8 @@ export interface match_map_rounds {
     backup_file: (Scalars['String'] | null)
     created_at: Scalars['timestamptz']
     deleted_at: (Scalars['timestamptz'] | null)
+    /** A computed field, executes function "has_backup_file" */
+    has_backup_file: (Scalars['Boolean'] | null)
     id: Scalars['uuid']
     /** An array relationship */
     kills: player_kills[]
@@ -20422,6 +20424,8 @@ export interface match_map_roundsGenqlSelection{
     backup_file?: boolean | number
     created_at?: boolean | number
     deleted_at?: boolean | number
+    /** A computed field, executes function "has_backup_file" */
+    has_backup_file?: boolean | number
     id?: boolean | number
     /** An array relationship */
     kills?: (player_killsGenqlSelection & { __args?: {
@@ -20526,7 +20530,7 @@ export interface match_map_rounds_avg_order_by {lineup_1_money?: (order_by | nul
 
 
 /** Boolean expression to filter rows from the table "match_map_rounds". All fields are combined with a logical 'AND'. */
-export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),winning_side?: (String_comparison_exp | null)}
+export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),has_backup_file?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),winning_side?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_rounds" */
@@ -20603,7 +20607,7 @@ export interface match_map_rounds_on_conflict {constraint: match_map_rounds_cons
 
 
 /** Ordering options when selecting data from "match_map_rounds". */
-export interface match_map_rounds_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
+export interface match_map_rounds_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),has_backup_file?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_rounds */

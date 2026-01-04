@@ -11006,6 +11006,11 @@ type match_map_rounds {
   backup_file: String
   created_at: timestamptz!
   deleted_at: timestamptz
+
+  """
+  A computed field, executes function "has_backup_file"
+  """
+  has_backup_file: Boolean
   id: uuid!
 
   """An array relationship"""
@@ -11157,6 +11162,7 @@ input match_map_rounds_bool_exp {
   backup_file: String_comparison_exp
   created_at: timestamptz_comparison_exp
   deleted_at: timestamptz_comparison_exp
+  has_backup_file: Boolean_comparison_exp
   id: uuid_comparison_exp
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
@@ -11333,6 +11339,7 @@ input match_map_rounds_order_by {
   backup_file: order_by
   created_at: order_by
   deleted_at: order_by
+  has_backup_file: order_by
   id: order_by
   kills_aggregate: player_kills_aggregate_order_by
   lineup_1_money: order_by
