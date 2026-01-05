@@ -267,9 +267,15 @@ export class TypeSenseService {
     player.last_sign_in_at = player.last_sign_in_at || "~~";
 
     const elo = {
-      elo_competitive: player.elo["competitive"],
-      elo_wingman: player.elo["wingman"],
-      elo_duel: player.elo["duel"],
+      elo_competitive: player.elo["competitive"]
+        ? parseInt(String(player.elo["competitive"]), 10)
+        : null,
+      elo_wingman: player.elo["wingman"]
+        ? parseInt(String(player.elo["wingman"]), 10)
+        : null,
+      elo_duel: player.elo["duel"]
+        ? parseInt(String(player.elo["duel"]), 10)
+        : null,
     };
 
     delete player.elo;
