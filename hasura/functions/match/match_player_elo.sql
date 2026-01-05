@@ -48,13 +48,17 @@ DECLARE
     _player_kda FLOAT;
     _team_avg_kda FLOAT;
     _player_damage_percent FLOAT;
+    match_type text;
 BEGIN
+    SELECT "type" INTO match_type FROM match_options WHERE id = match_record.match_options_id;
+
     -- Get the player's current ELO value from the most recent record
     SELECT current INTO _current_player_elo
     FROM player_elo 
     WHERE steam_id = player_record.steam_id
     AND created_at < match_record.ended_at
     AND match_id != match_record.id
+    AND "type" = match_type
     ORDER BY created_at DESC
     LIMIT 1;
 
@@ -89,6 +93,7 @@ BEGIN
                     WHERE pr2.steam_id = mlp.steam_id
                     AND pr2.created_at < match_record.ended_at
                     AND pr2.match_id != match_record.id
+                    AND pr2."type" = match_type
                     ORDER BY pr2.created_at DESC
                     LIMIT 1
                 ), _default_elo
@@ -115,6 +120,7 @@ BEGIN
                     WHERE pr2.steam_id = mlp.steam_id
                     AND pr2.created_at < match_record.ended_at
                     AND pr2.match_id != match_record.id
+                    AND pr2."type" = match_type
                     ORDER BY pr2.created_at DESC
                     LIMIT 1
                 ), _default_elo
@@ -272,10 +278,12 @@ DECLARE
     current_elo INTEGER;
     new_elo INTEGER;
     ratings_created INTEGER := 0;
+    match_type text;
 BEGIN
     -- Get the match record
     SELECT * INTO match_record FROM matches WHERE id = _match_id;
-    
+    SELECT "type" INTO match_type FROM match_options WHERE id = match_record.match_options_id;
+
     IF match_record IS NULL THEN
         RETURN 0;
     END IF;
@@ -287,7 +295,7 @@ BEGIN
     END IF;
     
     -- Delete any existing ratings for this match to avoid duplicates
-    DELETE FROM player_elo WHERE match_id = _match_id;
+    DELETE FROM player_elo WHERE match_id = _match_id AND "type" = match_type;
     
     -- Get all players in this match
     FOR player_record IN
@@ -319,12 +327,14 @@ BEGIN
         END IF;
 
         INSERT INTO player_elo (
+            "type",
             match_id,
             steam_id,
             current,
             change,
             created_at
         ) VALUES (
+            match_type,
             match_record.id,
             player_record.steam_id,
             new_elo,

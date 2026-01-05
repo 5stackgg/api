@@ -16954,7 +16954,7 @@ type mutation_root {
   """
   delete single row from the table: "player_elo"
   """
-  delete_player_elo_by_pk(match_id: uuid!, steam_id: bigint!): player_elo
+  delete_player_elo_by_pk(match_id: uuid!, steam_id: bigint!, type: e_match_types_enum!): player_elo
 
   """
   delete data from the table: "player_flashes"
@@ -20457,8 +20457,29 @@ type mutation_root {
   update data of the table: "v_my_friends"
   """
   update_my_friends(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: my_friends_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: my_friends_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: my_friends_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: my_friends_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: my_friends_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: my_friends_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: my_friends_set_input
@@ -21447,7 +21468,10 @@ type my_friends {
   country: String
   created_at: timestamptz
   discord_id: String
-  elo: numeric
+  elo(
+    """JSON select path"""
+    path: String
+  ): jsonb
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
@@ -21532,6 +21556,11 @@ input my_friends_aggregate_order_by {
   variance: my_friends_variance_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input my_friends_append_input {
+  elo: jsonb
+}
+
 """
 input type for inserting array relation for remote table "v_my_friends"
 """
@@ -21541,7 +21570,6 @@ input my_friends_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type my_friends_avg_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21551,7 +21579,6 @@ type my_friends_avg_fields {
 order by avg() on columns of table "v_my_friends"
 """
 input my_friends_avg_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -21568,7 +21595,7 @@ input my_friends_bool_exp {
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   discord_id: String_comparison_exp
-  elo: numeric_comparison_exp
+  elo: jsonb_comparison_exp
   friend_steam_id: bigint_comparison_exp
   invited_by_steam_id: bigint_comparison_exp
   language: String_comparison_exp
@@ -21583,10 +21610,30 @@ input my_friends_bool_exp {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input my_friends_delete_at_path_input {
+  elo: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input my_friends_delete_elem_input {
+  elo: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input my_friends_delete_key_input {
+  elo: String
+}
+
+"""
 input type for incrementing numeric columns in table "v_my_friends"
 """
 input my_friends_inc_input {
-  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   steam_id: bigint
@@ -21600,7 +21647,7 @@ input my_friends_insert_input {
   country: String
   created_at: timestamptz
   discord_id: String
-  elo: numeric
+  elo: jsonb
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
@@ -21620,7 +21667,6 @@ type my_friends_max_fields {
   country: String
   created_at: timestamptz
   discord_id: String
-  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
@@ -21640,7 +21686,6 @@ input my_friends_max_order_by {
   country: order_by
   created_at: order_by
   discord_id: order_by
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   language: order_by
@@ -21658,7 +21703,6 @@ type my_friends_min_fields {
   country: String
   created_at: timestamptz
   discord_id: String
-  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
@@ -21678,7 +21722,6 @@ input my_friends_min_order_by {
   country: order_by
   created_at: order_by
   discord_id: order_by
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   language: order_by
@@ -21719,6 +21762,11 @@ input my_friends_order_by {
   role: order_by
   status: order_by
   steam_id: order_by
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input my_friends_prepend_input {
+  elo: jsonb
 }
 
 """
@@ -21795,7 +21843,7 @@ input my_friends_set_input {
   country: String
   created_at: timestamptz
   discord_id: String
-  elo: numeric
+  elo: jsonb
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
@@ -21810,7 +21858,6 @@ input my_friends_set_input {
 
 """aggregate stddev on columns"""
 type my_friends_stddev_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21820,7 +21867,6 @@ type my_friends_stddev_fields {
 order by stddev() on columns of table "v_my_friends"
 """
 input my_friends_stddev_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -21828,7 +21874,6 @@ input my_friends_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type my_friends_stddev_pop_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21838,7 +21883,6 @@ type my_friends_stddev_pop_fields {
 order by stddev_pop() on columns of table "v_my_friends"
 """
 input my_friends_stddev_pop_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -21846,7 +21890,6 @@ input my_friends_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type my_friends_stddev_samp_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21856,7 +21899,6 @@ type my_friends_stddev_samp_fields {
 order by stddev_samp() on columns of table "v_my_friends"
 """
 input my_friends_stddev_samp_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -21879,7 +21921,7 @@ input my_friends_stream_cursor_value_input {
   country: String
   created_at: timestamptz
   discord_id: String
-  elo: numeric
+  elo: jsonb
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   language: String
@@ -21894,7 +21936,6 @@ input my_friends_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type my_friends_sum_fields {
-  elo: numeric
   friend_steam_id: bigint
   invited_by_steam_id: bigint
   steam_id: bigint
@@ -21904,15 +21945,35 @@ type my_friends_sum_fields {
 order by sum() on columns of table "v_my_friends"
 """
 input my_friends_sum_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
 }
 
 input my_friends_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: my_friends_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: my_friends_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: my_friends_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: my_friends_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: my_friends_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: my_friends_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: my_friends_set_input
@@ -21923,7 +21984,6 @@ input my_friends_updates {
 
 """aggregate var_pop on columns"""
 type my_friends_var_pop_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21933,7 +21993,6 @@ type my_friends_var_pop_fields {
 order by var_pop() on columns of table "v_my_friends"
 """
 input my_friends_var_pop_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -21941,7 +22000,6 @@ input my_friends_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type my_friends_var_samp_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21951,7 +22009,6 @@ type my_friends_var_samp_fields {
 order by var_samp() on columns of table "v_my_friends"
 """
 input my_friends_var_samp_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -21959,7 +22016,6 @@ input my_friends_var_samp_order_by {
 
 """aggregate variance on columns"""
 type my_friends_variance_fields {
-  elo: Float
   friend_steam_id: Float
   invited_by_steam_id: Float
   steam_id: Float
@@ -21969,7 +22025,6 @@ type my_friends_variance_fields {
 order by variance() on columns of table "v_my_friends"
 """
 input my_friends_variance_order_by {
-  elo: order_by
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
@@ -23855,6 +23910,7 @@ type player_elo {
   """An object relationship"""
   player: players!
   steam_id: bigint!
+  type: e_match_types_enum!
 }
 
 """
@@ -23903,6 +23959,7 @@ input player_elo_bool_exp {
   match_id: uuid_comparison_exp
   player: players_bool_exp
   steam_id: bigint_comparison_exp
+  type: e_match_types_enum_comparison_exp
 }
 
 """
@@ -23910,7 +23967,7 @@ unique or primary key constraints on table "player_elo"
 """
 enum player_elo_constraint {
   """
-  unique or primary key constraint on columns "steam_id", "match_id"
+  unique or primary key constraint on columns "steam_id", "type", "match_id"
   """
   player_elo_pkey
 }
@@ -23935,6 +23992,7 @@ input player_elo_insert_input {
   match_id: uuid
   player: players_obj_rel_insert_input
   steam_id: bigint
+  type: e_match_types_enum
 }
 
 """aggregate max on columns"""
@@ -23984,12 +24042,14 @@ input player_elo_order_by {
   match_id: order_by
   player: players_order_by
   steam_id: order_by
+  type: order_by
 }
 
 """primary key columns input for table: player_elo"""
 input player_elo_pk_columns_input {
   match_id: uuid!
   steam_id: bigint!
+  type: e_match_types_enum!
 }
 
 """
@@ -24010,6 +24070,9 @@ enum player_elo_select_column {
 
   """column name"""
   steam_id
+
+  """column name"""
+  type
 }
 
 """
@@ -24021,6 +24084,7 @@ input player_elo_set_input {
   current: numeric
   match_id: uuid
   steam_id: bigint
+  type: e_match_types_enum
 }
 
 """aggregate stddev on columns"""
@@ -24062,6 +24126,7 @@ input player_elo_stream_cursor_value_input {
   current: numeric
   match_id: uuid
   steam_id: bigint
+  type: e_match_types_enum
 }
 
 """aggregate sum on columns"""
@@ -24089,6 +24154,9 @@ enum player_elo_update_column {
 
   """column name"""
   steam_id
+
+  """column name"""
+  type
 }
 
 input player_elo_updates {
@@ -27435,7 +27503,10 @@ type players {
   """
   A computed field, executes function "get_player_elo"
   """
-  elo: numeric
+  elo(
+    """JSON select path"""
+    path: String
+  ): jsonb
 
   """An array relationship"""
   elo_history(
@@ -28278,11 +28349,6 @@ type players_aggregate_fields {
 """aggregate avg on columns"""
 type players_avg_fields {
   """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
-  """
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
@@ -28325,7 +28391,7 @@ input players_bool_exp {
   deaths: player_kills_bool_exp
   deaths_aggregate: player_kills_aggregate_bool_exp
   discord_id: String_comparison_exp
-  elo: numeric_comparison_exp
+  elo: jsonb_comparison_exp
   elo_history: v_player_elo_bool_exp
   elo_history_aggregate: v_player_elo_aggregate_bool_exp
   flashed_by_players: player_flashes_bool_exp
@@ -28468,11 +28534,6 @@ type players_max_fields {
   """
   current_lobby_id: uuid
   discord_id: String
-
-  """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
   language: String
   last_sign_in_at: timestamptz
 
@@ -28511,11 +28572,6 @@ type players_min_fields {
   """
   current_lobby_id: uuid
   discord_id: String
-
-  """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
   language: String
   last_sign_in_at: timestamptz
 
@@ -28691,11 +28747,6 @@ input players_set_input {
 """aggregate stddev on columns"""
 type players_stddev_fields {
   """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
-  """
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
@@ -28715,11 +28766,6 @@ type players_stddev_fields {
 """aggregate stddev_pop on columns"""
 type players_stddev_pop_fields {
   """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
-  """
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
@@ -28738,11 +28784,6 @@ type players_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type players_stddev_samp_fields {
-  """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -28788,11 +28829,6 @@ input players_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type players_sum_fields {
-  """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -28862,11 +28898,6 @@ input players_updates {
 """aggregate var_pop on columns"""
 type players_var_pop_fields {
   """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
-  """
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
@@ -28886,11 +28917,6 @@ type players_var_pop_fields {
 """aggregate var_samp on columns"""
 type players_var_samp_fields {
   """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
-  """
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
@@ -28909,11 +28935,6 @@ type players_var_samp_fields {
 
 """aggregate variance on columns"""
 type players_variance_fields {
-  """
-  A computed field, executes function "get_player_elo"
-  """
-  elo: numeric
-
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -31440,7 +31461,7 @@ type query_root {
   ): player_elo_aggregate!
 
   """fetch data from the table: "player_elo" using primary key columns"""
-  player_elo_by_pk(match_id: uuid!, steam_id: bigint!): player_elo
+  player_elo_by_pk(match_id: uuid!, steam_id: bigint!, type: e_match_types_enum!): player_elo
 
   """An array relationship"""
   player_flashes(
@@ -37104,7 +37125,7 @@ type subscription_root {
   ): player_elo_aggregate!
 
   """fetch data from the table: "player_elo" using primary key columns"""
-  player_elo_by_pk(match_id: uuid!, steam_id: bigint!): player_elo
+  player_elo_by_pk(match_id: uuid!, steam_id: bigint!, type: e_match_types_enum!): player_elo
 
   """
   fetch data from the table in a streaming manner: "player_elo"
@@ -44972,6 +44993,7 @@ type v_player_elo {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  type: String
   updated_elo: Int
 }
 
@@ -45181,6 +45203,7 @@ input v_player_elo_bool_exp {
   player_steam_id: bigint_comparison_exp
   player_team_elo_avg: float8_comparison_exp
   team_avg_kda: float8_comparison_exp
+  type: String_comparison_exp
   updated_elo: Int_comparison_exp
 }
 
@@ -45209,6 +45232,7 @@ input v_player_elo_insert_input {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  type: String
   updated_elo: Int
 }
 
@@ -45234,6 +45258,7 @@ type v_player_elo_max_fields {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  type: String
   updated_elo: Int
 }
 
@@ -45261,6 +45286,7 @@ input v_player_elo_max_order_by {
   player_steam_id: order_by
   player_team_elo_avg: order_by
   team_avg_kda: order_by
+  type: order_by
   updated_elo: order_by
 }
 
@@ -45286,6 +45312,7 @@ type v_player_elo_min_fields {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  type: String
   updated_elo: Int
 }
 
@@ -45313,6 +45340,7 @@ input v_player_elo_min_order_by {
   player_steam_id: order_by
   player_team_elo_avg: order_by
   team_avg_kda: order_by
+  type: order_by
   updated_elo: order_by
 }
 
@@ -45339,6 +45367,7 @@ input v_player_elo_order_by {
   player_steam_id: order_by
   player_team_elo_avg: order_by
   team_avg_kda: order_by
+  type: order_by
   updated_elo: order_by
 }
 
@@ -45405,6 +45434,9 @@ enum v_player_elo_select_column {
 
   """column name"""
   team_avg_kda
+
+  """column name"""
+  type
 
   """column name"""
   updated_elo
@@ -45807,6 +45839,7 @@ input v_player_elo_stream_cursor_value_input {
   player_steam_id: bigint
   player_team_elo_avg: float8
   team_avg_kda: float8
+  type: String
   updated_elo: Int
 }
 

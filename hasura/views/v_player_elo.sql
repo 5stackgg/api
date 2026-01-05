@@ -1,9 +1,12 @@
+DROP VIEW IF EXISTS v_player_elo;
+
 
 -- Create a view that shows ELO changes for each match for each player
 CREATE OR REPLACE VIEW v_player_elo AS
 WITH match_player_elo_data AS (
     SELECT 
         m.id AS match_id,
+        mo."type" AS "type",
         m.created_at AS match_created_at,
         p.steam_id AS player_steam_id,
         p.name AS player_name,
@@ -18,9 +21,12 @@ WITH match_player_elo_data AS (
         match_lineup_players mlp ON (mlp.match_lineup_id = m.lineup_1_id OR mlp.match_lineup_id = m.lineup_2_id)
     JOIN 
         players p ON p.steam_id = mlp.steam_id
+    JOIN 
+        match_options mo ON mo.id = m.match_options_id
 )
 SELECT 
     match_id,
+    "type",
     match_created_at,
     player_steam_id,
     player_name,

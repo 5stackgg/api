@@ -175,7 +175,7 @@ export class MatchmakingLobbyService {
 
       let elo = 5000;
       if (players_by_pk?.elo) {
-        elo = Number(players_by_pk.elo);
+        elo = Number(players_by_pk.elo[type.toLowerCase()]);
       }
       _players.push({ steam_id, rank: elo });
     }

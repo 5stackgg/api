@@ -15,26 +15,27 @@ select_permissions:
   - role: guest
     permission:
       columns:
-        - player_steam_id
         - actual_score
-        - damage_percent
-        - expected_score
-        - kda
-        - opponent_team_elo_avg
-        - performance_multiplier
-        - player_team_elo_avg
-        - team_avg_kda
         - assists
         - current_elo
         - damage
+        - damage_percent
         - deaths
         - elo_change
+        - expected_score
         - k_factor
+        - kda
         - kills
-        - updated_elo
-        - match_result
-        - player_name
         - match_created_at
         - match_id
+        - match_result
+        - opponent_team_elo_avg
+        - performance_multiplier
+        - player_name
+        - player_steam_id
+        - player_team_elo_avg
+        - team_avg_kda
+        - type
+        - updated_elo
       filter: {}
     comment: ""

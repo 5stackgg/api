@@ -60,7 +60,27 @@ export class TypeSenseService {
       },
       { name: "steam_id", type: "string", index: true },
       { name: "teams", type: "string[]", optional: true },
-      { name: "elo", type: "int32", optional: true, index: true },
+      {
+        name: "elo_competitive",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "elo_wingman",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "elo_duel",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
       { name: "role", type: "string", optional: true, index: true },
       { name: "kills", type: "int32", optional: true },
       { name: "deaths", type: "int32", optional: true },
@@ -246,14 +266,21 @@ export class TypeSenseService {
     // this is to allow filtering
     player.last_sign_in_at = player.last_sign_in_at || "~~";
 
+    const elo = {
+      elo_competitive: player.elo["competitive"],
+      elo_wingman: player.elo["wingman"],
+      elo_duel: player.elo["duel"],
+    };
+
+    delete player.elo;
+
     return await this.client
       .collections("players")
       .documents()
       .upsert(
-        Object.assign({}, player, {
+        Object.assign({}, player, elo, {
           id: steamId,
           steam_id: steamId,
-          elo: player.elo ? parseInt(String(player.elo), 10) : 0,
           kills: player.kills_aggregate?.aggregate?.count
             ? parseInt(String(player.kills_aggregate?.aggregate?.count), 10)
             : 0,
