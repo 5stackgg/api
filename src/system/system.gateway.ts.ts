@@ -36,6 +36,8 @@ export class SystemGateway {
       return;
     }
 
+    const isJob = service.startsWith("cs-update:") || service.startsWith("m-");
+
     const stream = new PassThrough();
 
     stream.on("data", (chunk) => {
@@ -51,18 +53,25 @@ export class SystemGateway {
       stream.end();
     });
 
-    stream.on("end", () => {
+    stream.on("end", async () => {
+      let jobFinshed = false;
+      if (isJob) {
+        const jobStatus = await this.loggingService.getJobStatus(service);
+        if (jobStatus?.succeeded) {
+          jobFinshed = true;
+        }
+      }
+
       client.send(
         JSON.stringify({
           event: `logs:${service}`,
           data: JSON.stringify({
             end: true,
+            job_finshed: jobFinshed,
           }),
         }),
       );
     });
-
-    let isJob = service.startsWith("cs-update:");
 
     try {
       await this.loggingService.getServiceLogs(

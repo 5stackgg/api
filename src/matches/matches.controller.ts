@@ -30,7 +30,6 @@ import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
 import { MatchRelayService } from "./match-relay/match-relay.service";
-import { RestartDedicatedServer } from "./jobs/RestartDedicatedServer";
 
 @Controller("matches")
 export class MatchesController {

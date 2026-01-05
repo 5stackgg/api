@@ -1,6 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
-import { BatchV1Api, CoreV1Api, KubeConfig } from "@kubernetes/client-node";
+import {
+  BatchV1Api,
+  CoreV1Api,
+  KubeConfig,
+  Exec,
+} from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -447,7 +452,7 @@ export class MatchAssistantService {
         this.logger.log(`[${matchId}] assigning on demand server`);
 
         if (match.server_id) {
-          await this.stopOnDemandServer(matchId);
+          await this.stopOnDemandServer(matchId, true);
         }
 
         const kc = new KubeConfig();
@@ -613,6 +618,7 @@ export class MatchAssistantService {
                 name: jobName,
               },
               spec: {
+                ttlSecondsAfterFinished: 60 * 60 * 24,
                 template: {
                   metadata: {
                     name: jobName,
@@ -787,7 +793,7 @@ export class MatchAssistantService {
 
           return true;
         } catch (error) {
-          await this.stopOnDemandServer(matchId);
+          await this.stopOnDemandServer(matchId, true);
 
           this.logger.error(
             `[${matchId}] unable to create on demand server`,
@@ -889,8 +895,8 @@ export class MatchAssistantService {
     }
   }
 
-  public async stopOnDemandServer(matchId: string) {
-    this.logger.log(`[${matchId}] stopping match server`);
+  public async stopOnDemandServer(matchId: string, remove = false) {
+    this.logger.log(`[${matchId}] stopping match servers`);
 
     const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
 
@@ -908,6 +914,20 @@ export class MatchAssistantService {
 
       for (const pod of podList.items) {
         this.logger.verbose(`[${matchId}] remove pod`);
+
+        if (!remove) {
+          await new Exec(kc).exec(
+            this.namespace,
+            pod.metadata!.name!,
+            pod.spec!.containers?.at(0)?.name,
+            ["kill", "-SIGUSR1", "1"],
+            process.stdout,
+            process.stderr,
+            process.stdin,
+            false,
+          );
+          continue;
+        }
         await core
           .deleteNamespacedPod({
             name: pod.metadata!.name!,
@@ -920,7 +940,12 @@ export class MatchAssistantService {
           });
       }
 
+      if (!remove) {
+        return;
+      }
+
       this.logger.verbose(`[${matchId}] remove job`);
+
       await batch
         .deleteNamespacedJob({
           name: jobName,

@@ -262,6 +262,20 @@ export class LoggingService {
     }
   }
 
+  public async getJobStatus(jobName: string) {
+    try {
+      const job = await this.batchApi.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+      return job.status;
+    } catch (error) {
+      if (error.code.toString() !== "404") {
+        throw error;
+      }
+    }
+  }
+
   public async getJobPod(jobName: string) {
     try {
       const kc = new KubeConfig();
