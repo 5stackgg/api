@@ -235,6 +235,15 @@ export class LoggingService {
     const until = since ? new Date(since.until) : undefined;
 
     const endStream = () => {
+      if (oldestTimestamp) {
+        stream.emit(
+          "data",
+          JSON.stringify({
+            oldest_timestamp: oldestTimestamp.toISOString(),
+          }),
+        );
+      }
+
       if (!streamEnded) {
         streamEnded = true;
         stream.end();
@@ -304,17 +313,23 @@ export class LoggingService {
         for (let data of text.split(/\n/)) {
           const { timestamp, log } = this.parseLog(data);
 
-          if (since) {
-            if (new Date(timestamp)) {
-              const latestTimestamp = new Date(timestamp);
+          if (new Date(timestamp)) {
+            const latestTimestamp = new Date(timestamp);
 
-              if (!oldestTimestamp || oldestTimestamp > latestTimestamp) {
-                oldestTimestamp = latestTimestamp;
+            if (!oldestTimestamp || oldestTimestamp > latestTimestamp) {
+              if (!oldestTimestamp) {
+                stream.emit(
+                  "data",
+                  JSON.stringify({
+                    oldest_timestamp: latestTimestamp.toISOString(),
+                  }),
+                );
               }
+              oldestTimestamp = latestTimestamp;
+            }
 
-              if (latestTimestamp && latestTimestamp >= until) {
-                continue;
-              }
+            if (since && latestTimestamp && latestTimestamp >= until) {
+              continue;
             }
           }
 
