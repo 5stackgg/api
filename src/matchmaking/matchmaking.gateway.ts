@@ -62,6 +62,21 @@ export class MatchmakingGateway {
                   _eq: "public.max_acceptable_latency",
                 },
               },
+              {
+                name: {
+                  _eq: "public.matchmaking_competitive",
+                },
+              },
+              {
+                name: {
+                  _eq: "public.matchmaking_wingman",
+                },
+              },
+              {
+                name: {
+                  _eq: "public.matchmaking_duel",
+                },
+              },
             ],
           },
         },
@@ -69,6 +84,15 @@ export class MatchmakingGateway {
         value: true,
       },
     });
+
+    const matchmakingAllowed = settings.find(
+      (setting) =>
+        setting.name === `public.matchmaking_${data.type.toLowerCase()}`,
+    );
+
+    if (matchmakingAllowed?.value === "false") {
+      throw new JoinQueueError("Matchmaking is not allowed");
+    }
 
     const matchmakingEnabled = settings.find(
       (setting) => setting.name === "public.matchmaking",
