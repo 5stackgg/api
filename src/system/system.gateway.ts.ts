@@ -27,10 +27,15 @@ export class SystemGateway {
     data: {
       service: string;
       previous?: boolean;
+      tailLines?: number;
+      since?: {
+        start: string;
+        until: string;
+      };
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    let { service, previous } = data;
+    let { service, previous, tailLines, since } = data;
 
     if (!isRoleAbove(client.user.role, "administrator")) {
       return;
@@ -67,6 +72,7 @@ export class SystemGateway {
           event: `logs:${service}`,
           data: JSON.stringify({
             end: true,
+            partial: !!since,
             job_finshed: jobFinshed,
           }),
         }),
@@ -81,9 +87,11 @@ export class SystemGateway {
             )
           : service,
         stream,
+        tailLines,
         !!previous,
         false,
         isJob,
+        since,
       );
     } catch (error) {
       this.logger.warn(

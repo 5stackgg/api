@@ -29,9 +29,14 @@ export class LoggingService {
   public async getServiceLogs(
     service: string,
     stream: Writable,
+    tailLines: number,
     previous = false,
     download = false,
     isJob = false,
+    since?: {
+      start: string;
+      until: string;
+    },
   ): Promise<void> {
     let archive: archiver.Archiver;
 
@@ -74,6 +79,7 @@ export class LoggingService {
     }
 
     const podLogs: Promise<void>[] = [];
+
     for (const pod of pods) {
       podLogs.push(
         this.getLogsForPod(
@@ -82,7 +88,8 @@ export class LoggingService {
           download,
           previous,
           archive,
-          download ? undefined : 250,
+          download ? undefined : tailLines,
+          since,
         ),
       );
     }
@@ -111,6 +118,40 @@ export class LoggingService {
     return podList.items;
   }
 
+  private async getFirstLogTimestamp(
+    logApi: Log,
+    namespace: string,
+    pod: V1Pod,
+    containerName: string,
+    previous: boolean,
+  ) {
+    const logStream = new PassThrough();
+    await logApi.log(namespace, pod.metadata.name, containerName, logStream, {
+      previous,
+      timestamps: true,
+      limitBytes: 8 * 1024,
+    });
+
+    return await new Promise((resolve) => {
+      logStream.on("data", (chunk) => {
+        for (const line of chunk.toString().split("\n")) {
+          const data = line.trim();
+          if (data.length === 0) {
+            return;
+          }
+          const log = this.parseLog(data);
+          if (log.timestamp) {
+            resolve(new Date(log.timestamp));
+          }
+        }
+      });
+
+      logStream.on("end", () => {
+        resolve(null);
+      });
+    });
+  }
+
   private async tryGetPodLogs(
     logApi: Log,
     namespace: string,
@@ -120,7 +161,8 @@ export class LoggingService {
     stream: Writable,
     previous: boolean,
     download: boolean,
-    tailLines: number,
+    tailLines: number = 250,
+    since?: string,
   ): Promise<void> {
     try {
       let podLogs: Awaited<ReturnType<typeof logApi.log>>;
@@ -147,8 +189,14 @@ export class LoggingService {
           previous,
           pretty: false,
           timestamps: true,
-          follow: download === false,
-          tailLines,
+          tailLines: since || download ? undefined : tailLines || 250,
+          ...(since
+            ? {
+                sinceTime: since,
+              }
+            : {
+                follow: download === false,
+              }),
         },
       );
     } catch (error) {
@@ -175,9 +223,16 @@ export class LoggingService {
     previous = false,
     archive?: archiver.Archiver,
     tailLines?: number,
+    since?: {
+      start: string;
+      until: string;
+    },
   ) {
     let totalAdded = 0;
     let streamEnded = false;
+
+    let oldestTimestamp: Date;
+    const until = since ? new Date(since.until) : undefined;
 
     const endStream = () => {
       if (!streamEnded) {
@@ -186,12 +241,49 @@ export class LoggingService {
       }
     };
 
+    let totalLines = 0;
     for (const container of pod.spec.containers) {
       const logStream = new PassThrough();
 
-      logStream.on("end", () => {
-        this.logger.log("log stream ended");
+      logStream.on("end", async () => {
         ++totalAdded;
+
+        if (totalLines < tailLines) {
+          this.logger.log(
+            `loading more logs from service ${pod.metadata.name}...`,
+          );
+
+          const firstLogTimestamp = await this.getFirstLogTimestamp(
+            logApi,
+            this.namespace,
+            pod,
+            container.name,
+            previous,
+          );
+
+          const until = new Date(oldestTimestamp.toISOString());
+          oldestTimestamp.setMinutes(oldestTimestamp.getMinutes() - 60);
+
+          if (oldestTimestamp < firstLogTimestamp) {
+            endStream();
+            return;
+          }
+
+          await this.getLogsForPod(
+            pod,
+            stream,
+            download,
+            previous,
+            archive,
+            tailLines - totalLines,
+            {
+              start: oldestTimestamp.toISOString(),
+              until: until.toISOString(),
+            },
+          );
+          return;
+        }
+
         if (archive && totalAdded == pod.spec.containers.length) {
           void archive.finalize();
         }
@@ -209,15 +301,24 @@ export class LoggingService {
           return;
         }
 
-        for (let log of text.split(/\n/)) {
-          const timestampMatch = log.match(
-            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z/,
-          );
-          const timestamp = timestampMatch ? timestampMatch[0] : "";
-          log = log.replace(
-            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/,
-            "",
-          );
+        for (let data of text.split(/\n/)) {
+          const { timestamp, log } = this.parseLog(data);
+
+          if (since) {
+            if (new Date(timestamp)) {
+              const latestTimestamp = new Date(timestamp);
+
+              if (!oldestTimestamp || oldestTimestamp > latestTimestamp) {
+                oldestTimestamp = latestTimestamp;
+              }
+
+              if (latestTimestamp && latestTimestamp >= until) {
+                continue;
+              }
+            }
+          }
+
+          totalLines++;
 
           stream.write(
             JSON.stringify({
@@ -236,7 +337,6 @@ export class LoggingService {
       });
 
       logStream.on("close", () => {
-        this.logger.log("log stream closed");
         endStream();
       });
 
@@ -258,8 +358,21 @@ export class LoggingService {
         previous,
         download,
         tailLines,
+        since?.start,
       );
     }
+  }
+
+  private parseLog(log: string) {
+    const timestampMatch = log.match(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z/,
+    );
+    const timestamp = timestampMatch ? timestampMatch[0] : "";
+    log = log.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
+    return {
+      log,
+      timestamp,
+    };
   }
 
   public async getJobStatus(jobName: string) {
