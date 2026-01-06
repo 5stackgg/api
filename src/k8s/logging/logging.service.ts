@@ -337,6 +337,7 @@ export class LoggingService {
 
           stream.write(
             JSON.stringify({
+              pod: pod.metadata.name,
               node: pod.spec.nodeName,
               container: container.name,
               timestamp,
@@ -383,7 +384,9 @@ export class LoggingService {
       /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z/,
     );
     const timestamp = timestampMatch ? timestampMatch[0] : "";
-    log = log.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, "");
+    if (timestamp) {
+      log = log.replace(timestampMatch[0], "");
+    }
     return {
       log,
       timestamp,
