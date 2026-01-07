@@ -51,7 +51,7 @@ BEGIN
         END IF;
     ELSIF best_of = 5 THEN
         if pool_size = 6 THEN
-            base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick', 'Pick', 'Decider'];
+            base_pattern := ARRAY['Ban', 'Pick', 'Pick', 'Pick', 'Pick', 'Decider'];
         ELSE
             base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick', 'Pick', 'Pick', 'Decider'];
         END IF;
