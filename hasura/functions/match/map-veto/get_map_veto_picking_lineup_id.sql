@@ -54,6 +54,7 @@ BEGIN
         inner join match_options mo on mo.id = m.match_options_id
         where m.id = match.id;
 
+    -- best of 3 swaps teams after the 4th pick
     IF best_of = 3 THEN
         IF turn_index < 4 THEN
             current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
