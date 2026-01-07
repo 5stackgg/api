@@ -63,13 +63,14 @@ BEGIN
         END LOOP;
     END IF;
   
-    FOR i IN 1..(pool_size - 1) LOOP
+    FOR i IN 1..(pool_size) LOOP
         _type := base_pattern[i];
-        pattern := array_append(pattern, _type);
 
-        IF _type = 'Pick' THEN
-            pattern := array_append(pattern, 'Side');
-        END IF;
+        pattern := pattern ||
+            CASE
+                WHEN _type = 'Pick' THEN ARRAY['Pick', 'Side']
+                ELSE ARRAY[_type]
+            END;
     END LOOP;
 
     RETURN pattern;
