@@ -41,7 +41,7 @@ BEGIN
         base_pattern := array_append(base_pattern, 'Decider');
     ELSIF best_of = 3 THEN
         IF pool_size = 4 THEN
-            base_pattern := ARRAY['Pick', 'Pick', 'Ban', 'Decider'];
+            base_pattern := ARRAY['Ban', 'Pick', 'Pick', 'Decider'];
         ELSIF pool_size = 5 THEN
             base_pattern := ARRAY['Ban', 'Pick', 'Pick', 'Ban', 'Decider'];
         ELSIF pool_size = 6 THEN
