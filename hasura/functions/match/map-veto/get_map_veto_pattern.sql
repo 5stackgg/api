@@ -6,11 +6,9 @@ DECLARE
     best_of int;
     pattern TEXT[] := '{}';
     base_pattern TEXT[] := '{}';
-    pattern_length INT;
     i INT;
     pool_size INT;
     _type TEXT;
-    base_pattern_length INT;
 BEGIN
     SELECT mo.best_of INTO best_of
     FROM matches m
@@ -25,26 +23,55 @@ BEGIN
 
     pool_size := coalesce(array_length(pool, 1), 0);
 
-    IF best_of = 1 THEN
-        base_pattern := ARRAY['Ban'];
-    ELSIF pool_size = best_of THEN
-        base_pattern := ARRAY['Pick'];
-    ELSIF pool_size <= best_of + 2 THEN
-        base_pattern := ARRAY['Ban', 'Pick', 'Pick'];
-    ELSE
-        base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick'];
+    IF(best_of > pool_size) THEN
+        RAISE EXCEPTION 'Not enough maps in the pool for the best of %', best_of USING ERRCODE = '22000';
     END IF;
 
-    FOR i IN 1..(pool_size - 1) LOOP
-        _type := base_pattern[1 + ((i - 1) % array_length(base_pattern, 1))];
-        pattern := array_append(pattern, _type);
+    -- https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
 
-        IF _type = 'Pick' THEN
-            pattern := array_append(pattern, 'Side');
+    IF best_of = 1 THEN
+        FOR i IN 1..(pool_size - 1) LOOP
+            base_pattern := array_append(base_pattern, 'Ban');
+        END LOOP;
+        base_pattern := array_append(base_pattern, 'Decider');
+    ELSIF pool_size = best_of THEN
+         FOR i IN 1..(pool_size - 1) LOOP
+            base_pattern := array_append(base_pattern, 'Pick');
+        END LOOP;
+        base_pattern := array_append(base_pattern, 'Decider');
+    ELSIF best_of = 3 THEN
+        IF pool_size = 4 THEN
+            base_pattern := ARRAY['Ban', 'Pick', 'Pick', 'Decider'];
+        ELSIF pool_size = 5 THEN
+            base_pattern := ARRAY['Ban', 'Pick', 'Pick', 'Ban', 'Decider'];
+        ELSIF pool_size = 6 THEN
+            base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick', 'Ban', 'Decider'];
+        ELSE
+            base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick', 'Ban', 'Ban', 'Decider'];
         END IF;
-    END LOOP;
+    ELSIF best_of = 5 THEN
+        if pool_size = 6 THEN
+            base_pattern := ARRAY['Ban', 'Pick', 'Pick', 'Pick', 'Pick', 'Decider'];
+        ELSE
+            base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick', 'Pick', 'Pick', 'Decider'];
+        END IF;
+    END IF;
 
-    pattern := array_append(pattern, 'Decider');
+    IF pool_size > array_length(base_pattern, 1) THEN
+        FOR i IN 1..(pool_size - array_length(base_pattern, 1)) LOOP
+            base_pattern := array_append(base_pattern, 'Ban');
+        END LOOP;
+    END IF;
+  
+    FOR i IN 1..(pool_size) LOOP
+        _type := base_pattern[i];
+
+        pattern := pattern ||
+            CASE
+                WHEN _type = 'Pick' THEN ARRAY['Pick', 'Side']
+                ELSE ARRAY[_type]
+            END;
+    END LOOP;
 
     RETURN pattern;
 END;

@@ -1,63 +1,75 @@
-CREATE OR REPLACE FUNCTION public.get_map_veto_picking_lineup_id(match public.matches) RETURNS uuid
-    LANGUAGE plpgsql STABLE
-    AS $$
+CREATE OR REPLACE FUNCTION public.get_map_veto_picking_lineup_id(
+    match public.matches
+) RETURNS uuid
+LANGUAGE plpgsql STABLE
+AS $$
 DECLARE
-    lineup_id uuid;
-    total_picks int;
-    round_num int;
-    starting_team int;
-    picks_made int;
-    team int;
+    vetoPattern text[];
+    action_index int;
+    next_action text;
+    turn_index int;
     best_of int;
+    current_team int;
+    team int;
+    last_pick_lineup uuid;
 BEGIN
     IF match.status != 'Veto' THEN
         RETURN NULL;
     END IF;
 
+    vetoPattern := get_map_veto_pattern(match);
+
+    SELECT COUNT(*) + 1 INTO action_index
+    FROM match_map_veto_picks
+    WHERE match_id = match.id;
+
+    next_action := vetoPattern[action_index];
+
+    IF next_action = 'Side' THEN
+        SELECT mvp.match_lineup_id
+        INTO last_pick_lineup
+        FROM match_map_veto_picks mvp
+        WHERE mvp.match_id = match.id
+          AND mvp.type = 'Pick'
+        ORDER BY mvp.created_at DESC
+        LIMIT 1;
+
+        IF last_pick_lineup IS NULL THEN
+            RAISE EXCEPTION 'Side selection requested but no prior Pick exists';
+        END IF;
+
+        IF last_pick_lineup = match.lineup_1_id THEN
+            RETURN match.lineup_2_id;
+        ELSE
+            RETURN match.lineup_1_id;
+        END IF;
+    END IF;
+
+    SELECT COUNT(*) INTO turn_index
+    FROM match_map_veto_picks
+    WHERE match_id = match.id
+      AND type IN ('Ban', 'Pick', 'Decider');
+
     select mo.best_of into best_of from matches m
         inner join match_options mo on mo.id = m.match_options_id
         where m.id = match.id;
 
-    -- Count the total number of picks made for the match
-    SELECT COUNT(*) INTO total_picks
-    FROM match_map_veto_picks mvp
-    WHERE mvp.match_id = match.id;
-
-    -- Calculate the round number
-    round_num := floor(total_picks / 6);
-
-    -- Determine the starting team based on the round number
-    IF round_num % 2 = 0 THEN
-        starting_team := 1;
-    ELSE
-        starting_team := 2;
-    END IF;
-
-    -- Determine the team based on the number of picks made within the round
-    picks_made := total_picks % 6;
-
-    IF best_of = 1 OR picks_made < 4 THEN
-        IF (starting_team = 1 AND picks_made % 2 = 0) OR
-           (starting_team = 2 AND picks_made % 2 <> 0) THEN
-            team := 1;
+    -- best of 3 swaps teams after the 4th pick
+    IF best_of = 3 THEN
+        IF turn_index < 4 THEN
+            current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
         ELSE
-            team := 2;
+            current_team := CASE WHEN turn_index % 2 = 0 THEN 2 ELSE 1 END;
         END IF;
     ELSE
-        -- After the fourth pick within a round, switch the teams
-        IF (starting_team = 1 AND picks_made % 2 = 0) OR
-           (starting_team = 2 AND picks_made % 2 <> 0) THEN
-            team := 2;
-        ELSE
-            team := 1;
-        END IF;
+        current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
     END IF;
+    
 
-    -- Determine the lineup ID based on the team
-    IF team = 1 THEN
-       RETURN match.lineup_1_id;
+    IF current_team = 1 THEN
+        RETURN match.lineup_1_id;
     ELSE
-       RETURN match.lineup_2_id;
+        RETURN match.lineup_2_id;
     END IF;
 END;
 $$;
