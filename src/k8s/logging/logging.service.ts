@@ -313,9 +313,9 @@ export class LoggingService {
         for (let data of text.split(/\n/)) {
           const { timestamp, log } = this.parseLog(data);
 
-          if (new Date(timestamp)) {
-            const latestTimestamp = new Date(timestamp);
+          const latestTimestamp = new Date(timestamp);
 
+          if (latestTimestamp && !Number.isNaN(latestTimestamp.getTime())) {
             if (!oldestTimestamp || oldestTimestamp > latestTimestamp) {
               if (!oldestTimestamp) {
                 stream.emit(
