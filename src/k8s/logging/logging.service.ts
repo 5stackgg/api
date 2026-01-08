@@ -231,7 +231,7 @@ export class LoggingService {
     let totalAdded = 0;
     let streamEnded = false;
 
-    let oldestTimestamp: Date;
+    let oldestTimestamp = new Date();
     const until = since ? new Date(since.until) : undefined;
 
     const endStream = () => {
