@@ -199,7 +199,7 @@ BEGIN
     FROM tournaments t
     WHERE t.id = NEW.tournament_id;
 
-    IF tournament_status != 'Setup' THEN
+    IF tournament_status = 'Live' OR tournament_status = 'Finished' THEN
         RAISE EXCEPTION 'Unable to modify stage since the tournament has been started';
     END IF;
 

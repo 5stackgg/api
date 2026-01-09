@@ -44,11 +44,12 @@ BEGIN
         end if;
 
         next_stage_max_teams := COALESCE((select max_teams from tournament_stages ts2 where ts2.tournament_id = _tournament_id and ts2."order" = stage."order" + 1), 1);
-        teams_per_group := CEIL(effective_teams::float / stage.groups);
+
+        RAISE NOTICE 'Stage % : effective_teams=%, next_stage_max_teams=%, groups=%', stage."order", effective_teams, next_stage_max_teams, stage.groups;
+        teams_per_group := CEIL(effective_teams::float / stage.groups); 
         
         IF stage_type = 'RoundRobin' THEN
-            RAISE NOTICE 'Stage % : RoundRobin detected, teams_per_group=%, groups=%', 
-                stage."order", teams_per_group, stage.groups;
+            RAISE NOTICE 'Stage % : RoundRobin detected', stage."order";
             
             -- For round robin, we generate all pairings
             -- Each group needs (teams_per_group * (teams_per_group - 1)) / 2 matches total
