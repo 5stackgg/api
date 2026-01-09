@@ -262,3 +262,16 @@ CREATE TRIGGER tbd_tournament_stages
     FOR EACH ROW
     EXECUTE FUNCTION public.tbd_tournament_stages();
 
+
+CREATE OR REPLACE FUNCTION public.tad_tournament_stages() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM update_tournament_stages(OLD.tournament_id);
+    RETURN OLD;
+END;
+$$;
+
+
+DROP TRIGGER IF EXISTS tad_tournament_stages ON public.tournament_stages;
+CREATE TRIGGER tad_tournament_stages AFTER DELETE ON public.tournament_stages FOR EACH ROW EXECUTE FUNCTION public.tad_tournament_stages(); 
