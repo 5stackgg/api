@@ -178,7 +178,15 @@ BEGIN
     SELECT type INTO _pool_type FROM map_pools WHERE id = OLD.map_pool_id;
 
     IF _pool_type = 'Custom' THEN
-        DELETE FROM map_pools WHERE id = OLD.map_pool_id;
+        IF NOT EXISTS (
+            SELECT 1
+            FROM match_options
+            WHERE map_pool_id = OLD.map_pool_id
+              AND id <> OLD.id
+        ) THEN
+            DELETE FROM map_pools
+            WHERE id = OLD.map_pool_id;
+        END IF;
     END IF;
 
     RETURN OLD;
