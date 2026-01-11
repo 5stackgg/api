@@ -100,7 +100,8 @@ BEGIN
         DELETE FROM tournament_brackets
         WHERE tournament_stage_id = _stage_id
           AND round = 1
-          AND (team_1_seed IS NULL OR team_2_seed IS NULL);
+          AND (team_1_seed IS NULL OR team_2_seed IS NULL)
+          AND path != 'LB';
     END;
 
 END;

@@ -157,15 +157,17 @@ BEGIN
             -- Elimination brackets can have byes
             UPDATE tournament_brackets 
             SET tournament_team_id_1 = team_1_id,
-                tournament_team_id_2 = team_2_id,
-                bye = (team_1_id IS NULL OR team_2_id IS NULL)
-            WHERE id = bracket.id and round = 1;
+                tournament_team_id_2 = team_2_id
+            WHERE id = bracket.id;
             
             RAISE NOTICE '  Bracket %: Seed % (team %) vs Seed % (team %)', 
                 bracket.match_number, 
                 team_1_seed_val, team_1_id,
                 team_2_seed_val, team_2_id;
         END LOOP;
+
+        update tournament_brackets set bye = (team_1_id IS NULL OR team_2_id IS NULL) 
+              where tournament_stage_id = stage.id and round = 1;
     END IF;
 
     IF stage.type != 'RoundRobin' THEN
