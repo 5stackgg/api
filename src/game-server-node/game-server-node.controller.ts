@@ -249,6 +249,8 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "kube-reserved=cpu=1"
 EOF
 
+        rm -f /var/lib/kubelet/cpu_manager_state
+
         systemctl restart k3s-agent
 
         mkdir -p /opt/5stack/demos
