@@ -55,7 +55,7 @@ map_type_config AS (
         -- Competitive maps
         ('de_ancient', 'Competitive', true),
         ('de_ancient_night', 'Competitive', false),
-        ('de_anubis', 'Competitive', false),
+        ('de_anubis', 'Competitive', true),
         ('de_inferno', 'Competitive', true),
         ('de_inferno_night', 'Competitive', false),
         ('de_mirage', 'Competitive', true),
@@ -66,7 +66,7 @@ map_type_config AS (
         ('de_vertigo', 'Competitive', false),
         ('de_dust2', 'Competitive', true),
         ('de_dust2_night', 'Competitive', false),
-        ('de_train', 'Competitive', true),
+        ('de_train', 'Competitive', false),
         ('de_cache', 'Competitive', false),
         ('de_thera', 'Competitive', false),
         ('de_mills', 'Competitive', false),
