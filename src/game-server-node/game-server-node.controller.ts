@@ -226,26 +226,21 @@ export class GameServerNodeController {
         echo "Waiting for Tailscale IP";
 
         for i in {1..30}; do
-          TS_IP=$(tailscale ip -4 2>/dev/null | head -n 1)
-          if [ -n "$TS_IP" ]; then
+          TAILSCALE_IP=$(tailscale ip -4 2>/dev/null | head -n 1)
+          if [ -n "$TAILSCALE_IP" ]; then
             break
           fi
           sleep 2
         done
 
-        if [ -z "$TS_IP" ]; then
-          echo "ERROR: Tailscale IP not assigned"
-          exit 1
-        fi
-
-        echo "Tailscale IP acquired: $TS_IP"
+        echo "Tailscale IP: $TAILSCALE_IP"
 
         mkdir -p /etc/rancher/k3s
 
         rm -f /etc/rancher/k3s/config.yaml
 
 cat <<-EOF >/etc/rancher/k3s/config.yaml
-	node-ip: $TS_IP
+	node-ip: $TAILSCALE_IP
 
 	kubelet-arg:
 	  - "cpu-manager-policy=static"
