@@ -29,6 +29,8 @@ DECLARE
     gf_id uuid;
     reset_final_id uuid;
     grand_finals_match_options_id uuid;
+    current_round_matches int;
+    prev_round_matches int;
 BEGIN
     P := POWER(2, CEIL(LOG(_teams_per_group::numeric) / LOG(2)))::int;
 
@@ -80,18 +82,31 @@ BEGIN
             wb_match_count := COALESCE(array_length(wb_match_ids,1),0);
             IF wb_match_count=0 THEN CONTINUE; END IF;
 
-            -- Determine LB target round
-            IF r=1 THEN
-                target_lb_round := 1;
-            ELSE
-                target_lb_round := LEAST(r + (r - 1), lb_rounds);
-            END IF;
-
-            SELECT array_agg(id ORDER BY match_number ASC) INTO lb_match_ids
-            FROM tournament_brackets
-            WHERE tournament_stage_id=_stage_id AND path='LB' AND round=target_lb_round AND "group"=loser_group_num;
+            -- Find LB matches that can still accept WB losers
+            -- Count existing feeds into each LB match (from previous WB loser assignments)
+            -- A match can accept more feeds if it has fewer than 2 total feeds
+            SELECT array_agg(tb.id ORDER BY tb.round ASC, tb.match_number ASC) INTO lb_match_ids
+            FROM tournament_brackets tb
+            WHERE tb.tournament_stage_id = _stage_id
+              AND tb.path = 'LB'
+              AND tb.round >= r
+              AND tb."group" = loser_group_num
+              AND (
+                  -- Count current feeds into this match
+                  (SELECT COUNT(*)
+                   FROM tournament_brackets feeder
+                   WHERE (
+                    feeder.loser_parent_bracket_id = tb.id
+                    OR feeder.parent_bracket_id = tb.id
+                   )) < 2
+              );
 
             lb_match_count := COALESCE(array_length(lb_match_ids,1),0);
+
+            -- If no LB matches available, skip this WB round
+            IF lb_match_count = 0 THEN
+                CONTINUE;
+            END IF;
 
             -- Assign WB losers to LB matches
             IF r=1 THEN
