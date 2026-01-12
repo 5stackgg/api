@@ -148,7 +148,39 @@ insert into e_map_pool_types ("value", "description") values
     ('Custom', 'Custom')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
--- create seed map pools
+-- create seed map pools with conflict detection
+WITH expected_maps AS (
+  SELECT
+    type,
+    array_agg(name ORDER BY name) as expected_map_names
+  FROM maps
+  WHERE active_pool = true
+  GROUP BY type
+),
+existing_pools AS (
+  SELECT
+    mp.id,
+    mp.type,
+    array_agg(m.name ORDER BY m.name) as current_map_names
+  FROM map_pools mp
+  LEFT JOIN _map_pool mp_rel ON mp.id = mp_rel.map_pool_id
+  LEFT JOIN maps m ON mp_rel.map_id = m.id
+  WHERE mp.seed = true AND mp.type IN ('Competitive', 'Wingman', 'Duel') AND mp.enabled = true
+  GROUP BY mp.id, mp.type
+),
+pools_to_disable AS (
+  SELECT
+    ep.id
+  FROM existing_pools ep
+  JOIN expected_maps em ON ep.type = em.type
+  WHERE ep.current_map_names != em.expected_map_names
+)
+-- Disable mismatched pools
+UPDATE map_pools
+SET enabled = false
+WHERE id IN (SELECT id FROM pools_to_disable);
+
+-- Create new seed pools
 WITH new_rows AS (
   SELECT *
   FROM (VALUES
@@ -164,7 +196,8 @@ WHERE NOT EXISTS (
   SELECT 1
   FROM map_pools
   WHERE map_pools.type = new_rows.type
-    AND map_pools.seed = true
+    AND map_pools.seed = true and
+    map_pools.enabled = true
 );
 
 create or replace function update_map_pools()
@@ -183,15 +216,10 @@ begin
     end if;
 
     if(update_map_pools = 'true') then
-        DELETE FROM _map_pool
-        WHERE map_pool_id IN (
-            SELECT id FROM map_pools WHERE type IN ('Competitive', 'Wingman', 'Duel')
-        );
-        
         WITH pool_ids AS (
             SELECT id, type
             FROM map_pools
-            WHERE type IN ('Competitive', 'Wingman', 'Duel')
+            WHERE type IN ('Competitive', 'Wingman', 'Duel') and seed = true and enabled = true
             ORDER BY type
         )
         INSERT INTO _map_pool (map_id, map_pool_id)
