@@ -5,7 +5,16 @@ DECLARE
     bracket_record RECORD;
     base_start_time timestamptz;
     child_finish_time timestamptz;
+    tournament_status text;
 BEGIN
+    SELECT status INTO tournament_status
+    FROM tournaments
+    WHERE id = _tournament_id;
+
+    IF tournament_status != 'Live' THEN
+        RETURN;
+    END IF;
+
     UPDATE tournament_brackets 
     SET scheduled_eta = NULL
     WHERE tournament_stage_id IN (

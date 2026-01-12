@@ -41,6 +41,12 @@ object_relationships:
   - name: team_2
     using:
       foreign_key_constraint_on: tournament_team_id_2
+computed_fields:
+  - name: feeding_brackets
+    definition:
+      function:
+        name: get_feeding_brackets
+        schema: public
 select_permissions:
   - role: guest
     permission:
