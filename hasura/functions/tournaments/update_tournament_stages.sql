@@ -290,10 +290,10 @@ BEGIN
         -- For N winner groups (1..N), we create N loser groups (N+1..2N) with path='LB'.
         IF stage_type = 'DoubleElimination' THEN
             PERFORM generate_double_elimination_bracket(stage.id, teams_per_group, stage.groups, next_stage_max_teams);
+        ELSE
+            RAISE NOTICE '  => Linking matches within stage %', stage."order";
+            PERFORM link_tournament_stage_matches(stage.id);
         END IF;
-
-        RAISE NOTICE '  => Linking matches within stage %', stage."order";
-        PERFORM link_tournament_stage_matches(stage.id);
     END LOOP;
 
     RAISE NOTICE '--- LINKING TOURNAMENT STAGES ---';
