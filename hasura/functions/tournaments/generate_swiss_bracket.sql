@@ -35,6 +35,21 @@ BEGIN
     
     -- Generate bracket order for first round
     bracket_order := generate_bracket_order(_team_count);
+    -- generate_bracket_order() returns the next power-of-2 ordering (to support byes).
+    -- For Swiss round 1 we want to display seeds for *all* teams (no implicit byes when _team_count is even),
+    -- so we filter the order down to valid seed positions 1.._team_count (same approach as assign_teams_to_swiss_pools()).
+    DECLARE
+        filtered_order int[];
+        valid_seed int;
+    BEGIN
+        filtered_order := ARRAY[]::int[];
+        FOREACH valid_seed IN ARRAY bracket_order LOOP
+            IF valid_seed >= 1 AND valid_seed <= _team_count THEN
+                filtered_order := filtered_order || valid_seed;
+            END IF;
+        END LOOP;
+        bracket_order := filtered_order;
+    END;
     bracket_idx := 0;
     
     RAISE NOTICE 'Round %: Pool 0-0 (group %), % matches', round_num, pool_group, matches_needed;
