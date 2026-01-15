@@ -203,6 +203,19 @@ BEGIN
      WHERE wb.loser_parent_bracket_id = p.id
        AND p.parent_bracket_id IS NOT NULL;
 
+     WITH lb_prune AS (
+         SELECT lb.id, lb.parent_bracket_id
+         FROM tournament_brackets lb
+         LEFT JOIN tournament_brackets wb
+           ON wb.loser_parent_bracket_id = lb.id
+          AND wb.tournament_stage_id = _stage_id
+          AND wb.path = 'WB'
+         WHERE lb.tournament_stage_id = _stage_id
+           AND lb.path = 'LB'
+           AND lb.round = 1
+         GROUP BY lb.id, lb.parent_bracket_id
+         HAVING COUNT(wb.id) < 2
+     )
      DELETE FROM tournament_brackets lb
      USING lb_prune p
      WHERE lb.id = p.id;
