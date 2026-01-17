@@ -26,13 +26,9 @@ BEGIN
              RETURN NEW;  -- Skip scheduling for round > 1 in RoundRobin
          END IF;
          
-         -- Normal case: schedule when both teams are present
+         raise notice 'Scheduling match for bracket %', NEW.id;
          IF NEW.tournament_team_id_1 IS NOT NULL AND NEW.tournament_team_id_2 IS NOT NULL THEN
-             PERFORM schedule_tournament_match(NEW);
-         -- Losers bracket special case: allow schedule_tournament_match to decide if this should be a bye
-         ELSIF COALESCE(NEW.path, 'WB') = 'LB' AND
-               (NEW.tournament_team_id_1 IS NOT NULL OR NEW.tournament_team_id_2 IS NOT NULL) THEN
-             PERFORM schedule_tournament_match(NEW);
+            PERFORM schedule_tournament_match(NEW);
          END IF;
      END IF;
 

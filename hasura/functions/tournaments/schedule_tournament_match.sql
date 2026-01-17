@@ -26,39 +26,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
         RETURN NULL;
     END IF;
 
-     -- Special handling for losers-bracket matches where we may effectively have a bye
-     IF COALESCE(bracket.path, 'WB') = 'LB' THEN
-         -- Exactly one team present: decide whether a second team can still appear
-         IF bracket.tournament_team_id_1 IS NULL OR bracket.tournament_team_id_2 IS NULL THEN
-             FOR feeder IN
-                 SELECT tb.*
-                 FROM tournament_brackets tb
-                 WHERE tb.parent_bracket_id = bracket.id
-                    OR tb.loser_parent_bracket_id = bracket.id
-             LOOP
-                 IF feeder.tournament_team_id_1 IS NOT NULL OR feeder.tournament_team_id_2 IS NOT NULL THEN
-                     feeders_with_team := feeders_with_team + 1;
-                 END IF;
-             END LOOP;
-
-             -- If we don't have at least one team in both feeder matches,
-             -- treat this as an effective bye and auto-advance the existing team.
-             IF feeders_with_team < 2 THEN
-                 winner_id := COALESCE(bracket.tournament_team_id_1, bracket.tournament_team_id_2);
-
-                 IF winner_id IS NOT NULL AND bracket.parent_bracket_id IS NOT NULL THEN
-                    update tournament_brackets
-                    SET finished = true
-                    WHERE id = bracket.id;
-                    
-                    PERFORM public.assign_team_to_bracket_slot(bracket.parent_bracket_id, winner_id);
-                 END IF;
-
-                 RETURN NULL;
-             END IF;
-         END IF;
-     END IF;
-
      -- For all other cases, we require two teams to schedule a match
      IF bracket.tournament_team_id_1 IS NULL OR bracket.tournament_team_id_2 IS NULL THEN
          RETURN NULL;
