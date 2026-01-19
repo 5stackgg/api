@@ -20,10 +20,6 @@ BEGIN
         END IF;
     END IF;
 
-    IF (NEW.status = 'Cancelled' OR NEW.status = 'CancelledMinTeams') THEN
-        PERFORM delete_tournament_brackets_and_matches(NEW.id);
-    END IF;
-
 	RETURN NEW;
 END;
 $$;
