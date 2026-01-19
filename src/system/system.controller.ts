@@ -1,4 +1,5 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Post, Req, Res } from "@nestjs/common";
+import { Request, Response } from "express";
 import { SystemService } from "./system.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { Get } from "@nestjs/common";
@@ -9,6 +10,9 @@ import { HasuraEvent } from "src/hasura/hasura.controller";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { settings_set_input } from "generated/schema";
 import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
+import { LoggingService } from "src/k8s/logging/logging.service";
+import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { PassThrough } from "stream";
 
 @Controller("system")
 export class SystemController {
@@ -17,11 +21,108 @@ export class SystemController {
     private readonly hasura: HasuraService,
     private readonly notifications: NotificationsService,
     private readonly gameServerNodeService: GameServerNodeService,
+    private readonly loggingService: LoggingService,
   ) {}
 
   @Get("healthz")
   public async status() {
     return;
+  }
+
+  @Post("logs/download")
+  public async logs(@Req() request: Request, @Res() response: Response): Promise<void> {
+    const user = request.user;
+
+    if (!user || !isRoleAbove(user.role, "administrator")) {
+      response.status(403).json({
+        message: "Forbidden",
+      });
+      return;
+    }
+
+    const {
+      service,
+      previous,
+      tailLines,
+      since,
+    }: {
+      service: string;
+      previous?: boolean;
+      tailLines?: number;
+      since?: {
+        start: string;
+        until: string;
+      };
+    } = request.body;
+
+    if (!service) {
+      response.status(400).json({
+        message: "service is required",
+      });
+      return;
+    }
+
+    const isJob =
+      service.startsWith("cs-update:") || service.startsWith("m-");
+
+    const stream = new PassThrough();
+
+    try {
+      const filename = `${service}-logs.zip`;
+
+      response.setHeader("Content-Type", "application/zip");
+      response.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`,
+      );
+
+      stream.pipe(response);
+
+      stream.on("error", (error) => {
+        if (!response.headersSent) {
+          response.status(500).json({
+            message: error?.message || "Stream error",
+          });
+          return;
+        }
+        response.destroy();
+      });
+
+      response.on("close", () => {
+        if (!stream.destroyed) {
+          stream.destroy();
+        }
+      });
+
+      await this.loggingService.getServiceLogs(
+        service.startsWith("cs-update:")
+          ? GameServerNodeService.GET_UPDATE_JOB_NAME(
+              service.replace("cs-update:", ""),
+            )
+          : service,
+        stream,
+        tailLines,
+        !!previous,
+        true,
+        isJob,
+        since,
+      );
+
+      if (stream.readableEnded || stream.destroyed) {
+        if (!response.writableEnded) {
+          response.end();
+        }
+      }
+    } catch (error) {
+      if (!response.headersSent) {
+        response.status(500).json({
+          message: error?.body?.message || error.message || "Unable to get logs",
+        });
+        return;
+      }
+      stream.destroy();
+      response.destroy();
+    }
   }
 
   @HasuraAction()

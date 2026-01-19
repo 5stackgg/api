@@ -70,6 +70,13 @@ async function bootstrap() {
 
   const appConfig = configService.get<AppConfig>("app");
 
+  if (process.env.DEV) {
+    app.enableCors({
+      origin: ["http://localhost:3000", "http://0.0.0.0:3000"],
+      credentials: true,
+    });
+  }
+
   app.use(
     session({
       rolling: true,
