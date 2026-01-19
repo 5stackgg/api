@@ -90,15 +90,9 @@ export class LoggingService {
     }
 
     const podLogs: Promise<void>[] = [];
-    let totalContainers = 0;
     let completedContainers = 0;
     let archiveFinalizePromise: Promise<void> | null = null;
     let archiveFinalizeResolve: (() => void) | null = null;
-
-    // Count total containers across all pods
-    for (const pod of pods) {
-      totalContainers += pod.spec.containers.length;
-    }
 
     // Set up archive finalization promise if in download mode
     if (download && archive) {
@@ -126,7 +120,7 @@ export class LoggingService {
 
     const finalizeArchive = () => {
       completedContainers++;
-      if (download && archive && completedContainers === totalContainers) {
+      if (download && archive) {
         try {
           void archive.finalize();
         } catch (error) {
@@ -146,7 +140,6 @@ export class LoggingService {
           archive,
           download ? undefined : tailLines,
           since,
-          totalContainers,
           finalizeArchive,
         ),
       );
@@ -290,7 +283,6 @@ export class LoggingService {
       start: string;
       until: string;
     },
-    totalContainers?: number,
     onContainerComplete?: () => void,
   ) {
     let totalAdded = 0;
@@ -326,11 +318,7 @@ export class LoggingService {
       logStream.on("end", async () => {
         ++totalAdded;
 
-        if (totalLines < tailLines && tailLines !== undefined) {
-          this.logger.log(
-            `loading more logs from service ${pod.metadata.name}...`,
-          );
-
+        if (since && totalLines < 250) {
           const firstLogTimestamp = await this.getFirstLogTimestamp(
             logApi,
             this.namespace,
@@ -342,7 +330,7 @@ export class LoggingService {
           const until = new Date(oldestTimestamp.toISOString());
           oldestTimestamp.setMinutes(oldestTimestamp.getMinutes() - 60);
 
-          if (oldestTimestamp < firstLogTimestamp) {
+          if (!firstLogTimestamp || oldestTimestamp < firstLogTimestamp) {
             if (!archive) {
               endStream();
             }
@@ -356,12 +344,11 @@ export class LoggingService {
             download,
             previous,
             archive,
-            tailLines - totalLines,
+            250 - totalLines,
             {
               start: oldestTimestamp.toISOString(),
               until: until.toISOString(),
             },
-            totalContainers,
             onContainerComplete,
           );
           return;
@@ -444,6 +431,10 @@ export class LoggingService {
       }
 
       const logApi = new Log(this.kubeConfig);
+
+      if(since) {
+        tailLines = undefined;
+      }
 
       await this.tryGetPodLogs(
         logApi,
