@@ -55,7 +55,7 @@ BEGIN
                     RAISE NOTICE '    Borrowed team % from adjacent pool', adjacent_team_id;
                 ELSE
                     RAISE EXCEPTION 'Odd number of teams in pool %-% and no adjacent team found', 
-                        pool_record.wins, pool_record.losses;
+                        pool_record.wins, pool_record.losses USING ERRCODE = '22000';
                 END IF;
             END IF;
             
@@ -80,7 +80,7 @@ BEGIN
             -- Validate we have enough valid seed positions
             IF array_length(bracket_order, 1) < matches_needed * 2 THEN
                 RAISE EXCEPTION 'Not enough valid seed positions in bracket order for pool %-% (needed: %, got: %)', 
-                    pool_record.wins, pool_record.losses, matches_needed * 2, array_length(bracket_order, 1);
+                    pool_record.wins, pool_record.losses, matches_needed * 2, array_length(bracket_order, 1) USING ERRCODE = '22000';
             END IF;
             
             match_counter := 1;
@@ -95,7 +95,7 @@ BEGIN
                 -- Validate that teams are not NULL
                 IF team_1_id IS NULL OR team_2_id IS NULL THEN
                     RAISE EXCEPTION 'NULL team found in pool %-% at match % (seed_1_idx: %, seed_2_idx: %, teams_to_pair length: %)', 
-                        pool_record.wins, pool_record.losses, match_counter, seed_1_idx, seed_2_idx, array_length(teams_to_pair, 1);
+                        pool_record.wins, pool_record.losses, match_counter, seed_1_idx, seed_2_idx, array_length(teams_to_pair, 1) USING ERRCODE = '22000';
                 END IF;
                 
                 SELECT id INTO bracket_record
@@ -108,7 +108,7 @@ BEGIN
                 
                 IF bracket_record IS NULL THEN
                     RAISE EXCEPTION 'Bracket record not found for match % in pool %-% (group %)', 
-                        match_counter, pool_record.wins, pool_record.losses, pool_group;
+                        match_counter, pool_record.wins, pool_record.losses, pool_group USING ERRCODE = '22000';
                 END IF;
 
                 UPDATE tournament_brackets

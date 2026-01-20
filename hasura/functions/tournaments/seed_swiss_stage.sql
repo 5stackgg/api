@@ -16,11 +16,11 @@ BEGIN
     SELECT * INTO stage FROM tournament_stages WHERE id = stage_id;
 
     IF stage IS NULL THEN
-        RAISE EXCEPTION 'Stage % not found', stage_id;
+        RAISE EXCEPTION 'Stage % not found', stage_id USING ERRCODE = '22000';
     END IF;
 
     IF stage.type != 'Swiss' THEN
-        RAISE EXCEPTION 'seed_swiss_stage can only be used for Swiss tournament stages';
+        RAISE EXCEPTION 'seed_swiss_stage can only be used for Swiss tournament stages' USING ERRCODE = '22000';
     END IF;
 
     teams_assigned_count := 0;

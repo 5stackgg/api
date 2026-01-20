@@ -35,7 +35,7 @@ BEGIN
     WHERE id = NEW.tournament_id;
 
     IF tournament_status = 'Cancelled' OR tournament_status = 'CancelledMinTeams' OR tournament_status = 'Finished' THEN
-        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot leave an active tournament';
+        RAISE EXCEPTION 'Cannot leave an active tournament' USING ERRCODE = '22000';
     END IF;
 
     RETURN OLD;

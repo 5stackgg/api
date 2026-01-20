@@ -200,7 +200,7 @@ BEGIN
     WHERE t.id = NEW.tournament_id;
 
     IF tournament_status = 'Live' OR tournament_status = 'Finished' THEN
-        RAISE EXCEPTION 'Unable to modify stage since the tournament has been started';
+        RAISE EXCEPTION 'Unable to modify stage since the tournament has been started' USING ERRCODE = '22000';
     END IF;
 
     -- Check if stage has started (has at least one match created)
@@ -213,7 +213,7 @@ BEGIN
 
     -- Prevent match_options_id changes once stage has started
     IF stage_has_matches AND OLD.match_options_id IS DISTINCT FROM NEW.match_options_id THEN
-        RAISE EXCEPTION 'Unable to modify match options for a stage that has already started';
+        RAISE EXCEPTION 'Unable to modify match options for a stage that has already started' USING ERRCODE = '22000';
     END IF;
 
     IF OLD.max_teams != NEW.max_teams THEN

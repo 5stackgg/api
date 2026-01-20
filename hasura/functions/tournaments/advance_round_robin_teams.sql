@@ -12,7 +12,7 @@ BEGIN
     WHERE ts.id = _stage_id;
     
     IF current_stage IS NULL THEN
-        RAISE EXCEPTION 'Stage % not found', _stage_id;
+        RAISE EXCEPTION 'Stage % not found', _stage_id USING ERRCODE = '22000';
     END IF;
     
     SELECT ts.id, ts.max_teams

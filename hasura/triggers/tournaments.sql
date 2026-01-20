@@ -2,11 +2,21 @@ CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    tournament_matches uuid[];
     first_stage_id uuid;
 BEGIN
+    IF (
+         NEW.status IS DISTINCT FROM OLD.status AND
+         NEW.status IN ('RegistrationOpen')
+    ) THEN
+        PERFORM update_tournament_stages(NEW.id);
+        return NEW;
+    END IF;
 
-    IF (NEW.status IS DISTINCT FROM OLD.status AND NEW.status = 'Live') THEN
+    IF (
+        NEW.status IS DISTINCT FROM OLD.status AND
+        NEW.status IN ('Live', 'RegistrationClosed') AND
+        OLD.status IN ('Setup', 'RegistrationOpen')
+    ) THEN
         PERFORM update_tournament_stages(NEW.id);
         PERFORM assign_seeds_to_teams(NEW);
         

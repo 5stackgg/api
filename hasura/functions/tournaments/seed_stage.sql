@@ -18,7 +18,7 @@ BEGIN
     SELECT * INTO stage FROM tournament_stages WHERE id = stage_id;
 
     IF stage IS NULL THEN
-        RAISE EXCEPTION 'Stage % not found', stage_id;
+        RAISE EXCEPTION 'Stage % not found', stage_id USING ERRCODE = '22000';
     END IF;
 
     SELECT * INTO previous_stage

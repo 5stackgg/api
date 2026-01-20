@@ -39,11 +39,11 @@ BEGIN
         use_team_ids := false;
         team_count := array_length(_team_seeds, 1);
     ELSE
-        RAISE EXCEPTION 'Need either team_ids or team_seeds array';
+        RAISE EXCEPTION 'Need either team_ids or team_seeds array' USING ERRCODE = '22000';
     END IF;
     
     IF team_count < 2 THEN
-        RAISE EXCEPTION 'Need at least 2 teams for round robin, got %', team_count;
+        RAISE EXCEPTION 'Need at least 2 teams for round robin, got %', team_count USING ERRCODE = '22000';
     END IF;
     
     -- Calculate rounds needed for round robin

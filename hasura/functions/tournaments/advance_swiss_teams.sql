@@ -14,7 +14,7 @@ BEGIN
     WHERE ts.id = _stage_id;
     
     IF stage_record IS NULL THEN
-        RAISE EXCEPTION 'Stage % not found', _stage_id;
+        RAISE EXCEPTION 'Stage % not found', _stage_id USING ERRCODE = '22000';
     END IF;
     
     SELECT array_agg(vtsr.tournament_team_id)

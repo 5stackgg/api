@@ -35,7 +35,7 @@ BEGIN
         LIMIT 1;
 
         IF last_pick_lineup IS NULL THEN
-            RAISE EXCEPTION 'Side selection requested but no prior Pick exists';
+            RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Side selection requested but no prior Pick exists';
         END IF;
 
         IF last_pick_lineup = match.lineup_1_id THEN

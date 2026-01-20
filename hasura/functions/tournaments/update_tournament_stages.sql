@@ -146,7 +146,7 @@ BEGIN
             
             -- First round requires even number (all teams start at 0-0, same pool)
             IF effective_teams % 2 != 0 THEN
-                RAISE EXCEPTION 'Swiss tournament first round must have an even number of teams. Current: %', effective_teams;
+                RAISE EXCEPTION 'Swiss tournament first round must have an even number of teams. Current: %', effective_teams USING ERRCODE = '22000';
             END IF;
             
             PERFORM generate_swiss_bracket(stage.id, effective_teams);

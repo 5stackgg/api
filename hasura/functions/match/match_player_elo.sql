@@ -11,7 +11,7 @@ BEGIN
     LIMIT 1;
 
     IF player_record IS NULL THEN
-        RAISE EXCEPTION 'Player not found for steam_id: %', hasura_session->>'x-hasura-user-id';
+        RAISE EXCEPTION 'Player not found for steam_id: %', hasura_session->>'x-hasura-user-id' USING ERRCODE = '22000';
     END IF;
 
    RETURN get_player_elo_for_match(match_record, player_record);

@@ -12,7 +12,7 @@ BEGIN
     WHERE id = match_id;
 
     IF match_status != 'PickingPlayers' THEN
-        RAISE EXCEPTION 'Match is not picking players' USING ERRCODE = '22000';
+        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Match is not picking players';
     END IF;
 
     WITH randomized_players AS (
