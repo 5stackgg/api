@@ -1,0 +1,12 @@
+table:
+  name: e_winning_reasons
+  schema: public
+is_enum: true
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

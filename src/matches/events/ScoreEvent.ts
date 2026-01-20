@@ -1,5 +1,5 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import { e_sides_enum } from "../../../generated";
+import { e_sides_enum, e_winning_reasons_enum } from "../../../generated";
 
 export default class ScoreEvent extends MatchEventProcessor<{
   time: string;
@@ -15,6 +15,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
   lineup_2_side: e_sides_enum;
   winning_side: e_sides_enum;
   backup_file: string;
+  winning_reason: e_winning_reasons_enum;
 }> {
   public async process() {
     await this.cleanupData();
@@ -36,6 +37,7 @@ export default class ScoreEvent extends MatchEventProcessor<{
             lineup_1_side: this.data.lineup_1_side,
             lineup_2_side: this.data.lineup_2_side,
             winning_side: this.data.winning_side,
+            winning_reason: this.data.winning_reason,
           },
           on_conflict: {
             constraint: "match_rounds_match_id_round_key",

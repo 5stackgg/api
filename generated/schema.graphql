@@ -6172,6 +6172,189 @@ input e_veto_pick_types_updates {
   where: e_veto_pick_types_bool_exp!
 }
 
+"""
+columns and relationships of "e_winning_reasons"
+"""
+type e_winning_reasons {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_winning_reasons"
+"""
+type e_winning_reasons_aggregate {
+  aggregate: e_winning_reasons_aggregate_fields
+  nodes: [e_winning_reasons!]!
+}
+
+"""
+aggregate fields of "e_winning_reasons"
+"""
+type e_winning_reasons_aggregate_fields {
+  count(columns: [e_winning_reasons_select_column!], distinct: Boolean): Int!
+  max: e_winning_reasons_max_fields
+  min: e_winning_reasons_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_winning_reasons". All fields are combined with a logical 'AND'.
+"""
+input e_winning_reasons_bool_exp {
+  _and: [e_winning_reasons_bool_exp!]
+  _not: e_winning_reasons_bool_exp
+  _or: [e_winning_reasons_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_winning_reasons"
+"""
+enum e_winning_reasons_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_winning_reasons_pkey
+}
+
+enum e_winning_reasons_enum {
+  """Bomb Defused"""
+  BombDefused
+
+  """Bomb Exploded"""
+  BombExploded
+
+  """CTs Win"""
+  CTsWin
+
+  """Terrorists Win"""
+  TerroristsWin
+
+  """Time Ran Out"""
+  TimeRanOut
+
+  """Unknown"""
+  Unknown
+}
+
+"""
+Boolean expression to compare columns of type "e_winning_reasons_enum". All fields are combined with logical 'AND'.
+"""
+input e_winning_reasons_enum_comparison_exp {
+  _eq: e_winning_reasons_enum
+  _in: [e_winning_reasons_enum!]
+  _is_null: Boolean
+  _neq: e_winning_reasons_enum
+  _nin: [e_winning_reasons_enum!]
+}
+
+"""
+input type for inserting data into table "e_winning_reasons"
+"""
+input e_winning_reasons_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_winning_reasons_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_winning_reasons_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_winning_reasons"
+"""
+type e_winning_reasons_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_winning_reasons!]!
+}
+
+"""
+on_conflict condition type for table "e_winning_reasons"
+"""
+input e_winning_reasons_on_conflict {
+  constraint: e_winning_reasons_constraint!
+  update_columns: [e_winning_reasons_update_column!]! = []
+  where: e_winning_reasons_bool_exp
+}
+
+"""Ordering options when selecting data from "e_winning_reasons"."""
+input e_winning_reasons_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_winning_reasons"""
+input e_winning_reasons_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_winning_reasons"
+"""
+enum e_winning_reasons_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_winning_reasons"
+"""
+input e_winning_reasons_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_winning_reasons"
+"""
+input e_winning_reasons_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_winning_reasons_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_winning_reasons_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_winning_reasons"
+"""
+enum e_winning_reasons_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_winning_reasons_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_winning_reasons_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_winning_reasons_bool_exp!
+}
+
 scalar float8
 
 """
@@ -11062,6 +11245,7 @@ type match_map_rounds {
   match_map_id: uuid!
   round: Int!
   time: timestamptz!
+  winning_reason: e_winning_reasons_enum
   winning_side: String!
 }
 
@@ -11178,6 +11362,7 @@ input match_map_rounds_bool_exp {
   match_map_id: uuid_comparison_exp
   round: Int_comparison_exp
   time: timestamptz_comparison_exp
+  winning_reason: e_winning_reasons_enum_comparison_exp
   winning_side: String_comparison_exp
 }
 
@@ -11235,6 +11420,7 @@ input match_map_rounds_insert_input {
   match_map_id: uuid
   round: Int
   time: timestamptz
+  winning_reason: e_winning_reasons_enum
   winning_side: String
 }
 
@@ -11354,6 +11540,7 @@ input match_map_rounds_order_by {
   match_map_id: order_by
   round: order_by
   time: order_by
+  winning_reason: order_by
   winning_side: order_by
 }
 
@@ -11412,6 +11599,9 @@ enum match_map_rounds_select_column {
   time
 
   """column name"""
+  winning_reason
+
+  """column name"""
   winning_side
 }
 
@@ -11434,6 +11624,7 @@ input match_map_rounds_set_input {
   match_map_id: uuid
   round: Int
   time: timestamptz
+  winning_reason: e_winning_reasons_enum
   winning_side: String
 }
 
@@ -11537,6 +11728,7 @@ input match_map_rounds_stream_cursor_value_input {
   match_map_id: uuid
   round: Int
   time: timestamptz
+  winning_reason: e_winning_reasons_enum
   winning_side: String
 }
 
@@ -11612,6 +11804,9 @@ enum match_map_rounds_update_column {
 
   """column name"""
   time
+
+  """column name"""
+  winning_reason
 
   """column name"""
   winning_side
@@ -16637,6 +16832,19 @@ type mutation_root {
   delete_e_veto_pick_types_by_pk(value: String!): e_veto_pick_types
 
   """
+  delete data from the table: "e_winning_reasons"
+  """
+  delete_e_winning_reasons(
+    """filter the rows which have to be deleted"""
+    where: e_winning_reasons_bool_exp!
+  ): e_winning_reasons_mutation_response
+
+  """
+  delete single row from the table: "e_winning_reasons"
+  """
+  delete_e_winning_reasons_by_pk(value: String!): e_winning_reasons
+
+  """
   delete data from the table: "friends"
   """
   delete_friends(
@@ -17863,6 +18071,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_veto_pick_types_on_conflict
   ): e_veto_pick_types
+
+  """
+  insert data into the table: "e_winning_reasons"
+  """
+  insert_e_winning_reasons(
+    """the rows to be inserted"""
+    objects: [e_winning_reasons_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_winning_reasons_on_conflict
+  ): e_winning_reasons_mutation_response
+
+  """
+  insert a single row into the table: "e_winning_reasons"
+  """
+  insert_e_winning_reasons_one(
+    """the row to be inserted"""
+    object: e_winning_reasons_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_winning_reasons_on_conflict
+  ): e_winning_reasons
 
   """
   insert data into the table: "friends"
@@ -19730,6 +19960,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_veto_pick_types_updates!]!
   ): [e_veto_pick_types_mutation_response]
+
+  """
+  update data of the table: "e_winning_reasons"
+  """
+  update_e_winning_reasons(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_winning_reasons_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_winning_reasons_bool_exp!
+  ): e_winning_reasons_mutation_response
+
+  """
+  update single row of the table: "e_winning_reasons"
+  """
+  update_e_winning_reasons_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_winning_reasons_set_input
+    pk_columns: e_winning_reasons_pk_columns_input!
+  ): e_winning_reasons
+
+  """
+  update multiples rows of table: "e_winning_reasons"
+  """
+  update_e_winning_reasons_many(
+    """updates to execute, in order"""
+    updates: [e_winning_reasons_updates!]!
+  ): [e_winning_reasons_mutation_response]
 
   """
   update data of the table: "friends"
@@ -30410,6 +30668,51 @@ type query_root {
   e_veto_pick_types_by_pk(value: String!): e_veto_pick_types
 
   """
+  fetch data from the table: "e_winning_reasons"
+  """
+  e_winning_reasons(
+    """distinct select on columns"""
+    distinct_on: [e_winning_reasons_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_winning_reasons_order_by!]
+
+    """filter the rows returned"""
+    where: e_winning_reasons_bool_exp
+  ): [e_winning_reasons!]!
+
+  """
+  fetch aggregated fields from the table: "e_winning_reasons"
+  """
+  e_winning_reasons_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_winning_reasons_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_winning_reasons_order_by!]
+
+    """filter the rows returned"""
+    where: e_winning_reasons_bool_exp
+  ): e_winning_reasons_aggregate!
+
+  """
+  fetch data from the table: "e_winning_reasons" using primary key columns
+  """
+  e_winning_reasons_by_pk(value: String!): e_winning_reasons
+
+  """
   fetch data from the table: "friends"
   """
   friends(
@@ -35744,6 +36047,65 @@ type subscription_root {
   ): [e_veto_pick_types!]!
 
   """
+  fetch data from the table: "e_winning_reasons"
+  """
+  e_winning_reasons(
+    """distinct select on columns"""
+    distinct_on: [e_winning_reasons_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_winning_reasons_order_by!]
+
+    """filter the rows returned"""
+    where: e_winning_reasons_bool_exp
+  ): [e_winning_reasons!]!
+
+  """
+  fetch aggregated fields from the table: "e_winning_reasons"
+  """
+  e_winning_reasons_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_winning_reasons_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_winning_reasons_order_by!]
+
+    """filter the rows returned"""
+    where: e_winning_reasons_bool_exp
+  ): e_winning_reasons_aggregate!
+
+  """
+  fetch data from the table: "e_winning_reasons" using primary key columns
+  """
+  e_winning_reasons_by_pk(value: String!): e_winning_reasons
+
+  """
+  fetch data from the table in a streaming manner: "e_winning_reasons"
+  """
+  e_winning_reasons_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_winning_reasons_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_winning_reasons_bool_exp
+  ): [e_winning_reasons!]!
+
+  """
   fetch data from the table: "friends"
   """
   friends(
@@ -40333,6 +40695,26 @@ columns and relationships of "tournament_brackets"
 type tournament_brackets {
   bye: Boolean!
   created_at: timestamptz!
+
+  """
+  A computed field, executes function "get_feeding_brackets"
+  """
+  feeding_brackets(
+    """distinct select on columns"""
+    distinct_on: [tournament_brackets_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_brackets_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_brackets_bool_exp
+  ): [tournament_brackets!]
   finished: Boolean!
   group: numeric
   id: uuid!
@@ -40480,6 +40862,7 @@ input tournament_brackets_bool_exp {
   _or: [tournament_brackets_bool_exp!]
   bye: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
+  feeding_brackets: tournament_brackets_bool_exp
   finished: Boolean_comparison_exp
   group: numeric_comparison_exp
   id: uuid_comparison_exp
@@ -40680,6 +41063,7 @@ input tournament_brackets_on_conflict {
 input tournament_brackets_order_by {
   bye: order_by
   created_at: order_by
+  feeding_brackets_aggregate: tournament_brackets_aggregate_order_by
   finished: order_by
   group: order_by
   id: order_by

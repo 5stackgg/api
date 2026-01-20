@@ -27,6 +27,7 @@
 - "!include public_e_tournament_status.yaml"
 - "!include public_e_utility_types.yaml"
 - "!include public_e_veto_pick_types.yaml"
+- "!include public_e_winning_reasons.yaml"
 - "!include public_friends.yaml"
 - "!include public_game_server_nodes.yaml"
 - "!include public_game_versions.yaml"

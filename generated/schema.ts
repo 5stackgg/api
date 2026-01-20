@@ -2213,6 +2213,71 @@ export type e_veto_pick_types_select_column = 'description' | 'value'
 export type e_veto_pick_types_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_winning_reasons" */
+export interface e_winning_reasons {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_winning_reasons'
+}
+
+
+/** aggregated selection of "e_winning_reasons" */
+export interface e_winning_reasons_aggregate {
+    aggregate: (e_winning_reasons_aggregate_fields | null)
+    nodes: e_winning_reasons[]
+    __typename: 'e_winning_reasons_aggregate'
+}
+
+
+/** aggregate fields of "e_winning_reasons" */
+export interface e_winning_reasons_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_winning_reasons_max_fields | null)
+    min: (e_winning_reasons_min_fields | null)
+    __typename: 'e_winning_reasons_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_winning_reasons" */
+export type e_winning_reasons_constraint = 'e_winning_reasons_pkey'
+
+export type e_winning_reasons_enum = 'BombDefused' | 'BombExploded' | 'CTsWin' | 'TerroristsWin' | 'TimeRanOut' | 'Unknown'
+
+
+/** aggregate max on columns */
+export interface e_winning_reasons_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_winning_reasons_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_winning_reasons_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_winning_reasons_min_fields'
+}
+
+
+/** response of any mutation on the table "e_winning_reasons" */
+export interface e_winning_reasons_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_winning_reasons[]
+    __typename: 'e_winning_reasons_mutation_response'
+}
+
+
+/** select columns of table "e_winning_reasons" */
+export type e_winning_reasons_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_winning_reasons" */
+export type e_winning_reasons_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "friends" */
 export interface friends {
     /** An object relationship */
@@ -3812,6 +3877,7 @@ export interface match_map_rounds {
     match_map_id: Scalars['uuid']
     round: Scalars['Int']
     time: Scalars['timestamptz']
+    winning_reason: (e_winning_reasons_enum | null)
     winning_side: Scalars['String']
     __typename: 'match_map_rounds'
 }
@@ -3910,7 +3976,7 @@ export interface match_map_rounds_mutation_response {
 
 
 /** select columns of table "match_map_rounds" */
-export type match_map_rounds_select_column = 'backup_file' | 'created_at' | 'deleted_at' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_side'
+export type match_map_rounds_select_column = 'backup_file' | 'created_at' | 'deleted_at' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_reason' | 'winning_side'
 
 
 /** aggregate stddev on columns */
@@ -3966,7 +4032,7 @@ export interface match_map_rounds_sum_fields {
 
 
 /** update columns of table "match_map_rounds" */
-export type match_map_rounds_update_column = 'backup_file' | 'created_at' | 'deleted_at' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_side'
+export type match_map_rounds_update_column = 'backup_file' | 'created_at' | 'deleted_at' | 'id' | 'lineup_1_money' | 'lineup_1_score' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_money' | 'lineup_2_score' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'match_map_id' | 'round' | 'time' | 'winning_reason' | 'winning_side'
 
 
 /** aggregate var_pop on columns */
@@ -5417,6 +5483,10 @@ export interface mutation_root {
     delete_e_veto_pick_types: (e_veto_pick_types_mutation_response | null)
     /** delete single row from the table: "e_veto_pick_types" */
     delete_e_veto_pick_types_by_pk: (e_veto_pick_types | null)
+    /** delete data from the table: "e_winning_reasons" */
+    delete_e_winning_reasons: (e_winning_reasons_mutation_response | null)
+    /** delete single row from the table: "e_winning_reasons" */
+    delete_e_winning_reasons_by_pk: (e_winning_reasons | null)
     /** delete data from the table: "friends" */
     delete_friends: (friends_mutation_response | null)
     /** delete single row from the table: "friends" */
@@ -5718,6 +5788,10 @@ export interface mutation_root {
     insert_e_veto_pick_types: (e_veto_pick_types_mutation_response | null)
     /** insert a single row into the table: "e_veto_pick_types" */
     insert_e_veto_pick_types_one: (e_veto_pick_types | null)
+    /** insert data into the table: "e_winning_reasons" */
+    insert_e_winning_reasons: (e_winning_reasons_mutation_response | null)
+    /** insert a single row into the table: "e_winning_reasons" */
+    insert_e_winning_reasons_one: (e_winning_reasons | null)
     /** insert data into the table: "friends" */
     insert_friends: (friends_mutation_response | null)
     /** insert a single row into the table: "friends" */
@@ -6101,6 +6175,12 @@ export interface mutation_root {
     update_e_veto_pick_types_by_pk: (e_veto_pick_types | null)
     /** update multiples rows of table: "e_veto_pick_types" */
     update_e_veto_pick_types_many: ((e_veto_pick_types_mutation_response | null)[] | null)
+    /** update data of the table: "e_winning_reasons" */
+    update_e_winning_reasons: (e_winning_reasons_mutation_response | null)
+    /** update single row of the table: "e_winning_reasons" */
+    update_e_winning_reasons_by_pk: (e_winning_reasons | null)
+    /** update multiples rows of table: "e_winning_reasons" */
+    update_e_winning_reasons_many: ((e_winning_reasons_mutation_response | null)[] | null)
     /** update data of the table: "friends" */
     update_friends: (friends_mutation_response | null)
     /** update single row of the table: "friends" */
@@ -8977,6 +9057,12 @@ export interface query_root {
     e_veto_pick_types_aggregate: e_veto_pick_types_aggregate
     /** fetch data from the table: "e_veto_pick_types" using primary key columns */
     e_veto_pick_types_by_pk: (e_veto_pick_types | null)
+    /** fetch data from the table: "e_winning_reasons" */
+    e_winning_reasons: e_winning_reasons[]
+    /** fetch aggregated fields from the table: "e_winning_reasons" */
+    e_winning_reasons_aggregate: e_winning_reasons_aggregate
+    /** fetch data from the table: "e_winning_reasons" using primary key columns */
+    e_winning_reasons_by_pk: (e_winning_reasons | null)
     /** fetch data from the table: "friends" */
     friends: friends[]
     /** fetch aggregated fields from the table: "friends" */
@@ -9987,6 +10073,14 @@ export interface subscription_root {
     e_veto_pick_types_by_pk: (e_veto_pick_types | null)
     /** fetch data from the table in a streaming manner: "e_veto_pick_types" */
     e_veto_pick_types_stream: e_veto_pick_types[]
+    /** fetch data from the table: "e_winning_reasons" */
+    e_winning_reasons: e_winning_reasons[]
+    /** fetch aggregated fields from the table: "e_winning_reasons" */
+    e_winning_reasons_aggregate: e_winning_reasons_aggregate
+    /** fetch data from the table: "e_winning_reasons" using primary key columns */
+    e_winning_reasons_by_pk: (e_winning_reasons | null)
+    /** fetch data from the table in a streaming manner: "e_winning_reasons" */
+    e_winning_reasons_stream: e_winning_reasons[]
     /** fetch data from the table: "friends" */
     friends: friends[]
     /** fetch aggregated fields from the table: "friends" */
@@ -10884,6 +10978,8 @@ export interface teams_variance_fields {
 export interface tournament_brackets {
     bye: Scalars['Boolean']
     created_at: Scalars['timestamptz']
+    /** A computed field, executes function "get_feeding_brackets" */
+    feeding_brackets: (tournament_brackets[] | null)
     finished: Scalars['Boolean']
     group: (Scalars['numeric'] | null)
     id: Scalars['uuid']
@@ -17711,6 +17807,109 @@ _set?: (e_veto_pick_types_set_input | null),
 where: e_veto_pick_types_bool_exp}
 
 
+/** columns and relationships of "e_winning_reasons" */
+export interface e_winning_reasonsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_winning_reasons" */
+export interface e_winning_reasons_aggregateGenqlSelection{
+    aggregate?: e_winning_reasons_aggregate_fieldsGenqlSelection
+    nodes?: e_winning_reasonsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_winning_reasons" */
+export interface e_winning_reasons_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_winning_reasons_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_winning_reasons_max_fieldsGenqlSelection
+    min?: e_winning_reasons_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_winning_reasons". All fields are combined with a logical 'AND'. */
+export interface e_winning_reasons_bool_exp {_and?: (e_winning_reasons_bool_exp[] | null),_not?: (e_winning_reasons_bool_exp | null),_or?: (e_winning_reasons_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_winning_reasons_enum". All fields are combined with logical 'AND'. */
+export interface e_winning_reasons_enum_comparison_exp {_eq?: (e_winning_reasons_enum | null),_in?: (e_winning_reasons_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_winning_reasons_enum | null),_nin?: (e_winning_reasons_enum[] | null)}
+
+
+/** input type for inserting data into table "e_winning_reasons" */
+export interface e_winning_reasons_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_winning_reasons_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_winning_reasons_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_winning_reasons" */
+export interface e_winning_reasons_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_winning_reasonsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_winning_reasons" */
+export interface e_winning_reasons_on_conflict {constraint: e_winning_reasons_constraint,update_columns?: e_winning_reasons_update_column[],where?: (e_winning_reasons_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_winning_reasons". */
+export interface e_winning_reasons_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_winning_reasons */
+export interface e_winning_reasons_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_winning_reasons" */
+export interface e_winning_reasons_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_winning_reasons" */
+export interface e_winning_reasons_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_winning_reasons_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_winning_reasons_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_winning_reasons_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_winning_reasons_set_input | null),
+/** filter the rows which have to be updated */
+where: e_winning_reasons_bool_exp}
+
+
 /** Boolean expression to compare columns of type "float8". All fields are combined with logical 'AND'. */
 export interface float8_comparison_exp {_eq?: (Scalars['float8'] | null),_gt?: (Scalars['float8'] | null),_gte?: (Scalars['float8'] | null),_in?: (Scalars['float8'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['float8'] | null),_lte?: (Scalars['float8'] | null),_neq?: (Scalars['float8'] | null),_nin?: (Scalars['float8'][] | null)}
 
@@ -20438,6 +20637,7 @@ export interface match_map_roundsGenqlSelection{
     match_map_id?: boolean | number
     round?: boolean | number
     time?: boolean | number
+    winning_reason?: boolean | number
     winning_side?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -20504,7 +20704,7 @@ export interface match_map_rounds_avg_order_by {lineup_1_money?: (order_by | nul
 
 
 /** Boolean expression to filter rows from the table "match_map_rounds". All fields are combined with a logical 'AND'. */
-export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),has_backup_file?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),winning_side?: (String_comparison_exp | null)}
+export interface match_map_rounds_bool_exp {_and?: (match_map_rounds_bool_exp[] | null),_not?: (match_map_rounds_bool_exp | null),_or?: (match_map_rounds_bool_exp[] | null),backup_file?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),has_backup_file?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),lineup_1_money?: (Int_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_money?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),round?: (Int_comparison_exp | null),time?: (timestamptz_comparison_exp | null),winning_reason?: (e_winning_reasons_enum_comparison_exp | null),winning_side?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_rounds" */
@@ -20512,7 +20712,7 @@ export interface match_map_rounds_inc_input {lineup_1_money?: (Scalars['Int'] | 
 
 
 /** input type for inserting data into table "match_map_rounds" */
-export interface match_map_rounds_insert_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),kills?: (player_kills_arr_rel_insert_input | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
+export interface match_map_rounds_insert_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),kills?: (player_kills_arr_rel_insert_input | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_reason?: (e_winning_reasons_enum | null),winning_side?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -20581,7 +20781,7 @@ export interface match_map_rounds_on_conflict {constraint: match_map_rounds_cons
 
 
 /** Ordering options when selecting data from "match_map_rounds". */
-export interface match_map_rounds_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),has_backup_file?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_side?: (order_by | null)}
+export interface match_map_rounds_order_by {backup_file?: (order_by | null),created_at?: (order_by | null),deleted_at?: (order_by | null),has_backup_file?: (order_by | null),id?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),lineup_1_money?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_money?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),time?: (order_by | null),winning_reason?: (order_by | null),winning_side?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_rounds */
@@ -20589,7 +20789,7 @@ export interface match_map_rounds_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_map_rounds" */
-export interface match_map_rounds_set_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
+export interface match_map_rounds_set_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_reason?: (e_winning_reasons_enum | null),winning_side?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -20655,7 +20855,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_rounds_stream_cursor_value_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_side?: (Scalars['String'] | null)}
+export interface match_map_rounds_stream_cursor_value_input {backup_file?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_money?: (Scalars['Int'] | null),lineup_1_score?: (Scalars['Int'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_money?: (Scalars['Int'] | null),lineup_2_score?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),time?: (Scalars['timestamptz'] | null),winning_reason?: (e_winning_reasons_enum | null),winning_side?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -23303,6 +23503,12 @@ export interface mutation_rootGenqlSelection{
     where: e_veto_pick_types_bool_exp} })
     /** delete single row from the table: "e_veto_pick_types" */
     delete_e_veto_pick_types_by_pk?: (e_veto_pick_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_winning_reasons" */
+    delete_e_winning_reasons?: (e_winning_reasons_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_winning_reasons_bool_exp} })
+    /** delete single row from the table: "e_winning_reasons" */
+    delete_e_winning_reasons_by_pk?: (e_winning_reasonsGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "friends" */
     delete_friends?: (friends_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -23924,6 +24130,18 @@ export interface mutation_rootGenqlSelection{
     object: e_veto_pick_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_veto_pick_types_on_conflict | null)} })
+    /** insert data into the table: "e_winning_reasons" */
+    insert_e_winning_reasons?: (e_winning_reasons_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_winning_reasons_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_winning_reasons_on_conflict | null)} })
+    /** insert a single row into the table: "e_winning_reasons" */
+    insert_e_winning_reasons_one?: (e_winning_reasonsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_winning_reasons_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_winning_reasons_on_conflict | null)} })
     /** insert data into the table: "friends" */
     insert_friends?: (friends_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -24915,6 +25133,20 @@ export interface mutation_rootGenqlSelection{
     update_e_veto_pick_types_many?: (e_veto_pick_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_veto_pick_types_updates[]} })
+    /** update data of the table: "e_winning_reasons" */
+    update_e_winning_reasons?: (e_winning_reasons_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_winning_reasons_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_winning_reasons_bool_exp} })
+    /** update single row of the table: "e_winning_reasons" */
+    update_e_winning_reasons_by_pk?: (e_winning_reasonsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_winning_reasons_set_input | null), pk_columns: e_winning_reasons_pk_columns_input} })
+    /** update multiples rows of table: "e_winning_reasons" */
+    update_e_winning_reasons_many?: (e_winning_reasons_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_winning_reasons_updates[]} })
     /** update data of the table: "friends" */
     update_friends?: (friends_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -30768,6 +31000,32 @@ export interface query_rootGenqlSelection{
     where?: (e_veto_pick_types_bool_exp | null)} })
     /** fetch data from the table: "e_veto_pick_types" using primary key columns */
     e_veto_pick_types_by_pk?: (e_veto_pick_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_winning_reasons" */
+    e_winning_reasons?: (e_winning_reasonsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_winning_reasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_winning_reasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_winning_reasons_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_winning_reasons" */
+    e_winning_reasons_aggregate?: (e_winning_reasons_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_winning_reasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_winning_reasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_winning_reasons_bool_exp | null)} })
+    /** fetch data from the table: "e_winning_reasons" using primary key columns */
+    e_winning_reasons_by_pk?: (e_winning_reasonsGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "friends" */
     friends?: (friendsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -33879,6 +34137,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_veto_pick_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_veto_pick_types_bool_exp | null)} })
+    /** fetch data from the table: "e_winning_reasons" */
+    e_winning_reasons?: (e_winning_reasonsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_winning_reasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_winning_reasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_winning_reasons_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_winning_reasons" */
+    e_winning_reasons_aggregate?: (e_winning_reasons_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_winning_reasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_winning_reasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_winning_reasons_bool_exp | null)} })
+    /** fetch data from the table: "e_winning_reasons" using primary key columns */
+    e_winning_reasons_by_pk?: (e_winning_reasonsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_winning_reasons" */
+    e_winning_reasons_stream?: (e_winning_reasonsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_winning_reasons_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_winning_reasons_bool_exp | null)} })
     /** fetch data from the table: "friends" */
     friends?: (friendsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -36667,6 +36959,18 @@ export interface timestamptz_comparison_exp {_eq?: (Scalars['timestamptz'] | nul
 export interface tournament_bracketsGenqlSelection{
     bye?: boolean | number
     created_at?: boolean | number
+    /** A computed field, executes function "get_feeding_brackets" */
+    feeding_brackets?: (tournament_bracketsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_brackets_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_brackets_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_brackets_bool_exp | null)} })
     finished?: boolean | number
     group?: boolean | number
     id?: boolean | number
@@ -36764,7 +37068,7 @@ export interface tournament_brackets_avg_order_by {group?: (order_by | null),mat
 
 
 /** Boolean expression to filter rows from the table "tournament_brackets". All fields are combined with a logical 'AND'. */
-export interface tournament_brackets_bool_exp {_and?: (tournament_brackets_bool_exp[] | null),_not?: (tournament_brackets_bool_exp | null),_or?: (tournament_brackets_bool_exp[] | null),bye?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),finished?: (Boolean_comparison_exp | null),group?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),loser_bracket?: (tournament_brackets_bool_exp | null),loser_parent_bracket_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_number?: (Int_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),options?: (match_options_bool_exp | null),parent_bracket?: (tournament_brackets_bool_exp | null),parent_bracket_id?: (uuid_comparison_exp | null),path?: (String_comparison_exp | null),round?: (Int_comparison_exp | null),scheduled_eta?: (timestamptz_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team_1?: (tournament_teams_bool_exp | null),team_1_seed?: (Int_comparison_exp | null),team_2?: (tournament_teams_bool_exp | null),team_2_seed?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id_1?: (uuid_comparison_exp | null),tournament_team_id_2?: (uuid_comparison_exp | null)}
+export interface tournament_brackets_bool_exp {_and?: (tournament_brackets_bool_exp[] | null),_not?: (tournament_brackets_bool_exp | null),_or?: (tournament_brackets_bool_exp[] | null),bye?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),feeding_brackets?: (tournament_brackets_bool_exp | null),finished?: (Boolean_comparison_exp | null),group?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),loser_bracket?: (tournament_brackets_bool_exp | null),loser_parent_bracket_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_number?: (Int_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),options?: (match_options_bool_exp | null),parent_bracket?: (tournament_brackets_bool_exp | null),parent_bracket_id?: (uuid_comparison_exp | null),path?: (String_comparison_exp | null),round?: (Int_comparison_exp | null),scheduled_eta?: (timestamptz_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team_1?: (tournament_teams_bool_exp | null),team_1_seed?: (Int_comparison_exp | null),team_2?: (tournament_teams_bool_exp | null),team_2_seed?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id_1?: (uuid_comparison_exp | null),tournament_team_id_2?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_brackets" */
@@ -36851,7 +37155,7 @@ export interface tournament_brackets_on_conflict {constraint: tournament_bracket
 
 
 /** Ordering options when selecting data from "tournament_brackets". */
-export interface tournament_brackets_order_by {bye?: (order_by | null),created_at?: (order_by | null),finished?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_bracket?: (tournament_brackets_order_by | null),loser_parent_bracket_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),options?: (match_options_order_by | null),parent_bracket?: (tournament_brackets_order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),stage?: (tournament_stages_order_by | null),team_1?: (tournament_teams_order_by | null),team_1_seed?: (order_by | null),team_2?: (tournament_teams_order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_order_by {bye?: (order_by | null),created_at?: (order_by | null),feeding_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),finished?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_bracket?: (tournament_brackets_order_by | null),loser_parent_bracket_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),options?: (match_options_order_by | null),parent_bracket?: (tournament_brackets_order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),stage?: (tournament_stages_order_by | null),team_1?: (tournament_teams_order_by | null),team_1_seed?: (order_by | null),team_2?: (tournament_teams_order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_brackets */
@@ -42955,6 +43259,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_veto_pick_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_veto_pick_types_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_veto_pick_types_mutation_response"')
       return e_veto_pick_types_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_winning_reasons_possibleTypes: string[] = ['e_winning_reasons']
+    export const ise_winning_reasons = (obj?: { __typename?: any } | null): obj is e_winning_reasons => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_winning_reasons"')
+      return e_winning_reasons_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_winning_reasons_aggregate_possibleTypes: string[] = ['e_winning_reasons_aggregate']
+    export const ise_winning_reasons_aggregate = (obj?: { __typename?: any } | null): obj is e_winning_reasons_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_winning_reasons_aggregate"')
+      return e_winning_reasons_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_winning_reasons_aggregate_fields_possibleTypes: string[] = ['e_winning_reasons_aggregate_fields']
+    export const ise_winning_reasons_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_winning_reasons_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_winning_reasons_aggregate_fields"')
+      return e_winning_reasons_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_winning_reasons_max_fields_possibleTypes: string[] = ['e_winning_reasons_max_fields']
+    export const ise_winning_reasons_max_fields = (obj?: { __typename?: any } | null): obj is e_winning_reasons_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_winning_reasons_max_fields"')
+      return e_winning_reasons_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_winning_reasons_min_fields_possibleTypes: string[] = ['e_winning_reasons_min_fields']
+    export const ise_winning_reasons_min_fields = (obj?: { __typename?: any } | null): obj is e_winning_reasons_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_winning_reasons_min_fields"')
+      return e_winning_reasons_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_winning_reasons_mutation_response_possibleTypes: string[] = ['e_winning_reasons_mutation_response']
+    export const ise_winning_reasons_mutation_response = (obj?: { __typename?: any } | null): obj is e_winning_reasons_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_winning_reasons_mutation_response"')
+      return e_winning_reasons_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -49313,6 +49665,29 @@ export const enumEVetoPickTypesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumEWinningReasonsConstraint = {
+   e_winning_reasons_pkey: 'e_winning_reasons_pkey' as const
+}
+
+export const enumEWinningReasonsEnum = {
+   BombDefused: 'BombDefused' as const,
+   BombExploded: 'BombExploded' as const,
+   CTsWin: 'CTsWin' as const,
+   TerroristsWin: 'TerroristsWin' as const,
+   TimeRanOut: 'TimeRanOut' as const,
+   Unknown: 'Unknown' as const
+}
+
+export const enumEWinningReasonsSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEWinningReasonsUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumFriendsConstraint = {
    friends_pkey: 'friends_pkey' as const,
    friends_player_steam_id_other_player_steam_id_key: 'friends_player_steam_id_other_player_steam_id_key' as const
@@ -49647,6 +50022,7 @@ export const enumMatchMapRoundsSelectColumn = {
    match_map_id: 'match_map_id' as const,
    round: 'round' as const,
    time: 'time' as const,
+   winning_reason: 'winning_reason' as const,
    winning_side: 'winning_side' as const
 }
 
@@ -49666,6 +50042,7 @@ export const enumMatchMapRoundsUpdateColumn = {
    match_map_id: 'match_map_id' as const,
    round: 'round' as const,
    time: 'time' as const,
+   winning_reason: 'winning_reason' as const,
    winning_side: 'winning_side' as const
 }
 
