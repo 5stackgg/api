@@ -17191,6 +17191,19 @@ type mutation_root {
   delete_player_kills_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_kills
 
   """
+  delete data from the table: "player_kills_by_weapon"
+  """
+  delete_player_kills_by_weapon(
+    """filter the rows which have to be deleted"""
+    where: player_kills_by_weapon_bool_exp!
+  ): player_kills_by_weapon_mutation_response
+
+  """
+  delete single row from the table: "player_kills_by_weapon"
+  """
+  delete_player_kills_by_weapon_by_pk(player_steam_id: bigint!, with: String!): player_kills_by_weapon
+
+  """
   delete data from the table: "player_objectives"
   """
   delete_player_objectives(
@@ -17215,6 +17228,19 @@ type mutation_root {
   delete single row from the table: "player_sanctions"
   """
   delete_player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
+
+  """
+  delete data from the table: "player_stats"
+  """
+  delete_player_stats(
+    """filter the rows which have to be deleted"""
+    where: player_stats_bool_exp!
+  ): player_stats_mutation_response
+
+  """
+  delete single row from the table: "player_stats"
+  """
+  delete_player_stats_by_pk(player_steam_id: bigint!): player_stats
 
   """
   delete data from the table: "player_unused_utility"
@@ -18672,6 +18698,28 @@ type mutation_root {
   ): player_kills_mutation_response
 
   """
+  insert data into the table: "player_kills_by_weapon"
+  """
+  insert_player_kills_by_weapon(
+    """the rows to be inserted"""
+    objects: [player_kills_by_weapon_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_kills_by_weapon_on_conflict
+  ): player_kills_by_weapon_mutation_response
+
+  """
+  insert a single row into the table: "player_kills_by_weapon"
+  """
+  insert_player_kills_by_weapon_one(
+    """the row to be inserted"""
+    object: player_kills_by_weapon_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_kills_by_weapon_on_conflict
+  ): player_kills_by_weapon
+
+  """
   insert a single row into the table: "player_kills"
   """
   insert_player_kills_one(
@@ -18725,6 +18773,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: player_sanctions_on_conflict
   ): player_sanctions
+
+  """
+  insert data into the table: "player_stats"
+  """
+  insert_player_stats(
+    """the rows to be inserted"""
+    objects: [player_stats_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_stats_on_conflict
+  ): player_stats_mutation_response
+
+  """
+  insert a single row into the table: "player_stats"
+  """
+  insert_player_stats_one(
+    """the row to be inserted"""
+    object: player_stats_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_stats_on_conflict
+  ): player_stats
 
   """
   insert data into the table: "player_unused_utility"
@@ -20993,6 +21063,40 @@ type mutation_root {
   ): player_kills
 
   """
+  update data of the table: "player_kills_by_weapon"
+  """
+  update_player_kills_by_weapon(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_kills_by_weapon_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_kills_by_weapon_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_kills_by_weapon_bool_exp!
+  ): player_kills_by_weapon_mutation_response
+
+  """
+  update single row of the table: "player_kills_by_weapon"
+  """
+  update_player_kills_by_weapon_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_kills_by_weapon_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_kills_by_weapon_set_input
+    pk_columns: player_kills_by_weapon_pk_columns_input!
+  ): player_kills_by_weapon
+
+  """
+  update multiples rows of table: "player_kills_by_weapon"
+  """
+  update_player_kills_by_weapon_many(
+    """updates to execute, in order"""
+    updates: [player_kills_by_weapon_updates!]!
+  ): [player_kills_by_weapon_mutation_response]
+
+  """
   update multiples rows of table: "player_kills"
   """
   update_player_kills_many(
@@ -21067,6 +21171,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_sanctions_updates!]!
   ): [player_sanctions_mutation_response]
+
+  """
+  update data of the table: "player_stats"
+  """
+  update_player_stats(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_stats_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_stats_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_stats_bool_exp!
+  ): player_stats_mutation_response
+
+  """
+  update single row of the table: "player_stats"
+  """
+  update_player_stats_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_stats_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_stats_set_input
+    pk_columns: player_stats_pk_columns_input!
+  ): player_stats
+
+  """
+  update multiples rows of table: "player_stats"
+  """
+  update_player_stats_many(
+    """updates to execute, in order"""
+    updates: [player_stats_updates!]!
+  ): [player_stats_mutation_response]
 
   """
   update data of the table: "player_unused_utility"
@@ -25170,6 +25308,366 @@ input player_kills_bool_exp {
 }
 
 """
+columns and relationships of "player_kills_by_weapon"
+"""
+type player_kills_by_weapon {
+  kill_count: bigint!
+
+  """An object relationship"""
+  player: players!
+  player_steam_id: bigint!
+  with: String!
+}
+
+"""
+aggregated selection of "player_kills_by_weapon"
+"""
+type player_kills_by_weapon_aggregate {
+  aggregate: player_kills_by_weapon_aggregate_fields
+  nodes: [player_kills_by_weapon!]!
+}
+
+input player_kills_by_weapon_aggregate_bool_exp {
+  count: player_kills_by_weapon_aggregate_bool_exp_count
+}
+
+input player_kills_by_weapon_aggregate_bool_exp_count {
+  arguments: [player_kills_by_weapon_select_column!]
+  distinct: Boolean
+  filter: player_kills_by_weapon_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "player_kills_by_weapon"
+"""
+type player_kills_by_weapon_aggregate_fields {
+  avg: player_kills_by_weapon_avg_fields
+  count(columns: [player_kills_by_weapon_select_column!], distinct: Boolean): Int!
+  max: player_kills_by_weapon_max_fields
+  min: player_kills_by_weapon_min_fields
+  stddev: player_kills_by_weapon_stddev_fields
+  stddev_pop: player_kills_by_weapon_stddev_pop_fields
+  stddev_samp: player_kills_by_weapon_stddev_samp_fields
+  sum: player_kills_by_weapon_sum_fields
+  var_pop: player_kills_by_weapon_var_pop_fields
+  var_samp: player_kills_by_weapon_var_samp_fields
+  variance: player_kills_by_weapon_variance_fields
+}
+
+"""
+order by aggregate values of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_aggregate_order_by {
+  avg: player_kills_by_weapon_avg_order_by
+  count: order_by
+  max: player_kills_by_weapon_max_order_by
+  min: player_kills_by_weapon_min_order_by
+  stddev: player_kills_by_weapon_stddev_order_by
+  stddev_pop: player_kills_by_weapon_stddev_pop_order_by
+  stddev_samp: player_kills_by_weapon_stddev_samp_order_by
+  sum: player_kills_by_weapon_sum_order_by
+  var_pop: player_kills_by_weapon_var_pop_order_by
+  var_samp: player_kills_by_weapon_var_samp_order_by
+  variance: player_kills_by_weapon_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_arr_rel_insert_input {
+  data: [player_kills_by_weapon_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_kills_by_weapon_on_conflict
+}
+
+"""aggregate avg on columns"""
+type player_kills_by_weapon_avg_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_avg_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "player_kills_by_weapon". All fields are combined with a logical 'AND'.
+"""
+input player_kills_by_weapon_bool_exp {
+  _and: [player_kills_by_weapon_bool_exp!]
+  _not: player_kills_by_weapon_bool_exp
+  _or: [player_kills_by_weapon_bool_exp!]
+  kill_count: bigint_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  with: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_kills_by_weapon"
+"""
+enum player_kills_by_weapon_constraint {
+  """
+  unique or primary key constraint on columns "player_steam_id", "with"
+  """
+  player_kills_by_weapon_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_inc_input {
+  kill_count: bigint
+  player_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_insert_input {
+  kill_count: bigint
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+  with: String
+}
+
+"""aggregate max on columns"""
+type player_kills_by_weapon_max_fields {
+  kill_count: bigint
+  player_steam_id: bigint
+  with: String
+}
+
+"""
+order by max() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_max_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+  with: order_by
+}
+
+"""aggregate min on columns"""
+type player_kills_by_weapon_min_fields {
+  kill_count: bigint
+  player_steam_id: bigint
+  with: String
+}
+
+"""
+order by min() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_min_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+  with: order_by
+}
+
+"""
+response of any mutation on the table "player_kills_by_weapon"
+"""
+type player_kills_by_weapon_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_kills_by_weapon!]!
+}
+
+"""
+on_conflict condition type for table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_on_conflict {
+  constraint: player_kills_by_weapon_constraint!
+  update_columns: [player_kills_by_weapon_update_column!]! = []
+  where: player_kills_by_weapon_bool_exp
+}
+
+"""Ordering options when selecting data from "player_kills_by_weapon"."""
+input player_kills_by_weapon_order_by {
+  kill_count: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  with: order_by
+}
+
+"""primary key columns input for table: player_kills_by_weapon"""
+input player_kills_by_weapon_pk_columns_input {
+  player_steam_id: bigint!
+  with: String!
+}
+
+"""
+select columns of table "player_kills_by_weapon"
+"""
+enum player_kills_by_weapon_select_column {
+  """column name"""
+  kill_count
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  with
+}
+
+"""
+input type for updating data in table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_set_input {
+  kill_count: bigint
+  player_steam_id: bigint
+  with: String
+}
+
+"""aggregate stddev on columns"""
+type player_kills_by_weapon_stddev_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_stddev_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type player_kills_by_weapon_stddev_pop_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_stddev_pop_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type player_kills_by_weapon_stddev_samp_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_stddev_samp_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_kills_by_weapon_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_kills_by_weapon_stream_cursor_value_input {
+  kill_count: bigint
+  player_steam_id: bigint
+  with: String
+}
+
+"""aggregate sum on columns"""
+type player_kills_by_weapon_sum_fields {
+  kill_count: bigint
+  player_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_sum_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""
+update columns of table "player_kills_by_weapon"
+"""
+enum player_kills_by_weapon_update_column {
+  """column name"""
+  kill_count
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  with
+}
+
+input player_kills_by_weapon_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_kills_by_weapon_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_kills_by_weapon_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_kills_by_weapon_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_kills_by_weapon_var_pop_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_var_pop_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type player_kills_by_weapon_var_samp_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_var_samp_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type player_kills_by_weapon_variance_fields {
+  kill_count: Float
+  player_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "player_kills_by_weapon"
+"""
+input player_kills_by_weapon_variance_order_by {
+  kill_count: order_by
+  player_steam_id: order_by
+}
+
+"""
 unique or primary key constraints on table "player_kills"
 """
 enum player_kills_constraint {
@@ -26608,6 +27106,619 @@ input player_sanctions_variance_order_by {
 }
 
 """
+columns and relationships of "player_stats"
+"""
+type player_stats {
+  assists: bigint!
+  deaths: bigint!
+  headshot_percentage: float8!
+  headshots: bigint!
+  kills: bigint!
+
+  """An object relationship"""
+  player: players!
+  player_steam_id: bigint!
+}
+
+"""
+aggregated selection of "player_stats"
+"""
+type player_stats_aggregate {
+  aggregate: player_stats_aggregate_fields
+  nodes: [player_stats!]!
+}
+
+input player_stats_aggregate_bool_exp {
+  avg: player_stats_aggregate_bool_exp_avg
+  corr: player_stats_aggregate_bool_exp_corr
+  count: player_stats_aggregate_bool_exp_count
+  covar_samp: player_stats_aggregate_bool_exp_covar_samp
+  max: player_stats_aggregate_bool_exp_max
+  min: player_stats_aggregate_bool_exp_min
+  stddev_samp: player_stats_aggregate_bool_exp_stddev_samp
+  sum: player_stats_aggregate_bool_exp_sum
+  var_samp: player_stats_aggregate_bool_exp_var_samp
+}
+
+input player_stats_aggregate_bool_exp_avg {
+  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_avg_arguments_columns!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_corr {
+  arguments: player_stats_aggregate_bool_exp_corr_arguments!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_corr_arguments {
+  X: player_stats_select_column_player_stats_aggregate_bool_exp_corr_arguments_columns!
+  Y: player_stats_select_column_player_stats_aggregate_bool_exp_corr_arguments_columns!
+}
+
+input player_stats_aggregate_bool_exp_count {
+  arguments: [player_stats_select_column!]
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_covar_samp {
+  arguments: player_stats_aggregate_bool_exp_covar_samp_arguments!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_covar_samp_arguments {
+  X: player_stats_select_column_player_stats_aggregate_bool_exp_covar_samp_arguments_columns!
+  Y: player_stats_select_column_player_stats_aggregate_bool_exp_covar_samp_arguments_columns!
+}
+
+input player_stats_aggregate_bool_exp_max {
+  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_max_arguments_columns!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_min {
+  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_min_arguments_columns!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_stddev_samp {
+  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_sum {
+  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_sum_arguments_columns!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input player_stats_aggregate_bool_exp_var_samp {
+  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_var_samp_arguments_columns!
+  distinct: Boolean
+  filter: player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+"""
+aggregate fields of "player_stats"
+"""
+type player_stats_aggregate_fields {
+  avg: player_stats_avg_fields
+  count(columns: [player_stats_select_column!], distinct: Boolean): Int!
+  max: player_stats_max_fields
+  min: player_stats_min_fields
+  stddev: player_stats_stddev_fields
+  stddev_pop: player_stats_stddev_pop_fields
+  stddev_samp: player_stats_stddev_samp_fields
+  sum: player_stats_sum_fields
+  var_pop: player_stats_var_pop_fields
+  var_samp: player_stats_var_samp_fields
+  variance: player_stats_variance_fields
+}
+
+"""
+order by aggregate values of table "player_stats"
+"""
+input player_stats_aggregate_order_by {
+  avg: player_stats_avg_order_by
+  count: order_by
+  max: player_stats_max_order_by
+  min: player_stats_min_order_by
+  stddev: player_stats_stddev_order_by
+  stddev_pop: player_stats_stddev_pop_order_by
+  stddev_samp: player_stats_stddev_samp_order_by
+  sum: player_stats_sum_order_by
+  var_pop: player_stats_var_pop_order_by
+  var_samp: player_stats_var_samp_order_by
+  variance: player_stats_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "player_stats"
+"""
+input player_stats_arr_rel_insert_input {
+  data: [player_stats_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_stats_on_conflict
+}
+
+"""aggregate avg on columns"""
+type player_stats_avg_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "player_stats"
+"""
+input player_stats_avg_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "player_stats". All fields are combined with a logical 'AND'.
+"""
+input player_stats_bool_exp {
+  _and: [player_stats_bool_exp!]
+  _not: player_stats_bool_exp
+  _or: [player_stats_bool_exp!]
+  assists: bigint_comparison_exp
+  deaths: bigint_comparison_exp
+  headshot_percentage: float8_comparison_exp
+  headshots: bigint_comparison_exp
+  kills: bigint_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_stats"
+"""
+enum player_stats_constraint {
+  """
+  unique or primary key constraint on columns "player_steam_id"
+  """
+  player_stats_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_stats"
+"""
+input player_stats_inc_input {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_stats"
+"""
+input player_stats_insert_input {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type player_stats_max_fields {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player_steam_id: bigint
+}
+
+"""
+order by max() on columns of table "player_stats"
+"""
+input player_stats_max_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type player_stats_min_fields {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player_steam_id: bigint
+}
+
+"""
+order by min() on columns of table "player_stats"
+"""
+input player_stats_min_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""
+response of any mutation on the table "player_stats"
+"""
+type player_stats_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_stats!]!
+}
+
+"""
+on_conflict condition type for table "player_stats"
+"""
+input player_stats_on_conflict {
+  constraint: player_stats_constraint!
+  update_columns: [player_stats_update_column!]! = []
+  where: player_stats_bool_exp
+}
+
+"""Ordering options when selecting data from "player_stats"."""
+input player_stats_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player: players_order_by
+  player_steam_id: order_by
+}
+
+"""primary key columns input for table: player_stats"""
+input player_stats_pk_columns_input {
+  player_steam_id: bigint!
+}
+
+"""
+select columns of table "player_stats"
+"""
+enum player_stats_select_column {
+  """column name"""
+  assists
+
+  """column name"""
+  deaths
+
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  headshots
+
+  """column name"""
+  kills
+
+  """column name"""
+  player_steam_id
+}
+
+"""
+select "player_stats_aggregate_bool_exp_avg_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_avg_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_corr_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_corr_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_covar_samp_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_max_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_max_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_min_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_min_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_sum_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_sum_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+select "player_stats_aggregate_bool_exp_var_samp_arguments_columns" columns of table "player_stats"
+"""
+enum player_stats_select_column_player_stats_aggregate_bool_exp_var_samp_arguments_columns {
+  """column name"""
+  headshot_percentage
+}
+
+"""
+input type for updating data in table "player_stats"
+"""
+input player_stats_set_input {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player_steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type player_stats_stddev_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "player_stats"
+"""
+input player_stats_stddev_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type player_stats_stddev_pop_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "player_stats"
+"""
+input player_stats_stddev_pop_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type player_stats_stddev_samp_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "player_stats"
+"""
+input player_stats_stddev_samp_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "player_stats"
+"""
+input player_stats_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_stats_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_stats_stream_cursor_value_input {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player_steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type player_stats_sum_fields {
+  assists: bigint
+  deaths: bigint
+  headshot_percentage: float8
+  headshots: bigint
+  kills: bigint
+  player_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "player_stats"
+"""
+input player_stats_sum_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""
+update columns of table "player_stats"
+"""
+enum player_stats_update_column {
+  """column name"""
+  assists
+
+  """column name"""
+  deaths
+
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  headshots
+
+  """column name"""
+  kills
+
+  """column name"""
+  player_steam_id
+}
+
+input player_stats_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_stats_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_stats_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_stats_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_stats_var_pop_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "player_stats"
+"""
+input player_stats_var_pop_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type player_stats_var_samp_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "player_stats"
+"""
+input player_stats_var_samp_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type player_stats_variance_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kills: Float
+  player_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "player_stats"
+"""
+input player_stats_variance_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kills: order_by
+  player_steam_id: order_by
+}
+
+"""
 columns and relationships of "player_unused_utility"
 """
 type player_unused_utility {
@@ -28006,6 +29117,42 @@ type players {
     """filter the rows returned"""
     where: player_kills_bool_exp
   ): player_kills_aggregate!
+
+  """An array relationship"""
+  kills_by_weapons(
+    """distinct select on columns"""
+    distinct_on: [player_kills_by_weapon_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_kills_by_weapon_order_by!]
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): [player_kills_by_weapon!]!
+
+  """An aggregate relationship"""
+  kills_by_weapons_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_kills_by_weapon_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_kills_by_weapon_order_by!]
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): player_kills_by_weapon_aggregate!
   language: String
   last_sign_in_at: timestamptz
 
@@ -28330,6 +29477,42 @@ type players {
     """filter the rows returned"""
     where: player_sanctions_bool_exp
   ): player_sanctions_aggregate!
+
+  """An array relationship"""
+  stats(
+    """distinct select on columns"""
+    distinct_on: [player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): [player_stats!]!
+
+  """An aggregate relationship"""
+  stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): player_stats_aggregate!
   steam_id: bigint!
 
   """An array relationship"""
@@ -28667,6 +29850,8 @@ input players_bool_exp {
   is_muted: Boolean_comparison_exp
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
+  kills_by_weapons: player_kills_by_weapon_bool_exp
+  kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_bool_exp
   language: String_comparison_exp
   last_sign_in_at: timestamptz_comparison_exp
   lobby_players: lobby_players_bool_exp
@@ -28692,6 +29877,8 @@ input players_bool_exp {
   role: e_player_roles_enum_comparison_exp
   sanctions: player_sanctions_bool_exp
   sanctions_aggregate: player_sanctions_aggregate_bool_exp
+  stats: player_stats_bool_exp
+  stats_aggregate: player_stats_aggregate_bool_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -28758,6 +29945,7 @@ input players_insert_input {
   friends: my_friends_arr_rel_insert_input
   invited_players: team_invites_arr_rel_insert_input
   kills: player_kills_arr_rel_insert_input
+  kills_by_weapons: player_kills_by_weapon_arr_rel_insert_input
   language: String
   last_sign_in_at: timestamptz
   lobby_players: lobby_players_arr_rel_insert_input
@@ -28772,6 +29960,7 @@ input players_insert_input {
   profile_url: String
   role: e_player_roles_enum
   sanctions: player_sanctions_arr_rel_insert_input
+  stats: player_stats_arr_rel_insert_input
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -28913,6 +30102,7 @@ input players_order_by {
   is_in_lobby: order_by
   is_muted: order_by
   kills_aggregate: player_kills_aggregate_order_by
+  kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_order_by
   language: order_by
   last_sign_in_at: order_by
   lobby_players_aggregate: lobby_players_aggregate_order_by
@@ -28930,6 +30120,7 @@ input players_order_by {
   profile_url: order_by
   role: order_by
   sanctions_aggregate: player_sanctions_aggregate_order_by
+  stats_aggregate: player_stats_aggregate_order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
   team_members_aggregate: team_roster_aggregate_order_by
@@ -31844,6 +33035,51 @@ type query_root {
   """fetch data from the table: "player_kills" using primary key columns"""
   player_kills_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_kills
 
+  """
+  fetch data from the table: "player_kills_by_weapon"
+  """
+  player_kills_by_weapon(
+    """distinct select on columns"""
+    distinct_on: [player_kills_by_weapon_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_kills_by_weapon_order_by!]
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): [player_kills_by_weapon!]!
+
+  """
+  fetch aggregated fields from the table: "player_kills_by_weapon"
+  """
+  player_kills_by_weapon_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_kills_by_weapon_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_kills_by_weapon_order_by!]
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): player_kills_by_weapon_aggregate!
+
+  """
+  fetch data from the table: "player_kills_by_weapon" using primary key columns
+  """
+  player_kills_by_weapon_by_pk(player_steam_id: bigint!, with: String!): player_kills_by_weapon
+
   """An array relationship"""
   player_objectives(
     """distinct select on columns"""
@@ -31929,6 +33165,49 @@ type query_root {
   fetch data from the table: "player_sanctions" using primary key columns
   """
   player_sanctions_by_pk(created_at: timestamptz!, id: uuid!): player_sanctions
+
+  """
+  fetch data from the table: "player_stats"
+  """
+  player_stats(
+    """distinct select on columns"""
+    distinct_on: [player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): [player_stats!]!
+
+  """
+  fetch aggregated fields from the table: "player_stats"
+  """
+  player_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): player_stats_aggregate!
+
+  """fetch data from the table: "player_stats" using primary key columns"""
+  player_stats_by_pk(player_steam_id: bigint!): player_stats
 
   """
   fetch data from the table: "player_unused_utility"
@@ -37596,6 +38875,65 @@ type subscription_root {
   player_kills_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_kills
 
   """
+  fetch data from the table: "player_kills_by_weapon"
+  """
+  player_kills_by_weapon(
+    """distinct select on columns"""
+    distinct_on: [player_kills_by_weapon_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_kills_by_weapon_order_by!]
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): [player_kills_by_weapon!]!
+
+  """
+  fetch aggregated fields from the table: "player_kills_by_weapon"
+  """
+  player_kills_by_weapon_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_kills_by_weapon_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_kills_by_weapon_order_by!]
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): player_kills_by_weapon_aggregate!
+
+  """
+  fetch data from the table: "player_kills_by_weapon" using primary key columns
+  """
+  player_kills_by_weapon_by_pk(player_steam_id: bigint!, with: String!): player_kills_by_weapon
+
+  """
+  fetch data from the table in a streaming manner: "player_kills_by_weapon"
+  """
+  player_kills_by_weapon_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_kills_by_weapon_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_kills_by_weapon_bool_exp
+  ): [player_kills_by_weapon!]!
+
+  """
   fetch data from the table in a streaming manner: "player_kills"
   """
   player_kills_stream(
@@ -37722,6 +39060,63 @@ type subscription_root {
     """filter the rows returned"""
     where: player_sanctions_bool_exp
   ): [player_sanctions!]!
+
+  """
+  fetch data from the table: "player_stats"
+  """
+  player_stats(
+    """distinct select on columns"""
+    distinct_on: [player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): [player_stats!]!
+
+  """
+  fetch aggregated fields from the table: "player_stats"
+  """
+  player_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): player_stats_aggregate!
+
+  """fetch data from the table: "player_stats" using primary key columns"""
+  player_stats_by_pk(player_steam_id: bigint!): player_stats
+
+  """
+  fetch data from the table in a streaming manner: "player_stats"
+  """
+  player_stats_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_stats_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_stats_bool_exp
+  ): [player_stats!]!
 
   """
   fetch data from the table: "player_unused_utility"
