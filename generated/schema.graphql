@@ -27128,91 +27128,6 @@ type player_stats_aggregate {
   nodes: [player_stats!]!
 }
 
-input player_stats_aggregate_bool_exp {
-  avg: player_stats_aggregate_bool_exp_avg
-  corr: player_stats_aggregate_bool_exp_corr
-  count: player_stats_aggregate_bool_exp_count
-  covar_samp: player_stats_aggregate_bool_exp_covar_samp
-  max: player_stats_aggregate_bool_exp_max
-  min: player_stats_aggregate_bool_exp_min
-  stddev_samp: player_stats_aggregate_bool_exp_stddev_samp
-  sum: player_stats_aggregate_bool_exp_sum
-  var_samp: player_stats_aggregate_bool_exp_var_samp
-}
-
-input player_stats_aggregate_bool_exp_avg {
-  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_avg_arguments_columns!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_corr {
-  arguments: player_stats_aggregate_bool_exp_corr_arguments!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_corr_arguments {
-  X: player_stats_select_column_player_stats_aggregate_bool_exp_corr_arguments_columns!
-  Y: player_stats_select_column_player_stats_aggregate_bool_exp_corr_arguments_columns!
-}
-
-input player_stats_aggregate_bool_exp_count {
-  arguments: [player_stats_select_column!]
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: Int_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_covar_samp {
-  arguments: player_stats_aggregate_bool_exp_covar_samp_arguments!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_covar_samp_arguments {
-  X: player_stats_select_column_player_stats_aggregate_bool_exp_covar_samp_arguments_columns!
-  Y: player_stats_select_column_player_stats_aggregate_bool_exp_covar_samp_arguments_columns!
-}
-
-input player_stats_aggregate_bool_exp_max {
-  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_max_arguments_columns!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_min {
-  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_min_arguments_columns!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_stddev_samp {
-  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_sum {
-  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_sum_arguments_columns!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
-input player_stats_aggregate_bool_exp_var_samp {
-  arguments: player_stats_select_column_player_stats_aggregate_bool_exp_var_samp_arguments_columns!
-  distinct: Boolean
-  filter: player_stats_bool_exp
-  predicate: float8_comparison_exp!
-}
-
 """
 aggregate fields of "player_stats"
 """
@@ -27230,33 +27145,6 @@ type player_stats_aggregate_fields {
   variance: player_stats_variance_fields
 }
 
-"""
-order by aggregate values of table "player_stats"
-"""
-input player_stats_aggregate_order_by {
-  avg: player_stats_avg_order_by
-  count: order_by
-  max: player_stats_max_order_by
-  min: player_stats_min_order_by
-  stddev: player_stats_stddev_order_by
-  stddev_pop: player_stats_stddev_pop_order_by
-  stddev_samp: player_stats_stddev_samp_order_by
-  sum: player_stats_sum_order_by
-  var_pop: player_stats_var_pop_order_by
-  var_samp: player_stats_var_samp_order_by
-  variance: player_stats_variance_order_by
-}
-
-"""
-input type for inserting array relation for remote table "player_stats"
-"""
-input player_stats_arr_rel_insert_input {
-  data: [player_stats_insert_input!]!
-
-  """upsert condition"""
-  on_conflict: player_stats_on_conflict
-}
-
 """aggregate avg on columns"""
 type player_stats_avg_fields {
   assists: Float
@@ -27265,18 +27153,6 @@ type player_stats_avg_fields {
   headshots: Float
   kills: Float
   player_steam_id: Float
-}
-
-"""
-order by avg() on columns of table "player_stats"
-"""
-input player_stats_avg_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
 }
 
 """
@@ -27340,18 +27216,6 @@ type player_stats_max_fields {
   player_steam_id: bigint
 }
 
-"""
-order by max() on columns of table "player_stats"
-"""
-input player_stats_max_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
-}
-
 """aggregate min on columns"""
 type player_stats_min_fields {
   assists: bigint
@@ -27363,18 +27227,6 @@ type player_stats_min_fields {
 }
 
 """
-order by min() on columns of table "player_stats"
-"""
-input player_stats_min_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
-}
-
-"""
 response of any mutation on the table "player_stats"
 """
 type player_stats_mutation_response {
@@ -27383,6 +27235,16 @@ type player_stats_mutation_response {
 
   """data from the rows affected by the mutation"""
   returning: [player_stats!]!
+}
+
+"""
+input type for inserting object relation for remote table "player_stats"
+"""
+input player_stats_obj_rel_insert_input {
+  data: player_stats_insert_input!
+
+  """upsert condition"""
+  on_conflict: player_stats_on_conflict
 }
 
 """
@@ -27434,70 +27296,6 @@ enum player_stats_select_column {
 }
 
 """
-select "player_stats_aggregate_bool_exp_avg_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_avg_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_corr_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_corr_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_covar_samp_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_max_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_max_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_min_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_min_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_sum_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_sum_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
-select "player_stats_aggregate_bool_exp_var_samp_arguments_columns" columns of table "player_stats"
-"""
-enum player_stats_select_column_player_stats_aggregate_bool_exp_var_samp_arguments_columns {
-  """column name"""
-  headshot_percentage
-}
-
-"""
 input type for updating data in table "player_stats"
 """
 input player_stats_set_input {
@@ -27519,18 +27317,6 @@ type player_stats_stddev_fields {
   player_steam_id: Float
 }
 
-"""
-order by stddev() on columns of table "player_stats"
-"""
-input player_stats_stddev_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
-}
-
 """aggregate stddev_pop on columns"""
 type player_stats_stddev_pop_fields {
   assists: Float
@@ -27541,18 +27327,6 @@ type player_stats_stddev_pop_fields {
   player_steam_id: Float
 }
 
-"""
-order by stddev_pop() on columns of table "player_stats"
-"""
-input player_stats_stddev_pop_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
-}
-
 """aggregate stddev_samp on columns"""
 type player_stats_stddev_samp_fields {
   assists: Float
@@ -27561,18 +27335,6 @@ type player_stats_stddev_samp_fields {
   headshots: Float
   kills: Float
   player_steam_id: Float
-}
-
-"""
-order by stddev_samp() on columns of table "player_stats"
-"""
-input player_stats_stddev_samp_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
 }
 
 """
@@ -27604,18 +27366,6 @@ type player_stats_sum_fields {
   headshots: bigint
   kills: bigint
   player_steam_id: bigint
-}
-
-"""
-order by sum() on columns of table "player_stats"
-"""
-input player_stats_sum_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
 }
 
 """
@@ -27662,18 +27412,6 @@ type player_stats_var_pop_fields {
   player_steam_id: Float
 }
 
-"""
-order by var_pop() on columns of table "player_stats"
-"""
-input player_stats_var_pop_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
-}
-
 """aggregate var_samp on columns"""
 type player_stats_var_samp_fields {
   assists: Float
@@ -27684,18 +27422,6 @@ type player_stats_var_samp_fields {
   player_steam_id: Float
 }
 
-"""
-order by var_samp() on columns of table "player_stats"
-"""
-input player_stats_var_samp_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
-}
-
 """aggregate variance on columns"""
 type player_stats_variance_fields {
   assists: Float
@@ -27704,18 +27430,6 @@ type player_stats_variance_fields {
   headshots: Float
   kills: Float
   player_steam_id: Float
-}
-
-"""
-order by variance() on columns of table "player_stats"
-"""
-input player_stats_variance_order_by {
-  assists: order_by
-  deaths: order_by
-  headshot_percentage: order_by
-  headshots: order_by
-  kills: order_by
-  player_steam_id: order_by
 }
 
 """
@@ -29478,41 +29192,8 @@ type players {
     where: player_sanctions_bool_exp
   ): player_sanctions_aggregate!
 
-  """An array relationship"""
-  stats(
-    """distinct select on columns"""
-    distinct_on: [player_stats_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [player_stats_order_by!]
-
-    """filter the rows returned"""
-    where: player_stats_bool_exp
-  ): [player_stats!]!
-
-  """An aggregate relationship"""
-  stats_aggregate(
-    """distinct select on columns"""
-    distinct_on: [player_stats_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [player_stats_order_by!]
-
-    """filter the rows returned"""
-    where: player_stats_bool_exp
-  ): player_stats_aggregate!
+  """An object relationship"""
+  stats: player_stats
   steam_id: bigint!
 
   """An array relationship"""
@@ -29878,7 +29559,6 @@ input players_bool_exp {
   sanctions: player_sanctions_bool_exp
   sanctions_aggregate: player_sanctions_aggregate_bool_exp
   stats: player_stats_bool_exp
-  stats_aggregate: player_stats_aggregate_bool_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -29960,7 +29640,7 @@ input players_insert_input {
   profile_url: String
   role: e_player_roles_enum
   sanctions: player_sanctions_arr_rel_insert_input
-  stats: player_stats_arr_rel_insert_input
+  stats: player_stats_obj_rel_insert_input
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -30120,7 +29800,7 @@ input players_order_by {
   profile_url: order_by
   role: order_by
   sanctions_aggregate: player_sanctions_aggregate_order_by
-  stats_aggregate: player_stats_aggregate_order_by
+  stats: player_stats_order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
   team_members_aggregate: team_roster_aggregate_order_by
