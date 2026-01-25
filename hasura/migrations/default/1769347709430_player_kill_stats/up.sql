@@ -5,12 +5,11 @@ CREATE TABLE IF NOT EXISTS player_kills_by_weapon (
   PRIMARY KEY (player_steam_id, "with")
 );
 
-alter table "public"."player_stats"
-  add constraint "player_stats_player_steam_id_fkey"
+alter table "public"."player_kills_by_weapon"
+  add constraint "player_kills_by_weapon_player_steam_id_fkey"
   foreign key ("player_steam_id")
   references "public"."players"
   ("steam_id") on update cascade on delete cascade;
-
 
 INSERT INTO player_kills_by_weapon (player_steam_id, "with", kill_count)
 SELECT
@@ -32,8 +31,8 @@ CREATE TABLE IF NOT EXISTS player_stats (
   PRIMARY KEY (player_steam_id)
 );
 
-alter table "public"."player_kills_by_weapon"
-  add constraint "player_kills_by_weapon_player_steam_id_fkey"
+alter table "public"."player_stats"
+  add constraint "player_stats_player_steam_id_fkey"
   foreign key ("player_steam_id")
   references "public"."players"
   ("steam_id") on update cascade on delete cascade;
