@@ -297,3 +297,82 @@ type DedicatedSeverInfo {
   lastPing: String!
 }
 
+type Query {
+  listServerFiles(
+    node_id: String!
+    server_id: String
+    path: String
+  ): FileListResponse!
+}
+
+type Query {
+  readServerFile(
+    node_id: String!
+    server_id: String
+    file_path: String!
+  ): FileContentResponse!
+}
+
+type Mutation {
+  createServerDirectory(
+    node_id: String!
+    server_id: String
+    dir_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  deleteServerItem(
+    node_id: String!
+    server_id: String
+    path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  moveServerItem(
+    node_id: String!
+    server_id: String
+    source_path: String!
+    dest_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  renameServerItem(
+    node_id: String!
+    server_id: String
+    old_path: String!
+    new_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  writeServerFile(
+    node_id: String!
+    server_id: String
+    file_path: String!
+    content: String!
+  ): SuccessOutput
+}
+
+type FileItem {
+  name: String!
+  path: String!
+  type: String!
+  size: bigint
+  modified: timestamp
+  isDirectory: Boolean!
+}
+
+type FileListResponse {
+  items: [FileItem!]!
+  currentPath: String!
+}
+
+type FileContentResponse {
+  content: String!
+  path: String!
+  size: bigint!
+}
+
