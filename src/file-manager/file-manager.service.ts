@@ -108,40 +108,6 @@ export class FileManagerService {
   }
 
   /**
-   * Log file operation for real-time subscriptions
-   */
-  async logFileOperation(
-    nodeId: string,
-    serverId: string | null,
-    operation: string,
-    path: string,
-    details?: Record<string, any>,
-  ): Promise<void> {
-    try {
-      // TODO: Re-enable after running GraphQL codegen
-      // await this.hasura.mutation({
-      //   insert_file_operations_log_one: {
-      //     __args: {
-      //       object: {
-      //         node_id: nodeId,
-      //         server_id: serverId,
-      //         operation,
-      //         path,
-      //         details: details || {},
-      //       },
-      //     },
-      //     id: true,
-      //   },
-      // });
-      this.logger.log(
-        `File operation: ${operation} on ${path} (node: ${nodeId}, server: ${serverId})`,
-      );
-    } catch (error) {
-      this.logger.error("Failed to log file operation", error);
-    }
-  }
-
-  /**
    * List files in a directory
    */
   async listFiles(
@@ -196,16 +162,13 @@ export class FileManagerService {
     const nodeIP = await this.getNodeIP(nodeId);
     const basePath = this.getBasePath(serverId);
 
-    const result = await this.requestNodeConnector(nodeIP, "create-directory", {
+    return await this.requestNodeConnector(nodeIP, "create-directory", {
       method: "POST",
       body: JSON.stringify({
         basePath,
         dirPath,
       }),
     });
-
-    await this.logFileOperation(nodeId, serverId || null, "create", dirPath);
-    return result;
   }
 
   /**
@@ -221,16 +184,13 @@ export class FileManagerService {
     const nodeIP = await this.getNodeIP(nodeId);
     const basePath = this.getBasePath(serverId);
 
-    const result = await this.requestNodeConnector(nodeIP, "delete", {
+    return await this.requestNodeConnector(nodeIP, "delete", {
       method: "DELETE",
       body: JSON.stringify({
         basePath,
         path,
       }),
     });
-
-    await this.logFileOperation(nodeId, serverId || null, "delete", path);
-    return result;
   }
 
   /**
@@ -247,7 +207,7 @@ export class FileManagerService {
     const nodeIP = await this.getNodeIP(nodeId);
     const basePath = this.getBasePath(serverId);
 
-    const result = await this.requestNodeConnector(nodeIP, "move", {
+    return await this.requestNodeConnector(nodeIP, "move", {
       method: "POST",
       body: JSON.stringify({
         basePath,
@@ -255,11 +215,6 @@ export class FileManagerService {
         destPath,
       }),
     });
-
-    await this.logFileOperation(nodeId, serverId || null, "move", sourcePath, {
-      destPath,
-    });
-    return result;
   }
 
   /**
@@ -276,7 +231,7 @@ export class FileManagerService {
     const nodeIP = await this.getNodeIP(nodeId);
     const basePath = this.getBasePath(serverId);
 
-    const result = await this.requestNodeConnector(nodeIP, "rename", {
+    return await this.requestNodeConnector(nodeIP, "rename", {
       method: "POST",
       body: JSON.stringify({
         basePath,
@@ -284,11 +239,6 @@ export class FileManagerService {
         newPath,
       }),
     });
-
-    await this.logFileOperation(nodeId, serverId || null, "rename", oldPath, {
-      newPath,
-    });
-    return result;
   }
 
   /**
@@ -305,7 +255,7 @@ export class FileManagerService {
     const nodeIP = await this.getNodeIP(nodeId);
     const basePath = this.getBasePath(serverId);
 
-    const result = await this.requestNodeConnector(nodeIP, "write", {
+    return await this.requestNodeConnector(nodeIP, "write", {
       method: "POST",
       body: JSON.stringify({
         basePath,
@@ -313,9 +263,6 @@ export class FileManagerService {
         content,
       }),
     });
-
-    await this.logFileOperation(nodeId, serverId || null, "write", filePath);
-    return result;
   }
 
   /**
@@ -353,7 +300,6 @@ export class FileManagerService {
         );
       }
 
-      await this.logFileOperation(nodeId, serverId || null, "upload", filePath);
       return await response.json();
     } catch (error) {
       this.logger.error(`Error uploading file to ${url}`, error);
