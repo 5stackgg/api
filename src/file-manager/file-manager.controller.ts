@@ -7,7 +7,6 @@ import {
   UseInterceptors,
   ParseFilePipe,
   MaxFileSizeValidator,
-  Logger,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileManagerService } from "./file-manager.service";
@@ -16,7 +15,6 @@ import { HasuraAction } from "../hasura/hasura.controller";
 @Controller("file-manager")
 export class FileManagerController {
   constructor(
-    private readonly logger: Logger,
     private readonly fileManagerService: FileManagerService,
   ) {}
 
@@ -147,10 +145,6 @@ export class FileManagerController {
     @Body("filePath") filePath: string,
     @Body("userId") userId: string,
   ) {
-    this.logger.log(
-      `Upload request: node=${nodeId}, server=${serverId}, file=${filePath}`,
-    );
-
     return await this.fileManagerService.uploadFile(
       userId,
       nodeId,
@@ -175,10 +169,6 @@ export class FileManagerController {
     @Body("filePath") filePath: string,
     @Body("userId") userId: string,
   ) {
-    this.logger.log(
-      `Upload request: node=${nodeId}, custom-plugins, file=${filePath}`,
-    );
-
     return await this.fileManagerService.uploadFile(
       userId,
       nodeId,
