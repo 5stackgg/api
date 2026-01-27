@@ -196,17 +196,13 @@ export class FileManagerService {
     const nodeIP = await this.getNodeIP(nodeId);
     const basePath = this.getBasePath(serverId);
 
-    const result = await this.requestNodeConnector(
-      nodeIP,
-      "create-directory",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          basePath,
-          dirPath,
-        }),
-      },
-    );
+    const result = await this.requestNodeConnector(nodeIP, "create-directory", {
+      method: "POST",
+      body: JSON.stringify({
+        basePath,
+        dirPath,
+      }),
+    });
 
     await this.logFileOperation(nodeId, serverId || null, "create", dirPath);
     return result;

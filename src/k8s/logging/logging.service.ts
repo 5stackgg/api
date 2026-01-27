@@ -432,7 +432,7 @@ export class LoggingService {
 
       const logApi = new Log(this.kubeConfig);
 
-      if(since) {
+      if (since) {
         tailLines = undefined;
       }
 

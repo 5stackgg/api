@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { FileManagerService } from './file-manager.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { FileManagerService } from "./file-manager.service";
 
-describe('FileManagerService', () => {
+describe("FileManagerService", () => {
   let service: FileManagerService;
 
   beforeEach(async () => {
@@ -12,7 +12,7 @@ describe('FileManagerService', () => {
     service = module.get<FileManagerService>(FileManagerService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

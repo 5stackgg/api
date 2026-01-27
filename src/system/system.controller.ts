@@ -33,7 +33,10 @@ export class SystemController {
   }
 
   @Post("logs/download")
-  public async logs(@Req() request: Request, @Res() response: Response): Promise<void> {
+  public async logs(
+    @Req() request: Request,
+    @Res() response: Response,
+  ): Promise<void> {
     const user = request.user;
 
     if (!user || !isRoleAbove(user.role, "administrator")) {
@@ -65,8 +68,7 @@ export class SystemController {
       return;
     }
 
-    const isJob =
-      service.startsWith("cs-update:") || service.startsWith("m-");
+    const isJob = service.startsWith("cs-update:") || service.startsWith("m-");
 
     const stream = new PassThrough();
 
@@ -119,7 +121,8 @@ export class SystemController {
     } catch (error) {
       if (!response.headersSent) {
         response.status(500).json({
-          message: error?.body?.message || error.message || "Unable to get logs",
+          message:
+            error?.body?.message || error.message || "Unable to get logs",
         });
         return;
       }
