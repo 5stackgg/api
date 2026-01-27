@@ -131,9 +131,6 @@ export class FileManagerController {
     );
   }
 
-  /**
-   * Upload file endpoint for server-specific files
-   */
   @Post("upload/:nodeId/:serverId")
   @UseInterceptors(FileInterceptor("file"))
   async uploadFileToServer(
@@ -163,9 +160,6 @@ export class FileManagerController {
     );
   }
 
-  /**
-   * Upload file endpoint for custom plugins (no serverId)
-   */
   @Post("upload/:nodeId")
   @UseInterceptors(FileInterceptor("file"))
   async uploadFileToCustomPlugins(

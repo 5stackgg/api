@@ -14,9 +14,6 @@ export class FileManagerService {
     private readonly hasura: HasuraService,
   ) {}
 
-  /**
-   * Verify user is an administrator
-   */
   private async verifyAdminPermissions(userId: string): Promise<void> {
     if (!userId) {
       throw new ForbiddenException("User not authenticated");
@@ -37,9 +34,6 @@ export class FileManagerService {
     }
   }
 
-  /**
-   * Get node IP address from database
-   */
   private async getNodeIP(nodeId: string): Promise<string> {
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
@@ -57,9 +51,6 @@ export class FileManagerService {
     return game_server_nodes_by_pk.node_ip;
   }
 
-  /**
-   * Build base path for server files or custom plugins
-   */
   private getBasePath(serverId?: string): string {
     if (serverId) {
       return `/servers/${serverId}`;
@@ -67,16 +58,10 @@ export class FileManagerService {
     return `/custom-plugins`;
   }
 
-  /**
-   * Build URL for node connector endpoint
-   */
   private getNodeConnectorURL(nodeIP: string, endpoint: string): string {
     return `http://${nodeIP}:8585/file-operations/${endpoint}`;
   }
 
-  /**
-   * Make HTTP request to node connector
-   */
   private async requestNodeConnector(
     nodeIP: string,
     endpoint: string,
@@ -107,9 +92,6 @@ export class FileManagerService {
     }
   }
 
-  /**
-   * List files in a directory
-   */
   async listFiles(
     userId: string,
     nodeId: string,
@@ -128,9 +110,6 @@ export class FileManagerService {
     return await this.requestNodeConnector(nodeIP, `list?${params.toString()}`);
   }
 
-  /**
-   * Read file content
-   */
   async readFile(
     userId: string,
     nodeId: string,
@@ -149,9 +128,6 @@ export class FileManagerService {
     return await this.requestNodeConnector(nodeIP, `read?${params.toString()}`);
   }
 
-  /**
-   * Create directory
-   */
   async createDirectory(
     userId: string,
     nodeId: string,
@@ -171,9 +147,6 @@ export class FileManagerService {
     });
   }
 
-  /**
-   * Delete file or directory
-   */
   async deleteItem(
     userId: string,
     nodeId: string,
@@ -193,9 +166,6 @@ export class FileManagerService {
     });
   }
 
-  /**
-   * Move file or directory
-   */
   async moveItem(
     userId: string,
     nodeId: string,
@@ -217,9 +187,6 @@ export class FileManagerService {
     });
   }
 
-  /**
-   * Rename file or directory
-   */
   async renameItem(
     userId: string,
     nodeId: string,
@@ -241,9 +208,6 @@ export class FileManagerService {
     });
   }
 
-  /**
-   * Write text content to a file
-   */
   async writeFile(
     userId: string,
     nodeId: string,
@@ -265,9 +229,6 @@ export class FileManagerService {
     });
   }
 
-  /**
-   * Upload file to node connector
-   */
   async uploadFile(
     userId: string,
     nodeId: string,
