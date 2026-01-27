@@ -26,10 +26,7 @@ export class SystemController {
 
   @Get("healthz")
   public async status() {
-    console.log("healthz");
-    return {
-      status: "ok",
-    };
+    return;
   }
 
   @Post("logs/download")
