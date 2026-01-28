@@ -6,6 +6,6 @@ export default (): {
   tailscale: {
     key: process.env.TAILSCALE_CLIENT_ID,
     secret: process.env.TAILSCALE_SECRET_ID,
-    netName: process.env.TAILSCALE_NET_NAME,
+    netName: process.env.TAILSCALE_NET_NAME || "-",
   },
 });
