@@ -272,12 +272,8 @@ export class DedicatedServersService {
                         mountPath: "/opt/demos",
                       },
                       {
-                        name: `custom-plugins-${sanitizedGameServerNodeId}`,
-                        mountPath: "/opt/custom-plugins",
-                      },
-                      {
                         name: `dedicated-server-data-${server.id}`,
-                        mountPath: `/opt/custom-data`,
+                        mountPath: `/opt/custom-plugins`,
                       },
                     ],
                   },
