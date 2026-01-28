@@ -14,9 +14,7 @@ import { HasuraAction } from "../hasura/hasura.controller";
 
 @Controller("file-manager")
 export class FileManagerController {
-  constructor(
-    private readonly fileManagerService: FileManagerService,
-  ) {}
+  constructor(private readonly fileManagerService: FileManagerService) {}
 
   @HasuraAction()
   async listServerFiles(data: {
