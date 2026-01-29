@@ -29,7 +29,7 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
           },
           _set: {
             status: this.data.status,
-            ...(isFinished
+            ...(this.data.winning_lineup_id
               ? { winning_lineup_id: this.data.winning_lineup_id }
               : {}),
           },
