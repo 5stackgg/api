@@ -60,6 +60,26 @@ type DiskStats {
   time: timestamp
 }
 
+type FileContentResponse {
+  content: String!
+  path: String!
+  size: bigint!
+}
+
+type FileItem {
+  isDirectory: Boolean!
+  modified: timestamp
+  name: String!
+  path: String!
+  size: bigint
+  type: String!
+}
+
+type FileListResponse {
+  currentPath: String!
+  items: [FileItem!]!
+}
+
 type GetTestUploadResponse {
   error: String
   link: String
@@ -16465,7 +16485,13 @@ type mutation_root {
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
   createApiKey(label: String!): ApiKeyResponse
+
+  """Create directory on game server"""
+  createServerDirectory(dir_path: String!, node_id: String!, server_id: String): SuccessOutput
   deleteMatch(match_id: String!): SuccessOutput
+
+  """Delete file or directory on game server"""
+  deleteServerItem(node_id: String!, path: String!, server_id: String): SuccessOutput
 
   """
   delete data from the table: "_map_pool"
@@ -19206,8 +19232,14 @@ type mutation_root {
 
   """logout"""
   logout: SuccessOutput
+
+  """Move file or directory on game server"""
+  moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
   registerName(name: String!): SuccessOutput
+
+  """Rename file or directory on game server"""
+  renameServerItem(new_path: String!, node_id: String!, old_path: String!, server_id: String): SuccessOutput
   requestNameChange(name: String!, steam_id: bigint!): SuccessOutput
   restartService(service: String!): SuccessOutput
 
@@ -21854,6 +21886,9 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_pool_maps_updates!]!
   ): [v_pool_maps_mutation_response]
+
+  """Write content to file on game server"""
+  writeServerFile(content: String!, file_path: String!, node_id: String!, server_id: String): SuccessOutput
 }
 
 """
@@ -31713,6 +31748,9 @@ type query_root {
   getNodeStats(node: String!): NodeStats!
   getServiceStats: [PodStats]!
 
+  """List files in game server directory"""
+  listServerFiles(node_id: String!, path: String, server_id: String): FileListResponse!
+
   """
   fetch data from the table: "lobbies"
   """
@@ -33058,6 +33096,9 @@ type query_root {
 
   """fetch data from the table: "plugin_versions" using primary key columns"""
   plugin_versions_by_pk(version: String!): plugin_versions
+
+  """Read file content from game server"""
+  readServerFile(file_path: String!, node_id: String!, server_id: String): FileContentResponse!
 
   """
   fetch data from the table: "server_regions"

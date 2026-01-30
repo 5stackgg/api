@@ -57,6 +57,29 @@ export interface DiskStats {
     __typename: 'DiskStats'
 }
 
+export interface FileContentResponse {
+    content: Scalars['String']
+    path: Scalars['String']
+    size: Scalars['bigint']
+    __typename: 'FileContentResponse'
+}
+
+export interface FileItem {
+    isDirectory: Scalars['Boolean']
+    modified: (Scalars['timestamp'] | null)
+    name: Scalars['String']
+    path: Scalars['String']
+    size: (Scalars['bigint'] | null)
+    type: Scalars['String']
+    __typename: 'FileItem'
+}
+
+export interface FileListResponse {
+    currentPath: Scalars['String']
+    items: FileItem[]
+    __typename: 'FileListResponse'
+}
+
 export interface GetTestUploadResponse {
     error: (Scalars['String'] | null)
     link: (Scalars['String'] | null)
@@ -5370,7 +5393,11 @@ export interface mutation_root {
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
     createApiKey: (ApiKeyResponse | null)
+    /** Create directory on game server */
+    createServerDirectory: (SuccessOutput | null)
     deleteMatch: (SuccessOutput | null)
+    /** Delete file or directory on game server */
+    deleteServerItem: (SuccessOutput | null)
     /** delete data from the table: "_map_pool" */
     delete__map_pool: (_map_pool_mutation_response | null)
     /** delete single row from the table: "_map_pool" */
@@ -6004,8 +6031,12 @@ export interface mutation_root {
     leaveLineup: (SuccessOutput | null)
     /** logout */
     logout: (SuccessOutput | null)
+    /** Move file or directory on game server */
+    moveServerItem: (SuccessOutput | null)
     randomizeTeams: (SuccessOutput | null)
     registerName: (SuccessOutput | null)
+    /** Rename file or directory on game server */
+    renameServerItem: (SuccessOutput | null)
     requestNameChange: (SuccessOutput | null)
     restartService: (SuccessOutput | null)
     /** scheduleMatch */
@@ -6491,6 +6522,8 @@ export interface mutation_root {
     update_v_pool_maps: (v_pool_maps_mutation_response | null)
     /** update multiples rows of table: "v_pool_maps" */
     update_v_pool_maps_many: ((v_pool_maps_mutation_response | null)[] | null)
+    /** Write content to file on game server */
+    writeServerFile: (SuccessOutput | null)
     __typename: 'mutation_root'
 }
 
@@ -9439,6 +9472,8 @@ export interface query_root {
     getDedicatedServerInfo: (DedicatedSeverInfo | null)[]
     getNodeStats: NodeStats
     getServiceStats: (PodStats | null)[]
+    /** List files in game server directory */
+    listServerFiles: FileListResponse
     /** fetch data from the table: "lobbies" */
     lobbies: lobbies[]
     /** fetch aggregated fields from the table: "lobbies" */
@@ -9631,6 +9666,8 @@ export interface query_root {
     plugin_versions_aggregate: plugin_versions_aggregate
     /** fetch data from the table: "plugin_versions" using primary key columns */
     plugin_versions_by_pk: (plugin_versions | null)
+    /** Read file content from game server */
+    readServerFile: FileContentResponse
     /** fetch data from the table: "server_regions" */
     server_regions: server_regions[]
     /** fetch aggregated fields from the table: "server_regions" */
@@ -14501,6 +14538,32 @@ export interface DiskStatGenqlSelection{
 export interface DiskStatsGenqlSelection{
     disks?: DiskStatGenqlSelection
     time?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface FileContentResponseGenqlSelection{
+    content?: boolean | number
+    path?: boolean | number
+    size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface FileItemGenqlSelection{
+    isDirectory?: boolean | number
+    modified?: boolean | number
+    name?: boolean | number
+    path?: boolean | number
+    size?: boolean | number
+    type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface FileListResponseGenqlSelection{
+    currentPath?: boolean | number
+    items?: FileItemGenqlSelection
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -23717,7 +23780,11 @@ export interface mutation_rootGenqlSelection{
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
+    /** Create directory on game server */
+    createServerDirectory?: (SuccessOutputGenqlSelection & { __args: {dir_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    /** Delete file or directory on game server */
+    deleteServerItem?: (SuccessOutputGenqlSelection & { __args: {node_id: Scalars['String'], path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     /** delete data from the table: "_map_pool" */
     delete__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -25129,8 +25196,12 @@ export interface mutation_rootGenqlSelection{
     leaveLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** logout */
     logout?: SuccessOutputGenqlSelection
+    /** Move file or directory on game server */
+    moveServerItem?: (SuccessOutputGenqlSelection & { __args: {dest_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null), source_path: Scalars['String']} })
     randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     registerName?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String']} })
+    /** Rename file or directory on game server */
+    renameServerItem?: (SuccessOutputGenqlSelection & { __args: {new_path: Scalars['String'], node_id: Scalars['String'], old_path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     requestNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
     restartService?: (SuccessOutputGenqlSelection & { __args: {service: Scalars['String']} })
     /** scheduleMatch */
@@ -26500,6 +26571,8 @@ export interface mutation_rootGenqlSelection{
     update_v_pool_maps_many?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: v_pool_maps_updates[]} })
+    /** Write content to file on game server */
+    writeServerFile?: (SuccessOutputGenqlSelection & { __args: {content: Scalars['String'], file_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32069,6 +32142,8 @@ export interface query_rootGenqlSelection{
     getDedicatedServerInfo?: DedicatedSeverInfoGenqlSelection
     getNodeStats?: (NodeStatsGenqlSelection & { __args: {node: Scalars['String']} })
     getServiceStats?: PodStatsGenqlSelection
+    /** List files in game server directory */
+    listServerFiles?: (FileListResponseGenqlSelection & { __args: {node_id: Scalars['String'], path?: (Scalars['String'] | null), server_id?: (Scalars['String'] | null)} })
     /** fetch data from the table: "lobbies" */
     lobbies?: (lobbiesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -32901,6 +32976,8 @@ export interface query_rootGenqlSelection{
     where?: (plugin_versions_bool_exp | null)} })
     /** fetch data from the table: "plugin_versions" using primary key columns */
     plugin_versions_by_pk?: (plugin_versionsGenqlSelection & { __args: {version: Scalars['String']} })
+    /** Read file content from game server */
+    readServerFile?: (FileContentResponseGenqlSelection & { __args: {file_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     /** fetch data from the table: "server_regions" */
     server_regions?: (server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -42717,6 +42794,30 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isDiskStats = (obj?: { __typename?: any } | null): obj is DiskStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isDiskStats"')
       return DiskStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const FileContentResponse_possibleTypes: string[] = ['FileContentResponse']
+    export const isFileContentResponse = (obj?: { __typename?: any } | null): obj is FileContentResponse => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isFileContentResponse"')
+      return FileContentResponse_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const FileItem_possibleTypes: string[] = ['FileItem']
+    export const isFileItem = (obj?: { __typename?: any } | null): obj is FileItem => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isFileItem"')
+      return FileItem_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const FileListResponse_possibleTypes: string[] = ['FileListResponse']
+    export const isFileListResponse = (obj?: { __typename?: any } | null): obj is FileListResponse => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isFileListResponse"')
+      return FileListResponse_possibleTypes.includes(obj.__typename)
     }
     
 
