@@ -72,6 +72,53 @@ export class ChatService {
         }
 
         break;
+      case ChatLobbyType.Tournament:
+        const { tournaments } = await this.hasuraService.query(
+          {
+            tournaments: {
+              __args: {
+                where: {
+                  id: {
+                    _eq: id,
+                  },
+                  _or: [
+                    {
+                      is_organizer: {
+                        _eq: true,
+                      },
+                    },
+                    {
+                      teams: {
+                        _or: [
+                          {
+                            owner_steam_id: {
+                              _eq: client.user.steam_id,
+                            },
+                          },
+                          {
+                            roster: {
+                              player_steam_id: {
+                                _eq: client.user.steam_id,
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              id: true,
+            },
+          },
+          client.user.steam_id,
+        );
+
+        if (tournaments.length === 0) {
+          return;
+        }
+
+        break;
       default:
         this.logger.warn(`Unknown lobby type: ${type}`);
         return;
