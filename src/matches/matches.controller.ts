@@ -418,7 +418,11 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (status === "Live" && data.old.status !== "WaitingForServer") {
+    if (
+      (status === "Live" && data.old.status !== "WaitingForServer") ||
+      (status === "WaitingForServer" &&
+        data.old.server_id !== data.new.server_id)
+    ) {
       if (match.server) {
         if (match.server.reserved_by_match_id === matchId) {
           return;
