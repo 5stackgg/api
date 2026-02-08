@@ -37,8 +37,86 @@ type Mutation {
 }
 
 type Mutation {
+  createServerDirectory(
+    node_id: String!
+    server_id: String
+    dir_path: String!
+  ): SuccessOutput
+}
+
+type Query {
+  dbStats: [DbStats]
+}
+
+type Query {
+  getQueryStats: [QueryStat]!
+}
+
+type Query {
+  getQueryDetail(
+    queryid: String!
+  ): QueryDetail
+}
+
+type Query {
+  getActiveQueries: [ActiveQuery]!
+}
+
+type Query {
+  getTableStats: [TableStat]!
+}
+
+type Query {
+  getIndexStats: [IndexStat]!
+}
+
+type Query {
+  getConnectionStats: ConnectionStats!
+}
+
+type Query {
+  getActiveConnections: [ActiveConnection]!
+}
+
+type Query {
+  getDatabaseStats: DatabaseStats!
+}
+
+type Query {
+  getCurrentLocks: [LockInfo]!
+}
+
+type Query {
+  getTableIOStats: [TableIOStat]!
+}
+
+type Query {
+  getIndexIOStats: [IndexIOStat]!
+}
+
+type Query {
+  getTimescaleStats: TimescaleStats!
+}
+
+type Query {
+  getSchemas: [String]!
+}
+
+type Query {
+  getStorageStats: StorageStats!
+}
+
+type Mutation {
   deleteMatch(
     match_id: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  deleteServerItem(
+    node_id: String!
+    server_id: String
+    path: String!
   ): SuccessOutput
 }
 
@@ -88,6 +166,14 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Query {
+  listServerFiles(
+    node_id: String!
+    server_id: String
+    path: String
+  ): FileListResponse!
+}
+
 type Mutation {
   logout: SuccessOutput
 }
@@ -97,14 +183,40 @@ type Query {
 }
 
 type Mutation {
+  moveServerItem(
+    node_id: String!
+    server_id: String
+    source_path: String!
+    dest_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   randomizeTeams(
     match_id: uuid!
   ): SuccessOutput
 }
 
+type Query {
+  readServerFile(
+    node_id: String!
+    server_id: String
+    file_path: String!
+  ): FileContentResponse!
+}
+
 type Mutation {
   registerName(
     name: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  renameServerItem(
+    node_id: String!
+    server_id: String
+    old_path: String!
+    new_path: String!
   ): SuccessOutput
 }
 
@@ -189,6 +301,15 @@ type Mutation {
 
 type Mutation {
   updateServices: SuccessOutput
+}
+
+type Mutation {
+  writeServerFile(
+    node_id: String!
+    server_id: String
+    file_path: String!
+    content: String!
+  ): SuccessOutput
 }
 
 input SampleInput {
@@ -297,65 +418,6 @@ type DedicatedSeverInfo {
   lastPing: String!
 }
 
-type Query {
-  listServerFiles(
-    node_id: String!
-    server_id: String
-    path: String
-  ): FileListResponse!
-}
-
-type Query {
-  readServerFile(
-    node_id: String!
-    server_id: String
-    file_path: String!
-  ): FileContentResponse!
-}
-
-type Mutation {
-  createServerDirectory(
-    node_id: String!
-    server_id: String
-    dir_path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  deleteServerItem(
-    node_id: String!
-    server_id: String
-    path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  moveServerItem(
-    node_id: String!
-    server_id: String
-    source_path: String!
-    dest_path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  renameServerItem(
-    node_id: String!
-    server_id: String
-    old_path: String!
-    new_path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  writeServerFile(
-    node_id: String!
-    server_id: String
-    file_path: String!
-    content: String!
-  ): SuccessOutput
-}
-
 type FileItem {
   name: String!
   path: String!
@@ -374,5 +436,202 @@ type FileContentResponse {
   content: String!
   path: String!
   size: bigint!
+}
+
+type DbStats {
+  queryid: String!
+  query: String!
+  calls: Int!
+  total_exec_time: Float!
+  mean_exec_time: Float!
+  max_exec_time: Float!
+  min_exec_time: Float!
+  total_rows: Int!
+  shared_blks_hit: Int!
+  shared_blks_read: Int!
+  local_blks_hit: Int!
+  local_blks_read: Int!
+}
+
+type QueryStat {
+  queryid: String!
+  query: String!
+  calls: Int!
+  total_exec_time: Float!
+  mean_exec_time: Float!
+  stddev_exec_time: Float
+  min_exec_time: Float!
+  max_exec_time: Float!
+  total_rows: Int!
+  shared_blks_hit: Int!
+  shared_blks_read: Int!
+  cache_hit_ratio: Float
+  temp_blks_written: Int!
+  local_blks_hit: Int!
+  local_blks_read: Int!
+}
+
+type QueryDetail {
+  queryid: String!
+  query: String!
+  explain_plan: String
+  stats: QueryStat!
+}
+
+type ActiveQuery {
+  pid: Int!
+  usename: String!
+  application_name: String
+  client_addr: String
+  state: String!
+  wait_event_type: String
+  wait_event: String
+  query: String!
+  query_start: timestamp!
+  duration_seconds: Float!
+}
+
+type TableStat {
+  schemaname: String!
+  relname: String!
+  seq_scan: Int!
+  seq_tup_read: Int!
+  idx_scan: Int
+  idx_tup_fetch: Int
+  n_tup_ins: Int!
+  n_tup_upd: Int!
+  n_tup_del: Int!
+  n_tup_hot_upd: Int!
+  n_live_tup: Int!
+  n_dead_tup: Int!
+  last_vacuum: timestamp
+  last_autovacuum: timestamp
+  last_analyze: timestamp
+  last_autoanalyze: timestamp
+}
+
+type IndexStat {
+  schemaname: String!
+  tablename: String!
+  indexname: String!
+  idx_scan: Int!
+  idx_tup_read: Int!
+  idx_tup_fetch: Int!
+  index_size: Int!
+  table_size: Int!
+}
+
+type ConnectionStats {
+  total: Int!
+  active: Int!
+  idle: Int!
+  idle_in_transaction: Int!
+  waiting: Int!
+  by_state: [ConnectionByState]!
+}
+
+type ConnectionByState {
+  state: String!
+  count: Int!
+  wait_event_type: String
+  waiting_count: Int!
+}
+
+type ActiveConnection {
+  pid: Int!
+  usename: String
+  application_name: String
+  client_addr: String
+  state: String
+  query: String!
+  query_start: timestamp
+}
+
+type DatabaseStats {
+  datname: String!
+  numbackends: Int!
+  xact_commit: Int!
+  xact_rollback: Int!
+  blks_read: Int!
+  blks_hit: Int!
+  cache_hit_ratio: Float!
+  tup_returned: Int!
+  tup_fetched: Int!
+  tup_inserted: Int!
+  tup_updated: Int!
+  tup_deleted: Int!
+  conflicts: Int!
+  deadlocks: Int!
+}
+
+type LockInfo {
+  locktype: String!
+  relation: String
+  mode: String!
+  granted: Boolean!
+  usename: String
+  query: String
+  pid: Int!
+}
+
+type TableIOStat {
+  schemaname: String!
+  relname: String!
+  heap_blks_read: Int!
+  heap_blks_hit: Int!
+  idx_blks_read: Int!
+  idx_blks_hit: Int!
+  cache_hit_ratio: Float
+}
+
+type IndexIOStat {
+  schemaname: String!
+  tablename: String!
+  indexname: String!
+  idx_blks_read: Int!
+  idx_blks_hit: Int!
+}
+
+type TimescaleStats {
+  hypertables: [HypertableInfo]!
+  chunks_count: Int!
+  jobs: [TimescaleJob]!
+}
+
+type HypertableInfo {
+  hypertable_name: String!
+  num_chunks: Int!
+  compression_enabled: Boolean!
+}
+
+type TimescaleJob {
+  job_id: Int!
+  job_type: String!
+  hypertable_name: String
+  last_run_status: String
+  next_start: timestamp
+}
+
+type StorageStats {
+  summary: StorageSummary!
+  tables: [TableSizeInfo!]!
+}
+
+type StorageSummary {
+  total_database_size: Float!
+  total_table_size: Float!
+  total_indexes_size: Float!
+  estimated_reclaimable_space: Float!
+}
+
+type TableSizeInfo {
+  schemaname: String!
+  tablename: String!
+  total_size: Float!
+  table_size: Float!
+  indexes_size: Float!
+  n_live_tup: Int!
+  n_dead_tup: Int!
+  estimated_dead_tuple_bytes: Float!
 }
 

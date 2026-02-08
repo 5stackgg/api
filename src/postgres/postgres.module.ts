@@ -13,6 +13,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { RedisModule } from "src/redis/redis.module";
 import { GetDatabaseBackups } from "./jobs/GetDatabaseBackups";
 import { S3Module } from "src/s3/s3.module";
+import { PostgresController } from "./postgres.controller";
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { S3Module } from "src/s3/s3.module";
     ...getQueuesProcessors("Postgres"),
     loggerFactory(),
   ],
+  controllers: [PostgresController],
 })
 export class PostgresModule {
   constructor(@InjectQueue(PostgresQueues.Postgres) queue: Queue) {

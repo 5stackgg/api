@@ -20,9 +20,52 @@ export type Scalars = {
     uuid: any,
 }
 
+export interface ActiveConnection {
+    application_name: (Scalars['String'] | null)
+    client_addr: (Scalars['String'] | null)
+    pid: Scalars['Int']
+    query: Scalars['String']
+    query_start: (Scalars['timestamp'] | null)
+    state: (Scalars['String'] | null)
+    usename: (Scalars['String'] | null)
+    __typename: 'ActiveConnection'
+}
+
+export interface ActiveQuery {
+    application_name: (Scalars['String'] | null)
+    client_addr: (Scalars['String'] | null)
+    duration_seconds: Scalars['Float']
+    pid: Scalars['Int']
+    query: Scalars['String']
+    query_start: Scalars['timestamp']
+    state: Scalars['String']
+    usename: Scalars['String']
+    wait_event: (Scalars['String'] | null)
+    wait_event_type: (Scalars['String'] | null)
+    __typename: 'ActiveQuery'
+}
+
 export interface ApiKeyResponse {
     key: Scalars['String']
     __typename: 'ApiKeyResponse'
+}
+
+export interface ConnectionByState {
+    count: Scalars['Int']
+    state: Scalars['String']
+    wait_event_type: (Scalars['String'] | null)
+    waiting_count: Scalars['Int']
+    __typename: 'ConnectionByState'
+}
+
+export interface ConnectionStats {
+    active: Scalars['Int']
+    by_state: (ConnectionByState | null)[]
+    idle: Scalars['Int']
+    idle_in_transaction: Scalars['Int']
+    total: Scalars['Int']
+    waiting: Scalars['Int']
+    __typename: 'ConnectionStats'
 }
 
 export interface CpuStat {
@@ -31,6 +74,40 @@ export interface CpuStat {
     used: (Scalars['bigint'] | null)
     window: (Scalars['Float'] | null)
     __typename: 'CpuStat'
+}
+
+export interface DatabaseStats {
+    blks_hit: Scalars['Int']
+    blks_read: Scalars['Int']
+    cache_hit_ratio: Scalars['Float']
+    conflicts: Scalars['Int']
+    datname: Scalars['String']
+    deadlocks: Scalars['Int']
+    numbackends: Scalars['Int']
+    tup_deleted: Scalars['Int']
+    tup_fetched: Scalars['Int']
+    tup_inserted: Scalars['Int']
+    tup_returned: Scalars['Int']
+    tup_updated: Scalars['Int']
+    xact_commit: Scalars['Int']
+    xact_rollback: Scalars['Int']
+    __typename: 'DatabaseStats'
+}
+
+export interface DbStats {
+    calls: Scalars['Int']
+    local_blks_hit: Scalars['Int']
+    local_blks_read: Scalars['Int']
+    max_exec_time: Scalars['Float']
+    mean_exec_time: Scalars['Float']
+    min_exec_time: Scalars['Float']
+    query: Scalars['String']
+    queryid: Scalars['String']
+    shared_blks_hit: Scalars['Int']
+    shared_blks_read: Scalars['Int']
+    total_exec_time: Scalars['Float']
+    total_rows: Scalars['Int']
+    __typename: 'DbStats'
 }
 
 export interface DedicatedSeverInfo {
@@ -86,6 +163,45 @@ export interface GetTestUploadResponse {
     __typename: 'GetTestUploadResponse'
 }
 
+export interface HypertableInfo {
+    compression_enabled: Scalars['Boolean']
+    hypertable_name: Scalars['String']
+    num_chunks: Scalars['Int']
+    __typename: 'HypertableInfo'
+}
+
+export interface IndexIOStat {
+    idx_blks_hit: Scalars['Int']
+    idx_blks_read: Scalars['Int']
+    indexname: Scalars['String']
+    schemaname: Scalars['String']
+    tablename: Scalars['String']
+    __typename: 'IndexIOStat'
+}
+
+export interface IndexStat {
+    idx_scan: Scalars['Int']
+    idx_tup_fetch: Scalars['Int']
+    idx_tup_read: Scalars['Int']
+    index_size: Scalars['Int']
+    indexname: Scalars['String']
+    schemaname: Scalars['String']
+    table_size: Scalars['Int']
+    tablename: Scalars['String']
+    __typename: 'IndexStat'
+}
+
+export interface LockInfo {
+    granted: Scalars['Boolean']
+    locktype: Scalars['String']
+    mode: Scalars['String']
+    pid: Scalars['Int']
+    query: (Scalars['String'] | null)
+    relation: (Scalars['String'] | null)
+    usename: (Scalars['String'] | null)
+    __typename: 'LockInfo'
+}
+
 export interface MeResponse {
     avatar_url: Scalars['String']
     country: (Scalars['String'] | null)
@@ -136,15 +252,99 @@ export interface PodStats {
     __typename: 'PodStats'
 }
 
+export interface QueryDetail {
+    explain_plan: (Scalars['String'] | null)
+    query: Scalars['String']
+    queryid: Scalars['String']
+    stats: QueryStat
+    __typename: 'QueryDetail'
+}
+
+export interface QueryStat {
+    cache_hit_ratio: (Scalars['Float'] | null)
+    calls: Scalars['Int']
+    local_blks_hit: Scalars['Int']
+    local_blks_read: Scalars['Int']
+    max_exec_time: Scalars['Float']
+    mean_exec_time: Scalars['Float']
+    min_exec_time: Scalars['Float']
+    query: Scalars['String']
+    queryid: Scalars['String']
+    shared_blks_hit: Scalars['Int']
+    shared_blks_read: Scalars['Int']
+    stddev_exec_time: (Scalars['Float'] | null)
+    temp_blks_written: Scalars['Int']
+    total_exec_time: Scalars['Float']
+    total_rows: Scalars['Int']
+    __typename: 'QueryStat'
+}
+
 export interface SetupGameServeOutput {
     gameServerId: Scalars['String']
     link: Scalars['String']
     __typename: 'SetupGameServeOutput'
 }
 
+export interface StorageStats {
+    summary: StorageSummary
+    tables: TableSizeInfo[]
+    __typename: 'StorageStats'
+}
+
+export interface StorageSummary {
+    estimated_reclaimable_space: Scalars['Float']
+    total_database_size: Scalars['Float']
+    total_indexes_size: Scalars['Float']
+    total_table_size: Scalars['Float']
+    __typename: 'StorageSummary'
+}
+
 export interface SuccessOutput {
     success: Scalars['Boolean']
     __typename: 'SuccessOutput'
+}
+
+export interface TableIOStat {
+    cache_hit_ratio: (Scalars['Float'] | null)
+    heap_blks_hit: Scalars['Int']
+    heap_blks_read: Scalars['Int']
+    idx_blks_hit: Scalars['Int']
+    idx_blks_read: Scalars['Int']
+    relname: Scalars['String']
+    schemaname: Scalars['String']
+    __typename: 'TableIOStat'
+}
+
+export interface TableSizeInfo {
+    estimated_dead_tuple_bytes: Scalars['Float']
+    indexes_size: Scalars['Float']
+    n_dead_tup: Scalars['Int']
+    n_live_tup: Scalars['Int']
+    schemaname: Scalars['String']
+    table_size: Scalars['Float']
+    tablename: Scalars['String']
+    total_size: Scalars['Float']
+    __typename: 'TableSizeInfo'
+}
+
+export interface TableStat {
+    idx_scan: (Scalars['Int'] | null)
+    idx_tup_fetch: (Scalars['Int'] | null)
+    last_analyze: (Scalars['timestamp'] | null)
+    last_autoanalyze: (Scalars['timestamp'] | null)
+    last_autovacuum: (Scalars['timestamp'] | null)
+    last_vacuum: (Scalars['timestamp'] | null)
+    n_dead_tup: Scalars['Int']
+    n_live_tup: Scalars['Int']
+    n_tup_del: Scalars['Int']
+    n_tup_hot_upd: Scalars['Int']
+    n_tup_ins: Scalars['Int']
+    n_tup_upd: Scalars['Int']
+    relname: Scalars['String']
+    schemaname: Scalars['String']
+    seq_scan: Scalars['Int']
+    seq_tup_read: Scalars['Int']
+    __typename: 'TableStat'
 }
 
 export interface TelemetryStats {
@@ -155,6 +355,22 @@ export interface TelemetryStats {
 export interface TestUploadResponse {
     error: (Scalars['String'] | null)
     __typename: 'TestUploadResponse'
+}
+
+export interface TimescaleJob {
+    hypertable_name: (Scalars['String'] | null)
+    job_id: Scalars['Int']
+    job_type: Scalars['String']
+    last_run_status: (Scalars['String'] | null)
+    next_start: (Scalars['timestamp'] | null)
+    __typename: 'TimescaleJob'
+}
+
+export interface TimescaleStats {
+    chunks_count: Scalars['Int']
+    hypertables: (HypertableInfo | null)[]
+    jobs: (TimescaleJob | null)[]
+    __typename: 'TimescaleStats'
 }
 
 
@@ -9295,6 +9511,7 @@ export interface query_root {
     api_keys_aggregate: api_keys_aggregate
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk: (api_keys | null)
+    dbStats: ((DbStats | null)[] | null)
     /** fetch data from the table: "db_backups" */
     db_backups: db_backups[]
     /** fetch aggregated fields from the table: "db_backups" */
@@ -9469,9 +9686,37 @@ export interface query_root {
     game_versions_aggregate: game_versions_aggregate
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk: (game_versions | null)
+    /** Get list of active connections */
+    getActiveConnections: (ActiveConnection | null)[]
+    /** Get currently executing queries */
+    getActiveQueries: (ActiveQuery | null)[]
+    /** Get connection statistics */
+    getConnectionStats: ConnectionStats
+    /** Get current database locks */
+    getCurrentLocks: (LockInfo | null)[]
+    /** Get database-wide statistics */
+    getDatabaseStats: DatabaseStats
     getDedicatedServerInfo: (DedicatedSeverInfo | null)[]
+    /** Get index I/O statistics */
+    getIndexIOStats: (IndexIOStat | null)[]
+    /** Get index usage statistics */
+    getIndexStats: (IndexStat | null)[]
     getNodeStats: NodeStats
+    /** Get detailed query analysis with EXPLAIN plan */
+    getQueryDetail: (QueryDetail | null)
+    /** Get enhanced query performance statistics */
+    getQueryStats: (QueryStat | null)[]
+    /** Get available database schemas */
+    getSchemas: Scalars['String']
     getServiceStats: (PodStats | null)[]
+    /** Get database storage statistics and reclaimable space */
+    getStorageStats: StorageStats
+    /** Get table I/O statistics */
+    getTableIOStats: (TableIOStat | null)[]
+    /** Get table access statistics */
+    getTableStats: (TableStat | null)[]
+    /** Get TimescaleDB statistics */
+    getTimescaleStats: TimescaleStats
     /** List files in game server directory */
     listServerFiles: FileListResponse
     /** fetch data from the table: "lobbies" */
@@ -14496,6 +14741,33 @@ export type Query = query_root
 export type Mutation = mutation_root
 export type Subscription = subscription_root
 
+export interface ActiveConnectionGenqlSelection{
+    application_name?: boolean | number
+    client_addr?: boolean | number
+    pid?: boolean | number
+    query?: boolean | number
+    query_start?: boolean | number
+    state?: boolean | number
+    usename?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface ActiveQueryGenqlSelection{
+    application_name?: boolean | number
+    client_addr?: boolean | number
+    duration_seconds?: boolean | number
+    pid?: boolean | number
+    query?: boolean | number
+    query_start?: boolean | number
+    state?: boolean | number
+    usename?: boolean | number
+    wait_event?: boolean | number
+    wait_event_type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface ApiKeyResponseGenqlSelection{
     key?: boolean | number
     __typename?: boolean | number
@@ -14506,11 +14778,67 @@ export interface ApiKeyResponseGenqlSelection{
 /** Boolean expression to compare columns of type "Boolean". All fields are combined with logical 'AND'. */
 export interface Boolean_comparison_exp {_eq?: (Scalars['Boolean'] | null),_gt?: (Scalars['Boolean'] | null),_gte?: (Scalars['Boolean'] | null),_in?: (Scalars['Boolean'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Boolean'] | null),_lte?: (Scalars['Boolean'] | null),_neq?: (Scalars['Boolean'] | null),_nin?: (Scalars['Boolean'][] | null)}
 
+export interface ConnectionByStateGenqlSelection{
+    count?: boolean | number
+    state?: boolean | number
+    wait_event_type?: boolean | number
+    waiting_count?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface ConnectionStatsGenqlSelection{
+    active?: boolean | number
+    by_state?: ConnectionByStateGenqlSelection
+    idle?: boolean | number
+    idle_in_transaction?: boolean | number
+    total?: boolean | number
+    waiting?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface CpuStatGenqlSelection{
     time?: boolean | number
     total?: boolean | number
     used?: boolean | number
     window?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface DatabaseStatsGenqlSelection{
+    blks_hit?: boolean | number
+    blks_read?: boolean | number
+    cache_hit_ratio?: boolean | number
+    conflicts?: boolean | number
+    datname?: boolean | number
+    deadlocks?: boolean | number
+    numbackends?: boolean | number
+    tup_deleted?: boolean | number
+    tup_fetched?: boolean | number
+    tup_inserted?: boolean | number
+    tup_returned?: boolean | number
+    tup_updated?: boolean | number
+    xact_commit?: boolean | number
+    xact_rollback?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface DbStatsGenqlSelection{
+    calls?: boolean | number
+    local_blks_hit?: boolean | number
+    local_blks_read?: boolean | number
+    max_exec_time?: boolean | number
+    mean_exec_time?: boolean | number
+    min_exec_time?: boolean | number
+    query?: boolean | number
+    queryid?: boolean | number
+    shared_blks_hit?: boolean | number
+    shared_blks_read?: boolean | number
+    total_exec_time?: boolean | number
+    total_rows?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -14575,9 +14903,52 @@ export interface GetTestUploadResponseGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface HypertableInfoGenqlSelection{
+    compression_enabled?: boolean | number
+    hypertable_name?: boolean | number
+    num_chunks?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface IndexIOStatGenqlSelection{
+    idx_blks_hit?: boolean | number
+    idx_blks_read?: boolean | number
+    indexname?: boolean | number
+    schemaname?: boolean | number
+    tablename?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface IndexStatGenqlSelection{
+    idx_scan?: boolean | number
+    idx_tup_fetch?: boolean | number
+    idx_tup_read?: boolean | number
+    index_size?: boolean | number
+    indexname?: boolean | number
+    schemaname?: boolean | number
+    table_size?: boolean | number
+    tablename?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 
 /** Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'. */
 export interface Int_comparison_exp {_eq?: (Scalars['Int'] | null),_gt?: (Scalars['Int'] | null),_gte?: (Scalars['Int'] | null),_in?: (Scalars['Int'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Int'] | null),_lte?: (Scalars['Int'] | null),_neq?: (Scalars['Int'] | null),_nin?: (Scalars['Int'][] | null)}
+
+export interface LockInfoGenqlSelection{
+    granted?: boolean | number
+    locktype?: boolean | number
+    mode?: boolean | number
+    pid?: boolean | number
+    query?: boolean | number
+    relation?: boolean | number
+    usename?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 export interface MeResponseGenqlSelection{
     avatar_url?: boolean | number
@@ -14635,9 +15006,54 @@ export interface PodStatsGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface QueryDetailGenqlSelection{
+    explain_plan?: boolean | number
+    query?: boolean | number
+    queryid?: boolean | number
+    stats?: QueryStatGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface QueryStatGenqlSelection{
+    cache_hit_ratio?: boolean | number
+    calls?: boolean | number
+    local_blks_hit?: boolean | number
+    local_blks_read?: boolean | number
+    max_exec_time?: boolean | number
+    mean_exec_time?: boolean | number
+    min_exec_time?: boolean | number
+    query?: boolean | number
+    queryid?: boolean | number
+    shared_blks_hit?: boolean | number
+    shared_blks_read?: boolean | number
+    stddev_exec_time?: boolean | number
+    temp_blks_written?: boolean | number
+    total_exec_time?: boolean | number
+    total_rows?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface SetupGameServeOutputGenqlSelection{
     gameServerId?: boolean | number
     link?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface StorageStatsGenqlSelection{
+    summary?: StorageSummaryGenqlSelection
+    tables?: TableSizeInfoGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface StorageSummaryGenqlSelection{
+    estimated_reclaimable_space?: boolean | number
+    total_database_size?: boolean | number
+    total_indexes_size?: boolean | number
+    total_table_size?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -14680,6 +15096,52 @@ export interface SuccessOutputGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TableIOStatGenqlSelection{
+    cache_hit_ratio?: boolean | number
+    heap_blks_hit?: boolean | number
+    heap_blks_read?: boolean | number
+    idx_blks_hit?: boolean | number
+    idx_blks_read?: boolean | number
+    relname?: boolean | number
+    schemaname?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TableSizeInfoGenqlSelection{
+    estimated_dead_tuple_bytes?: boolean | number
+    indexes_size?: boolean | number
+    n_dead_tup?: boolean | number
+    n_live_tup?: boolean | number
+    schemaname?: boolean | number
+    table_size?: boolean | number
+    tablename?: boolean | number
+    total_size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TableStatGenqlSelection{
+    idx_scan?: boolean | number
+    idx_tup_fetch?: boolean | number
+    last_analyze?: boolean | number
+    last_autoanalyze?: boolean | number
+    last_autovacuum?: boolean | number
+    last_vacuum?: boolean | number
+    n_dead_tup?: boolean | number
+    n_live_tup?: boolean | number
+    n_tup_del?: boolean | number
+    n_tup_hot_upd?: boolean | number
+    n_tup_ins?: boolean | number
+    n_tup_upd?: boolean | number
+    relname?: boolean | number
+    schemaname?: boolean | number
+    seq_scan?: boolean | number
+    seq_tup_read?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface TelemetryStatsGenqlSelection{
     online?: boolean | number
     __typename?: boolean | number
@@ -14688,6 +15150,24 @@ export interface TelemetryStatsGenqlSelection{
 
 export interface TestUploadResponseGenqlSelection{
     error?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TimescaleJobGenqlSelection{
+    hypertable_name?: boolean | number
+    job_id?: boolean | number
+    job_type?: boolean | number
+    last_run_status?: boolean | number
+    next_start?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TimescaleStatsGenqlSelection{
+    chunks_count?: boolean | number
+    hypertables?: HypertableInfoGenqlSelection
+    jobs?: TimescaleJobGenqlSelection
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -31385,6 +31865,7 @@ export interface query_rootGenqlSelection{
     where?: (api_keys_bool_exp | null)} })
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    dbStats?: DbStatsGenqlSelection
     /** fetch data from the table: "db_backups" */
     db_backups?: (db_backupsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -32139,9 +32620,37 @@ export interface query_rootGenqlSelection{
     where?: (game_versions_bool_exp | null)} })
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk?: (game_versionsGenqlSelection & { __args: {build_id: Scalars['Int']} })
+    /** Get list of active connections */
+    getActiveConnections?: ActiveConnectionGenqlSelection
+    /** Get currently executing queries */
+    getActiveQueries?: ActiveQueryGenqlSelection
+    /** Get connection statistics */
+    getConnectionStats?: ConnectionStatsGenqlSelection
+    /** Get current database locks */
+    getCurrentLocks?: LockInfoGenqlSelection
+    /** Get database-wide statistics */
+    getDatabaseStats?: DatabaseStatsGenqlSelection
     getDedicatedServerInfo?: DedicatedSeverInfoGenqlSelection
+    /** Get index I/O statistics */
+    getIndexIOStats?: IndexIOStatGenqlSelection
+    /** Get index usage statistics */
+    getIndexStats?: IndexStatGenqlSelection
     getNodeStats?: (NodeStatsGenqlSelection & { __args: {node: Scalars['String']} })
+    /** Get detailed query analysis with EXPLAIN plan */
+    getQueryDetail?: (QueryDetailGenqlSelection & { __args: {queryid: Scalars['String']} })
+    /** Get enhanced query performance statistics */
+    getQueryStats?: QueryStatGenqlSelection
+    /** Get available database schemas */
+    getSchemas?: boolean | number
     getServiceStats?: PodStatsGenqlSelection
+    /** Get database storage statistics and reclaimable space */
+    getStorageStats?: StorageStatsGenqlSelection
+    /** Get table I/O statistics */
+    getTableIOStats?: TableIOStatGenqlSelection
+    /** Get table access statistics */
+    getTableStats?: TableStatGenqlSelection
+    /** Get TimescaleDB statistics */
+    getTimescaleStats?: TimescaleStatsGenqlSelection
     /** List files in game server directory */
     listServerFiles?: (FileListResponseGenqlSelection & { __args: {node_id: Scalars['String'], path?: (Scalars['String'] | null), server_id?: (Scalars['String'] | null)} })
     /** fetch data from the table: "lobbies" */
@@ -42758,6 +43267,22 @@ export type MutationGenqlSelection = mutation_rootGenqlSelection
 export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
 
 
+    const ActiveConnection_possibleTypes: string[] = ['ActiveConnection']
+    export const isActiveConnection = (obj?: { __typename?: any } | null): obj is ActiveConnection => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isActiveConnection"')
+      return ActiveConnection_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const ActiveQuery_possibleTypes: string[] = ['ActiveQuery']
+    export const isActiveQuery = (obj?: { __typename?: any } | null): obj is ActiveQuery => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isActiveQuery"')
+      return ActiveQuery_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const ApiKeyResponse_possibleTypes: string[] = ['ApiKeyResponse']
     export const isApiKeyResponse = (obj?: { __typename?: any } | null): obj is ApiKeyResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isApiKeyResponse"')
@@ -42766,10 +43291,42 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const ConnectionByState_possibleTypes: string[] = ['ConnectionByState']
+    export const isConnectionByState = (obj?: { __typename?: any } | null): obj is ConnectionByState => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isConnectionByState"')
+      return ConnectionByState_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const ConnectionStats_possibleTypes: string[] = ['ConnectionStats']
+    export const isConnectionStats = (obj?: { __typename?: any } | null): obj is ConnectionStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isConnectionStats"')
+      return ConnectionStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const CpuStat_possibleTypes: string[] = ['CpuStat']
     export const isCpuStat = (obj?: { __typename?: any } | null): obj is CpuStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isCpuStat"')
       return CpuStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const DatabaseStats_possibleTypes: string[] = ['DatabaseStats']
+    export const isDatabaseStats = (obj?: { __typename?: any } | null): obj is DatabaseStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isDatabaseStats"')
+      return DatabaseStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const DbStats_possibleTypes: string[] = ['DbStats']
+    export const isDbStats = (obj?: { __typename?: any } | null): obj is DbStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isDbStats"')
+      return DbStats_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -42830,6 +43387,38 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const HypertableInfo_possibleTypes: string[] = ['HypertableInfo']
+    export const isHypertableInfo = (obj?: { __typename?: any } | null): obj is HypertableInfo => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isHypertableInfo"')
+      return HypertableInfo_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const IndexIOStat_possibleTypes: string[] = ['IndexIOStat']
+    export const isIndexIOStat = (obj?: { __typename?: any } | null): obj is IndexIOStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isIndexIOStat"')
+      return IndexIOStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const IndexStat_possibleTypes: string[] = ['IndexStat']
+    export const isIndexStat = (obj?: { __typename?: any } | null): obj is IndexStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isIndexStat"')
+      return IndexStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const LockInfo_possibleTypes: string[] = ['LockInfo']
+    export const isLockInfo = (obj?: { __typename?: any } | null): obj is LockInfo => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isLockInfo"')
+      return LockInfo_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const MeResponse_possibleTypes: string[] = ['MeResponse']
     export const isMeResponse = (obj?: { __typename?: any } | null): obj is MeResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isMeResponse"')
@@ -42878,6 +43467,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const QueryDetail_possibleTypes: string[] = ['QueryDetail']
+    export const isQueryDetail = (obj?: { __typename?: any } | null): obj is QueryDetail => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isQueryDetail"')
+      return QueryDetail_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const QueryStat_possibleTypes: string[] = ['QueryStat']
+    export const isQueryStat = (obj?: { __typename?: any } | null): obj is QueryStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isQueryStat"')
+      return QueryStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const SetupGameServeOutput_possibleTypes: string[] = ['SetupGameServeOutput']
     export const isSetupGameServeOutput = (obj?: { __typename?: any } | null): obj is SetupGameServeOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isSetupGameServeOutput"')
@@ -42886,10 +43491,50 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const StorageStats_possibleTypes: string[] = ['StorageStats']
+    export const isStorageStats = (obj?: { __typename?: any } | null): obj is StorageStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isStorageStats"')
+      return StorageStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const StorageSummary_possibleTypes: string[] = ['StorageSummary']
+    export const isStorageSummary = (obj?: { __typename?: any } | null): obj is StorageSummary => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isStorageSummary"')
+      return StorageSummary_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const SuccessOutput_possibleTypes: string[] = ['SuccessOutput']
     export const isSuccessOutput = (obj?: { __typename?: any } | null): obj is SuccessOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isSuccessOutput"')
       return SuccessOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TableIOStat_possibleTypes: string[] = ['TableIOStat']
+    export const isTableIOStat = (obj?: { __typename?: any } | null): obj is TableIOStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTableIOStat"')
+      return TableIOStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TableSizeInfo_possibleTypes: string[] = ['TableSizeInfo']
+    export const isTableSizeInfo = (obj?: { __typename?: any } | null): obj is TableSizeInfo => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTableSizeInfo"')
+      return TableSizeInfo_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TableStat_possibleTypes: string[] = ['TableStat']
+    export const isTableStat = (obj?: { __typename?: any } | null): obj is TableStat => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTableStat"')
+      return TableStat_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -42906,6 +43551,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isTestUploadResponse = (obj?: { __typename?: any } | null): obj is TestUploadResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTestUploadResponse"')
       return TestUploadResponse_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TimescaleJob_possibleTypes: string[] = ['TimescaleJob']
+    export const isTimescaleJob = (obj?: { __typename?: any } | null): obj is TimescaleJob => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTimescaleJob"')
+      return TimescaleJob_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TimescaleStats_possibleTypes: string[] = ['TimescaleStats']
+    export const isTimescaleStats = (obj?: { __typename?: any } | null): obj is TimescaleStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTimescaleStats"')
+      return TimescaleStats_possibleTypes.includes(obj.__typename)
     }
     
 

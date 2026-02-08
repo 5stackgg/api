@@ -38,6 +38,13 @@ actions:
     permissions:
       - role: user
     comment: checkIntoMatch
+  - name: createApiKey
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
   - name: createServerDirectory
     definition:
       kind: synchronous
@@ -46,13 +53,125 @@ actions:
     permissions:
       - role: administrator
     comment: Create directory on game server
-  - name: createApiKey
+  - name: dbStats
     definition:
-      kind: synchronous
+      kind: ""
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: user
+      - role: administrator
+  - name: getQueryStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get enhanced query performance statistics
+  - name: getQueryDetail
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get detailed query analysis with EXPLAIN plan
+  - name: getActiveQueries
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get currently executing queries
+  - name: getTableStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get table access statistics
+  - name: getIndexStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get index usage statistics
+  - name: getConnectionStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get connection statistics
+  - name: getActiveConnections
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get list of active connections
+  - name: getDatabaseStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get database-wide statistics
+  - name: getCurrentLocks
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get current database locks
+  - name: getTableIOStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get table I/O statistics
+  - name: getIndexIOStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get index I/O statistics
+  - name: getTimescaleStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get TimescaleDB statistics
+  - name: getSchemas
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get available database schemas
+  - name: getStorageStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Get database storage statistics and reclaimable space
   - name: deleteMatch
     definition:
       kind: synchronous
@@ -184,14 +303,6 @@ actions:
     permissions:
       - role: administrator
     comment: Rename file or directory on game server
-  - name: writeServerFile
-    definition:
-      kind: synchronous
-      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
-      forward_client_headers: true
-    permissions:
-      - role: administrator
-    comment: Write content to file on game server
   - name: requestNameChange
     definition:
       kind: synchronous
@@ -300,6 +411,14 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
+  - name: writeServerFile
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Write content to file on game server
 custom_types:
   enums: []
   input_objects:
@@ -334,4 +453,23 @@ custom_types:
     - name: FileItem
     - name: FileListResponse
     - name: FileContentResponse
+    - name: DbStats
+    - name: QueryStat
+    - name: QueryDetail
+    - name: ActiveQuery
+    - name: TableStat
+    - name: IndexStat
+    - name: ConnectionStats
+    - name: ConnectionByState
+    - name: ActiveConnection
+    - name: DatabaseStats
+    - name: LockInfo
+    - name: TableIOStat
+    - name: IndexIOStat
+    - name: TimescaleStats
+    - name: HypertableInfo
+    - name: TimescaleJob
+    - name: StorageStats
+    - name: StorageSummary
+    - name: TableSizeInfo
   scalars: []

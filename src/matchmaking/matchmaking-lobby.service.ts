@@ -162,22 +162,19 @@ export class MatchmakingLobbyService {
       }>;
     },
   ) {
-
     const { players } = await this.hasura.query({
       players: {
         __args: {
           where: {
-            steam_id: { _in: lobby.players.map(p => p.steam_id) }
-          }
+            steam_id: { _in: lobby.players.map((p) => p.steam_id) },
+          },
         },
         steam_id: true,
         elo: true,
       },
     });
 
-    const eloMap = new Map(
-      players.map(p => [p.steam_id, p.elo])
-    );
+    const eloMap = new Map(players.map((p) => [p.steam_id, p.elo]));
 
     const _players = lobby.players.map(({ steam_id }) => {
       const playerElo = eloMap.get(steam_id);

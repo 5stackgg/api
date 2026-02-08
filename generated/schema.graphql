@@ -13,6 +13,29 @@ directive @cached(
   refresh: Boolean! = false
 ) on QUERY
 
+type ActiveConnection {
+  application_name: String
+  client_addr: String
+  pid: Int!
+  query: String!
+  query_start: timestamp
+  state: String
+  usename: String
+}
+
+type ActiveQuery {
+  application_name: String
+  client_addr: String
+  duration_seconds: Float!
+  pid: Int!
+  query: String!
+  query_start: timestamp!
+  state: String!
+  usename: String!
+  wait_event: String
+  wait_event_type: String
+}
+
 type ApiKeyResponse {
   key: String!
 }
@@ -32,11 +55,59 @@ input Boolean_comparison_exp {
   _nin: [Boolean!]
 }
 
+type ConnectionByState {
+  count: Int!
+  state: String!
+  wait_event_type: String
+  waiting_count: Int!
+}
+
+type ConnectionStats {
+  active: Int!
+  by_state: [ConnectionByState]!
+  idle: Int!
+  idle_in_transaction: Int!
+  total: Int!
+  waiting: Int!
+}
+
 type CpuStat {
   time: timestamp
   total: bigint
   used: bigint
   window: Float
+}
+
+type DatabaseStats {
+  blks_hit: Int!
+  blks_read: Int!
+  cache_hit_ratio: Float!
+  conflicts: Int!
+  datname: String!
+  deadlocks: Int!
+  numbackends: Int!
+  tup_deleted: Int!
+  tup_fetched: Int!
+  tup_inserted: Int!
+  tup_returned: Int!
+  tup_updated: Int!
+  xact_commit: Int!
+  xact_rollback: Int!
+}
+
+type DbStats {
+  calls: Int!
+  local_blks_hit: Int!
+  local_blks_read: Int!
+  max_exec_time: Float!
+  mean_exec_time: Float!
+  min_exec_time: Float!
+  query: String!
+  queryid: String!
+  shared_blks_hit: Int!
+  shared_blks_read: Int!
+  total_exec_time: Float!
+  total_rows: Int!
 }
 
 type DedicatedSeverInfo {
@@ -85,6 +156,31 @@ type GetTestUploadResponse {
   link: String
 }
 
+type HypertableInfo {
+  compression_enabled: Boolean!
+  hypertable_name: String!
+  num_chunks: Int!
+}
+
+type IndexIOStat {
+  idx_blks_hit: Int!
+  idx_blks_read: Int!
+  indexname: String!
+  schemaname: String!
+  tablename: String!
+}
+
+type IndexStat {
+  idx_scan: Int!
+  idx_tup_fetch: Int!
+  idx_tup_read: Int!
+  index_size: Int!
+  indexname: String!
+  schemaname: String!
+  table_size: Int!
+  tablename: String!
+}
+
 """
 Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'.
 """
@@ -98,6 +194,16 @@ input Int_comparison_exp {
   _lte: Int
   _neq: Int
   _nin: [Int!]
+}
+
+type LockInfo {
+  granted: Boolean!
+  locktype: String!
+  mode: String!
+  pid: Int!
+  query: String
+  relation: String
+  usename: String
 }
 
 type MeResponse {
@@ -144,9 +250,46 @@ type PodStats {
   node: String!
 }
 
+type QueryDetail {
+  explain_plan: String
+  query: String!
+  queryid: String!
+  stats: QueryStat!
+}
+
+type QueryStat {
+  cache_hit_ratio: Float
+  calls: Int!
+  local_blks_hit: Int!
+  local_blks_read: Int!
+  max_exec_time: Float!
+  mean_exec_time: Float!
+  min_exec_time: Float!
+  query: String!
+  queryid: String!
+  shared_blks_hit: Int!
+  shared_blks_read: Int!
+  stddev_exec_time: Float
+  temp_blks_written: Int!
+  total_exec_time: Float!
+  total_rows: Int!
+}
+
 type SetupGameServeOutput {
   gameServerId: String!
   link: String!
+}
+
+type StorageStats {
+  summary: StorageSummary!
+  tables: [TableSizeInfo!]!
+}
+
+type StorageSummary {
+  estimated_reclaimable_space: Float!
+  total_database_size: Float!
+  total_indexes_size: Float!
+  total_table_size: Float!
 }
 
 """
@@ -226,12 +369,66 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type TableIOStat {
+  cache_hit_ratio: Float
+  heap_blks_hit: Int!
+  heap_blks_read: Int!
+  idx_blks_hit: Int!
+  idx_blks_read: Int!
+  relname: String!
+  schemaname: String!
+}
+
+type TableSizeInfo {
+  estimated_dead_tuple_bytes: Float!
+  indexes_size: Float!
+  n_dead_tup: Int!
+  n_live_tup: Int!
+  schemaname: String!
+  table_size: Float!
+  tablename: String!
+  total_size: Float!
+}
+
+type TableStat {
+  idx_scan: Int
+  idx_tup_fetch: Int
+  last_analyze: timestamp
+  last_autoanalyze: timestamp
+  last_autovacuum: timestamp
+  last_vacuum: timestamp
+  n_dead_tup: Int!
+  n_live_tup: Int!
+  n_tup_del: Int!
+  n_tup_hot_upd: Int!
+  n_tup_ins: Int!
+  n_tup_upd: Int!
+  relname: String!
+  schemaname: String!
+  seq_scan: Int!
+  seq_tup_read: Int!
+}
+
 type TelemetryStats {
   online: Int!
 }
 
 type TestUploadResponse {
   error: String
+}
+
+type TimescaleJob {
+  hypertable_name: String
+  job_id: Int!
+  job_type: String!
+  last_run_status: String
+  next_start: timestamp
+}
+
+type TimescaleStats {
+  chunks_count: Int!
+  hypertables: [HypertableInfo]!
+  jobs: [TimescaleJob]!
 }
 
 """
@@ -30467,6 +30664,7 @@ type query_root {
 
   """fetch data from the table: "api_keys" using primary key columns"""
   api_keys_by_pk(id: uuid!): api_keys
+  dbStats: [DbStats]
 
   """
   fetch data from the table: "db_backups"
@@ -31744,9 +31942,51 @@ type query_root {
 
   """fetch data from the table: "game_versions" using primary key columns"""
   game_versions_by_pk(build_id: Int!): game_versions
+
+  """Get list of active connections"""
+  getActiveConnections: [ActiveConnection]!
+
+  """Get currently executing queries"""
+  getActiveQueries: [ActiveQuery]!
+
+  """Get connection statistics"""
+  getConnectionStats: ConnectionStats!
+
+  """Get current database locks"""
+  getCurrentLocks: [LockInfo]!
+
+  """Get database-wide statistics"""
+  getDatabaseStats: DatabaseStats!
   getDedicatedServerInfo: [DedicatedSeverInfo]!
+
+  """Get index I/O statistics"""
+  getIndexIOStats: [IndexIOStat]!
+
+  """Get index usage statistics"""
+  getIndexStats: [IndexStat]!
   getNodeStats(node: String!): NodeStats!
+
+  """Get detailed query analysis with EXPLAIN plan"""
+  getQueryDetail(queryid: String!): QueryDetail
+
+  """Get enhanced query performance statistics"""
+  getQueryStats: [QueryStat]!
+
+  """Get available database schemas"""
+  getSchemas: String!
   getServiceStats: [PodStats]!
+
+  """Get database storage statistics and reclaimable space"""
+  getStorageStats: StorageStats!
+
+  """Get table I/O statistics"""
+  getTableIOStats: [TableIOStat]!
+
+  """Get table access statistics"""
+  getTableStats: [TableStat]!
+
+  """Get TimescaleDB statistics"""
+  getTimescaleStats: TimescaleStats!
 
   """List files in game server directory"""
   listServerFiles(node_id: String!, path: String, server_id: String): FileListResponse!
