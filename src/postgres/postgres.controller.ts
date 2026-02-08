@@ -211,36 +211,52 @@ export class PostgresController {
 
     const statRow = (statsResult as unknown as any[])[0];
 
-    // Try to get EXPLAIN plan (may fail for queries with parameters)
+    // Try to get EXPLAIN plan for pev2 (https://github.com/dalibo/pev2)
+    // We use ANALYZE for actual execution stats, but wrap in a transaction with ROLLBACK
+    // to prevent any data modifications from DML queries
     let explainPlan: string | null = null;
     try {
-      // First try with generic plan for parameterized queries
-      const explainResult = await this.postgres.query<{
-        "QUERY PLAN": string;
-      }>(`
-        EXPLAIN (FORMAT TEXT, GENERIC_PLAN true) ${statRow.query}
-      `);
-      explainPlan = (explainResult as unknown as any[])
-        .map((row) => row["QUERY PLAN"])
-        .join("\n");
-    } catch (error) {
-      // If generic plan fails, try without it (works for non-parameterized queries)
+      // First try with full ANALYZE in a rolled-back transaction for safety
+      // This gives us actual execution stats for pev2 without persisting changes
+      await this.postgres.query("BEGIN");
       try {
         const explainResult = await this.postgres.query<{
-          "QUERY PLAN": string;
+          "QUERY PLAN": any;
         }>(`
-          EXPLAIN (FORMAT TEXT) ${statRow.query}
+          EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statRow.query}
         `);
-        explainPlan = (explainResult as unknown as any[])
-          .map((row) => row["QUERY PLAN"])
-          .join("\n");
-      } catch (innerError) {
-        // EXPLAIN failed - this is common for parameterized queries from pg_stat_statements
-        // Return a helpful message instead of null
-        explainPlan =
-          "EXPLAIN plan cannot be generated for parameterized queries.\n\n" +
-          "The query contains parameter placeholders ($1, $2, etc.) that cannot be explained without actual values.\n\n" +
-          "To see the execution plan, run EXPLAIN with actual parameter values in psql or your database client.";
+        await this.postgres.query("ROLLBACK");
+        // Format the JSON nicely for pev2
+        const jsonPlan = (explainResult as unknown as any[])[0]["QUERY PLAN"];
+        explainPlan = JSON.stringify(jsonPlan, null, 2);
+      } catch (analyzeError) {
+        // Make sure to rollback on error
+        await this.postgres.query("ROLLBACK");
+        throw analyzeError;
+      }
+    } catch (error) {
+      // If ANALYZE fails, try without it (still good for pev2, just no actual stats)
+      try {
+        const explainResult = await this.postgres.query<{
+          "QUERY PLAN": any;
+        }>(`
+          EXPLAIN (COSTS, VERBOSE, BUFFERS, FORMAT JSON) ${statRow.query}
+        `);
+        const jsonPlan = (explainResult as unknown as any[])[0]["QUERY PLAN"];
+        explainPlan = JSON.stringify(jsonPlan, null, 2);
+      } catch {
+        // Fall back to generic plan for parameterized queries
+        try {
+          const explainResult = await this.postgres.query<{
+            "QUERY PLAN": any;
+          }>(`
+            EXPLAIN (FORMAT JSON, GENERIC_PLAN true) ${statRow.query}
+          `);
+          const jsonPlan = (explainResult as unknown as any[])[0]["QUERY PLAN"];
+          explainPlan = JSON.stringify(jsonPlan, null, 2);
+        } catch {
+          // not able to get explain plan
+        }
       }
     }
 
