@@ -37,8 +37,24 @@ type Mutation {
 }
 
 type Mutation {
+  createServerDirectory(
+    node_id: String!
+    server_id: String
+    dir_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   deleteMatch(
     match_id: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  deleteServerItem(
+    node_id: String!
+    server_id: String
+    path: String!
   ): SuccessOutput
 }
 
@@ -88,6 +104,14 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Query {
+  listServerFiles(
+    node_id: String!
+    server_id: String
+    path: String
+  ): FileListResponse!
+}
+
 type Mutation {
   logout: SuccessOutput
 }
@@ -97,14 +121,40 @@ type Query {
 }
 
 type Mutation {
+  moveServerItem(
+    node_id: String!
+    server_id: String
+    source_path: String!
+    dest_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   randomizeTeams(
     match_id: uuid!
   ): SuccessOutput
 }
 
+type Query {
+  readServerFile(
+    node_id: String!
+    server_id: String
+    file_path: String!
+  ): FileContentResponse!
+}
+
 type Mutation {
   registerName(
     name: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  renameServerItem(
+    node_id: String!
+    server_id: String
+    old_path: String!
+    new_path: String!
   ): SuccessOutput
 }
 
@@ -189,6 +239,15 @@ type Mutation {
 
 type Mutation {
   updateServices: SuccessOutput
+}
+
+type Mutation {
+  writeServerFile(
+    node_id: String!
+    server_id: String
+    file_path: String!
+    content: String!
+  ): SuccessOutput
 }
 
 input SampleInput {
@@ -295,65 +354,6 @@ type DedicatedSeverInfo {
   players: Int!
   map: String!
   lastPing: String!
-}
-
-type Query {
-  listServerFiles(
-    node_id: String!
-    server_id: String
-    path: String
-  ): FileListResponse!
-}
-
-type Query {
-  readServerFile(
-    node_id: String!
-    server_id: String
-    file_path: String!
-  ): FileContentResponse!
-}
-
-type Mutation {
-  createServerDirectory(
-    node_id: String!
-    server_id: String
-    dir_path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  deleteServerItem(
-    node_id: String!
-    server_id: String
-    path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  moveServerItem(
-    node_id: String!
-    server_id: String
-    source_path: String!
-    dest_path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  renameServerItem(
-    node_id: String!
-    server_id: String
-    old_path: String!
-    new_path: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  writeServerFile(
-    node_id: String!
-    server_id: String
-    file_path: String!
-    content: String!
-  ): SuccessOutput
 }
 
 type FileItem {
