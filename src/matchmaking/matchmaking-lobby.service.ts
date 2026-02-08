@@ -162,23 +162,31 @@ export class MatchmakingLobbyService {
       }>;
     },
   ) {
-    const _players = [];
-    for (const { steam_id } of lobby.players) {
-      const { players_by_pk } = await this.hasura.query({
-        players_by_pk: {
-          __args: {
-            steam_id,
-          },
-          elo: true,
-        },
-      });
 
+    const { players } = await this.hasura.query({
+      players: {
+        __args: {
+          where: {
+            steam_id: { _in: lobby.players.map(p => p.steam_id) }
+          }
+        },
+        steam_id: true,
+        elo: true,
+      },
+    });
+
+    const eloMap = new Map(
+      players.map(p => [p.steam_id, p.elo])
+    );
+
+    const _players = lobby.players.map(({ steam_id }) => {
+      const playerElo = eloMap.get(steam_id);
       let elo = 5000;
-      if (players_by_pk?.elo) {
-        elo = Number(players_by_pk.elo[type.toLowerCase()]);
+      if (playerElo) {
+        elo = Number(playerElo[type.toLowerCase()]);
       }
-      _players.push({ steam_id, rank: elo });
-    }
+      return { steam_id, rank: elo };
+    });
 
     const matchmakingLobby: MatchmakingLobby = {
       type,

@@ -207,15 +207,9 @@ export class TypeSenseService {
         last_sign_in_at: true,
         wins: true,
         losses: true,
-        kills_aggregate: {
-          aggregate: {
-            count: true,
-          },
-        },
-        deaths_aggregate: {
-          aggregate: {
-            count: true,
-          },
+        stats: {
+          kills: true,
+          deaths: true,
         },
         sanctions_aggregate: {
           aggregate: {
@@ -287,11 +281,11 @@ export class TypeSenseService {
         Object.assign({}, player, elo, {
           id: steamId,
           steam_id: steamId,
-          kills: player.kills_aggregate?.aggregate?.count
-            ? parseInt(String(player.kills_aggregate?.aggregate?.count), 10)
+          kills: player.stats?.kills
+            ? parseInt(String(player.stats.kills), 10)
             : 0,
-          deaths: player.deaths_aggregate?.aggregate?.count
-            ? parseInt(String(player.deaths_aggregate?.aggregate?.count), 10)
+          deaths: player.stats?.deaths
+            ? parseInt(String(player.stats.deaths), 10)
             : 0,
           wins: player.wins ? parseInt(String(player.wins), 10) : 0,
           losses: player.losses ? parseInt(String(player.losses), 10) : 0,
