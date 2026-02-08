@@ -430,7 +430,7 @@ export class PostgresController {
         s.idx_tup_read,
         s.idx_tup_fetch,
         pg_relation_size(s.indexrelid) as index_size,
-        pg_relation_size(s.relid) as table_size
+        pg_table_size(s.relid) as table_size
       FROM pg_stat_user_indexes s
       ORDER BY s.idx_scan DESC
     `);
@@ -860,11 +860,11 @@ export class PostgresController {
     const summaryResult = await this.postgres.query<SummaryRow>(`
       SELECT
         SUM(pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))) as total_database_size,
-        SUM(pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))) as total_table_size,
+        SUM(pg_table_size(quote_ident(schemaname)||'.'||quote_ident(relname))) as total_table_size,
         SUM(pg_indexes_size(quote_ident(schemaname)||'.'||quote_ident(relname))) as total_indexes_size,
         SUM(CASE
           WHEN n_live_tup > 0
-          THEN pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))::float / n_live_tup * n_dead_tup
+          THEN pg_table_size(quote_ident(schemaname)||'.'||quote_ident(relname))::float / n_live_tup * n_dead_tup
           ELSE 0
         END) as estimated_reclaimable_space
       FROM pg_stat_user_tables
@@ -889,13 +889,13 @@ export class PostgresController {
         schemaname,
         relname as tablename,
         pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname)) as total_size,
-        pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname)) as table_size,
+        pg_table_size(quote_ident(schemaname)||'.'||quote_ident(relname)) as table_size,
         pg_indexes_size(quote_ident(schemaname)||'.'||quote_ident(relname)) as indexes_size,
         n_live_tup,
         n_dead_tup,
         CASE
           WHEN n_live_tup > 0
-          THEN pg_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))::float / n_live_tup * n_dead_tup
+          THEN pg_table_size(quote_ident(schemaname)||'.'||quote_ident(relname))::float / n_live_tup * n_dead_tup
           ELSE 0
         END as estimated_dead_tuple_bytes
       FROM pg_stat_user_tables
