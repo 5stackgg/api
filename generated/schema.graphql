@@ -39,6 +39,21 @@ type CpuStat {
   window: Float
 }
 
+type DbStats {
+  calls: Int!
+  local_blks_hit: Int!
+  local_blks_read: Int!
+  max_exec_time: Float!
+  mean_exec_time: Float!
+  min_exec_time: Float!
+  query: String!
+  queryid: String!
+  shared_blks_hit: Int!
+  shared_blks_read: Int!
+  total_exec_time: Float!
+  total_rows: Int!
+}
+
 type DedicatedSeverInfo {
   id: String!
   lastPing: String!
@@ -30467,6 +30482,7 @@ type query_root {
 
   """fetch data from the table: "api_keys" using primary key columns"""
   api_keys_by_pk(id: uuid!): api_keys
+  dbStats: [DbStats]
 
   """
   fetch data from the table: "db_backups"

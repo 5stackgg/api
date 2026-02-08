@@ -33,6 +33,22 @@ export interface CpuStat {
     __typename: 'CpuStat'
 }
 
+export interface DbStats {
+    calls: Scalars['Int']
+    local_blks_hit: Scalars['Int']
+    local_blks_read: Scalars['Int']
+    max_exec_time: Scalars['Float']
+    mean_exec_time: Scalars['Float']
+    min_exec_time: Scalars['Float']
+    query: Scalars['String']
+    queryid: Scalars['String']
+    shared_blks_hit: Scalars['Int']
+    shared_blks_read: Scalars['Int']
+    total_exec_time: Scalars['Float']
+    total_rows: Scalars['Int']
+    __typename: 'DbStats'
+}
+
 export interface DedicatedSeverInfo {
     id: Scalars['String']
     lastPing: Scalars['String']
@@ -9295,6 +9311,7 @@ export interface query_root {
     api_keys_aggregate: api_keys_aggregate
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk: (api_keys | null)
+    dbStats: ((DbStats | null)[] | null)
     /** fetch data from the table: "db_backups" */
     db_backups: db_backups[]
     /** fetch aggregated fields from the table: "db_backups" */
@@ -14511,6 +14528,23 @@ export interface CpuStatGenqlSelection{
     total?: boolean | number
     used?: boolean | number
     window?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface DbStatsGenqlSelection{
+    calls?: boolean | number
+    local_blks_hit?: boolean | number
+    local_blks_read?: boolean | number
+    max_exec_time?: boolean | number
+    mean_exec_time?: boolean | number
+    min_exec_time?: boolean | number
+    query?: boolean | number
+    queryid?: boolean | number
+    shared_blks_hit?: boolean | number
+    shared_blks_read?: boolean | number
+    total_exec_time?: boolean | number
+    total_rows?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -31385,6 +31419,7 @@ export interface query_rootGenqlSelection{
     where?: (api_keys_bool_exp | null)} })
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    dbStats?: DbStatsGenqlSelection
     /** fetch data from the table: "db_backups" */
     db_backups?: (db_backupsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -42770,6 +42805,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isCpuStat = (obj?: { __typename?: any } | null): obj is CpuStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isCpuStat"')
       return CpuStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const DbStats_possibleTypes: string[] = ['DbStats']
+    export const isDbStats = (obj?: { __typename?: any } | null): obj is DbStats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isDbStats"')
+      return DbStats_possibleTypes.includes(obj.__typename)
     }
     
 
