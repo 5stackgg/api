@@ -878,23 +878,6 @@ export class MatchAssistantService {
     );
   }
 
-  public async restartDedicatedServer(serverId: string) {
-    this.logger.log(`[${serverId}] restarting server`);
-
-    try {
-      const rcon = await this.rcon.connect(serverId);
-      if (!rcon) {
-        this.logger.warn(`[${serverId}] unable to restart server`);
-        return;
-      }
-
-      await rcon.send("sv_cheats 1; restart; sv_cheats 0");
-      await this.rcon.disconnect(serverId);
-    } catch (error) {
-      this.logger.warn(`[${serverId}] unable to restart server`, error);
-    }
-  }
-
   public async stopOnDemandServer(matchId: string, remove = false) {
     this.logger.log(`[${matchId}] stopping match servers`);
 
