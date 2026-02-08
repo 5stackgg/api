@@ -53,6 +53,13 @@ actions:
     permissions:
       - role: administrator
     comment: Create directory on game server
+  - name: dbStats
+    definition:
+      kind: ""
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
   - name: deleteMatch
     definition:
       kind: synchronous
@@ -334,4 +341,5 @@ custom_types:
     - name: FileItem
     - name: FileListResponse
     - name: FileContentResponse
+    - name: DbStats
   scalars: []

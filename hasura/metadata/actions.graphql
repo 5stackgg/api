@@ -44,6 +44,10 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Query {
+  dbStats: [DbStats]
+}
+
 type Mutation {
   deleteMatch(
     match_id: String!
@@ -374,5 +378,20 @@ type FileContentResponse {
   content: String!
   path: String!
   size: bigint!
+}
+
+type DbStats {
+  queryid: String!
+  query: String!
+  calls: Int!
+  total_exec_time: Float!
+  mean_exec_time: Float!
+  max_exec_time: Float!
+  min_exec_time: Float!
+  total_rows: Int!
+  shared_blks_hit: Int!
+  shared_blks_read: Int!
+  local_blks_hit: Int!
+  local_blks_read: Int!
 }
 

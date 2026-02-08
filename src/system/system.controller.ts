@@ -13,6 +13,7 @@ import { GameServerNodeService } from "src/game-server-node/game-server-node.ser
 import { LoggingService } from "src/k8s/logging/logging.service";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { PassThrough } from "stream";
+import { PostgresService } from "src/postgres/postgres.service";
 
 @Controller("system")
 export class SystemController {
@@ -22,11 +23,70 @@ export class SystemController {
     private readonly notifications: NotificationsService,
     private readonly gameServerNodeService: GameServerNodeService,
     private readonly loggingService: LoggingService,
+    private readonly postgres: PostgresService,
   ) {}
 
   @Get("healthz")
   public async status() {
     return;
+  }
+
+  @HasuraAction()
+  public async dbStats() {
+    // Define a type for the result rows
+    type DbStatRow = {
+      queryid: string | number;
+      query: string;
+      calls: number;
+      total_exec_time: number;
+      mean_exec_time: number;
+      max_exec_time: number;
+      min_exec_time: number;
+      total_rows: number;
+      shared_blks_hit: number;
+      shared_blks_read: number;
+      local_blks_hit: number;
+      local_blks_read: number;
+    };
+
+    const result = await this.postgres.query<DbStatRow>(`
+      SELECT
+          queryid,
+          query,
+          SUM(calls) AS calls,
+          SUM(total_exec_time) AS total_exec_time,
+          AVG(mean_exec_time) AS mean_exec_time,
+          MAX(max_exec_time) AS max_exec_time,
+          MIN(min_exec_time) AS min_exec_time,
+          SUM(rows) AS total_rows,
+          SUM(shared_blks_hit) AS shared_blks_hit,
+          SUM(shared_blks_read) AS shared_blks_read,
+          SUM(local_blks_hit) AS local_blks_hit,
+          SUM(local_blks_read) AS local_blks_read
+      FROM pg_stat_statements
+      WHERE query NOT LIKE '/* pgbouncer */%'
+      GROUP BY queryid, query
+      HAVING SUM(calls) > 5
+      ORDER BY mean_exec_time DESC
+      LIMIT 50;
+    `);
+
+    return (result as unknown as any[]).map(
+      (row): DbStatRow => ({
+        queryid: row.queryid,
+        query: row.query,
+        calls: Number(row.calls),
+        total_exec_time: Number(row.total_exec_time),
+        mean_exec_time: Number(row.mean_exec_time),
+        max_exec_time: Number(row.max_exec_time),
+        min_exec_time: Number(row.min_exec_time),
+        total_rows: Number(row.total_rows),
+        shared_blks_hit: Number(row.shared_blks_hit),
+        shared_blks_read: Number(row.shared_blks_read),
+        local_blks_hit: Number(row.local_blks_hit),
+        local_blks_read: Number(row.local_blks_read),
+      }),
+    );
   }
 
   @Post("logs/download")
