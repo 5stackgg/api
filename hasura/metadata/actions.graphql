@@ -63,11 +63,15 @@ type Query {
 }
 
 type Query {
-  getTableStats: [TableStat]!
+  getTableStats(
+    schemas: [String!]
+  ): [TableStat]!
 }
 
 type Query {
-  getIndexStats: [IndexStat]!
+  getIndexStats(
+    schemas: [String!]
+  ): [IndexStat]!
 }
 
 type Query {
@@ -87,11 +91,15 @@ type Query {
 }
 
 type Query {
-  getTableIOStats: [TableIOStat]!
+  getTableIOStats(
+    schemas: [String!]
+  ): [TableIOStat]!
 }
 
 type Query {
-  getIndexIOStats: [IndexIOStat]!
+  getIndexIOStats(
+    schemas: [String!]
+  ): [IndexIOStat]!
 }
 
 type Query {
@@ -103,7 +111,9 @@ type Query {
 }
 
 type Query {
-  getStorageStats: StorageStats!
+  getStorageStats(
+    schemas: [String!]
+  ): StorageStats!
 }
 
 type Mutation {

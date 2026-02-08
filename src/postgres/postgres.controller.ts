@@ -344,7 +344,14 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getTableStats(): Promise<TableStat[]> {
+  public async getTableStats(args?: {
+    schemas?: string[];
+  }): Promise<TableStat[]> {
+    // Return empty array if no schemas specified
+    if (!args?.schemas || args.schemas.length === 0) {
+      return [];
+    }
+
     type TableStatRow = {
       schemaname: string;
       relname: string;
@@ -364,7 +371,12 @@ export class PostgresController {
       last_autoanalyze: Date | null;
     };
 
-    const result = await this.postgres.query<TableStatRow>(`
+    // Build WHERE clause for schema filtering
+    const whereClause = "WHERE schemaname = ANY($1)";
+    const params: any[] = [args.schemas];
+
+    const result = await this.postgres.query<TableStatRow>(
+      `
       SELECT
         schemaname,
         relname,
@@ -383,8 +395,11 @@ export class PostgresController {
         last_analyze,
         last_autoanalyze
       FROM pg_stat_user_tables
+      ${whereClause}
       ORDER BY seq_scan + COALESCE(idx_scan, 0) DESC
-    `);
+    `,
+      params,
+    );
 
     return (result as unknown as any[]).map((row) => ({
       __typename: "TableStat",
@@ -409,7 +424,14 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getIndexStats(): Promise<IndexStat[]> {
+  public async getIndexStats(args?: {
+    schemas?: string[];
+  }): Promise<IndexStat[]> {
+    // Return empty array if no schemas specified
+    if (!args?.schemas || args.schemas.length === 0) {
+      return [];
+    }
+
     type IndexStatRow = {
       schemaname: string;
       tablename: string;
@@ -421,7 +443,12 @@ export class PostgresController {
       table_size: number;
     };
 
-    const result = await this.postgres.query<IndexStatRow>(`
+    // Build WHERE clause for schema filtering
+    const whereClause = "WHERE s.schemaname = ANY($1)";
+    const params: any[] = [args.schemas];
+
+    const result = await this.postgres.query<IndexStatRow>(
+      `
       SELECT
         s.schemaname,
         s.relname as tablename,
@@ -432,8 +459,11 @@ export class PostgresController {
         pg_relation_size(s.indexrelid) as index_size,
         pg_table_size(s.relid) as table_size
       FROM pg_stat_user_indexes s
+      ${whereClause}
       ORDER BY s.idx_scan DESC
-    `);
+    `,
+      params,
+    );
 
     return (result as unknown as any[]).map((row) => ({
       __typename: "IndexStat",
@@ -663,7 +693,14 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getTableIOStats(): Promise<TableIOStat[]> {
+  public async getTableIOStats(args?: {
+    schemas?: string[];
+  }): Promise<TableIOStat[]> {
+    // Return empty array if no schemas specified
+    if (!args?.schemas || args.schemas.length === 0) {
+      return [];
+    }
+
     type TableIOStatRow = {
       schemaname: string;
       relname: string;
@@ -674,7 +711,12 @@ export class PostgresController {
       cache_hit_ratio: number | null;
     };
 
-    const result = await this.postgres.query<TableIOStatRow>(`
+    // Build WHERE clause for schema filtering
+    const whereClause = "WHERE schemaname = ANY($1)";
+    const params: any[] = [args.schemas];
+
+    const result = await this.postgres.query<TableIOStatRow>(
+      `
       SELECT
         schemaname,
         relname,
@@ -688,8 +730,11 @@ export class PostgresController {
           ELSE NULL
         END as cache_hit_ratio
       FROM pg_statio_user_tables
+      ${whereClause}
       ORDER BY (heap_blks_read + idx_blks_read) DESC
-    `);
+    `,
+      params,
+    );
 
     return (result as unknown as any[]).map((row) => ({
       __typename: "TableIOStat",
@@ -705,7 +750,14 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getIndexIOStats(): Promise<IndexIOStat[]> {
+  public async getIndexIOStats(args?: {
+    schemas?: string[];
+  }): Promise<IndexIOStat[]> {
+    // Return empty array if no schemas specified
+    if (!args?.schemas || args.schemas.length === 0) {
+      return [];
+    }
+
     type IndexIOStatRow = {
       schemaname: string;
       tablename: string;
@@ -714,7 +766,12 @@ export class PostgresController {
       idx_blks_hit: number;
     };
 
-    const result = await this.postgres.query<IndexIOStatRow>(`
+    // Build WHERE clause for schema filtering
+    const whereClause = "WHERE schemaname = ANY($1)";
+    const params: any[] = [args.schemas];
+
+    const result = await this.postgres.query<IndexIOStatRow>(
+      `
       SELECT
         schemaname,
         relname as tablename,
@@ -722,8 +779,11 @@ export class PostgresController {
         idx_blks_read,
         idx_blks_hit
       FROM pg_statio_user_indexes
+      ${whereClause}
       ORDER BY idx_blks_read DESC
-    `);
+    `,
+      params,
+    );
 
     return (result as unknown as any[]).map((row) => ({
       __typename: "IndexIOStat",
@@ -848,7 +908,22 @@ export class PostgresController {
   }
 
   @HasuraAction()
-  public async getStorageStats(): Promise<any> {
+  public async getStorageStats(args?: { schemas?: string[] }): Promise<any> {
+    // Return empty result if no schemas specified
+    if (!args?.schemas || args.schemas.length === 0) {
+      return {
+        __typename: "StorageStats",
+        summary: {
+          __typename: "StorageSummary",
+          total_database_size: 0,
+          total_table_size: 0,
+          total_indexes_size: 0,
+          estimated_reclaimable_space: 0,
+        },
+        tables: [],
+      };
+    }
+
     // Get summary statistics
     type SummaryRow = {
       total_database_size: number;
@@ -857,7 +932,12 @@ export class PostgresController {
       estimated_reclaimable_space: number;
     };
 
-    const summaryResult = await this.postgres.query<SummaryRow>(`
+    // Build WHERE clause for schema filtering
+    const whereClause = "WHERE schemaname = ANY($1)";
+    const params: any[] = [args.schemas];
+
+    const summaryResult = await this.postgres.query<SummaryRow>(
+      `
       SELECT
         SUM(pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname))) as total_database_size,
         SUM(pg_table_size(quote_ident(schemaname)||'.'||quote_ident(relname))) as total_table_size,
@@ -868,7 +948,10 @@ export class PostgresController {
           ELSE 0
         END) as estimated_reclaimable_space
       FROM pg_stat_user_tables
-    `);
+      ${whereClause}
+    `,
+      params,
+    );
 
     const summary = (summaryResult as unknown as SummaryRow[])[0];
 
@@ -884,7 +967,8 @@ export class PostgresController {
       estimated_dead_tuple_bytes: number;
     };
 
-    const tablesResult = await this.postgres.query<TableSizeRow>(`
+    const tablesResult = await this.postgres.query<TableSizeRow>(
+      `
       SELECT
         schemaname,
         relname as tablename,
@@ -899,8 +983,11 @@ export class PostgresController {
           ELSE 0
         END as estimated_dead_tuple_bytes
       FROM pg_stat_user_tables
+      ${whereClause}
       ORDER BY pg_total_relation_size(quote_ident(schemaname)||'.'||quote_ident(relname)) DESC
-    `);
+    `,
+      params,
+    );
 
     return {
       __typename: "StorageStats",

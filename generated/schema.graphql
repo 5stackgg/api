@@ -31960,10 +31960,10 @@ type query_root {
   getDedicatedServerInfo: [DedicatedSeverInfo]!
 
   """Get index I/O statistics"""
-  getIndexIOStats: [IndexIOStat]!
+  getIndexIOStats(schemas: [String!]): [IndexIOStat]!
 
   """Get index usage statistics"""
-  getIndexStats: [IndexStat]!
+  getIndexStats(schemas: [String!]): [IndexStat]!
   getNodeStats(node: String!): NodeStats!
 
   """Get detailed query analysis with EXPLAIN plan"""
@@ -31977,13 +31977,13 @@ type query_root {
   getServiceStats: [PodStats]!
 
   """Get database storage statistics and reclaimable space"""
-  getStorageStats: StorageStats!
+  getStorageStats(schemas: [String!]): StorageStats!
 
   """Get table I/O statistics"""
-  getTableIOStats: [TableIOStat]!
+  getTableIOStats(schemas: [String!]): [TableIOStat]!
 
   """Get table access statistics"""
-  getTableStats: [TableStat]!
+  getTableStats(schemas: [String!]): [TableStat]!
 
   """Get TimescaleDB statistics"""
   getTimescaleStats: TimescaleStats!
