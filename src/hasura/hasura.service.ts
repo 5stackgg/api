@@ -164,6 +164,12 @@ export class HasuraService {
           }
         }
       }
+
+      if(completed > 0) {
+        await this.postgresService.query(`select pg_stat_reset();`);
+        await this.postgresService.query(`select pg_stat_statements_reset();`);
+      }
+
       this.logger.log(`Migrations: ${completed} Completed`);
     }
 

@@ -57,7 +57,6 @@ export class PostgresController {
           SUM(local_blks_hit) AS local_blks_hit,
           SUM(local_blks_read) AS local_blks_read
       FROM pg_stat_statements
-      WHERE query NOT LIKE '/* pgbouncer */%'
       GROUP BY queryid, query
       HAVING SUM(calls) > 5
       ORDER BY mean_exec_time DESC
@@ -125,10 +124,9 @@ export class PostgresController {
         local_blks_hit,
         local_blks_read
       FROM pg_stat_statements
-      WHERE query NOT LIKE '/* pgbouncer */%'
-        AND calls > 5
+      WHERE calls > 5
       ORDER BY mean_exec_time DESC
-      LIMIT 100
+      LIMIT 50
     `);
 
     return (result as unknown as any[]).map((row) => ({
@@ -321,7 +319,6 @@ export class PostgresController {
         EXTRACT(EPOCH FROM (now() - query_start)) as duration_seconds
       FROM pg_stat_activity
       WHERE state != 'idle'
-        AND query NOT LIKE '/* pgbouncer */%'
         AND pid != pg_backend_pid()
       ORDER BY query_start ASC
     `);
