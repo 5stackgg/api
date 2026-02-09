@@ -1,14 +1,17 @@
+CREATE OR REPLACE FUNCTION public.get_player_teams(player public.players)
+RETURNS SETOF public.teams
+LANGUAGE sql STABLE
+AS $$
+    -- Teams where player is in the roster
+    SELECT t.*
+    FROM team_roster tr
+    INNER JOIN teams t ON t.id = tr.team_id
+    WHERE tr.player_steam_id = player.steam_id
 
-CREATE OR REPLACE FUNCTION public.get_player_teams(player public.players) RETURNS SETOF public.teams
-    LANGUAGE plpgsql STABLE
-    AS $$
-DECLARE
-BEGIN
-    RETURN QUERY
-       SELECT DISTINCT t.*
-        FROM players p
-        LEFT JOIN team_roster tr on tr.player_steam_id = p.steam_id
-        INNER JOIN teams t ON t.id = tr.team_id or t.owner_steam_id = player.steam_id
-        where p.steam_id = player.steam_id;
-END;
+    UNION
+
+    -- Teams owned by the player
+    SELECT t.*
+    FROM teams t
+    WHERE t.owner_steam_id = player.steam_id
 $$;
