@@ -41,6 +41,7 @@ import { Transport } from "@nestjs/microservices";
 import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.module";
 import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
+import { BrandingModule } from "./branding/branding.module";
 
 @Module({
   imports: [
@@ -122,6 +123,7 @@ import { FileManagerModule } from "./file-manager/file-manager.module";
     DedicatedServersModule,
     K8sModule,
     FileManagerModule,
+    BrandingModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
