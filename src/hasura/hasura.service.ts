@@ -120,6 +120,15 @@ export class HasuraService {
     await this.apply(path.resolve("./hasura/triggers"));
 
     await this.updateSettings();
+
+    if (process.env.LOAD_FIXTURES === "true") {
+      const fixturesPath = path.resolve("./hasura/fixtures");
+      if (fs.existsSync(fixturesPath)) {
+        this.logger.log("Fixtures: Loading dev fixture data...");
+        await this.apply(fixturesPath);
+        this.logger.log("Fixtures: Complete");
+      }
+    }
   }
 
   private async updateSettings() {

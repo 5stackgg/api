@@ -42,6 +42,7 @@ import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.mo
 import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
 import { BrandingModule } from "./branding/branding.module";
+import { FixturesModule } from "./fixtures/fixtures.module";
 
 @Module({
   imports: [
@@ -124,6 +125,7 @@ import { BrandingModule } from "./branding/branding.module";
     K8sModule,
     FileManagerModule,
     BrandingModule,
+    FixturesModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
