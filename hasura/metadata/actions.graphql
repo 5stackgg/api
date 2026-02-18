@@ -215,6 +215,10 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  refreshAllPlayers: SuccessOutput
+}
+
 type Query {
   readServerFile(
     node_id: String!
