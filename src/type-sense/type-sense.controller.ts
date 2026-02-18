@@ -6,6 +6,7 @@ import {
   player_elo_set_input,
   player_sanctions_set_input,
   players_set_input,
+  seasons_set_input,
   team_roster_set_input,
 } from "../../generated";
 import { CacheService } from "../cache/cache.service";
@@ -246,5 +247,11 @@ export class TypeSenseController {
   public async refreshAllPlayers() {
     await this.queue.add(RefreshAllPlayersJob.name, {});
     return { success: true };
+  }
+
+  @HasuraEvent()
+  public async season_events(data: HasuraEventData<seasons_set_input>) {
+    // When a season is created or ended, refresh all players since displayed ELO changes
+    await this.queue.add(RefreshAllPlayersJob.name, {});
   }
 }
