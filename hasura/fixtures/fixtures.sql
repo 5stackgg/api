@@ -1007,7 +1007,6 @@ BEGIN
   DECLARE
     t4_rr_options_id uuid := gen_random_uuid();
     t4_de_options_id uuid := gen_random_uuid();
-    t4_gf_options_id uuid := gen_random_uuid();
     t4_stage1_id uuid := gen_random_uuid();
     t4_stage2_id uuid := gen_random_uuid();
     t4_team_ids uuid[];
@@ -1038,13 +1037,10 @@ BEGIN
     INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
     VALUES (t4_rr_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
 
-    -- Match options for double elimination stage (BO1)
+    -- Match options for double elimination stage (BO3)
     INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t4_de_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
+    VALUES (t4_de_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Private');
 
-    -- Match options for grand final (BO5)
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t4_gf_options_id, true, true, 12, 5, true, 'Competitive', comp_map_pool_id, 'Private');
 
     INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
     VALUES (
@@ -1163,13 +1159,13 @@ BEGIN
     VALUES (t4_lb_r2, t4_stage2_id, t4_team_ids[2], t4_team_ids[3], 2, 1, 'LB', 2, t4_gf, true);
 
     -- Grand Final (round=3): T1 vs T2 → T1 wins (Champion!)
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, path, "group", match_options_id, finished)
-    VALUES (t4_gf, t4_stage2_id, t4_team_ids[1], t4_team_ids[2], 3, 1, 'WB', 1, t4_gf_options_id, true);
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, path, "group", finished)
+    VALUES (t4_gf, t4_stage2_id, t4_team_ids[1], t4_team_ids[2], 3, 1, 'WB', 1, true);
 
     -- Create matches linked to all 18 finished brackets
     -- RR G1: T1vT7(1w), T3vT5(1w), T1vT3(1w), T5vT7(1w), T1vT5(1w), T7vT3(2w)
     -- RR G2: T2vT8(1w), T4vT6(1w), T2vT4(1w), T6vT8(1w), T2vT6(1w), T8vT4(2w)
-    -- DE:    T1vT4(1w), T2vT3(1w), T1vT2(1w), T4vT3(2w), T2vT3(1w), T1vT2(1w)
+    -- DE (BO3): T1vT4(1w,2-0), T2vT3(1w,2-1), T1vT2(1w,2-1), T4vT3(2w,2-0), T2vT3(1w,2-1), GF(1w,3-0)
     DECLARE
       t4_all_br uuid[] := ARRAY[
         t4_rr_g1_m1, t4_rr_g1_m2, t4_rr_g1_m3, t4_rr_g1_m4, t4_rr_g1_m5, t4_rr_g1_m6,
@@ -1180,7 +1176,9 @@ BEGIN
       t4_m_t2 int[] := ARRAY[7,5,3,7,5,3,  8,6,4,8,6,4,  4,3,2,3,3,2];
       -- 1=team1 wins, 2=team2 wins
       t4_m_win int[] := ARRAY[1,1,1,1,1,2,  1,1,1,1,1,2,  1,1,1,2,1,1];
-      t4_m_bo int[] := ARRAY[1,1,1,1,1,1,  1,1,1,1,1,1,  1,1,1,1,1,5];
+      t4_m_bo int[] := ARRAY[1,1,1,1,1,1,  1,1,1,1,1,1,  3,3,3,3,3,3];
+      -- Maps per match: RR=1, DE=2-3 (2-0 or 2-1), GF=3 (3-0)
+      t4_map_count int[] := ARRAY[1,1,1,1,1,1,  1,1,1,1,1,1,  2,3,3,2,3,3];
       t4_mid uuid; t4_moid uuid; t4_l1id uuid; t4_l2id uuid; t4_mmid uuid;
       t4_mdate timestamptz;
       t4_l1s int; t4_l2s int;
@@ -1195,7 +1193,6 @@ BEGIN
 
         t4_moid := gen_random_uuid(); t4_mid := gen_random_uuid();
         t4_l1id := gen_random_uuid(); t4_l2id := gen_random_uuid();
-        t4_mmid := gen_random_uuid();
 
         INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
         VALUES (t4_moid, true, true, 12, t4_m_bo[i], true, 'Competitive', comp_map_pool_id, 'Private', 115);
@@ -1208,7 +1205,7 @@ BEGIN
                              created_at, scheduled_at, started_at, ended_at, winning_lineup_id)
         VALUES (t4_mid, 'Finished', t4_moid, t4_l1id, t4_l2id,
                 t4_mdate - interval '1 hour', t4_mdate, t4_mdate,
-                t4_mdate + interval '45 minutes',
+                t4_mdate + interval '45 minutes' * t4_map_count[i],
                 CASE WHEN t4_m_win[i] = 1 THEN t4_l1id ELSE t4_l2id END);
 
         FOR j IN 1..5 LOOP
@@ -1217,29 +1214,136 @@ BEGIN
             (t4_l2id, p_steam_ids[(t4_m_t2[i] - 1) * 5 + j], j = 1, true);
         END LOOP;
 
-        INSERT INTO match_maps (id, match_id, map_id, "order", status, lineup_1_side, lineup_2_side, started_at, ended_at, winning_lineup_id)
-        VALUES (t4_mmid, t4_mid, map_ids[((i - 1) % map_count) + 1], 1, 'Finished', 'CT', 'TERRORIST', t4_mdate, t4_mdate + interval '40 minutes',
-                CASE WHEN t4_m_win[i] = 1 THEN t4_l1id ELSE t4_l2id END);
-
-        -- Veto picks
-        DECLARE ban_n int := 0; t4_cur_map uuid := map_ids[((i - 1) % map_count) + 1];
+        -- Veto picks (full pattern: bans, picks, decider)
+        DECLARE
+          t4_played_maps uuid[] := ARRAY[]::uuid[];
+          t4_unplayed uuid[] := ARRAY[]::uuid[];
+          t4_pick_maps uuid[] := ARRAY[]::uuid[];
+          t4_ban_maps uuid[] := ARRAY[]::uuid[];
+          t4_decider_map uuid;
+          veto_step int := 0;
+          veto_time timestamptz := t4_mdate - interval '10 minutes';
         BEGIN
+          -- Build played and unplayed maps
+          FOR mn IN 1..t4_map_count[i] LOOP
+            t4_played_maps := t4_played_maps || map_ids[((i - 1 + mn - 1) % map_count) + 1];
+          END LOOP;
           FOR j IN 1..map_count LOOP
-            IF map_ids[j] != t4_cur_map THEN
-              ban_n := ban_n + 1;
-              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
-              VALUES (t4_mid, 'Ban', CASE WHEN ban_n % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
-                      map_ids[j], t4_mdate - interval '10 minutes' + (interval '30 seconds' * ban_n));
+            IF NOT (map_ids[j] = ANY(t4_played_maps)) THEN
+              t4_unplayed := t4_unplayed || map_ids[j];
             END IF;
           END LOOP;
+
+          -- Assign picks, decider, bans based on best_of
+          IF t4_m_bo[i] = 1 THEN
+            t4_decider_map := t4_played_maps[1];
+            t4_ban_maps := t4_unplayed;
+          ELSIF t4_m_bo[i] = 3 THEN
+            t4_pick_maps := ARRAY[t4_played_maps[1], t4_played_maps[2]];
+            IF t4_map_count[i] >= 3 THEN
+              t4_decider_map := t4_played_maps[3];
+              t4_ban_maps := t4_unplayed;
+            ELSE
+              -- 2-0: decider was designated but not played
+              t4_decider_map := t4_unplayed[1];
+              t4_ban_maps := t4_unplayed[2:];
+            END IF;
+          ELSIF t4_m_bo[i] = 5 THEN
+            t4_pick_maps := t4_played_maps;
+            WHILE coalesce(array_length(t4_pick_maps, 1), 0) < 4 LOOP
+              t4_pick_maps := t4_pick_maps || t4_unplayed[1];
+              t4_unplayed := t4_unplayed[2:];
+            END LOOP;
+            t4_decider_map := t4_unplayed[1];
+            t4_ban_maps := t4_unplayed[2:];
+          END IF;
+
+          -- Generate veto entries following CS2 patterns
+          IF t4_m_bo[i] = 1 THEN
+            -- BO1: Ban, Ban, Ban, Ban, Ban, Ban, Decider
+            FOR j IN 1..coalesce(array_length(t4_ban_maps, 1), 0) LOOP
+              veto_step := veto_step + 1;
+              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+              VALUES (t4_mid, 'Ban', CASE WHEN j % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
+                      t4_ban_maps[j], veto_time + (interval '30 seconds' * veto_step));
+            END LOOP;
+            veto_step := veto_step + 1;
+            INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+            VALUES (t4_mid, 'Decider', t4_l1id, t4_decider_map, veto_time + (interval '30 seconds' * veto_step));
+
+          ELSIF t4_m_bo[i] = 3 THEN
+            -- BO3: Ban, Ban, Pick, Pick, Ban, Ban, Decider
+            FOR j IN 1..2 LOOP
+              veto_step := veto_step + 1;
+              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+              VALUES (t4_mid, 'Ban', CASE WHEN j % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
+                      t4_ban_maps[j], veto_time + (interval '30 seconds' * veto_step));
+            END LOOP;
+            FOR j IN 1..2 LOOP
+              veto_step := veto_step + 1;
+              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+              VALUES (t4_mid, 'Pick', CASE WHEN j % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
+                      t4_pick_maps[j], veto_time + (interval '30 seconds' * veto_step));
+            END LOOP;
+            FOR j IN 3..coalesce(array_length(t4_ban_maps, 1), 0) LOOP
+              veto_step := veto_step + 1;
+              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+              VALUES (t4_mid, 'Ban', CASE WHEN j % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
+                      t4_ban_maps[j], veto_time + (interval '30 seconds' * veto_step));
+            END LOOP;
+            veto_step := veto_step + 1;
+            INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+            VALUES (t4_mid, 'Decider', t4_l1id, t4_decider_map, veto_time + (interval '30 seconds' * veto_step));
+
+          ELSIF t4_m_bo[i] = 5 THEN
+            -- BO5: Ban, Ban, Pick, Pick, Pick, Pick, Decider
+            FOR j IN 1..coalesce(array_length(t4_ban_maps, 1), 0) LOOP
+              veto_step := veto_step + 1;
+              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+              VALUES (t4_mid, 'Ban', CASE WHEN j % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
+                      t4_ban_maps[j], veto_time + (interval '30 seconds' * veto_step));
+            END LOOP;
+            FOR j IN 1..4 LOOP
+              veto_step := veto_step + 1;
+              INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+              VALUES (t4_mid, 'Pick', CASE WHEN j % 2 = 1 THEN t4_l1id ELSE t4_l2id END,
+                      t4_pick_maps[j], veto_time + (interval '30 seconds' * veto_step));
+            END LOOP;
+            veto_step := veto_step + 1;
+            INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+            VALUES (t4_mid, 'Decider', t4_l1id, t4_decider_map, veto_time + (interval '30 seconds' * veto_step));
+          END IF;
         END;
 
-        -- Generate rounds and kills
-        IF t4_m_win[i] = 1 THEN
-          t4_l1s := 13; t4_l2s := 5 + (i % 7);
-        ELSE
-          t4_l1s := 5 + (i % 7); t4_l2s := 13;
-        END IF;
+        -- Generate maps for this match
+        FOR map_num IN 1..t4_map_count[i] LOOP
+        DECLARE
+          map_winner_v int;
+          cur_map_id uuid;
+          map_start timestamptz;
+        BEGIN
+          t4_mmid := gen_random_uuid();
+          cur_map_id := map_ids[((i - 1 + map_num - 1) % map_count) + 1];
+          map_start := t4_mdate + (interval '45 minutes' * (map_num - 1));
+
+          -- Determine map winner (2-1 pattern: map 2 goes to loser in BO3)
+          IF t4_map_count[i] = 3 AND t4_m_bo[i] = 3 AND map_num = 2 THEN
+            map_winner_v := 3 - t4_m_win[i];
+          ELSE
+            map_winner_v := t4_m_win[i];
+          END IF;
+
+          INSERT INTO match_maps (id, match_id, map_id, "order", status, lineup_1_side, lineup_2_side, started_at, ended_at, winning_lineup_id)
+          VALUES (t4_mmid, t4_mid, cur_map_id, map_num, 'Finished', 'CT', 'TERRORIST',
+                  map_start, map_start + interval '40 minutes',
+                  CASE WHEN map_winner_v = 1 THEN t4_l1id ELSE t4_l2id END);
+
+          -- Generate rounds and kills for this map
+          IF map_winner_v = 1 THEN
+            t4_l1s := 13; t4_l2s := 5 + ((i + map_num) % 7);
+          ELSE
+            t4_l1s := 5 + ((i + map_num) % 7); t4_l2s := 13;
+          END IF;
 
         v_t1_wins := 0; v_t2_wins := 0;
         FOR round_num IN 1..(t4_l1s + t4_l2s) LOOP
@@ -1256,7 +1360,7 @@ BEGIN
             winning_side, lineup_1_side, lineup_2_side)
           VALUES (t4_mmid, round_num, v_t1_wins, v_t2_wins,
             4100 + (round_num * 300), 4100 + (round_num * 300),
-            t4_mdate + (interval '2 minutes' * round_num), 2, 2,
+            map_start + (interval '2 minutes' * round_num), 2, 2,
             winning_side,
             CASE WHEN round_num <= 12 THEN 'CT' ELSE 'TERRORIST' END,
             CASE WHEN round_num <= 12 THEN 'TERRORIST' ELSE 'CT' END);
@@ -1273,7 +1377,7 @@ BEGIN
               'BombsiteA', weapons[((i + round_num + k) % array_length(weapons, 1)) + 1],
               CASE WHEN (round_num + k) % 3 = 0 THEN 'head' ELSE hitgroups[((k + round_num) % 6) + 2] END,
               (round_num + k) % 3 = 0,
-              t4_mdate + (interval '2 minutes' * round_num) + (interval '5 seconds' * k))
+              map_start + (interval '2 minutes' * round_num) + (interval '5 seconds' * k))
             ON CONFLICT DO NOTHING;
           END LOOP;
 
@@ -1283,7 +1387,7 @@ BEGIN
             fp1 int := (t4_m_t1[i] - 1) * 5 + ((round_num + 1) % 5) + 1;
             fp2 int := (t4_m_t2[i] - 1) * 5 + ((round_num + 2) % 5) + 1;
           BEGIN
-            ut := t4_mdate + (interval '2 minutes' * round_num) + interval '40 seconds';
+            ut := map_start + (interval '2 minutes' * round_num) + interval '40 seconds';
             INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
             VALUES (t4_mmid, p_steam_ids[fp1], ut, t4_mid, round_num, 'Flash') ON CONFLICT DO NOTHING;
             INSERT INTO player_flashes (match_map_id, time, attacker_steam_id, attacked_steam_id, match_id, round, duration, team_flash)
@@ -1291,7 +1395,7 @@ BEGIN
                     p_steam_ids[(t4_m_t2[i] - 1) * 5 + ((round_num + 3) % 5) + 1],
                     t4_mid, round_num, 1.5 + (round_num % 3)::numeric * 0.5, false) ON CONFLICT DO NOTHING;
 
-            ut := t4_mdate + (interval '2 minutes' * round_num) + interval '50 seconds';
+            ut := map_start + (interval '2 minutes' * round_num) + interval '50 seconds';
             INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
             VALUES (t4_mmid, p_steam_ids[fp2], ut, t4_mid, round_num, 'Flash') ON CONFLICT DO NOTHING;
             INSERT INTO player_flashes (match_map_id, time, attacker_steam_id, attacked_steam_id, match_id, round, duration, team_flash)
@@ -1306,11 +1410,11 @@ BEGIN
                       t4_mid, round_num, 0.8 + (round_num % 2)::numeric * 0.4, true) ON CONFLICT DO NOTHING;
             END IF;
 
-            ut := t4_mdate + (interval '2 minutes' * round_num) + interval '35 seconds';
+            ut := map_start + (interval '2 minutes' * round_num) + interval '35 seconds';
             INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
             VALUES (t4_mmid, p_steam_ids[(t4_m_t1[i] - 1) * 5 + ((round_num + 3) % 5) + 1], ut, t4_mid, round_num, 'Smoke') ON CONFLICT DO NOTHING;
 
-            ut := t4_mdate + (interval '2 minutes' * round_num) + interval '55 seconds';
+            ut := map_start + (interval '2 minutes' * round_num) + interval '55 seconds';
             IF round_num % 2 = 0 THEN
               INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
               VALUES (t4_mmid, p_steam_ids[(t4_m_t2[i] - 1) * 5 + (round_num % 5) + 1], ut, t4_mid, round_num, 'HighExplosive') ON CONFLICT DO NOTHING;
@@ -1331,6 +1435,8 @@ BEGIN
                 'BombsiteA', 'inferno', 10 + (round_num % 25), 0, 90 - (round_num % 25), 100, 'chest', ut + interval '0.5 seconds');
             END IF;
           END;
+        END LOOP;
+        END;
         END LOOP;
 
         UPDATE tournament_brackets SET match_id = t4_mid WHERE id = t4_all_br[i];
