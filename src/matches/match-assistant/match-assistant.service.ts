@@ -637,7 +637,6 @@ export class MatchAssistantService {
                       ],
                     },
                     hostNetwork: true,
-                    dnsPolicy: "ClusterFirstWithHostNet",
                     affinity: {
                       nodeAffinity: {
                         requiredDuringSchedulingIgnoredDuringExecution: {

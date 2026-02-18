@@ -170,7 +170,6 @@ export class DedicatedServersService {
                   ],
                 },
                 hostNetwork: true,
-                dnsPolicy: "ClusterFirstWithHostNet",
                 affinity: {
                   nodeAffinity: {
                     requiredDuringSchedulingIgnoredDuringExecution: {
