@@ -20,7 +20,9 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION get_player_elo_for_match(
     match_record public.matches,
-    player_record public.players
+    player_record public.players,
+    _season_id UUID DEFAULT NULL,
+    _is_tournament BOOLEAN DEFAULT FALSE
 ) RETURNS JSONB AS $$
 DECLARE
     _current_player_elo INTEGER;
@@ -34,7 +36,7 @@ DECLARE
     _elo_change INTEGER;
     _scale_factor INTEGER := 4000;
     _default_elo INTEGER := 5000;
-    
+
     -- Performance metrics
     _player_kills INTEGER;
     _player_deaths INTEGER;
@@ -53,14 +55,34 @@ BEGIN
     SELECT "type" INTO match_type FROM match_options WHERE id = match_record.match_options_id;
 
     -- Get the player's current ELO value from the most recent record
-    SELECT current INTO _current_player_elo
-    FROM player_elo 
-    WHERE steam_id = player_record.steam_id
-    AND created_at < match_record.ended_at
-    AND match_id != match_record.id
-    AND "type" = match_type
-    ORDER BY created_at DESC
-    LIMIT 1;
+    -- Scoped by tournament vs season context
+    IF _is_tournament THEN
+        -- Tournament track: find latest ELO where season_id IS NULL and match is a tournament match
+        SELECT pe.current INTO _current_player_elo
+        FROM player_elo pe
+        INNER JOIN tournament_brackets tb ON tb.match_id = pe.match_id
+        WHERE pe.steam_id = player_record.steam_id
+        AND pe.created_at < match_record.ended_at
+        AND pe.match_id != match_record.id
+        AND pe."type" = match_type
+        AND pe.season_id IS NULL
+        ORDER BY pe.created_at DESC
+        LIMIT 1;
+    ELSIF _season_id IS NOT NULL THEN
+        -- Season match: find latest ELO within this season
+        SELECT pe.current INTO _current_player_elo
+        FROM player_elo pe
+        WHERE pe.steam_id = player_record.steam_id
+        AND pe.created_at < match_record.ended_at
+        AND pe.match_id != match_record.id
+        AND pe."type" = match_type
+        AND pe.season_id = _season_id
+        ORDER BY pe.created_at DESC
+        LIMIT 1;
+    ELSE
+        -- Off-season or legacy: default to 5000
+        _current_player_elo := _default_elo;
+    END IF;
 
     if(_current_player_elo is null) then
         _current_player_elo := _default_elo;
@@ -80,115 +102,149 @@ BEGIN
     END IF;
 
     -- Calculate average ELO for player's team
-    -- First get the sum of all previous ELO changes for each player in the team
-    SELECT 
+    -- Scoped by tournament vs season context
+    SELECT
         AVG(player_elo) INTO _player_team_elo_avg
     FROM (
-        SELECT 
+        SELECT
             mlp.steam_id,
             COALESCE(
-                (
-                    SELECT current 
-                    FROM player_elo pr2 
-                    WHERE pr2.steam_id = mlp.steam_id
-                    AND pr2.created_at < match_record.ended_at
-                    AND pr2.match_id != match_record.id
-                    AND pr2."type" = match_type
-                    ORDER BY pr2.created_at DESC
-                    LIMIT 1
-                ), _default_elo
+                CASE
+                    WHEN _is_tournament THEN (
+                        SELECT pe.current
+                        FROM player_elo pe
+                        INNER JOIN tournament_brackets tb ON tb.match_id = pe.match_id
+                        WHERE pe.steam_id = mlp.steam_id
+                        AND pe.created_at < match_record.ended_at
+                        AND pe.match_id != match_record.id
+                        AND pe."type" = match_type
+                        AND pe.season_id IS NULL
+                        ORDER BY pe.created_at DESC
+                        LIMIT 1
+                    )
+                    WHEN _season_id IS NOT NULL THEN (
+                        SELECT pe.current
+                        FROM player_elo pe
+                        WHERE pe.steam_id = mlp.steam_id
+                        AND pe.created_at < match_record.ended_at
+                        AND pe.match_id != match_record.id
+                        AND pe."type" = match_type
+                        AND pe.season_id = _season_id
+                        ORDER BY pe.created_at DESC
+                        LIMIT 1
+                    )
+                    ELSE NULL
+                END,
+                _default_elo
             ) AS player_elo
-        FROM 
+        FROM
             match_lineup_players mlp
-        WHERE 
+        WHERE
             mlp.match_lineup_id = _player_lineup_id
-        GROUP BY 
+        GROUP BY
             mlp.steam_id
     ) AS team_elos;
 
     -- Calculate average ELO for opponent's team
-    -- First get the sum of all previous ELO changes for each player in the team
-    SELECT 
+    -- Scoped by tournament vs season context
+    SELECT
         AVG(player_elo) INTO _opponent_team_elo_avg
     FROM (
-        SELECT 
+        SELECT
             mlp.steam_id,
             COALESCE(
-                (
-                    SELECT current 
-                    FROM player_elo pr2 
-                    WHERE pr2.steam_id = mlp.steam_id
-                    AND pr2.created_at < match_record.ended_at
-                    AND pr2.match_id != match_record.id
-                    AND pr2."type" = match_type
-                    ORDER BY pr2.created_at DESC
-                    LIMIT 1
-                ), _default_elo
+                CASE
+                    WHEN _is_tournament THEN (
+                        SELECT pe.current
+                        FROM player_elo pe
+                        INNER JOIN tournament_brackets tb ON tb.match_id = pe.match_id
+                        WHERE pe.steam_id = mlp.steam_id
+                        AND pe.created_at < match_record.ended_at
+                        AND pe.match_id != match_record.id
+                        AND pe."type" = match_type
+                        AND pe.season_id IS NULL
+                        ORDER BY pe.created_at DESC
+                        LIMIT 1
+                    )
+                    WHEN _season_id IS NOT NULL THEN (
+                        SELECT pe.current
+                        FROM player_elo pe
+                        WHERE pe.steam_id = mlp.steam_id
+                        AND pe.created_at < match_record.ended_at
+                        AND pe.match_id != match_record.id
+                        AND pe."type" = match_type
+                        AND pe.season_id = _season_id
+                        ORDER BY pe.created_at DESC
+                        LIMIT 1
+                    )
+                    ELSE NULL
+                END,
+                _default_elo
             ) AS player_elo
-        FROM 
+        FROM
             match_lineup_players mlp
-        WHERE 
+        WHERE
             mlp.match_lineup_id = _opponent_lineup_id
-        GROUP BY 
+        GROUP BY
             mlp.steam_id
     ) AS team_elos;
 
     -- Get player's performance metrics
     SELECT COUNT(*) INTO _player_kills
-    FROM player_kills 
+    FROM player_kills
     WHERE match_id = match_record.id AND attacker_steam_id = player_record.steam_id;
-    
+
     SELECT COUNT(*) INTO _player_deaths
-    FROM player_kills 
+    FROM player_kills
     WHERE match_id = match_record.id AND attacked_steam_id = player_record.steam_id;
-    
+
     SELECT COUNT(*) INTO _player_assists
-    FROM player_assists 
+    FROM player_assists
     WHERE match_id = match_record.id AND attacker_steam_id = player_record.steam_id;
-    
+
     SELECT COALESCE(SUM(damage), 0) INTO _player_damage
-    FROM player_damages 
+    FROM player_damages
     WHERE match_id = match_record.id AND attacker_steam_id = player_record.steam_id AND attacker_steam_id IS NOT NULL;
-    
+
     -- Get team's total performance metrics
     SELECT COUNT(*) INTO _team_total_kills
     FROM player_kills pk
     JOIN match_lineup_players mlp ON pk.attacker_steam_id = mlp.steam_id
     WHERE pk.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
-    
+
     SELECT COUNT(*) INTO _team_total_deaths
     FROM player_kills pk
     JOIN match_lineup_players mlp ON pk.attacked_steam_id = mlp.steam_id
     WHERE pk.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
-    
+
     SELECT COUNT(*) INTO _team_total_assists
     FROM player_assists pa
     JOIN match_lineup_players mlp ON pa.attacker_steam_id = mlp.steam_id
     WHERE pa.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id;
-    
+
     SELECT COALESCE(SUM(pd.damage), 0) INTO _team_total_damage
     FROM player_damages pd
     JOIN match_lineup_players mlp ON pd.attacker_steam_id = mlp.steam_id
     WHERE pd.match_id = match_record.id AND mlp.match_lineup_id = _player_lineup_id AND pd.attacker_steam_id IS NOT NULL;
-    
+
     -- Calculate player's KDA (Kills + Assists / Deaths, with a minimum of 1 death to avoid division by zero)
     _player_kda := (_player_kills + _player_assists)::FLOAT / GREATEST(_player_deaths, 1)::FLOAT;
-    
+
     -- Calculate team's average KDA
     _team_avg_kda := (_team_total_kills + _team_total_assists)::FLOAT / GREATEST(_team_total_deaths, 1)::FLOAT;
-    
+
     -- Calculate player's damage percentage
-    _player_damage_percent := CASE 
+    _player_damage_percent := CASE
         WHEN _team_total_damage > 0 THEN _player_damage::FLOAT / _team_total_damage::FLOAT
         ELSE 0
     END;
-    
+
     -- Calculate performance multiplier based on KDA ratio and damage percentage
     -- This will be a value between 0.8 and 1.2, with 1.0 being average performance
-    _performance_multiplier := 1.0 + 
-        (0.1 * (_player_kda / GREATEST(_team_avg_kda, 0.1) - 1.0)) + 
+    _performance_multiplier := 1.0 +
+        (0.1 * (_player_kda / GREATEST(_team_avg_kda, 0.1) - 1.0)) +
         (0.1 * (_player_damage_percent - 0.2)); -- Assuming 20% damage is average for a 5-player team
-    
+
     -- Ensure the multiplier stays within reasonable bounds
     _performance_multiplier := GREATEST(0.8, LEAST(1.2, _performance_multiplier));
 
@@ -254,7 +310,7 @@ BEGIN
     IF match_record IS NULL THEN
         RETURN 0;
     END IF;
-    
+
     -- Skip matches without a winning_lineup_id
     IF match_record.winning_lineup_id IS NULL THEN
         RAISE NOTICE 'Skipping match % as it has no winning_lineup_id', match_id;
@@ -279,6 +335,8 @@ DECLARE
     new_elo INTEGER;
     ratings_created INTEGER := 0;
     match_type text;
+    _is_tournament BOOLEAN;
+    _season_id UUID;
 BEGIN
     -- Get the match record
     SELECT * INTO match_record FROM matches WHERE id = _match_id;
@@ -287,41 +345,51 @@ BEGIN
     IF match_record IS NULL THEN
         RETURN 0;
     END IF;
-    
+
     -- Skip matches without a winning_lineup_id
     IF match_record.winning_lineup_id IS NULL THEN
         RAISE NOTICE 'Skipping match % as it has no winning_lineup_id', _match_id;
         RETURN 0;
     END IF;
-    
+
+    -- Determine if this is a tournament match
+    _is_tournament := is_tournament_match(match_record);
+
+    -- Determine season context
+    IF _is_tournament THEN
+        _season_id := NULL;  -- Tournament matches are always season-independent
+    ELSE
+        _season_id := get_active_season();  -- May be NULL if no active season (off-season)
+    END IF;
+
     -- Delete any existing ratings for this match to avoid duplicates
     DELETE FROM player_elo WHERE match_id = _match_id AND "type" = match_type;
-    
+
     -- Get all players in this match
     FOR player_record IN
-        SELECT DISTINCT p.* 
+        SELECT DISTINCT p.*
         FROM players p
         JOIN match_lineup_players mlp ON p.steam_id = mlp.steam_id
-        WHERE mlp.match_lineup_id = match_record.lineup_1_id 
+        WHERE mlp.match_lineup_id = match_record.lineup_1_id
            OR mlp.match_lineup_id = match_record.lineup_2_id
     LOOP
         -- Calculate ELO change for this player in this match
-        elo_data := get_player_elo_for_match(match_record, player_record);
-        
+        elo_data := get_player_elo_for_match(match_record, player_record, _season_id, _is_tournament);
+
         -- Validate that we got valid data back
         IF elo_data IS NULL THEN
             RAISE NOTICE 'Skipping player % for match % - elo_data is null', player_record.steam_id, _match_id;
             CONTINUE;
         END IF;
-        
+
         -- Extract values with null checks
         elo_change := COALESCE((elo_data->>'elo_change')::INTEGER, 0);
         current_elo := COALESCE((elo_data->>'current_elo')::INTEGER, 5000); -- Default ELO if null
         new_elo := current_elo + elo_change;
-        
+
         -- Validate the calculated values
         IF current_elo IS NULL OR elo_change IS NULL OR new_elo IS NULL THEN
-            RAISE NOTICE 'Skipping player % for match % - invalid elo values (current: %, change: %, new: %)', 
+            RAISE NOTICE 'Skipping player % for match % - invalid elo values (current: %, change: %, new: %)',
                 player_record.steam_id, _match_id, current_elo, elo_change, new_elo;
             CONTINUE;
         END IF;
@@ -332,19 +400,21 @@ BEGIN
             steam_id,
             current,
             change,
-            created_at
+            created_at,
+            season_id
         ) VALUES (
             match_type,
             match_record.id,
             player_record.steam_id,
             new_elo,
             elo_change,
-            match_record.ended_at
+            match_record.ended_at,
+            _season_id
         );
-        
+
         ratings_created := ratings_created + 1;
     END LOOP;
-    
+
     RETURN ratings_created;
 END;
 $$ LANGUAGE plpgsql;

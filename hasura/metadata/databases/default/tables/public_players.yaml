@@ -172,6 +172,13 @@ array_relationships:
         table:
           name: player_sanctions
           schema: public
+  - name: season_stats
+    using:
+      foreign_key_constraint_on:
+        column: player_steam_id
+        table:
+          name: player_season_stats
+          schema: public
   - name: team_invites
     using:
       foreign_key_constraint_on:

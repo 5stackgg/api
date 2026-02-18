@@ -5848,6 +5848,10 @@ export interface mutation_root {
     delete_player_sanctions: (player_sanctions_mutation_response | null)
     /** delete single row from the table: "player_sanctions" */
     delete_player_sanctions_by_pk: (player_sanctions | null)
+    /** delete data from the table: "player_season_stats" */
+    delete_player_season_stats: (player_season_stats_mutation_response | null)
+    /** delete single row from the table: "player_season_stats" */
+    delete_player_season_stats_by_pk: (player_season_stats | null)
     /** delete data from the table: "player_stats" */
     delete_player_stats: (player_stats_mutation_response | null)
     /** delete single row from the table: "player_stats" */
@@ -5868,6 +5872,10 @@ export interface mutation_root {
     delete_plugin_versions: (plugin_versions_mutation_response | null)
     /** delete single row from the table: "plugin_versions" */
     delete_plugin_versions_by_pk: (plugin_versions | null)
+    /** delete data from the table: "seasons" */
+    delete_seasons: (seasons_mutation_response | null)
+    /** delete single row from the table: "seasons" */
+    delete_seasons_by_pk: (seasons | null)
     /** delete data from the table: "server_regions" */
     delete_server_regions: (server_regions_mutation_response | null)
     /** delete single row from the table: "server_regions" */
@@ -6163,6 +6171,10 @@ export interface mutation_root {
     insert_player_sanctions: (player_sanctions_mutation_response | null)
     /** insert a single row into the table: "player_sanctions" */
     insert_player_sanctions_one: (player_sanctions | null)
+    /** insert data into the table: "player_season_stats" */
+    insert_player_season_stats: (player_season_stats_mutation_response | null)
+    /** insert a single row into the table: "player_season_stats" */
+    insert_player_season_stats_one: (player_season_stats | null)
     /** insert data into the table: "player_stats" */
     insert_player_stats: (player_stats_mutation_response | null)
     /** insert a single row into the table: "player_stats" */
@@ -6183,6 +6195,10 @@ export interface mutation_root {
     insert_plugin_versions: (plugin_versions_mutation_response | null)
     /** insert a single row into the table: "plugin_versions" */
     insert_plugin_versions_one: (plugin_versions | null)
+    /** insert data into the table: "seasons" */
+    insert_seasons: (seasons_mutation_response | null)
+    /** insert a single row into the table: "seasons" */
+    insert_seasons_one: (seasons | null)
     /** insert data into the table: "server_regions" */
     insert_server_regions: (server_regions_mutation_response | null)
     /** insert a single row into the table: "server_regions" */
@@ -6245,12 +6261,16 @@ export interface mutation_root {
     insert_v_pool_maps_one: (v_pool_maps | null)
     joinLineup: (SuccessOutput | null)
     leaveLineup: (SuccessOutput | null)
+    /** Load dev fixture data (dev only) */
+    loadFixtures: (SuccessOutput | null)
     /** logout */
     logout: (SuccessOutput | null)
     /** Move file or directory on game server */
     moveServerItem: (SuccessOutput | null)
     randomizeTeams: (SuccessOutput | null)
     registerName: (SuccessOutput | null)
+    /** Remove dev fixture data (dev only) */
+    removeFixtures: (SuccessOutput | null)
     /** Rename file or directory on game server */
     renameServerItem: (SuccessOutput | null)
     requestNameChange: (SuccessOutput | null)
@@ -6622,6 +6642,12 @@ export interface mutation_root {
     update_player_sanctions_by_pk: (player_sanctions | null)
     /** update multiples rows of table: "player_sanctions" */
     update_player_sanctions_many: ((player_sanctions_mutation_response | null)[] | null)
+    /** update data of the table: "player_season_stats" */
+    update_player_season_stats: (player_season_stats_mutation_response | null)
+    /** update single row of the table: "player_season_stats" */
+    update_player_season_stats_by_pk: (player_season_stats | null)
+    /** update multiples rows of table: "player_season_stats" */
+    update_player_season_stats_many: ((player_season_stats_mutation_response | null)[] | null)
     /** update data of the table: "player_stats" */
     update_player_stats: (player_stats_mutation_response | null)
     /** update single row of the table: "player_stats" */
@@ -6652,6 +6678,12 @@ export interface mutation_root {
     update_plugin_versions_by_pk: (plugin_versions | null)
     /** update multiples rows of table: "plugin_versions" */
     update_plugin_versions_many: ((plugin_versions_mutation_response | null)[] | null)
+    /** update data of the table: "seasons" */
+    update_seasons: (seasons_mutation_response | null)
+    /** update single row of the table: "seasons" */
+    update_seasons_by_pk: (seasons | null)
+    /** update multiples rows of table: "seasons" */
+    update_seasons_many: ((seasons_mutation_response | null)[] | null)
     /** update data of the table: "server_regions" */
     update_server_regions: (server_regions_mutation_response | null)
     /** update single row of the table: "server_regions" */
@@ -7516,6 +7548,9 @@ export interface player_elo {
     match_id: Scalars['uuid']
     /** An object relationship */
     player: players
+    /** An object relationship */
+    season: (seasons | null)
+    season_id: (Scalars['uuid'] | null)
     steam_id: Scalars['bigint']
     type: e_match_types_enum
     __typename: 'player_elo'
@@ -7566,6 +7601,7 @@ export interface player_elo_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     current: (Scalars['numeric'] | null)
     match_id: (Scalars['uuid'] | null)
+    season_id: (Scalars['uuid'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_elo_max_fields'
 }
@@ -7577,6 +7613,7 @@ export interface player_elo_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     current: (Scalars['numeric'] | null)
     match_id: (Scalars['uuid'] | null)
+    season_id: (Scalars['uuid'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_elo_min_fields'
 }
@@ -7593,7 +7630,7 @@ export interface player_elo_mutation_response {
 
 
 /** select columns of table "player_elo" */
-export type player_elo_select_column = 'change' | 'created_at' | 'current' | 'match_id' | 'steam_id' | 'type'
+export type player_elo_select_column = 'change' | 'created_at' | 'current' | 'match_id' | 'season_id' | 'steam_id' | 'type'
 
 
 /** aggregate stddev on columns */
@@ -7633,7 +7670,7 @@ export interface player_elo_sum_fields {
 
 
 /** update columns of table "player_elo" */
-export type player_elo_update_column = 'change' | 'created_at' | 'current' | 'match_id' | 'steam_id' | 'type'
+export type player_elo_update_column = 'change' | 'created_at' | 'current' | 'match_id' | 'season_id' | 'steam_id' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -8506,6 +8543,224 @@ export interface player_sanctions_variance_fields {
 }
 
 
+/** columns and relationships of "player_season_stats" */
+export interface player_season_stats {
+    assists: Scalars['bigint']
+    deaths: Scalars['bigint']
+    headshot_percentage: Scalars['float8']
+    headshots: Scalars['bigint']
+    kills: Scalars['bigint']
+    /** An object relationship */
+    player: players
+    player_steam_id: Scalars['bigint']
+    /** An object relationship */
+    season: seasons
+    season_id: Scalars['uuid']
+    __typename: 'player_season_stats'
+}
+
+
+/** aggregated selection of "player_season_stats" */
+export interface player_season_stats_aggregate {
+    aggregate: (player_season_stats_aggregate_fields | null)
+    nodes: player_season_stats[]
+    __typename: 'player_season_stats_aggregate'
+}
+
+
+/** aggregate fields of "player_season_stats" */
+export interface player_season_stats_aggregate_fields {
+    avg: (player_season_stats_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_season_stats_max_fields | null)
+    min: (player_season_stats_min_fields | null)
+    stddev: (player_season_stats_stddev_fields | null)
+    stddev_pop: (player_season_stats_stddev_pop_fields | null)
+    stddev_samp: (player_season_stats_stddev_samp_fields | null)
+    sum: (player_season_stats_sum_fields | null)
+    var_pop: (player_season_stats_var_pop_fields | null)
+    var_samp: (player_season_stats_var_samp_fields | null)
+    variance: (player_season_stats_variance_fields | null)
+    __typename: 'player_season_stats_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_season_stats_avg_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "player_season_stats" */
+export type player_season_stats_constraint = 'player_season_stats_pkey'
+
+
+/** aggregate max on columns */
+export interface player_season_stats_max_fields {
+    assists: (Scalars['bigint'] | null)
+    deaths: (Scalars['bigint'] | null)
+    headshot_percentage: (Scalars['float8'] | null)
+    headshots: (Scalars['bigint'] | null)
+    kills: (Scalars['bigint'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    season_id: (Scalars['uuid'] | null)
+    __typename: 'player_season_stats_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_season_stats_min_fields {
+    assists: (Scalars['bigint'] | null)
+    deaths: (Scalars['bigint'] | null)
+    headshot_percentage: (Scalars['float8'] | null)
+    headshots: (Scalars['bigint'] | null)
+    kills: (Scalars['bigint'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    season_id: (Scalars['uuid'] | null)
+    __typename: 'player_season_stats_min_fields'
+}
+
+
+/** response of any mutation on the table "player_season_stats" */
+export interface player_season_stats_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_season_stats[]
+    __typename: 'player_season_stats_mutation_response'
+}
+
+
+/** select columns of table "player_season_stats" */
+export type player_season_stats_select_column = 'assists' | 'deaths' | 'headshot_percentage' | 'headshots' | 'kills' | 'player_steam_id' | 'season_id'
+
+
+/** select "player_season_stats_aggregate_bool_exp_avg_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_avg_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_corr_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_corr_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_covar_samp_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_max_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_max_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_min_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_min_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_stddev_samp_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_sum_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_sum_arguments_columns = 'headshot_percentage'
+
+
+/** select "player_season_stats_aggregate_bool_exp_var_samp_arguments_columns" columns of table "player_season_stats" */
+export type player_season_stats_select_column_player_season_stats_aggregate_bool_exp_var_samp_arguments_columns = 'headshot_percentage'
+
+
+/** aggregate stddev on columns */
+export interface player_season_stats_stddev_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_season_stats_stddev_pop_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_season_stats_stddev_samp_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_season_stats_sum_fields {
+    assists: (Scalars['bigint'] | null)
+    deaths: (Scalars['bigint'] | null)
+    headshot_percentage: (Scalars['float8'] | null)
+    headshots: (Scalars['bigint'] | null)
+    kills: (Scalars['bigint'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_season_stats_sum_fields'
+}
+
+
+/** update columns of table "player_season_stats" */
+export type player_season_stats_update_column = 'assists' | 'deaths' | 'headshot_percentage' | 'headshots' | 'kills' | 'player_steam_id' | 'season_id'
+
+
+/** aggregate var_pop on columns */
+export interface player_season_stats_var_pop_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_season_stats_var_samp_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_season_stats_variance_fields {
+    assists: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    headshot_percentage: (Scalars['Float'] | null)
+    headshots: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'player_season_stats_variance_fields'
+}
+
+
 /** columns and relationships of "player_stats" */
 export interface player_stats {
     assists: Scalars['bigint']
@@ -9125,6 +9380,10 @@ export interface players {
     sanctions: player_sanctions[]
     /** An aggregate relationship */
     sanctions_aggregate: player_sanctions_aggregate
+    /** An array relationship */
+    season_stats: player_season_stats[]
+    /** An aggregate relationship */
+    season_stats_aggregate: player_season_stats_aggregate
     /** An object relationship */
     stats: (player_stats | null)
     steam_id: Scalars['bigint']
@@ -9881,6 +10140,12 @@ export interface query_root {
     player_sanctions_aggregate: player_sanctions_aggregate
     /** fetch data from the table: "player_sanctions" using primary key columns */
     player_sanctions_by_pk: (player_sanctions | null)
+    /** An array relationship */
+    player_season_stats: player_season_stats[]
+    /** An aggregate relationship */
+    player_season_stats_aggregate: player_season_stats_aggregate
+    /** fetch data from the table: "player_season_stats" using primary key columns */
+    player_season_stats_by_pk: (player_season_stats | null)
     /** fetch data from the table: "player_stats" */
     player_stats: player_stats[]
     /** fetch aggregated fields from the table: "player_stats" */
@@ -9913,6 +10178,12 @@ export interface query_root {
     plugin_versions_by_pk: (plugin_versions | null)
     /** Read file content from game server */
     readServerFile: FileContentResponse
+    /** fetch data from the table: "seasons" */
+    seasons: seasons[]
+    /** fetch aggregated fields from the table: "seasons" */
+    seasons_aggregate: seasons_aggregate
+    /** fetch data from the table: "seasons" using primary key columns */
+    seasons_by_pk: (seasons | null)
     /** fetch data from the table: "server_regions" */
     server_regions: server_regions[]
     /** fetch aggregated fields from the table: "server_regions" */
@@ -10038,6 +10309,82 @@ export interface query_root {
     v_team_tournament_results_aggregate: v_team_tournament_results_aggregate
     __typename: 'query_root'
 }
+
+
+/** columns and relationships of "seasons" */
+export interface seasons {
+    created_at: Scalars['timestamptz']
+    ends_at: (Scalars['timestamptz'] | null)
+    id: Scalars['uuid']
+    name: Scalars['String']
+    /** An array relationship */
+    player_season_stats: player_season_stats[]
+    /** An aggregate relationship */
+    player_season_stats_aggregate: player_season_stats_aggregate
+    starts_at: Scalars['timestamptz']
+    __typename: 'seasons'
+}
+
+
+/** aggregated selection of "seasons" */
+export interface seasons_aggregate {
+    aggregate: (seasons_aggregate_fields | null)
+    nodes: seasons[]
+    __typename: 'seasons_aggregate'
+}
+
+
+/** aggregate fields of "seasons" */
+export interface seasons_aggregate_fields {
+    count: Scalars['Int']
+    max: (seasons_max_fields | null)
+    min: (seasons_min_fields | null)
+    __typename: 'seasons_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "seasons" */
+export type seasons_constraint = 'idx_seasons_one_active' | 'seasons_pkey'
+
+
+/** aggregate max on columns */
+export interface seasons_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    ends_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    name: (Scalars['String'] | null)
+    starts_at: (Scalars['timestamptz'] | null)
+    __typename: 'seasons_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface seasons_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    ends_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    name: (Scalars['String'] | null)
+    starts_at: (Scalars['timestamptz'] | null)
+    __typename: 'seasons_min_fields'
+}
+
+
+/** response of any mutation on the table "seasons" */
+export interface seasons_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: seasons[]
+    __typename: 'seasons_mutation_response'
+}
+
+
+/** select columns of table "seasons" */
+export type seasons_select_column = 'created_at' | 'ends_at' | 'id' | 'name' | 'starts_at'
+
+
+/** update columns of table "seasons" */
+export type seasons_update_column = 'created_at' | 'ends_at' | 'id' | 'name' | 'starts_at'
 
 
 /** columns and relationships of "server_regions" */
@@ -10968,6 +11315,14 @@ export interface subscription_root {
     player_sanctions_by_pk: (player_sanctions | null)
     /** fetch data from the table in a streaming manner: "player_sanctions" */
     player_sanctions_stream: player_sanctions[]
+    /** An array relationship */
+    player_season_stats: player_season_stats[]
+    /** An aggregate relationship */
+    player_season_stats_aggregate: player_season_stats_aggregate
+    /** fetch data from the table: "player_season_stats" using primary key columns */
+    player_season_stats_by_pk: (player_season_stats | null)
+    /** fetch data from the table in a streaming manner: "player_season_stats" */
+    player_season_stats_stream: player_season_stats[]
     /** fetch data from the table: "player_stats" */
     player_stats: player_stats[]
     /** fetch aggregated fields from the table: "player_stats" */
@@ -11008,6 +11363,14 @@ export interface subscription_root {
     plugin_versions_by_pk: (plugin_versions | null)
     /** fetch data from the table in a streaming manner: "plugin_versions" */
     plugin_versions_stream: plugin_versions[]
+    /** fetch data from the table: "seasons" */
+    seasons: seasons[]
+    /** fetch aggregated fields from the table: "seasons" */
+    seasons_aggregate: seasons_aggregate
+    /** fetch data from the table: "seasons" using primary key columns */
+    seasons_by_pk: (seasons | null)
+    /** fetch data from the table in a streaming manner: "seasons" */
+    seasons_stream: seasons[]
     /** fetch data from the table: "server_regions" */
     server_regions: server_regions[]
     /** fetch aggregated fields from the table: "server_regions" */
@@ -13398,11 +13761,11 @@ export interface v_player_damage_variance_fields {
 export interface v_player_elo {
     actual_score: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
-    current_elo: (Scalars['Int'] | null)
+    current_elo: (Scalars['numeric'] | null)
     damage: (Scalars['Int'] | null)
     damage_percent: (Scalars['float8'] | null)
     deaths: (Scalars['Int'] | null)
-    elo_change: (Scalars['Int'] | null)
+    elo_change: (Scalars['numeric'] | null)
     expected_score: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
@@ -13417,9 +13780,10 @@ export interface v_player_elo {
     player_name: (Scalars['String'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     player_team_elo_avg: (Scalars['float8'] | null)
+    season_id: (Scalars['uuid'] | null)
     team_avg_kda: (Scalars['float8'] | null)
     type: (Scalars['String'] | null)
-    updated_elo: (Scalars['Int'] | null)
+    updated_elo: (Scalars['numeric'] | null)
     __typename: 'v_player_elo'
 }
 
@@ -13476,11 +13840,11 @@ export interface v_player_elo_avg_fields {
 export interface v_player_elo_max_fields {
     actual_score: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
-    current_elo: (Scalars['Int'] | null)
+    current_elo: (Scalars['numeric'] | null)
     damage: (Scalars['Int'] | null)
     damage_percent: (Scalars['float8'] | null)
     deaths: (Scalars['Int'] | null)
-    elo_change: (Scalars['Int'] | null)
+    elo_change: (Scalars['numeric'] | null)
     expected_score: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
@@ -13493,9 +13857,10 @@ export interface v_player_elo_max_fields {
     player_name: (Scalars['String'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     player_team_elo_avg: (Scalars['float8'] | null)
+    season_id: (Scalars['uuid'] | null)
     team_avg_kda: (Scalars['float8'] | null)
     type: (Scalars['String'] | null)
-    updated_elo: (Scalars['Int'] | null)
+    updated_elo: (Scalars['numeric'] | null)
     __typename: 'v_player_elo_max_fields'
 }
 
@@ -13504,11 +13869,11 @@ export interface v_player_elo_max_fields {
 export interface v_player_elo_min_fields {
     actual_score: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
-    current_elo: (Scalars['Int'] | null)
+    current_elo: (Scalars['numeric'] | null)
     damage: (Scalars['Int'] | null)
     damage_percent: (Scalars['float8'] | null)
     deaths: (Scalars['Int'] | null)
-    elo_change: (Scalars['Int'] | null)
+    elo_change: (Scalars['numeric'] | null)
     expected_score: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
@@ -13521,15 +13886,16 @@ export interface v_player_elo_min_fields {
     player_name: (Scalars['String'] | null)
     player_steam_id: (Scalars['bigint'] | null)
     player_team_elo_avg: (Scalars['float8'] | null)
+    season_id: (Scalars['uuid'] | null)
     team_avg_kda: (Scalars['float8'] | null)
     type: (Scalars['String'] | null)
-    updated_elo: (Scalars['Int'] | null)
+    updated_elo: (Scalars['numeric'] | null)
     __typename: 'v_player_elo_min_fields'
 }
 
 
 /** select columns of table "v_player_elo" */
-export type v_player_elo_select_column = 'actual_score' | 'assists' | 'current_elo' | 'damage' | 'damage_percent' | 'deaths' | 'elo_change' | 'expected_score' | 'k_factor' | 'kda' | 'kills' | 'match_created_at' | 'match_id' | 'match_result' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_name' | 'player_steam_id' | 'player_team_elo_avg' | 'team_avg_kda' | 'type' | 'updated_elo'
+export type v_player_elo_select_column = 'actual_score' | 'assists' | 'current_elo' | 'damage' | 'damage_percent' | 'deaths' | 'elo_change' | 'expected_score' | 'k_factor' | 'kda' | 'kills' | 'match_created_at' | 'match_id' | 'match_result' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_name' | 'player_steam_id' | 'player_team_elo_avg' | 'season_id' | 'team_avg_kda' | 'type' | 'updated_elo'
 
 
 /** select "v_player_elo_aggregate_bool_exp_avg_arguments_columns" columns of table "v_player_elo" */
@@ -13637,11 +14003,11 @@ export interface v_player_elo_stddev_samp_fields {
 export interface v_player_elo_sum_fields {
     actual_score: (Scalars['float8'] | null)
     assists: (Scalars['Int'] | null)
-    current_elo: (Scalars['Int'] | null)
+    current_elo: (Scalars['numeric'] | null)
     damage: (Scalars['Int'] | null)
     damage_percent: (Scalars['float8'] | null)
     deaths: (Scalars['Int'] | null)
-    elo_change: (Scalars['Int'] | null)
+    elo_change: (Scalars['numeric'] | null)
     expected_score: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
@@ -13651,7 +14017,7 @@ export interface v_player_elo_sum_fields {
     player_steam_id: (Scalars['bigint'] | null)
     player_team_elo_avg: (Scalars['float8'] | null)
     team_avg_kda: (Scalars['float8'] | null)
-    updated_elo: (Scalars['Int'] | null)
+    updated_elo: (Scalars['numeric'] | null)
     __typename: 'v_player_elo_sum_fields'
 }
 
@@ -24617,6 +24983,12 @@ export interface mutation_rootGenqlSelection{
     where: player_sanctions_bool_exp} })
     /** delete single row from the table: "player_sanctions" */
     delete_player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {created_at: Scalars['timestamptz'], id: Scalars['uuid']} })
+    /** delete data from the table: "player_season_stats" */
+    delete_player_season_stats?: (player_season_stats_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_season_stats_bool_exp} })
+    /** delete single row from the table: "player_season_stats" */
+    delete_player_season_stats_by_pk?: (player_season_statsGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], season_id: Scalars['uuid']} })
     /** delete data from the table: "player_stats" */
     delete_player_stats?: (player_stats_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -24647,6 +25019,12 @@ export interface mutation_rootGenqlSelection{
     where: plugin_versions_bool_exp} })
     /** delete single row from the table: "plugin_versions" */
     delete_plugin_versions_by_pk?: (plugin_versionsGenqlSelection & { __args: {version: Scalars['String']} })
+    /** delete data from the table: "seasons" */
+    delete_seasons?: (seasons_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: seasons_bool_exp} })
+    /** delete single row from the table: "seasons" */
+    delete_seasons_by_pk?: (seasonsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "server_regions" */
     delete_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -25440,6 +25818,18 @@ export interface mutation_rootGenqlSelection{
     object: player_sanctions_insert_input, 
     /** upsert condition */
     on_conflict?: (player_sanctions_on_conflict | null)} })
+    /** insert data into the table: "player_season_stats" */
+    insert_player_season_stats?: (player_season_stats_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_season_stats_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (player_season_stats_on_conflict | null)} })
+    /** insert a single row into the table: "player_season_stats" */
+    insert_player_season_stats_one?: (player_season_statsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_season_stats_insert_input, 
+    /** upsert condition */
+    on_conflict?: (player_season_stats_on_conflict | null)} })
     /** insert data into the table: "player_stats" */
     insert_player_stats?: (player_stats_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -25500,6 +25890,18 @@ export interface mutation_rootGenqlSelection{
     object: plugin_versions_insert_input, 
     /** upsert condition */
     on_conflict?: (plugin_versions_on_conflict | null)} })
+    /** insert data into the table: "seasons" */
+    insert_seasons?: (seasons_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: seasons_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (seasons_on_conflict | null)} })
+    /** insert a single row into the table: "seasons" */
+    insert_seasons_one?: (seasonsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: seasons_insert_input, 
+    /** upsert condition */
+    on_conflict?: (seasons_on_conflict | null)} })
     /** insert data into the table: "server_regions" */
     insert_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -25674,12 +26076,16 @@ export interface mutation_rootGenqlSelection{
     object: v_pool_maps_insert_input} })
     joinLineup?: (SuccessOutputGenqlSelection & { __args: {code?: (Scalars['String'] | null), lineup_id: Scalars['String'], match_id: Scalars['String']} })
     leaveLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    /** Load dev fixture data (dev only) */
+    loadFixtures?: SuccessOutputGenqlSelection
     /** logout */
     logout?: SuccessOutputGenqlSelection
     /** Move file or directory on game server */
     moveServerItem?: (SuccessOutputGenqlSelection & { __args: {dest_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null), source_path: Scalars['String']} })
     randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     registerName?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String']} })
+    /** Remove dev fixture data (dev only) */
+    removeFixtures?: SuccessOutputGenqlSelection
     /** Rename file or directory on game server */
     renameServerItem?: (SuccessOutputGenqlSelection & { __args: {new_path: Scalars['String'], node_id: Scalars['String'], old_path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     requestNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
@@ -26693,6 +27099,24 @@ export interface mutation_rootGenqlSelection{
     update_player_sanctions_many?: (player_sanctions_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_sanctions_updates[]} })
+    /** update data of the table: "player_season_stats" */
+    update_player_season_stats?: (player_season_stats_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_season_stats_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_season_stats_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_season_stats_bool_exp} })
+    /** update single row of the table: "player_season_stats" */
+    update_player_season_stats_by_pk?: (player_season_statsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_season_stats_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_season_stats_set_input | null), pk_columns: player_season_stats_pk_columns_input} })
+    /** update multiples rows of table: "player_season_stats" */
+    update_player_season_stats_many?: (player_season_stats_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_season_stats_updates[]} })
     /** update data of the table: "player_stats" */
     update_player_stats?: (player_stats_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -26783,6 +27207,20 @@ export interface mutation_rootGenqlSelection{
     update_plugin_versions_many?: (plugin_versions_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: plugin_versions_updates[]} })
+    /** update data of the table: "seasons" */
+    update_seasons?: (seasons_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (seasons_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: seasons_bool_exp} })
+    /** update single row of the table: "seasons" */
+    update_seasons_by_pk?: (seasonsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (seasons_set_input | null), pk_columns: seasons_pk_columns_input} })
+    /** update multiples rows of table: "seasons" */
+    update_seasons_many?: (seasons_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: seasons_updates[]} })
     /** update data of the table: "server_regions" */
     update_server_regions?: (server_regions_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -28296,6 +28734,9 @@ export interface player_eloGenqlSelection{
     match_id?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
+    /** An object relationship */
+    season?: seasonsGenqlSelection
+    season_id?: boolean | number
     steam_id?: boolean | number
     type?: boolean | number
     __typename?: boolean | number
@@ -28341,7 +28782,7 @@ export interface player_elo_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "player_elo". All fields are combined with a logical 'AND'. */
-export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),season?: (seasons_bool_exp | null),season_id?: (uuid_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_elo" */
@@ -28349,7 +28790,7 @@ export interface player_elo_inc_input {change?: (Scalars['numeric'] | null),curr
 
 
 /** input type for inserting data into table "player_elo" */
-export interface player_elo_insert_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_insert_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),season?: (seasons_obj_rel_insert_input | null),season_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -28358,6 +28799,7 @@ export interface player_elo_max_fieldsGenqlSelection{
     created_at?: boolean | number
     current?: boolean | number
     match_id?: boolean | number
+    season_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -28370,6 +28812,7 @@ export interface player_elo_min_fieldsGenqlSelection{
     created_at?: boolean | number
     current?: boolean | number
     match_id?: boolean | number
+    season_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -28392,7 +28835,7 @@ export interface player_elo_on_conflict {constraint: player_elo_constraint,updat
 
 
 /** Ordering options when selecting data from "player_elo". */
-export interface player_elo_order_by {change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),type?: (order_by | null)}
+export interface player_elo_order_by {change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),player?: (players_order_by | null),season?: (seasons_order_by | null),season_id?: (order_by | null),steam_id?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: player_elo */
@@ -28400,7 +28843,7 @@ export interface player_elo_pk_columns_input {match_id: Scalars['uuid'],steam_id
 
 
 /** input type for updating data in table "player_elo" */
-export interface player_elo_set_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_set_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),season_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -28442,7 +28885,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_elo_stream_cursor_value_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_stream_cursor_value_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),season_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -29848,6 +30291,316 @@ export interface player_sanctions_variance_fieldsGenqlSelection{
 export interface player_sanctions_variance_order_by {player_steam_id?: (order_by | null),sanctioned_by_steam_id?: (order_by | null)}
 
 
+/** columns and relationships of "player_season_stats" */
+export interface player_season_statsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    player_steam_id?: boolean | number
+    /** An object relationship */
+    season?: seasonsGenqlSelection
+    season_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_season_stats" */
+export interface player_season_stats_aggregateGenqlSelection{
+    aggregate?: player_season_stats_aggregate_fieldsGenqlSelection
+    nodes?: player_season_statsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_season_stats_aggregate_bool_exp {avg?: (player_season_stats_aggregate_bool_exp_avg | null),corr?: (player_season_stats_aggregate_bool_exp_corr | null),count?: (player_season_stats_aggregate_bool_exp_count | null),covar_samp?: (player_season_stats_aggregate_bool_exp_covar_samp | null),max?: (player_season_stats_aggregate_bool_exp_max | null),min?: (player_season_stats_aggregate_bool_exp_min | null),stddev_samp?: (player_season_stats_aggregate_bool_exp_stddev_samp | null),sum?: (player_season_stats_aggregate_bool_exp_sum | null),var_samp?: (player_season_stats_aggregate_bool_exp_var_samp | null)}
+
+export interface player_season_stats_aggregate_bool_exp_avg {arguments: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_corr {arguments: player_season_stats_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_corr_arguments {X: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_corr_arguments_columns,Y: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_corr_arguments_columns}
+
+export interface player_season_stats_aggregate_bool_exp_count {arguments?: (player_season_stats_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_covar_samp {arguments: player_season_stats_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_covar_samp_arguments {X: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_covar_samp_arguments_columns,Y: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface player_season_stats_aggregate_bool_exp_max {arguments: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_min {arguments: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_stddev_samp {arguments: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_sum {arguments: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface player_season_stats_aggregate_bool_exp_var_samp {arguments: player_season_stats_select_column_player_season_stats_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (player_season_stats_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "player_season_stats" */
+export interface player_season_stats_aggregate_fieldsGenqlSelection{
+    avg?: player_season_stats_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_season_stats_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_season_stats_max_fieldsGenqlSelection
+    min?: player_season_stats_min_fieldsGenqlSelection
+    stddev?: player_season_stats_stddev_fieldsGenqlSelection
+    stddev_pop?: player_season_stats_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_season_stats_stddev_samp_fieldsGenqlSelection
+    sum?: player_season_stats_sum_fieldsGenqlSelection
+    var_pop?: player_season_stats_var_pop_fieldsGenqlSelection
+    var_samp?: player_season_stats_var_samp_fieldsGenqlSelection
+    variance?: player_season_stats_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "player_season_stats" */
+export interface player_season_stats_aggregate_order_by {avg?: (player_season_stats_avg_order_by | null),count?: (order_by | null),max?: (player_season_stats_max_order_by | null),min?: (player_season_stats_min_order_by | null),stddev?: (player_season_stats_stddev_order_by | null),stddev_pop?: (player_season_stats_stddev_pop_order_by | null),stddev_samp?: (player_season_stats_stddev_samp_order_by | null),sum?: (player_season_stats_sum_order_by | null),var_pop?: (player_season_stats_var_pop_order_by | null),var_samp?: (player_season_stats_var_samp_order_by | null),variance?: (player_season_stats_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "player_season_stats" */
+export interface player_season_stats_arr_rel_insert_input {data: player_season_stats_insert_input[],
+/** upsert condition */
+on_conflict?: (player_season_stats_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface player_season_stats_avg_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "player_season_stats" */
+export interface player_season_stats_avg_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "player_season_stats". All fields are combined with a logical 'AND'. */
+export interface player_season_stats_bool_exp {_and?: (player_season_stats_bool_exp[] | null),_not?: (player_season_stats_bool_exp | null),_or?: (player_season_stats_bool_exp[] | null),assists?: (bigint_comparison_exp | null),deaths?: (bigint_comparison_exp | null),headshot_percentage?: (float8_comparison_exp | null),headshots?: (bigint_comparison_exp | null),kills?: (bigint_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),season?: (seasons_bool_exp | null),season_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_season_stats" */
+export interface player_season_stats_inc_input {assists?: (Scalars['bigint'] | null),deaths?: (Scalars['bigint'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['bigint'] | null),kills?: (Scalars['bigint'] | null),player_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "player_season_stats" */
+export interface player_season_stats_insert_input {assists?: (Scalars['bigint'] | null),deaths?: (Scalars['bigint'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['bigint'] | null),kills?: (Scalars['bigint'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),season?: (seasons_obj_rel_insert_input | null),season_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_season_stats_max_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    season_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "player_season_stats" */
+export interface player_season_stats_max_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null),season_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface player_season_stats_min_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    season_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "player_season_stats" */
+export interface player_season_stats_min_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null),season_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "player_season_stats" */
+export interface player_season_stats_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_season_statsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "player_season_stats" */
+export interface player_season_stats_on_conflict {constraint: player_season_stats_constraint,update_columns?: player_season_stats_update_column[],where?: (player_season_stats_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "player_season_stats". */
+export interface player_season_stats_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),season?: (seasons_order_by | null),season_id?: (order_by | null)}
+
+
+/** primary key columns input for table: player_season_stats */
+export interface player_season_stats_pk_columns_input {player_steam_id: Scalars['bigint'],season_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "player_season_stats" */
+export interface player_season_stats_set_input {assists?: (Scalars['bigint'] | null),deaths?: (Scalars['bigint'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['bigint'] | null),kills?: (Scalars['bigint'] | null),player_steam_id?: (Scalars['bigint'] | null),season_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_season_stats_stddev_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "player_season_stats" */
+export interface player_season_stats_stddev_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_season_stats_stddev_pop_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "player_season_stats" */
+export interface player_season_stats_stddev_pop_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_season_stats_stddev_samp_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "player_season_stats" */
+export interface player_season_stats_stddev_samp_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "player_season_stats" */
+export interface player_season_stats_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_season_stats_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_season_stats_stream_cursor_value_input {assists?: (Scalars['bigint'] | null),deaths?: (Scalars['bigint'] | null),headshot_percentage?: (Scalars['float8'] | null),headshots?: (Scalars['bigint'] | null),kills?: (Scalars['bigint'] | null),player_steam_id?: (Scalars['bigint'] | null),season_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_season_stats_sum_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "player_season_stats" */
+export interface player_season_stats_sum_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+export interface player_season_stats_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_season_stats_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_season_stats_set_input | null),
+/** filter the rows which have to be updated */
+where: player_season_stats_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_season_stats_var_pop_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "player_season_stats" */
+export interface player_season_stats_var_pop_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface player_season_stats_var_samp_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "player_season_stats" */
+export interface player_season_stats_var_samp_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface player_season_stats_variance_fieldsGenqlSelection{
+    assists?: boolean | number
+    deaths?: boolean | number
+    headshot_percentage?: boolean | number
+    headshots?: boolean | number
+    kills?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "player_season_stats" */
+export interface player_season_stats_variance_order_by {assists?: (order_by | null),deaths?: (order_by | null),headshot_percentage?: (order_by | null),headshots?: (order_by | null),kills?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
 /** columns and relationships of "player_stats" */
 export interface player_statsGenqlSelection{
     assists?: boolean | number
@@ -31183,6 +31936,30 @@ export interface playersGenqlSelection{
     order_by?: (player_sanctions_order_by[] | null), 
     /** filter the rows returned */
     where?: (player_sanctions_bool_exp | null)} })
+    /** An array relationship */
+    season_stats?: (player_season_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    /** An aggregate relationship */
+    season_stats_aggregate?: (player_season_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
     /** An object relationship */
     stats?: player_statsGenqlSelection
     steam_id?: boolean | number
@@ -31393,7 +32170,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -31401,7 +32178,7 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),season_stats?: (player_season_stats_arr_rel_insert_input | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -31478,7 +32255,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wins?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wins?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -33355,6 +34132,32 @@ export interface query_rootGenqlSelection{
     where?: (player_sanctions_bool_exp | null)} })
     /** fetch data from the table: "player_sanctions" using primary key columns */
     player_sanctions_by_pk?: (player_sanctionsGenqlSelection & { __args: {created_at: Scalars['timestamptz'], id: Scalars['uuid']} })
+    /** An array relationship */
+    player_season_stats?: (player_season_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    /** An aggregate relationship */
+    player_season_stats_aggregate?: (player_season_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_season_stats" using primary key columns */
+    player_season_stats_by_pk?: (player_season_statsGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], season_id: Scalars['uuid']} })
     /** fetch data from the table: "player_stats" */
     player_stats?: (player_statsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -33487,6 +34290,32 @@ export interface query_rootGenqlSelection{
     plugin_versions_by_pk?: (plugin_versionsGenqlSelection & { __args: {version: Scalars['String']} })
     /** Read file content from game server */
     readServerFile?: (FileContentResponseGenqlSelection & { __args: {file_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** fetch data from the table: "seasons" */
+    seasons?: (seasonsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (seasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (seasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (seasons_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "seasons" */
+    seasons_aggregate?: (seasons_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (seasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (seasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (seasons_bool_exp | null)} })
+    /** fetch data from the table: "seasons" using primary key columns */
+    seasons_by_pk?: (seasonsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "server_regions" */
     server_regions?: (server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -34093,6 +34922,144 @@ export interface query_rootGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "seasons" */
+export interface seasonsGenqlSelection{
+    created_at?: boolean | number
+    ends_at?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    /** An array relationship */
+    player_season_stats?: (player_season_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    /** An aggregate relationship */
+    player_season_stats_aggregate?: (player_season_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    starts_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "seasons" */
+export interface seasons_aggregateGenqlSelection{
+    aggregate?: seasons_aggregate_fieldsGenqlSelection
+    nodes?: seasonsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "seasons" */
+export interface seasons_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (seasons_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: seasons_max_fieldsGenqlSelection
+    min?: seasons_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "seasons". All fields are combined with a logical 'AND'. */
+export interface seasons_bool_exp {_and?: (seasons_bool_exp[] | null),_not?: (seasons_bool_exp | null),_or?: (seasons_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),ends_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),name?: (String_comparison_exp | null),player_season_stats?: (player_season_stats_bool_exp | null),player_season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),starts_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for inserting data into table "seasons" */
+export interface seasons_insert_input {created_at?: (Scalars['timestamptz'] | null),ends_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),player_season_stats?: (player_season_stats_arr_rel_insert_input | null),starts_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface seasons_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    ends_at?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    starts_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface seasons_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    ends_at?: boolean | number
+    id?: boolean | number
+    name?: boolean | number
+    starts_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "seasons" */
+export interface seasons_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: seasonsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "seasons" */
+export interface seasons_obj_rel_insert_input {data: seasons_insert_input,
+/** upsert condition */
+on_conflict?: (seasons_on_conflict | null)}
+
+
+/** on_conflict condition type for table "seasons" */
+export interface seasons_on_conflict {constraint: seasons_constraint,update_columns?: seasons_update_column[],where?: (seasons_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "seasons". */
+export interface seasons_order_by {created_at?: (order_by | null),ends_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),player_season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),starts_at?: (order_by | null)}
+
+
+/** primary key columns input for table: seasons */
+export interface seasons_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "seasons" */
+export interface seasons_set_input {created_at?: (Scalars['timestamptz'] | null),ends_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),starts_at?: (Scalars['timestamptz'] | null)}
+
+
+/** Streaming cursor of the table "seasons" */
+export interface seasons_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: seasons_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface seasons_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),ends_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),starts_at?: (Scalars['timestamptz'] | null)}
+
+export interface seasons_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (seasons_set_input | null),
+/** filter the rows which have to be updated */
+where: seasons_bool_exp}
 
 
 /** columns and relationships of "server_regions" */
@@ -36789,6 +37756,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_sanctions_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_sanctions_bool_exp | null)} })
+    /** An array relationship */
+    player_season_stats?: (player_season_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    /** An aggregate relationship */
+    player_season_stats_aggregate?: (player_season_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_season_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_season_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_season_stats" using primary key columns */
+    player_season_stats_by_pk?: (player_season_statsGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], season_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "player_season_stats" */
+    player_season_stats_stream?: (player_season_statsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_season_stats_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_season_stats_bool_exp | null)} })
     /** fetch data from the table: "player_stats" */
     player_stats?: (player_statsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -36959,6 +37960,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (plugin_versions_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (plugin_versions_bool_exp | null)} })
+    /** fetch data from the table: "seasons" */
+    seasons?: (seasonsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (seasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (seasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (seasons_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "seasons" */
+    seasons_aggregate?: (seasons_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (seasons_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (seasons_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (seasons_bool_exp | null)} })
+    /** fetch data from the table: "seasons" using primary key columns */
+    seasons_by_pk?: (seasonsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "seasons" */
+    seasons_stream?: (seasonsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (seasons_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (seasons_bool_exp | null)} })
     /** fetch data from the table: "server_regions" */
     server_regions?: (server_regionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -41524,6 +42559,7 @@ export interface v_player_eloGenqlSelection{
     player_name?: boolean | number
     player_steam_id?: boolean | number
     player_team_elo_avg?: boolean | number
+    season_id?: boolean | number
     team_avg_kda?: boolean | number
     type?: boolean | number
     updated_elo?: boolean | number
@@ -41620,11 +42656,11 @@ export interface v_player_elo_avg_order_by {actual_score?: (order_by | null),ass
 
 
 /** Boolean expression to filter rows from the table "v_player_elo". All fields are combined with a logical 'AND'. */
-export interface v_player_elo_bool_exp {_and?: (v_player_elo_bool_exp[] | null),_not?: (v_player_elo_bool_exp | null),_or?: (v_player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),current_elo?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),elo_change?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_result?: (String_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player_name?: (String_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (String_comparison_exp | null),updated_elo?: (Int_comparison_exp | null)}
+export interface v_player_elo_bool_exp {_and?: (v_player_elo_bool_exp[] | null),_not?: (v_player_elo_bool_exp | null),_or?: (v_player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),current_elo?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),elo_change?: (numeric_comparison_exp | null),expected_score?: (float8_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_result?: (String_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player_name?: (String_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),season_id?: (uuid_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (String_comparison_exp | null),updated_elo?: (numeric_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_player_elo" */
-export interface v_player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
+export interface v_player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['numeric'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),season_id?: (Scalars['uuid'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['numeric'] | null)}
 
 
 /** aggregate max on columns */
@@ -41648,6 +42684,7 @@ export interface v_player_elo_max_fieldsGenqlSelection{
     player_name?: boolean | number
     player_steam_id?: boolean | number
     player_team_elo_avg?: boolean | number
+    season_id?: boolean | number
     team_avg_kda?: boolean | number
     type?: boolean | number
     updated_elo?: boolean | number
@@ -41657,7 +42694,7 @@ export interface v_player_elo_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_player_elo" */
-export interface v_player_elo_max_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_max_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),season_id?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -41681,6 +42718,7 @@ export interface v_player_elo_min_fieldsGenqlSelection{
     player_name?: boolean | number
     player_steam_id?: boolean | number
     player_team_elo_avg?: boolean | number
+    season_id?: boolean | number
     team_avg_kda?: boolean | number
     type?: boolean | number
     updated_elo?: boolean | number
@@ -41690,11 +42728,11 @@ export interface v_player_elo_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_player_elo" */
-export interface v_player_elo_min_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_min_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),season_id?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Ordering options when selecting data from "v_player_elo". */
-export interface v_player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),season_id?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
@@ -41790,7 +42828,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
+export interface v_player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['numeric'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),season_id?: (Scalars['uuid'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['numeric'] | null)}
 
 
 /** aggregate sum on columns */
@@ -48075,6 +49113,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const player_season_stats_possibleTypes: string[] = ['player_season_stats']
+    export const isplayer_season_stats = (obj?: { __typename?: any } | null): obj is player_season_stats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats"')
+      return player_season_stats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_aggregate_possibleTypes: string[] = ['player_season_stats_aggregate']
+    export const isplayer_season_stats_aggregate = (obj?: { __typename?: any } | null): obj is player_season_stats_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_aggregate"')
+      return player_season_stats_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_aggregate_fields_possibleTypes: string[] = ['player_season_stats_aggregate_fields']
+    export const isplayer_season_stats_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_aggregate_fields"')
+      return player_season_stats_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_avg_fields_possibleTypes: string[] = ['player_season_stats_avg_fields']
+    export const isplayer_season_stats_avg_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_avg_fields"')
+      return player_season_stats_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_max_fields_possibleTypes: string[] = ['player_season_stats_max_fields']
+    export const isplayer_season_stats_max_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_max_fields"')
+      return player_season_stats_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_min_fields_possibleTypes: string[] = ['player_season_stats_min_fields']
+    export const isplayer_season_stats_min_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_min_fields"')
+      return player_season_stats_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_mutation_response_possibleTypes: string[] = ['player_season_stats_mutation_response']
+    export const isplayer_season_stats_mutation_response = (obj?: { __typename?: any } | null): obj is player_season_stats_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_mutation_response"')
+      return player_season_stats_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_stddev_fields_possibleTypes: string[] = ['player_season_stats_stddev_fields']
+    export const isplayer_season_stats_stddev_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_stddev_fields"')
+      return player_season_stats_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_stddev_pop_fields_possibleTypes: string[] = ['player_season_stats_stddev_pop_fields']
+    export const isplayer_season_stats_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_stddev_pop_fields"')
+      return player_season_stats_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_stddev_samp_fields_possibleTypes: string[] = ['player_season_stats_stddev_samp_fields']
+    export const isplayer_season_stats_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_stddev_samp_fields"')
+      return player_season_stats_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_sum_fields_possibleTypes: string[] = ['player_season_stats_sum_fields']
+    export const isplayer_season_stats_sum_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_sum_fields"')
+      return player_season_stats_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_var_pop_fields_possibleTypes: string[] = ['player_season_stats_var_pop_fields']
+    export const isplayer_season_stats_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_var_pop_fields"')
+      return player_season_stats_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_var_samp_fields_possibleTypes: string[] = ['player_season_stats_var_samp_fields']
+    export const isplayer_season_stats_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_var_samp_fields"')
+      return player_season_stats_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_season_stats_variance_fields_possibleTypes: string[] = ['player_season_stats_variance_fields']
+    export const isplayer_season_stats_variance_fields = (obj?: { __typename?: any } | null): obj is player_season_stats_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_season_stats_variance_fields"')
+      return player_season_stats_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const player_stats_possibleTypes: string[] = ['player_stats']
     export const isplayer_stats = (obj?: { __typename?: any } | null): obj is player_stats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_stats"')
@@ -48639,6 +49789,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isquery_root = (obj?: { __typename?: any } | null): obj is query_root => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isquery_root"')
       return query_root_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const seasons_possibleTypes: string[] = ['seasons']
+    export const isseasons = (obj?: { __typename?: any } | null): obj is seasons => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isseasons"')
+      return seasons_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const seasons_aggregate_possibleTypes: string[] = ['seasons_aggregate']
+    export const isseasons_aggregate = (obj?: { __typename?: any } | null): obj is seasons_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isseasons_aggregate"')
+      return seasons_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const seasons_aggregate_fields_possibleTypes: string[] = ['seasons_aggregate_fields']
+    export const isseasons_aggregate_fields = (obj?: { __typename?: any } | null): obj is seasons_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isseasons_aggregate_fields"')
+      return seasons_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const seasons_max_fields_possibleTypes: string[] = ['seasons_max_fields']
+    export const isseasons_max_fields = (obj?: { __typename?: any } | null): obj is seasons_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isseasons_max_fields"')
+      return seasons_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const seasons_min_fields_possibleTypes: string[] = ['seasons_min_fields']
+    export const isseasons_min_fields = (obj?: { __typename?: any } | null): obj is seasons_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isseasons_min_fields"')
+      return seasons_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const seasons_mutation_response_possibleTypes: string[] = ['seasons_mutation_response']
+    export const isseasons_mutation_response = (obj?: { __typename?: any } | null): obj is seasons_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isseasons_mutation_response"')
+      return seasons_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -52516,6 +53714,7 @@ export const enumPlayerEloSelectColumn = {
    created_at: 'created_at' as const,
    current: 'current' as const,
    match_id: 'match_id' as const,
+   season_id: 'season_id' as const,
    steam_id: 'steam_id' as const,
    type: 'type' as const
 }
@@ -52525,6 +53724,7 @@ export const enumPlayerEloUpdateColumn = {
    created_at: 'created_at' as const,
    current: 'current' as const,
    match_id: 'match_id' as const,
+   season_id: 'season_id' as const,
    steam_id: 'steam_id' as const,
    type: 'type' as const
 }
@@ -52703,6 +53903,62 @@ export const enumPlayerSanctionsUpdateColumn = {
    type: 'type' as const
 }
 
+export const enumPlayerSeasonStatsConstraint = {
+   player_season_stats_pkey: 'player_season_stats_pkey' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumn = {
+   assists: 'assists' as const,
+   deaths: 'deaths' as const,
+   headshot_percentage: 'headshot_percentage' as const,
+   headshots: 'headshots' as const,
+   kills: 'kills' as const,
+   player_steam_id: 'player_steam_id' as const,
+   season_id: 'season_id' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpAvgArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpCorrArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpCovarSampArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpMaxArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpMinArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpStddevSampArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpSumArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsSelectColumnPlayerSeasonStatsAggregateBoolExpVarSampArgumentsColumns = {
+   headshot_percentage: 'headshot_percentage' as const
+}
+
+export const enumPlayerSeasonStatsUpdateColumn = {
+   assists: 'assists' as const,
+   deaths: 'deaths' as const,
+   headshot_percentage: 'headshot_percentage' as const,
+   headshots: 'headshots' as const,
+   kills: 'kills' as const,
+   player_steam_id: 'player_steam_id' as const,
+   season_id: 'season_id' as const
+}
+
 export const enumPlayerStatsConstraint = {
    player_stats_pkey: 'player_stats_pkey' as const
 }
@@ -52821,6 +54077,27 @@ export const enumPluginVersionsUpdateColumn = {
    min_game_build_id: 'min_game_build_id' as const,
    published_at: 'published_at' as const,
    version: 'version' as const
+}
+
+export const enumSeasonsConstraint = {
+   idx_seasons_one_active: 'idx_seasons_one_active' as const,
+   seasons_pkey: 'seasons_pkey' as const
+}
+
+export const enumSeasonsSelectColumn = {
+   created_at: 'created_at' as const,
+   ends_at: 'ends_at' as const,
+   id: 'id' as const,
+   name: 'name' as const,
+   starts_at: 'starts_at' as const
+}
+
+export const enumSeasonsUpdateColumn = {
+   created_at: 'created_at' as const,
+   ends_at: 'ends_at' as const,
+   id: 'id' as const,
+   name: 'name' as const,
+   starts_at: 'starts_at' as const
 }
 
 export const enumServerRegionsConstraint = {
@@ -53236,6 +54513,7 @@ export const enumVPlayerEloSelectColumn = {
    player_name: 'player_name' as const,
    player_steam_id: 'player_steam_id' as const,
    player_team_elo_avg: 'player_team_elo_avg' as const,
+   season_id: 'season_id' as const,
    team_avg_kda: 'team_avg_kda' as const,
    type: 'type' as const,
    updated_elo: 'updated_elo' as const

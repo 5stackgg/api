@@ -6,11 +6,13 @@ import {
   player_elo_set_input,
   player_sanctions_set_input,
   players_set_input,
+  seasons_set_input,
   team_roster_set_input,
 } from "../../generated";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { RefreshPlayerJob } from "./jobs/RefreshPlayer";
+import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 import { Queue } from "bullmq";
 import { TypesenseQueues } from "./enums/TypesenseQueues";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -192,5 +194,11 @@ export class TypeSenseController {
     await this.typeSense.updatePlayer(
       (data.new.player_steam_id || data.old.player_steam_id) as string,
     );
+  }
+
+  @HasuraEvent()
+  public async season_events(data: HasuraEventData<seasons_set_input>) {
+    // When a season is created or ended, refresh all players since displayed ELO changes
+    await this.queue.add(RefreshAllPlayersJob.name, {});
   }
 }

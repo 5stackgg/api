@@ -1,20 +1,21 @@
 DROP VIEW IF EXISTS v_player_elo;
 
 CREATE OR REPLACE VIEW v_player_elo AS
-SELECT 
+SELECT
     m.id AS match_id,
     mo."type" AS "type",
     m.created_at AS match_created_at,
     p.steam_id AS player_steam_id,
     p.name AS player_name,
-    CASE 
+    pe.season_id AS season_id,
+    CASE
         WHEN m.winning_lineup_id = mlp.match_lineup_id THEN 'win'
         ELSE 'loss'
     END AS match_result,
+    pe.current AS updated_elo,
+    (pe.current - pe.change) AS current_elo,
+    pe.change AS elo_change,
     -- Extract ELO data using LATERAL join for better performance
-    (elo_data->>'current_elo')::INTEGER + (elo_data->>'elo_change')::INTEGER AS updated_elo,
-    (elo_data->>'current_elo')::INTEGER AS current_elo,
-    (elo_data->>'elo_change')::INTEGER AS elo_change,
     (elo_data->>'player_team_elo_avg')::FLOAT AS player_team_elo_avg,
     (elo_data->>'opponent_team_elo_avg')::FLOAT AS opponent_team_elo_avg,
     (elo_data->>'expected_score')::FLOAT AS expected_score,
@@ -28,13 +29,15 @@ SELECT
     (elo_data->>'team_avg_kda')::FLOAT AS team_avg_kda,
     (elo_data->>'damage_percent')::FLOAT AS damage_percent,
     (elo_data->>'performance_multiplier')::FLOAT AS performance_multiplier
-FROM 
+FROM
     matches m
-JOIN 
+JOIN
     match_lineup_players mlp ON (mlp.match_lineup_id = m.lineup_1_id OR mlp.match_lineup_id = m.lineup_2_id)
-JOIN 
+JOIN
     players p ON p.steam_id = mlp.steam_id
-JOIN 
+JOIN
     match_options mo ON mo.id = m.match_options_id
-CROSS JOIN LATERAL 
+JOIN
+    player_elo pe ON pe.match_id = m.id AND pe.steam_id = p.steam_id AND pe."type" = mo."type"
+CROSS JOIN LATERAL
     get_elo_for_match(m.id, p.steam_id) AS elo_data;

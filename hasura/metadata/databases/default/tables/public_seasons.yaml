@@ -1,0 +1,102 @@
+table:
+  name: seasons
+  schema: public
+array_relationships:
+  - name: player_season_stats
+    using:
+      foreign_key_constraint_on:
+        column: season_id
+        table:
+          name: player_season_stats
+          schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - name
+        - starts_at
+        - ends_at
+        - created_at
+      filter: {}
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - name
+        - starts_at
+        - ends_at
+        - created_at
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - name
+        - starts_at
+        - ends_at
+        - created_at
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - name
+        - starts_at
+        - ends_at
+        - created_at
+      filter: {}
+    comment: ""
+insert_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - starts_at
+      check: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - name
+        - starts_at
+      check: {}
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - ends_at
+      filter: {}
+      check: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - name
+        - ends_at
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+event_triggers:
+  - name: season_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 0
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

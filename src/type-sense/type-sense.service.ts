@@ -81,6 +81,27 @@ export class TypeSenseService {
         sort: true,
         index: true,
       },
+      {
+        name: "tournament_elo_competitive",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "tournament_elo_wingman",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "tournament_elo_duel",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
       { name: "role", type: "string", optional: true, index: true },
       { name: "kills", type: "int32", optional: true },
       { name: "deaths", type: "int32", optional: true },
@@ -269,6 +290,15 @@ export class TypeSenseService {
         : null,
       elo_duel: player.elo["duel"]
         ? parseInt(String(player.elo["duel"]), 10)
+        : null,
+      tournament_elo_competitive: player.elo["tournament_competitive"]
+        ? parseInt(String(player.elo["tournament_competitive"]), 10)
+        : null,
+      tournament_elo_wingman: player.elo["tournament_wingman"]
+        ? parseInt(String(player.elo["tournament_wingman"]), 10)
+        : null,
+      tournament_elo_duel: player.elo["tournament_duel"]
+        ? parseInt(String(player.elo["tournament_duel"]), 10)
         : null,
     };
 
