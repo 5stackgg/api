@@ -375,6 +375,7 @@ export class GameServerNodeService {
                 },
               },
               spec: {
+                hostNetwork: true,
                 affinity: {
                   nodeAffinity: {
                     requiredDuringSchedulingIgnoredDuringExecution: {
