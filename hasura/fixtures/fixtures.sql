@@ -1165,7 +1165,7 @@ BEGIN
     -- Create matches linked to all 18 finished brackets
     -- RR G1: T1vT7(1w), T3vT5(1w), T1vT3(1w), T5vT7(1w), T1vT5(1w), T7vT3(2w)
     -- RR G2: T2vT8(1w), T4vT6(1w), T2vT4(1w), T6vT8(1w), T2vT6(1w), T8vT4(2w)
-    -- DE (BO3): T1vT4(1w,2-0), T2vT3(1w,2-1), T1vT2(1w,2-1), T4vT3(2w,2-0), T2vT3(1w,2-1), GF(1w,3-0)
+    -- DE (BO3): T1vT4(1w,2-0), T2vT3(1w,2-1), T1vT2(1w,2-1), T4vT3(2w,2-0), T2vT3(1w,2-1), GF(1w,2-1)
     DECLARE
       t4_all_br uuid[] := ARRAY[
         t4_rr_g1_m1, t4_rr_g1_m2, t4_rr_g1_m3, t4_rr_g1_m4, t4_rr_g1_m5, t4_rr_g1_m6,
@@ -1177,7 +1177,7 @@ BEGIN
       -- 1=team1 wins, 2=team2 wins
       t4_m_win int[] := ARRAY[1,1,1,1,1,2,  1,1,1,1,1,2,  1,1,1,2,1,1];
       t4_m_bo int[] := ARRAY[1,1,1,1,1,1,  1,1,1,1,1,1,  3,3,3,3,3,3];
-      -- Maps per match: RR=1, DE=2-3 (2-0 or 2-1), GF=3 (3-0)
+      -- Maps per match: RR=1, DE=2-3 (2-0 or 2-1), GF=3 (2-1)
       t4_map_count int[] := ARRAY[1,1,1,1,1,1,  1,1,1,1,1,1,  2,3,3,2,3,3];
       t4_mid uuid; t4_moid uuid; t4_l1id uuid; t4_l2id uuid; t4_mmid uuid;
       t4_mdate timestamptz;
