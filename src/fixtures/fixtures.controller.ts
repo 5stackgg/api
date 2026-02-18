@@ -46,6 +46,13 @@ export class FixturesController {
       this.logger.log("Fixtures: Refreshing Typesense player index...");
       await this.typesenseQueue.add(RefreshAllPlayersJob.name, {});
 
+      // Delayed refresh to catch ELO calculations that complete after the first refresh
+      await this.typesenseQueue.add(
+        RefreshAllPlayersJob.name,
+        {},
+        { delay: 30000, jobId: "fixtures-delayed-refresh" },
+      );
+
       this.logger.log("Fixtures: Complete");
       return { success: true };
     } catch (error) {
