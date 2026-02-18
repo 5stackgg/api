@@ -1,22 +1,25 @@
 -- Cleanup fixture data
 -- Removes all fixture data inserted by fixtures.sql
--- Fixture players use steam_ids 76561198000000001 through 76561198000000030
+-- Fixture players use steam_ids 76561198000000001 through 76561198000000040
 
 DO $$
 DECLARE
-  fixture_steam_ids bigint[] := ARRAY(SELECT generate_series(76561198000000001::bigint, 76561198000000030::bigint));
+  fixture_steam_ids bigint[] := ARRAY(SELECT generate_series(76561198000000001::bigint, 76561198000000040::bigint));
   fixture_team_ids uuid[] := ARRAY[
     'a0000000-0000-0000-0000-000000000001'::uuid,
     'a0000000-0000-0000-0000-000000000002'::uuid,
     'a0000000-0000-0000-0000-000000000003'::uuid,
     'a0000000-0000-0000-0000-000000000004'::uuid,
     'a0000000-0000-0000-0000-000000000005'::uuid,
-    'a0000000-0000-0000-0000-000000000006'::uuid
+    'a0000000-0000-0000-0000-000000000006'::uuid,
+    'a0000000-0000-0000-0000-000000000007'::uuid,
+    'a0000000-0000-0000-0000-000000000008'::uuid
   ];
   fixture_tournament_ids uuid[] := ARRAY[
     'b0000000-0000-0000-0000-000000000001'::uuid,
     'b0000000-0000-0000-0000-000000000002'::uuid,
-    'b0000000-0000-0000-0000-000000000003'::uuid
+    'b0000000-0000-0000-0000-000000000003'::uuid,
+    'b0000000-0000-0000-0000-000000000004'::uuid
   ];
   match_ids uuid[];
 BEGIN
@@ -48,6 +51,7 @@ BEGIN
     ALTER TABLE matches DISABLE TRIGGER ALL;
     ALTER TABLE match_lineups DISABLE TRIGGER ALL;
     ALTER TABLE match_options DISABLE TRIGGER ALL;
+    ALTER TABLE match_map_veto_picks DISABLE TRIGGER ALL;
 
     -- Delete player event data
     DELETE FROM player_kills WHERE match_id = ANY(match_ids);
@@ -57,6 +61,9 @@ BEGIN
     DELETE FROM player_objectives WHERE match_id = ANY(match_ids);
     DELETE FROM player_unused_utility WHERE match_id = ANY(match_ids);
     DELETE FROM player_utility WHERE match_id = ANY(match_ids);
+
+    -- Delete map veto picks
+    DELETE FROM match_map_veto_picks WHERE match_id = ANY(match_ids);
 
     -- Delete match map data
     DELETE FROM match_map_rounds WHERE match_map_id IN (
@@ -104,6 +111,7 @@ BEGIN
     ALTER TABLE matches ENABLE TRIGGER ALL;
     ALTER TABLE match_lineups ENABLE TRIGGER ALL;
     ALTER TABLE match_options ENABLE TRIGGER ALL;
+    ALTER TABLE match_map_veto_picks ENABLE TRIGGER ALL;
   END IF;
 
   -- Delete tournament data
