@@ -5,14 +5,19 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
 import { RefreshAllPlayersJob } from "../type-sense/jobs/RefreshAllPlayers";
+import { TypeSenseService } from "../type-sense/type-sense.service";
 import fs from "fs";
 import path from "path";
+
+const FIXTURE_STEAM_ID_START = 76561198000000001n;
+const FIXTURE_STEAM_ID_END = 76561198000000040n;
 
 @Controller("fixtures")
 export class FixturesController {
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
+    private readonly typeSense: TypeSenseService,
     @InjectQueue(TypesenseQueues.TypeSense) private typesenseQueue: Queue,
   ) {}
 
@@ -63,6 +68,19 @@ export class FixturesController {
 
       this.logger.log("Fixtures: Removing fixture data...");
       await this.postgres.query(cleanupSql);
+
+      this.logger.log("Fixtures: Removing fixture players from Typesense...");
+      for (
+        let steamId = FIXTURE_STEAM_ID_START;
+        steamId <= FIXTURE_STEAM_ID_END;
+        steamId++
+      ) {
+        try {
+          await this.typeSense.removePlayer(steamId.toString());
+        } catch {
+          // Player may not exist in Typesense, ignore
+        }
+      }
 
       this.logger.log("Fixtures: Removed");
       return { success: true };
