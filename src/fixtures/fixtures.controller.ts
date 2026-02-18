@@ -1,6 +1,10 @@
 import { Controller, Logger } from "@nestjs/common";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { PostgresService } from "../postgres/postgres.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
+import { RefreshAllPlayersJob } from "../type-sense/jobs/RefreshAllPlayers";
 import fs from "fs";
 import path from "path";
 
@@ -9,6 +13,7 @@ export class FixturesController {
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
+    @InjectQueue(TypesenseQueues.TypeSense) private typesenseQueue: Queue,
   ) {}
 
   @HasuraAction()
@@ -32,6 +37,9 @@ export class FixturesController {
 
       this.logger.log("Fixtures: Loading fixture data...");
       await this.postgres.query(fixturesSql);
+
+      this.logger.log("Fixtures: Refreshing Typesense player index...");
+      await this.typesenseQueue.add(RefreshAllPlayersJob.name, {});
 
       this.logger.log("Fixtures: Complete");
       return { success: true };
