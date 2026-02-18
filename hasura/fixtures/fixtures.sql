@@ -207,16 +207,12 @@ BEGIN
   -- ==========================================
   FOR match_idx IN 1..100 LOOP
     -- Determine match status
-    IF match_idx <= 80 THEN
+    IF match_idx <= 85 THEN
       match_status := 'Finished';
-    ELSIF match_idx <= 85 THEN
+    ELSIF match_idx <= 92 THEN
       match_status := 'Live';
-    ELSIF match_idx <= 90 THEN
-      match_status := 'Scheduled';
-    ELSIF match_idx <= 95 THEN
-      match_status := 'Canceled';
     ELSE
-      match_status := 'Forfeit';
+      match_status := 'Scheduled';
     END IF;
 
     -- Pick two different teams
@@ -226,7 +222,7 @@ BEGIN
     -- Match date spread over past 90 days
     match_date := now() - (interval '1 day' * (90 - match_idx));
     IF match_status = 'Scheduled' THEN
-      match_date := now() + (interval '1 day' * (match_idx - 85));
+      match_date := now() + (interval '1 day' * (match_idx - 92));
     END IF;
 
     -- Create match options
@@ -256,9 +252,9 @@ BEGIN
       lineup_2_id,
       match_date - interval '1 hour',
       match_date,
-      CASE WHEN match_status IN ('Finished', 'Live', 'Forfeit') THEN match_date ELSE NULL END,
+      CASE WHEN match_status IN ('Finished', 'Live') THEN match_date ELSE NULL END,
       CASE WHEN match_status = 'Finished' THEN match_date + interval '45 minutes' ELSE NULL END,
-      CASE WHEN match_status IN ('Finished', 'Forfeit') THEN
+      CASE WHEN match_status = 'Finished' THEN
         CASE WHEN ((match_idx - 1) / 8 + match_idx) % 2 = 0 THEN lineup_1_id ELSE lineup_2_id END
       ELSE NULL END
     );
@@ -285,19 +281,18 @@ BEGIN
       CASE
         WHEN match_status = 'Finished' THEN 'Finished'
         WHEN match_status = 'Live' THEN 'Live'
-        WHEN match_status = 'Canceled' THEN 'Canceled'
         ELSE 'Scheduled'
       END,
       'CT',
       'TERRORIST',
       CASE WHEN match_status IN ('Finished', 'Live') THEN match_date ELSE NULL END,
       CASE WHEN match_status = 'Finished' THEN match_date + interval '40 minutes' ELSE NULL END,
-      CASE WHEN match_status IN ('Finished', 'Forfeit') THEN
+      CASE WHEN match_status = 'Finished' THEN
         CASE WHEN ((match_idx - 1) / 8 + match_idx) % 2 = 0 THEN lineup_1_id ELSE lineup_2_id END
       ELSE NULL END
     );
 
-    -- Generate map veto picks (ban all maps except played one)
+    -- Generate map veto picks (BO1: Ban, Ban, ..., Ban, Decider)
     DECLARE
       ban_n int := 0;
     BEGIN
@@ -311,6 +306,11 @@ BEGIN
                   match_date - interval '10 minutes' + (interval '30 seconds' * ban_n));
         END IF;
       END LOOP;
+      -- Decider
+      ban_n := ban_n + 1;
+      INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+      VALUES (match_id, 'Decider', lineup_1_id, cur_map_id,
+              match_date - interval '10 minutes' + (interval '30 seconds' * ban_n));
     END;
 
     -- ==========================================
@@ -631,7 +631,7 @@ BEGIN
         INSERT INTO match_maps (id, match_id, map_id, "order", status, lineup_1_side, lineup_2_side, started_at, ended_at, winning_lineup_id)
         VALUES (t1_mmid, t1_mid, map_ids[((i - 1) % map_count) + 1], 1, 'Finished', 'CT', 'TERRORIST', t1_mdate, t1_mdate + interval '40 minutes', t1_l1id);
 
-        -- Veto picks
+        -- Veto picks (BO1: Ban, Ban, ..., Ban, Decider)
         DECLARE ban_n int := 0; t1_cur_map uuid := map_ids[((i - 1) % map_count) + 1];
         BEGIN
           FOR j IN 1..map_count LOOP
@@ -642,6 +642,11 @@ BEGIN
                       map_ids[j], t1_mdate - interval '10 minutes' + (interval '30 seconds' * ban_n));
             END IF;
           END LOOP;
+          -- Decider
+          ban_n := ban_n + 1;
+          INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+          VALUES (t1_mid, 'Decider', t1_l1id, t1_cur_map,
+                  t1_mdate - interval '10 minutes' + (interval '30 seconds' * ban_n));
         END;
 
         -- Generate rounds and kills (team1 always wins)
@@ -844,7 +849,7 @@ BEGIN
       INSERT INTO match_maps (id, match_id, map_id, "order", status, lineup_1_side, lineup_2_side, started_at, ended_at, winning_lineup_id)
       VALUES (t2_mmid, t2_mid, map_ids[1], 1, 'Finished', 'CT', 'TERRORIST', t2_mdate, t2_mdate + interval '40 minutes', t2_l1id);
 
-      -- Veto picks
+      -- Veto picks (BO1: Ban, Ban, ..., Ban, Decider)
       DECLARE ban_n int := 0;
       BEGIN
         FOR j IN 1..map_count LOOP
@@ -855,6 +860,11 @@ BEGIN
                     map_ids[j], t2_mdate - interval '10 minutes' + (interval '30 seconds' * ban_n));
           END IF;
         END LOOP;
+        -- Decider
+        ban_n := ban_n + 1;
+        INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+        VALUES (t2_mid, 'Decider', t2_l1id, map_ids[1],
+                t2_mdate - interval '10 minutes' + (interval '30 seconds' * ban_n));
       END;
 
       -- Generate rounds and kills (T1 wins 13-8)
