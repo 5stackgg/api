@@ -41,6 +41,7 @@ import { Transport } from "@nestjs/microservices";
 import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.module";
 import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
+import { BrandingModule } from "./branding/branding.module";
 import { FixturesModule } from "./fixtures/fixtures.module";
 
 @Module({
@@ -123,6 +124,7 @@ import { FixturesModule } from "./fixtures/fixtures.module";
     DedicatedServersModule,
     K8sModule,
     FileManagerModule,
+    BrandingModule,
     FixturesModule,
   ],
   providers: [loggerFactory()],
