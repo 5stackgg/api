@@ -1,0 +1,47 @@
+table:
+  name: player_season_stats
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: season
+    using:
+      foreign_key_constraint_on: season_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - player_steam_id
+        - season_id
+        - kills
+        - deaths
+        - assists
+        - headshots
+        - headshot_percentage
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - player_steam_id
+        - season_id
+        - kills
+        - deaths
+        - assists
+        - headshots
+        - headshot_percentage
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - player_steam_id
+        - season_id
+        - kills
+        - deaths
+        - assists
+        - headshots
+        - headshot_percentage
+      filter: {}
+    comment: ""
