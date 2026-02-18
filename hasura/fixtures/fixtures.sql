@@ -219,9 +219,12 @@ BEGIN
     team_1_idx := ((match_idx - 1) % 8) + 1;
     team_2_idx := (match_idx % 8) + 1;
 
-    -- Match date spread over past 90 days
-    match_date := now() - (interval '1 day' * (90 - match_idx));
-    IF match_status = 'Scheduled' THEN
+    -- Match date: Finished in the past, Live today, Scheduled in the future
+    IF match_status = 'Finished' THEN
+      match_date := now() - (interval '1 day' * (85 - match_idx)) - interval '1 day';
+    ELSIF match_status = 'Live' THEN
+      match_date := now() - (interval '30 minutes' * (92 - match_idx));
+    ELSE
       match_date := now() + (interval '1 day' * (match_idx - 92));
     END IF;
 
@@ -551,11 +554,11 @@ BEGIN
       tournament_ids[1],
       'Adria Cup Season 1',
       'First season of the Adria Cup tournament',
-      now() - interval '30 days',
+      now() - interval '3 days',
       p_steam_ids[1],
       'Finished',
       t1_options_id,
-      now() - interval '45 days'
+      now() - interval '10 days'
     );
 
     INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id)
@@ -571,7 +574,7 @@ BEGIN
         team_names[t],
         p_steam_ids[(t - 1) * 5 + 1],
         t,
-        now() - interval '40 days'
+        now() - interval '7 days'
       );
     END LOOP;
 
@@ -604,7 +607,7 @@ BEGIN
       t1_l1s int; t1_l2s int;
     BEGIN
       FOR i IN 1..3 LOOP
-        t1_mdate := (now() - interval '30 days') + (interval '1 day' * (i - 1));
+        t1_mdate := (now() - interval '3 days') + (interval '2 hours' * (i - 1));
         t1_moid := gen_random_uuid(); t1_mid := gen_random_uuid();
         t1_l1id := gen_random_uuid(); t1_l2id := gen_random_uuid();
         t1_mmid := gen_random_uuid();
@@ -765,11 +768,11 @@ BEGIN
       tournament_ids[2],
       'Balkan Masters Invitational',
       'Top teams from the Balkan region compete',
-      now() - interval '3 days',
+      now() - interval '4 hours',
       p_steam_ids[1],
       'Live',
       t2_options_id,
-      now() - interval '14 days'
+      now() - interval '7 days'
     );
 
     INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id)
@@ -785,7 +788,7 @@ BEGIN
         team_names[t],
         p_steam_ids[(t - 1) * 5 + 1],
         t,
-        now() - interval '10 days'
+        now() - interval '5 days'
       );
     END LOOP;
 
@@ -826,7 +829,7 @@ BEGIN
       t2_l1id uuid := gen_random_uuid();
       t2_l2id uuid := gen_random_uuid();
       t2_mmid uuid := gen_random_uuid();
-      t2_mdate timestamptz := now() - interval '3 days';
+      t2_mdate timestamptz := now() - interval '3 hours';
       t2_l1s int := 13; t2_l2s int := 8;
     BEGIN
       INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
@@ -1060,7 +1063,7 @@ BEGIN
       t2_m3_oid uuid := gen_random_uuid();
       t2_m3_l1id uuid := gen_random_uuid();
       t2_m3_l2id uuid := gen_random_uuid();
-      t2_m3_date timestamptz := now() + interval '1 day';
+      t2_m3_date timestamptz := now() + interval '2 hours';
     BEGIN
       INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
       VALUES (t2_m3_oid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
@@ -1100,7 +1103,7 @@ BEGIN
       tournament_ids[3],
       'EsportAdria Open 2026',
       'Open tournament for all teams. Best of 3, single elimination.',
-      now() + interval '14 days',
+      now() + interval '3 days',
       p_steam_ids[1],
       'RegistrationOpen',
       t3_options_id,
@@ -1180,11 +1183,11 @@ BEGIN
       tournament_ids[4],
       'Adria Championship 2025',
       'Championship featuring round robin group stage followed by double elimination playoffs. 8 teams compete for the title.',
-      now() - interval '60 days',
+      now() - interval '3 days',
       p_steam_ids[1],
       'Finished',
       t4_de_options_id,
-      now() - interval '75 days'
+      now() - interval '14 days'
     );
 
     -- Stage 1: Round Robin (2 groups of 4)
@@ -1205,7 +1208,7 @@ BEGIN
         team_names[t],
         p_steam_ids[(t - 1) * 5 + 1],
         t,
-        now() - interval '70 days'
+        now() - interval '10 days'
       );
     END LOOP;
 
@@ -1317,11 +1320,11 @@ BEGIN
       t4_l1s int; t4_l2s int;
     BEGIN
       FOR i IN 1..18 LOOP
-        -- RR matches: 58-53 days ago, DE matches: 50-45 days ago
+        -- RR matches: day -3 (1h spacing), DE matches: day -2 (2h spacing)
         IF i <= 12 THEN
-          t4_mdate := (now() - interval '58 days') + (interval '1 day' * ((i - 1) / 2));
+          t4_mdate := (now() - interval '3 days') + (interval '1 hour' * (i - 1));
         ELSE
-          t4_mdate := (now() - interval '50 days') + (interval '1 day' * (i - 13));
+          t4_mdate := (now() - interval '2 days') + (interval '2 hours' * (i - 13));
         END IF;
 
         t4_moid := gen_random_uuid(); t4_mid := gen_random_uuid();
