@@ -135,6 +135,15 @@ BEGIN
   ALTER TABLE tournament_stages ENABLE TRIGGER ALL;
   ALTER TABLE tournaments ENABLE TRIGGER ALL;
 
+  -- Delete season data for fixture players/seasons
+  DELETE FROM player_elo WHERE steam_id = ANY(fixture_steam_ids);
+  DELETE FROM player_season_stats WHERE player_steam_id = ANY(fixture_steam_ids);
+  DELETE FROM seasons WHERE id IN (
+    'c0000000-0000-0000-0000-000000000001'::uuid,
+    'c0000000-0000-0000-0000-000000000002'::uuid,
+    'c0000000-0000-0000-0000-000000000003'::uuid
+  );
+
   -- Delete player stats for fixture players
   DELETE FROM player_stats WHERE player_steam_id = ANY(fixture_steam_ids);
   DELETE FROM player_kills_by_weapon WHERE player_steam_id = ANY(fixture_steam_ids);

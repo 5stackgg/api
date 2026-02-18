@@ -22,6 +22,9 @@ ALTER TABLE tournament_teams DISABLE TRIGGER ALL;
 ALTER TABLE tournament_team_roster DISABLE TRIGGER ALL;
 ALTER TABLE tournament_brackets DISABLE TRIGGER ALL;
 ALTER TABLE match_map_veto_picks DISABLE TRIGGER ALL;
+ALTER TABLE player_elo DISABLE TRIGGER ALL;
+ALTER TABLE player_season_stats DISABLE TRIGGER ALL;
+ALTER TABLE seasons DISABLE TRIGGER ALL;
 
 DO $$
 DECLARE
@@ -66,10 +69,18 @@ DECLARE
     'b0000000-0000-0000-0000-000000000004'::uuid
   ];
 
+  -- Season data
+  season_ids uuid[] := ARRAY[
+    'c0000000-0000-0000-0000-000000000001'::uuid,
+    'c0000000-0000-0000-0000-000000000002'::uuid,
+    'c0000000-0000-0000-0000-000000000003'::uuid
+  ];
+
   -- Working variables
   i int;
   j int;
   k int;
+  s int;
   t int;
   comp_map_pool_id uuid;
   map_ids uuid[];
@@ -109,6 +120,18 @@ DECLARE
   death_counts int[];
   headshot_counts int[];
   weapon_kill_map jsonb;
+
+  -- ELO tracking
+  season_elos int[];
+  tournament_elos int[];
+  cur_season_id uuid;
+  cur_season_idx int;
+  elo_change int;
+
+  -- Per-season stats tracking
+  s_kill_counts int[];
+  s_death_counts int[];
+  s_headshot_counts int[];
 
   -- Tournament working variables
   tourn_stage_id uuid;
@@ -161,6 +184,15 @@ BEGIN
   END LOOP;
 
   -- ==========================================
+  -- 2.5 INSERT SEASONS
+  -- ==========================================
+  INSERT INTO seasons (id, name, starts_at, ends_at, created_at) VALUES
+    (season_ids[1], 'Season Alpha', now() - interval '90 days', now() - interval '60 days', now() - interval '95 days'),
+    (season_ids[2], 'Season Beta', now() - interval '55 days', now() - interval '25 days', now() - interval '60 days'),
+    (season_ids[3], 'Season Gamma', now() - interval '20 days', NULL, now() - interval '25 days')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- ==========================================
   -- 3. FIND COMPETITIVE MAP POOL
   -- ==========================================
   SELECT id INTO comp_map_pool_id
@@ -201,6 +233,15 @@ BEGIN
   death_counts := array_fill(0, ARRAY[40]);
   headshot_counts := array_fill(0, ARRAY[40]);
   weapon_kill_map := '{}'::jsonb;
+
+  -- Initialize ELO: everyone starts at 5000 per season
+  season_elos := array_fill(5000, ARRAY[3, 40]);
+  tournament_elos := array_fill(5000, ARRAY[40]);
+
+  -- Per-season stats
+  s_kill_counts := array_fill(0, ARRAY[3, 40]);
+  s_death_counts := array_fill(0, ARRAY[3, 40]);
+  s_headshot_counts := array_fill(0, ARRAY[3, 40]);
 
   -- ==========================================
   -- 5. INSERT MATCHES (~100 matches)
@@ -320,6 +361,17 @@ BEGIN
     -- 5a. GENERATE ROUNDS AND KILLS FOR FINISHED/LIVE MATCHES
     -- ==========================================
     IF match_status IN ('Finished', 'Live') THEN
+      -- Determine season for this match
+      cur_season_id := NULL;
+      cur_season_idx := 0;
+      IF match_date >= now() - interval '90 days' AND match_date < now() - interval '60 days' THEN
+        cur_season_id := season_ids[1]; cur_season_idx := 1;
+      ELSIF match_date >= now() - interval '55 days' AND match_date < now() - interval '25 days' THEN
+        cur_season_id := season_ids[2]; cur_season_idx := 2;
+      ELSIF match_date >= now() - interval '20 days' THEN
+        cur_season_id := season_ids[3]; cur_season_idx := 3;
+      END IF;
+
       -- Determine final score for finished matches (MR12: first to 13)
       IF match_status = 'Finished' THEN
         IF ((match_idx - 1) / 8 + match_idx) % 2 = 0 THEN
@@ -412,6 +464,15 @@ BEGIN
             headshot_counts[attacker_idx] := headshot_counts[attacker_idx] + 1;
           END IF;
 
+          -- Track per-season stats
+          IF cur_season_idx > 0 THEN
+            s_kill_counts[cur_season_idx][attacker_idx] := s_kill_counts[cur_season_idx][attacker_idx] + 1;
+            s_death_counts[cur_season_idx][attacked_idx] := s_death_counts[cur_season_idx][attacked_idx] + 1;
+            IF is_headshot THEN
+              s_headshot_counts[cur_season_idx][attacker_idx] := s_headshot_counts[cur_season_idx][attacker_idx] + 1;
+            END IF;
+          END IF;
+
           -- Track weapon kills
           DECLARE
             wkey text := p_steam_ids[attacker_idx]::text || ':' || weapons[weapon_idx];
@@ -488,6 +549,34 @@ BEGIN
           END IF;
         END;
       END LOOP; -- rounds
+
+      -- Insert player_elo for finished matches in a season
+      IF match_status = 'Finished' AND cur_season_id IS NOT NULL THEN
+        FOR j IN 1..5 LOOP
+          -- Team 1 players
+          attacker_idx := (team_1_idx - 1) * 5 + j;
+          IF ((match_idx - 1) / 8 + match_idx) % 2 = 0 THEN
+            elo_change := 12 + (match_idx + j) % 11;
+          ELSE
+            elo_change := -(12 + (match_idx + j) % 11);
+          END IF;
+          season_elos[cur_season_idx][attacker_idx] := season_elos[cur_season_idx][attacker_idx] + elo_change;
+          INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+          VALUES (p_steam_ids[attacker_idx], match_id, 'Competitive',
+                  season_elos[cur_season_idx][attacker_idx], elo_change,
+                  match_date + interval '45 minutes', cur_season_id);
+
+          -- Team 2 players (opposite result)
+          attacker_idx := (team_2_idx - 1) * 5 + j;
+          elo_change := -elo_change;
+          season_elos[cur_season_idx][attacker_idx] := season_elos[cur_season_idx][attacker_idx] + elo_change;
+          INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+          VALUES (p_steam_ids[attacker_idx], match_id, 'Competitive',
+                  season_elos[cur_season_idx][attacker_idx], elo_change,
+                  match_date + interval '45 minutes', cur_season_id);
+        END LOOP;
+      END IF;
+
     END IF; -- finished/live
   END LOOP; -- matches
 
@@ -532,6 +621,29 @@ BEGIN
       ON CONFLICT (player_steam_id, "with") DO UPDATE SET kill_count = EXCLUDED.kill_count;
     END LOOP;
   END;
+
+  -- Player season stats
+  FOR s IN 1..3 LOOP
+    FOR i IN 1..40 LOOP
+      IF s_kill_counts[s][i] > 0 OR s_death_counts[s][i] > 0 THEN
+        INSERT INTO player_season_stats (player_steam_id, season_id, kills, deaths, assists, headshots, headshot_percentage)
+        VALUES (
+          p_steam_ids[i],
+          season_ids[s],
+          s_kill_counts[s][i],
+          s_death_counts[s][i],
+          0,
+          s_headshot_counts[s][i],
+          CASE WHEN s_kill_counts[s][i] > 0 THEN (s_headshot_counts[s][i]::float / s_kill_counts[s][i]) * 100 ELSE 0 END
+        )
+        ON CONFLICT (player_steam_id, season_id) DO UPDATE SET
+          kills = EXCLUDED.kills,
+          deaths = EXCLUDED.deaths,
+          headshots = EXCLUDED.headshots,
+          headshot_percentage = EXCLUDED.headshot_percentage;
+      END IF;
+    END LOOP;
+  END LOOP;
 
   -- ==========================================
   -- 7. INSERT TOURNAMENTS
@@ -744,6 +856,23 @@ BEGIN
                 'BombsiteA', 'inferno', 10 + (round_num % 25), 0, 90 - (round_num % 25), 100, 'chest', ut + interval '0.5 seconds');
             END IF;
           END;
+        END LOOP;
+
+        -- Insert tournament ELO (team 1 always wins in T1)
+        FOR j IN 1..5 LOOP
+          attacker_idx := (t1_ti1[i] - 1) * 5 + j;
+          elo_change := 12 + (i + j) % 11;
+          tournament_elos[attacker_idx] := tournament_elos[attacker_idx] + elo_change;
+          INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+          VALUES (p_steam_ids[attacker_idx], t1_mid, 'Competitive',
+                  tournament_elos[attacker_idx], elo_change, t1_mdate + interval '45 minutes', NULL);
+
+          attacker_idx := (t1_ti2[i] - 1) * 5 + j;
+          elo_change := -(12 + (i + j) % 11);
+          tournament_elos[attacker_idx] := tournament_elos[attacker_idx] + elo_change;
+          INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+          VALUES (p_steam_ids[attacker_idx], t1_mid, 'Competitive',
+                  tournament_elos[attacker_idx], elo_change, t1_mdate + interval '45 minutes', NULL);
         END LOOP;
 
         UPDATE tournament_brackets SET match_id = t1_mid WHERE id = t1_br[i];
@@ -963,6 +1092,23 @@ BEGIN
               'BombsiteA', 'inferno', 10 + (round_num % 25), 0, 90 - (round_num % 25), 100, 'chest', ut + interval '0.5 seconds');
           END IF;
         END;
+      END LOOP;
+
+      -- Insert tournament ELO (T1 wins 13-8 against T6)
+      FOR j IN 1..5 LOOP
+        attacker_idx := (1 - 1) * 5 + j;
+        elo_change := 12 + j % 11;
+        tournament_elos[attacker_idx] := tournament_elos[attacker_idx] + elo_change;
+        INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+        VALUES (p_steam_ids[attacker_idx], t2_mid, 'Competitive',
+                tournament_elos[attacker_idx], elo_change, t2_mdate + interval '45 minutes', NULL);
+
+        attacker_idx := (6 - 1) * 5 + j;
+        elo_change := -(12 + j % 11);
+        tournament_elos[attacker_idx] := tournament_elos[attacker_idx] + elo_change;
+        INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+        VALUES (p_steam_ids[attacker_idx], t2_mid, 'Competitive',
+                tournament_elos[attacker_idx], elo_change, t2_mdate + interval '45 minutes', NULL);
       END LOOP;
 
       UPDATE tournament_brackets SET match_id = t2_mid WHERE id = t2_bracket_r1m1;
@@ -1575,6 +1721,27 @@ BEGIN
         END;
         END LOOP;
 
+        -- Insert tournament ELO
+        FOR j IN 1..5 LOOP
+          attacker_idx := (t4_m_t1[i] - 1) * 5 + j;
+          IF t4_m_win[i] = 1 THEN
+            elo_change := 12 + (i + j) % 11;
+          ELSE
+            elo_change := -(12 + (i + j) % 11);
+          END IF;
+          tournament_elos[attacker_idx] := tournament_elos[attacker_idx] + elo_change;
+          INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+          VALUES (p_steam_ids[attacker_idx], t4_mid, 'Competitive',
+                  tournament_elos[attacker_idx], elo_change, t4_mdate + interval '45 minutes' * t4_map_count[i], NULL);
+
+          attacker_idx := (t4_m_t2[i] - 1) * 5 + j;
+          elo_change := -elo_change;
+          tournament_elos[attacker_idx] := tournament_elos[attacker_idx] + elo_change;
+          INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+          VALUES (p_steam_ids[attacker_idx], t4_mid, 'Competitive',
+                  tournament_elos[attacker_idx], elo_change, t4_mdate + interval '45 minutes' * t4_map_count[i], NULL);
+        END LOOP;
+
         UPDATE tournament_brackets SET match_id = t4_mid WHERE id = t4_all_br[i];
       END LOOP;
     END;
@@ -1607,3 +1774,6 @@ ALTER TABLE tournament_teams ENABLE TRIGGER ALL;
 ALTER TABLE tournament_team_roster ENABLE TRIGGER ALL;
 ALTER TABLE tournament_brackets ENABLE TRIGGER ALL;
 ALTER TABLE match_map_veto_picks ENABLE TRIGGER ALL;
+ALTER TABLE player_elo ENABLE TRIGGER ALL;
+ALTER TABLE player_season_stats ENABLE TRIGGER ALL;
+ALTER TABLE seasons ENABLE TRIGGER ALL;
