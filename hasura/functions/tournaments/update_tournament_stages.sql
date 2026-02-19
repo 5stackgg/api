@@ -293,6 +293,62 @@ BEGIN
         ELSE
             RAISE NOTICE '  => Linking matches within stage %', stage."order";
             PERFORM link_tournament_stage_matches(stage.id);
+
+            -- SE decider: apply decider best_of to final and optionally create 3rd place match
+            IF stage.decider_best_of IS NOT NULL THEN
+                DECLARE
+                    _decider_match_options_id uuid;
+                    _final_bracket_id uuid;
+                    _third_place_id uuid;
+                    _semi_record RECORD;
+                BEGIN
+                    _decider_match_options_id := update_match_options_best_of(stage.id);
+
+                    -- Apply decider match_options to the final (last round, match 1)
+                    SELECT id INTO _final_bracket_id
+                    FROM tournament_brackets
+                    WHERE tournament_stage_id = stage.id
+                      AND path = 'WB'
+                      AND round = total_rounds
+                      AND match_number = 1
+                    LIMIT 1;
+
+                    IF _final_bracket_id IS NOT NULL AND _decider_match_options_id IS NOT NULL THEN
+                        UPDATE tournament_brackets
+                        SET match_options_id = _decider_match_options_id
+                        WHERE id = _final_bracket_id;
+
+                        RAISE NOTICE '  => SE decider: applied decider match_options to final bracket %', _final_bracket_id;
+                    END IF;
+
+                    -- Create 3rd place match if there are at least 2 rounds (semifinals exist)
+                    IF total_rounds >= 2 THEN
+                        INSERT INTO tournament_brackets (
+                            round, tournament_stage_id, match_number, "group", path, match_options_id
+                        ) VALUES (
+                            total_rounds, stage.id, 2, 1, 'WB', _decider_match_options_id
+                        )
+                        RETURNING id INTO _third_place_id;
+
+                        RAISE NOTICE '  => SE decider: created 3rd place bracket % in round %', _third_place_id, total_rounds;
+
+                        -- Set loser_parent_bracket_id on semifinal brackets to route losers to 3rd place match
+                        FOR _semi_record IN
+                            SELECT id FROM tournament_brackets
+                            WHERE tournament_stage_id = stage.id
+                              AND path = 'WB'
+                              AND round = total_rounds - 1
+                            ORDER BY match_number ASC
+                        LOOP
+                            UPDATE tournament_brackets
+                            SET loser_parent_bracket_id = _third_place_id
+                            WHERE id = _semi_record.id;
+
+                            RAISE NOTICE '  => SE decider: set semifinal % loser -> 3rd place %', _semi_record.id, _third_place_id;
+                        END LOOP;
+                    END IF;
+                END;
+            END IF;
         END IF;
     END LOOP;
 
