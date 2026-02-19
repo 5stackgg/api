@@ -43,6 +43,28 @@ export class FixturesController {
       this.logger.log("Fixtures: Loading fixture data...");
       await this.postgres.query(fixturesSql);
 
+      this.logger.log("Fixtures: Generating player ELO ratings...");
+      await this.postgres.query(`
+        DO $$
+        DECLARE
+          m RECORD;
+        BEGIN
+          DELETE FROM player_elo
+          WHERE match_id IN (
+            SELECT id FROM matches
+            WHERE ended_at IS NOT NULL AND winning_lineup_id IS NOT NULL
+          );
+          FOR m IN
+            SELECT id FROM matches
+            WHERE ended_at IS NOT NULL
+              AND winning_lineup_id IS NOT NULL
+            ORDER BY created_at ASC
+          LOOP
+            PERFORM generate_player_elo_for_match(m.id);
+          END LOOP;
+        END $$;
+      `);
+
       this.logger.log("Fixtures: Refreshing Typesense player index...");
       await this.typesenseQueue.add(RefreshAllPlayersJob.name, {});
 

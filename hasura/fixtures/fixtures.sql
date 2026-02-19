@@ -1,5 +1,5 @@
 -- Dev Fixture Data
--- Inserts ~40 players, 8 teams, ~100 matches with scores, map veto picks, utility/flash data, and 4 tournaments
+-- Inserts ~40 players, 8 teams, ~143 matches with scores, map veto picks, utility/flash data, and 4 tournaments
 -- This file is idempotent: running cleanup.sql first removes prior fixture data
 
 -- Disable triggers on affected tables (excluding hypertables which don't support this)
@@ -490,6 +490,182 @@ BEGIN
       END LOOP; -- rounds
     END IF; -- finished/live
   END LOOP; -- matches
+
+  -- ==========================================
+  -- 5b. ADDITIONAL STANDALONE MATCHES (~43 more finished, spread across last 30 days)
+  -- ==========================================
+  FOR match_idx IN 1..43 LOOP
+    -- Pick two different teams with offset for variety
+    team_1_idx := ((match_idx + 3) % 8) + 1;
+    team_2_idx := ((match_idx + 6) % 8) + 1;
+    IF team_1_idx = team_2_idx THEN
+      team_2_idx := (team_2_idx % 8) + 1;
+    END IF;
+
+    -- Spread across last 30 days (denser toward recent)
+    match_date := now() - (interval '16 hours' * (43 - match_idx)) - interval '6 hours';
+
+    -- Create match options
+    match_options_id := gen_random_uuid();
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
+    VALUES (match_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
+
+    -- Create lineups
+    lineup_1_id := gen_random_uuid();
+    lineup_2_id := gen_random_uuid();
+    INSERT INTO match_lineups (id, team_id, team_name) VALUES (lineup_1_id, team_ids[team_1_idx], team_names[team_1_idx]);
+    INSERT INTO match_lineups (id, team_id, team_name) VALUES (lineup_2_id, team_ids[team_2_idx], team_names[team_2_idx]);
+
+    -- Create match
+    match_id := gen_random_uuid();
+    INSERT INTO matches (id, status, match_options_id, lineup_1_id, lineup_2_id, created_at, scheduled_at,
+                         started_at, ended_at, winning_lineup_id)
+    VALUES (match_id, 'Finished', match_options_id, lineup_1_id, lineup_2_id,
+            match_date - interval '1 hour', match_date, match_date,
+            match_date + interval '45 minutes',
+            CASE WHEN match_idx % 2 = 0 THEN lineup_1_id ELSE lineup_2_id END);
+
+    -- Add lineup players (5 per team)
+    FOR j IN 1..5 LOOP
+      INSERT INTO match_lineup_players (match_lineup_id, steam_id, captain, checked_in)
+      VALUES (lineup_1_id, p_steam_ids[(team_1_idx - 1) * 5 + j], j = 1, true);
+      INSERT INTO match_lineup_players (match_lineup_id, steam_id, captain, checked_in)
+      VALUES (lineup_2_id, p_steam_ids[(team_2_idx - 1) * 5 + j], j = 1, true);
+    END LOOP;
+
+    -- Create match map (BO1)
+    cur_map_id := map_ids[((match_idx + 3) % map_count) + 1];
+    match_map_id := gen_random_uuid();
+    INSERT INTO match_maps (id, match_id, map_id, "order", status, lineup_1_side, lineup_2_side, started_at, ended_at, winning_lineup_id)
+    VALUES (match_map_id, match_id, cur_map_id, 1, 'Finished', 'CT', 'TERRORIST',
+            match_date, match_date + interval '40 minutes',
+            CASE WHEN match_idx % 2 = 0 THEN lineup_1_id ELSE lineup_2_id END);
+
+    -- Map veto picks
+    DECLARE
+      ban_n int := 0;
+    BEGIN
+      FOR j IN 1..map_count LOOP
+        IF map_ids[j] != cur_map_id THEN
+          ban_n := ban_n + 1;
+          INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+          VALUES (match_id, 'Ban', CASE WHEN ban_n % 2 = 1 THEN lineup_1_id ELSE lineup_2_id END,
+                  map_ids[j], match_date - interval '10 minutes' + (interval '30 seconds' * ban_n));
+        END IF;
+      END LOOP;
+      ban_n := ban_n + 1;
+      INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+      VALUES (match_id, 'Decider', lineup_1_id, cur_map_id,
+              match_date - interval '10 minutes' + (interval '30 seconds' * ban_n));
+    END;
+
+    -- Determine score
+    IF match_idx % 2 = 0 THEN
+      l1_score := 13; l2_score := 5 + (match_idx % 8);
+    ELSE
+      l1_score := 5 + (match_idx % 8); l2_score := 13;
+    END IF;
+    total_rounds := l1_score + l2_score;
+
+    -- Generate rounds, kills, and utility
+    v_t1_wins := 0; v_t2_wins := 0;
+    FOR round_num IN 1..total_rounds LOOP
+      IF v_t1_wins * total_rounds < round_num * l1_score AND v_t1_wins < l1_score THEN
+        v_t1_wins := v_t1_wins + 1;
+        IF round_num <= 12 THEN winning_side := 'CT'; ELSE winning_side := 'TERRORIST'; END IF;
+      ELSE
+        v_t2_wins := v_t2_wins + 1;
+        IF round_num <= 12 THEN winning_side := 'TERRORIST'; ELSE winning_side := 'CT'; END IF;
+      END IF;
+
+      INSERT INTO match_map_rounds (
+        match_map_id, round, lineup_1_score, lineup_2_score,
+        lineup_1_money, lineup_2_money, time,
+        lineup_1_timeouts_available, lineup_2_timeouts_available,
+        winning_side, lineup_1_side, lineup_2_side)
+      VALUES (
+        match_map_id, round_num, v_t1_wins, v_t2_wins,
+        4100 + (round_num * 300), 4100 + (round_num * 300),
+        match_date + (interval '2 minutes' * round_num), 2, 2, winning_side,
+        CASE WHEN round_num <= 12 THEN 'CT' ELSE 'TERRORIST' END,
+        CASE WHEN round_num <= 12 THEN 'TERRORIST' ELSE 'CT' END);
+
+      -- Kills (5-7 per round)
+      FOR k IN 1..(5 + (round_num % 3)) LOOP
+        IF k % 2 = 1 THEN
+          attacker_idx := (team_1_idx - 1) * 5 + ((k - 1) % 5) + 1;
+          attacked_idx := (team_2_idx - 1) * 5 + ((k + round_num) % 5) + 1;
+        ELSE
+          attacker_idx := (team_2_idx - 1) * 5 + ((k - 1) % 5) + 1;
+          attacked_idx := (team_1_idx - 1) * 5 + ((k + round_num) % 5) + 1;
+        END IF;
+
+        weapon_idx := ((match_idx + round_num + k + 50) % array_length(weapons, 1)) + 1;
+        is_headshot := (match_idx + round_num + k + 1) % 3 = 0;
+        kill_time := match_date + (interval '2 minutes' * round_num) + (interval '5 seconds' * k);
+
+        INSERT INTO player_kills (
+          match_id, match_map_id, round,
+          attacker_steam_id, attacker_team,
+          attacked_steam_id, attacked_team, attacked_location,
+          "with", hitgroup, headshot, time)
+        VALUES (
+          match_id, match_map_id, round_num,
+          p_steam_ids[attacker_idx],
+          CASE WHEN k % 2 = 1 THEN 'CT' ELSE 'TERRORIST' END,
+          p_steam_ids[attacked_idx],
+          CASE WHEN k % 2 = 1 THEN 'TERRORIST' ELSE 'CT' END,
+          'BombsiteA', weapons[weapon_idx],
+          CASE WHEN is_headshot THEN 'head' ELSE hitgroups[((k + round_num) % 6) + 2] END,
+          is_headshot, kill_time)
+        ON CONFLICT DO NOTHING;
+
+        -- Track stats
+        kill_counts[attacker_idx] := kill_counts[attacker_idx] + 1;
+        death_counts[attacked_idx] := death_counts[attacked_idx] + 1;
+        IF is_headshot THEN
+          headshot_counts[attacker_idx] := headshot_counts[attacker_idx] + 1;
+        END IF;
+
+        DECLARE
+          wkey text := p_steam_ids[attacker_idx]::text || ':' || weapons[weapon_idx];
+        BEGIN
+          IF weapon_kill_map ? wkey THEN
+            weapon_kill_map := jsonb_set(weapon_kill_map, ARRAY[wkey], to_jsonb((weapon_kill_map->>wkey)::int + 1));
+          ELSE
+            weapon_kill_map := weapon_kill_map || jsonb_build_object(wkey, 1);
+          END IF;
+        END;
+      END LOOP; -- kills per round
+
+      -- Utility events (flash + smoke per round)
+      DECLARE
+        ut timestamptz;
+        fp1 int := (team_1_idx - 1) * 5 + ((round_num + 1) % 5) + 1;
+        fp2 int := (team_2_idx - 1) * 5 + ((round_num + 2) % 5) + 1;
+        fe1 int := (team_2_idx - 1) * 5 + ((round_num + 3) % 5) + 1;
+        fe2 int := (team_1_idx - 1) * 5 + ((round_num + 4) % 5) + 1;
+      BEGIN
+        ut := match_date + (interval '2 minutes' * round_num) + interval '40 seconds';
+        INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
+        VALUES (match_map_id, p_steam_ids[fp1], ut, match_id, round_num, 'Flash') ON CONFLICT DO NOTHING;
+        INSERT INTO player_flashes (match_map_id, time, attacker_steam_id, attacked_steam_id, match_id, round, duration, team_flash)
+        VALUES (match_map_id, ut + interval '1 second', p_steam_ids[fp1], p_steam_ids[fe1], match_id, round_num,
+                1.5 + (round_num % 3)::numeric * 0.5, false) ON CONFLICT DO NOTHING;
+
+        ut := match_date + (interval '2 minutes' * round_num) + interval '50 seconds';
+        INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
+        VALUES (match_map_id, p_steam_ids[fp2], ut, match_id, round_num, 'Flash') ON CONFLICT DO NOTHING;
+        INSERT INTO player_flashes (match_map_id, time, attacker_steam_id, attacked_steam_id, match_id, round, duration, team_flash)
+        VALUES (match_map_id, ut + interval '1 second', p_steam_ids[fp2], p_steam_ids[fe2], match_id, round_num,
+                1.5 + ((round_num + 1) % 3)::numeric * 0.5, false) ON CONFLICT DO NOTHING;
+
+        ut := match_date + (interval '2 minutes' * round_num) + interval '35 seconds';
+        INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
+        VALUES (match_map_id, p_steam_ids[(team_1_idx - 1) * 5 + ((round_num + 3) % 5) + 1], ut, match_id, round_num, 'Smoke') ON CONFLICT DO NOTHING;
+      END;
+    END LOOP; -- rounds
+  END LOOP; -- additional matches
 
   -- ==========================================
   -- 6. POPULATE AGGREGATE TABLES

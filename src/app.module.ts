@@ -43,6 +43,7 @@ import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
 import { BrandingModule } from "./branding/branding.module";
 import { FixturesModule } from "./fixtures/fixtures.module";
+import { LeaderboardModule } from "./leaderboard/leaderboard.module";
 
 @Module({
   imports: [
@@ -126,6 +127,7 @@ import { FixturesModule } from "./fixtures/fixtures.module";
     FileManagerModule,
     BrandingModule,
     FixturesModule,
+    LeaderboardModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
