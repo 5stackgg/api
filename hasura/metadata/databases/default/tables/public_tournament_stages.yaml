@@ -42,6 +42,7 @@ insert_permissions:
           is_organizer:
             _eq: true
       columns:
+        - decider_best_of
         - groups
         - match_options_id
         - max_teams
@@ -55,6 +56,7 @@ select_permissions:
   - role: guest
     permission:
       columns:
+        - decider_best_of
         - groups
         - id
         - match_options_id
@@ -71,6 +73,7 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - decider_best_of
         - groups
         - match_options_id
         - max_teams

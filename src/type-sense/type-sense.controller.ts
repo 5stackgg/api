@@ -1,6 +1,6 @@
 import { Controller } from "@nestjs/common";
 import { TypeSenseService } from "./type-sense.service";
-import { HasuraEvent } from "../hasura/hasura.controller";
+import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import {
   player_elo_set_input,
@@ -11,6 +11,7 @@ import {
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { RefreshPlayerJob } from "./jobs/RefreshPlayer";
+import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 import { Queue } from "bullmq";
 import { TypesenseQueues } from "./enums/TypesenseQueues";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -192,5 +193,11 @@ export class TypeSenseController {
     await this.typeSense.updatePlayer(
       (data.new.player_steam_id || data.old.player_steam_id) as string,
     );
+  }
+
+  @HasuraAction()
+  public async refreshAllPlayers() {
+    await this.queue.add(RefreshAllPlayersJob.name, {});
+    return { success: true };
   }
 }

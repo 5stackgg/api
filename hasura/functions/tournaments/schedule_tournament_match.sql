@@ -44,11 +44,11 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      INNER JOIN tournaments t ON t.id = ts.tournament_id
      WHERE tb.id = bracket.id;
 
-     -- Check if stage has match_options_id first, otherwise use tournament match_options_id
-     IF stage.match_options_id IS NOT NULL THEN
-         _match_options_id := stage.match_options_id;
-     ELSIF bracket.match_options_id IS NOT NULL THEN
+     -- Check bracket first (decider overrides), then stage, then tournament
+     IF bracket.match_options_id IS NOT NULL THEN
          _match_options_id := bracket.match_options_id;
+     ELSIF stage.match_options_id IS NOT NULL THEN
+         _match_options_id := stage.match_options_id;
      ELSE
          _match_options_id := tournament.match_options_id;
      END IF;

@@ -215,6 +215,10 @@ type Mutation {
   ): SuccessOutput
 }
 
+type Mutation {
+  refreshAllPlayers: SuccessOutput
+}
+
 type Query {
   readServerFile(
     node_id: String!
@@ -328,6 +332,36 @@ type Mutation {
     file_path: String!
     content: String!
   ): SuccessOutput
+}
+
+type Query {
+  getLeaderboard(
+    category: String!
+    window_days: Int!
+    match_type: String
+    limit: Int
+    offset: Int
+    exclude_tournaments: Boolean
+    sort_by: String
+    sort_dir: String
+  ): LeaderboardResponse!
+}
+
+type LeaderboardResponse {
+  entries: [LeaderboardEntry!]!
+  total: Int!
+}
+
+type LeaderboardEntry {
+  rank: Int!
+  player_steam_id: String!
+  player_name: String!
+  player_avatar_url: String
+  player_country: String
+  value: Float!
+  secondary_value: Float
+  tertiary_value: Float
+  matches_played: Int
 }
 
 input SampleInput {
