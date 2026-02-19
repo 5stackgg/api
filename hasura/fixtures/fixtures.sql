@@ -766,11 +766,11 @@ BEGIN
     END LOOP;
 
     -- Create brackets (semifinals + final)
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, finished)
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished)
     VALUES
-      (t1_bracket_sf1, t1_stage_id, t1_team_ids[1], t1_team_ids[4], 1, 1, true),
-      (t1_bracket_sf2, t1_stage_id, t1_team_ids[2], t1_team_ids[3], 1, 2, true),
-      (t1_bracket_final, t1_stage_id, t1_team_ids[1], t1_team_ids[2], 2, 1, true);
+      (t1_bracket_sf1, t1_stage_id, t1_team_ids[1], t1_team_ids[4], 1, 1, 1, 'WB', true),
+      (t1_bracket_sf2, t1_stage_id, t1_team_ids[2], t1_team_ids[3], 1, 2, 1, 'WB', true),
+      (t1_bracket_final, t1_stage_id, t1_team_ids[1], t1_team_ids[2], 2, 1, 1, 'WB', true);
 
     -- Create matches linked to finished brackets
     -- SF1: T1 vs T4 → T1 wins, SF2: T2 vs T3 → T2 wins, Final: T1 vs T2 → T1 wins
@@ -980,23 +980,23 @@ BEGIN
     END LOOP;
 
     -- First round brackets (3 matches for 6 teams)
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, finished)
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished)
     VALUES
-      (t2_bracket_r1m1, t2_stage_id, t2_team_ids[1], t2_team_ids[6], 1, 1, true);
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, finished)
+      (t2_bracket_r1m1, t2_stage_id, t2_team_ids[1], t2_team_ids[6], 1, 1, 1, 'WB', true);
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished)
     VALUES
-      (t2_bracket_r1m2, t2_stage_id, t2_team_ids[2], t2_team_ids[5], 1, 2, false),
-      (t2_bracket_r1m3, t2_stage_id, t2_team_ids[3], t2_team_ids[4], 1, 3, false);
+      (t2_bracket_r1m2, t2_stage_id, t2_team_ids[2], t2_team_ids[5], 1, 2, 1, 'WB', false),
+      (t2_bracket_r1m3, t2_stage_id, t2_team_ids[3], t2_team_ids[4], 1, 3, 1, 'WB', false);
 
     -- Semifinal brackets (placeholders)
-    INSERT INTO tournament_brackets (tournament_stage_id, tournament_team_id_1, round, match_number, finished)
+    INSERT INTO tournament_brackets (tournament_stage_id, tournament_team_id_1, round, match_number, "group", path, finished)
     VALUES
-      (t2_stage_id, t2_team_ids[1], 2, 1, false),
-      (t2_stage_id, NULL, 2, 2, false);
+      (t2_stage_id, t2_team_ids[1], 2, 1, 1, 'WB', false),
+      (t2_stage_id, NULL, 2, 2, 1, 'WB', false);
 
     -- Final bracket
-    INSERT INTO tournament_brackets (tournament_stage_id, round, match_number, finished)
-    VALUES (t2_stage_id, 3, 1, false);
+    INSERT INTO tournament_brackets (tournament_stage_id, round, match_number, "group", path, finished)
+    VALUES (t2_stage_id, 3, 1, 1, 'WB', false);
 
     -- Create match for the one finished bracket (R1 M1: T1 vs T6, T1 wins)
     DECLARE
