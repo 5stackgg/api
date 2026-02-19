@@ -114,7 +114,7 @@ event_triggers:
           - demo_network_limiter
     retry_conf:
       interval_sec: 10
-      num_retries: 0
+      num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
   - name: game_server_cs_build_changed
@@ -125,7 +125,7 @@ event_triggers:
           - build_id
     retry_conf:
       interval_sec: 10
-      num_retries: 0
+      num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
   - name: node_server_availability
@@ -139,6 +139,6 @@ event_triggers:
           - region
     retry_conf:
       interval_sec: 10
-      num_retries: 0
+      num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
