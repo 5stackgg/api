@@ -199,6 +199,21 @@ export class LeaderboardController {
         : "";
     if (windowDays > 0) params.push(windowDays);
 
+    const streakMatchTypeFilter = matchType
+      ? `AND mo.type = $${paramIdx++}`
+      : "";
+    if (matchType) params.push(matchType);
+
+    const streakTimeFilter =
+      windowDays > 0
+        ? `AND m.ended_at >= NOW() - make_interval(days => $${paramIdx++})`
+        : "";
+    if (windowDays > 0) params.push(windowDays);
+
+    const streakTournamentFilter = excludeTournaments
+      ? this.tournamentExclusionFilter("m.id")
+      : "";
+
     params.push(MAX_RESULTS);
     const limitParam = `$${paramIdx++}`;
 
@@ -243,6 +258,27 @@ export class LeaderboardController {
             ${timeFilter}
             ${this.tournamentExclusionFilter("pe.match_id")}
           GROUP BY pe.steam_id
+        ),
+        win_streak AS (
+          SELECT sub.steam_id,
+            COALESCE(MIN(CASE WHEN sub.won = 0 THEN sub.rn END) - 1, MAX(sub.rn))::int as streak
+          FROM (
+            SELECT
+              mlp.steam_id,
+              CASE WHEN m.winning_lineup_id = mlp.match_lineup_id THEN 1 ELSE 0 END as won,
+              ROW_NUMBER() OVER (PARTITION BY mlp.steam_id ORDER BY m.ended_at DESC) as rn
+            FROM match_lineup_players mlp
+            JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+            JOIN matches m ON (m.lineup_1_id = ml.id OR m.lineup_2_id = ml.id)
+            JOIN match_options mo ON mo.id = m.match_options_id
+            WHERE m.status = 'Finished'
+              AND mlp.steam_id IS NOT NULL
+              AND m.winning_lineup_id IS NOT NULL
+              ${streakTimeFilter}
+              ${streakMatchTypeFilter}
+              ${streakTournamentFilter}
+          ) sub
+          GROUP BY sub.steam_id
         )
         SELECT
           le.steam_id,
@@ -251,12 +287,13 @@ export class LeaderboardController {
           p.country,
           le.raw_current - COALESCE(ta.tourney_total, 0) as value,
           (le.raw_current - COALESCE(ta.tourney_total, 0)) - fe.starting_elo as secondary_value,
-          NULL as tertiary_value,
+          COALESCE(ws.streak, 0) as tertiary_value,
           COALESCE(mc.matches_played, 0) as matches_played
         FROM last_elo_raw le
         LEFT JOIN tournament_adj ta ON ta.steam_id = le.steam_id
         JOIN first_elo fe ON fe.steam_id = le.steam_id
         LEFT JOIN match_counts mc ON mc.steam_id = le.steam_id
+        LEFT JOIN win_streak ws ON ws.steam_id = le.steam_id
         JOIN players p ON p.steam_id = le.steam_id
         ORDER BY value DESC
         LIMIT ${limitParam}
@@ -290,6 +327,26 @@ export class LeaderboardController {
             ${eloTypeFilter}
             ${timeFilter}
           GROUP BY pe.steam_id
+        ),
+        win_streak AS (
+          SELECT sub.steam_id,
+            COALESCE(MIN(CASE WHEN sub.won = 0 THEN sub.rn END) - 1, MAX(sub.rn))::int as streak
+          FROM (
+            SELECT
+              mlp.steam_id,
+              CASE WHEN m.winning_lineup_id = mlp.match_lineup_id THEN 1 ELSE 0 END as won,
+              ROW_NUMBER() OVER (PARTITION BY mlp.steam_id ORDER BY m.ended_at DESC) as rn
+            FROM match_lineup_players mlp
+            JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+            JOIN matches m ON (m.lineup_1_id = ml.id OR m.lineup_2_id = ml.id)
+            JOIN match_options mo ON mo.id = m.match_options_id
+            WHERE m.status = 'Finished'
+              AND mlp.steam_id IS NOT NULL
+              AND m.winning_lineup_id IS NOT NULL
+              ${streakTimeFilter}
+              ${streakMatchTypeFilter}
+          ) sub
+          GROUP BY sub.steam_id
         )
         SELECT
           le.steam_id,
@@ -298,11 +355,12 @@ export class LeaderboardController {
           p.country,
           le.current_elo as value,
           le.current_elo - fe.starting_elo as secondary_value,
-          NULL as tertiary_value,
+          COALESCE(ws.streak, 0) as tertiary_value,
           mc.matches_played
         FROM last_elo le
         JOIN first_elo fe ON fe.steam_id = le.steam_id
         JOIN match_counts mc ON mc.steam_id = le.steam_id
+        LEFT JOIN win_streak ws ON ws.steam_id = le.steam_id
         JOIN players p ON p.steam_id = le.steam_id
         ORDER BY value DESC
         LIMIT ${limitParam}
