@@ -47,8 +47,8 @@ BEGIN
         JOIN tournament_stages ts ON ts.tournament_id = t.id
         WHERE ts.id = NEW.tournament_stage_id;
 
-        IF tournament_status NOT IN ('RegistrationClosed', 'Live') THEN
-            RAISE EXCEPTION 'Tournament status must be Registration Closed or Live' USING ERRCODE = '22000';
+        IF tournament_status NOT IN ('Setup', 'RegistrationOpen', 'RegistrationClosed', 'Live') THEN
+            RAISE EXCEPTION 'Tournament status must be Setup, Registration Open, Registration Closed or Live' USING ERRCODE = '22000';
         END IF;
     END IF;
 
