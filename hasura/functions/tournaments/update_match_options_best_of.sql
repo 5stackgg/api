@@ -33,15 +33,11 @@ BEGIN
     FROM tournament_stages ts WHERE ts.id = _stage_id;
 
     -- Determine effective best_of for decider matches
+    -- Only apply a different BO if the stage explicitly has decider_best_of set
     IF _decider_best_of IS NOT NULL THEN
         _effective_best_of := _decider_best_of;
     ELSE
-        -- Legacy behavior: only BO1 -> BO3, others unchanged
-        IF match_options_record.best_of = 1 THEN
-            _effective_best_of := 3;
-        ELSE
-            RETURN original_match_options_id;
-        END IF;
+        RETURN original_match_options_id;
     END IF;
 
     -- If target BO equals current BO, no clone needed

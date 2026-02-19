@@ -160,6 +160,30 @@ BEGIN
             VALUES (wb_rounds + 1, _stage_id, 1, g, 'WB', grand_finals_match_options_id)
             RETURNING id INTO gf_id;
 
+            -- Apply decider to WB Final (last WB round)
+            IF grand_finals_match_options_id IS NOT NULL THEN
+                UPDATE tournament_brackets
+                SET match_options_id = grand_finals_match_options_id
+                WHERE tournament_stage_id = _stage_id
+                  AND path = 'WB'
+                  AND round = wb_rounds
+                  AND "group" = g;
+
+                RAISE NOTICE 'DE decider: applied decider match_options to WB Final (round %, group %)', wb_rounds, g;
+            END IF;
+
+            -- Apply decider to LB Final (last LB round)
+            IF lb_rounds > 0 AND grand_finals_match_options_id IS NOT NULL THEN
+                UPDATE tournament_brackets
+                SET match_options_id = grand_finals_match_options_id
+                WHERE tournament_stage_id = _stage_id
+                  AND path = 'LB'
+                  AND round = lb_rounds
+                  AND "group" = loser_group_num;
+
+                RAISE NOTICE 'DE decider: applied decider match_options to LB Final (round %, group %)', lb_rounds, loser_group_num;
+            END IF;
+
             IF lb_rounds > 0 THEN
                 SELECT id INTO lb_final_id
                 FROM tournament_brackets
