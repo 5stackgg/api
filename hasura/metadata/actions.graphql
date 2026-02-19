@@ -342,6 +342,8 @@ type Query {
     limit: Int
     offset: Int
     exclude_tournaments: Boolean
+    sort_by: String
+    sort_dir: String
   ): LeaderboardResponse!
 }
 
@@ -358,6 +360,7 @@ type LeaderboardEntry {
   player_country: String
   value: Float!
   secondary_value: Float
+  tertiary_value: Float
   matches_played: Int
 }
 

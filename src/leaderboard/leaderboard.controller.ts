@@ -4,18 +4,22 @@ import { PostgresService } from "src/postgres/postgres.service";
 import { CacheService } from "src/cache/cache.service";
 
 const VALID_CATEGORIES = [
-  "highest_elo",
-  "most_elo_gained",
-  "most_kills",
+  "elo",
   "best_kdr",
   "best_win_rate",
-  "most_matches",
   "highest_hs_pct",
 ] as const;
 
 type LeaderboardCategory = (typeof VALID_CATEGORIES)[number];
 
 const VALID_MATCH_TYPES = ["Competitive", "Wingman", "Duel"] as const;
+
+const VALID_SORT_FIELDS = [
+  "value",
+  "secondary_value",
+  "tertiary_value",
+  "matches_played",
+] as const;
 
 const MAX_RESULTS = 500;
 
@@ -26,6 +30,8 @@ interface LeaderboardArgs {
   limit?: number;
   offset?: number;
   exclude_tournaments?: boolean;
+  sort_by?: string;
+  sort_dir?: string;
 }
 
 interface LeaderboardEntry {
@@ -37,6 +43,7 @@ interface LeaderboardEntry {
   player_country: string | null;
   value: number;
   secondary_value: number | null;
+  tertiary_value: number | null;
   matches_played: number | null;
 }
 
@@ -64,6 +71,8 @@ export class LeaderboardController {
       limit: rawLimit,
       offset: rawOffset,
       exclude_tournaments,
+      sort_by,
+      sort_dir,
     } = args;
 
     if (!VALID_CATEGORIES.includes(category as LeaderboardCategory)) {
@@ -85,7 +94,7 @@ export class LeaderboardController {
     // Cache the full ranked result set (without pagination) so page changes are instant
     const cacheKey = `leaderboard:${category}:${window_days}:${match_type || "all"}:${excludeTournaments ? "no_tourney" : "all"}`;
 
-    const allRows = await this.cache.remember<LeaderboardEntry[]>(
+    let allRows = await this.cache.remember<LeaderboardEntry[]>(
       cacheKey,
       async () => {
         return this.executeQuery(
@@ -97,6 +106,22 @@ export class LeaderboardController {
       },
       300,
     );
+
+    // Apply custom sorting if requested
+    if (
+      sort_by &&
+      VALID_SORT_FIELDS.includes(sort_by as (typeof VALID_SORT_FIELDS)[number])
+    ) {
+      const dir = sort_dir === "asc" ? 1 : -1;
+      const field = sort_by as keyof LeaderboardEntry;
+      allRows = [...allRows].sort((a, b) => {
+        const aVal = (a[field] as number) ?? 0;
+        const bVal = (b[field] as number) ?? 0;
+        return (aVal - bVal) * dir;
+      });
+      // Re-rank after sorting
+      allRows = allRows.map((row, index) => ({ ...row, rank: index + 1 }));
+    }
 
     return {
       __typename: "LeaderboardResponse",
@@ -112,22 +137,12 @@ export class LeaderboardController {
     excludeTournaments: boolean,
   ): Promise<LeaderboardEntry[]> {
     switch (category) {
-      case "highest_elo":
-        return this.queryHighestElo(windowDays, matchType, excludeTournaments);
-      case "most_elo_gained":
-        return this.queryMostEloGained(
-          windowDays,
-          matchType,
-          excludeTournaments,
-        );
-      case "most_kills":
-        return this.queryMostKills(windowDays, matchType, excludeTournaments);
+      case "elo":
+        return this.queryElo(windowDays, matchType, excludeTournaments);
       case "best_kdr":
         return this.queryBestKdr(windowDays, matchType, excludeTournaments);
       case "best_win_rate":
         return this.queryBestWinRate(windowDays, matchType, excludeTournaments);
-      case "most_matches":
-        return this.queryMostMatches(windowDays, matchType, excludeTournaments);
       case "highest_hs_pct":
         return this.queryHighestHsPct(
           windowDays,
@@ -153,13 +168,21 @@ export class LeaderboardController {
         value: Number(row.value),
         secondary_value:
           row.secondary_value != null ? Number(row.secondary_value) : null,
+        tertiary_value:
+          row.tertiary_value != null ? Number(row.tertiary_value) : null,
         matches_played:
           row.matches_played != null ? Number(row.matches_played) : null,
       }),
     );
   }
 
-  private async queryHighestElo(
+  /**
+   * Combined ELO query returning:
+   *   value = Current ELO
+   *   secondary_value = ELO Change (ending - starting ELO)
+   *   matches_played = match count
+   */
+  private async queryElo(
     windowDays: number,
     matchType: string | null,
     excludeTournaments: boolean,
@@ -182,17 +205,11 @@ export class LeaderboardController {
     let sql: string;
 
     if (excludeTournaments) {
-      // pe.current is cumulative and includes tournament effects, so we can't
-      // simply filter records. Instead: get the latest ELO per player, then
-      // subtract the SUM of tournament-match ELO changes to approximate what
-      // each player's rating would be without tournament matches.
       sql = `
-        WITH latest AS (
+        WITH last_elo_raw AS (
           SELECT DISTINCT ON (pe.steam_id)
             pe.steam_id,
-            pe.current,
-            pe.change,
-            pe.type
+            pe.current as raw_current
           FROM player_elo pe
           WHERE 1=1
             ${eloTypeFilter}
@@ -200,161 +217,97 @@ export class LeaderboardController {
           ORDER BY pe.steam_id, pe.created_at DESC
         ),
         tournament_adj AS (
-          SELECT pe.steam_id, pe.type, SUM(pe.change) as tourney_total
+          SELECT pe.steam_id, SUM(pe.change) as tourney_total
           FROM player_elo pe
           WHERE 1=1
             ${eloTypeFilter}
             ${timeFilter}
             AND EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
-          GROUP BY pe.steam_id, pe.type
-        )
-        SELECT
-          l.steam_id,
-          p.name,
-          p.avatar_url,
-          p.country,
-          l.current - COALESCE(ta.tourney_total, 0) as value,
-          l.change as secondary_value,
-          NULL as matches_played
-        FROM latest l
-        JOIN players p ON p.steam_id = l.steam_id
-        LEFT JOIN tournament_adj ta ON ta.steam_id = l.steam_id AND ta.type = l.type
-        ORDER BY value DESC
-        LIMIT ${limitParam}
-      `;
-    } else {
-      sql = `
-        WITH latest_elo AS (
+          GROUP BY pe.steam_id
+        ),
+        first_elo AS (
           SELECT DISTINCT ON (pe.steam_id)
             pe.steam_id,
-            pe.current as value,
-            pe.change as secondary_value
+            pe.current - pe.change as starting_elo
           FROM player_elo pe
           WHERE 1=1
             ${eloTypeFilter}
             ${timeFilter}
-          ORDER BY pe.steam_id, pe.created_at DESC
+          ORDER BY pe.steam_id, pe.created_at ASC
+        ),
+        match_counts AS (
+          SELECT pe.steam_id, COUNT(*) as matches_played
+          FROM player_elo pe
+          WHERE 1=1
+            ${eloTypeFilter}
+            ${timeFilter}
+            ${this.tournamentExclusionFilter("pe.match_id")}
+          GROUP BY pe.steam_id
         )
         SELECT
           le.steam_id,
           p.name,
           p.avatar_url,
           p.country,
-          le.value,
-          le.secondary_value,
-          NULL as matches_played
-        FROM latest_elo le
+          le.raw_current - COALESCE(ta.tourney_total, 0) as value,
+          (le.raw_current - COALESCE(ta.tourney_total, 0)) - fe.starting_elo as secondary_value,
+          NULL as tertiary_value,
+          COALESCE(mc.matches_played, 0) as matches_played
+        FROM last_elo_raw le
+        LEFT JOIN tournament_adj ta ON ta.steam_id = le.steam_id
+        JOIN first_elo fe ON fe.steam_id = le.steam_id
+        LEFT JOIN match_counts mc ON mc.steam_id = le.steam_id
         JOIN players p ON p.steam_id = le.steam_id
-        ORDER BY le.value DESC
+        ORDER BY value DESC
+        LIMIT ${limitParam}
+      `;
+    } else {
+      sql = `
+        WITH last_elo AS (
+          SELECT DISTINCT ON (pe.steam_id)
+            pe.steam_id,
+            pe.current as current_elo
+          FROM player_elo pe
+          WHERE 1=1
+            ${eloTypeFilter}
+            ${timeFilter}
+          ORDER BY pe.steam_id, pe.created_at DESC
+        ),
+        first_elo AS (
+          SELECT DISTINCT ON (pe.steam_id)
+            pe.steam_id,
+            pe.current - pe.change as starting_elo
+          FROM player_elo pe
+          WHERE 1=1
+            ${eloTypeFilter}
+            ${timeFilter}
+          ORDER BY pe.steam_id, pe.created_at ASC
+        ),
+        match_counts AS (
+          SELECT pe.steam_id, COUNT(*) as matches_played
+          FROM player_elo pe
+          WHERE 1=1
+            ${eloTypeFilter}
+            ${timeFilter}
+          GROUP BY pe.steam_id
+        )
+        SELECT
+          le.steam_id,
+          p.name,
+          p.avatar_url,
+          p.country,
+          le.current_elo as value,
+          le.current_elo - fe.starting_elo as secondary_value,
+          NULL as tertiary_value,
+          mc.matches_played
+        FROM last_elo le
+        JOIN first_elo fe ON fe.steam_id = le.steam_id
+        JOIN match_counts mc ON mc.steam_id = le.steam_id
+        JOIN players p ON p.steam_id = le.steam_id
+        ORDER BY value DESC
         LIMIT ${limitParam}
       `;
     }
-
-    const rows = await this.postgres.query<any[]>(sql, params);
-    return this.mapRows(rows);
-  }
-
-  private async queryMostEloGained(
-    windowDays: number,
-    matchType: string | null,
-    excludeTournaments: boolean,
-  ): Promise<LeaderboardEntry[]> {
-    const params: any[] = [];
-    let paramIdx = 1;
-
-    const eloTypeFilter = matchType ? `AND pe.type = $${paramIdx++}` : "";
-    if (matchType) params.push(matchType);
-
-    const timeFilter =
-      windowDays > 0
-        ? `AND pe.created_at >= NOW() - make_interval(days => $${paramIdx++})`
-        : "";
-    if (windowDays > 0) params.push(windowDays);
-
-    const tournamentFilter = excludeTournaments
-      ? this.tournamentExclusionFilter("pe.match_id")
-      : "";
-
-    params.push(MAX_RESULTS);
-    const limitParam = `$${paramIdx++}`;
-
-    const sql = `
-      SELECT
-        pe.steam_id,
-        p.name,
-        p.avatar_url,
-        p.country,
-        SUM(pe.change) as value,
-        NULL as secondary_value,
-        COUNT(*) as matches_played
-      FROM player_elo pe
-      JOIN players p ON p.steam_id = pe.steam_id
-      WHERE 1=1
-        ${eloTypeFilter}
-        ${timeFilter}
-        ${tournamentFilter}
-      GROUP BY pe.steam_id, p.name, p.avatar_url, p.country
-      HAVING COUNT(*) >= 5
-      ORDER BY value DESC
-      LIMIT ${limitParam}
-    `;
-
-    const rows = await this.postgres.query<any[]>(sql, params);
-    return this.mapRows(rows);
-  }
-
-  private async queryMostKills(
-    windowDays: number,
-    matchType: string | null,
-    excludeTournaments: boolean,
-  ): Promise<LeaderboardEntry[]> {
-    const params: any[] = [];
-    let paramIdx = 1;
-
-    const timeFilter =
-      windowDays > 0
-        ? `AND pk.time >= NOW() - make_interval(days => $${paramIdx++})`
-        : "";
-    if (windowDays > 0) params.push(windowDays);
-
-    let matchTypeJoin = "";
-    let matchTypeFilter = "";
-    if (matchType) {
-      matchTypeJoin = `
-        JOIN matches m ON m.id = pk.match_id
-        JOIN match_options mo ON mo.id = m.match_options_id`;
-      matchTypeFilter = `AND mo.type = $${paramIdx++}`;
-      params.push(matchType);
-    }
-
-    const tournamentFilter = excludeTournaments
-      ? this.tournamentExclusionFilter("pk.match_id")
-      : "";
-
-    params.push(MAX_RESULTS);
-    const limitParam = `$${paramIdx++}`;
-
-    const sql = `
-      SELECT
-        pk.attacker_steam_id as steam_id,
-        p.name,
-        p.avatar_url,
-        p.country,
-        COUNT(*) as value,
-        NULL as secondary_value,
-        COUNT(DISTINCT pk.match_id) as matches_played
-      FROM player_kills pk
-      JOIN players p ON p.steam_id = pk.attacker_steam_id
-      ${matchTypeJoin}
-      WHERE pk.attacker_steam_id IS NOT NULL
-        AND pk.attacker_steam_id != pk.attacked_steam_id
-        ${timeFilter}
-        ${matchTypeFilter}
-        ${tournamentFilter}
-      GROUP BY pk.attacker_steam_id, p.name, p.avatar_url, p.country
-      ORDER BY value DESC
-      LIMIT ${limitParam}
-    `;
 
     const rows = await this.postgres.query<any[]>(sql, params);
     return this.mapRows(rows);
@@ -450,6 +403,7 @@ export class LeaderboardController {
           ELSE ROUND((k.kill_count::numeric / d.death_count::numeric), 2)::float
         END as value,
         k.kill_count as secondary_value,
+        COALESCE(d.death_count, 0) as tertiary_value,
         k.match_count as matches_played
       FROM kills k
       LEFT JOIN deaths d ON d.steam_id = k.steam_id
@@ -463,6 +417,13 @@ export class LeaderboardController {
     return this.mapRows(rows);
   }
 
+  /**
+   * Win Rate query returning:
+   *   value = Win rate %
+   *   secondary_value = Wins
+   *   tertiary_value = Losses
+   *   matches_played = Total matches
+   */
   private async queryBestWinRate(
     windowDays: number,
     matchType: string | null,
@@ -511,63 +472,12 @@ export class LeaderboardController {
         p.country,
         ROUND((SUM(pm.won)::numeric / COUNT(*)::numeric) * 100, 2)::float as value,
         SUM(pm.won) as secondary_value,
+        COUNT(*) - SUM(pm.won) as tertiary_value,
         COUNT(*) as matches_played
       FROM player_matches pm
       JOIN players p ON p.steam_id = pm.steam_id
       GROUP BY pm.steam_id, p.name, p.avatar_url, p.country
       HAVING COUNT(*) >= 5
-      ORDER BY value DESC
-      LIMIT ${limitParam}
-    `;
-
-    const rows = await this.postgres.query<any[]>(sql, params);
-    return this.mapRows(rows);
-  }
-
-  private async queryMostMatches(
-    windowDays: number,
-    matchType: string | null,
-    excludeTournaments: boolean,
-  ): Promise<LeaderboardEntry[]> {
-    const params: any[] = [];
-    let paramIdx = 1;
-
-    const timeFilter =
-      windowDays > 0
-        ? `AND m.ended_at >= NOW() - make_interval(days => $${paramIdx++})`
-        : "";
-    if (windowDays > 0) params.push(windowDays);
-
-    const matchTypeFilter = matchType ? `AND mo.type = $${paramIdx++}` : "";
-    if (matchType) params.push(matchType);
-
-    const tournamentFilter = excludeTournaments
-      ? this.tournamentExclusionFilter("m.id")
-      : "";
-
-    params.push(MAX_RESULTS);
-    const limitParam = `$${paramIdx++}`;
-
-    const sql = `
-      SELECT
-        mlp.steam_id,
-        p.name,
-        p.avatar_url,
-        p.country,
-        COUNT(DISTINCT m.id) as value,
-        NULL as secondary_value,
-        NULL as matches_played
-      FROM match_lineup_players mlp
-      JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
-      JOIN matches m ON (m.lineup_1_id = ml.id OR m.lineup_2_id = ml.id)
-      JOIN match_options mo ON mo.id = m.match_options_id
-      JOIN players p ON p.steam_id = mlp.steam_id
-      WHERE m.status = 'Finished'
-        AND mlp.steam_id IS NOT NULL
-        ${timeFilter}
-        ${matchTypeFilter}
-        ${tournamentFilter}
-      GROUP BY mlp.steam_id, p.name, p.avatar_url, p.country
       ORDER BY value DESC
       LIMIT ${limitParam}
     `;
@@ -615,6 +525,7 @@ export class LeaderboardController {
         p.country,
         ROUND((SUM(CASE WHEN pk.headshot THEN 1 ELSE 0 END)::numeric / COUNT(*)::numeric) * 100, 2)::float as value,
         COUNT(*) as secondary_value,
+        NULL as tertiary_value,
         COUNT(DISTINCT pk.match_id) as matches_played
       FROM player_kills pk
       JOIN players p ON p.steam_id = pk.attacker_steam_id
