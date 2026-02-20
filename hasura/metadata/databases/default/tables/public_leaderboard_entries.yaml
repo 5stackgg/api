@@ -1,0 +1,18 @@
+table:
+  name: leaderboard_entries
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - player_steam_id
+        - player_name
+        - player_avatar_url
+        - player_country
+        - value
+        - secondary_value
+        - tertiary_value
+        - matches_played
+      filter: {}
+      allow_aggregations: true
+    comment: ""

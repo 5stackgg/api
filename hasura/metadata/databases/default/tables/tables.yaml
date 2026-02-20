@@ -31,6 +31,7 @@
 - "!include public_friends.yaml"
 - "!include public_game_server_nodes.yaml"
 - "!include public_game_versions.yaml"
+- "!include public_leaderboard_entries.yaml"
 - "!include public_lobbies.yaml"
 - "!include public_lobby_players.yaml"
 - "!include public_map_pools.yaml"
