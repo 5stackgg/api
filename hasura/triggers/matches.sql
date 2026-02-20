@@ -218,6 +218,13 @@ BEGIN
         UPDATE servers SET reserved_by_match_id = null WHERE id = _server_id;
     END IF;
 
+    -- Regenerate maps when match_options_id FK changes (e.g. bracket-level override)
+    IF OLD.match_options_id IS DISTINCT FROM NEW.match_options_id
+       AND NEW.status NOT IN ('Veto', 'Live', 'Finished', 'Forfeit', 'Tie', 'Surrendered') THEN
+        DELETE FROM match_maps WHERE match_id = NEW.id;
+        PERFORM setup_match_maps(NEW.id, NEW.match_options_id);
+    END IF;
+
     -- No refresh needed - v_team_stage_results is now a regular view that's always up-to-date
 
 	RETURN NEW;
