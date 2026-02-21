@@ -1,0 +1,8 @@
+function:
+  name: get_leaderboard
+  schema: public
+configuration:
+  exposed_as: query
+  session_argument: null
+permissions:
+  - role: guest

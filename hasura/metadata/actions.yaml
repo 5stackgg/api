@@ -443,14 +443,6 @@ actions:
     permissions:
       - role: administrator
     comment: Write content to file on game server
-  - name: getLeaderboard
-    definition:
-      kind: ""
-      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
-      forward_client_headers: true
-    permissions:
-      - role: guest
-    comment: Get leaderboard rankings by category and time window
 custom_types:
   enums: []
   input_objects:
@@ -504,6 +496,4 @@ custom_types:
     - name: StorageStats
     - name: StorageSummary
     - name: TableSizeInfo
-    - name: LeaderboardResponse
-    - name: LeaderboardEntry
   scalars: []
