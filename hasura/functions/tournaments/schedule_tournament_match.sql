@@ -12,6 +12,8 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      feeders_with_team int := 0;
      winner_id UUID;
      _match_options_id UUID;
+     _round_best_of int;
+     _swiss_match_type text;
  BEGIN
    	IF bracket.match_id IS NOT NULL THEN
    	 RETURN bracket.match_id;
@@ -44,13 +46,52 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      INNER JOIN tournaments t ON t.id = ts.tournament_id
      WHERE tb.id = bracket.id;
 
-     -- Check bracket first (decider overrides), then stage, then tournament
+     -- Check bracket first (organizer overrides), then stage, then tournament
      IF bracket.match_options_id IS NOT NULL THEN
          _match_options_id := bracket.match_options_id;
      ELSIF stage.match_options_id IS NOT NULL THEN
          _match_options_id := stage.match_options_id;
      ELSE
          _match_options_id := tournament.match_options_id;
+     END IF;
+
+     -- Per-round best_of resolution (only when bracket has no custom match_options)
+     IF bracket.match_options_id IS NULL THEN
+         IF stage.type = 'Swiss' THEN
+             -- Swiss: decode group (wins*100+losses) to determine match type
+             DECLARE
+                 _wins int;
+                 _losses int;
+                 _wins_needed int := 3;
+             BEGIN
+                 _wins := (bracket."group" / 100)::int;
+                 _losses := (bracket."group" % 100)::int;
+                 IF _wins = _wins_needed - 1 THEN
+                     _swiss_match_type := 'advancement';
+                 ELSIF _losses = _wins_needed - 1 THEN
+                     _swiss_match_type := 'elimination';
+                 ELSE
+                     _swiss_match_type := 'regular';
+                 END IF;
+                 _round_best_of := get_bracket_best_of(stage.id, _swiss_match_type, bracket.round);
+             END;
+         ELSE
+             _round_best_of := get_bracket_best_of(stage.id, bracket.path, bracket.round);
+         END IF;
+
+         -- If round best_of differs from the resolved match_options, clone with new best_of
+         IF _round_best_of IS NOT NULL THEN
+             DECLARE
+                 _current_best_of int;
+             BEGIN
+                 SELECT mo.best_of INTO _current_best_of
+                 FROM match_options mo WHERE mo.id = _match_options_id;
+
+                 IF _current_best_of IS DISTINCT FROM _round_best_of THEN
+                     _match_options_id := clone_match_options_with_best_of(_match_options_id, _round_best_of);
+                 END IF;
+             END;
+         END IF;
      END IF;
 
      -- Create the match first
