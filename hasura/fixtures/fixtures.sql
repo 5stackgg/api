@@ -951,8 +951,8 @@ BEGIN
       now() - interval '7 days'
     );
 
-    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id)
-    VALUES (t2_stage_id, tournament_ids[2], 'SingleElimination', 1, 4, 8, t2_options_id);
+    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id, third_place_match, decider_best_of)
+    VALUES (t2_stage_id, tournament_ids[2], 'SingleElimination', 1, 4, 8, t2_options_id, true, 1);
 
     -- Register all 6 teams
     FOR t IN 1..6 LOOP
@@ -1286,8 +1286,8 @@ BEGIN
       now() - interval '2 days'
     );
 
-    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id)
-    VALUES (t3_stage_id, tournament_ids[3], 'SingleElimination', 1, 4, 16, t3_options_id);
+    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id, default_best_of)
+    VALUES (t3_stage_id, tournament_ids[3], 'SingleElimination', 1, 4, 16, t3_options_id, 3);
 
     -- Register 2 teams so far
     FOR t IN 1..2 LOOP
@@ -1367,12 +1367,12 @@ BEGIN
     );
 
     -- Stage 1: Round Robin (2 groups of 4)
-    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id)
-    VALUES (t4_stage1_id, tournament_ids[4], 'RoundRobin', 1, 8, 8, t4_rr_options_id);
+    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id, groups)
+    VALUES (t4_stage1_id, tournament_ids[4], 'RoundRobin', 1, 8, 8, t4_rr_options_id, 2);
 
     -- Stage 2: Double Elimination (top 2 from each group = 4 teams)
-    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id)
-    VALUES (t4_stage2_id, tournament_ids[4], 'DoubleElimination', 2, 4, 4, t4_de_options_id);
+    INSERT INTO tournament_stages (id, tournament_id, type, "order", min_teams, max_teams, match_options_id, default_best_of, settings)
+    VALUES (t4_stage2_id, tournament_ids[4], 'DoubleElimination', 2, 4, 4, t4_de_options_id, 3, '{"round_best_of": {"GF": 5}}');
 
     -- Register all 8 teams
     FOR t IN 1..8 LOOP
