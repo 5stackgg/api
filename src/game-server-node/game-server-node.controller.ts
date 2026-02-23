@@ -197,14 +197,55 @@ export class GameServerNodeController {
     // Set the content length to avoid download issues
     const scriptContent = `
         sudo -i
-        
+
+        echo "Running pre-flight checks..."
+
+        PREFLIGHT_FAILED=0
+
+        for cmd in curl systemctl modprobe; do
+          if ! command -v $cmd &> /dev/null; then
+            echo "ERROR: '$cmd' is not installed."
+            PREFLIGHT_FAILED=1
+          fi
+        done
+
+        check_module() {
+          local mod=$1
+          local fallback_path=$2
+          if modprobe $mod 2>/dev/null; then
+            return 0
+          fi
+          if [ -e "$fallback_path" ]; then
+            echo "Note: '$mod' is built into the kernel (modprobe failed but $fallback_path exists)."
+            return 0
+          fi
+          echo "ERROR: Kernel module '$mod' is not available."
+          echo "  If running in a Proxmox LXC container, run this on the Proxmox HOST:"
+          echo "    modprobe $mod"
+          echo "    echo '$mod' >> /etc/modules-load.d/k3s.conf"
+          echo "  Also ensure the container has: features: nesting=1"
+          echo "  Alternatively, use a VM instead of an LXC container."
+          return 1
+        }
+
+        check_module br_netfilter /proc/sys/net/bridge/bridge-nf-call-iptables || PREFLIGHT_FAILED=1
+        check_module overlay /sys/module/overlay || PREFLIGHT_FAILED=1
+
+        if [ "$PREFLIGHT_FAILED" -eq 1 ]; then
+          echo ""
+          echo "Pre-flight checks failed. Please fix the issues above and re-run the script."
+          exit 1
+        fi
+
+        echo "Pre-flight checks passed."
+
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
         mkdir -p /opt/5stack/serverfiles
         mkdir -p /opt/5stack/custom-plugins
 
         echo "Connecting to secure network";
-      
+
         curl -fsSL https://tailscale.com/install.sh | sh
 
         if [ -d "/etc/sysctl.d" ]; then
@@ -214,6 +255,12 @@ export class GameServerNodeController {
           if ! grep -q "^net.ipv6.conf.all.forwarding = 1" /etc/sysctl.d/99-tailscale.conf; then
             echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
           fi
+          if ! grep -q "^net.bridge.bridge-nf-call-iptables = 1" /etc/sysctl.d/99-tailscale.conf; then
+            echo 'net.bridge.bridge-nf-call-iptables = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+          fi
+          if ! grep -q "^net.bridge.bridge-nf-call-ip6tables = 1" /etc/sysctl.d/99-tailscale.conf; then
+            echo 'net.bridge.bridge-nf-call-ip6tables = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+          fi
           sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
         else
           if ! grep -q "^net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
@@ -221,6 +268,12 @@ export class GameServerNodeController {
           fi
           if ! grep -q "^net.ipv6.conf.all.forwarding = 1" /etc/sysctl.conf; then
             echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.conf
+          fi
+          if ! grep -q "^net.bridge.bridge-nf-call-iptables = 1" /etc/sysctl.conf; then
+            echo 'net.bridge.bridge-nf-call-iptables = 1' | sudo tee -a /etc/sysctl.conf
+          fi
+          if ! grep -q "^net.bridge.bridge-nf-call-ip6tables = 1" /etc/sysctl.conf; then
+            echo 'net.bridge.bridge-nf-call-ip6tables = 1' | sudo tee -a /etc/sysctl.conf
           fi
           sudo sysctl -p /etc/sysctl.conf
         fi
