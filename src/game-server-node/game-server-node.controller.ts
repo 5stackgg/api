@@ -16,6 +16,7 @@ import { EventPattern } from "@nestjs/microservices";
 import { NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
+import { MarkGameServerNodeOnline } from "./jobs/MarkGameServerNodeOnline";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { game_server_nodes_set_input } from "generated/schema";
 
@@ -73,7 +74,7 @@ export class GameServerNodeController {
       );
     }
 
-    await this.gameServerNodeService.updateStatus(
+    const result = await this.gameServerNodeService.updateStatus(
       payload.node,
       payload.nodeIP,
       payload.lanIP,
@@ -87,6 +88,22 @@ export class GameServerNodeController {
       payload.nodeStats.nvidiaGPU,
       "Online",
     );
+
+    if (result?.previousStatus === "Offline") {
+      await this.nodeOfflineQueue.add(
+        MarkGameServerNodeOnline.name,
+        {
+          node: payload.node,
+          label: result.label,
+          offlineAt: result.offlineAt,
+        },
+        {
+          attempts: 1,
+          removeOnFail: false,
+          removeOnComplete: true,
+        },
+      );
+    }
 
     if (payload.nodeStats && payload.podStats) {
       await this.gameServerNodeService.captureNodeStats(
