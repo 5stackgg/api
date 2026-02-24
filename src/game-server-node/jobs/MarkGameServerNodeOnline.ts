@@ -19,10 +19,6 @@ export class MarkGameServerNodeOnline extends WorkerHost {
       offlineAt?: string;
     }>,
   ): Promise<void> {
-    if (process.env.DEV) {
-      return;
-    }
-
     const nodeLabel = job.data.label || job.data.node;
     let message = `Game Server Node (${nodeLabel}) is back Online.`;
 
