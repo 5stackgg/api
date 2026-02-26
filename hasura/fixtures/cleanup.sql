@@ -27,6 +27,11 @@ BEGIN
   -- Must delete servers first due to FK constraint (ON DELETE RESTRICT)
   DELETE FROM servers WHERE game_server_node_id LIKE 'fixture-node-%';
   DELETE FROM game_server_nodes WHERE id LIKE 'fixture-node-%';
+  -- Remove fixture-created regions (not LAN, which is created by the panel)
+  DELETE FROM server_regions WHERE value IN (
+    'US East', 'US Central', 'US West', 'South America',
+    'Europe', 'Asia', 'Australia', 'Middle East', 'Africa'
+  );
 
   -- Collect all match IDs that belong to fixture lineups
   SELECT ARRAY(
