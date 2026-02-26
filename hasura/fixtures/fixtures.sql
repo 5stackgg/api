@@ -1783,3 +1783,49 @@ ALTER TABLE tournament_teams ENABLE TRIGGER ALL;
 ALTER TABLE tournament_team_roster ENABLE TRIGGER ALL;
 ALTER TABLE tournament_brackets ENABLE TRIGGER ALL;
 ALTER TABLE match_map_veto_picks ENABLE TRIGGER ALL;
+
+-- ============================================================
+-- Game Server Nodes (one per seeded region)
+-- Inserted AFTER triggers are re-enabled so the
+-- taiud_populate_game_servers trigger auto-creates servers.
+-- Nodes inserted via SQL bypass the heartbeat system, so
+-- status='Online' persists permanently — ideal for dev.
+-- ============================================================
+DO $$
+BEGIN
+  -- Server Regions (required by game_server_nodes FK)
+  INSERT INTO server_regions (value, description, is_lan) VALUES
+    ('US East',       'US - East',       false),
+    ('US Central',    'US - Central',    false),
+    ('US West',       'US - West',       false),
+    ('South America', 'South America',   false),
+    ('Europe',        'Europe',          false),
+    ('Asia',          'Asia',            false),
+    ('Australia',     'Australia',       false),
+    ('Middle East',   'Middle East',     false),
+    ('Africa',        'Africa',          false),
+    ('Lan',           'Lan',             true)
+  ON CONFLICT (value) DO NOTHING;
+
+  INSERT INTO game_server_nodes (id, public_ip, lan_ip, start_port_range, end_port_range, region, status, enabled, label)
+  VALUES
+    ('fixture-node-us-east',      '198.51.100.1'::inet,  NULL, 27015, 27025, 'US East',       'Online', true, 'Fixture US East'),
+    ('fixture-node-us-central',   '198.51.100.2'::inet,  NULL, 27015, 27025, 'US Central',    'Online', true, 'Fixture US Central'),
+    ('fixture-node-us-west',      '198.51.100.3'::inet,  NULL, 27015, 27025, 'US West',       'Online', true, 'Fixture US West'),
+    ('fixture-node-south-america','198.51.100.4'::inet,  NULL, 27015, 27025, 'South America', 'Online', true, 'Fixture South America'),
+    ('fixture-node-europe',       '198.51.100.5'::inet,  NULL, 27015, 27025, 'Europe',        'Online', true, 'Fixture Europe'),
+    ('fixture-node-asia',         '198.51.100.6'::inet,  NULL, 27015, 27025, 'Asia',          'Online', true, 'Fixture Asia'),
+    ('fixture-node-australia',    '198.51.100.7'::inet,  NULL, 27015, 27025, 'Australia',     'Online', true, 'Fixture Australia'),
+    ('fixture-node-middle-east',  '198.51.100.8'::inet,  NULL, 27015, 27025, 'Middle East',   'Online', true, 'Fixture Middle East'),
+    ('fixture-node-africa',       '198.51.100.9'::inet,  NULL, 27015, 27025, 'Africa',        'Online', true, 'Fixture Africa'),
+    ('fixture-node-lan',          '198.51.100.10'::inet, '192.168.1.100'::inet, 27015, 27025, 'Lan', 'Online', true, 'Fixture LAN')
+  ON CONFLICT (id) DO UPDATE SET
+    public_ip        = EXCLUDED.public_ip,
+    lan_ip           = EXCLUDED.lan_ip,
+    start_port_range = EXCLUDED.start_port_range,
+    end_port_range   = EXCLUDED.end_port_range,
+    region           = EXCLUDED.region,
+    status           = EXCLUDED.status,
+    enabled          = EXCLUDED.enabled,
+    label            = EXCLUDED.label;
+END $$;

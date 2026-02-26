@@ -23,6 +23,11 @@ DECLARE
   ];
   match_ids uuid[];
 BEGIN
+  -- Clean up fixture game server nodes and their auto-created servers
+  -- Must delete servers first due to FK constraint (ON DELETE RESTRICT)
+  DELETE FROM servers WHERE game_server_node_id LIKE 'fixture-node-%';
+  DELETE FROM game_server_nodes WHERE id LIKE 'fixture-node-%';
+
   -- Collect all match IDs that belong to fixture lineups
   SELECT ARRAY(
     SELECT DISTINCT m.id FROM matches m
