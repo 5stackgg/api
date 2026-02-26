@@ -150,6 +150,8 @@ export class GameServerNodeService {
         },
         token: true,
         status: true,
+        label: true,
+        offline_at: true,
         lan_ip: true,
         node_ip: true,
         build_id: true,
@@ -179,6 +181,10 @@ export class GameServerNodeService {
       await this.create(undefined, node, status);
       return;
     }
+
+    const previousStatus = game_server_nodes_by_pk.status;
+    const label = game_server_nodes_by_pk.label;
+    const offlineAt = game_server_nodes_by_pk.offline_at;
 
     if (
       game_server_nodes_by_pk.lan_ip !== lanIP ||
@@ -237,6 +243,8 @@ export class GameServerNodeService {
     ) {
       await this.updateCsServer(node);
     }
+
+    return { previousStatus, label, offlineAt };
   }
 
   public async updateIdLabel(nodeId: string) {

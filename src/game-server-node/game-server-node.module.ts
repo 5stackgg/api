@@ -16,6 +16,7 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { GameServerQueues } from "./enums/GameServerQueues";
 import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
+import { MarkGameServerNodeOnline } from "./jobs/MarkGameServerNodeOnline";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "../matches/match-server-middleware/match-server-middleware.middleware";
@@ -34,6 +35,7 @@ import { K8sModule } from "src/k8s/k8s.module";
     CheckGameUpdate,
     GetPluginVersions,
     MarkGameServerNodeOffline,
+    MarkGameServerNodeOnline,
     MarkDedicatedServerOffline,
     CheckServerPluginVersions,
     ...getQueuesProcessors("GameServerNode"),
