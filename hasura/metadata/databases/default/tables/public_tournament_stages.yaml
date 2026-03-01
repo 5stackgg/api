@@ -43,12 +43,14 @@ insert_permissions:
             _eq: true
       columns:
         - decider_best_of
+        - default_best_of
         - groups
         - match_options_id
         - max_teams
         - min_teams
         - order
         - settings
+        - third_place_match
         - tournament_id
         - type
     comment: ""
@@ -57,6 +59,7 @@ select_permissions:
     permission:
       columns:
         - decider_best_of
+        - default_best_of
         - groups
         - id
         - match_options_id
@@ -64,6 +67,7 @@ select_permissions:
         - min_teams
         - order
         - settings
+        - third_place_match
         - tournament_id
         - type
       filter: {}
@@ -74,12 +78,14 @@ update_permissions:
     permission:
       columns:
         - decider_best_of
+        - default_best_of
         - groups
         - match_options_id
         - max_teams
         - min_teams
         - order
         - settings
+        - third_place_match
         - type
       filter:
         tournament:

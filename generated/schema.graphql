@@ -8239,6 +8239,13 @@ type game_versions_variance_fields {
   build_id: Float
 }
 
+input get_leaderboard_args {
+  _category: String
+  _exclude_tournaments: Boolean
+  _match_type: String
+  _window_days: Int
+}
+
 scalar inet
 
 """
@@ -8308,6 +8315,271 @@ input jsonb_comparison_exp {
   _lte: jsonb
   _neq: jsonb
   _nin: [jsonb!]
+}
+
+"""
+columns and relationships of "leaderboard_entries"
+"""
+type leaderboard_entries {
+  matches_played: Int
+  player_avatar_url: String
+  player_country: String
+  player_name: String!
+  player_steam_id: String!
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8!
+}
+
+type leaderboard_entries_aggregate {
+  aggregate: leaderboard_entries_aggregate_fields
+  nodes: [leaderboard_entries!]!
+}
+
+"""
+aggregate fields of "leaderboard_entries"
+"""
+type leaderboard_entries_aggregate_fields {
+  avg: leaderboard_entries_avg_fields
+  count(columns: [leaderboard_entries_select_column!], distinct: Boolean): Int!
+  max: leaderboard_entries_max_fields
+  min: leaderboard_entries_min_fields
+  stddev: leaderboard_entries_stddev_fields
+  stddev_pop: leaderboard_entries_stddev_pop_fields
+  stddev_samp: leaderboard_entries_stddev_samp_fields
+  sum: leaderboard_entries_sum_fields
+  var_pop: leaderboard_entries_var_pop_fields
+  var_samp: leaderboard_entries_var_samp_fields
+  variance: leaderboard_entries_variance_fields
+}
+
+"""aggregate avg on columns"""
+type leaderboard_entries_avg_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
+}
+
+"""
+Boolean expression to filter rows from the table "leaderboard_entries". All fields are combined with a logical 'AND'.
+"""
+input leaderboard_entries_bool_exp {
+  _and: [leaderboard_entries_bool_exp!]
+  _not: leaderboard_entries_bool_exp
+  _or: [leaderboard_entries_bool_exp!]
+  matches_played: Int_comparison_exp
+  player_avatar_url: String_comparison_exp
+  player_country: String_comparison_exp
+  player_name: String_comparison_exp
+  player_steam_id: String_comparison_exp
+  secondary_value: float8_comparison_exp
+  tertiary_value: float8_comparison_exp
+  value: float8_comparison_exp
+}
+
+"""
+input type for incrementing numeric columns in table "leaderboard_entries"
+"""
+input leaderboard_entries_inc_input {
+  matches_played: Int
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+"""
+input type for inserting data into table "leaderboard_entries"
+"""
+input leaderboard_entries_insert_input {
+  matches_played: Int
+  player_avatar_url: String
+  player_country: String
+  player_name: String
+  player_steam_id: String
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+"""aggregate max on columns"""
+type leaderboard_entries_max_fields {
+  matches_played: Int
+  player_avatar_url: String
+  player_country: String
+  player_name: String
+  player_steam_id: String
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+"""aggregate min on columns"""
+type leaderboard_entries_min_fields {
+  matches_played: Int
+  player_avatar_url: String
+  player_country: String
+  player_name: String
+  player_steam_id: String
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+"""
+response of any mutation on the table "leaderboard_entries"
+"""
+type leaderboard_entries_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [leaderboard_entries!]!
+}
+
+"""Ordering options when selecting data from "leaderboard_entries"."""
+input leaderboard_entries_order_by {
+  matches_played: order_by
+  player_avatar_url: order_by
+  player_country: order_by
+  player_name: order_by
+  player_steam_id: order_by
+  secondary_value: order_by
+  tertiary_value: order_by
+  value: order_by
+}
+
+"""
+select columns of table "leaderboard_entries"
+"""
+enum leaderboard_entries_select_column {
+  """column name"""
+  matches_played
+
+  """column name"""
+  player_avatar_url
+
+  """column name"""
+  player_country
+
+  """column name"""
+  player_name
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  secondary_value
+
+  """column name"""
+  tertiary_value
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "leaderboard_entries"
+"""
+input leaderboard_entries_set_input {
+  matches_played: Int
+  player_avatar_url: String
+  player_country: String
+  player_name: String
+  player_steam_id: String
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+"""aggregate stddev on columns"""
+type leaderboard_entries_stddev_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type leaderboard_entries_stddev_pop_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type leaderboard_entries_stddev_samp_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
+}
+
+"""
+Streaming cursor of the table "leaderboard_entries"
+"""
+input leaderboard_entries_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: leaderboard_entries_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input leaderboard_entries_stream_cursor_value_input {
+  matches_played: Int
+  player_avatar_url: String
+  player_country: String
+  player_name: String
+  player_steam_id: String
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+"""aggregate sum on columns"""
+type leaderboard_entries_sum_fields {
+  matches_played: Int
+  secondary_value: float8
+  tertiary_value: float8
+  value: float8
+}
+
+input leaderboard_entries_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: leaderboard_entries_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: leaderboard_entries_set_input
+
+  """filter the rows which have to be updated"""
+  where: leaderboard_entries_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type leaderboard_entries_var_pop_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
+}
+
+"""aggregate var_samp on columns"""
+type leaderboard_entries_var_samp_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
+}
+
+"""aggregate variance on columns"""
+type leaderboard_entries_variance_fields {
+  matches_played: Float
+  secondary_value: Float
+  tertiary_value: Float
+  value: Float
 }
 
 """
@@ -17107,6 +17379,14 @@ type mutation_root {
   delete_game_versions_by_pk(build_id: Int!): game_versions
 
   """
+  delete data from the table: "leaderboard_entries"
+  """
+  delete_leaderboard_entries(
+    """filter the rows which have to be deleted"""
+    where: leaderboard_entries_bool_exp!
+  ): leaderboard_entries_mutation_response
+
+  """
   delete data from the table: "lobbies"
   """
   delete_lobbies(
@@ -18410,6 +18690,22 @@ type mutation_root {
   ): game_versions
 
   """
+  insert data into the table: "leaderboard_entries"
+  """
+  insert_leaderboard_entries(
+    """the rows to be inserted"""
+    objects: [leaderboard_entries_insert_input!]!
+  ): leaderboard_entries_mutation_response
+
+  """
+  insert a single row into the table: "leaderboard_entries"
+  """
+  insert_leaderboard_entries_one(
+    """the row to be inserted"""
+    object: leaderboard_entries_insert_input!
+  ): leaderboard_entries
+
+  """
   insert data into the table: "lobbies"
   """
   insert_lobbies(
@@ -19427,13 +19723,22 @@ type mutation_root {
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
   leaveLineup(match_id: String!): SuccessOutput
 
+  """Load dev fixture data (dev only)"""
+  loadFixtures: SuccessOutput
+
   """logout"""
   logout: SuccessOutput
 
   """Move file or directory on game server"""
   moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
+
+  """Refresh all players in Typesense index"""
+  refreshAllPlayers: SuccessOutput
   registerName(name: String!): SuccessOutput
+
+  """Remove dev fixture data (dev only)"""
+  removeFixtures: SuccessOutput
 
   """Rename file or directory on game server"""
   renameServerItem(new_path: String!, node_id: String!, old_path: String!, server_id: String): SuccessOutput
@@ -20473,6 +20778,28 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [game_versions_updates!]!
   ): [game_versions_mutation_response]
+
+  """
+  update data of the table: "leaderboard_entries"
+  """
+  update_leaderboard_entries(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: leaderboard_entries_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: leaderboard_entries_set_input
+
+    """filter the rows which have to be updated"""
+    where: leaderboard_entries_bool_exp!
+  ): leaderboard_entries_mutation_response
+
+  """
+  update multiples rows of table: "leaderboard_entries"
+  """
+  update_leaderboard_entries_many(
+    """updates to execute, in order"""
+    updates: [leaderboard_entries_updates!]!
+  ): [leaderboard_entries_mutation_response]
 
   """
   update data of the table: "lobbies"
@@ -31988,6 +32315,96 @@ type query_root {
   """Get TimescaleDB statistics"""
   getTimescaleStats: TimescaleStats!
 
+  """
+  execute function "get_leaderboard" which returns "leaderboard_entries"
+  """
+  get_leaderboard(
+    """
+    input parameters for function "get_leaderboard"
+    """
+    args: get_leaderboard_args!
+
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): [leaderboard_entries!]!
+
+  """
+  execute function "get_leaderboard" and query aggregates on result of table type "leaderboard_entries"
+  """
+  get_leaderboard_aggregate(
+    """
+    input parameters for function "get_leaderboard_aggregate"
+    """
+    args: get_leaderboard_args!
+
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): leaderboard_entries_aggregate!
+
+  """
+  fetch data from the table: "leaderboard_entries"
+  """
+  leaderboard_entries(
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): [leaderboard_entries!]!
+
+  """
+  fetch aggregated fields from the table: "leaderboard_entries"
+  """
+  leaderboard_entries_aggregate(
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): leaderboard_entries_aggregate!
+
   """List files in game server directory"""
   listServerFiles(node_id: String!, path: String, server_id: String): FileListResponse!
 
@@ -37513,6 +37930,110 @@ type subscription_root {
     """filter the rows returned"""
     where: game_versions_bool_exp
   ): [game_versions!]!
+
+  """
+  execute function "get_leaderboard" which returns "leaderboard_entries"
+  """
+  get_leaderboard(
+    """
+    input parameters for function "get_leaderboard"
+    """
+    args: get_leaderboard_args!
+
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): [leaderboard_entries!]!
+
+  """
+  execute function "get_leaderboard" and query aggregates on result of table type "leaderboard_entries"
+  """
+  get_leaderboard_aggregate(
+    """
+    input parameters for function "get_leaderboard_aggregate"
+    """
+    args: get_leaderboard_args!
+
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): leaderboard_entries_aggregate!
+
+  """
+  fetch data from the table: "leaderboard_entries"
+  """
+  leaderboard_entries(
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): [leaderboard_entries!]!
+
+  """
+  fetch aggregated fields from the table: "leaderboard_entries"
+  """
+  leaderboard_entries_aggregate(
+    """distinct select on columns"""
+    distinct_on: [leaderboard_entries_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [leaderboard_entries_order_by!]
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): leaderboard_entries_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "leaderboard_entries"
+  """
+  leaderboard_entries_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [leaderboard_entries_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: leaderboard_entries_bool_exp
+  ): [leaderboard_entries!]!
 
   """
   fetch data from the table: "lobbies"
@@ -43169,6 +43690,8 @@ type tournament_stages {
     """filter the rows returned"""
     where: tournament_brackets_bool_exp
   ): tournament_brackets_aggregate!
+  decider_best_of: Int
+  default_best_of: Int!
 
   """An object relationship"""
   e_tournament_stage_type: e_tournament_stage_types!
@@ -43221,6 +43744,7 @@ type tournament_stages {
     """JSON select path"""
     path: String
   ): jsonb
+  third_place_match: Boolean!
 
   """An object relationship"""
   tournament: tournaments!
@@ -43237,7 +43761,23 @@ type tournament_stages_aggregate {
 }
 
 input tournament_stages_aggregate_bool_exp {
+  bool_and: tournament_stages_aggregate_bool_exp_bool_and
+  bool_or: tournament_stages_aggregate_bool_exp_bool_or
   count: tournament_stages_aggregate_bool_exp_count
+}
+
+input tournament_stages_aggregate_bool_exp_bool_and {
+  arguments: tournament_stages_select_column_tournament_stages_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: tournament_stages_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input tournament_stages_aggregate_bool_exp_bool_or {
+  arguments: tournament_stages_select_column_tournament_stages_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: tournament_stages_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input tournament_stages_aggregate_bool_exp_count {
@@ -43298,6 +43838,8 @@ input tournament_stages_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type tournament_stages_avg_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43308,6 +43850,8 @@ type tournament_stages_avg_fields {
 order by avg() on columns of table "tournament_stages"
 """
 input tournament_stages_avg_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43323,6 +43867,8 @@ input tournament_stages_bool_exp {
   _or: [tournament_stages_bool_exp!]
   brackets: tournament_brackets_bool_exp
   brackets_aggregate: tournament_brackets_aggregate_bool_exp
+  decider_best_of: Int_comparison_exp
+  default_best_of: Int_comparison_exp
   e_tournament_stage_type: e_tournament_stage_types_bool_exp
   groups: Int_comparison_exp
   id: uuid_comparison_exp
@@ -43334,6 +43880,7 @@ input tournament_stages_bool_exp {
   results: v_team_stage_results_bool_exp
   results_aggregate: v_team_stage_results_aggregate_bool_exp
   settings: jsonb_comparison_exp
+  third_place_match: Boolean_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
   type: e_tournament_stage_types_enum_comparison_exp
@@ -43374,6 +43921,8 @@ input tournament_stages_delete_key_input {
 input type for incrementing numeric columns in table "tournament_stages"
 """
 input tournament_stages_inc_input {
+  decider_best_of: Int
+  default_best_of: Int
   groups: Int
   max_teams: Int
   min_teams: Int
@@ -43385,6 +43934,8 @@ input type for inserting data into table "tournament_stages"
 """
 input tournament_stages_insert_input {
   brackets: tournament_brackets_arr_rel_insert_input
+  decider_best_of: Int
+  default_best_of: Int
   e_tournament_stage_type: e_tournament_stage_types_obj_rel_insert_input
   groups: Int
   id: uuid
@@ -43395,6 +43946,7 @@ input tournament_stages_insert_input {
   order: Int
   results: v_team_stage_results_arr_rel_insert_input
   settings: jsonb
+  third_place_match: Boolean
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
   type: e_tournament_stage_types_enum
@@ -43402,6 +43954,8 @@ input tournament_stages_insert_input {
 
 """aggregate max on columns"""
 type tournament_stages_max_fields {
+  decider_best_of: Int
+  default_best_of: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -43415,6 +43969,8 @@ type tournament_stages_max_fields {
 order by max() on columns of table "tournament_stages"
 """
 input tournament_stages_max_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   id: order_by
   match_options_id: order_by
@@ -43426,6 +43982,8 @@ input tournament_stages_max_order_by {
 
 """aggregate min on columns"""
 type tournament_stages_min_fields {
+  decider_best_of: Int
+  default_best_of: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -43439,6 +43997,8 @@ type tournament_stages_min_fields {
 order by min() on columns of table "tournament_stages"
 """
 input tournament_stages_min_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   id: order_by
   match_options_id: order_by
@@ -43481,6 +44041,8 @@ input tournament_stages_on_conflict {
 """Ordering options when selecting data from "tournament_stages"."""
 input tournament_stages_order_by {
   brackets_aggregate: tournament_brackets_aggregate_order_by
+  decider_best_of: order_by
+  default_best_of: order_by
   e_tournament_stage_type: e_tournament_stage_types_order_by
   groups: order_by
   id: order_by
@@ -43491,6 +44053,7 @@ input tournament_stages_order_by {
   order: order_by
   results_aggregate: v_team_stage_results_aggregate_order_by
   settings: order_by
+  third_place_match: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
   type: order_by
@@ -43511,6 +44074,12 @@ select columns of table "tournament_stages"
 """
 enum tournament_stages_select_column {
   """column name"""
+  decider_best_of
+
+  """column name"""
+  default_best_of
+
+  """column name"""
   groups
 
   """column name"""
@@ -43532,6 +44101,9 @@ enum tournament_stages_select_column {
   settings
 
   """column name"""
+  third_place_match
+
+  """column name"""
   tournament_id
 
   """column name"""
@@ -43539,9 +44111,27 @@ enum tournament_stages_select_column {
 }
 
 """
+select "tournament_stages_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_stages"
+"""
+enum tournament_stages_select_column_tournament_stages_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  third_place_match
+}
+
+"""
+select "tournament_stages_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_stages"
+"""
+enum tournament_stages_select_column_tournament_stages_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  third_place_match
+}
+
+"""
 input type for updating data in table "tournament_stages"
 """
 input tournament_stages_set_input {
+  decider_best_of: Int
+  default_best_of: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -43549,12 +44139,15 @@ input tournament_stages_set_input {
   min_teams: Int
   order: Int
   settings: jsonb
+  third_place_match: Boolean
   tournament_id: uuid
   type: e_tournament_stage_types_enum
 }
 
 """aggregate stddev on columns"""
 type tournament_stages_stddev_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43565,6 +44158,8 @@ type tournament_stages_stddev_fields {
 order by stddev() on columns of table "tournament_stages"
 """
 input tournament_stages_stddev_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43573,6 +44168,8 @@ input tournament_stages_stddev_order_by {
 
 """aggregate stddev_pop on columns"""
 type tournament_stages_stddev_pop_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43583,6 +44180,8 @@ type tournament_stages_stddev_pop_fields {
 order by stddev_pop() on columns of table "tournament_stages"
 """
 input tournament_stages_stddev_pop_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43591,6 +44190,8 @@ input tournament_stages_stddev_pop_order_by {
 
 """aggregate stddev_samp on columns"""
 type tournament_stages_stddev_samp_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43601,6 +44202,8 @@ type tournament_stages_stddev_samp_fields {
 order by stddev_samp() on columns of table "tournament_stages"
 """
 input tournament_stages_stddev_samp_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43620,6 +44223,8 @@ input tournament_stages_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_stages_stream_cursor_value_input {
+  decider_best_of: Int
+  default_best_of: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -43627,12 +44232,15 @@ input tournament_stages_stream_cursor_value_input {
   min_teams: Int
   order: Int
   settings: jsonb
+  third_place_match: Boolean
   tournament_id: uuid
   type: e_tournament_stage_types_enum
 }
 
 """aggregate sum on columns"""
 type tournament_stages_sum_fields {
+  decider_best_of: Int
+  default_best_of: Int
   groups: Int
   max_teams: Int
   min_teams: Int
@@ -43643,6 +44251,8 @@ type tournament_stages_sum_fields {
 order by sum() on columns of table "tournament_stages"
 """
 input tournament_stages_sum_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43653,6 +44263,12 @@ input tournament_stages_sum_order_by {
 update columns of table "tournament_stages"
 """
 enum tournament_stages_update_column {
+  """column name"""
+  decider_best_of
+
+  """column name"""
+  default_best_of
+
   """column name"""
   groups
 
@@ -43673,6 +44289,9 @@ enum tournament_stages_update_column {
 
   """column name"""
   settings
+
+  """column name"""
+  third_place_match
 
   """column name"""
   tournament_id
@@ -43715,6 +44334,8 @@ input tournament_stages_updates {
 
 """aggregate var_pop on columns"""
 type tournament_stages_var_pop_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43725,6 +44346,8 @@ type tournament_stages_var_pop_fields {
 order by var_pop() on columns of table "tournament_stages"
 """
 input tournament_stages_var_pop_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43733,6 +44356,8 @@ input tournament_stages_var_pop_order_by {
 
 """aggregate var_samp on columns"""
 type tournament_stages_var_samp_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43743,6 +44368,8 @@ type tournament_stages_var_samp_fields {
 order by var_samp() on columns of table "tournament_stages"
 """
 input tournament_stages_var_samp_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
@@ -43751,6 +44378,8 @@ input tournament_stages_var_samp_order_by {
 
 """aggregate variance on columns"""
 type tournament_stages_variance_fields {
+  decider_best_of: Float
+  default_best_of: Float
   groups: Float
   max_teams: Float
   min_teams: Float
@@ -43761,6 +44390,8 @@ type tournament_stages_variance_fields {
 order by variance() on columns of table "tournament_stages"
 """
 input tournament_stages_variance_order_by {
+  decider_best_of: order_by
+  default_best_of: order_by
   groups: order_by
   max_teams: order_by
   min_teams: order_by
