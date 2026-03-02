@@ -4,6 +4,7 @@ import { Job } from "bullmq";
 import { HasuraService } from "../../hasura/hasura.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { NotificationsService } from "../../notifications/notifications.service";
+import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 
 @UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkGameServerNodeOffline extends WorkerHost {
@@ -39,6 +40,6 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       title: "Game Server Node Offline",
       role: "administrator",
       entity_id: job.data.node,
-    });
+    }, undefined, DISCORD_COLORS.RED);
   }
 }

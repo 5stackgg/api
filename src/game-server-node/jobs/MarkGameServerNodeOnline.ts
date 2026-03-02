@@ -3,6 +3,7 @@ import { GameServerQueues } from "../enums/GameServerQueues";
 import { Job } from "bullmq";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { NotificationsService } from "../../notifications/notifications.service";
+import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 
 @UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkGameServerNodeOnline extends WorkerHost {
@@ -36,6 +37,6 @@ export class MarkGameServerNodeOnline extends WorkerHost {
       title: "Game Server Node Online",
       role: "administrator",
       entity_id: job.data.node,
-    });
+    }, undefined, DISCORD_COLORS.GREEN);
   }
 }

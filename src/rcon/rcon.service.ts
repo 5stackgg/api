@@ -3,6 +3,7 @@ import { Rcon as RconClient } from "rcon-client";
 import { HasuraService } from "../hasura/hasura.service";
 import { EncryptionService } from "../encryption/encryption.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { DISCORD_COLORS } from "../notifications/utilities/constants";
 import { TypeSenseService } from "../type-sense/type-sense.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { CacheService } from "../cache/cache.service";
@@ -153,7 +154,7 @@ export class RconService {
           title: "Dedicated Server RCON Error",
           role: "administrator",
           entity_id: serverId,
-        });
+        }, undefined, DISCORD_COLORS.RED);
       }
       return;
     }

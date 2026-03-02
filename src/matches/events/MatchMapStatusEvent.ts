@@ -1,10 +1,25 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 import { e_match_map_status_enum } from "../../../generated";
+import { HasuraService } from "../../hasura/hasura.service";
+import { MatchAssistantService } from "../match-assistant/match-assistant.service";
+import { Logger } from "@nestjs/common";
+import { ChatService } from "../../chat/chat.service";
+import { NotificationsService } from "../../notifications/notifications.service";
 
 export default class MatchMapStatusEvent extends MatchEventProcessor<{
   status: e_match_map_status_enum;
   winning_lineup_id?: string;
 }> {
+  constructor(
+    logger: Logger,
+    hasura: HasuraService,
+    matchAssistant: MatchAssistantService,
+    chat: ChatService,
+    private readonly notifications: NotificationsService,
+  ) {
+    super(logger, hasura, matchAssistant, chat);
+  }
+
   public async process() {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
@@ -40,6 +55,10 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
         },
       },
     });
+
+    if (this.data.status === "Paused") {
+      void this.notifications.sendMatchMapPauseNotification(this.matchId);
+    }
 
     if (isFinished) {
       if (update_match_maps_by_pk.match.current_match_map_id !== null) {
