@@ -110,6 +110,20 @@ insert_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - match_options_id
         - name
         - start
@@ -145,6 +159,20 @@ insert_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - match_options_id
         - name
         - start
@@ -179,6 +207,20 @@ insert_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - match_options_id
         - name
         - start
@@ -215,6 +257,20 @@ insert_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - match_options_id
         - name
         - start
@@ -247,6 +303,20 @@ insert_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - match_options_id
         - name
         - start
@@ -280,6 +350,20 @@ insert_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - match_options_id
         - name
         - start
@@ -291,6 +375,20 @@ select_permissions:
         - created_at
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - id
         - match_options_id
         - name
@@ -318,6 +416,20 @@ select_permissions:
         - created_at
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - id
         - match_options_id
         - name
@@ -348,6 +460,20 @@ update_permissions:
       columns:
         - description
         - discord_notifications_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - name
         - start
         - status

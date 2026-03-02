@@ -1530,7 +1530,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'GameNodeStatus' | 'GameUpdate' | 'MatchSupport' | 'NameChangeRequest'
+export type e_notification_types_enum = 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'GameNodeStatus' | 'GameUpdate' | 'MatchStatusChange' | 'MatchSupport' | 'NameChangeRequest'
 
 
 /** aggregate max on columns */
@@ -12879,6 +12879,21 @@ export interface tournaments {
     can_start: (Scalars['Boolean'] | null)
     created_at: (Scalars['timestamptz'] | null)
     description: (Scalars['String'] | null)
+    discord_notifications_enabled: (Scalars['Boolean'] | null)
+    discord_notify_Canceled: (Scalars['Boolean'] | null)
+    discord_notify_Finished: (Scalars['Boolean'] | null)
+    discord_notify_Forfeit: (Scalars['Boolean'] | null)
+    discord_notify_Live: (Scalars['Boolean'] | null)
+    discord_notify_MapPaused: (Scalars['Boolean'] | null)
+    discord_notify_PickingPlayers: (Scalars['Boolean'] | null)
+    discord_notify_Scheduled: (Scalars['Boolean'] | null)
+    discord_notify_Surrendered: (Scalars['Boolean'] | null)
+    discord_notify_Tie: (Scalars['Boolean'] | null)
+    discord_notify_Veto: (Scalars['Boolean'] | null)
+    discord_notify_WaitingForCheckIn: (Scalars['Boolean'] | null)
+    discord_notify_WaitingForServer: (Scalars['Boolean'] | null)
+    discord_role_id: (Scalars['String'] | null)
+    discord_webhook: (Scalars['String'] | null)
     /** An object relationship */
     e_tournament_status: e_tournament_status
     /** A computed field, executes function "tournament_has_min_teams" */
@@ -12965,6 +12980,8 @@ export type tournaments_constraint = 'tournaments_match_options_id_key' | 'tourn
 export interface tournaments_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     description: (Scalars['String'] | null)
+    discord_role_id: (Scalars['String'] | null)
+    discord_webhook: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_options_id: (Scalars['uuid'] | null)
     /** A computed field, executes function "tournament_max_players_per_lineup" */
@@ -12982,6 +12999,8 @@ export interface tournaments_max_fields {
 export interface tournaments_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     description: (Scalars['String'] | null)
+    discord_role_id: (Scalars['String'] | null)
+    discord_webhook: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_options_id: (Scalars['uuid'] | null)
     /** A computed field, executes function "tournament_max_players_per_lineup" */
@@ -13006,7 +13025,15 @@ export interface tournaments_mutation_response {
 
 
 /** select columns of table "tournaments" */
-export type tournaments_select_column = 'created_at' | 'description' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+export type tournaments_select_column = 'created_at' | 'description' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+
+
+/** select "tournaments_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournaments" */
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer'
+
+
+/** select "tournaments_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournaments" */
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer'
 
 
 /** aggregate stddev on columns */
@@ -13054,7 +13081,7 @@ export interface tournaments_sum_fields {
 
 
 /** update columns of table "tournaments" */
-export type tournaments_update_column = 'created_at' | 'description' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+export type tournaments_update_column = 'created_at' | 'description' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
 
 
 /** aggregate var_pop on columns */
@@ -41003,6 +41030,21 @@ export interface tournamentsGenqlSelection{
     can_start?: boolean | number
     created_at?: boolean | number
     description?: boolean | number
+    discord_notifications_enabled?: boolean | number
+    discord_notify_Canceled?: boolean | number
+    discord_notify_Finished?: boolean | number
+    discord_notify_Forfeit?: boolean | number
+    discord_notify_Live?: boolean | number
+    discord_notify_MapPaused?: boolean | number
+    discord_notify_PickingPlayers?: boolean | number
+    discord_notify_Scheduled?: boolean | number
+    discord_notify_Surrendered?: boolean | number
+    discord_notify_Tie?: boolean | number
+    discord_notify_Veto?: boolean | number
+    discord_notify_WaitingForCheckIn?: boolean | number
+    discord_notify_WaitingForServer?: boolean | number
+    discord_role_id?: boolean | number
+    discord_webhook?: boolean | number
     /** An object relationship */
     e_tournament_status?: e_tournament_statusGenqlSelection
     /** A computed field, executes function "tournament_has_min_teams" */
@@ -41154,7 +41196,11 @@ export interface tournaments_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface tournaments_aggregate_bool_exp {count?: (tournaments_aggregate_bool_exp_count | null)}
+export interface tournaments_aggregate_bool_exp {bool_and?: (tournaments_aggregate_bool_exp_bool_and | null),bool_or?: (tournaments_aggregate_bool_exp_bool_or | null),count?: (tournaments_aggregate_bool_exp_count | null)}
+
+export interface tournaments_aggregate_bool_exp_bool_and {arguments: tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournaments_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface tournaments_aggregate_bool_exp_bool_or {arguments: tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournaments_bool_exp | null),predicate: Boolean_comparison_exp}
 
 export interface tournaments_aggregate_bool_exp_count {arguments?: (tournaments_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournaments_bool_exp | null),predicate: Int_comparison_exp}
 
@@ -41204,7 +41250,7 @@ export interface tournaments_avg_order_by {organizer_steam_id?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -41212,13 +41258,15 @@ export interface tournaments_inc_input {organizer_steam_id?: (Scalars['bigint'] 
 
 
 /** input type for inserting data into table "tournaments" */
-export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
+export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
 export interface tournaments_max_fieldsGenqlSelection{
     created_at?: boolean | number
     description?: boolean | number
+    discord_role_id?: boolean | number
+    discord_webhook?: boolean | number
     id?: boolean | number
     match_options_id?: boolean | number
     /** A computed field, executes function "tournament_max_players_per_lineup" */
@@ -41234,13 +41282,15 @@ export interface tournaments_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "tournaments" */
-export interface tournaments_max_order_by {created_at?: (order_by | null),description?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),organizer_steam_id?: (order_by | null),start?: (order_by | null)}
+export interface tournaments_max_order_by {created_at?: (order_by | null),description?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),organizer_steam_id?: (order_by | null),start?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface tournaments_min_fieldsGenqlSelection{
     created_at?: boolean | number
     description?: boolean | number
+    discord_role_id?: boolean | number
+    discord_webhook?: boolean | number
     id?: boolean | number
     match_options_id?: boolean | number
     /** A computed field, executes function "tournament_max_players_per_lineup" */
@@ -41256,7 +41306,7 @@ export interface tournaments_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "tournaments" */
-export interface tournaments_min_order_by {created_at?: (order_by | null),description?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),organizer_steam_id?: (order_by | null),start?: (order_by | null)}
+export interface tournaments_min_order_by {created_at?: (order_by | null),description?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),id?: (order_by | null),match_options_id?: (order_by | null),name?: (order_by | null),organizer_steam_id?: (order_by | null),start?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournaments" */
@@ -41281,7 +41331,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -41289,7 +41339,7 @@ export interface tournaments_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournaments" */
-export interface tournaments_set_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+export interface tournaments_set_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -41349,7 +41399,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournaments_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+export interface tournaments_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -52155,6 +52205,7 @@ export const enumENotificationTypesEnum = {
    DedicatedServerStatus: 'DedicatedServerStatus' as const,
    GameNodeStatus: 'GameNodeStatus' as const,
    GameUpdate: 'GameUpdate' as const,
+   MatchStatusChange: 'MatchStatusChange' as const,
    MatchSupport: 'MatchSupport' as const,
    NameChangeRequest: 'NameChangeRequest' as const
 }
@@ -53908,6 +53959,21 @@ export const enumTournamentsConstraint = {
 export const enumTournamentsSelectColumn = {
    created_at: 'created_at' as const,
    description: 'description' as const,
+   discord_notifications_enabled: 'discord_notifications_enabled' as const,
+   discord_notify_Canceled: 'discord_notify_Canceled' as const,
+   discord_notify_Finished: 'discord_notify_Finished' as const,
+   discord_notify_Forfeit: 'discord_notify_Forfeit' as const,
+   discord_notify_Live: 'discord_notify_Live' as const,
+   discord_notify_MapPaused: 'discord_notify_MapPaused' as const,
+   discord_notify_PickingPlayers: 'discord_notify_PickingPlayers' as const,
+   discord_notify_Scheduled: 'discord_notify_Scheduled' as const,
+   discord_notify_Surrendered: 'discord_notify_Surrendered' as const,
+   discord_notify_Tie: 'discord_notify_Tie' as const,
+   discord_notify_Veto: 'discord_notify_Veto' as const,
+   discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
+   discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const,
+   discord_role_id: 'discord_role_id' as const,
+   discord_webhook: 'discord_webhook' as const,
    id: 'id' as const,
    match_options_id: 'match_options_id' as const,
    name: 'name' as const,
@@ -53916,9 +53982,56 @@ export const enumTournamentsSelectColumn = {
    status: 'status' as const
 }
 
+export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgumentsColumns = {
+   discord_notifications_enabled: 'discord_notifications_enabled' as const,
+   discord_notify_Canceled: 'discord_notify_Canceled' as const,
+   discord_notify_Finished: 'discord_notify_Finished' as const,
+   discord_notify_Forfeit: 'discord_notify_Forfeit' as const,
+   discord_notify_Live: 'discord_notify_Live' as const,
+   discord_notify_MapPaused: 'discord_notify_MapPaused' as const,
+   discord_notify_PickingPlayers: 'discord_notify_PickingPlayers' as const,
+   discord_notify_Scheduled: 'discord_notify_Scheduled' as const,
+   discord_notify_Surrendered: 'discord_notify_Surrendered' as const,
+   discord_notify_Tie: 'discord_notify_Tie' as const,
+   discord_notify_Veto: 'discord_notify_Veto' as const,
+   discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
+   discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const
+}
+
+export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumentsColumns = {
+   discord_notifications_enabled: 'discord_notifications_enabled' as const,
+   discord_notify_Canceled: 'discord_notify_Canceled' as const,
+   discord_notify_Finished: 'discord_notify_Finished' as const,
+   discord_notify_Forfeit: 'discord_notify_Forfeit' as const,
+   discord_notify_Live: 'discord_notify_Live' as const,
+   discord_notify_MapPaused: 'discord_notify_MapPaused' as const,
+   discord_notify_PickingPlayers: 'discord_notify_PickingPlayers' as const,
+   discord_notify_Scheduled: 'discord_notify_Scheduled' as const,
+   discord_notify_Surrendered: 'discord_notify_Surrendered' as const,
+   discord_notify_Tie: 'discord_notify_Tie' as const,
+   discord_notify_Veto: 'discord_notify_Veto' as const,
+   discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
+   discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const
+}
+
 export const enumTournamentsUpdateColumn = {
    created_at: 'created_at' as const,
    description: 'description' as const,
+   discord_notifications_enabled: 'discord_notifications_enabled' as const,
+   discord_notify_Canceled: 'discord_notify_Canceled' as const,
+   discord_notify_Finished: 'discord_notify_Finished' as const,
+   discord_notify_Forfeit: 'discord_notify_Forfeit' as const,
+   discord_notify_Live: 'discord_notify_Live' as const,
+   discord_notify_MapPaused: 'discord_notify_MapPaused' as const,
+   discord_notify_PickingPlayers: 'discord_notify_PickingPlayers' as const,
+   discord_notify_Scheduled: 'discord_notify_Scheduled' as const,
+   discord_notify_Surrendered: 'discord_notify_Surrendered' as const,
+   discord_notify_Tie: 'discord_notify_Tie' as const,
+   discord_notify_Veto: 'discord_notify_Veto' as const,
+   discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
+   discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const,
+   discord_role_id: 'discord_role_id' as const,
+   discord_webhook: 'discord_webhook' as const,
    id: 'id' as const,
    match_options_id: 'match_options_id' as const,
    name: 'name' as const,

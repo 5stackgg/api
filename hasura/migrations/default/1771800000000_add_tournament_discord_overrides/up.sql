@@ -1,0 +1,15 @@
+ALTER TABLE public.tournaments
+  ADD COLUMN discord_webhook text,
+  ADD COLUMN discord_role_id text,
+  ADD COLUMN "discord_notify_PickingPlayers" boolean,
+  ADD COLUMN "discord_notify_Scheduled" boolean,
+  ADD COLUMN "discord_notify_WaitingForCheckIn" boolean,
+  ADD COLUMN "discord_notify_WaitingForServer" boolean,
+  ADD COLUMN "discord_notify_Veto" boolean,
+  ADD COLUMN "discord_notify_Live" boolean,
+  ADD COLUMN "discord_notify_Finished" boolean,
+  ADD COLUMN "discord_notify_Tie" boolean,
+  ADD COLUMN "discord_notify_Canceled" boolean,
+  ADD COLUMN "discord_notify_Forfeit" boolean,
+  ADD COLUMN "discord_notify_Surrendered" boolean,
+  ADD COLUMN "discord_notify_MapPaused" boolean;
