@@ -122,6 +122,21 @@ export class NotificationsService {
               organizers: {
                 steam_id: true,
               },
+              discord_notifications_enabled: true,
+              discord_webhook: true,
+              discord_role_id: true,
+              discord_notify_PickingPlayers: true,
+              discord_notify_Scheduled: true,
+              discord_notify_WaitingForCheckIn: true,
+              discord_notify_WaitingForServer: true,
+              discord_notify_Veto: true,
+              discord_notify_Live: true,
+              discord_notify_Finished: true,
+              discord_notify_Tie: true,
+              discord_notify_Canceled: true,
+              discord_notify_Forfeit: true,
+              discord_notify_Surrendered: true,
+              discord_notify_MapPaused: true,
             },
           },
         },
@@ -129,40 +144,14 @@ export class NotificationsService {
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
 
-      // Fetch tournament discord overrides if this is a tournament match
-      let tournamentOverrides: Record<string, any> | null = null;
-      if (tournament) {
-        const { tournaments_by_pk } = await this.hasura.query({
-          tournaments_by_pk: {
-            __args: { id: tournament.id },
-            discord_notifications_enabled: true,
-            discord_webhook: true,
-            discord_role_id: true,
-            discord_notify_PickingPlayers: true,
-            discord_notify_Scheduled: true,
-            discord_notify_WaitingForCheckIn: true,
-            discord_notify_WaitingForServer: true,
-            discord_notify_Veto: true,
-            discord_notify_Live: true,
-            discord_notify_Finished: true,
-            discord_notify_Tie: true,
-            discord_notify_Canceled: true,
-            discord_notify_Forfeit: true,
-            discord_notify_Surrendered: true,
-            discord_notify_MapPaused: true,
-          },
-        } as any);
-        tournamentOverrides = (tournaments_by_pk as any) ?? null;
-      }
-
       // Check master toggle - if explicitly false, stop
-      if (tournamentOverrides?.discord_notifications_enabled === false) {
+      if (tournament?.discord_notifications_enabled === false) {
         return;
       }
 
       // Resolve whether this status should send a notification
       const tournamentStatusOverride =
-        tournamentOverrides?.[`discord_notify_${newStatus}`] ?? null;
+        tournament?.[`discord_notify_${newStatus}`] ?? null;
 
       if (tournamentStatusOverride !== null) {
         // Tournament has an explicit override for this status
@@ -291,7 +280,7 @@ export class NotificationsService {
         title,
         discordMessage,
         color,
-        tournamentOverrides,
+        tournament,
       );
     } catch (error) {
       this.logger.error(
@@ -319,6 +308,10 @@ export class NotificationsService {
               organizers: {
                 steam_id: true,
               },
+              discord_notifications_enabled: true,
+              discord_webhook: true,
+              discord_role_id: true,
+              discord_notify_MapPaused: true,
             },
           },
         },
@@ -326,29 +319,14 @@ export class NotificationsService {
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
 
-      // Fetch tournament discord overrides if this is a tournament match
-      let tournamentOverrides: Record<string, any> | null = null;
-      if (tournament) {
-        const { tournaments_by_pk } = await this.hasura.query({
-          tournaments_by_pk: {
-            __args: { id: tournament.id },
-            discord_notifications_enabled: true,
-            discord_webhook: true,
-            discord_role_id: true,
-            discord_notify_MapPaused: true,
-          },
-        } as any);
-        tournamentOverrides = (tournaments_by_pk as any) ?? null;
-      }
-
       // Check master toggle - if explicitly false, stop
-      if (tournamentOverrides?.discord_notifications_enabled === false) {
+      if (tournament?.discord_notifications_enabled === false) {
         return;
       }
 
       // Resolve whether MapPaused should send a notification
       const tournamentMapPausedOverride =
-        tournamentOverrides?.discord_notify_MapPaused ?? null;
+        tournament?.discord_notify_MapPaused ?? null;
 
       if (tournamentMapPausedOverride !== null) {
         if (!tournamentMapPausedOverride) {
@@ -428,7 +406,7 @@ export class NotificationsService {
         title,
         discordMessage,
         DISCORD_COLORS.RED,
-        tournamentOverrides,
+        tournament,
       );
     } catch (error) {
       this.logger.error(

@@ -387,8 +387,6 @@ select_permissions:
         - discord_notify_Veto
         - discord_notify_WaitingForCheckIn
         - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
         - id
         - match_options_id
         - name
