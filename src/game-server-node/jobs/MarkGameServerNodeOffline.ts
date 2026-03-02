@@ -3,7 +3,7 @@ import { GameServerQueues } from "../enums/GameServerQueues";
 import { Job } from "bullmq";
 import { HasuraService } from "../../hasura/hasura.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
-import { NotificationsService } from "../../notifications/notifications.service";
+import { NotificationsService, DISCORD_COLORS } from "../../notifications/notifications.service";
 
 @UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkGameServerNodeOffline extends WorkerHost {
@@ -39,6 +39,6 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       title: "Game Server Node Offline",
       role: "administrator",
       entity_id: job.data.node,
-    });
+    }, undefined, DISCORD_COLORS.RED);
   }
 }

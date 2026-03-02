@@ -19,7 +19,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
 import { PostgresService } from "src/postgres/postgres.service";
-import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationsService, DISCORD_COLORS } from "../notifications/notifications.service";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
@@ -694,7 +694,7 @@ export class MatchesController {
       title: "Match Assistanced Required",
       role: "match_organizer",
       entity_id: data.match_id,
-    });
+    }, undefined, DISCORD_COLORS.RED);
 
     return {
       success: true,

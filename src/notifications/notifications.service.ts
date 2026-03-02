@@ -22,7 +22,7 @@ const STATUS_LABELS: Record<string, string> = {
   Surrendered: "Surrendered",
 };
 
-const DISCORD_COLORS = {
+export const DISCORD_COLORS = {
   GREEN: 0x2d6644,
   RED: 0xd7463d,
   GRAY: 0x95a5a6,
@@ -69,6 +69,7 @@ export class NotificationsService {
         variables?: Record<string, any>;
       };
     }>,
+    color?: number,
   ) {
     const { settings_by_pk: discord_support_webhook } = await this.hasura.query(
       {
@@ -105,15 +106,17 @@ export class NotificationsService {
 
     if (discord_support_webhook?.value) {
       try {
+        const description = new TurndownService().turndown(notification.message);
+        const content = discord_role_id?.value ? `<@&${discord_role_id.value}>` : undefined;
+
         await fetch(discord_support_webhook.value, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            content: new TurndownService().turndown(
-              `${discord_role_id ? ` <@&${discord_role_id.value}> ` : ""} ${notification.message}`,
-            ),
+            ...(content && { content }),
+            embeds: [{ title: notification.title, description, color: color ?? DISCORD_COLORS.GRAY }],
             username: "5stack",
           }),
         });
