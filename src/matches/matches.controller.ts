@@ -691,12 +691,17 @@ export class MatchesController {
       };
     }
 
-    void this.notifications.send("MatchSupport", {
-      message: `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
-      title: "Match Assistanced Required",
-      role: "match_organizer",
-      entity_id: data.match_id,
-    }, undefined, DISCORD_COLORS.RED);
+    void this.notifications.send(
+      "MatchSupport",
+      {
+        message: `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
+        title: "Match Assistanced Required",
+        role: "match_organizer",
+        entity_id: data.match_id,
+      },
+      undefined,
+      DISCORD_COLORS.RED,
+    );
 
     return {
       success: true,

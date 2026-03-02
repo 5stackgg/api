@@ -56,7 +56,8 @@ export class BrandingService {
 
     return {
       stream,
-      contentType: stat.metaData?.["content-type"] || this.guessContentType(filePath),
+      contentType:
+        stat.metaData?.["content-type"] || this.guessContentType(filePath),
       etag: stat.etag,
     };
   }
