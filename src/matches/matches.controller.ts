@@ -10,6 +10,7 @@ import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/d
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
 import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice-channels/discord-bot-voice-channels.service";
 import {
+  e_match_status_enum,
   match_map_veto_picks_set_input,
   matches_set_input,
   servers_set_input,
@@ -314,8 +315,8 @@ export class MatchesController {
     ) {
       void this.notifications.sendMatchStatusNotification(
         matchId,
-        data.new.status as string,
-        data.old.status as string,
+        data.new.status as e_match_status_enum,
+        data.old.status as e_match_status_enum,
       );
     }
 
