@@ -374,19 +374,6 @@ select_permissions:
       columns:
         - created_at
         - description
-        - discord_notifications_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
         - id
         - match_options_id
         - name

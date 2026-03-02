@@ -7,6 +7,7 @@ import {
   e_match_status_enum,
   e_notification_types_enum,
   e_player_roles_enum,
+  tournaments,
 } from "generated/schema";
 import {
   STATUS_LABELS,
@@ -144,35 +145,12 @@ export class NotificationsService {
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
 
-      // Check master toggle - if explicitly false, stop
-      if (tournament?.discord_notifications_enabled === false) {
-        return;
-      }
-
-      // Resolve whether this status should send a notification
-      const tournamentStatusOverride =
-        tournament?.[`discord_notify_${newStatus}`] ?? null;
-
-      if (tournamentStatusOverride !== null) {
-        // Tournament has an explicit override for this status
-        if (!tournamentStatusOverride) {
-          return;
-        }
-      } else {
-        // Fall back to global setting
-        const { settings_by_pk: statusSetting } = await this.hasura.query({
-          settings_by_pk: {
-            __args: {
-              name: `discord_match_notify_${newStatus}`,
-            },
-            value: true,
-          },
-        });
-
-        if (statusSetting?.value !== "true") {
-          return;
-        }
-      }
+      const shouldNotify = await this.shouldSendNotification(
+        tournament,
+        `discord_notify_${newStatus}`,
+        `discord_match_notify_${newStatus}`,
+      );
+      if (!shouldNotify) return;
 
       const readableStatus = STATUS_LABELS[newStatus] || newStatus;
       const matchUrl = `${this.appConfig.webDomain}/matches/${matchId}`;
@@ -319,33 +297,12 @@ export class NotificationsService {
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
 
-      // Check master toggle - if explicitly false, stop
-      if (tournament?.discord_notifications_enabled === false) {
-        return;
-      }
-
-      // Resolve whether MapPaused should send a notification
-      const tournamentMapPausedOverride =
-        tournament?.discord_notify_MapPaused ?? null;
-
-      if (tournamentMapPausedOverride !== null) {
-        if (!tournamentMapPausedOverride) {
-          return;
-        }
-      } else {
-        const { settings_by_pk: statusSetting } = await this.hasura.query({
-          settings_by_pk: {
-            __args: {
-              name: "discord_match_notify_MapPaused",
-            },
-            value: true,
-          },
-        });
-
-        if (statusSetting?.value !== "true") {
-          return;
-        }
-      }
+      const shouldNotify = await this.shouldSendNotification(
+        tournament,
+        "discord_notify_MapPaused",
+        "discord_match_notify_MapPaused",
+      );
+      if (!shouldNotify) return;
 
       const matchUrl = `${this.appConfig.webDomain}/matches/${matchId}`;
       const title = "Match Alert: Map Paused";
@@ -434,14 +391,37 @@ export class NotificationsService {
     });
   }
 
+  private async shouldSendNotification(
+    tournament: Record<string, any> | null | undefined,
+    overrideKey: string,
+    globalSettingName: string,
+  ): Promise<boolean> {
+    if (tournament?.discord_notifications_enabled === false) {
+      return false;
+    }
+
+    const tournamentOverride = tournament?.[overrideKey] ?? null;
+    if (tournamentOverride !== null) {
+      return !!tournamentOverride;
+    }
+
+    const { settings_by_pk: setting } = await this.hasura.query({
+      settings_by_pk: {
+        __args: { name: globalSettingName },
+        value: true,
+      },
+    });
+    return setting?.value === "true";
+  }
+
   private async sendDiscordMatchNotification(
     title: string,
     message: string,
     color: number,
-    tournamentOverrides?: Record<string, any> | null,
+    tournament?: Pick<tournaments, "discord_webhook" | "discord_role_id"> | null,
   ) {
     // Resolve webhook URL: tournament override > global match webhook > global support webhook
-    let webhookUrl = tournamentOverrides?.discord_webhook || null;
+    let webhookUrl = tournament?.discord_webhook || null;
 
     if (!webhookUrl) {
       const { settings_by_pk: matchWebhookSetting } = await this.hasura.query({
@@ -472,7 +452,7 @@ export class NotificationsService {
     }
 
     // Resolve role ID: tournament override > global match role ID
-    let roleId = tournamentOverrides?.discord_role_id || null;
+    let roleId = tournament?.discord_role_id || null;
 
     if (!roleId) {
       const { settings_by_pk: roleIdSetting } = await this.hasura.query({
