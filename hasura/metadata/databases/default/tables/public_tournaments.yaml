@@ -109,6 +109,7 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
+        - discord_notifications_enabled
         - match_options_id
         - name
         - start
@@ -143,6 +144,7 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
+        - discord_notifications_enabled
         - match_options_id
         - name
         - start
@@ -176,6 +178,7 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
+        - discord_notifications_enabled
         - match_options_id
         - name
         - start
@@ -211,6 +214,7 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
+        - discord_notifications_enabled
         - match_options_id
         - name
         - start
@@ -242,6 +246,7 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
+        - discord_notifications_enabled
         - match_options_id
         - name
         - start
@@ -274,6 +279,7 @@ insert_permissions:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
+        - discord_notifications_enabled
         - match_options_id
         - name
         - start
@@ -284,6 +290,7 @@ select_permissions:
       columns:
         - created_at
         - description
+        - discord_notifications_enabled
         - id
         - match_options_id
         - name
@@ -310,6 +317,7 @@ select_permissions:
       columns:
         - created_at
         - description
+        - discord_notifications_enabled
         - id
         - match_options_id
         - name
@@ -339,6 +347,7 @@ update_permissions:
     permission:
       columns:
         - description
+        - discord_notifications_enabled
         - name
         - start
         - status

@@ -307,6 +307,18 @@ export class MatchesController {
 
     const status = data.new.status;
 
+    if (
+      data.op === "UPDATE" &&
+      data.old.status !== data.new.status &&
+      data.new.status
+    ) {
+      void this.notifications.sendMatchStatusNotification(
+        matchId,
+        data.new.status as string,
+        data.old.status as string,
+      );
+    }
+
     if (data.op === "DELETE") {
       await this.chatService.removeLobby(ChatLobbyType.Match, matchId);
     }
