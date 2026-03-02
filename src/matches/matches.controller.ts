@@ -10,6 +10,7 @@ import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/d
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
 import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice-channels/discord-bot-voice-channels.service";
 import {
+  e_match_status_enum,
   match_map_veto_picks_set_input,
   matches_set_input,
   servers_set_input,
@@ -20,6 +21,7 @@ import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
 import { PostgresService } from "src/postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { DISCORD_COLORS } from "../notifications/utilities/constants";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
@@ -306,6 +308,18 @@ export class MatchesController {
     const matchId = (data.new.id || data.old.id) as string;
 
     const status = data.new.status;
+
+    if (
+      data.op === "UPDATE" &&
+      data.old.status !== data.new.status &&
+      data.new.status
+    ) {
+      void this.notifications.sendMatchStatusNotification(
+        matchId,
+        data.new.status as e_match_status_enum,
+        data.old.status as e_match_status_enum,
+      );
+    }
 
     if (data.op === "DELETE") {
       await this.chatService.removeLobby(ChatLobbyType.Match, matchId);
@@ -682,7 +696,7 @@ export class MatchesController {
       title: "Match Assistanced Required",
       role: "match_organizer",
       entity_id: data.match_id,
-    });
+    }, undefined, DISCORD_COLORS.RED);
 
     return {
       success: true,
