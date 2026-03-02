@@ -48,74 +48,6 @@ type Query {
   dbStats: [DbStats]
 }
 
-type Query {
-  getQueryStats: [QueryStat]!
-}
-
-type Query {
-  getQueryDetail(
-    queryid: String!
-  ): QueryDetail
-}
-
-type Query {
-  getActiveQueries: [ActiveQuery]!
-}
-
-type Query {
-  getTableStats(
-    schemas: [String!]
-  ): [TableStat]!
-}
-
-type Query {
-  getIndexStats(
-    schemas: [String!]
-  ): [IndexStat]!
-}
-
-type Query {
-  getConnectionStats: ConnectionStats!
-}
-
-type Query {
-  getActiveConnections: [ActiveConnection]!
-}
-
-type Query {
-  getDatabaseStats: DatabaseStats!
-}
-
-type Query {
-  getCurrentLocks: [LockInfo]!
-}
-
-type Query {
-  getTableIOStats(
-    schemas: [String!]
-  ): [TableIOStat]!
-}
-
-type Query {
-  getIndexIOStats(
-    schemas: [String!]
-  ): [IndexIOStat]!
-}
-
-type Query {
-  getTimescaleStats: TimescaleStats!
-}
-
-type Query {
-  getSchemas: [String]!
-}
-
-type Query {
-  getStorageStats(
-    schemas: [String!]
-  ): StorageStats!
-}
-
 type Mutation {
   deleteMatch(
     match_id: String!
@@ -145,7 +77,39 @@ type Mutation {
 }
 
 type Query {
+  getActiveConnections: [ActiveConnection]!
+}
+
+type Query {
+  getActiveQueries: [ActiveQuery]!
+}
+
+type Query {
+  getConnectionStats: ConnectionStats!
+}
+
+type Query {
+  getCurrentLocks: [LockInfo]!
+}
+
+type Query {
+  getDatabaseStats: DatabaseStats!
+}
+
+type Query {
   getDedicatedServerInfo: [DedicatedSeverInfo]!
+}
+
+type Query {
+  getIndexIOStats(
+    schemas: [String!]
+  ): [IndexIOStat]!
+}
+
+type Query {
+  getIndexStats(
+    schemas: [String!]
+  ): [IndexStat]!
 }
 
 type Query {
@@ -155,19 +119,47 @@ type Query {
 }
 
 type Query {
+  getQueryDetail(
+    queryid: String!
+  ): QueryDetail
+}
+
+type Query {
+  getQueryStats: [QueryStat]!
+}
+
+type Query {
+  getSchemas: [String]!
+}
+
+type Query {
   getServiceStats: [PodStats]!
+}
+
+type Query {
+  getStorageStats(
+    schemas: [String!]
+  ): StorageStats!
+}
+
+type Query {
+  getTableIOStats(
+    schemas: [String!]
+  ): [TableIOStat]!
+}
+
+type Query {
+  getTableStats(
+    schemas: [String!]
+  ): [TableStat]!
 }
 
 type Mutation {
   getTestUploadLink: GetTestUploadResponse!
 }
 
-type Mutation {
-  loadFixtures: SuccessOutput
-}
-
-type Mutation {
-  removeFixtures: SuccessOutput
+type Query {
+  getTimescaleStats: TimescaleStats!
 }
 
 type Mutation {
@@ -193,6 +185,10 @@ type Query {
 }
 
 type Mutation {
+  loadFixtures: SuccessOutput
+}
+
+type Mutation {
   logout: SuccessOutput
 }
 
@@ -215,10 +211,6 @@ type Mutation {
   ): SuccessOutput
 }
 
-type Mutation {
-  refreshAllPlayers: SuccessOutput
-}
-
 type Query {
   readServerFile(
     node_id: String!
@@ -228,9 +220,17 @@ type Query {
 }
 
 type Mutation {
+  refreshAllPlayers: SuccessOutput
+}
+
+type Mutation {
   registerName(
     name: String!
   ): SuccessOutput
+}
+
+type Mutation {
+  removeFixtures: SuccessOutput
 }
 
 type Mutation {
