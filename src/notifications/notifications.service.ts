@@ -22,6 +22,24 @@ const STATUS_LABELS: Record<string, string> = {
   Surrendered: "Surrendered",
 };
 
+const DISCORD_COLORS = {
+  GREEN: 0x2d6644,
+  RED: 0xd7463d,
+  GRAY: 0x95a5a6,
+} as const;
+
+const STATUS_COLORS: Record<string, number> = {
+  Live: DISCORD_COLORS.GREEN,
+  Finished: DISCORD_COLORS.GREEN,
+  Tie: DISCORD_COLORS.GREEN,
+  Veto: DISCORD_COLORS.GREEN,
+  WaitingForCheckIn: DISCORD_COLORS.GREEN,
+  Canceled: DISCORD_COLORS.RED,
+  Forfeit: DISCORD_COLORS.RED,
+  Surrendered: DISCORD_COLORS.RED,
+  WaitingForServer: DISCORD_COLORS.RED,
+};
+
 @Injectable()
 export class NotificationsService {
   private readonly appConfig: AppConfig;
@@ -254,9 +272,15 @@ export class NotificationsService {
         }
       }
 
+      const discordTournamentContext = tournament
+        ? ` in tournament **${tournament.name}**`
+        : "";
+      const discordMessage = `Match status changed to **${readableStatus}**${discordTournamentContext}. [View Match](${matchUrl})`;
+      const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
       await this.sendDiscordMatchNotification(
         title,
-        message,
+        discordMessage,
+        color,
         tournamentDiscordEnabled,
       );
     } catch (error) {
@@ -355,9 +379,14 @@ export class NotificationsService {
         entity_id: matchId,
       });
 
+      const discordTournamentContext = tournament
+        ? ` in tournament **${tournament.name}**`
+        : "";
+      const discordMessage = `A map has been paused${discordTournamentContext}. [View Match](${matchUrl})`;
       await this.sendDiscordMatchNotification(
         title,
-        message,
+        discordMessage,
+        DISCORD_COLORS.RED,
         tournamentDiscordEnabled,
       );
     } catch (error) {
@@ -389,6 +418,7 @@ export class NotificationsService {
   private async sendDiscordMatchNotification(
     title: string,
     message: string,
+    color: number,
     tournamentDiscordEnabled?: boolean | null,
   ) {
     if (tournamentDiscordEnabled === false) {
@@ -432,10 +462,7 @@ export class NotificationsService {
     });
 
     const roleId = roleIdSetting?.value;
-    const roleMention = roleId ? `<@&${roleId}> ` : "";
-    const content = new TurndownService().turndown(
-      `${roleMention}**${title}**\n${message}`,
-    );
+    const content = roleId ? `<@&${roleId}>` : undefined;
 
     try {
       await fetch(webhookUrl, {
@@ -444,7 +471,8 @@ export class NotificationsService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          content,
+          ...(content && { content }),
+          embeds: [{ title, description: message, color }],
           username: "5stack",
         }),
       });
