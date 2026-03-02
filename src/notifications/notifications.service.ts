@@ -14,8 +14,6 @@ import {
   DISCORD_COLORS,
 } from "./utilities/constants";
 
-export { DISCORD_COLORS } from "./utilities/constants";
-
 @Injectable()
 export class NotificationsService {
   private readonly appConfig: AppConfig;

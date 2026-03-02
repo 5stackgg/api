@@ -20,7 +20,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
 import { PostgresService } from "src/postgres/postgres.service";
-import { NotificationsService, DISCORD_COLORS } from "../notifications/notifications.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { DISCORD_COLORS } from "../notifications/utilities/constants";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";

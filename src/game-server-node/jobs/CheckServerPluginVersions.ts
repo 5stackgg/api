@@ -2,7 +2,8 @@ import { WorkerHost } from "@nestjs/bullmq";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { HasuraService } from "../../hasura/hasura.service";
 import { UseQueue } from "../../utilities/QueueProcessors";
-import { NotificationsService, DISCORD_COLORS } from "../../notifications/notifications.service";
+import { NotificationsService } from "../../notifications/notifications.service";
+import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 
 @UseQueue("GameServerNode", GameServerQueues.PluginVersion)
 export class CheckServerPluginVersions extends WorkerHost {
