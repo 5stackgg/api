@@ -6,8 +6,15 @@ ADD COLUMN IF NOT EXISTS "third_place_match" boolean NOT NULL DEFAULT false;
 
 -- Temporarily disable triggers for backfill (avoids "tournament has been started" error
 -- and prevents unnecessary bracket regeneration)
-ALTER TABLE "public"."tournament_stages" DISABLE TRIGGER tbu_tournament_stages;
-ALTER TABLE "public"."tournament_stages" DISABLE TRIGGER taiu_tournament_stages;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'tbu_tournament_stages') THEN
+        ALTER TABLE "public"."tournament_stages" DISABLE TRIGGER tbu_tournament_stages;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'taiu_tournament_stages') THEN
+        ALTER TABLE "public"."tournament_stages" DISABLE TRIGGER taiu_tournament_stages;
+    END IF;
+END $$;
 
 -- Backfill default_best_of from existing data: use stage match_options best_of, else tournament match_options best_of
 UPDATE tournament_stages ts
@@ -21,5 +28,12 @@ SET default_best_of = COALESCE(
 UPDATE tournament_stages SET third_place_match = true WHERE decider_best_of IS NOT NULL;
 
 -- Re-enable triggers
-ALTER TABLE "public"."tournament_stages" ENABLE TRIGGER tbu_tournament_stages;
-ALTER TABLE "public"."tournament_stages" ENABLE TRIGGER taiu_tournament_stages;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'tbu_tournament_stages') THEN
+        ALTER TABLE "public"."tournament_stages" ENABLE TRIGGER tbu_tournament_stages;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'taiu_tournament_stages') THEN
+        ALTER TABLE "public"."tournament_stages" ENABLE TRIGGER taiu_tournament_stages;
+    END IF;
+END $$;
