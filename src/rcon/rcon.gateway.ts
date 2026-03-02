@@ -42,16 +42,27 @@ export class RconGateway {
           id: data.serverId,
         },
         current_match: {
-          is_tournament_match: true,
+          id: true,
         },
       },
     });
 
-    if (
-      server.current_match?.is_tournament_match &&
-      client.user.role === "match_organizer"
-    ) {
-      return;
+    if (server?.current_match && client.user.role !== "administrator") {
+      const { matches_by_pk } = await this.hasura.query(
+        {
+          matches_by_pk: {
+            __args: {
+              id: server.current_match.id,
+            },
+            is_organizer: true,
+          },
+        },
+        client.user.steam_id,
+      );
+
+      if (!matches_by_pk?.is_organizer) {
+        return;
+      }
     }
 
     const rcon = await this.rconService.connect(data.serverId);
