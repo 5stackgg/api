@@ -1,0 +1,15 @@
+ALTER TABLE public.tournaments
+  DROP COLUMN IF EXISTS discord_webhook,
+  DROP COLUMN IF EXISTS discord_role_id,
+  DROP COLUMN IF EXISTS "discord_notify_PickingPlayers",
+  DROP COLUMN IF EXISTS "discord_notify_Scheduled",
+  DROP COLUMN IF EXISTS "discord_notify_WaitingForCheckIn",
+  DROP COLUMN IF EXISTS "discord_notify_WaitingForServer",
+  DROP COLUMN IF EXISTS "discord_notify_Veto",
+  DROP COLUMN IF EXISTS "discord_notify_Live",
+  DROP COLUMN IF EXISTS "discord_notify_Finished",
+  DROP COLUMN IF EXISTS "discord_notify_Tie",
+  DROP COLUMN IF EXISTS "discord_notify_Canceled",
+  DROP COLUMN IF EXISTS "discord_notify_Forfeit",
+  DROP COLUMN IF EXISTS "discord_notify_Surrendered",
+  DROP COLUMN IF EXISTS "discord_notify_MapPaused";
