@@ -45824,6 +45824,11 @@ type tournaments {
   A computed field, executes function "is_tournament_organizer"
   """
   is_organizer: Boolean
+
+  """
+  A computed field, executes function "joined_tournament"
+  """
+  joined_tournament: Boolean
   match_options_id: uuid!
 
   """
@@ -46158,6 +46163,7 @@ input tournaments_bool_exp {
   has_min_teams: Boolean_comparison_exp
   id: uuid_comparison_exp
   is_organizer: Boolean_comparison_exp
+  joined_tournament: Boolean_comparison_exp
   match_options_id: uuid_comparison_exp
   max_players_per_lineup: Int_comparison_exp
   min_players_per_lineup: Int_comparison_exp
@@ -46372,6 +46378,7 @@ input tournaments_order_by {
   has_min_teams: order_by
   id: order_by
   is_organizer: order_by
+  joined_tournament: order_by
   match_options_id: order_by
   max_players_per_lineup: order_by
   min_players_per_lineup: order_by

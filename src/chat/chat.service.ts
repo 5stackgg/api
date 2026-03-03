@@ -114,6 +114,10 @@ export class ChatService {
           client.user.steam_id,
         );
 
+
+        console.log({
+          tournaments
+        });
         if (tournaments.length === 0) {
           return;
         }

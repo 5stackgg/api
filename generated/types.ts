@@ -46217,6 +46217,9 @@ export default {
             "is_organizer": [
                 3
             ],
+            "joined_tournament": [
+                3
+            ],
             "match_options_id": [
                 2498
             ],
@@ -46750,6 +46753,9 @@ export default {
             "is_organizer": [
                 4
             ],
+            "joined_tournament": [
+                4
+            ],
             "match_options_id": [
                 2499
             ],
@@ -47171,6 +47177,9 @@ export default {
                 1476
             ],
             "is_organizer": [
+                1476
+            ],
+            "joined_tournament": [
                 1476
             ],
             "match_options_id": [
