@@ -396,10 +396,6 @@ export class NotificationsService {
     overrideKey: string,
     globalSettingName: string,
   ): Promise<boolean> {
-    if (tournament?.discord_notifications_enabled === false) {
-      return false;
-    }
-
     const tournamentOverride = tournament?.[overrideKey] ?? null;
     if (tournamentOverride !== null) {
       return !!tournamentOverride;
@@ -430,8 +426,12 @@ export class NotificationsService {
     title: string,
     message: string,
     color: number,
-    tournament?: Pick<tournaments, "discord_webhook" | "discord_role_id"> | null,
+    tournament?: Pick<tournaments, "discord_webhook" | "discord_role_id" | "discord_notifications_enabled"> | null,
   ) {
+    if (tournament?.discord_notifications_enabled === false) {
+      return;
+    }
+
     // Resolve webhook URL: tournament override > global match webhook > global support webhook
     let webhookUrl = tournament?.discord_webhook || null;
 
