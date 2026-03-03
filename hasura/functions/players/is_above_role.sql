@@ -3,7 +3,7 @@ RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
 DECLARE
-    role_order text[] := ARRAY['user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'];
+    role_order text[] := ARRAY['guest', 'user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'];
     me_role_index integer;
     role_index integer;
 BEGIN    
@@ -20,7 +20,7 @@ RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
 DECLARE
-    role_order text[] := ARRAY['user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'];
+    role_order text[] := ARRAY['guest', 'user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'];
     me_role_index integer;
     role_index integer;
 BEGIN    

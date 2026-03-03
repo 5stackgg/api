@@ -113,8 +113,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        type:
-          _neq: Ranked
+        _and:
+          - type:
+              _neq: Ranked
+          - connection_string:
+              _is_null: false
     comment: ""
   - role: match_organizer
     permission:

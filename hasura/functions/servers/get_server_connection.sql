@@ -11,7 +11,7 @@ BEGIN
 
     connection_string := CONCAT('connect ', get_server_host(server));
 
-    IF server.connect_password IS NULL THEN
+    IF NULLIF(server.connect_password, '') IS NULL THEN
         RETURN connection_string;
     END IF;
 
