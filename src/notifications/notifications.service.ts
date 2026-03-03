@@ -81,8 +81,12 @@ export class NotificationsService {
 
     if (discord_support_webhook?.value) {
       try {
-        const description = new TurndownService().turndown(notification.message);
-        const content = discord_role_id?.value ? `<@&${discord_role_id.value}>` : undefined;
+        const description = new TurndownService().turndown(
+          notification.message,
+        );
+        const content = discord_role_id?.value
+          ? `<@&${discord_role_id.value}>`
+          : undefined;
 
         await fetch(discord_support_webhook.value, {
           method: "POST",
@@ -91,7 +95,13 @@ export class NotificationsService {
           },
           body: JSON.stringify({
             ...(content && { content }),
-            embeds: [{ title: notification.title, description, color: color ?? DISCORD_COLORS.GRAY }],
+            embeds: [
+              {
+                title: notification.title,
+                description,
+                color: color ?? DISCORD_COLORS.GRAY,
+              },
+            ],
             username: "5stack",
           }),
         });

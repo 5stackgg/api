@@ -7,9 +7,7 @@ import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 
 @UseQueue("GameServerNode", GameServerQueues.NodeOffline)
 export class MarkGameServerNodeOnline extends WorkerHost {
-  constructor(
-    protected readonly notifications: NotificationsService,
-  ) {
+  constructor(protected readonly notifications: NotificationsService) {
     super();
   }
 
@@ -32,11 +30,16 @@ export class MarkGameServerNodeOnline extends WorkerHost {
       }
     }
 
-    await this.notifications.send("GameNodeStatus", {
-      message,
-      title: "Game Server Node Online",
-      role: "administrator",
-      entity_id: job.data.node,
-    }, undefined, DISCORD_COLORS.GREEN);
+    await this.notifications.send(
+      "GameNodeStatus",
+      {
+        message,
+        title: "Game Server Node Online",
+        role: "administrator",
+        entity_id: job.data.node,
+      },
+      undefined,
+      DISCORD_COLORS.GREEN,
+    );
   }
 }

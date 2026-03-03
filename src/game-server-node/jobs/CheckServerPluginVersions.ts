@@ -97,11 +97,16 @@ export class CheckServerPluginVersions extends WorkerHost {
       return;
     }
 
-    await this.notifications.send("DedicatedServerStatus", {
-      entity_id: "plugin_version",
-      message: `${servers_aggregate.aggregate.count} servers has out of date plugins.`,
-      title: "Plugin Out of Date",
-      role: "administrator",
-    }, undefined, DISCORD_COLORS.RED);
+    await this.notifications.send(
+      "DedicatedServerStatus",
+      {
+        entity_id: "plugin_version",
+        message: `${servers_aggregate.aggregate.count} servers has out of date plugins.`,
+        title: "Plugin Out of Date",
+        role: "administrator",
+      },
+      undefined,
+      DISCORD_COLORS.RED,
+    );
   }
 }
