@@ -82,7 +82,7 @@ export class NotificationsService {
     if (discord_support_webhook?.value) {
       try {
         const description = new TurndownService().turndown(notification.message);
-        const content = this.formatRoleMentions(discord_role_id?.value);
+        const content = discord_role_id?.value ? `<@&${discord_role_id.value}>` : undefined;
 
         await fetch(discord_support_webhook.value, {
           method: "POST",
@@ -104,7 +104,7 @@ export class NotificationsService {
   async sendMatchStatusNotification(
     matchId: string,
     newStatus: e_match_status_enum,
-    oldStatus: e_match_status_enum,
+    _oldStatus: e_match_status_enum,
   ) {
     try {
       const { tournament_brackets } = await this.hasura.query({
@@ -144,13 +144,6 @@ export class NotificationsService {
       });
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
-
-      const shouldNotify = await this.shouldSendNotification(
-        tournament,
-        `discord_notify_${newStatus}`,
-        `discord_match_notify_${newStatus}`,
-      );
-      if (!shouldNotify) return;
 
       const readableStatus = STATUS_LABELS[newStatus] || newStatus;
       const matchUrl = `${this.appConfig.webDomain}/matches/${matchId}`;
@@ -216,9 +209,15 @@ export class NotificationsService {
           entity_id: matchId,
         });
 
-        const discordMessage = `Match status changed to **${readableStatus}**. [View Match](${matchUrl})`;
-        const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
-        await this.sendDiscordMatchNotification(title, discordMessage, color, null);
+        const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
+          null,
+          `discord_match_notify_${newStatus}`,
+        );
+        if (shouldNotifyDiscord) {
+          const discordMessage = `Match status changed to **${readableStatus}**. [View Match](${matchUrl})`;
+          const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
+          await this.sendDiscordMatchNotification(title, discordMessage, color, null);
+        }
         return;
       }
 
@@ -251,15 +250,22 @@ export class NotificationsService {
         entity_id: matchId,
       });
 
-      const discordTournamentContext = ` in tournament **${tournament.name}**`;
-      const discordMessage = `Match status changed to **${readableStatus}**${discordTournamentContext}. [View Match](${matchUrl})`;
-      const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
-      await this.sendDiscordMatchNotification(
-        title,
-        discordMessage,
-        color,
-        tournament,
+      const notifyKey = `discord_notify_${newStatus}` as keyof typeof tournament;
+      const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
+        tournament[notifyKey] as boolean | null | undefined,
+        `discord_match_notify_${newStatus}`,
       );
+      if (shouldNotifyDiscord) {
+        const discordTournamentContext = ` in tournament **${tournament.name}**`;
+        const discordMessage = `Match status changed to **${readableStatus}**${discordTournamentContext}. [View Match](${matchUrl})`;
+        const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
+        await this.sendDiscordMatchNotification(
+          title,
+          discordMessage,
+          color,
+          tournament,
+        );
+      }
     } catch (error) {
       this.logger.error(
         `Error sending match status notification for match ${matchId}`,
@@ -297,13 +303,6 @@ export class NotificationsService {
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
 
-      const shouldNotify = await this.shouldSendNotification(
-        tournament,
-        "discord_notify_MapPaused",
-        "discord_match_notify_MapPaused",
-      );
-      if (!shouldNotify) return;
-
       const matchUrl = `${this.appConfig.webDomain}/matches/${matchId}`;
       const title = "Match Alert: Map Paused";
 
@@ -318,13 +317,19 @@ export class NotificationsService {
           entity_id: matchId,
         });
 
-        const discordMessage = `A map has been paused. [View Match](${matchUrl})`;
-        await this.sendDiscordMatchNotification(
-          title,
-          discordMessage,
-          DISCORD_COLORS.RED,
+        const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
           null,
+          "discord_match_notify_MapPaused",
         );
+        if (shouldNotifyDiscord) {
+          const discordMessage = `A map has been paused. [View Match](${matchUrl})`;
+          await this.sendDiscordMatchNotification(
+            title,
+            discordMessage,
+            DISCORD_COLORS.RED,
+            null,
+          );
+        }
         return;
       }
 
@@ -357,14 +362,20 @@ export class NotificationsService {
         entity_id: matchId,
       });
 
-      const discordTournamentContext = ` in tournament **${tournament.name}**`;
-      const discordMessage = `A map has been paused${discordTournamentContext}. [View Match](${matchUrl})`;
-      await this.sendDiscordMatchNotification(
-        title,
-        discordMessage,
-        DISCORD_COLORS.RED,
-        tournament,
+      const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
+        tournament.discord_notify_MapPaused,
+        "discord_match_notify_MapPaused",
       );
+      if (shouldNotifyDiscord) {
+        const discordTournamentContext = ` in tournament **${tournament.name}**`;
+        const discordMessage = `A map has been paused${discordTournamentContext}. [View Match](${matchUrl})`;
+        await this.sendDiscordMatchNotification(
+          title,
+          discordMessage,
+          DISCORD_COLORS.RED,
+          tournament,
+        );
+      }
     } catch (error) {
       this.logger.error(
         `Error sending match map pause notification for match ${matchId}`,
@@ -391,14 +402,12 @@ export class NotificationsService {
     });
   }
 
-  private async shouldSendNotification(
-    tournament: Record<string, unknown> | null | undefined,
-    overrideKey: string,
+  private async shouldSendDiscordNotification(
+    tournamentOverride: boolean | null | undefined,
     globalSettingName: string,
   ): Promise<boolean> {
-    const tournamentOverride = tournament?.[overrideKey] ?? null;
-    if (tournamentOverride !== null) {
-      return !!tournamentOverride;
+    if (tournamentOverride !== null && tournamentOverride !== undefined) {
+      return tournamentOverride;
     }
 
     const { settings_by_pk: setting } = await this.hasura.query({
@@ -408,6 +417,10 @@ export class NotificationsService {
       },
     });
     return setting?.value === "true";
+  }
+
+  private isValidDiscordWebhookUrl(url: string): boolean {
+    return /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/.+$/.test(url);
   }
 
   private formatRoleMentions(
@@ -460,6 +473,11 @@ export class NotificationsService {
     }
 
     if (!webhookUrl) {
+      return;
+    }
+
+    if (!this.isValidDiscordWebhookUrl(webhookUrl)) {
+      this.logger.warn(`Invalid Discord webhook URL, skipping notification`);
       return;
     }
 
