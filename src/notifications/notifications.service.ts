@@ -392,7 +392,7 @@ export class NotificationsService {
   }
 
   private async shouldSendNotification(
-    tournament: Record<string, any> | null | undefined,
+    tournament: Record<string, unknown> | null | undefined,
     overrideKey: string,
     globalSettingName: string,
   ): Promise<boolean> {
