@@ -226,7 +226,12 @@ export class NotificationsService {
         if (shouldNotifyDiscord) {
           const discordMessage = `Match status changed to **${readableStatus}**. [View Match](${matchUrl})`;
           const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
-          await this.sendDiscordMatchNotification(title, discordMessage, color, null);
+          await this.sendDiscordMatchNotification(
+            title,
+            discordMessage,
+            color,
+            null,
+          );
         }
         return;
       }
@@ -260,7 +265,8 @@ export class NotificationsService {
         entity_id: matchId,
       });
 
-      const notifyKey = `discord_notify_${newStatus}` as keyof typeof tournament;
+      const notifyKey =
+        `discord_notify_${newStatus}` as keyof typeof tournament;
       const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
         tournament[notifyKey] as boolean | null | undefined,
         `discord_match_notify_${newStatus}`,
@@ -430,7 +436,9 @@ export class NotificationsService {
   }
 
   private isValidDiscordWebhookUrl(url: string): boolean {
-    return /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/.+$/.test(url);
+    return /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/.+$/.test(
+      url,
+    );
   }
 
   private formatRoleMentions(
@@ -449,7 +457,10 @@ export class NotificationsService {
     title: string,
     message: string,
     color: number,
-    tournament?: Pick<tournaments, "discord_webhook" | "discord_role_id" | "discord_notifications_enabled"> | null,
+    tournament?: Pick<
+      tournaments,
+      "discord_webhook" | "discord_role_id" | "discord_notifications_enabled"
+    > | null,
   ) {
     if (tournament?.discord_notifications_enabled === false) {
       return;

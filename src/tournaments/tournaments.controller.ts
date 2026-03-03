@@ -13,10 +13,7 @@ export class TournamentsController {
   ) {}
 
   @HasuraAction()
-  public async deleteTournament(data: {
-    user: User;
-    tournament_id: string;
-  }) {
+  public async deleteTournament(data: { user: User; tournament_id: string }) {
     const { tournament_id } = data;
     this.logger.log(`[${tournament_id}] deleting tournament`);
 

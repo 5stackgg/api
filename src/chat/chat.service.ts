@@ -7,7 +7,7 @@ import { RconService } from "../rcon/rcon.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { e_player_roles_enum } from "generated/schema";
-
+import { isRoleAbove } from "src/utilities/isRoleAbove";
 @Injectable()
 export class ChatService {
   private redis: Redis;
@@ -117,6 +117,13 @@ export class ChatService {
         if (tournaments.length === 0) {
           return;
         }
+        break;
+      case ChatLobbyType.Organizer:
+        if (!isRoleAbove(client.user.role, "match_organizer")) {
+          return;
+        }
+
+        break;
 
         break;
       default:
