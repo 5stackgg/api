@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION public.tau_tournaments() RETURNS TRIGGER
     AS $$
 DECLARE
     first_stage_id uuid;
+    bracket_row tournament_brackets%ROWTYPE;
 BEGIN
     IF (
          NEW.status IS DISTINCT FROM OLD.status AND
@@ -28,6 +29,28 @@ BEGIN
         IF first_stage_id IS NOT NULL THEN
             PERFORM seed_stage(first_stage_id);
         END IF;
+    END IF;
+
+    -- When tournament resumes from Paused, schedule all ready brackets
+    IF (
+        NEW.status IS DISTINCT FROM OLD.status AND
+        OLD.status = 'Paused' AND NEW.status = 'Live'
+    ) THEN
+        FOR bracket_row IN
+            SELECT tb.*
+            FROM tournament_brackets tb
+            INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+            WHERE ts.tournament_id = NEW.id
+              AND tb.match_id IS NULL
+              AND tb.finished = false
+              AND tb.tournament_team_id_1 IS NOT NULL
+              AND tb.tournament_team_id_2 IS NOT NULL
+            ORDER BY tb.round, tb.match_number
+        LOOP
+            PERFORM schedule_tournament_match(bracket_row);
+        END LOOP;
+
+        PERFORM calculate_tournament_bracket_start_times(NEW.id);
     END IF;
 
 	RETURN NEW;
@@ -71,8 +94,18 @@ BEGIN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot close tournament registration';
                 END IF;
             WHEN 'Live' THEN
-                IF NOT tournament_has_min_teams(NEW) THEN 
-                    NEW.status = 'CancelledMinTeams';
+                IF OLD.status = 'Paused' THEN
+                    IF NOT can_resume_tournament(OLD, current_setting('hasura.user', true)::json) THEN
+                        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot resume tournament';
+                    END IF;
+                ELSE
+                    IF NOT tournament_has_min_teams(NEW) THEN
+                        NEW.status = 'CancelledMinTeams';
+                    END IF;
+                END IF;
+            WHEN 'Paused' THEN
+                IF NOT can_pause_tournament(OLD, current_setting('hasura.user', true)::json) THEN
+                    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot pause tournament';
                 END IF;
             ELSE
                 -- No action needed for other status changes
