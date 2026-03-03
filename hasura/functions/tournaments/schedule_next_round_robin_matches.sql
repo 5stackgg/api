@@ -20,6 +20,7 @@ DECLARE
     brackets_to_schedule uuid[];
     bracket_id uuid;
     bracket_row tournament_brackets%ROWTYPE;
+    _tournament_status text;
 BEGIN
     -- Get the finished bracket info
     SELECT tb.*, ts.id as stage_id, ts.type as stage_type
@@ -96,15 +97,22 @@ BEGIN
         END IF;
     END IF;
     
-    -- Schedule all brackets that are ready
+    -- Schedule all brackets that are ready (skip if tournament is paused)
     IF array_length(brackets_to_schedule, 1) > 0 THEN
-        FOREACH bracket_id IN ARRAY brackets_to_schedule LOOP
-            SELECT * INTO bracket_row FROM tournament_brackets WHERE id = bracket_id;
-            
-            IF bracket_row.match_id IS NULL THEN
-                PERFORM schedule_tournament_match(bracket_row);
-            END IF;
-        END LOOP;
+        SELECT t.status INTO _tournament_status
+        FROM tournaments t
+        JOIN tournament_stages ts ON ts.tournament_id = t.id
+        WHERE ts.id = stage_id;
+
+        IF _tournament_status != 'Paused' THEN
+            FOREACH bracket_id IN ARRAY brackets_to_schedule LOOP
+                SELECT * INTO bracket_row FROM tournament_brackets WHERE id = bracket_id;
+
+                IF bracket_row.match_id IS NULL THEN
+                    PERFORM schedule_tournament_match(bracket_row);
+                END IF;
+            END LOOP;
+        END IF;
     END IF;
 END;
 $$;
