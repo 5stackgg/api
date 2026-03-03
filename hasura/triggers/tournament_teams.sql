@@ -32,9 +32,10 @@ BEGIN
     SELECT status
     INTO tournament_status
     FROM tournaments
-    WHERE id = NEW.tournament_id;
+    WHERE id = OLD.tournament_id;
 
-    IF tournament_status = 'Cancelled' OR tournament_status = 'CancelledMinTeams' OR tournament_status = 'Finished' THEN
+    -- If tournament doesn't exist (cascade delete), allow the team removal
+    IF tournament_status IS NOT NULL AND tournament_status IN ('Cancelled', 'CancelledMinTeams', 'Finished') THEN
         RAISE EXCEPTION 'Cannot leave an active tournament' USING ERRCODE = '22000';
     END IF;
 

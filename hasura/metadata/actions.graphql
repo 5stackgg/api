@@ -55,6 +55,12 @@ type Mutation {
 }
 
 type Mutation {
+  deleteTournament(
+    tournament_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   deleteServerItem(
     node_id: String!
     server_id: String

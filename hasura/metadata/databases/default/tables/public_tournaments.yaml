@@ -358,10 +358,3 @@ update_permissions:
         is_organizer:
           _eq: true
     comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        is_organizer:
-          _eq: true
-    comment: ""
