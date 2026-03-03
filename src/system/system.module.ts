@@ -17,6 +17,9 @@ import { NotificationsModule } from "src/notifications/notifications.module";
 import { S3Module } from "src/s3/s3.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { K8sModule } from "src/k8s/k8s.module";
+import { ChatModule } from "src/chat/chat.module";
+import { SystemSettingName } from "./enums/SystemSettingName";
+import { ChatService } from "src/chat/chat.service";
 
 @Module({
   imports: [
@@ -27,6 +30,7 @@ import { K8sModule } from "src/k8s/k8s.module";
     NotificationsModule,
     S3Module,
     PostgresModule,
+    ChatModule,
     BullModule.registerQueue({
       name: SystemQueues.Version,
     }),
@@ -46,7 +50,11 @@ import { K8sModule } from "src/k8s/k8s.module";
   controllers: [SystemController],
 })
 export class SystemModule {
-  constructor(@InjectQueue(SystemQueues.Version) queue: Queue) {
+  constructor(
+    @InjectQueue(SystemQueues.Version) queue: Queue,
+    private readonly systemService: SystemService,
+    private readonly chatService: ChatService,
+  ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
@@ -59,6 +67,17 @@ export class SystemModule {
           pattern: "* * * * *",
         },
       },
+    );
+
+    void this.setupSettings();
+  }
+
+  public async setupSettings() {
+    await this.chatService.updateChatMessageTTL(
+      await this.systemService.getSetting<number>(
+        SystemSettingName.ChatMessageTtl,
+        60 * 60,
+      ),
     );
   }
 }
