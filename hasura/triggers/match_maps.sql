@@ -28,16 +28,38 @@ CREATE OR REPLACE FUNCTION public.tbu_match_maps() RETURNS TRIGGER
     AS $$
 DECLARE
     auto_cancel_duration text;
+    _auto_cancel_mode text;
 BEGIN
     auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
 
+    SELECT mo.auto_cancel_mode INTO _auto_cancel_mode
+    FROM matches m
+    INNER JOIN match_options mo ON mo.id = m.match_options_id
+    WHERE m.id = NEW.match_id;
+
     IF NEW.status = 'Warmup' THEN
-        update matches set cancels_at = NOW() + (auto_cancel_duration)::interval where id = NEW.match_id;
+        IF _auto_cancel_mode = 'AutoCancel' THEN
+            UPDATE matches SET cancels_at = NOW() + (auto_cancel_duration)::interval WHERE id = NEW.match_id;
+        END IF;
     END IF;
 
     IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'OverTime') THEN
         NEW.started_at = NOW();
-        update matches set cancels_at = NOW() + INTERVAL '3 hours' where id = NEW.match_id;
+        IF _auto_cancel_mode = 'AutoCancel' THEN
+            UPDATE matches SET cancels_at = NOW() + INTERVAL '3 hours' WHERE id = NEW.match_id;
+        END IF;
+    END IF;
+
+    -- Clear cancels_at when map is paused (prevent unexpected cancellation during long pauses)
+    IF NEW.status = 'Paused' AND OLD.status != 'Paused' THEN
+        UPDATE matches SET cancels_at = NULL WHERE id = NEW.match_id;
+    END IF;
+
+    -- Reset cancels_at when map resumes from pause
+    IF OLD.status = 'Paused' AND (NEW.status = 'Live' OR NEW.status = 'OverTime') THEN
+        IF _auto_cancel_mode = 'AutoCancel' THEN
+            UPDATE matches SET cancels_at = NOW() + INTERVAL '3 hours' WHERE id = NEW.match_id;
+        END IF;
     END IF;
 
     IF NEW.status = 'Finished' THEN
