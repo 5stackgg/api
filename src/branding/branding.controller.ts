@@ -57,10 +57,7 @@ export class BrandingController {
   }
 
   @Get(":type")
-  async serve(
-    @Param("type") type: string,
-    @Res() res: Response,
-  ) {
+  async serve(@Param("type") type: string, @Res() res: Response) {
     if (type !== "logo" && type !== "favicon") {
       throw new NotFoundException();
     }
@@ -81,10 +78,7 @@ export class BrandingController {
   }
 
   @Delete(":type")
-  async remove(
-    @Param("type") type: string,
-    @Req() request: Request,
-  ) {
+  async remove(@Param("type") type: string, @Req() request: Request) {
     this.requireAdmin(request);
 
     if (type !== "logo" && type !== "favicon") {

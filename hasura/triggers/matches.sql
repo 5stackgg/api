@@ -252,6 +252,36 @@ BEGIN
         NEW.status = 'Live';
     END IF;
 
+    IF (
+        OLD.status = 'Canceled' AND NEW.status != 'Canceled' OR
+        OLD.status = 'Forfeit' AND NEW.status != 'Forfeit' OR
+        OLD.status = 'Tie' AND NEW.status != 'Tie' OR
+        OLD.status = 'Surrendered' AND NEW.status != 'Surrendered'
+    ) THEN
+        SELECT map_veto, region_veto INTO has_map_veto, has_region_veto FROM match_options WHERE id = NEW.match_options_id;
+
+        SELECT regions INTO _regions FROM match_options WHERE id = NEW.match_options_id;
+
+        IF has_region_veto AND array_length(_regions, 1) > 1 THEN
+            DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
+        END IF;
+
+        SELECT map_pool_id INTO _map_pool_id FROM match_options WHERE id = NEW.match_options_id;
+
+        SELECT array_agg(map_id) INTO _map_pool FROM _map_pool WHERE map_pool_id = _map_pool_id;
+
+        _map_pool_count = array_length(_map_pool, 1);
+
+        IF has_map_veto AND _map_pool_count > 1 THEN 
+            DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
+            DELETE FROM match_maps WHERE match_id = NEW.id;
+        END IF;
+    END IF;
+
+    IF NEW.status IN ('Setup', 'PickingPlayers', 'WaitingForCheckIn', 'Veto') THEN
+        PERFORM setup_match_maps(NEW.id, NEW.match_options_id);
+    END IF;
+
     IF(NEW.status = 'Live') THEN
         SELECT COUNT(*) INTO _match_map_count FROM match_maps WHERE match_id = NEW.id;
         SELECT * INTO _match_options FROM match_options WHERE id = NEW.match_options_id;
@@ -306,32 +336,6 @@ BEGIN
     IF (NEW.status = 'Canceled' AND OLD.status != 'Canceled')  THEN
         NEW.cancels_at = NOW();
         NEW.ended_at = null;
-    END IF;
-
-    IF (
-        OLD.status = 'Canceled' AND NEW.status != 'Canceled' OR
-        OLD.status = 'Forfeit' AND NEW.status != 'Forfeit' OR
-        OLD.status = 'Tie' AND NEW.status != 'Tie' OR
-        OLD.status = 'Surrendered' AND NEW.status != 'Surrendered'
-    ) THEN
-        SELECT map_veto, region_veto INTO has_map_veto, has_region_veto FROM match_options WHERE id = NEW.match_options_id;
-
-        SELECT regions INTO _regions FROM match_options WHERE id = NEW.match_options_id;
-
-        IF has_region_veto AND array_length(_regions, 1) > 1 THEN
-            DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
-        END IF;
-
-        SELECT map_pool_id INTO _map_pool_id FROM match_options WHERE id = NEW.match_options_id;
-
-        SELECT array_agg(map_id) INTO _map_pool FROM _map_pool WHERE map_pool_id = _map_pool_id;
-
-        _map_pool_count = array_length(_map_pool, 1);
-
-        IF has_map_veto AND _map_pool_count > 1 THEN 
-            DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
-            DELETE FROM match_maps WHERE match_id = NEW.id;
-        END IF;
     END IF;
 
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN
