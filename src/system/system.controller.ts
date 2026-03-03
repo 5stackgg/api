@@ -13,6 +13,8 @@ import { GameServerNodeService } from "src/game-server-node/game-server-node.ser
 import { LoggingService } from "src/k8s/logging/logging.service";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { PassThrough } from "stream";
+import { ChatService } from "src/chat/chat.service";
+import { SystemSettingName } from "./enums/SystemSettingName";
 
 @Controller("system")
 export class SystemController {
@@ -22,6 +24,7 @@ export class SystemController {
     private readonly notifications: NotificationsService,
     private readonly gameServerNodeService: GameServerNodeService,
     private readonly loggingService: LoggingService,
+    private readonly chatService: ChatService,
   ) {}
 
   @Get("healthz")
@@ -262,13 +265,23 @@ export class SystemController {
   @HasuraEvent()
   public async settings(data: HasuraEventData<settings_set_input>) {
     if (
-      (data.new.name === "demo_network_limiter" ||
-        data.old.name === "demo_network_limiter") &&
+      (data.new.name === SystemSettingName.DemoNetworkLimiter ||
+        data.old.name === SystemSettingName.DemoNetworkLimiter) &&
       (data.op === "INSERT" ||
         data.op === "DELETE" ||
         data.new.value !== data.old.value)
     ) {
       await this.gameServerNodeService.updateDemoNetworkLimiters();
+    }
+
+    if (
+      (data.new.name === SystemSettingName.ChatMessageTtl ||
+        data.old.name === SystemSettingName.ChatMessageTtl) &&
+      (data.op === "INSERT" ||
+        data.op === "DELETE" ||
+        data.new.value !== data.old.value)
+    ) {
+      await this.chatService.updateChatMessageTTL(parseInt(data.new.value));
     }
 
     await this.system.updateDefaultOptions();

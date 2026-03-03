@@ -14,6 +14,7 @@ import { TailscaleConfig } from "src/configs/types/TailscaleConfig";
 import { DiscordConfig } from "src/configs/types/DiscordConfig";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { PostgresService } from "src/postgres/postgres.service";
+import { SystemSettingName } from "./enums/SystemSettingName";
 
 @Injectable()
 export class SystemService {
@@ -35,6 +36,30 @@ export class SystemService {
     this.appsClient = kc.makeApiClient(AppsV1Api);
   }
 
+  public async getSetting<T extends string | number | boolean>(
+    name: SystemSettingName,
+    defaultValue: T,
+  ): Promise<T> {
+    const [data] = await this.postgres.query<
+      Array<{
+        value: string;
+      }>
+    >(`SELECT value FROM public.settings WHERE name = $1 LIMIT 1`, [name]);
+
+    if (data?.value !== undefined && data?.value !== null) {
+      // Try to convert the string value to the type of defaultValue
+      if (typeof defaultValue === "boolean") {
+        return (data.value === "true") as T;
+      } else if (typeof defaultValue === "number") {
+        const num = Number(data.value);
+        return (isNaN(num) ? defaultValue : num) as T;
+      } else {
+        return data.value as T;
+      }
+    }
+    return defaultValue;
+  }
+
   public async detectFeatures() {
     while (this.featuresDetected === false) {
       try {
@@ -53,7 +78,7 @@ export class SystemService {
           insert_settings_one: {
             __args: {
               object: {
-                name: "supports_game_server_nodes",
+                name: SystemSettingName.SupportsGameServerNodes,
                 value: supportsGameServerNodes.toString(),
               },
               on_conflict: {
@@ -80,7 +105,7 @@ export class SystemService {
           insert_settings_one: {
             __args: {
               object: {
-                name: "public.supports_discord_bot",
+                name: SystemSettingName.SupportsDiscordBot,
                 value: supportsDiscordBot.toString(),
               },
               on_conflict: {
@@ -103,7 +128,7 @@ export class SystemService {
           insert_settings_one: {
             __args: {
               object: {
-                name: "supports_game_server_version_pinning",
+                name: SystemSettingName.SupportsGameServerVersionPinning,
                 value: supportsGameServerNodeVersionPinning.toString(),
               },
               on_conflict: {
@@ -189,7 +214,7 @@ export class SystemService {
       insert_settings_one: {
         __args: {
           object: {
-            name: "updates",
+            name: SystemSettingName.Updates,
             value: JSON.stringify(hasUpdates),
           },
           on_conflict: {
@@ -409,7 +434,7 @@ export class SystemService {
 
     for (const setting of settings) {
       switch (setting.name) {
-        case "public.default_models":
+        case SystemSettingName.PublicDefaultModels:
           await this.postgres.query(
             `ALTER TABLE "public"."match_options" ALTER COLUMN "default_models" SET DEFAULT ${setting.value === "true" ? true : false}`,
           );
