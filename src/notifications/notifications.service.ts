@@ -82,7 +82,7 @@ export class NotificationsService {
     if (discord_support_webhook?.value) {
       try {
         const description = new TurndownService().turndown(notification.message);
-        const content = discord_role_id?.value ? `<@&${discord_role_id.value}>` : undefined;
+        const content = this.formatRoleMentions(discord_role_id?.value);
 
         await fetch(discord_support_webhook.value, {
           method: "POST",
@@ -414,6 +414,18 @@ export class NotificationsService {
     return setting?.value === "true";
   }
 
+  private formatRoleMentions(
+    roleIds: string | null | undefined,
+  ): string | undefined {
+    if (!roleIds) return undefined;
+    const mentions = roleIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id)
+      .map((id) => `<@&${id}>`);
+    return mentions.length > 0 ? mentions.join(" ") : undefined;
+  }
+
   private async sendDiscordMatchNotification(
     title: string,
     message: string,
@@ -466,7 +478,7 @@ export class NotificationsService {
       roleId = roleIdSetting?.value;
     }
 
-    const content = roleId ? `<@&${roleId}>` : undefined;
+    const content = this.formatRoleMentions(roleId);
 
     try {
       await fetch(webhookUrl, {
