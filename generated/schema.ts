@@ -5773,6 +5773,8 @@ export interface mutation_root {
     deleteMatch: (SuccessOutput | null)
     /** Delete file or directory on game server */
     deleteServerItem: (SuccessOutput | null)
+    /** Delete a tournament and clean up demo files */
+    deleteTournament: (SuccessOutput | null)
     /** delete data from the table: "_map_pool" */
     delete__map_pool: (_map_pool_mutation_response | null)
     /** delete single row from the table: "_map_pool" */
@@ -24727,6 +24729,8 @@ export interface mutation_rootGenqlSelection{
     deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** Delete file or directory on game server */
     deleteServerItem?: (SuccessOutputGenqlSelection & { __args: {node_id: Scalars['String'], path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** Delete a tournament and clean up demo files */
+    deleteTournament?: (SuccessOutputGenqlSelection & { __args: {tournament_id: Scalars['uuid']} })
     /** delete data from the table: "_map_pool" */
     delete__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */

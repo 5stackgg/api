@@ -60376,6 +60376,15 @@ export default {
                     ]
                 }
             ],
+            "deleteTournament": [
+                38,
+                {
+                    "tournament_id": [
+                        2498,
+                        "uuid!"
+                    ]
+                }
+            ],
             "delete__map_pool": [
                 54,
                 {

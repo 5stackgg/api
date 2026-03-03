@@ -16965,6 +16965,9 @@ type mutation_root {
   """Delete file or directory on game server"""
   deleteServerItem(node_id: String!, path: String!, server_id: String): SuccessOutput
 
+  """Delete a tournament and clean up demo files"""
+  deleteTournament(tournament_id: uuid!): SuccessOutput
+
   """
   delete data from the table: "_map_pool"
   """
