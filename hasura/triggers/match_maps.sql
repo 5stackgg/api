@@ -43,7 +43,7 @@ BEGIN
         END IF;
     END IF;
 
-    IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'OverTime') THEN
+    IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
         NEW.started_at = NOW();
         IF _auto_cancel_mode = 'AutoCancel' THEN
             UPDATE matches SET cancels_at = NOW() + INTERVAL '3 hours' WHERE id = NEW.match_id;
@@ -56,7 +56,7 @@ BEGIN
     END IF;
 
     -- Reset cancels_at when map resumes from pause
-    IF OLD.status = 'Paused' AND (NEW.status = 'Live' OR NEW.status = 'OverTime') THEN
+    IF OLD.status = 'Paused' AND (NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
         IF _auto_cancel_mode = 'AutoCancel' THEN
             UPDATE matches SET cancels_at = NOW() + INTERVAL '3 hours' WHERE id = NEW.match_id;
         END IF;
