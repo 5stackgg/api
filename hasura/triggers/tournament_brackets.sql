@@ -30,18 +30,14 @@ BEGIN
          raise notice 'Scheduling match for bracket %', NEW.id;
          IF NEW.tournament_team_id_1 IS NOT NULL AND NEW.tournament_team_id_2 IS NOT NULL THEN
             -- Skip auto-scheduling if tournament is paused
-            DECLARE
-                _tournament_status text;
-            BEGIN
-                SELECT t.status INTO _tournament_status
-                FROM tournaments t
-                JOIN tournament_stages ts ON ts.tournament_id = t.id
-                WHERE ts.id = NEW.tournament_stage_id;
+            SELECT t.status INTO tournament_status
+            FROM tournaments t
+            JOIN tournament_stages ts ON ts.tournament_id = t.id
+            WHERE ts.id = NEW.tournament_stage_id;
 
-                IF _tournament_status != 'Paused' THEN
-                    PERFORM schedule_tournament_match(NEW);
-                END IF;
-            END;
+            IF tournament_status != 'Paused' THEN
+                PERFORM schedule_tournament_match(NEW);
+            END IF;
          END IF;
      END IF;
 

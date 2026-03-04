@@ -3,17 +3,28 @@ RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
 DECLARE
+    _auto_cancel_mode text;
+    _user_role text;
 BEGIN
-    IF is_match_organizer(match, hasura_session) AND (
-        match.status != 'Finished' AND
-        match.status != 'Tie' AND
-        match.status != 'Canceled' AND
-        match.status != 'Forfeit' AND
-        match.status != 'Surrendered'
-    ) THEN
-        RETURN true;
+    IF NOT is_match_organizer(match, hasura_session) THEN
+        RETURN false;
     END IF;
 
-    RETURN false;
+    IF match.status IN ('Finished', 'Tie', 'Canceled', 'Forfeit', 'Surrendered') THEN
+        RETURN false;
+    END IF;
+
+    -- Admin-only cancel: restrict to privileged roles
+    SELECT mo.auto_cancel_mode INTO _auto_cancel_mode
+    FROM match_options mo WHERE mo.id = match.match_options_id;
+
+    IF _auto_cancel_mode = 'Admin' THEN
+        _user_role := hasura_session ->> 'x-hasura-role';
+        IF _user_role NOT IN ('admin', 'administrator', 'tournament_organizer', 'match_organizer') THEN
+            RETURN false;
+        END IF;
+    END IF;
+
+    RETURN true;
 END;
 $$;

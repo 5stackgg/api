@@ -242,6 +242,8 @@ DECLARE
     _match_map_count int;
     _match_options match_options%ROWTYPE;
     _auto_cancel_mode text;
+    _hasura_session jsonb;
+    _user_role text;
 BEGIN
     auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
     SELECT auto_cancel_mode INTO _auto_cancel_mode FROM match_options WHERE id = NEW.match_options_id;
@@ -340,6 +342,17 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'Canceled' AND OLD.status != 'Canceled')  THEN
+        -- Admin-only cancel: only privileged roles can cancel
+        IF _auto_cancel_mode = 'Admin' THEN
+            _hasura_session := current_setting('hasura.user', true)::jsonb;
+            IF _hasura_session IS NOT NULL THEN
+                _user_role := _hasura_session ->> 'x-hasura-role';
+                IF _user_role NOT IN ('admin', 'administrator', 'tournament_organizer', 'match_organizer') THEN
+                    RAISE EXCEPTION 'Only administrators and organizers can cancel matches in Admin cancel mode' USING ERRCODE = '22000';
+                END IF;
+            END IF;
+            -- NULL session = system/API context, allow through
+        END IF;
         NEW.cancels_at = NOW();
         NEW.ended_at = null;
     END IF;
