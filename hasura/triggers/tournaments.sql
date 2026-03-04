@@ -31,10 +31,11 @@ BEGIN
         END IF;
     END IF;
 
-    -- When tournament resumes from Paused, schedule all ready brackets
+    -- When tournament resumes from Paused, schedule all ready brackets (only if auto_start)
     IF (
         NEW.status IS DISTINCT FROM OLD.status AND
         OLD.status = 'Paused' AND NEW.status = 'Live'
+        AND NEW.auto_start
     ) THEN
         FOR bracket_row IN
             SELECT tb.*

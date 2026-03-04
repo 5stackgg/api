@@ -49,7 +49,7 @@ insert_permissions:
     permission:
       check: {}
       columns:
-        - auto_cancel_mode
+        - auto_cancel
         - best_of
         - check_in_setting
         - coaches
@@ -74,7 +74,7 @@ insert_permissions:
     permission:
       check: {}
       columns:
-        - auto_cancel_mode
+        - auto_cancel
         - best_of
         - coaches
         - default_models
@@ -98,7 +98,7 @@ select_permissions:
   - role: guest
     permission:
       columns:
-        - auto_cancel_mode
+        - auto_cancel
         - best_of
         - check_in_setting
         - coaches
@@ -125,7 +125,7 @@ update_permissions:
   - role: match_organizer
     permission:
       columns:
-        - auto_cancel_mode
+        - auto_cancel
         - best_of
         - check_in_setting
         - coaches
@@ -183,7 +183,7 @@ update_permissions:
   - role: user
     permission:
       columns:
-        - auto_cancel_mode
+        - auto_cancel
         - best_of
         - coaches
         - default_models

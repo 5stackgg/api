@@ -23,7 +23,7 @@ BEGIN
         update tournaments
         set status = 'Finished'
         where id = _tournament_id
-          and status not in ('Paused', 'Cancelled', 'CancelledMinTeams');
+          and status not in ('Cancelled', 'CancelledMinTeams');
     end if;
 END;
 $$;

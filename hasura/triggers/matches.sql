@@ -235,18 +235,16 @@ DECLARE
     has_region_veto BOOLEAN;
     _map_pool_id UUID;
     _map_pool UUID[];
-    _map_pool_count int;    
+    _map_pool_count int;
     _regions text[];
     auto_cancel_duration text;
     scheduled_at timestamptz;
     _match_map_count int;
     _match_options match_options%ROWTYPE;
-    _auto_cancel_mode text;
-    _hasura_session jsonb;
-    _user_role text;
+    _auto_cancel boolean;
 BEGIN
     auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
-    SELECT auto_cancel_mode INTO _auto_cancel_mode FROM match_options WHERE id = NEW.match_options_id;
+    SELECT auto_cancel INTO _auto_cancel FROM match_options WHERE id = NEW.match_options_id;
 
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
         UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
@@ -323,14 +321,14 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        IF _auto_cancel_mode = 'AutoCancel' THEN
+        IF _auto_cancel THEN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
-        IF _auto_cancel_mode = 'AutoCancel' THEN
+        IF _auto_cancel THEN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
@@ -342,17 +340,6 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'Canceled' AND OLD.status != 'Canceled')  THEN
-        -- Admin-only cancel: only privileged roles can cancel
-        IF _auto_cancel_mode = 'Admin' THEN
-            _hasura_session := current_setting('hasura.user', true)::jsonb;
-            IF _hasura_session IS NOT NULL THEN
-                _user_role := _hasura_session ->> 'x-hasura-role';
-                IF _user_role NOT IN ('admin', 'administrator', 'tournament_organizer', 'match_organizer') THEN
-                    RAISE EXCEPTION 'Only administrators and organizers can cancel matches in Admin cancel mode' USING ERRCODE = '22000';
-                END IF;
-            END IF;
-            -- NULL session = system/API context, allow through
-        END IF;
         NEW.cancels_at = NOW();
         NEW.ended_at = null;
     END IF;

@@ -97,22 +97,26 @@ BEGIN
         END IF;
     END IF;
     
-    -- Schedule all brackets that are ready (skip if tournament is paused)
+    -- Schedule all brackets that are ready (skip if tournament is paused or auto_start is off)
     IF array_length(brackets_to_schedule, 1) > 0 THEN
-        SELECT t.status INTO _tournament_status
-        FROM tournaments t
-        JOIN tournament_stages ts ON ts.tournament_id = t.id
-        WHERE ts.id = stage_id;
+        DECLARE
+            _tournament RECORD;
+        BEGIN
+            SELECT t.status, t.auto_start INTO _tournament
+            FROM tournaments t
+            JOIN tournament_stages ts ON ts.tournament_id = t.id
+            WHERE ts.id = stage_id;
 
-        IF _tournament_status != 'Paused' THEN
-            FOREACH bracket_id IN ARRAY brackets_to_schedule LOOP
-                SELECT * INTO bracket_row FROM tournament_brackets WHERE id = bracket_id;
+            IF _tournament.status != 'Paused' AND _tournament.auto_start THEN
+                FOREACH bracket_id IN ARRAY brackets_to_schedule LOOP
+                    SELECT * INTO bracket_row FROM tournament_brackets WHERE id = bracket_id;
 
-                IF bracket_row.match_id IS NULL THEN
-                    PERFORM schedule_tournament_match(bracket_row);
-                END IF;
-            END LOOP;
-        END IF;
+                    IF bracket_row.match_id IS NULL THEN
+                        PERFORM schedule_tournament_match(bracket_row);
+                    END IF;
+                END LOOP;
+            END IF;
+        END;
     END IF;
 END;
 $$;
