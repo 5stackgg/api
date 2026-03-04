@@ -13,6 +13,8 @@ export class ChatService {
   private redis: Redis;
   private sessions: Map<string, FiveStackWebSocketClient[]> = new Map();
 
+  private expiresIn = 60 * 60;
+
   constructor(
     private readonly logger: Logger,
     private readonly rcon: RconService,
@@ -20,6 +22,10 @@ export class ChatService {
     private readonly redisManager: RedisManagerService,
   ) {
     this.redis = this.redisManager.getConnection();
+  }
+
+  public async updateChatMessageTTL(expiresIn: number) {
+    this.expiresIn = expiresIn;
   }
 
   public async joinMatchLobby(
@@ -114,6 +120,10 @@ export class ChatService {
           client.user.steam_id,
         );
 
+
+        console.log({
+          tournaments
+        });
         if (tournaments.length === 0) {
           return;
         }
@@ -234,7 +244,7 @@ export class ChatService {
     await this.redis.sendCommand(
       new Redis.Command("HEXPIRE", [
         messageKey,
-        60 * 60,
+        this.expiresIn,
         "FIELDS",
         1,
         messageField,

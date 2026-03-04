@@ -103,6 +103,12 @@ computed_fields:
         name: is_tournament_organizer
         schema: public
       session_argument: hasura_session
+  - name: joined_tournament
+    definition:
+      function:
+        name: joined_tournament
+        schema: public
+      session_argument: hasura_session
   - name: max_players_per_lineup
     definition:
       function:
