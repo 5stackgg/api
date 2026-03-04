@@ -22,7 +22,8 @@ BEGIN
     if unfinished_brackets = 0 then
         update tournaments
         set status = 'Finished'
-        where id = _tournament_id;
+        where id = _tournament_id
+          and status not in ('Paused', 'Cancelled', 'CancelledMinTeams');
     end if;
 END;
 $$;
