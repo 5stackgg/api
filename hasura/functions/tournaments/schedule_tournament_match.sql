@@ -105,7 +105,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          'PickingPlayers',
          tournament.organizer_steam_id,
          _match_options_id,
-         COALESCE(bracket.scheduled_at, now())
+         GREATEST(COALESCE(bracket.scheduled_at, now()), now())
      )
      RETURNING id INTO _match_id;
          
