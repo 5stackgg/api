@@ -12,6 +12,6 @@ BEGIN
     JOIN tournament_stages ts ON ts.tournament_id = t.id
     WHERE ts.id = _tournament_stage_id;
 
-    RETURN _tournament.status != 'Paused' AND _tournament.auto_start;
+    RETURN COALESCE(_tournament.status != 'Paused' AND _tournament.auto_start, false);
 END;
 $$;

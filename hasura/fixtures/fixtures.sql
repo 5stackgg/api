@@ -725,7 +725,7 @@ BEGIN
     INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
     VALUES (t1_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[1],
       'Adria Cup Season 1',
@@ -734,6 +734,7 @@ BEGIN
       p_steam_ids[1],
       'Finished',
       t1_options_id,
+      true,
       now() - interval '10 days'
     );
 
@@ -941,7 +942,7 @@ BEGIN
     INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
     VALUES (t2_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[2],
       'Balkan Masters Invitational',
@@ -950,6 +951,7 @@ BEGIN
       p_steam_ids[1],
       'Live',
       t2_options_id,
+      true,
       now() - interval '7 days'
     );
 
@@ -1239,10 +1241,10 @@ BEGIN
     t3_options_id uuid := gen_random_uuid();
     t3_stage_id uuid := gen_random_uuid();
   BEGIN
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t3_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Open');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, match_mode)
+    VALUES (t3_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Open', 'admin');
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[3],
       'EsportAdria Open 2026',
@@ -1251,6 +1253,7 @@ BEGIN
       p_steam_ids[1],
       'RegistrationOpen',
       t3_options_id,
+      false,
       now() - interval '2 days'
     );
 
@@ -1322,7 +1325,7 @@ BEGIN
     VALUES (t4_de_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Private');
 
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[4],
       'Adria Championship 2025',
@@ -1331,6 +1334,7 @@ BEGIN
       p_steam_ids[1],
       'Finished',
       t4_de_options_id,
+      true,
       now() - interval '14 days'
     );
 
