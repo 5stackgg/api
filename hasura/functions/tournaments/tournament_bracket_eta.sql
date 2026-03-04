@@ -55,18 +55,20 @@ BEGIN
                     END IF;
                     
                     -- Update all brackets in this round
-                    UPDATE tournament_brackets 
-                    SET scheduled_eta = CASE 
+                    UPDATE tournament_brackets
+                    SET scheduled_eta = CASE
                         -- If bracket has a match, use its actual start time
                         WHEN match_id IS NOT NULL THEN (
                             SELECT COALESCE(m.started_at, m.scheduled_at)
                             FROM matches m
                             WHERE m.id = tournament_brackets.match_id
                         )
+                        -- If organizer pre-set a schedule, use that
+                        WHEN tournament_brackets.scheduled_at IS NOT NULL THEN tournament_brackets.scheduled_at
                         -- Otherwise use the calculated round start time
                         ELSE round_start_time
                     END
-                    WHERE tournament_stage_id = stage_record.tournament_stage_id 
+                    WHERE tournament_stage_id = stage_record.tournament_stage_id
                       AND round = round_record.round;
                 END;
             END LOOP;
@@ -127,18 +129,20 @@ BEGIN
                         END IF;
                     
                     -- Update all brackets in this round
-                    UPDATE tournament_brackets 
-                    SET scheduled_eta = CASE 
+                    UPDATE tournament_brackets
+                    SET scheduled_eta = CASE
                         -- If bracket has a match, use its actual start time
                         WHEN match_id IS NOT NULL THEN (
                             SELECT COALESCE(m.started_at, m.scheduled_at)
                             FROM matches m
                             WHERE m.id = tournament_brackets.match_id
                         )
+                        -- If organizer pre-set a schedule, use that
+                        WHEN tournament_brackets.scheduled_at IS NOT NULL THEN tournament_brackets.scheduled_at
                         -- Otherwise use the calculated round start time
                         ELSE round_start_time
                     END
-                    WHERE tournament_stage_id = stage_record.tournament_stage_id 
+                    WHERE tournament_stage_id = stage_record.tournament_stage_id
                       AND round = round_record.round;
                     END;
                 END LOOP;
@@ -160,12 +164,16 @@ BEGIN
                 LOOP
                     -- Case A: If bracket has a match, use its actual start time
                     IF bracket_record.match_id IS NOT NULL THEN
-                        UPDATE tournament_brackets 
+                        UPDATE tournament_brackets
                         SET scheduled_eta = (
                             SELECT COALESCE(m.started_at, m.scheduled_at)
                             FROM matches m
                             WHERE m.id = bracket_record.match_id
                         )
+                        WHERE id = bracket_record.id;
+                    ELSIF bracket_record.scheduled_at IS NOT NULL THEN
+                        UPDATE tournament_brackets
+                        SET scheduled_eta = bracket_record.scheduled_at
                         WHERE id = bracket_record.id;
                     ELSE
                         -- Case B: Check if this bracket has children
