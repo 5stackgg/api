@@ -67,7 +67,9 @@ insert_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - track_cancellation
+        - auto_cancel_duration
+        - live_match_timeout
+        - match_cancellation
         - tv_delay
         - type
     comment: ""
@@ -92,7 +94,9 @@ insert_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - track_cancellation
+        - auto_cancel_duration
+        - live_match_timeout
+        - match_cancellation
         - tv_delay
         - type
     comment: ""
@@ -119,7 +123,9 @@ select_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - track_cancellation
+        - auto_cancel_duration
+        - live_match_timeout
+        - match_cancellation
         - tv_delay
         - type
       filter: {}
@@ -146,7 +152,9 @@ update_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - track_cancellation
+        - auto_cancel_duration
+        - live_match_timeout
+        - match_cancellation
         - tv_delay
         - type
       filter:
@@ -204,7 +212,9 @@ update_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - track_cancellation
+        - auto_cancel_duration
+        - live_match_timeout
+        - match_cancellation
         - tv_delay
         - type
       filter:
