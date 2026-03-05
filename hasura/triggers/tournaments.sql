@@ -108,6 +108,8 @@ BEGIN
                 IF NOT can_pause_tournament(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot pause tournament';
                 END IF;
+            WHEN 'Finished' THEN
+                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Tournament finish is handled automatically';
             ELSE
                 -- No action needed for other status changes
         END CASE;
