@@ -28,25 +28,30 @@ CREATE OR REPLACE FUNCTION public.tbu_match_maps() RETURNS TRIGGER
     AS $$
 DECLARE
     auto_cancel_duration text;
-    _track_cancellation boolean;
+    _match_cancellation boolean;
+    _auto_cancel_duration_override integer;
+    _live_match_timeout_override integer;
+    _live_match_timeout text;
 BEGIN
-    auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
-
-    SELECT mo.track_cancellation INTO _track_cancellation
+    SELECT mo.match_cancellation, mo.auto_cancel_duration, mo.live_match_timeout
+    INTO _match_cancellation, _auto_cancel_duration_override, _live_match_timeout_override
     FROM matches m
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.id = NEW.match_id;
 
+    auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
+    _live_match_timeout := COALESCE(_live_match_timeout_override, get_setting('live_match_timeout', '180')::int)::text || ' minutes';
+
     IF NEW.status = 'Warmup' THEN
-        IF _track_cancellation THEN
+        IF _match_cancellation THEN
             UPDATE matches SET cancels_at = NOW() + (auto_cancel_duration)::interval WHERE id = NEW.match_id;
         END IF;
     END IF;
 
     IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
         NEW.started_at = NOW();
-        IF _track_cancellation THEN
-            UPDATE matches SET cancels_at = NOW() + INTERVAL '3 hours' WHERE id = NEW.match_id;
+        IF _match_cancellation THEN
+            UPDATE matches SET cancels_at = NOW() + (_live_match_timeout)::interval WHERE id = NEW.match_id;
         END IF;
     END IF;
 

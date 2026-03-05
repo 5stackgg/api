@@ -241,10 +241,11 @@ DECLARE
     scheduled_at timestamptz;
     _match_map_count int;
     _match_options match_options%ROWTYPE;
-    _track_cancellation boolean;
+    _match_cancellation boolean;
+    _auto_cancel_duration_override integer;
 BEGIN
-    auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
-    SELECT track_cancellation INTO _track_cancellation FROM match_options WHERE id = NEW.match_options_id;
+    SELECT match_cancellation, auto_cancel_duration INTO _match_cancellation, _auto_cancel_duration_override FROM match_options WHERE id = NEW.match_options_id;
+    auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
 
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
         UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
@@ -321,14 +322,14 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
-        IF _track_cancellation THEN
+        IF _match_cancellation THEN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
-        IF _track_cancellation THEN
+        IF _match_cancellation THEN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
