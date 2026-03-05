@@ -27,7 +27,7 @@ CREATE OR REPLACE FUNCTION public.tbu_match_maps() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    auto_cancel_duration text;
+    _auto_cancel_duration text;
     _auto_cancellation boolean;
     _auto_cancel_duration_override integer;
     _live_match_timeout_override integer;
@@ -39,12 +39,12 @@ BEGIN
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.id = NEW.match_id;
 
-    auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
+    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
     _live_match_timeout := COALESCE(_live_match_timeout_override, get_setting('live_match_timeout', '180')::int)::text || ' minutes';
 
     IF NEW.status = 'Warmup' THEN
         IF _auto_cancellation THEN
-            UPDATE matches SET cancels_at = NOW() + (auto_cancel_duration)::interval WHERE id = NEW.match_id;
+            UPDATE matches SET cancels_at = NOW() + (_auto_cancel_duration)::interval WHERE id = NEW.match_id;
         END IF;
     END IF;
 

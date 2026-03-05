@@ -237,7 +237,7 @@ DECLARE
     _map_pool UUID[];
     _map_pool_count int;
     _regions text[];
-    auto_cancel_duration text;
+    _auto_cancel_duration text;
     scheduled_at timestamptz;
     _match_map_count int;
     _match_options match_options%ROWTYPE;
@@ -245,7 +245,7 @@ DECLARE
     _auto_cancel_duration_override integer;
 BEGIN
     SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM match_options WHERE id = NEW.match_options_id;
-    auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
+    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
 
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
         UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
@@ -323,14 +323,14 @@ BEGIN
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
         IF _auto_cancellation THEN
-            NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
+            NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
         IF _auto_cancellation THEN
-            NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (auto_cancel_duration)::interval;
+            NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
     END IF;
