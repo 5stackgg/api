@@ -120,10 +120,6 @@ export class ChatService {
           client.user.steam_id,
         );
 
-
-        console.log({
-          tournaments
-        });
         if (tournaments.length === 0) {
           return;
         }
@@ -132,8 +128,6 @@ export class ChatService {
         if (!isRoleAbove(client.user.role, "match_organizer")) {
           return;
         }
-
-        break;
 
         break;
       default:
