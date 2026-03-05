@@ -48,6 +48,16 @@ BEGIN
         END IF;
     END IF;
 
+    IF NEW.status = 'Paused' AND OLD.status != 'Paused' THEN
+        UPDATE matches SET cancels_at = NULL WHERE id = NEW.match_id;
+    END IF;
+
+    IF OLD.status = 'Paused' AND (NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
+        IF _match_cancellation THEN
+            UPDATE matches SET cancels_at = NOW() + (_live_match_timeout)::interval WHERE id = NEW.match_id;
+        END IF;
+    END IF;
+
     IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
         NEW.started_at = NOW();
         IF _match_cancellation THEN
