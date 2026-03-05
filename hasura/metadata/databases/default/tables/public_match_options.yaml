@@ -69,7 +69,7 @@ insert_permissions:
         - timeout_setting
         - auto_cancel_duration
         - live_match_timeout
-        - match_cancellation
+        - auto_cancellation
         - tv_delay
         - type
     comment: ""
@@ -121,7 +121,7 @@ select_permissions:
         - timeout_setting
         - auto_cancel_duration
         - live_match_timeout
-        - match_cancellation
+        - auto_cancellation
         - tv_delay
         - type
       filter: {}
@@ -150,7 +150,7 @@ update_permissions:
         - timeout_setting
         - auto_cancel_duration
         - live_match_timeout
-        - match_cancellation
+        - auto_cancellation
         - tv_delay
         - type
       filter:
