@@ -27,7 +27,7 @@ BEGIN
         RETURN _team_name;
     END IF;
 
-    SELECT tt.name
+    SELECT COALESCE(tt.name, t2.name)
     INTO _team_name
     FROM matches m
     JOIN tournament_brackets tb ON tb.match_id = m.id
@@ -41,6 +41,7 @@ BEGIN
             match_lineup.id = m.lineup_2_id
             AND tt.id = tb.tournament_team_id_2
         )
+    LEFT JOIN teams t2 ON t2.id = tt.team_id
     WHERE m.id = (
         SELECT match_id
         FROM match_lineups

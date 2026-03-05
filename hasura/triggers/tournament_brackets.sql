@@ -29,7 +29,9 @@ BEGIN
          
          raise notice 'Scheduling match for bracket %', NEW.id;
          IF NEW.tournament_team_id_1 IS NOT NULL AND NEW.tournament_team_id_2 IS NOT NULL THEN
-            PERFORM schedule_tournament_match(NEW);
+            IF should_auto_schedule(NEW.tournament_stage_id) THEN
+                PERFORM schedule_tournament_match(NEW);
+            END IF;
          END IF;
      END IF;
 
@@ -47,8 +49,8 @@ BEGIN
         JOIN tournament_stages ts ON ts.tournament_id = t.id
         WHERE ts.id = NEW.tournament_stage_id;
 
-        IF tournament_status NOT IN ('Setup', 'RegistrationOpen', 'RegistrationClosed', 'Live') THEN
-            RAISE EXCEPTION 'Tournament status must be Setup, Registration Open, Registration Closed or Live' USING ERRCODE = '22000';
+        IF tournament_status NOT IN ('Setup', 'RegistrationOpen', 'RegistrationClosed', 'Live', 'Paused') THEN
+            RAISE EXCEPTION 'Tournament status must be Setup, Registration Open, Registration Closed, Live or Paused' USING ERRCODE = '22000';
         END IF;
     END IF;
 

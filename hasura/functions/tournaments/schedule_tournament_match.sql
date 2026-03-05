@@ -55,6 +55,18 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _match_options_id := tournament.match_options_id;
      END IF;
 
+    -- Enforce match_mode: skip auto-scheduling for admin-only matches
+    DECLARE
+        _match_mode text;
+    BEGIN
+        SELECT mo.match_mode INTO _match_mode
+        FROM match_options mo WHERE mo.id = _match_options_id;
+
+        IF _match_mode = 'admin' THEN
+            RETURN NULL;
+        END IF;
+    END;
+
      -- Per-round best_of resolution (only when bracket has no custom match_options)
      IF bracket.match_options_id IS NULL THEN
          IF stage.type = 'Swiss' THEN
@@ -105,7 +117,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          'PickingPlayers',
          tournament.organizer_steam_id,
          _match_options_id,
-         now()
+         GREATEST(COALESCE(bracket.scheduled_at, now()), now())
      )
      RETURNING id INTO _match_id;
          

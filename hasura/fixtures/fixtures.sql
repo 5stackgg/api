@@ -725,7 +725,7 @@ BEGIN
     INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
     VALUES (t1_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[1],
       'Adria Cup Season 1',
@@ -734,6 +734,7 @@ BEGIN
       p_steam_ids[1],
       'Finished',
       t1_options_id,
+      true,
       now() - interval '10 days'
     );
 
@@ -766,11 +767,11 @@ BEGIN
     END LOOP;
 
     -- Create brackets (semifinals + final)
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished)
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished, parent_bracket_id)
     VALUES
-      (t1_bracket_sf1, t1_stage_id, t1_team_ids[1], t1_team_ids[4], 1, 1, 1, 'WB', true),
-      (t1_bracket_sf2, t1_stage_id, t1_team_ids[2], t1_team_ids[3], 1, 2, 1, 'WB', true),
-      (t1_bracket_final, t1_stage_id, t1_team_ids[1], t1_team_ids[2], 2, 1, 1, 'WB', true);
+      (t1_bracket_sf1, t1_stage_id, t1_team_ids[1], t1_team_ids[4], 1, 1, 1, 'WB', true, t1_bracket_final),
+      (t1_bracket_sf2, t1_stage_id, t1_team_ids[2], t1_team_ids[3], 1, 2, 1, 'WB', true, t1_bracket_final),
+      (t1_bracket_final, t1_stage_id, t1_team_ids[1], t1_team_ids[2], 2, 1, 1, 'WB', true, NULL);
 
     -- Create matches linked to finished brackets
     -- SF1: T1 vs T4 → T1 wins, SF2: T2 vs T3 → T2 wins, Final: T1 vs T2 → T1 wins
@@ -934,12 +935,14 @@ BEGIN
     t2_team_ids uuid[];
     t2_bracket_r1m1 uuid := gen_random_uuid();
     t2_bracket_r1m2 uuid := gen_random_uuid();
-    t2_bracket_r1m3 uuid := gen_random_uuid();
+    t2_bracket_r2m1 uuid := gen_random_uuid();
+    t2_bracket_r2m2 uuid := gen_random_uuid();
+    t2_bracket_final uuid := gen_random_uuid();
   BEGIN
     INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
     VALUES (t2_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[2],
       'Balkan Masters Invitational',
@@ -948,6 +951,7 @@ BEGIN
       p_steam_ids[1],
       'Live',
       t2_options_id,
+      true,
       now() - interval '7 days'
     );
 
@@ -979,26 +983,23 @@ BEGIN
       END LOOP;
     END LOOP;
 
-    -- First round brackets (3 matches for 6 teams)
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished)
+    -- Round 1 brackets (seeds 3v6, 4v5 — top 2 seeds get byes to R2)
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished, parent_bracket_id)
     VALUES
-      (t2_bracket_r1m1, t2_stage_id, t2_team_ids[1], t2_team_ids[6], 1, 1, 1, 'WB', true);
-    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, tournament_team_id_2, round, match_number, "group", path, finished)
-    VALUES
-      (t2_bracket_r1m2, t2_stage_id, t2_team_ids[2], t2_team_ids[5], 1, 2, 1, 'WB', false),
-      (t2_bracket_r1m3, t2_stage_id, t2_team_ids[3], t2_team_ids[4], 1, 3, 1, 'WB', false);
+      (t2_bracket_r1m1, t2_stage_id, t2_team_ids[3], t2_team_ids[6], 1, 1, 1, 'WB', true, t2_bracket_r2m1),
+      (t2_bracket_r1m2, t2_stage_id, t2_team_ids[4], t2_team_ids[5], 1, 2, 1, 'WB', false, t2_bracket_r2m2);
 
-    -- Semifinal brackets (placeholders)
-    INSERT INTO tournament_brackets (tournament_stage_id, tournament_team_id_1, round, match_number, "group", path, finished)
+    -- Semifinal brackets (seed 1 pre-placed in R2M1, seed 2 pre-placed in R2M2)
+    INSERT INTO tournament_brackets (id, tournament_stage_id, tournament_team_id_1, round, match_number, "group", path, finished, parent_bracket_id)
     VALUES
-      (t2_stage_id, t2_team_ids[1], 2, 1, 1, 'WB', false),
-      (t2_stage_id, NULL, 2, 2, 1, 'WB', false);
+      (t2_bracket_r2m1, t2_stage_id, t2_team_ids[1], 2, 1, 1, 'WB', false, t2_bracket_final),
+      (t2_bracket_r2m2, t2_stage_id, t2_team_ids[2], 2, 2, 1, 'WB', false, t2_bracket_final);
 
     -- Final bracket
-    INSERT INTO tournament_brackets (tournament_stage_id, round, match_number, "group", path, finished)
-    VALUES (t2_stage_id, 3, 1, 1, 'WB', false);
+    INSERT INTO tournament_brackets (id, tournament_stage_id, round, match_number, "group", path, finished)
+    VALUES (t2_bracket_final, t2_stage_id, 3, 1, 1, 'WB', false);
 
-    -- Create match for the one finished bracket (R1 M1: T1 vs T6, T1 wins)
+    -- Create match for the one finished bracket (R1 M1: T3 vs T6, T3 Crimson Wolves wins)
     DECLARE
       t2_mid uuid := gen_random_uuid();
       t2_moid uuid := gen_random_uuid();
@@ -1012,7 +1013,7 @@ BEGIN
       VALUES (t2_moid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
 
       INSERT INTO match_lineups (id, team_id, team_name) VALUES
-        (t2_l1id, team_ids[1], team_names[1]),
+        (t2_l1id, team_ids[3], team_names[3]),
         (t2_l2id, team_ids[6], team_names[6]);
 
       INSERT INTO matches (id, status, match_options_id, lineup_1_id, lineup_2_id,
@@ -1023,7 +1024,7 @@ BEGIN
 
       FOR j IN 1..5 LOOP
         INSERT INTO match_lineup_players (match_lineup_id, steam_id, captain, checked_in) VALUES
-          (t2_l1id, p_steam_ids[(1 - 1) * 5 + j], j = 1, true),
+          (t2_l1id, p_steam_ids[(3 - 1) * 5 + j], j = 1, true),
           (t2_l2id, p_steam_ids[(6 - 1) * 5 + j], j = 1, true);
       END LOOP;
 
@@ -1048,7 +1049,7 @@ BEGIN
                 t2_mdate - interval '10 minutes' + (interval '30 seconds' * ban_n));
       END;
 
-      -- Generate rounds and kills (T1 wins 13-8)
+      -- Generate rounds and kills (T3 Crimson Wolves wins 13-8)
       v_t1_wins := 0; v_t2_wins := 0;
       FOR round_num IN 1..(t2_l1s + t2_l2s) LOOP
         IF v_t1_wins * (t2_l1s + t2_l2s) < round_num * t2_l1s AND v_t1_wins < t2_l1s THEN
@@ -1074,9 +1075,9 @@ BEGIN
             attacker_steam_id, attacker_team, attacked_steam_id, attacked_team, attacked_location,
             "with", hitgroup, headshot, time)
           VALUES (t2_mid, t2_mmid, round_num,
-            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 1 ELSE 6 END - 1) * 5 + ((k - 1) % 5) + 1],
+            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 3 ELSE 6 END - 1) * 5 + ((k - 1) % 5) + 1],
             CASE WHEN (k % 2 = 1) = (round_num <= 12) THEN 'CT' ELSE 'TERRORIST' END,
-            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 6 ELSE 1 END - 1) * 5 + ((k + round_num) % 5) + 1],
+            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 6 ELSE 3 END - 1) * 5 + ((k + round_num) % 5) + 1],
             CASE WHEN (k % 2 = 1) = (round_num <= 12) THEN 'TERRORIST' ELSE 'CT' END,
             'BombsiteA', weapons[((round_num + k) % array_length(weapons, 1)) + 1],
             CASE WHEN (round_num + k) % 3 = 0 THEN 'head' ELSE hitgroups[((k + round_num) % 6) + 2] END,
@@ -1088,7 +1089,7 @@ BEGIN
         -- Utility events
         DECLARE
           ut timestamptz;
-          fp1 int := (1 - 1) * 5 + ((round_num + 1) % 5) + 1;
+          fp1 int := (3 - 1) * 5 + ((round_num + 1) % 5) + 1;
           fp2 int := (6 - 1) * 5 + ((round_num + 2) % 5) + 1;
         BEGIN
           ut := t2_mdate + (interval '2 minutes' * round_num) + interval '40 seconds';
@@ -1104,19 +1105,19 @@ BEGIN
           VALUES (t2_mmid, p_steam_ids[fp2], ut, t2_mid, round_num, 'Flash') ON CONFLICT DO NOTHING;
           INSERT INTO player_flashes (match_map_id, time, attacker_steam_id, attacked_steam_id, match_id, round, duration, team_flash)
           VALUES (t2_mmid, ut + interval '1 second', p_steam_ids[fp2],
-                  p_steam_ids[(1 - 1) * 5 + ((round_num + 4) % 5) + 1],
+                  p_steam_ids[(3 - 1) * 5 + ((round_num + 4) % 5) + 1],
                   t2_mid, round_num, 1.5 + ((round_num + 1) % 3)::numeric * 0.5, false) ON CONFLICT DO NOTHING;
 
           IF round_num % 3 = 0 THEN
             INSERT INTO player_flashes (match_map_id, time, attacker_steam_id, attacked_steam_id, match_id, round, duration, team_flash)
             VALUES (t2_mmid, ut + interval '2 seconds', p_steam_ids[fp1],
-                    p_steam_ids[(1 - 1) * 5 + ((round_num + 2) % 5) + 1],
+                    p_steam_ids[(3 - 1) * 5 + ((round_num + 2) % 5) + 1],
                     t2_mid, round_num, 0.8 + (round_num % 2)::numeric * 0.4, true) ON CONFLICT DO NOTHING;
           END IF;
 
           ut := t2_mdate + (interval '2 minutes' * round_num) + interval '35 seconds';
           INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
-          VALUES (t2_mmid, p_steam_ids[(1 - 1) * 5 + ((round_num + 3) % 5) + 1], ut, t2_mid, round_num, 'Smoke') ON CONFLICT DO NOTHING;
+          VALUES (t2_mmid, p_steam_ids[(3 - 1) * 5 + ((round_num + 3) % 5) + 1], ut, t2_mid, round_num, 'Smoke') ON CONFLICT DO NOTHING;
 
           ut := t2_mdate + (interval '2 minutes' * round_num) + interval '55 seconds';
           IF round_num % 2 = 0 THEN
@@ -1126,15 +1127,15 @@ BEGIN
               attacked_steam_id, attacked_team, attacked_location, "with", damage, damage_armor, health, armor, hitgroup, time)
             VALUES (t2_mid, t2_mmid, round_num,
               p_steam_ids[(6 - 1) * 5 + (round_num % 5) + 1], CASE WHEN round_num <= 12 THEN 'TERRORIST' ELSE 'CT' END,
-              p_steam_ids[(1 - 1) * 5 + ((round_num + 1) % 5) + 1], CASE WHEN round_num <= 12 THEN 'CT' ELSE 'TERRORIST' END,
+              p_steam_ids[(3 - 1) * 5 + ((round_num + 1) % 5) + 1], CASE WHEN round_num <= 12 THEN 'CT' ELSE 'TERRORIST' END,
               'BombsiteA', 'hegrenade', 15 + (round_num % 30), 0, 85 - (round_num % 30), 100, 'chest', ut + interval '0.3 seconds');
           ELSE
             INSERT INTO player_utility (match_map_id, attacker_steam_id, time, match_id, round, type)
-            VALUES (t2_mmid, p_steam_ids[(1 - 1) * 5 + ((round_num + 4) % 5) + 1], ut, t2_mid, round_num, 'Molotov') ON CONFLICT DO NOTHING;
+            VALUES (t2_mmid, p_steam_ids[(3 - 1) * 5 + ((round_num + 4) % 5) + 1], ut, t2_mid, round_num, 'Molotov') ON CONFLICT DO NOTHING;
             INSERT INTO player_damages (match_id, match_map_id, round, attacker_steam_id, attacker_team,
               attacked_steam_id, attacked_team, attacked_location, "with", damage, damage_armor, health, armor, hitgroup, time)
             VALUES (t2_mid, t2_mmid, round_num,
-              p_steam_ids[(1 - 1) * 5 + ((round_num + 4) % 5) + 1], CASE WHEN round_num <= 12 THEN 'CT' ELSE 'TERRORIST' END,
+              p_steam_ids[(3 - 1) * 5 + ((round_num + 4) % 5) + 1], CASE WHEN round_num <= 12 THEN 'CT' ELSE 'TERRORIST' END,
               p_steam_ids[(6 - 1) * 5 + ((round_num + 2) % 5) + 1], CASE WHEN round_num <= 12 THEN 'TERRORIST' ELSE 'CT' END,
               'BombsiteA', 'inferno', 10 + (round_num % 25), 0, 90 - (round_num % 25), 100, 'chest', ut + interval '0.5 seconds');
           END IF;
@@ -1144,7 +1145,7 @@ BEGIN
       UPDATE tournament_brackets SET match_id = t2_mid WHERE id = t2_bracket_r1m1;
     END;
 
-    -- R1 M2: T2 vs T5 (Live, currently in progress)
+    -- R1 M2: T4 vs T5 (Live, currently in progress — Dark Phoenix vs Echo Storm)
     DECLARE
       t2_m2_id uuid := gen_random_uuid();
       t2_m2_oid uuid := gen_random_uuid();
@@ -1158,7 +1159,7 @@ BEGIN
       VALUES (t2_m2_oid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
 
       INSERT INTO match_lineups (id, team_id, team_name) VALUES
-        (t2_m2_l1id, team_ids[2], team_names[2]),
+        (t2_m2_l1id, team_ids[4], team_names[4]),
         (t2_m2_l2id, team_ids[5], team_names[5]);
 
       INSERT INTO matches (id, status, match_options_id, lineup_1_id, lineup_2_id,
@@ -1168,7 +1169,7 @@ BEGIN
 
       FOR j IN 1..5 LOOP
         INSERT INTO match_lineup_players (match_lineup_id, steam_id, captain, checked_in) VALUES
-          (t2_m2_l1id, p_steam_ids[(2 - 1) * 5 + j], j = 1, true),
+          (t2_m2_l1id, p_steam_ids[(4 - 1) * 5 + j], j = 1, true),
           (t2_m2_l2id, p_steam_ids[(5 - 1) * 5 + j], j = 1, true);
       END LOOP;
 
@@ -1218,9 +1219,9 @@ BEGIN
             attacker_steam_id, attacker_team, attacked_steam_id, attacked_team, attacked_location,
             "with", hitgroup, headshot, time)
           VALUES (t2_m2_id, t2_m2_mmid, round_num,
-            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 2 ELSE 5 END - 1) * 5 + ((k - 1) % 5) + 1],
+            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 4 ELSE 5 END - 1) * 5 + ((k - 1) % 5) + 1],
             CASE WHEN (k % 2 = 1) = (round_num <= 12) THEN 'CT' ELSE 'TERRORIST' END,
-            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 5 ELSE 2 END - 1) * 5 + ((k + round_num) % 5) + 1],
+            p_steam_ids[(CASE WHEN k % 2 = 1 THEN 5 ELSE 4 END - 1) * 5 + ((k + round_num) % 5) + 1],
             CASE WHEN (k % 2 = 1) = (round_num <= 12) THEN 'TERRORIST' ELSE 'CT' END,
             'BombsiteA', weapons[((round_num + k) % array_length(weapons, 1)) + 1],
             CASE WHEN (round_num + k) % 3 = 0 THEN 'head' ELSE hitgroups[((k + round_num) % 6) + 2] END,
@@ -1233,37 +1234,6 @@ BEGIN
       UPDATE tournament_brackets SET match_id = t2_m2_id WHERE id = t2_bracket_r1m2;
     END;
 
-    -- R1 M3: T3 vs T4 (Scheduled, upcoming)
-    DECLARE
-      t2_m3_id uuid := gen_random_uuid();
-      t2_m3_oid uuid := gen_random_uuid();
-      t2_m3_l1id uuid := gen_random_uuid();
-      t2_m3_l2id uuid := gen_random_uuid();
-      t2_m3_date timestamptz := now() + interval '2 hours';
-    BEGIN
-      INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-      VALUES (t2_m3_oid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
-
-      INSERT INTO match_lineups (id, team_id, team_name) VALUES
-        (t2_m3_l1id, team_ids[3], team_names[3]),
-        (t2_m3_l2id, team_ids[4], team_names[4]);
-
-      INSERT INTO matches (id, status, match_options_id, lineup_1_id, lineup_2_id,
-                           created_at, scheduled_at, started_at, ended_at, winning_lineup_id)
-      VALUES (t2_m3_id, 'Scheduled', t2_m3_oid, t2_m3_l1id, t2_m3_l2id,
-              now(), t2_m3_date, NULL, NULL, NULL);
-
-      FOR j IN 1..5 LOOP
-        INSERT INTO match_lineup_players (match_lineup_id, steam_id, captain, checked_in) VALUES
-          (t2_m3_l1id, p_steam_ids[(3 - 1) * 5 + j], j = 1, false),
-          (t2_m3_l2id, p_steam_ids[(4 - 1) * 5 + j], j = 1, false);
-      END LOOP;
-
-      INSERT INTO match_maps (id, match_id, map_id, "order", status, lineup_1_side, lineup_2_side, started_at, ended_at, winning_lineup_id)
-      VALUES (gen_random_uuid(), t2_m3_id, map_ids[3], 1, 'Scheduled', 'CT', 'TERRORIST', NULL, NULL, NULL);
-
-      UPDATE tournament_brackets SET match_id = t2_m3_id WHERE id = t2_bracket_r1m3;
-    END;
   END;
 
   -- Tournament 3: RegistrationOpen
@@ -1271,10 +1241,10 @@ BEGIN
     t3_options_id uuid := gen_random_uuid();
     t3_stage_id uuid := gen_random_uuid();
   BEGIN
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t3_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Open');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, match_mode)
+    VALUES (t3_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Open', 'admin');
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[3],
       'EsportAdria Open 2026',
@@ -1283,6 +1253,7 @@ BEGIN
       p_steam_ids[1],
       'RegistrationOpen',
       t3_options_id,
+      false,
       now() - interval '2 days'
     );
 
@@ -1354,7 +1325,7 @@ BEGIN
     VALUES (t4_de_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Private');
 
 
-    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, created_at)
+    INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
       tournament_ids[4],
       'Adria Championship 2025',
@@ -1363,6 +1334,7 @@ BEGIN
       p_steam_ids[1],
       'Finished',
       t4_de_options_id,
+      true,
       now() - interval '14 days'
     );
 

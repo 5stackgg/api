@@ -62,6 +62,18 @@ computed_fields:
         name: can_close_tournament_registration
         schema: public
       session_argument: hasura_session
+  - name: can_pause
+    definition:
+      function:
+        name: can_pause_tournament
+        schema: public
+      session_argument: hasura_session
+  - name: can_resume
+    definition:
+      function:
+        name: can_resume_tournament
+        schema: public
+      session_argument: hasura_session
   - name: can_join
     definition:
       function:
@@ -114,6 +126,7 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled
@@ -163,6 +176,7 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled
@@ -211,6 +225,7 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled
@@ -261,6 +276,7 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled
@@ -307,6 +323,7 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled
@@ -354,6 +371,7 @@ insert_permissions:
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled
@@ -378,6 +396,7 @@ select_permissions:
   - role: guest
     permission:
       columns:
+        - auto_start
         - created_at
         - description
         - id
@@ -391,9 +410,12 @@ select_permissions:
         - can_close_registration
         - can_join
         - can_open_registration
+        - can_pause
+        - can_resume
         - can_start
         - has_min_teams
         - is_organizer
+        - joined_tournament
         - max_players_per_lineup
         - min_players_per_lineup
       filter:
@@ -404,6 +426,7 @@ select_permissions:
   - role: user
     permission:
       columns:
+        - auto_start
         - created_at
         - description
         - discord_notifications_enabled
@@ -432,9 +455,12 @@ select_permissions:
         - can_close_registration
         - can_join
         - can_open_registration
+        - can_pause
+        - can_resume
         - can_start
         - has_min_teams
         - is_organizer
+        - joined_tournament
         - max_players_per_lineup
         - min_players_per_lineup
       filter:
@@ -449,6 +475,7 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - auto_start
         - description
         - discord_notifications_enabled
         - discord_notify_Canceled

@@ -27,17 +27,42 @@ CREATE OR REPLACE FUNCTION public.tbu_match_maps() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    auto_cancel_duration text;
+    _auto_cancel_duration text;
+    _auto_cancellation boolean;
+    _auto_cancel_duration_override integer;
+    _live_match_timeout_override integer;
+    _live_match_timeout text;
 BEGIN
-    auto_cancel_duration := get_setting('auto_cancel_duration', '15') || ' minutes';
+    SELECT mo.auto_cancellation, mo.auto_cancel_duration, mo.live_match_timeout
+    INTO _auto_cancellation, _auto_cancel_duration_override, _live_match_timeout_override
+    FROM matches m
+    INNER JOIN match_options mo ON mo.id = m.match_options_id
+    WHERE m.id = NEW.match_id;
+
+    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
+    _live_match_timeout := COALESCE(_live_match_timeout_override, get_setting('live_match_timeout', '180')::int)::text || ' minutes';
 
     IF NEW.status = 'Warmup' THEN
-        update matches set cancels_at = NOW() + (auto_cancel_duration)::interval where id = NEW.match_id;
+        IF _auto_cancellation THEN
+            UPDATE matches SET cancels_at = NOW() + (_auto_cancel_duration)::interval WHERE id = NEW.match_id;
+        END IF;
     END IF;
 
-    IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'OverTime') THEN
+    IF NEW.status = 'Paused' AND OLD.status != 'Paused' THEN
+        UPDATE matches SET cancels_at = NULL WHERE id = NEW.match_id;
+    END IF;
+
+    IF OLD.status = 'Paused' AND (NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
+        IF _auto_cancellation THEN
+            UPDATE matches SET cancels_at = NOW() + (_live_match_timeout)::interval WHERE id = NEW.match_id;
+        END IF;
+    END IF;
+
+    IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
         NEW.started_at = NOW();
-        update matches set cancels_at = NOW() + INTERVAL '3 hours' where id = NEW.match_id;
+        IF _auto_cancellation THEN
+            UPDATE matches SET cancels_at = NOW() + (_live_match_timeout)::interval WHERE id = NEW.match_id;
+        END IF;
     END IF;
 
     IF NEW.status = 'Finished' THEN

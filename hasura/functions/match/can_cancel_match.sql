@@ -2,18 +2,15 @@ CREATE OR REPLACE FUNCTION public.can_cancel_match(match public.matches, hasura_
 RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
-DECLARE
 BEGIN
-    IF is_match_organizer(match, hasura_session) AND (
-        match.status != 'Finished' AND
-        match.status != 'Tie' AND
-        match.status != 'Canceled' AND
-        match.status != 'Forfeit' AND
-        match.status != 'Surrendered'
-    ) THEN
-        RETURN true;
+    IF NOT is_match_organizer(match, hasura_session) THEN
+        RETURN false;
     END IF;
 
-    RETURN false;
+    IF match.status IN ('Finished', 'Tie', 'Canceled', 'Forfeit', 'Surrendered') THEN
+        RETURN false;
+    END IF;
+
+    RETURN true;
 END;
 $$;

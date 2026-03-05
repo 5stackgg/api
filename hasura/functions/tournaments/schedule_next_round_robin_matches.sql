@@ -96,11 +96,11 @@ BEGIN
         END IF;
     END IF;
     
-    -- Schedule all brackets that are ready
-    IF array_length(brackets_to_schedule, 1) > 0 THEN
+    -- Schedule all brackets that are ready (skip if tournament is paused or auto_start is off)
+    IF array_length(brackets_to_schedule, 1) > 0 AND should_auto_schedule(stage_id) THEN
         FOREACH bracket_id IN ARRAY brackets_to_schedule LOOP
             SELECT * INTO bracket_row FROM tournament_brackets WHERE id = bracket_id;
-            
+
             IF bracket_row.match_id IS NULL THEN
                 PERFORM schedule_tournament_match(bracket_row);
             END IF;

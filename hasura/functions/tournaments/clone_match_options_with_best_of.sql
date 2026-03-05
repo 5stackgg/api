@@ -29,7 +29,8 @@ BEGIN
         overtime, knife_round, mr, best_of, coaches, number_of_substitutes,
         map_veto, timeout_setting, tech_timeout_setting, map_pool_id, type,
         regions, prefer_dedicated_server, invite_code, lobby_access,
-        region_veto, ready_setting, check_in_setting, default_models, tv_delay
+        region_veto, ready_setting, check_in_setting, default_models, tv_delay,
+        auto_cancellation, match_mode, auto_cancel_duration, live_match_timeout
     ) VALUES (
         match_options_record.overtime, match_options_record.knife_round,
         match_options_record.mr, _target_best_of,
@@ -40,7 +41,9 @@ BEGIN
         match_options_record.prefer_dedicated_server, match_options_record.invite_code,
         match_options_record.lobby_access, match_options_record.region_veto,
         match_options_record.ready_setting, match_options_record.check_in_setting,
-        match_options_record.default_models, match_options_record.tv_delay
+        match_options_record.default_models, match_options_record.tv_delay,
+        match_options_record.auto_cancellation, match_options_record.match_mode,
+        match_options_record.auto_cancel_duration, match_options_record.live_match_timeout
     )
     RETURNING id INTO cloned_id;
 
