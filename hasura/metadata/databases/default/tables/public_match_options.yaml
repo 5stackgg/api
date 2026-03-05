@@ -84,7 +84,6 @@ insert_permissions:
         - lobby_access
         - map_pool_id
         - map_veto
-        - match_mode
         - mr
         - number_of_substitutes
         - overtime
@@ -94,9 +93,6 @@ insert_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - auto_cancel_duration
-        - live_match_timeout
-        - match_cancellation
         - tv_delay
         - type
     comment: ""
@@ -202,7 +198,6 @@ update_permissions:
         - lobby_access
         - map_pool_id
         - map_veto
-        - match_mode
         - mr
         - number_of_substitutes
         - overtime
@@ -212,9 +207,6 @@ update_permissions:
         - regions
         - tech_timeout_setting
         - timeout_setting
-        - auto_cancel_duration
-        - live_match_timeout
-        - match_cancellation
         - tv_delay
         - type
       filter:
