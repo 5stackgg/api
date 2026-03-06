@@ -10,6 +10,7 @@ import {
   tournaments,
 } from "generated/schema";
 import {
+  NOTIFIABLE_STATUSES,
   STATUS_LABELS,
   STATUS_COLORS,
   DISCORD_COLORS,
@@ -116,16 +117,6 @@ export class NotificationsService {
     newStatus: e_match_status_enum,
     _oldStatus: e_match_status_enum,
   ) {
-    const NOTIFIABLE_STATUSES: Set<e_match_status_enum> = new Set([
-      "WaitingForCheckIn",
-      "Live",
-      "Finished",
-      "Tie",
-      "Canceled",
-      "Forfeit",
-      "Surrendered",
-    ]);
-
     if (!NOTIFIABLE_STATUSES.has(newStatus)) {
       return;
     }
