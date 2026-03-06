@@ -45,12 +45,6 @@ export class MatchesController {
     "Surrendered",
   ];
 
-  private static readonly TERMINAL_OR_PRE_START_STATUSES: string[] = [
-    ...MatchesController.TERMINAL_STATUSES,
-    "Scheduled",
-    "PickingPlayers",
-  ];
-
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -612,23 +606,6 @@ export class MatchesController {
 
     if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a match organizer");
-    }
-
-    const { matches_by_pk: matchToSetWinner } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: match_id,
-        },
-        status: true,
-      },
-    });
-
-    if (!matchToSetWinner) {
-      throw Error("match not found");
-    }
-
-    if (MatchesController.TERMINAL_OR_PRE_START_STATUSES.includes(matchToSetWinner.status)) {
-      throw Error("cannot set winner for a match in this state");
     }
 
     await this.hasura.mutation({
