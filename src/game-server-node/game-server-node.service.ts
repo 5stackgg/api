@@ -47,8 +47,14 @@ export class GameServerNodeService {
     this.batchApi = kc.makeApiClient(BatchV1Api);
   }
 
-  public static GET_UPDATE_JOB_NAME(gameServerNodeId: string) {
-    return `update-cs-server-${gameServerNodeId.replaceAll(".", "-")}`;
+  public static GET_UPDATE_JOB_NAME(
+    gameServerNodeId: string,
+    game = "cs2",
+  ) {
+    const sanitized = gameServerNodeId.replaceAll(".", "-");
+    return game === "csgo"
+      ? `update-csgo-server-${sanitized}`
+      : `update-cs-server-${sanitized}`;
   }
 
   public static GET_NODE_STATS_KEY(nodeId: string) {
@@ -293,7 +299,11 @@ export class GameServerNodeService {
     }
   }
 
-  public async updateCsServer(gameServerNodeId: string, force = false) {
+  public async updateCsServer(
+    gameServerNodeId: string,
+    force = false,
+    game = "cs2",
+  ) {
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: {
@@ -313,10 +323,10 @@ export class GameServerNodeService {
       throw new Error("Game server not found");
     }
 
-    const nodeBuildId = game_server_nodes_by_pk.build_id;
-    const pinBuildId = game_server_nodes_by_pk.pinned_version?.build_id;
+    if (game === "cs2" && !force) {
+      const nodeBuildId = game_server_nodes_by_pk.build_id;
+      const pinBuildId = game_server_nodes_by_pk.pinned_version?.build_id;
 
-    if (!force) {
       if (pinBuildId) {
         if (nodeBuildId === pinBuildId) {
           this.logger.log(
@@ -335,13 +345,17 @@ export class GameServerNodeService {
       }
     }
 
-    await this.createVolumes(gameServerNodeId);
+    await this.createVolumes(gameServerNodeId, game);
 
-    this.logger.log(`Updating CS2 on node ${gameServerNodeId}`);
-
-    const pod = await this.loggingService.getJobPod(
-      GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId),
+    this.logger.log(
+      `Updating ${game === "csgo" ? "CSGO" : "CS2"} on node ${gameServerNodeId}`,
     );
+
+    const jobName = GameServerNodeService.GET_UPDATE_JOB_NAME(
+      gameServerNodeId,
+      game,
+    );
+    const pod = await this.loggingService.getJobPod(jobName);
 
     if (pod) {
       if (game_server_nodes_by_pk.update_status === null) {
@@ -360,11 +374,18 @@ export class GameServerNodeService {
         });
       }
 
-      await this.moitorUpdateStatus(gameServerNodeId);
+      await this.moitorUpdateStatus(gameServerNodeId, 0, game);
       return;
     }
 
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
+    const gameId = game === "csgo" ? "4465480" : "730";
+    const pinBuildId = game_server_nodes_by_pk.pinned_version?.build_id;
+
+    const serverfilesVolumeName =
+      game === "csgo"
+        ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
+        : `serverfiles-${sanitizedGameServerNodeId}`;
 
     try {
       await this.batchApi.createNamespacedJob({
@@ -373,7 +394,7 @@ export class GameServerNodeService {
           apiVersion: "batch/v1",
           kind: "Job",
           metadata: {
-            name: `update-cs-server-${sanitizedGameServerNodeId}`,
+            name: jobName,
           },
           spec: {
             template: {
@@ -416,7 +437,11 @@ export class GameServerNodeService {
                     image: "ghcr.io/5stackgg/game-server:latest",
                     command: ["/opt/scripts/update.sh"],
                     env: [
-                      ...(pinBuildId
+                      {
+                        name: "GAME_ID",
+                        value: gameId,
+                      },
+                      ...(game === "cs2" && pinBuildId
                         ? [
                             {
                               name: "BUILD_ID",
@@ -431,7 +456,8 @@ export class GameServerNodeService {
                             },
                           ]
                         : []),
-                      ...(pinBuildId &&
+                      ...(game === "cs2" &&
+                      pinBuildId &&
                       this.steamConfig.steamUser &&
                       this.steamConfig.steamPassword
                         ? [
@@ -452,7 +478,7 @@ export class GameServerNodeService {
                         mountPath: "/serverdata/steamcmd",
                       },
                       {
-                        name: `serverfiles-${sanitizedGameServerNodeId}`,
+                        name: serverfilesVolumeName,
                         mountPath: "/serverdata/serverfiles",
                       },
                       {
@@ -470,9 +496,9 @@ export class GameServerNodeService {
                     },
                   },
                   {
-                    name: `serverfiles-${sanitizedGameServerNodeId}`,
+                    name: serverfilesVolumeName,
                     persistentVolumeClaim: {
-                      claimName: `serverfiles-${sanitizedGameServerNodeId}-claim`,
+                      claimName: `${serverfilesVolumeName}-claim`,
                     },
                   },
                   {
@@ -505,7 +531,7 @@ export class GameServerNodeService {
       });
 
       setTimeout(() => {
-        void this.moitorUpdateStatus(gameServerNodeId, 3);
+        void this.moitorUpdateStatus(gameServerNodeId, 3, game);
       }, 5000);
     } catch (error) {
       this.logger.error(
@@ -516,7 +542,17 @@ export class GameServerNodeService {
     }
   }
 
-  private async createVolumes(gameServerNodeId: string) {
+  private async createVolumes(gameServerNodeId: string, game = "cs2") {
+    if (game === "csgo") {
+      await this.createVolume(
+        gameServerNodeId,
+        `/opt/5stack/serverfiles-csgo`,
+        `serverfiles-csgo`,
+        "75Gi",
+      );
+      return;
+    }
+
     await this.createVolume(
       gameServerNodeId,
       `/opt/5stack/demos`,
@@ -539,10 +575,14 @@ export class GameServerNodeService {
     );
   }
 
-  public async moitorUpdateStatus(gameServerNodeId: string, attempts = 0) {
+  public async moitorUpdateStatus(
+    gameServerNodeId: string,
+    attempts = 0,
+    game = "cs2",
+  ) {
     try {
       const pod = await this.loggingService.getJobPod(
-        GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId),
+        GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId, game),
       );
 
       if (!pod) {
@@ -640,6 +680,7 @@ export class GameServerNodeService {
               },
               _set: {
                 update_status: null,
+                ...(game === "csgo" ? { csgo_build_id: 1 } : {}),
               },
             },
             update_status: true,
@@ -652,7 +693,7 @@ export class GameServerNodeService {
       }
       if (attempts > 0) {
         setTimeout(() => {
-          void this.moitorUpdateStatus(gameServerNodeId, attempts - 1);
+          void this.moitorUpdateStatus(gameServerNodeId, attempts - 1, game);
         }, 5000);
         return;
       }

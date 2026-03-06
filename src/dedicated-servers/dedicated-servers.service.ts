@@ -58,6 +58,7 @@ export class DedicatedServersService {
         type: true,
         port: true,
         tv_port: true,
+        game: true,
         max_players: true,
         api_password: true,
         rcon_password: true,
@@ -120,6 +121,10 @@ export class DedicatedServersService {
       }
 
       const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
+      const serverfilesVolumeName =
+        server.game === "csgo"
+          ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
+          : `serverfiles-${sanitizedGameServerNodeId}`;
 
       let pluginImage = this.gameServerConfig.serverImage;
 
@@ -263,7 +268,7 @@ export class DedicatedServersService {
                         mountPath: "/serverdata/steamcmd",
                       },
                       {
-                        name: `serverfiles-${sanitizedGameServerNodeId}`,
+                        name: serverfilesVolumeName,
                         mountPath: "/serverdata/serverfiles",
                       },
                       {
@@ -285,9 +290,9 @@ export class DedicatedServersService {
                     },
                   },
                   {
-                    name: `serverfiles-${sanitizedGameServerNodeId}`,
+                    name: serverfilesVolumeName,
                     persistentVolumeClaim: {
-                      claimName: `serverfiles-${sanitizedGameServerNodeId}-claim`,
+                      claimName: `${serverfilesVolumeName}-claim`,
                     },
                   },
                   {

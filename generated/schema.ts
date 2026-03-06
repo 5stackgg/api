@@ -1364,6 +1364,71 @@ export type e_match_map_status_select_column = 'description' | 'value'
 export type e_match_map_status_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_match_mode" */
+export interface e_match_mode {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_match_mode'
+}
+
+
+/** aggregated selection of "e_match_mode" */
+export interface e_match_mode_aggregate {
+    aggregate: (e_match_mode_aggregate_fields | null)
+    nodes: e_match_mode[]
+    __typename: 'e_match_mode_aggregate'
+}
+
+
+/** aggregate fields of "e_match_mode" */
+export interface e_match_mode_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_match_mode_max_fields | null)
+    min: (e_match_mode_min_fields | null)
+    __typename: 'e_match_mode_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_match_mode" */
+export type e_match_mode_constraint = 'e_match_mode_pkey'
+
+export type e_match_mode_enum = 'admin' | 'auto'
+
+
+/** aggregate max on columns */
+export interface e_match_mode_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_match_mode_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_match_mode_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_match_mode_min_fields'
+}
+
+
+/** response of any mutation on the table "e_match_mode" */
+export interface e_match_mode_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_match_mode[]
+    __typename: 'e_match_mode_mutation_response'
+}
+
+
+/** select columns of table "e_match_mode" */
+export type e_match_mode_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_match_mode" */
+export type e_match_mode_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_match_status" */
 export interface e_match_status {
     description: Scalars['String']
@@ -2277,7 +2342,7 @@ export interface e_tournament_status_aggregate_fields {
 /** unique or primary key constraints on table "e_tournament_status" */
 export type e_tournament_status_constraint = 'e_tournament_status_pkey'
 
-export type e_tournament_status_enum = 'Cancelled' | 'CancelledMinTeams' | 'Finished' | 'Live' | 'RegistrationClosed' | 'RegistrationOpen' | 'Setup'
+export type e_tournament_status_enum = 'Cancelled' | 'CancelledMinTeams' | 'Finished' | 'Live' | 'Paused' | 'RegistrationClosed' | 'RegistrationOpen' | 'Setup'
 
 
 /** aggregate max on columns */
@@ -4846,6 +4911,8 @@ export interface match_maps_variance_fields {
 
 /** columns and relationships of "match_options" */
 export interface match_options {
+    auto_cancel_duration: (Scalars['Int'] | null)
+    auto_cancellation: Scalars['Boolean']
     best_of: Scalars['Int']
     check_in_setting: e_check_in_settings_enum
     coaches: Scalars['Boolean']
@@ -4855,11 +4922,13 @@ export interface match_options {
     id: Scalars['uuid']
     invite_code: (Scalars['String'] | null)
     knife_round: Scalars['Boolean']
+    live_match_timeout: (Scalars['Int'] | null)
     lobby_access: (e_lobby_access_enum | null)
     /** An object relationship */
     map_pool: map_pools
     map_pool_id: Scalars['uuid']
     map_veto: Scalars['Boolean']
+    match_mode: e_match_mode_enum
     /** An array relationship */
     matches: matches[]
     /** An aggregate relationship */
@@ -4912,7 +4981,9 @@ export interface match_options_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface match_options_avg_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -4926,9 +4997,11 @@ export type match_options_constraint = 'match_options_pkey'
 
 /** aggregate max on columns */
 export interface match_options_max_fields {
+    auto_cancel_duration: (Scalars['Int'] | null)
     best_of: (Scalars['Int'] | null)
     id: (Scalars['uuid'] | null)
     invite_code: (Scalars['String'] | null)
+    live_match_timeout: (Scalars['Int'] | null)
     map_pool_id: (Scalars['uuid'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
@@ -4940,9 +5013,11 @@ export interface match_options_max_fields {
 
 /** aggregate min on columns */
 export interface match_options_min_fields {
+    auto_cancel_duration: (Scalars['Int'] | null)
     best_of: (Scalars['Int'] | null)
     id: (Scalars['uuid'] | null)
     invite_code: (Scalars['String'] | null)
+    live_match_timeout: (Scalars['Int'] | null)
     map_pool_id: (Scalars['uuid'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
@@ -4963,12 +5038,14 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'best_of' | 'check_in_setting' | 'coaches' | 'default_models' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_select_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'check_in_setting' | 'coaches' | 'default_models' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate stddev on columns */
 export interface match_options_stddev_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -4978,7 +5055,9 @@ export interface match_options_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface match_options_stddev_pop_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -4988,7 +5067,9 @@ export interface match_options_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface match_options_stddev_samp_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -4998,7 +5079,9 @@ export interface match_options_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface match_options_sum_fields {
+    auto_cancel_duration: (Scalars['Int'] | null)
     best_of: (Scalars['Int'] | null)
+    live_match_timeout: (Scalars['Int'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
     tv_delay: (Scalars['Int'] | null)
@@ -5007,12 +5090,14 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'best_of' | 'check_in_setting' | 'coaches' | 'default_models' | 'id' | 'invite_code' | 'knife_round' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
+export type match_options_update_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'check_in_setting' | 'coaches' | 'default_models' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'lobby_access' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type'
 
 
 /** aggregate var_pop on columns */
 export interface match_options_var_pop_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -5022,7 +5107,9 @@ export interface match_options_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface match_options_var_samp_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -5032,7 +5119,9 @@ export interface match_options_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface match_options_variance_fields {
+    auto_cancel_duration: (Scalars['Float'] | null)
     best_of: (Scalars['Float'] | null)
+    live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
@@ -5823,6 +5912,10 @@ export interface mutation_root {
     delete_e_match_map_status: (e_match_map_status_mutation_response | null)
     /** delete single row from the table: "e_match_map_status" */
     delete_e_match_map_status_by_pk: (e_match_map_status | null)
+    /** delete data from the table: "e_match_mode" */
+    delete_e_match_mode: (e_match_mode_mutation_response | null)
+    /** delete single row from the table: "e_match_mode" */
+    delete_e_match_mode_by_pk: (e_match_mode | null)
     /** delete data from the table: "e_match_status" */
     delete_e_match_status: (e_match_status_mutation_response | null)
     /** delete single row from the table: "e_match_status" */
@@ -6138,6 +6231,10 @@ export interface mutation_root {
     insert_e_match_map_status: (e_match_map_status_mutation_response | null)
     /** insert a single row into the table: "e_match_map_status" */
     insert_e_match_map_status_one: (e_match_map_status | null)
+    /** insert data into the table: "e_match_mode" */
+    insert_e_match_mode: (e_match_mode_mutation_response | null)
+    /** insert a single row into the table: "e_match_mode" */
+    insert_e_match_mode_one: (e_match_mode | null)
     /** insert data into the table: "e_match_status" */
     insert_e_match_status: (e_match_status_mutation_response | null)
     /** insert a single row into the table: "e_match_status" */
@@ -6515,6 +6612,12 @@ export interface mutation_root {
     update_e_match_map_status_by_pk: (e_match_map_status | null)
     /** update multiples rows of table: "e_match_map_status" */
     update_e_match_map_status_many: ((e_match_map_status_mutation_response | null)[] | null)
+    /** update data of the table: "e_match_mode" */
+    update_e_match_mode: (e_match_mode_mutation_response | null)
+    /** update single row of the table: "e_match_mode" */
+    update_e_match_mode_by_pk: (e_match_mode | null)
+    /** update multiples rows of table: "e_match_mode" */
+    update_e_match_mode_many: ((e_match_mode_mutation_response | null)[] | null)
     /** update data of the table: "e_match_status" */
     update_e_match_status: (e_match_status_mutation_response | null)
     /** update single row of the table: "e_match_status" */
@@ -9743,6 +9846,12 @@ export interface query_root {
     e_match_map_status_aggregate: e_match_map_status_aggregate
     /** fetch data from the table: "e_match_map_status" using primary key columns */
     e_match_map_status_by_pk: (e_match_map_status | null)
+    /** fetch data from the table: "e_match_mode" */
+    e_match_mode: e_match_mode[]
+    /** fetch aggregated fields from the table: "e_match_mode" */
+    e_match_mode_aggregate: e_match_mode_aggregate
+    /** fetch data from the table: "e_match_mode" using primary key columns */
+    e_match_mode_by_pk: (e_match_mode | null)
     /** fetch data from the table: "e_match_status" */
     e_match_status: e_match_status[]
     /** fetch aggregated fields from the table: "e_match_status" */
@@ -10779,6 +10888,14 @@ export interface subscription_root {
     e_match_map_status_by_pk: (e_match_map_status | null)
     /** fetch data from the table in a streaming manner: "e_match_map_status" */
     e_match_map_status_stream: e_match_map_status[]
+    /** fetch data from the table: "e_match_mode" */
+    e_match_mode: e_match_mode[]
+    /** fetch aggregated fields from the table: "e_match_mode" */
+    e_match_mode_aggregate: e_match_mode_aggregate
+    /** fetch data from the table: "e_match_mode" using primary key columns */
+    e_match_mode_by_pk: (e_match_mode | null)
+    /** fetch data from the table in a streaming manner: "e_match_mode" */
+    e_match_mode_stream: e_match_mode[]
     /** fetch data from the table: "e_match_status" */
     e_match_status: e_match_status[]
     /** fetch aggregated fields from the table: "e_match_status" */
@@ -11858,6 +11975,7 @@ export interface tournament_brackets {
     parent_bracket_id: (Scalars['uuid'] | null)
     path: (Scalars['String'] | null)
     round: Scalars['Int']
+    scheduled_at: (Scalars['timestamptz'] | null)
     scheduled_eta: (Scalars['timestamptz'] | null)
     /** An object relationship */
     stage: tournament_stages
@@ -11926,6 +12044,7 @@ export interface tournament_brackets_max_fields {
     parent_bracket_id: (Scalars['uuid'] | null)
     path: (Scalars['String'] | null)
     round: (Scalars['Int'] | null)
+    scheduled_at: (Scalars['timestamptz'] | null)
     scheduled_eta: (Scalars['timestamptz'] | null)
     team_1_seed: (Scalars['Int'] | null)
     team_2_seed: (Scalars['Int'] | null)
@@ -11948,6 +12067,7 @@ export interface tournament_brackets_min_fields {
     parent_bracket_id: (Scalars['uuid'] | null)
     path: (Scalars['String'] | null)
     round: (Scalars['Int'] | null)
+    scheduled_at: (Scalars['timestamptz'] | null)
     scheduled_eta: (Scalars['timestamptz'] | null)
     team_1_seed: (Scalars['Int'] | null)
     team_2_seed: (Scalars['Int'] | null)
@@ -11969,7 +12089,7 @@ export interface tournament_brackets_mutation_response {
 
 
 /** select columns of table "tournament_brackets" */
-export type tournament_brackets_select_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'match_options_id' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
+export type tournament_brackets_select_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'match_options_id' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_at' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
 
 
 /** select "tournament_brackets_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_brackets" */
@@ -12025,7 +12145,7 @@ export interface tournament_brackets_sum_fields {
 
 
 /** update columns of table "tournament_brackets" */
-export type tournament_brackets_update_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'match_options_id' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
+export type tournament_brackets_update_column = 'bye' | 'created_at' | 'finished' | 'group' | 'id' | 'loser_parent_bracket_id' | 'match_id' | 'match_number' | 'match_options_id' | 'parent_bracket_id' | 'path' | 'round' | 'scheduled_at' | 'scheduled_eta' | 'team_1_seed' | 'team_2_seed' | 'tournament_stage_id' | 'tournament_team_id_1' | 'tournament_team_id_2'
 
 
 /** aggregate var_pop on columns */
@@ -12869,6 +12989,7 @@ export interface tournament_teams_variance_fields {
 export interface tournaments {
     /** An object relationship */
     admin: players
+    auto_start: Scalars['Boolean']
     /** A computed field, executes function "can_cancel_tournament" */
     can_cancel: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_close_tournament_registration" */
@@ -12877,6 +12998,10 @@ export interface tournaments {
     can_join: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_open_tournament_registration" */
     can_open_registration: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_pause_tournament" */
+    can_pause: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_resume_tournament" */
+    can_resume: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_start_tournament" */
     can_start: (Scalars['Boolean'] | null)
     created_at: (Scalars['timestamptz'] | null)
@@ -13029,15 +13154,15 @@ export interface tournaments_mutation_response {
 
 
 /** select columns of table "tournaments" */
-export type tournaments_select_column = 'created_at' | 'description' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+export type tournaments_select_column = 'auto_start' | 'created_at' | 'description' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
 
 
 /** select "tournaments_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer'
 
 
 /** select "tournaments_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer'
 
 
 /** aggregate stddev on columns */
@@ -13085,7 +13210,7 @@ export interface tournaments_sum_fields {
 
 
 /** update columns of table "tournaments" */
-export type tournaments_update_column = 'created_at' | 'description' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+export type tournaments_update_column = 'auto_start' | 'created_at' | 'description' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
 
 
 /** aggregate var_pop on columns */
@@ -17014,6 +17139,109 @@ export interface e_match_map_status_updates {
 _set?: (e_match_map_status_set_input | null),
 /** filter the rows which have to be updated */
 where: e_match_map_status_bool_exp}
+
+
+/** columns and relationships of "e_match_mode" */
+export interface e_match_modeGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_match_mode" */
+export interface e_match_mode_aggregateGenqlSelection{
+    aggregate?: e_match_mode_aggregate_fieldsGenqlSelection
+    nodes?: e_match_modeGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_match_mode" */
+export interface e_match_mode_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_match_mode_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_match_mode_max_fieldsGenqlSelection
+    min?: e_match_mode_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_match_mode". All fields are combined with a logical 'AND'. */
+export interface e_match_mode_bool_exp {_and?: (e_match_mode_bool_exp[] | null),_not?: (e_match_mode_bool_exp | null),_or?: (e_match_mode_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_match_mode_enum". All fields are combined with logical 'AND'. */
+export interface e_match_mode_enum_comparison_exp {_eq?: (e_match_mode_enum | null),_in?: (e_match_mode_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_match_mode_enum | null),_nin?: (e_match_mode_enum[] | null)}
+
+
+/** input type for inserting data into table "e_match_mode" */
+export interface e_match_mode_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_match_mode_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_match_mode_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_match_mode" */
+export interface e_match_mode_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_match_modeGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_match_mode" */
+export interface e_match_mode_on_conflict {constraint: e_match_mode_constraint,update_columns?: e_match_mode_update_column[],where?: (e_match_mode_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_match_mode". */
+export interface e_match_mode_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_match_mode */
+export interface e_match_mode_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_match_mode" */
+export interface e_match_mode_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_match_mode" */
+export interface e_match_mode_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_match_mode_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_match_mode_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_match_mode_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_match_mode_set_input | null),
+/** filter the rows which have to be updated */
+where: e_match_mode_bool_exp}
 
 
 /** columns and relationships of "e_match_status" */
@@ -23072,6 +23300,8 @@ export interface match_maps_variance_order_by {lineup_1_timeouts_available?: (or
 
 /** columns and relationships of "match_options" */
 export interface match_optionsGenqlSelection{
+    auto_cancel_duration?: boolean | number
+    auto_cancellation?: boolean | number
     best_of?: boolean | number
     check_in_setting?: boolean | number
     coaches?: boolean | number
@@ -23081,11 +23311,13 @@ export interface match_optionsGenqlSelection{
     id?: boolean | number
     invite_code?: boolean | number
     knife_round?: boolean | number
+    live_match_timeout?: boolean | number
     lobby_access?: boolean | number
     /** An object relationship */
     map_pool?: map_poolsGenqlSelection
     map_pool_id?: boolean | number
     map_veto?: boolean | number
+    match_mode?: boolean | number
     /** An array relationship */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -23161,7 +23393,9 @@ export interface match_options_aggregate_fieldsGenqlSelection{
 
 /** aggregate avg on columns */
 export interface match_options_avg_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23171,22 +23405,24 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),best_of?: (Int_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),auto_cancel_duration?: (Int_comparison_exp | null),auto_cancellation?: (Boolean_comparison_exp | null),best_of?: (Int_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),live_match_timeout?: (Int_comparison_exp | null),lobby_access?: (e_lobby_access_enum_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),match_mode?: (e_match_mode_enum_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
-export interface match_options_inc_input {best_of?: (Scalars['Int'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),tv_delay?: (Scalars['Int'] | null)}
+export interface match_options_inc_input {auto_cancel_duration?: (Scalars['Int'] | null),best_of?: (Scalars['Int'] | null),live_match_timeout?: (Scalars['Int'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),tv_delay?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_insert_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
 export interface match_options_max_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
     id?: boolean | number
     invite_code?: boolean | number
+    live_match_timeout?: boolean | number
     map_pool_id?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
@@ -23199,9 +23435,11 @@ export interface match_options_max_fieldsGenqlSelection{
 
 /** aggregate min on columns */
 export interface match_options_min_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
     id?: boolean | number
     invite_code?: boolean | number
+    live_match_timeout?: boolean | number
     map_pool_id?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
@@ -23234,7 +23472,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {best_of?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
+export interface match_options_order_by {auto_cancel_duration?: (order_by | null),auto_cancellation?: (order_by | null),best_of?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),live_match_timeout?: (order_by | null),lobby_access?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),match_mode?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -23242,12 +23480,14 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_set_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
 export interface match_options_stddev_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23258,7 +23498,9 @@ export interface match_options_stddev_fieldsGenqlSelection{
 
 /** aggregate stddev_pop on columns */
 export interface match_options_stddev_pop_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23269,7 +23511,9 @@ export interface match_options_stddev_pop_fieldsGenqlSelection{
 
 /** aggregate stddev_samp on columns */
 export interface match_options_stddev_samp_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23287,12 +23531,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
+export interface match_options_stream_cursor_value_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),lobby_access?: (e_lobby_access_enum | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
 export interface match_options_sum_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23311,7 +23557,9 @@ where: match_options_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface match_options_var_pop_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23322,7 +23570,9 @@ export interface match_options_var_pop_fieldsGenqlSelection{
 
 /** aggregate var_samp on columns */
 export interface match_options_var_samp_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -23333,7 +23583,9 @@ export interface match_options_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface match_options_variance_fieldsGenqlSelection{
+    auto_cancel_duration?: boolean | number
     best_of?: boolean | number
+    live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
     tv_delay?: boolean | number
@@ -24805,6 +25057,12 @@ export interface mutation_rootGenqlSelection{
     where: e_match_map_status_bool_exp} })
     /** delete single row from the table: "e_match_map_status" */
     delete_e_match_map_status_by_pk?: (e_match_map_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_match_mode" */
+    delete_e_match_mode?: (e_match_mode_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_match_mode_bool_exp} })
+    /** delete single row from the table: "e_match_mode" */
+    delete_e_match_mode_by_pk?: (e_match_modeGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_match_status" */
     delete_e_match_status?: (e_match_status_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -25352,6 +25610,18 @@ export interface mutation_rootGenqlSelection{
     object: e_match_map_status_insert_input, 
     /** upsert condition */
     on_conflict?: (e_match_map_status_on_conflict | null)} })
+    /** insert data into the table: "e_match_mode" */
+    insert_e_match_mode?: (e_match_mode_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_match_mode_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_match_mode_on_conflict | null)} })
+    /** insert a single row into the table: "e_match_mode" */
+    insert_e_match_mode_one?: (e_match_modeGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_match_mode_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_match_mode_on_conflict | null)} })
     /** insert data into the table: "e_match_status" */
     insert_e_match_status?: (e_match_status_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -26183,7 +26453,7 @@ export interface mutation_rootGenqlSelection{
     syncSteamFriends?: SuccessOutputGenqlSelection
     testUpload?: TestUploadResponseGenqlSelection
     unlinkDiscord?: SuccessOutputGenqlSelection
-    updateCs?: (SuccessOutputGenqlSelection & { __args?: {game_server_node_id?: (Scalars['uuid'] | null)} })
+    updateCs?: (SuccessOutputGenqlSelection & { __args?: {game?: (Scalars['String'] | null), game_server_node_id?: (Scalars['uuid'] | null)} })
     updateServices?: SuccessOutputGenqlSelection
     /** update data of the table: "_map_pool" */
     update__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
@@ -26365,6 +26635,20 @@ export interface mutation_rootGenqlSelection{
     update_e_match_map_status_many?: (e_match_map_status_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_match_map_status_updates[]} })
+    /** update data of the table: "e_match_mode" */
+    update_e_match_mode?: (e_match_mode_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_match_mode_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_match_mode_bool_exp} })
+    /** update single row of the table: "e_match_mode" */
+    update_e_match_mode_by_pk?: (e_match_modeGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_match_mode_set_input | null), pk_columns: e_match_mode_pk_columns_input} })
+    /** update multiples rows of table: "e_match_mode" */
+    update_e_match_mode_many?: (e_match_mode_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_match_mode_updates[]} })
     /** update data of the table: "e_match_status" */
     update_e_match_status?: (e_match_status_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -32598,6 +32882,32 @@ export interface query_rootGenqlSelection{
     where?: (e_match_map_status_bool_exp | null)} })
     /** fetch data from the table: "e_match_map_status" using primary key columns */
     e_match_map_status_by_pk?: (e_match_map_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_match_mode" */
+    e_match_mode?: (e_match_modeGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_mode_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_mode_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_mode_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_match_mode" */
+    e_match_mode_aggregate?: (e_match_mode_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_mode_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_mode_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_mode_bool_exp | null)} })
+    /** fetch data from the table: "e_match_mode" using primary key columns */
+    e_match_mode_by_pk?: (e_match_modeGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_match_status" */
     e_match_status?: (e_match_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -35743,6 +36053,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_match_map_status_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_match_map_status_bool_exp | null)} })
+    /** fetch data from the table: "e_match_mode" */
+    e_match_mode?: (e_match_modeGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_mode_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_mode_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_mode_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_match_mode" */
+    e_match_mode_aggregate?: (e_match_mode_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_mode_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_mode_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_mode_bool_exp | null)} })
+    /** fetch data from the table: "e_match_mode" using primary key columns */
+    e_match_mode_by_pk?: (e_match_modeGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_match_mode" */
+    e_match_mode_stream?: (e_match_modeGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_match_mode_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_match_mode_bool_exp | null)} })
     /** fetch data from the table: "e_match_status" */
     e_match_status?: (e_match_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -39267,6 +39611,7 @@ export interface tournament_bracketsGenqlSelection{
     parent_bracket_id?: boolean | number
     path?: boolean | number
     round?: boolean | number
+    scheduled_at?: boolean | number
     scheduled_eta?: boolean | number
     /** An object relationship */
     stage?: tournament_stagesGenqlSelection
@@ -39346,7 +39691,7 @@ export interface tournament_brackets_avg_order_by {group?: (order_by | null),mat
 
 
 /** Boolean expression to filter rows from the table "tournament_brackets". All fields are combined with a logical 'AND'. */
-export interface tournament_brackets_bool_exp {_and?: (tournament_brackets_bool_exp[] | null),_not?: (tournament_brackets_bool_exp | null),_or?: (tournament_brackets_bool_exp[] | null),bye?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),feeding_brackets?: (tournament_brackets_bool_exp | null),finished?: (Boolean_comparison_exp | null),group?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),loser_bracket?: (tournament_brackets_bool_exp | null),loser_parent_bracket_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_number?: (Int_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),options?: (match_options_bool_exp | null),parent_bracket?: (tournament_brackets_bool_exp | null),parent_bracket_id?: (uuid_comparison_exp | null),path?: (String_comparison_exp | null),round?: (Int_comparison_exp | null),scheduled_eta?: (timestamptz_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team_1?: (tournament_teams_bool_exp | null),team_1_seed?: (Int_comparison_exp | null),team_2?: (tournament_teams_bool_exp | null),team_2_seed?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id_1?: (uuid_comparison_exp | null),tournament_team_id_2?: (uuid_comparison_exp | null)}
+export interface tournament_brackets_bool_exp {_and?: (tournament_brackets_bool_exp[] | null),_not?: (tournament_brackets_bool_exp | null),_or?: (tournament_brackets_bool_exp[] | null),bye?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),feeding_brackets?: (tournament_brackets_bool_exp | null),finished?: (Boolean_comparison_exp | null),group?: (numeric_comparison_exp | null),id?: (uuid_comparison_exp | null),loser_bracket?: (tournament_brackets_bool_exp | null),loser_parent_bracket_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_number?: (Int_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),options?: (match_options_bool_exp | null),parent_bracket?: (tournament_brackets_bool_exp | null),parent_bracket_id?: (uuid_comparison_exp | null),path?: (String_comparison_exp | null),round?: (Int_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),scheduled_eta?: (timestamptz_comparison_exp | null),stage?: (tournament_stages_bool_exp | null),team_1?: (tournament_teams_bool_exp | null),team_1_seed?: (Int_comparison_exp | null),team_2?: (tournament_teams_bool_exp | null),team_2_seed?: (Int_comparison_exp | null),tournament_stage_id?: (uuid_comparison_exp | null),tournament_team_id_1?: (uuid_comparison_exp | null),tournament_team_id_2?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_brackets" */
@@ -39354,7 +39699,7 @@ export interface tournament_brackets_inc_input {group?: (Scalars['numeric'] | nu
 
 
 /** input type for inserting data into table "tournament_brackets" */
-export interface tournament_brackets_insert_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_bracket?: (tournament_brackets_obj_rel_insert_input | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),options?: (match_options_obj_rel_insert_input | null),parent_bracket?: (tournament_brackets_obj_rel_insert_input | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),stage?: (tournament_stages_obj_rel_insert_input | null),team_1?: (tournament_teams_obj_rel_insert_input | null),team_1_seed?: (Scalars['Int'] | null),team_2?: (tournament_teams_obj_rel_insert_input | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
+export interface tournament_brackets_insert_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_bracket?: (tournament_brackets_obj_rel_insert_input | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),options?: (match_options_obj_rel_insert_input | null),parent_bracket?: (tournament_brackets_obj_rel_insert_input | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_at?: (Scalars['timestamptz'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),stage?: (tournament_stages_obj_rel_insert_input | null),team_1?: (tournament_teams_obj_rel_insert_input | null),team_1_seed?: (Scalars['Int'] | null),team_2?: (tournament_teams_obj_rel_insert_input | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -39369,6 +39714,7 @@ export interface tournament_brackets_max_fieldsGenqlSelection{
     parent_bracket_id?: boolean | number
     path?: boolean | number
     round?: boolean | number
+    scheduled_at?: boolean | number
     scheduled_eta?: boolean | number
     team_1_seed?: boolean | number
     team_2_seed?: boolean | number
@@ -39381,7 +39727,7 @@ export interface tournament_brackets_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "tournament_brackets" */
-export interface tournament_brackets_max_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_max_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_at?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -39396,6 +39742,7 @@ export interface tournament_brackets_min_fieldsGenqlSelection{
     parent_bracket_id?: boolean | number
     path?: boolean | number
     round?: boolean | number
+    scheduled_at?: boolean | number
     scheduled_eta?: boolean | number
     team_1_seed?: boolean | number
     team_2_seed?: boolean | number
@@ -39408,7 +39755,7 @@ export interface tournament_brackets_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "tournament_brackets" */
-export interface tournament_brackets_min_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_min_order_by {created_at?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_parent_bracket_id?: (order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_at?: (order_by | null),scheduled_eta?: (order_by | null),team_1_seed?: (order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_brackets" */
@@ -39433,7 +39780,7 @@ export interface tournament_brackets_on_conflict {constraint: tournament_bracket
 
 
 /** Ordering options when selecting data from "tournament_brackets". */
-export interface tournament_brackets_order_by {bye?: (order_by | null),created_at?: (order_by | null),feeding_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),finished?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_bracket?: (tournament_brackets_order_by | null),loser_parent_bracket_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),options?: (match_options_order_by | null),parent_bracket?: (tournament_brackets_order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_eta?: (order_by | null),stage?: (tournament_stages_order_by | null),team_1?: (tournament_teams_order_by | null),team_1_seed?: (order_by | null),team_2?: (tournament_teams_order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
+export interface tournament_brackets_order_by {bye?: (order_by | null),created_at?: (order_by | null),feeding_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),finished?: (order_by | null),group?: (order_by | null),id?: (order_by | null),loser_bracket?: (tournament_brackets_order_by | null),loser_parent_bracket_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_number?: (order_by | null),match_options_id?: (order_by | null),options?: (match_options_order_by | null),parent_bracket?: (tournament_brackets_order_by | null),parent_bracket_id?: (order_by | null),path?: (order_by | null),round?: (order_by | null),scheduled_at?: (order_by | null),scheduled_eta?: (order_by | null),stage?: (tournament_stages_order_by | null),team_1?: (tournament_teams_order_by | null),team_1_seed?: (order_by | null),team_2?: (tournament_teams_order_by | null),team_2_seed?: (order_by | null),tournament_stage_id?: (order_by | null),tournament_team_id_1?: (order_by | null),tournament_team_id_2?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_brackets */
@@ -39441,7 +39788,7 @@ export interface tournament_brackets_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournament_brackets" */
-export interface tournament_brackets_set_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
+export interface tournament_brackets_set_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_at?: (Scalars['timestamptz'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -39501,7 +39848,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_brackets_stream_cursor_value_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
+export interface tournament_brackets_stream_cursor_value_input {bye?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),finished?: (Scalars['Boolean'] | null),group?: (Scalars['numeric'] | null),id?: (Scalars['uuid'] | null),loser_parent_bracket_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_number?: (Scalars['Int'] | null),match_options_id?: (Scalars['uuid'] | null),parent_bracket_id?: (Scalars['uuid'] | null),path?: (Scalars['String'] | null),round?: (Scalars['Int'] | null),scheduled_at?: (Scalars['timestamptz'] | null),scheduled_eta?: (Scalars['timestamptz'] | null),team_1_seed?: (Scalars['Int'] | null),team_2_seed?: (Scalars['Int'] | null),tournament_stage_id?: (Scalars['uuid'] | null),tournament_team_id_1?: (Scalars['uuid'] | null),tournament_team_id_2?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -41024,6 +41371,7 @@ export interface tournament_teams_variance_order_by {owner_steam_id?: (order_by 
 export interface tournamentsGenqlSelection{
     /** An object relationship */
     admin?: playersGenqlSelection
+    auto_start?: boolean | number
     /** A computed field, executes function "can_cancel_tournament" */
     can_cancel?: boolean | number
     /** A computed field, executes function "can_close_tournament_registration" */
@@ -41032,6 +41380,10 @@ export interface tournamentsGenqlSelection{
     can_join?: boolean | number
     /** A computed field, executes function "can_open_tournament_registration" */
     can_open_registration?: boolean | number
+    /** A computed field, executes function "can_pause_tournament" */
+    can_pause?: boolean | number
+    /** A computed field, executes function "can_resume_tournament" */
+    can_resume?: boolean | number
     /** A computed field, executes function "can_start_tournament" */
     can_start?: boolean | number
     created_at?: boolean | number
@@ -41258,7 +41610,7 @@ export interface tournaments_avg_order_by {organizer_steam_id?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -41266,7 +41618,7 @@ export interface tournaments_inc_input {organizer_steam_id?: (Scalars['bigint'] 
 
 
 /** input type for inserting data into table "tournaments" */
-export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
+export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -41339,7 +41691,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -41347,7 +41699,7 @@ export interface tournaments_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournaments" */
-export interface tournaments_set_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+export interface tournaments_set_input {auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -41407,7 +41759,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournaments_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+export interface tournaments_stream_cursor_value_input {auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -44997,6 +45349,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_match_map_status_mutation_response = (obj?: { __typename?: any } | null): obj is e_match_map_status_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_map_status_mutation_response"')
       return e_match_map_status_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_mode_possibleTypes: string[] = ['e_match_mode']
+    export const ise_match_mode = (obj?: { __typename?: any } | null): obj is e_match_mode => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_mode"')
+      return e_match_mode_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_mode_aggregate_possibleTypes: string[] = ['e_match_mode_aggregate']
+    export const ise_match_mode_aggregate = (obj?: { __typename?: any } | null): obj is e_match_mode_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_mode_aggregate"')
+      return e_match_mode_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_mode_aggregate_fields_possibleTypes: string[] = ['e_match_mode_aggregate_fields']
+    export const ise_match_mode_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_match_mode_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_mode_aggregate_fields"')
+      return e_match_mode_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_mode_max_fields_possibleTypes: string[] = ['e_match_mode_max_fields']
+    export const ise_match_mode_max_fields = (obj?: { __typename?: any } | null): obj is e_match_mode_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_mode_max_fields"')
+      return e_match_mode_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_mode_min_fields_possibleTypes: string[] = ['e_match_mode_min_fields']
+    export const ise_match_mode_min_fields = (obj?: { __typename?: any } | null): obj is e_match_mode_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_mode_min_fields"')
+      return e_match_mode_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_mode_mutation_response_possibleTypes: string[] = ['e_match_mode_mutation_response']
+    export const ise_match_mode_mutation_response = (obj?: { __typename?: any } | null): obj is e_match_mode_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_mode_mutation_response"')
+      return e_match_mode_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -52156,6 +52556,25 @@ export const enumEMatchMapStatusUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumEMatchModeConstraint = {
+   e_match_mode_pkey: 'e_match_mode_pkey' as const
+}
+
+export const enumEMatchModeEnum = {
+   admin: 'admin' as const,
+   auto: 'auto' as const
+}
+
+export const enumEMatchModeSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEMatchModeUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumEMatchStatusConstraint = {
    e_match_status_pkey: 'e_match_status_pkey' as const
 }
@@ -52450,6 +52869,7 @@ export const enumETournamentStatusEnum = {
    CancelledMinTeams: 'CancelledMinTeams' as const,
    Finished: 'Finished' as const,
    Live: 'Live' as const,
+   Paused: 'Paused' as const,
    RegistrationClosed: 'RegistrationClosed' as const,
    RegistrationOpen: 'RegistrationOpen' as const,
    Setup: 'Setup' as const
@@ -52967,6 +53387,8 @@ export const enumMatchOptionsConstraint = {
 }
 
 export const enumMatchOptionsSelectColumn = {
+   auto_cancel_duration: 'auto_cancel_duration' as const,
+   auto_cancellation: 'auto_cancellation' as const,
    best_of: 'best_of' as const,
    check_in_setting: 'check_in_setting' as const,
    coaches: 'coaches' as const,
@@ -52974,9 +53396,11 @@ export const enumMatchOptionsSelectColumn = {
    id: 'id' as const,
    invite_code: 'invite_code' as const,
    knife_round: 'knife_round' as const,
+   live_match_timeout: 'live_match_timeout' as const,
    lobby_access: 'lobby_access' as const,
    map_pool_id: 'map_pool_id' as const,
    map_veto: 'map_veto' as const,
+   match_mode: 'match_mode' as const,
    mr: 'mr' as const,
    number_of_substitutes: 'number_of_substitutes' as const,
    overtime: 'overtime' as const,
@@ -52991,6 +53415,8 @@ export const enumMatchOptionsSelectColumn = {
 }
 
 export const enumMatchOptionsUpdateColumn = {
+   auto_cancel_duration: 'auto_cancel_duration' as const,
+   auto_cancellation: 'auto_cancellation' as const,
    best_of: 'best_of' as const,
    check_in_setting: 'check_in_setting' as const,
    coaches: 'coaches' as const,
@@ -52998,9 +53424,11 @@ export const enumMatchOptionsUpdateColumn = {
    id: 'id' as const,
    invite_code: 'invite_code' as const,
    knife_round: 'knife_round' as const,
+   live_match_timeout: 'live_match_timeout' as const,
    lobby_access: 'lobby_access' as const,
    map_pool_id: 'map_pool_id' as const,
    map_veto: 'map_veto' as const,
+   match_mode: 'match_mode' as const,
    mr: 'mr' as const,
    number_of_substitutes: 'number_of_substitutes' as const,
    overtime: 'overtime' as const,
@@ -53794,6 +54222,7 @@ export const enumTournamentBracketsSelectColumn = {
    parent_bracket_id: 'parent_bracket_id' as const,
    path: 'path' as const,
    round: 'round' as const,
+   scheduled_at: 'scheduled_at' as const,
    scheduled_eta: 'scheduled_eta' as const,
    team_1_seed: 'team_1_seed' as const,
    team_2_seed: 'team_2_seed' as const,
@@ -53825,6 +54254,7 @@ export const enumTournamentBracketsUpdateColumn = {
    parent_bracket_id: 'parent_bracket_id' as const,
    path: 'path' as const,
    round: 'round' as const,
+   scheduled_at: 'scheduled_at' as const,
    scheduled_eta: 'scheduled_eta' as const,
    team_1_seed: 'team_1_seed' as const,
    team_2_seed: 'team_2_seed' as const,
@@ -53965,6 +54395,7 @@ export const enumTournamentsConstraint = {
 }
 
 export const enumTournamentsSelectColumn = {
+   auto_start: 'auto_start' as const,
    created_at: 'created_at' as const,
    description: 'description' as const,
    discord_notifications_enabled: 'discord_notifications_enabled' as const,
@@ -53991,6 +54422,7 @@ export const enumTournamentsSelectColumn = {
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgumentsColumns = {
+   auto_start: 'auto_start' as const,
    discord_notifications_enabled: 'discord_notifications_enabled' as const,
    discord_notify_Canceled: 'discord_notify_Canceled' as const,
    discord_notify_Finished: 'discord_notify_Finished' as const,
@@ -54007,6 +54439,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgume
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumentsColumns = {
+   auto_start: 'auto_start' as const,
    discord_notifications_enabled: 'discord_notifications_enabled' as const,
    discord_notify_Canceled: 'discord_notify_Canceled' as const,
    discord_notify_Finished: 'discord_notify_Finished' as const,
@@ -54023,6 +54456,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumen
 }
 
 export const enumTournamentsUpdateColumn = {
+   auto_start: 'auto_start' as const,
    created_at: 'created_at' as const,
    description: 'description' as const,
    discord_notifications_enabled: 'discord_notifications_enabled' as const,
