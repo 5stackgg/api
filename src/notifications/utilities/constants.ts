@@ -20,6 +20,16 @@ export const DISCORD_COLORS = {
   GRAY: 0x95a5a6,
 } as const;
 
+export const NOTIFIABLE_STATUSES: ReadonlySet<e_match_status_enum> = new Set([
+  "WaitingForCheckIn",
+  "Live",
+  "Finished",
+  "Tie",
+  "Canceled",
+  "Forfeit",
+  "Surrendered",
+]);
+
 export const STATUS_COLORS: Partial<Record<e_match_status_enum, number>> = {
   Live: DISCORD_COLORS.GREEN,
   Finished: DISCORD_COLORS.GREEN,

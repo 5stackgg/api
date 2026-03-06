@@ -10,6 +10,7 @@ import {
   tournaments,
 } from "generated/schema";
 import {
+  NOTIFIABLE_STATUSES,
   STATUS_LABELS,
   STATUS_COLORS,
   DISCORD_COLORS,
@@ -116,6 +117,10 @@ export class NotificationsService {
     newStatus: e_match_status_enum,
     _oldStatus: e_match_status_enum,
   ) {
+    if (!NOTIFIABLE_STATUSES.has(newStatus)) {
+      return;
+    }
+
     try {
       const { tournament_brackets } = await this.hasura.query({
         tournament_brackets: {
