@@ -606,8 +606,35 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a match organizer");
+    }
+
+    const { matches_by_pk: matchToSetWinner } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: match_id,
+        },
+        status: true,
+      },
+    });
+
+    if (!matchToSetWinner) {
+      throw Error("match not found");
+    }
+
+    const terminalOrPreStartStatuses: string[] = [
+      "Finished",
+      "Canceled",
+      "Forfeit",
+      "Tie",
+      "Surrendered",
+      "Scheduled",
+      "PickingPlayers",
+    ];
+
+    if (terminalOrPreStartStatuses.includes(matchToSetWinner.status)) {
+      throw Error("cannot set winner for a match in this state");
     }
 
     await this.hasura.mutation({
@@ -641,8 +668,33 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a match organizer");
+    }
+
+    const { matches_by_pk: matchToForfeit } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: match_id,
+        },
+        status: true,
+      },
+    });
+
+    if (!matchToForfeit) {
+      throw Error("match not found");
+    }
+
+    const terminalStatuses: string[] = [
+      "Finished",
+      "Canceled",
+      "Forfeit",
+      "Tie",
+      "Surrendered",
+    ];
+
+    if (terminalStatuses.includes(matchToForfeit.status)) {
+      throw Error("cannot forfeit a match that has already ended");
     }
 
     const { update_matches_by_pk: match } = await this.hasura.mutation({
