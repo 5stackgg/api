@@ -37,6 +37,20 @@ import { MatchRelayService } from "./match-relay/match-relay.service";
 export class MatchesController {
   private readonly appConfig: AppConfig;
 
+  private static readonly TERMINAL_STATUSES: string[] = [
+    "Finished",
+    "Canceled",
+    "Forfeit",
+    "Tie",
+    "Surrendered",
+  ];
+
+  private static readonly TERMINAL_OR_PRE_START_STATUSES: string[] = [
+    ...MatchesController.TERMINAL_STATUSES,
+    "Scheduled",
+    "PickingPlayers",
+  ];
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -187,13 +201,7 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (
-      matches_by_pk.status === "Tie" ||
-      matches_by_pk.status === "Canceled" ||
-      matches_by_pk.status === "Forfeit" ||
-      matches_by_pk.status === "Finished" ||
-      matches_by_pk.status === "Surrendered"
-    ) {
+    if (MatchesController.TERMINAL_STATUSES.includes(matches_by_pk.status)) {
       response.status(204).end();
       return;
     }
@@ -330,11 +338,7 @@ export class MatchesController {
      */
     if (
       data.op === "DELETE" ||
-      status === "Tie" ||
-      status === "Forfeit" ||
-      status === "Canceled" ||
-      status === "Finished" ||
-      status === "Surrendered"
+      MatchesController.TERMINAL_STATUSES.includes(status)
     ) {
       this.matchRelayService.removeBroadcast(matchId);
       await this.removeDiscordIntegration(matchId);
@@ -623,17 +627,7 @@ export class MatchesController {
       throw Error("match not found");
     }
 
-    const terminalOrPreStartStatuses: string[] = [
-      "Finished",
-      "Canceled",
-      "Forfeit",
-      "Tie",
-      "Surrendered",
-      "Scheduled",
-      "PickingPlayers",
-    ];
-
-    if (terminalOrPreStartStatuses.includes(matchToSetWinner.status)) {
+    if (MatchesController.TERMINAL_OR_PRE_START_STATUSES.includes(matchToSetWinner.status)) {
       throw Error("cannot set winner for a match in this state");
     }
 
@@ -685,15 +679,7 @@ export class MatchesController {
       throw Error("match not found");
     }
 
-    const terminalStatuses: string[] = [
-      "Finished",
-      "Canceled",
-      "Forfeit",
-      "Tie",
-      "Surrendered",
-    ];
-
-    if (terminalStatuses.includes(matchToForfeit.status)) {
+    if (MatchesController.TERMINAL_STATUSES.includes(matchToForfeit.status)) {
       throw Error("cannot forfeit a match that has already ended");
     }
 
