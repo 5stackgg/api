@@ -379,7 +379,7 @@ export class GameServerNodeService {
     }
 
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
-    const gameId = game === "csgo" ? "4465480" : "730";
+    const gameId = game === "csgo" ? "740" : "730";
     const pinBuildId = game_server_nodes_by_pk.pinned_version?.build_id;
 
     const serverfilesVolumeName =
