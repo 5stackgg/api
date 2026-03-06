@@ -25,7 +25,7 @@ select_permissions:
           - steam_id:
               _eq: X-Hasura-User-Id
           - role:
-              _is_null: false
+              _eq: administrator
     comment: ""
   - role: match_organizer
     permission:
@@ -100,13 +100,13 @@ update_permissions:
           - steam_id:
               _eq: X-Hasura-User-Id
           - role:
-              _is_null: false
+              _eq: administrator
       check:
         _or:
           - steam_id:
               _eq: X-Hasura-User-Id
           - role:
-              _is_null: false
+              _eq: administrator
     comment: ""
   - role: match_organizer
     permission:
