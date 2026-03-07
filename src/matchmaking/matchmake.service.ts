@@ -267,7 +267,7 @@ export class MatchmakeService {
       }
 
       if (details.players.length === ExpectedPlayers[details.type]) {
-        const lock = await this.accquireLobbyLock(details.lobbyId);
+        const lock = await this.claimLobby(details.lobbyId);
         if (!lock) {
           this.logger.warn(
             `Unable to acquire lobby lock for ${details.lobbyId} - lobby is already being processed`,
