@@ -632,4 +632,72 @@ describe("MatchmakeService", () => {
       createMatchConfirmationSpy.mockRestore();
     });
   });
+
+  describe("claimLobby", () => {
+    it("should return false when lobby is already claimed by another region", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-multi-region",
+        type: "Competitive",
+        regions: ["us-east", "eu-west"],
+        players: [
+          { steam_id: "steam-1", rank: 1000 },
+          { steam_id: "steam-2", rank: 1000 },
+          { steam_id: "steam-3", rank: 1000 },
+          { steam_id: "steam-4", rank: 1000 },
+          { steam_id: "steam-5", rank: 1000 },
+        ],
+        avgRank: 1000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+
+      // First call succeeds (returns 1)
+      mockRedis.eval.mockResolvedValueOnce(1);
+      const firstClaim = await (service as any).claimLobby("lobby-multi-region");
+      expect(firstClaim).toBe(true);
+
+      // Second call fails (returns 0 — lock already held)
+      mockRedis.eval.mockResolvedValueOnce(0);
+      const secondClaim = await (service as any).claimLobby("lobby-multi-region");
+      expect(secondClaim).toBe(false);
+    });
+
+    it("should pass all regional queue and rank keys to the Lua script", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-keys-test",
+        type: "Competitive",
+        regions: ["us-east", "eu-west"],
+        players: [{ steam_id: "steam-1", rank: 1000 }],
+        avgRank: 1000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+      mockRedis.eval.mockResolvedValue(1);
+
+      await (service as any).claimLobby("lobby-keys-test");
+
+      // Verify eval was called with correct keys
+      const evalCall = mockRedis.eval.mock.calls[0];
+      const numKeys = evalCall[1];
+      const keys = evalCall.slice(2, 2 + numKeys);
+
+      // Should have: 1 lock key + 2 regions * 2 keys (queue + rank) = 5 keys
+      expect(numKeys).toBe(5);
+      expect(keys[0]).toBe("matchmaking:lock:lobby-keys-test");
+      expect(keys).toContainEqual(expect.stringContaining("us-east"));
+      expect(keys).toContainEqual(expect.stringContaining("eu-west"));
+    });
+
+    it("should return false when lobby details not found", async () => {
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(null);
+
+      const result = await (service as any).claimLobby("nonexistent-lobby");
+      expect(result).toBe(false);
+      expect(mockRedis.eval).not.toHaveBeenCalled();
+    });
+  });
 });
