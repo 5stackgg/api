@@ -700,4 +700,32 @@ describe("MatchmakeService", () => {
       expect(mockRedis.eval).not.toHaveBeenCalled();
     });
   });
+
+  describe("releaseLobbyAndRequeue", () => {
+    it("should release the lock and re-add lobby to all regional queues", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-requeue",
+        type: "Competitive",
+        regions: ["us-east", "eu-west"],
+        players: [{ steam_id: "steam-1", rank: 1000 }],
+        avgRank: 1000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+
+      await (service as any).releaseLobbyAndRequeue("lobby-requeue");
+
+      // Verify lock was released (expire with 0)
+      expect(mockRedis.expire).toHaveBeenCalledWith(
+        "matchmaking:lock:lobby-requeue",
+        0,
+      );
+
+      // Verify lobby was re-added to both regional queues (zadd called for each region)
+      const zaddCalls = mockRedis.zadd.mock.calls;
+      expect(zaddCalls.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });
