@@ -24,7 +24,6 @@ import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 export class MatchmakeService {
   public redis: Redis;
 
-  // TODO - fix race conditions for matchmaking across multiple regions
   constructor(
     public readonly logger: Logger,
     public readonly hasura: HasuraService,
@@ -530,18 +529,6 @@ export class MatchmakeService {
   private async releaseMatchmakeRegionLock(region: string) {
     const lockKey = `matchmaking:lock:${region}`;
     await this.redis.del(lockKey);
-  }
-
-  private async accquireLobbyLock(lobbyId: string): Promise<boolean> {
-    const lockKey = `matchmaking:lock:${lobbyId}`;
-
-    const result = await this.redis.set(lockKey, 1, "EX", 10, "NX");
-
-    if (result === null) {
-      return false;
-    }
-
-    return true;
   }
 
   private static readonly CLAIM_LOBBY_SCRIPT = `
