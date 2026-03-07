@@ -544,6 +544,47 @@ export class MatchmakeService {
     return true;
   }
 
+  private static readonly CLAIM_LOBBY_SCRIPT = `
+    local acquired = redis.call('SET', KEYS[1], 1, 'EX', ARGV[2], 'NX')
+    if not acquired then
+      return 0
+    end
+    for i = 2, #KEYS do
+      redis.call('ZREM', KEYS[i], ARGV[1])
+    end
+    return 1
+  `;
+
+  private async claimLobby(lobbyId: string): Promise<boolean> {
+    const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+    if (!lobby) {
+      return false;
+    }
+
+    const lockKey = `matchmaking:lock:${lobbyId}`;
+    const keys: string[] = [lockKey];
+
+    for (const region of lobby.regions) {
+      keys.push(getMatchmakingQueueCacheKey(lobby.type, region));
+      keys.push(getMatchmakingRankCacheKey(lobby.type, region));
+    }
+
+    const result = await this.redis.eval(
+      MatchmakeService.CLAIM_LOBBY_SCRIPT,
+      keys.length,
+      ...keys,
+      lobbyId,
+      10, // TTL in seconds
+    );
+
+    return result === 1;
+  }
+
+  private async releaseLobbyAndRequeue(lobbyId: string): Promise<void> {
+    await this.releaseLobbyLock(lobbyId, 0);
+    await this.addLobbyToQueue(lobbyId);
+  }
+
   public async releaseLobbyLock(lobbyId: string, seconds: number) {
     const lockKey = `matchmaking:lock:${lobbyId}`;
     await this.redis.expire(lockKey, seconds);
