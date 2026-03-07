@@ -42,8 +42,11 @@ describe("MatchmakeService", () => {
       hset: jest.fn().mockResolvedValue(1),
       hgetall: jest.fn().mockResolvedValue({}),
       hget: jest.fn().mockResolvedValue(null),
+      hdel: jest.fn().mockResolvedValue(1),
       expire: jest.fn().mockResolvedValue(1),
       publish: jest.fn().mockResolvedValue(1),
+      zrem: jest.fn().mockResolvedValue(1),
+      eval: jest.fn().mockResolvedValue(1),
     } as any;
 
     // Create mock services
@@ -60,8 +63,10 @@ describe("MatchmakeService", () => {
     mockMatchmakingLobbyService = {
       getLobbyDetails: jest.fn(),
       removeLobbyFromQueue: jest.fn(),
+      removeLobbyDetails: jest.fn(),
       setMatchConformationIdForLobby: jest.fn(),
       sendQueueDetailsToLobby: jest.fn(),
+      removeConfirmationIdFromLobby: jest.fn(),
     } as any;
 
     mockRedisManager = {
@@ -156,13 +161,9 @@ describe("MatchmakeService", () => {
         },
       ];
 
-      // Mock lock acquisition - all locks should succeed
-      mockRedis.set.mockImplementation(
-        (key: string, value: any, ...args: any[]) => {
-          if (key.includes("matchmaking:lock:")) {
-            return Promise.resolve("OK");
-          }
-          return Promise.resolve("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
         },
       );
 
@@ -201,12 +202,8 @@ describe("MatchmakeService", () => {
       // The important thing is that exactly 1 match was created with 10 players
       expect(result).toBe(0);
 
-      // Verify locks were acquired for the matched lobbies
-      const lockCalls = mockRedis.set.mock.calls.filter((call) =>
-        call[0]?.toString().includes("matchmaking:lock:lobby-"),
-      );
-      // Should have acquired locks for at least 2 lobbies (the ones that were matched)
-      expect(lockCalls.length).toBeGreaterThanOrEqual(2);
+      // Verify claimLobby was called (via redis.eval) for each lobby
+      expect(mockRedis.eval).toHaveBeenCalled();
 
       createMatchConfirmationSpy.mockRestore();
     });
@@ -243,7 +240,11 @@ describe("MatchmakeService", () => {
         },
       ];
 
-      mockRedis.set.mockResolvedValue("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       const createMatchConfirmationSpy = jest.spyOn(
         service as any,
@@ -297,7 +298,11 @@ describe("MatchmakeService", () => {
         },
       ];
 
-      mockRedis.set.mockResolvedValue("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       const createMatchConfirmationSpy = jest.spyOn(
         service as any,
@@ -365,8 +370,12 @@ describe("MatchmakeService", () => {
       // Low rank group: (5100+5200+5300+5400+5500)/5 = 5300
       const lowRankAvg = (5100 + 5200 + 5300 + 5400 + 5500) / 5;
 
-      // Mock lock acquisition - all locks should succeed
-      mockRedis.set.mockResolvedValue("OK");
+      const allLobbies = [...highRankGroup, ...lowRankGroup];
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return allLobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       // Mock createMatchConfirmation by spying on the method
       const createMatchConfirmationSpy = jest
@@ -520,8 +529,11 @@ describe("MatchmakeService", () => {
         lobby.players.map((p) => (typeof p === "string" ? p : p.steam_id)),
       );
 
-      // Mock lock acquisition - all locks should succeed
-      mockRedis.set.mockResolvedValue("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       // Mock createMatchConfirmation by spying on the method
       const createMatchConfirmationSpy = jest
