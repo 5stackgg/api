@@ -701,6 +701,82 @@ describe("MatchmakeService", () => {
     });
   });
 
+  describe("createMatches with multi-region lobbies", () => {
+    it("should skip lobbies that fail to claim (already claimed by another region)", async () => {
+      const region = "us-east";
+      const type: e_match_types_enum = "Competitive";
+
+      const lobbies: MatchmakingLobby[] = [
+        {
+          lobbyId: "lobby-1",
+          type,
+          regions: [region, "eu-west"],
+          players: Array.from({ length: 5 }, (_, i) => ({
+            steam_id: `steam-${i + 1}`,
+            rank: 1000,
+          })),
+          avgRank: 1000,
+          joinedAt: new Date(),
+          regionPositions: {},
+        },
+        {
+          lobbyId: "lobby-2",
+          type,
+          regions: [region],
+          players: Array.from({ length: 5 }, (_, i) => ({
+            steam_id: `steam-${i + 6}`,
+            rank: 1050,
+          })),
+          avgRank: 1050,
+          joinedAt: new Date(),
+          regionPositions: {},
+        },
+        {
+          lobbyId: "lobby-3",
+          type,
+          regions: [region],
+          players: Array.from({ length: 5 }, (_, i) => ({
+            steam_id: `steam-${i + 11}`,
+            rank: 1100,
+          })),
+          avgRank: 1100,
+          joinedAt: new Date(),
+          regionPositions: {},
+        },
+      ];
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
+
+      // lobby-1 fails to claim (another region got it), lobby-2 and lobby-3 succeed
+      mockRedis.eval
+        .mockResolvedValueOnce(0)  // lobby-1: already claimed
+        .mockResolvedValueOnce(1)  // lobby-2: claimed
+        .mockResolvedValueOnce(1); // lobby-3: claimed
+
+      const createMatchConfirmationSpy = jest
+        .spyOn(service as any, "createMatchConfirmation")
+        .mockResolvedValue(undefined);
+
+      await (service as any).createMatches(region, type, lobbies);
+
+      // Should still create a match from lobby-2 + lobby-3
+      expect(createMatchConfirmationSpy).toHaveBeenCalledTimes(1);
+      const callArgs = createMatchConfirmationSpy.mock.calls[0];
+      const { team1, team2 } = callArgs[2];
+      expect(team1.players.length + team2.players.length).toBe(10);
+
+      // lobby-1 should NOT be in either team
+      const allLobbies = [...team1.lobbies, ...team2.lobbies];
+      expect(allLobbies).not.toContain("lobby-1");
+
+      createMatchConfirmationSpy.mockRestore();
+    });
+  });
+
   describe("releaseLobbyAndRequeue", () => {
     it("should release the lock and re-add lobby to all regional queues", async () => {
       const lobby: MatchmakingLobby = {
