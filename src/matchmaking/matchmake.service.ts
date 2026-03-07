@@ -619,10 +619,6 @@ export class MatchmakeService {
 
     const allLobbies = new Set([...team1.lobbies, ...team2.lobbies]);
 
-    for (const lobby of allLobbies) {
-      await this.matchmakingLobbyService.removeLobbyFromQueue(lobby);
-    }
-
     for (const lobbyId of allLobbies) {
       void this.releaseLobbyLock(lobbyId, 30);
     }
