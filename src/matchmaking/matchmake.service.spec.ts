@@ -799,9 +799,13 @@ describe("MatchmakeService", () => {
         0,
       );
 
-      // Verify lobby was re-added to both regional queues (zadd called for each region)
+      // Verify lobby was re-added to both regional queues
+      // 2 regions * 2 keys each (queue + rank) = 4 zadd calls
       const zaddCalls = mockRedis.zadd.mock.calls;
-      expect(zaddCalls.length).toBeGreaterThanOrEqual(2);
+      expect(zaddCalls.length).toBe(4);
+      const zaddKeys = zaddCalls.map((c) => c[0]);
+      expect(zaddKeys.some((k: string) => k.includes("us-east"))).toBe(true);
+      expect(zaddKeys.some((k: string) => k.includes("eu-west"))).toBe(true);
     });
   });
 });

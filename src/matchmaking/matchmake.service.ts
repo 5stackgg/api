@@ -37,6 +37,10 @@ export class MatchmakeService {
 
   public async addLobbyToQueue(lobbyId: string) {
     const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+    if (!lobby) {
+      this.logger.warn(`Cannot requeue lobby ${lobbyId} - details not found`);
+      return;
+    }
 
     // store the lobby's rank in a separate sorted set for quick rank matching
     for (const region of lobby.regions) {
@@ -266,7 +270,7 @@ export class MatchmakeService {
       }
 
       if (details.players.length === ExpectedPlayers[details.type]) {
-        const lock = await this.claimLobby(details.lobbyId);
+        const lock = await this.claimLobby(details.lobbyId, details);
         if (!lock) {
           this.logger.warn(
             `Unable to acquire lobby lock for ${details.lobbyId} - lobby is already being processed`,
@@ -368,7 +372,7 @@ export class MatchmakeService {
     // we assign lobbies to the team that keeps average elo between teams as close as possible
     for (const lobby of lobbies) {
       try {
-        const lock = await this.claimLobby(lobby.lobbyId);
+        const lock = await this.claimLobby(lobby.lobbyId, lobby);
 
         if (!lock) {
           this.logger.warn(
@@ -542,8 +546,13 @@ export class MatchmakeService {
     return 1
   `;
 
-  private async claimLobby(lobbyId: string): Promise<boolean> {
-    const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+  private async claimLobby(
+    lobbyId: string,
+    existingLobby?: MatchmakingLobby,
+  ): Promise<boolean> {
+    const lobby =
+      existingLobby ??
+      (await this.matchmakingLobbyService.getLobbyDetails(lobbyId));
     if (!lobby) {
       return false;
     }
