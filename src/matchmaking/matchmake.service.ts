@@ -369,7 +369,7 @@ export class MatchmakeService {
     // we assign lobbies to the team that keeps average elo between teams as close as possible
     for (const lobby of lobbies) {
       try {
-        const lock = await this.accquireLobbyLock(lobby.lobbyId);
+        const lock = await this.claimLobby(lobby.lobbyId);
 
         if (!lock) {
           this.logger.warn(
@@ -384,7 +384,7 @@ export class MatchmakeService {
           team2.players.length + lobby.players.length <= playersPerTeam;
 
         if (!team1HasRoom && !team2HasRoom) {
-          await this.releaseLobbyLock(lobby.lobbyId, 0);
+          await this.releaseLobbyAndRequeue(lobby.lobbyId);
           continue;
         }
 
@@ -447,7 +447,7 @@ export class MatchmakeService {
         this.logger.error(`Error processing lobby ${lobby.lobbyId}:`, error);
         // If we acquired a lock but failed to process, release it
         if (lobbyLocks.has(lobby.lobbyId)) {
-          await this.releaseLobbyLock(lobby.lobbyId, 0);
+          await this.releaseLobbyAndRequeue(lobby.lobbyId);
           lobbyLocks.delete(lobby.lobbyId);
         }
       }
@@ -482,7 +482,7 @@ export class MatchmakeService {
         this.logger.error(`Error creating match confirmation:`, error);
         // Release all locks if match confirmation fails
         for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-          await this.releaseLobbyLock(lobbyId, 0);
+          await this.releaseLobbyAndRequeue(lobbyId);
         }
         totalPlayerNotQueued = team1.players.length + team2.players.length;
       }
@@ -490,7 +490,7 @@ export class MatchmakeService {
       totalPlayerNotQueued = team1.players.length + team2.players.length;
       // Release all acquired locks since we can't create a match
       for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-        await this.releaseLobbyLock(lobbyId, 0);
+        await this.releaseLobbyAndRequeue(lobbyId);
       }
     }
 
@@ -500,7 +500,7 @@ export class MatchmakeService {
     );
     if (lobbiesToMatch.length > 0) {
       for (const lobby of lobbiesToMatch) {
-        await this.releaseLobbyLock(lobby.lobbyId, 0);
+        await this.releaseLobbyAndRequeue(lobby.lobbyId);
       }
       await this.createMatches(region, type, lobbiesToMatch);
     }
@@ -508,7 +508,7 @@ export class MatchmakeService {
     // Safety check: ensure all remaining locks are released
     if (lobbyLocks.size > 0) {
       for (const lobbyId of lobbyLocks) {
-        await this.releaseLobbyLock(lobbyId, 0);
+        await this.releaseLobbyAndRequeue(lobbyId);
       }
     }
 
