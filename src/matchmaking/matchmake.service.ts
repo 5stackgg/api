@@ -312,7 +312,7 @@ export class MatchmakeService {
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
             error,
           );
-          await this.releaseLobbyLock(details.lobbyId, 0);
+          await this.releaseLobbyAndRequeue(details.lobbyId);
         }
 
         continue;
