@@ -324,6 +324,7 @@ type Mutation {
 type Mutation {
   updateCs(
     game_server_node_id: uuid
+    game: String
   ): SuccessOutput
 }
 

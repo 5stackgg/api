@@ -62,18 +62,6 @@ computed_fields:
         name: can_close_tournament_registration
         schema: public
       session_argument: hasura_session
-  - name: can_pause
-    definition:
-      function:
-        name: can_pause_tournament
-        schema: public
-      session_argument: hasura_session
-  - name: can_resume
-    definition:
-      function:
-        name: can_resume_tournament
-        schema: public
-      session_argument: hasura_session
   - name: can_join
     definition:
       function:
@@ -84,6 +72,18 @@ computed_fields:
     definition:
       function:
         name: can_open_tournament_registration
+        schema: public
+      session_argument: hasura_session
+  - name: can_pause
+    definition:
+      function:
+        name: can_pause_tournament
+        schema: public
+      session_argument: hasura_session
+  - name: can_resume
+    definition:
+      function:
+        name: can_resume_tournament
         schema: public
       session_argument: hasura_session
   - name: can_start
