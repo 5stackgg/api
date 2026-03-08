@@ -60,6 +60,7 @@ select_permissions:
         - cpu_governor_info
         - cpu_sockets
         - cpu_threads_per_core
+        - csgo_build_id
         - demo_network_limiter
         - enabled
         - end_port_range
