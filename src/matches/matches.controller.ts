@@ -37,6 +37,14 @@ import { MatchRelayService } from "./match-relay/match-relay.service";
 export class MatchesController {
   private readonly appConfig: AppConfig;
 
+  private static readonly TERMINAL_STATUSES: string[] = [
+    "Finished",
+    "Canceled",
+    "Forfeit",
+    "Tie",
+    "Surrendered",
+  ];
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -187,13 +195,7 @@ export class MatchesController {
       throw Error("unable to find match");
     }
 
-    if (
-      matches_by_pk.status === "Tie" ||
-      matches_by_pk.status === "Canceled" ||
-      matches_by_pk.status === "Forfeit" ||
-      matches_by_pk.status === "Finished" ||
-      matches_by_pk.status === "Surrendered"
-    ) {
+    if (MatchesController.TERMINAL_STATUSES.includes(matches_by_pk.status)) {
       response.status(204).end();
       return;
     }
@@ -330,11 +332,7 @@ export class MatchesController {
      */
     if (
       data.op === "DELETE" ||
-      status === "Tie" ||
-      status === "Forfeit" ||
-      status === "Canceled" ||
-      status === "Finished" ||
-      status === "Surrendered"
+      MatchesController.TERMINAL_STATUSES.includes(status)
     ) {
       this.matchRelayService.removeBroadcast(matchId);
       await this.removeDiscordIntegration(matchId);
@@ -606,7 +604,7 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a match organizer");
     }
 
@@ -641,8 +639,25 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    if (await this.matchAssistant.isOrganizer(match_id, user)) {
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a match organizer");
+    }
+
+    const { matches_by_pk: matchToForfeit } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: match_id,
+        },
+        status: true,
+      },
+    });
+
+    if (!matchToForfeit) {
+      throw Error("match not found");
+    }
+
+    if (MatchesController.TERMINAL_STATUSES.includes(matchToForfeit.status)) {
+      throw Error("cannot forfeit a match that has already ended");
     }
 
     const { update_matches_by_pk: match } = await this.hasura.mutation({
