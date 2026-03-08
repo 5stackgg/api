@@ -212,6 +212,10 @@ export class DedicatedServersService {
                     ],
                     env: [
                       {
+                        name: "GAME_ID",
+                        value: server.game === "csgo" ? "740" : "730",
+                      },
+                      {
                         name: "SERVER_TYPE",
                         value: server.type,
                       },
