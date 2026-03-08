@@ -71,6 +71,7 @@ select_permissions:
         - connect_password
         - connected
         - enabled
+        - game
         - game_server_node_id
         - host
         - id
@@ -98,6 +99,7 @@ select_permissions:
       columns:
         - connected
         - enabled
+        - game
         - host
         - id
         - label
@@ -124,6 +126,7 @@ select_permissions:
       columns:
         - connected
         - enabled
+        - game
         - host
         - id
         - is_dedicated
