@@ -42,8 +42,11 @@ describe("MatchmakeService", () => {
       hset: jest.fn().mockResolvedValue(1),
       hgetall: jest.fn().mockResolvedValue({}),
       hget: jest.fn().mockResolvedValue(null),
+      hdel: jest.fn().mockResolvedValue(1),
       expire: jest.fn().mockResolvedValue(1),
       publish: jest.fn().mockResolvedValue(1),
+      zrem: jest.fn().mockResolvedValue(1),
+      eval: jest.fn().mockResolvedValue(1),
     } as any;
 
     // Create mock services
@@ -60,8 +63,10 @@ describe("MatchmakeService", () => {
     mockMatchmakingLobbyService = {
       getLobbyDetails: jest.fn(),
       removeLobbyFromQueue: jest.fn(),
+      removeLobbyDetails: jest.fn(),
       setMatchConformationIdForLobby: jest.fn(),
       sendQueueDetailsToLobby: jest.fn(),
+      removeConfirmationIdFromLobby: jest.fn(),
     } as any;
 
     mockRedisManager = {
@@ -156,13 +161,9 @@ describe("MatchmakeService", () => {
         },
       ];
 
-      // Mock lock acquisition - all locks should succeed
-      mockRedis.set.mockImplementation(
-        (key: string, value: any, ...args: any[]) => {
-          if (key.includes("matchmaking:lock:")) {
-            return Promise.resolve("OK");
-          }
-          return Promise.resolve("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
         },
       );
 
@@ -201,12 +202,8 @@ describe("MatchmakeService", () => {
       // The important thing is that exactly 1 match was created with 10 players
       expect(result).toBe(0);
 
-      // Verify locks were acquired for the matched lobbies
-      const lockCalls = mockRedis.set.mock.calls.filter((call) =>
-        call[0]?.toString().includes("matchmaking:lock:lobby-"),
-      );
-      // Should have acquired locks for at least 2 lobbies (the ones that were matched)
-      expect(lockCalls.length).toBeGreaterThanOrEqual(2);
+      // Verify claimLobby was called (via redis.eval) for each lobby
+      expect(mockRedis.eval).toHaveBeenCalled();
 
       createMatchConfirmationSpy.mockRestore();
     });
@@ -243,7 +240,11 @@ describe("MatchmakeService", () => {
         },
       ];
 
-      mockRedis.set.mockResolvedValue("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       const createMatchConfirmationSpy = jest.spyOn(
         service as any,
@@ -297,7 +298,11 @@ describe("MatchmakeService", () => {
         },
       ];
 
-      mockRedis.set.mockResolvedValue("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       const createMatchConfirmationSpy = jest.spyOn(
         service as any,
@@ -365,8 +370,12 @@ describe("MatchmakeService", () => {
       // Low rank group: (5100+5200+5300+5400+5500)/5 = 5300
       const lowRankAvg = (5100 + 5200 + 5300 + 5400 + 5500) / 5;
 
-      // Mock lock acquisition - all locks should succeed
-      mockRedis.set.mockResolvedValue("OK");
+      const allLobbies = [...highRankGroup, ...lowRankGroup];
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return allLobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       // Mock createMatchConfirmation by spying on the method
       const createMatchConfirmationSpy = jest
@@ -520,8 +529,11 @@ describe("MatchmakeService", () => {
         lobby.players.map((p) => (typeof p === "string" ? p : p.steam_id)),
       );
 
-      // Mock lock acquisition - all locks should succeed
-      mockRedis.set.mockResolvedValue("OK");
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
 
       // Mock createMatchConfirmation by spying on the method
       const createMatchConfirmationSpy = jest
@@ -618,6 +630,182 @@ describe("MatchmakeService", () => {
       expect(result).toBe(0);
 
       createMatchConfirmationSpy.mockRestore();
+    });
+  });
+
+  describe("claimLobby", () => {
+    it("should return false when lobby is already claimed by another region", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-multi-region",
+        type: "Competitive",
+        regions: ["us-east", "eu-west"],
+        players: [
+          { steam_id: "steam-1", rank: 1000 },
+          { steam_id: "steam-2", rank: 1000 },
+          { steam_id: "steam-3", rank: 1000 },
+          { steam_id: "steam-4", rank: 1000 },
+          { steam_id: "steam-5", rank: 1000 },
+        ],
+        avgRank: 1000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+
+      // First call succeeds (returns 1)
+      mockRedis.eval.mockResolvedValueOnce(1);
+      const firstClaim = await (service as any).claimLobby("lobby-multi-region");
+      expect(firstClaim).toBe(true);
+
+      // Second call fails (returns 0 — lock already held)
+      mockRedis.eval.mockResolvedValueOnce(0);
+      const secondClaim = await (service as any).claimLobby("lobby-multi-region");
+      expect(secondClaim).toBe(false);
+    });
+
+    it("should pass all regional queue and rank keys to the Lua script", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-keys-test",
+        type: "Competitive",
+        regions: ["us-east", "eu-west"],
+        players: [{ steam_id: "steam-1", rank: 1000 }],
+        avgRank: 1000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+      mockRedis.eval.mockResolvedValue(1);
+
+      await (service as any).claimLobby("lobby-keys-test");
+
+      // Verify eval was called with correct keys
+      const evalCall = mockRedis.eval.mock.calls[0];
+      const numKeys = evalCall[1];
+      const keys = evalCall.slice(2, 2 + numKeys);
+
+      // Should have: 1 lock key + 2 regions * 2 keys (queue + rank) = 5 keys
+      expect(numKeys).toBe(5);
+      expect(keys[0]).toBe("matchmaking:lock:lobby-keys-test");
+      expect(keys).toContainEqual(expect.stringContaining("us-east"));
+      expect(keys).toContainEqual(expect.stringContaining("eu-west"));
+    });
+
+    it("should return false when lobby details not found", async () => {
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(null);
+
+      const result = await (service as any).claimLobby("nonexistent-lobby");
+      expect(result).toBe(false);
+      expect(mockRedis.eval).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createMatches with multi-region lobbies", () => {
+    it("should skip lobbies that fail to claim (already claimed by another region)", async () => {
+      const region = "us-east";
+      const type: e_match_types_enum = "Competitive";
+
+      const lobbies: MatchmakingLobby[] = [
+        {
+          lobbyId: "lobby-1",
+          type,
+          regions: [region, "eu-west"],
+          players: Array.from({ length: 5 }, (_, i) => ({
+            steam_id: `steam-${i + 1}`,
+            rank: 1000,
+          })),
+          avgRank: 1000,
+          joinedAt: new Date(),
+          regionPositions: {},
+        },
+        {
+          lobbyId: "lobby-2",
+          type,
+          regions: [region],
+          players: Array.from({ length: 5 }, (_, i) => ({
+            steam_id: `steam-${i + 6}`,
+            rank: 1050,
+          })),
+          avgRank: 1050,
+          joinedAt: new Date(),
+          regionPositions: {},
+        },
+        {
+          lobbyId: "lobby-3",
+          type,
+          regions: [region],
+          players: Array.from({ length: 5 }, (_, i) => ({
+            steam_id: `steam-${i + 11}`,
+            rank: 1100,
+          })),
+          avgRank: 1100,
+          joinedAt: new Date(),
+          regionPositions: {},
+        },
+      ];
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) => {
+          return lobbies.find((l) => l.lobbyId === lobbyId) || null;
+        },
+      );
+
+      // lobby-1 fails to claim (another region got it), lobby-2 and lobby-3 succeed
+      mockRedis.eval
+        .mockResolvedValueOnce(0)  // lobby-1: already claimed
+        .mockResolvedValueOnce(1)  // lobby-2: claimed
+        .mockResolvedValueOnce(1); // lobby-3: claimed
+
+      const createMatchConfirmationSpy = jest
+        .spyOn(service as any, "createMatchConfirmation")
+        .mockResolvedValue(undefined);
+
+      await (service as any).createMatches(region, type, lobbies);
+
+      // Should still create a match from lobby-2 + lobby-3
+      expect(createMatchConfirmationSpy).toHaveBeenCalledTimes(1);
+      const callArgs = createMatchConfirmationSpy.mock.calls[0];
+      const { team1, team2 } = callArgs[2];
+      expect(team1.players.length + team2.players.length).toBe(10);
+
+      // lobby-1 should NOT be in either team
+      const allLobbies = [...team1.lobbies, ...team2.lobbies];
+      expect(allLobbies).not.toContain("lobby-1");
+
+      createMatchConfirmationSpy.mockRestore();
+    });
+  });
+
+  describe("releaseLobbyAndRequeue", () => {
+    it("should release the lock and re-add lobby to all regional queues", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-requeue",
+        type: "Competitive",
+        regions: ["us-east", "eu-west"],
+        players: [{ steam_id: "steam-1", rank: 1000 }],
+        avgRank: 1000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+
+      await (service as any).releaseLobbyAndRequeue("lobby-requeue");
+
+      // Verify lock was released (expire with 0)
+      expect(mockRedis.expire).toHaveBeenCalledWith(
+        "matchmaking:lock:lobby-requeue",
+        0,
+      );
+
+      // Verify lobby was re-added to both regional queues
+      // 2 regions * 2 keys each (queue + rank) = 4 zadd calls
+      const zaddCalls = mockRedis.zadd.mock.calls;
+      expect(zaddCalls.length).toBe(4);
+      const zaddKeys = zaddCalls.map((c) => c[0]);
+      expect(zaddKeys.some((k: string) => k.includes("us-east"))).toBe(true);
+      expect(zaddKeys.some((k: string) => k.includes("eu-west"))).toBe(true);
     });
   });
 });

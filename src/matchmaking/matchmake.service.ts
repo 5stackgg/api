@@ -24,7 +24,6 @@ import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 export class MatchmakeService {
   public redis: Redis;
 
-  // TODO - fix race conditions for matchmaking across multiple regions
   constructor(
     public readonly logger: Logger,
     public readonly hasura: HasuraService,
@@ -38,6 +37,10 @@ export class MatchmakeService {
 
   public async addLobbyToQueue(lobbyId: string) {
     const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+    if (!lobby) {
+      this.logger.warn(`Cannot requeue lobby ${lobbyId} - details not found`);
+      return;
+    }
 
     // store the lobby's rank in a separate sorted set for quick rank matching
     for (const region of lobby.regions) {
@@ -267,7 +270,7 @@ export class MatchmakeService {
       }
 
       if (details.players.length === ExpectedPlayers[details.type]) {
-        const lock = await this.accquireLobbyLock(details.lobbyId);
+        const lock = await this.claimLobby(details.lobbyId, details);
         if (!lock) {
           this.logger.warn(
             `Unable to acquire lobby lock for ${details.lobbyId} - lobby is already being processed`,
@@ -313,7 +316,7 @@ export class MatchmakeService {
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
             error,
           );
-          await this.releaseLobbyLock(details.lobbyId, 0);
+          await this.releaseLobbyAndRequeue(details.lobbyId);
         }
 
         continue;
@@ -369,7 +372,7 @@ export class MatchmakeService {
     // we assign lobbies to the team that keeps average elo between teams as close as possible
     for (const lobby of lobbies) {
       try {
-        const lock = await this.accquireLobbyLock(lobby.lobbyId);
+        const lock = await this.claimLobby(lobby.lobbyId, lobby);
 
         if (!lock) {
           this.logger.warn(
@@ -384,7 +387,7 @@ export class MatchmakeService {
           team2.players.length + lobby.players.length <= playersPerTeam;
 
         if (!team1HasRoom && !team2HasRoom) {
-          await this.releaseLobbyLock(lobby.lobbyId, 0);
+          await this.releaseLobbyAndRequeue(lobby.lobbyId);
           continue;
         }
 
@@ -447,7 +450,7 @@ export class MatchmakeService {
         this.logger.error(`Error processing lobby ${lobby.lobbyId}:`, error);
         // If we acquired a lock but failed to process, release it
         if (lobbyLocks.has(lobby.lobbyId)) {
-          await this.releaseLobbyLock(lobby.lobbyId, 0);
+          await this.releaseLobbyAndRequeue(lobby.lobbyId);
           lobbyLocks.delete(lobby.lobbyId);
         }
       }
@@ -482,7 +485,7 @@ export class MatchmakeService {
         this.logger.error(`Error creating match confirmation:`, error);
         // Release all locks if match confirmation fails
         for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-          await this.releaseLobbyLock(lobbyId, 0);
+          await this.releaseLobbyAndRequeue(lobbyId);
         }
         totalPlayerNotQueued = team1.players.length + team2.players.length;
       }
@@ -490,7 +493,7 @@ export class MatchmakeService {
       totalPlayerNotQueued = team1.players.length + team2.players.length;
       // Release all acquired locks since we can't create a match
       for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-        await this.releaseLobbyLock(lobbyId, 0);
+        await this.releaseLobbyAndRequeue(lobbyId);
       }
     }
 
@@ -500,7 +503,7 @@ export class MatchmakeService {
     );
     if (lobbiesToMatch.length > 0) {
       for (const lobby of lobbiesToMatch) {
-        await this.releaseLobbyLock(lobby.lobbyId, 0);
+        await this.releaseLobbyAndRequeue(lobby.lobbyId);
       }
       await this.createMatches(region, type, lobbiesToMatch);
     }
@@ -508,7 +511,7 @@ export class MatchmakeService {
     // Safety check: ensure all remaining locks are released
     if (lobbyLocks.size > 0) {
       for (const lobbyId of lobbyLocks) {
-        await this.releaseLobbyLock(lobbyId, 0);
+        await this.releaseLobbyAndRequeue(lobbyId);
       }
     }
 
@@ -532,16 +535,50 @@ export class MatchmakeService {
     await this.redis.del(lockKey);
   }
 
-  private async accquireLobbyLock(lobbyId: string): Promise<boolean> {
-    const lockKey = `matchmaking:lock:${lobbyId}`;
+  private static readonly CLAIM_LOBBY_SCRIPT = `
+    local acquired = redis.call('SET', KEYS[1], 1, 'EX', ARGV[2], 'NX')
+    if not acquired then
+      return 0
+    end
+    for i = 2, #KEYS do
+      redis.call('ZREM', KEYS[i], ARGV[1])
+    end
+    return 1
+  `;
 
-    const result = await this.redis.set(lockKey, 1, "EX", 10, "NX");
-
-    if (result === null) {
+  private async claimLobby(
+    lobbyId: string,
+    existingLobby?: MatchmakingLobby,
+  ): Promise<boolean> {
+    const lobby =
+      existingLobby ??
+      (await this.matchmakingLobbyService.getLobbyDetails(lobbyId));
+    if (!lobby) {
       return false;
     }
 
-    return true;
+    const lockKey = `matchmaking:lock:${lobbyId}`;
+    const keys: string[] = [lockKey];
+
+    for (const region of lobby.regions) {
+      keys.push(getMatchmakingQueueCacheKey(lobby.type, region));
+      keys.push(getMatchmakingRankCacheKey(lobby.type, region));
+    }
+
+    const result = await this.redis.eval(
+      MatchmakeService.CLAIM_LOBBY_SCRIPT,
+      keys.length,
+      ...keys,
+      lobbyId,
+      10, // TTL in seconds
+    );
+
+    return result === 1;
+  }
+
+  private async releaseLobbyAndRequeue(lobbyId: string): Promise<void> {
+    await this.releaseLobbyLock(lobbyId, 0);
+    await this.addLobbyToQueue(lobbyId);
   }
 
   public async releaseLobbyLock(lobbyId: string, seconds: number) {
@@ -577,10 +614,6 @@ export class MatchmakeService {
     const { team1, team2 } = players;
 
     const allLobbies = new Set([...team1.lobbies, ...team2.lobbies]);
-
-    for (const lobby of allLobbies) {
-      await this.matchmakingLobbyService.removeLobbyFromQueue(lobby);
-    }
 
     for (const lobbyId of allLobbies) {
       void this.releaseLobbyLock(lobbyId, 30);
