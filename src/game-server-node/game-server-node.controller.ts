@@ -46,6 +46,7 @@ export class GameServerNodeController {
     nodeIP: string;
     publicIP: string;
     csBuild: number;
+    csgoBuild: number;
     supportsLowLatency: boolean;
     supportsCpuPinning: boolean;
     nodeStats: NodeStats;
@@ -80,6 +81,7 @@ export class GameServerNodeController {
       payload.lanIP,
       payload.publicIP,
       payload.csBuild,
+      payload.csgoBuild,
       payload.supportsCpuPinning,
       payload.supportsLowLatency,
       payload.nodeStats.cpuInfo,
@@ -138,10 +140,14 @@ export class GameServerNodeController {
   }
 
   @HasuraAction()
-  public async updateCs(data: { game_server_node_id: string }) {
+  public async updateCs(data: {
+    game_server_node_id: string;
+    game?: "cs2" | "csgo";
+  }) {
     await this.gameServerNodeService.updateCsServer(
       data.game_server_node_id,
       true,
+      data.game ?? "cs2",
     );
 
     return {
@@ -218,6 +224,7 @@ export class GameServerNodeController {
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
         mkdir -p /opt/5stack/serverfiles
+        mkdir -p /opt/5stack/serverfiles-csgo
         mkdir -p /opt/5stack/custom-plugins
 
         echo "Connecting to secure network";

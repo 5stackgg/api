@@ -33,6 +33,7 @@ CREATE OR REPLACE FUNCTION public.get_match_connection_link(match public.matches
     AS $$
 DECLARE
     server_host text;
+    server_game text;
 BEGIN
     server_host := get_match_server_info(match);
 
@@ -40,7 +41,13 @@ BEGIN
         return NULL;
     END IF;
 
-    RETURN CONCAT('steam://run/730//+connect ', server_host);
+    SELECT s.game INTO server_game
+    FROM matches m
+    INNER JOIN servers s ON s.id = m.server_id
+    WHERE m.id = match.id
+    LIMIT 1;
+
+    RETURN CONCAT('steam://run/', CASE WHEN server_game = 'csgo' THEN '4465480' ELSE '730' END, '//+connect ', server_host);
 END;
 $$;
 

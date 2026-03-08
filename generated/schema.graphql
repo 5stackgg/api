@@ -2971,6 +2971,177 @@ input e_match_map_status_updates {
 }
 
 """
+columns and relationships of "e_match_mode"
+"""
+type e_match_mode {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_match_mode"
+"""
+type e_match_mode_aggregate {
+  aggregate: e_match_mode_aggregate_fields
+  nodes: [e_match_mode!]!
+}
+
+"""
+aggregate fields of "e_match_mode"
+"""
+type e_match_mode_aggregate_fields {
+  count(columns: [e_match_mode_select_column!], distinct: Boolean): Int!
+  max: e_match_mode_max_fields
+  min: e_match_mode_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_match_mode". All fields are combined with a logical 'AND'.
+"""
+input e_match_mode_bool_exp {
+  _and: [e_match_mode_bool_exp!]
+  _not: e_match_mode_bool_exp
+  _or: [e_match_mode_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_match_mode"
+"""
+enum e_match_mode_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_match_mode_pkey
+}
+
+enum e_match_mode_enum {
+  """Match must be scheduled and started by an admin user"""
+  admin
+
+  """Match is automatically scheduled by the system"""
+  auto
+}
+
+"""
+Boolean expression to compare columns of type "e_match_mode_enum". All fields are combined with logical 'AND'.
+"""
+input e_match_mode_enum_comparison_exp {
+  _eq: e_match_mode_enum
+  _in: [e_match_mode_enum!]
+  _is_null: Boolean
+  _neq: e_match_mode_enum
+  _nin: [e_match_mode_enum!]
+}
+
+"""
+input type for inserting data into table "e_match_mode"
+"""
+input e_match_mode_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_match_mode_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_match_mode_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_match_mode"
+"""
+type e_match_mode_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_match_mode!]!
+}
+
+"""
+on_conflict condition type for table "e_match_mode"
+"""
+input e_match_mode_on_conflict {
+  constraint: e_match_mode_constraint!
+  update_columns: [e_match_mode_update_column!]! = []
+  where: e_match_mode_bool_exp
+}
+
+"""Ordering options when selecting data from "e_match_mode"."""
+input e_match_mode_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_match_mode"""
+input e_match_mode_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_match_mode"
+"""
+enum e_match_mode_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_match_mode"
+"""
+input e_match_mode_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_match_mode"
+"""
+input e_match_mode_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_match_mode_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_match_mode_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_match_mode"
+"""
+enum e_match_mode_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_match_mode_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_match_mode_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_match_mode_bool_exp!
+}
+
+"""
 columns and relationships of "e_match_status"
 """
 type e_match_status {
@@ -5816,6 +5987,9 @@ enum e_tournament_status_enum {
   """Live"""
   Live
 
+  """Paused"""
+  Paused
+
   """Registration Closed"""
   RegistrationClosed
 
@@ -6854,6 +7028,7 @@ type game_server_nodes {
   ): jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
 
   """An object relationship"""
@@ -7028,6 +7203,7 @@ type game_server_nodes_avg_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7047,6 +7223,7 @@ input game_server_nodes_avg_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7067,6 +7244,7 @@ input game_server_nodes_bool_exp {
   cpu_governor_info: jsonb_comparison_exp
   cpu_sockets: Int_comparison_exp
   cpu_threads_per_core: Int_comparison_exp
+  csgo_build_id: Int_comparison_exp
   demo_network_limiter: Int_comparison_exp
   e_region: server_regions_bool_exp
   e_status: e_game_server_node_statuses_bool_exp
@@ -7138,6 +7316,7 @@ input game_server_nodes_inc_input {
   cpu_cores_per_socket: Int
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   end_port_range: Int
   pin_build_id: Int
@@ -7154,6 +7333,7 @@ input game_server_nodes_insert_input {
   cpu_governor_info: jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   e_region: server_regions_obj_rel_insert_input
   e_status: e_game_server_node_statuses_obj_rel_insert_input
@@ -7190,6 +7370,7 @@ type game_server_nodes_max_fields {
   cpu_cores_per_socket: Int
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   end_port_range: Int
   id: String
@@ -7216,6 +7397,7 @@ input game_server_nodes_max_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   id: order_by
@@ -7239,6 +7421,7 @@ type game_server_nodes_min_fields {
   cpu_cores_per_socket: Int
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   end_port_range: Int
   id: String
@@ -7265,6 +7448,7 @@ input game_server_nodes_min_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   id: order_by
@@ -7317,6 +7501,7 @@ input game_server_nodes_order_by {
   cpu_governor_info: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   e_region: server_regions_order_by
   e_status: e_game_server_node_statuses_order_by
@@ -7377,6 +7562,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   cpu_threads_per_core
+
+  """column name"""
+  csgo_build_id
 
   """column name"""
   demo_network_limiter
@@ -7480,6 +7668,7 @@ input game_server_nodes_set_input {
   cpu_governor_info: jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   enabled: Boolean
   end_port_range: Int
@@ -7511,6 +7700,7 @@ type game_server_nodes_stddev_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7530,6 +7720,7 @@ input game_server_nodes_stddev_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7546,6 +7737,7 @@ type game_server_nodes_stddev_pop_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7565,6 +7757,7 @@ input game_server_nodes_stddev_pop_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7581,6 +7774,7 @@ type game_server_nodes_stddev_samp_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7600,6 +7794,7 @@ input game_server_nodes_stddev_samp_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7625,6 +7820,7 @@ input game_server_nodes_stream_cursor_value_input {
   cpu_governor_info: jsonb
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   enabled: Boolean
   end_port_range: Int
@@ -7656,6 +7852,7 @@ type game_server_nodes_sum_fields {
   cpu_cores_per_socket: Int
   cpu_sockets: Int
   cpu_threads_per_core: Int
+  csgo_build_id: Int
   demo_network_limiter: Int
   end_port_range: Int
   pin_build_id: Int
@@ -7675,6 +7872,7 @@ input game_server_nodes_sum_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7702,6 +7900,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   cpu_threads_per_core
+
+  """column name"""
+  csgo_build_id
 
   """column name"""
   demo_network_limiter
@@ -7803,6 +8004,7 @@ type game_server_nodes_var_pop_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7822,6 +8024,7 @@ input game_server_nodes_var_pop_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7838,6 +8041,7 @@ type game_server_nodes_var_samp_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7857,6 +8061,7 @@ input game_server_nodes_var_samp_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -7873,6 +8078,7 @@ type game_server_nodes_variance_fields {
   cpu_cores_per_socket: Float
   cpu_sockets: Float
   cpu_threads_per_core: Float
+  csgo_build_id: Float
   demo_network_limiter: Float
   end_port_range: Float
   pin_build_id: Float
@@ -7892,6 +8098,7 @@ input game_server_nodes_variance_order_by {
   cpu_cores_per_socket: order_by
   cpu_sockets: order_by
   cpu_threads_per_core: order_by
+  csgo_build_id: order_by
   demo_network_limiter: order_by
   end_port_range: order_by
   pin_build_id: order_by
@@ -13826,6 +14033,8 @@ input match_maps_variance_order_by {
 columns and relationships of "match_options"
 """
 type match_options {
+  auto_cancel_duration: Int
+  auto_cancellation: Boolean!
   best_of: Int!
   check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
@@ -13838,12 +14047,14 @@ type match_options {
   id: uuid!
   invite_code: String
   knife_round: Boolean!
+  live_match_timeout: Int
   lobby_access: e_lobby_access_enum
 
   """An object relationship"""
   map_pool: map_pools!
   map_pool_id: uuid!
   map_veto: Boolean!
+  match_mode: e_match_mode_enum!
 
   """An array relationship"""
   matches(
@@ -13929,7 +14140,9 @@ type match_options_aggregate_fields {
 
 """aggregate avg on columns"""
 type match_options_avg_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -13942,6 +14155,8 @@ input match_options_bool_exp {
   _and: [match_options_bool_exp!]
   _not: match_options_bool_exp
   _or: [match_options_bool_exp!]
+  auto_cancel_duration: Int_comparison_exp
+  auto_cancellation: Boolean_comparison_exp
   best_of: Int_comparison_exp
   check_in_setting: e_check_in_settings_enum_comparison_exp
   coaches: Boolean_comparison_exp
@@ -13950,10 +14165,12 @@ input match_options_bool_exp {
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
   knife_round: Boolean_comparison_exp
+  live_match_timeout: Int_comparison_exp
   lobby_access: e_lobby_access_enum_comparison_exp
   map_pool: map_pools_bool_exp
   map_pool_id: uuid_comparison_exp
   map_veto: Boolean_comparison_exp
+  match_mode: e_match_mode_enum_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
   mr: Int_comparison_exp
@@ -13986,7 +14203,9 @@ enum match_options_constraint {
 input type for incrementing numeric columns in table "match_options"
 """
 input match_options_inc_input {
+  auto_cancel_duration: Int
   best_of: Int
+  live_match_timeout: Int
   mr: Int
   number_of_substitutes: Int
   tv_delay: Int
@@ -13996,6 +14215,8 @@ input match_options_inc_input {
 input type for inserting data into table "match_options"
 """
 input match_options_insert_input {
+  auto_cancel_duration: Int
+  auto_cancellation: Boolean
   best_of: Int
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
@@ -14003,10 +14224,12 @@ input match_options_insert_input {
   id: uuid
   invite_code: String
   knife_round: Boolean
+  live_match_timeout: Int
   lobby_access: e_lobby_access_enum
   map_pool: map_pools_obj_rel_insert_input
   map_pool_id: uuid
   map_veto: Boolean
+  match_mode: e_match_mode_enum
   matches: matches_arr_rel_insert_input
   mr: Int
   number_of_substitutes: Int
@@ -14026,9 +14249,11 @@ input match_options_insert_input {
 
 """aggregate max on columns"""
 type match_options_max_fields {
+  auto_cancel_duration: Int
   best_of: Int
   id: uuid
   invite_code: String
+  live_match_timeout: Int
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
@@ -14038,9 +14263,11 @@ type match_options_max_fields {
 
 """aggregate min on columns"""
 type match_options_min_fields {
+  auto_cancel_duration: Int
   best_of: Int
   id: uuid
   invite_code: String
+  live_match_timeout: Int
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
@@ -14080,6 +14307,8 @@ input match_options_on_conflict {
 
 """Ordering options when selecting data from "match_options"."""
 input match_options_order_by {
+  auto_cancel_duration: order_by
+  auto_cancellation: order_by
   best_of: order_by
   check_in_setting: order_by
   coaches: order_by
@@ -14088,10 +14317,12 @@ input match_options_order_by {
   id: order_by
   invite_code: order_by
   knife_round: order_by
+  live_match_timeout: order_by
   lobby_access: order_by
   map_pool: map_pools_order_by
   map_pool_id: order_by
   map_veto: order_by
+  match_mode: order_by
   matches_aggregate: matches_aggregate_order_by
   mr: order_by
   number_of_substitutes: order_by
@@ -14119,6 +14350,12 @@ select columns of table "match_options"
 """
 enum match_options_select_column {
   """column name"""
+  auto_cancel_duration
+
+  """column name"""
+  auto_cancellation
+
+  """column name"""
   best_of
 
   """column name"""
@@ -14140,6 +14377,9 @@ enum match_options_select_column {
   knife_round
 
   """column name"""
+  live_match_timeout
+
+  """column name"""
   lobby_access
 
   """column name"""
@@ -14147,6 +14387,9 @@ enum match_options_select_column {
 
   """column name"""
   map_veto
+
+  """column name"""
+  match_mode
 
   """column name"""
   mr
@@ -14186,6 +14429,8 @@ enum match_options_select_column {
 input type for updating data in table "match_options"
 """
 input match_options_set_input {
+  auto_cancel_duration: Int
+  auto_cancellation: Boolean
   best_of: Int
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
@@ -14193,9 +14438,11 @@ input match_options_set_input {
   id: uuid
   invite_code: String
   knife_round: Boolean
+  live_match_timeout: Int
   lobby_access: e_lobby_access_enum
   map_pool_id: uuid
   map_veto: Boolean
+  match_mode: e_match_mode_enum
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
@@ -14211,7 +14458,9 @@ input match_options_set_input {
 
 """aggregate stddev on columns"""
 type match_options_stddev_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -14219,7 +14468,9 @@ type match_options_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type match_options_stddev_pop_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -14227,7 +14478,9 @@ type match_options_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type match_options_stddev_samp_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -14246,6 +14499,8 @@ input match_options_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_options_stream_cursor_value_input {
+  auto_cancel_duration: Int
+  auto_cancellation: Boolean
   best_of: Int
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
@@ -14253,9 +14508,11 @@ input match_options_stream_cursor_value_input {
   id: uuid
   invite_code: String
   knife_round: Boolean
+  live_match_timeout: Int
   lobby_access: e_lobby_access_enum
   map_pool_id: uuid
   map_veto: Boolean
+  match_mode: e_match_mode_enum
   mr: Int
   number_of_substitutes: Int
   overtime: Boolean
@@ -14271,7 +14528,9 @@ input match_options_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type match_options_sum_fields {
+  auto_cancel_duration: Int
   best_of: Int
+  live_match_timeout: Int
   mr: Int
   number_of_substitutes: Int
   tv_delay: Int
@@ -14281,6 +14540,12 @@ type match_options_sum_fields {
 update columns of table "match_options"
 """
 enum match_options_update_column {
+  """column name"""
+  auto_cancel_duration
+
+  """column name"""
+  auto_cancellation
+
   """column name"""
   best_of
 
@@ -14303,6 +14568,9 @@ enum match_options_update_column {
   knife_round
 
   """column name"""
+  live_match_timeout
+
+  """column name"""
   lobby_access
 
   """column name"""
@@ -14310,6 +14578,9 @@ enum match_options_update_column {
 
   """column name"""
   map_veto
+
+  """column name"""
+  match_mode
 
   """column name"""
   mr
@@ -14358,7 +14629,9 @@ input match_options_updates {
 
 """aggregate var_pop on columns"""
 type match_options_var_pop_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -14366,7 +14639,9 @@ type match_options_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type match_options_var_samp_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -14374,7 +14649,9 @@ type match_options_var_samp_fields {
 
 """aggregate variance on columns"""
 type match_options_variance_fields {
+  auto_cancel_duration: Float
   best_of: Float
+  live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
   tv_delay: Float
@@ -17125,6 +17402,19 @@ type mutation_root {
   delete_e_match_map_status_by_pk(value: String!): e_match_map_status
 
   """
+  delete data from the table: "e_match_mode"
+  """
+  delete_e_match_mode(
+    """filter the rows which have to be deleted"""
+    where: e_match_mode_bool_exp!
+  ): e_match_mode_mutation_response
+
+  """
+  delete single row from the table: "e_match_mode"
+  """
+  delete_e_match_mode_by_pk(value: String!): e_match_mode
+
+  """
   delete data from the table: "e_match_status"
   """
   delete_e_match_status(
@@ -18254,6 +18544,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_match_map_status_on_conflict
   ): e_match_map_status
+
+  """
+  insert data into the table: "e_match_mode"
+  """
+  insert_e_match_mode(
+    """the rows to be inserted"""
+    objects: [e_match_mode_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_match_mode_on_conflict
+  ): e_match_mode_mutation_response
+
+  """
+  insert a single row into the table: "e_match_mode"
+  """
+  insert_e_match_mode_one(
+    """the row to be inserted"""
+    object: e_match_mode_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_match_mode_on_conflict
+  ): e_match_mode
 
   """
   insert data into the table: "e_match_status"
@@ -19766,7 +20078,7 @@ type mutation_root {
   syncSteamFriends: SuccessOutput
   testUpload: TestUploadResponse
   unlinkDiscord: SuccessOutput
-  updateCs(game_server_node_id: uuid): SuccessOutput
+  updateCs(game: String, game_server_node_id: uuid): SuccessOutput
   updateServices: SuccessOutput
 
   """
@@ -20122,6 +20434,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_match_map_status_updates!]!
   ): [e_match_map_status_mutation_response]
+
+  """
+  update data of the table: "e_match_mode"
+  """
+  update_e_match_mode(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_match_mode_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_match_mode_bool_exp!
+  ): e_match_mode_mutation_response
+
+  """
+  update single row of the table: "e_match_mode"
+  """
+  update_e_match_mode_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_match_mode_set_input
+    pk_columns: e_match_mode_pk_columns_input!
+  ): e_match_mode
+
+  """
+  update multiples rows of table: "e_match_mode"
+  """
+  update_e_match_mode_many(
+    """updates to execute, in order"""
+    updates: [e_match_mode_updates!]!
+  ): [e_match_mode_mutation_response]
 
   """
   update data of the table: "e_match_status"
@@ -31399,6 +31739,49 @@ type query_root {
   e_match_map_status_by_pk(value: String!): e_match_map_status
 
   """
+  fetch data from the table: "e_match_mode"
+  """
+  e_match_mode(
+    """distinct select on columns"""
+    distinct_on: [e_match_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_mode_bool_exp
+  ): [e_match_mode!]!
+
+  """
+  fetch aggregated fields from the table: "e_match_mode"
+  """
+  e_match_mode_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_match_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_mode_bool_exp
+  ): e_match_mode_aggregate!
+
+  """fetch data from the table: "e_match_mode" using primary key columns"""
+  e_match_mode_by_pk(value: String!): e_match_mode
+
+  """
   fetch data from the table: "e_match_status"
   """
   e_match_status(
@@ -35162,6 +35545,7 @@ type servers {
   """An object relationship"""
   current_match: matches
   enabled: Boolean!
+  game: String
 
   """An object relationship"""
   game_server_node: game_server_nodes
@@ -35332,6 +35716,7 @@ input servers_bool_exp {
   connection_string: String_comparison_exp
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
+  game: String_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
   host: String_comparison_exp
@@ -35388,6 +35773,7 @@ input servers_insert_input {
   connected: Boolean
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
+  game: String
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
   host: String
@@ -35424,6 +35810,7 @@ type servers_max_fields {
   A computed field, executes function "get_server_connection_string"
   """
   connection_string: String
+  game: String
   game_server_node_id: String
   host: String
   id: uuid
@@ -35445,6 +35832,7 @@ order by max() on columns of table "servers"
 input servers_max_order_by {
   api_password: order_by
   connect_password: order_by
+  game: order_by
   game_server_node_id: order_by
   host: order_by
   id: order_by
@@ -35474,6 +35862,7 @@ type servers_min_fields {
   A computed field, executes function "get_server_connection_string"
   """
   connection_string: String
+  game: String
   game_server_node_id: String
   host: String
   id: uuid
@@ -35495,6 +35884,7 @@ order by min() on columns of table "servers"
 input servers_min_order_by {
   api_password: order_by
   connect_password: order_by
+  game: order_by
   game_server_node_id: order_by
   host: order_by
   id: order_by
@@ -35549,6 +35939,7 @@ input servers_order_by {
   connection_string: order_by
   current_match: matches_order_by
   enabled: order_by
+  game: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
   host: order_by
@@ -35591,6 +35982,9 @@ enum servers_select_column {
 
   """column name"""
   enabled
+
+  """column name"""
+  game
 
   """column name"""
   game_server_node_id
@@ -35686,6 +36080,7 @@ input servers_set_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
+  game: String
   game_server_node_id: String
   host: String
   id: uuid
@@ -35770,6 +36165,7 @@ input servers_stream_cursor_value_input {
   connect_password: String
   connected: Boolean
   enabled: Boolean
+  game: String
   game_server_node_id: String
   host: String
   id: uuid
@@ -35820,6 +36216,9 @@ enum servers_update_column {
 
   """column name"""
   enabled
+
+  """column name"""
+  game
 
   """column name"""
   game_server_node_id
@@ -36778,6 +37177,63 @@ type subscription_root {
     """filter the rows returned"""
     where: e_match_map_status_bool_exp
   ): [e_match_map_status!]!
+
+  """
+  fetch data from the table: "e_match_mode"
+  """
+  e_match_mode(
+    """distinct select on columns"""
+    distinct_on: [e_match_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_mode_bool_exp
+  ): [e_match_mode!]!
+
+  """
+  fetch aggregated fields from the table: "e_match_mode"
+  """
+  e_match_mode_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_match_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_mode_bool_exp
+  ): e_match_mode_aggregate!
+
+  """fetch data from the table: "e_match_mode" using primary key columns"""
+  e_match_mode_by_pk(value: String!): e_match_mode
+
+  """
+  fetch data from the table in a streaming manner: "e_match_mode"
+  """
+  e_match_mode_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_match_mode_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_match_mode_bool_exp
+  ): [e_match_mode!]!
 
   """
   fetch data from the table: "e_match_status"
@@ -42620,6 +43076,7 @@ type tournament_brackets {
   parent_bracket_id: uuid
   path: String
   round: Int!
+  scheduled_at: timestamptz
   scheduled_eta: timestamptz
 
   """An object relationship"""
@@ -42760,6 +43217,7 @@ input tournament_brackets_bool_exp {
   parent_bracket_id: uuid_comparison_exp
   path: String_comparison_exp
   round: Int_comparison_exp
+  scheduled_at: timestamptz_comparison_exp
   scheduled_eta: timestamptz_comparison_exp
   stage: tournament_stages_bool_exp
   team_1: tournament_teams_bool_exp
@@ -42817,6 +43275,7 @@ input tournament_brackets_insert_input {
   parent_bracket_id: uuid
   path: String
   round: Int
+  scheduled_at: timestamptz
   scheduled_eta: timestamptz
   stage: tournament_stages_obj_rel_insert_input
   team_1: tournament_teams_obj_rel_insert_input
@@ -42840,6 +43299,7 @@ type tournament_brackets_max_fields {
   parent_bracket_id: uuid
   path: String
   round: Int
+  scheduled_at: timestamptz
   scheduled_eta: timestamptz
   team_1_seed: Int
   team_2_seed: Int
@@ -42862,6 +43322,7 @@ input tournament_brackets_max_order_by {
   parent_bracket_id: order_by
   path: order_by
   round: order_by
+  scheduled_at: order_by
   scheduled_eta: order_by
   team_1_seed: order_by
   team_2_seed: order_by
@@ -42882,6 +43343,7 @@ type tournament_brackets_min_fields {
   parent_bracket_id: uuid
   path: String
   round: Int
+  scheduled_at: timestamptz
   scheduled_eta: timestamptz
   team_1_seed: Int
   team_2_seed: Int
@@ -42904,6 +43366,7 @@ input tournament_brackets_min_order_by {
   parent_bracket_id: order_by
   path: order_by
   round: order_by
+  scheduled_at: order_by
   scheduled_eta: order_by
   team_1_seed: order_by
   team_2_seed: order_by
@@ -42961,6 +43424,7 @@ input tournament_brackets_order_by {
   parent_bracket_id: order_by
   path: order_by
   round: order_by
+  scheduled_at: order_by
   scheduled_eta: order_by
   stage: tournament_stages_order_by
   team_1: tournament_teams_order_by
@@ -43016,6 +43480,9 @@ enum tournament_brackets_select_column {
 
   """column name"""
   round
+
+  """column name"""
+  scheduled_at
 
   """column name"""
   scheduled_eta
@@ -43074,6 +43541,7 @@ input tournament_brackets_set_input {
   parent_bracket_id: uuid
   path: String
   round: Int
+  scheduled_at: timestamptz
   scheduled_eta: timestamptz
   team_1_seed: Int
   team_2_seed: Int
@@ -43167,6 +43635,7 @@ input tournament_brackets_stream_cursor_value_input {
   parent_bracket_id: uuid
   path: String
   round: Int
+  scheduled_at: timestamptz
   scheduled_eta: timestamptz
   team_1_seed: Int
   team_2_seed: Int
@@ -43234,6 +43703,9 @@ enum tournament_brackets_update_column {
 
   """column name"""
   round
+
+  """column name"""
+  scheduled_at
 
   """column name"""
   scheduled_eta
@@ -45768,6 +46240,7 @@ columns and relationships of "tournaments"
 type tournaments {
   """An object relationship"""
   admin: players!
+  auto_start: Boolean!
 
   """
   A computed field, executes function "can_cancel_tournament"
@@ -45788,6 +46261,16 @@ type tournaments {
   A computed field, executes function "can_open_tournament_registration"
   """
   can_open_registration: Boolean
+
+  """
+  A computed field, executes function "can_pause_tournament"
+  """
+  can_pause: Boolean
+
+  """
+  A computed field, executes function "can_resume_tournament"
+  """
+  can_resume: Boolean
 
   """
   A computed field, executes function "can_start_tournament"
@@ -46137,10 +46620,13 @@ input tournaments_bool_exp {
   _not: tournaments_bool_exp
   _or: [tournaments_bool_exp!]
   admin: players_bool_exp
+  auto_start: Boolean_comparison_exp
   can_cancel: Boolean_comparison_exp
   can_close_registration: Boolean_comparison_exp
   can_join: Boolean_comparison_exp
   can_open_registration: Boolean_comparison_exp
+  can_pause: Boolean_comparison_exp
+  can_resume: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   description: String_comparison_exp
@@ -46211,6 +46697,7 @@ input type for inserting data into table "tournaments"
 """
 input tournaments_insert_input {
   admin: players_obj_rel_insert_input
+  auto_start: Boolean
   created_at: timestamptz
   description: String
   discord_notifications_enabled: Boolean
@@ -46352,10 +46839,13 @@ input tournaments_on_conflict {
 """Ordering options when selecting data from "tournaments"."""
 input tournaments_order_by {
   admin: players_order_by
+  auto_start: order_by
   can_cancel: order_by
   can_close_registration: order_by
   can_join: order_by
   can_open_registration: order_by
+  can_pause: order_by
+  can_resume: order_by
   can_start: order_by
   created_at: order_by
   description: order_by
@@ -46403,6 +46893,9 @@ input tournaments_pk_columns_input {
 select columns of table "tournaments"
 """
 enum tournaments_select_column {
+  """column name"""
+  auto_start
+
   """column name"""
   created_at
 
@@ -46478,6 +46971,9 @@ select "tournaments_aggregate_bool_exp_bool_and_arguments_columns" columns of ta
 """
 enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
+  auto_start
+
+  """column name"""
   discord_notifications_enabled
 
   """column name"""
@@ -46522,6 +47018,9 @@ select "tournaments_aggregate_bool_exp_bool_or_arguments_columns" columns of tab
 """
 enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
+  auto_start
+
+  """column name"""
   discord_notifications_enabled
 
   """column name"""
@@ -46565,6 +47064,7 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_
 input type for updating data in table "tournaments"
 """
 input tournaments_set_input {
+  auto_start: Boolean
   created_at: timestamptz
   description: String
   discord_notifications_enabled: Boolean
@@ -46666,6 +47166,7 @@ input tournaments_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournaments_stream_cursor_value_input {
+  auto_start: Boolean
   created_at: timestamptz
   description: String
   discord_notifications_enabled: Boolean
@@ -46716,6 +47217,9 @@ input tournaments_sum_order_by {
 update columns of table "tournaments"
 """
 enum tournaments_update_column {
+  """column name"""
+  auto_start
+
   """column name"""
   created_at
 
