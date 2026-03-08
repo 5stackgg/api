@@ -178,6 +178,7 @@ export class RconService {
 
   public async disconnect(serverId: string) {
     clearTimeout(this.connectTimeouts[serverId]);
+    delete this.connectTimeouts[serverId];
 
     if (this.connections[serverId]) {
       await this.connections[serverId].end();

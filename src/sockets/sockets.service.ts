@@ -117,6 +117,7 @@ export class SocketsService {
         );
 
         client.on("close", async () => {
+          this.clients.delete(client.id);
           await this.redis.del(
             SocketsService.GET_PLAYER_CLIENT(
               client.user.steam_id,
@@ -227,12 +228,6 @@ export class SocketsService {
   }
 
   private getClient(clientId: string) {
-    const _client = this.clients.get(clientId);
-
-    if (_client) {
-      return _client;
-    }
-
-    this.clients.delete(clientId);
+    return this.clients.get(clientId);
   }
 }
