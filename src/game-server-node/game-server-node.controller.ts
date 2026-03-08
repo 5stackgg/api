@@ -46,6 +46,7 @@ export class GameServerNodeController {
     nodeIP: string;
     publicIP: string;
     csBuild: number;
+    csgoBuild: number;
     supportsLowLatency: boolean;
     supportsCpuPinning: boolean;
     nodeStats: NodeStats;
@@ -80,6 +81,7 @@ export class GameServerNodeController {
       payload.lanIP,
       payload.publicIP,
       payload.csBuild,
+      payload.csgoBuild,
       payload.supportsCpuPinning,
       payload.supportsLowLatency,
       payload.nodeStats.cpuInfo,

@@ -439,10 +439,40 @@ export class DedicatedServersService {
     }
   }
 
+  private async getServerStatusInfo(
+    serverId: string,
+    game: string,
+    steamRelayEnabled: boolean,
+  ): Promise<{ steamId: string | null; clients_human: number; map: string }> {
+    const rcon = await this.RconService.connect(serverId);
+    if (!rcon) {
+      return;
+    }
+
+    if (game === "csgo") {
+      const output = await rcon.send("status");
+      const mapMatch = output.match(/^map\s*:\s*(\S+)/m);
+      const playersMatch = output.match(/^players\s*:\s*(\d+)\s+humans/m);
+      return {
+        steamId: null,
+        clients_human: playersMatch ? parseInt(playersMatch[1]) : 0,
+        map: mapMatch ? mapMatch[1] : "unknown",
+      };
+    } else {
+      const status = JSON.parse(await rcon.send("status_json"));
+      return {
+        steamId: steamRelayEnabled ? status.server.steamid : null,
+        clients_human: status.server.clients_human,
+        map: status.server.map || "unknown",
+      };
+    }
+  }
+
   public async pingDedicatedServer(serverId: string): Promise<void> {
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
         __args: { id: serverId },
+        game: true,
         connected: true,
         steam_relay: true,
         server_region: {
@@ -450,10 +480,6 @@ export class DedicatedServersService {
         },
       },
     });
-    const rcon = await this.RconService.connect(serverId);
-    if (!rcon) {
-      return;
-    }
 
     if (!server.connected) {
       await this.hasura.mutation({
@@ -464,20 +490,30 @@ export class DedicatedServersService {
       });
     }
 
-    let steamId = null;
-    const status = JSON.parse(await rcon.send("status_json"));
+    // TODO - fix steam relay for csgo
+    const steamRelayeEnabled =
+      server.game === "csgo" ? false : server.server_region?.steam_relay;
+    const { steamId, clients_human, map } = await this.getServerStatusInfo(
+      serverId,
+      server.game,
+      steamRelayeEnabled,
+    );
 
-    const steamRelayeEnabled = server.server_region?.steam_relay;
-    if (steamRelayeEnabled) {
-      steamId = status.server.steamid;
-    }
+    console.log({
+      serverId,
+      game: server.game,
+      steamId,
+      clients_human,
+      map,
+      steamRelayeEnabled,
+    });
 
     await this.redis.hset(
       "dedicated-servers:stats",
       serverId,
       JSON.stringify({
-        clients_human: status.server.clients_human,
-        map: status.server.map || "unknown",
+        clients_human,
+        map,
         last_ping: new Date().toISOString(),
       }),
     );

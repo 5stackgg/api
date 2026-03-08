@@ -47,10 +47,7 @@ export class GameServerNodeService {
     this.batchApi = kc.makeApiClient(BatchV1Api);
   }
 
-  public static GET_UPDATE_JOB_NAME(
-    gameServerNodeId: string,
-    game = "cs2",
-  ) {
+  public static GET_UPDATE_JOB_NAME(gameServerNodeId: string, game = "cs2") {
     const sanitized = gameServerNodeId.replaceAll(".", "-");
     return game === "csgo"
       ? `update-csgo-server-${sanitized}`
@@ -131,6 +128,7 @@ export class GameServerNodeService {
     lanIP: string,
     publicIP: string,
     csBulid: number,
+    csgoBuildId: number,
     supportsCpuPinning: boolean,
     supportsLowLatency: boolean,
     cpuInfo: {
@@ -161,6 +159,7 @@ export class GameServerNodeService {
         lan_ip: true,
         node_ip: true,
         build_id: true,
+        csgo_build_id: true,
         public_ip: true,
         gpu: true,
         cpu_sockets: true,
@@ -178,7 +177,6 @@ export class GameServerNodeService {
       this.logger.log(`Creating volumes for node ${node}`);
       await this.createVolumes(node);
     }
-
     if (game_server_nodes_by_pk?.status === "NotAcceptingNewMatches") {
       status = "NotAcceptingNewMatches";
     }
@@ -197,6 +195,8 @@ export class GameServerNodeService {
       game_server_nodes_by_pk.public_ip !== publicIP ||
       game_server_nodes_by_pk.status !== status ||
       (game_server_nodes_by_pk.build_id !== csBulid &&
+        game_server_nodes_by_pk.update_status === null) ||
+      (game_server_nodes_by_pk.csgo_build_id !== csgoBuildId &&
         game_server_nodes_by_pk.update_status === null) ||
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
@@ -227,6 +227,9 @@ export class GameServerNodeService {
               supports_cpu_pinning: supportsCpuPinning,
               ...(game_server_nodes_by_pk.update_status === null
                 ? { build_id: csBulid }
+                : {}),
+              ...(game_server_nodes_by_pk.update_status === null
+                ? { csgo_build_id: csgoBuildId }
                 : {}),
               gpu: nvidiaGPU,
               cpu_sockets: cpuInfo.sockets,
@@ -680,7 +683,6 @@ export class GameServerNodeService {
               },
               _set: {
                 update_status: null,
-                ...(game === "csgo" ? { csgo_build_id: 1 } : {}),
               },
             },
             update_status: true,
