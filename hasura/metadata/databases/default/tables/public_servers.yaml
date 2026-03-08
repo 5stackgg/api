@@ -53,6 +53,7 @@ insert_permissions:
       columns:
         - connect_password
         - enabled
+        - game
         - game_server_node_id
         - host
         - label
@@ -153,6 +154,7 @@ update_permissions:
       columns:
         - connect_password
         - enabled
+        - game
         - game_server_node_id
         - host
         - is_dedicated
