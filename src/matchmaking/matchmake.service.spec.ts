@@ -655,12 +655,16 @@ describe("MatchmakeService", () => {
 
       // First call succeeds (returns 1)
       mockRedis.eval.mockResolvedValueOnce(1);
-      const firstClaim = await (service as any).claimLobby("lobby-multi-region");
+      const firstClaim = await (service as any).claimLobby(
+        "lobby-multi-region",
+      );
       expect(firstClaim).toBe(true);
 
       // Second call fails (returns 0 — lock already held)
       mockRedis.eval.mockResolvedValueOnce(0);
-      const secondClaim = await (service as any).claimLobby("lobby-multi-region");
+      const secondClaim = await (service as any).claimLobby(
+        "lobby-multi-region",
+      );
       expect(secondClaim).toBe(false);
     });
 
@@ -753,8 +757,8 @@ describe("MatchmakeService", () => {
 
       // lobby-1 fails to claim (another region got it), lobby-2 and lobby-3 succeed
       mockRedis.eval
-        .mockResolvedValueOnce(0)  // lobby-1: already claimed
-        .mockResolvedValueOnce(1)  // lobby-2: claimed
+        .mockResolvedValueOnce(0) // lobby-1: already claimed
+        .mockResolvedValueOnce(1) // lobby-2: claimed
         .mockResolvedValueOnce(1); // lobby-3: claimed
 
       const createMatchConfirmationSpy = jest
