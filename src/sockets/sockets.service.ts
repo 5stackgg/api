@@ -198,7 +198,7 @@ export class SocketsService {
     for (const client of clients) {
       const [, , , clientId] = client.split(":");
 
-      const _client = this.getClient(clientId);
+      const _client = this.clients.get(clientId);
 
       if (!_client) {
         continue;
@@ -227,7 +227,4 @@ export class SocketsService {
     );
   }
 
-  private getClient(clientId: string) {
-    return this.clients.get(clientId);
-  }
 }
