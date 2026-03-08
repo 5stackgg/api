@@ -38,7 +38,7 @@ BEGIN
 
     server_host := get_server_host(server);
 
-    RETURN CONCAT('steam://run/730//+connect ', server_host);
+    RETURN CONCAT('steam://run/', CASE WHEN server.game = 'csgo' THEN '4465480' ELSE '730' END, '//+connect ', server_host);
 END;
 $$;
 

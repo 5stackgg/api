@@ -499,15 +499,6 @@ export class DedicatedServersService {
       steamRelayeEnabled,
     );
 
-    console.log({
-      serverId,
-      game: server.game,
-      steamId,
-      clients_human,
-      map,
-      steamRelayeEnabled,
-    });
-
     await this.redis.hset(
       "dedicated-servers:stats",
       serverId,
