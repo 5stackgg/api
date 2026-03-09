@@ -24,7 +24,7 @@ describe("Matches (e2e)", () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) await app.close();
   });
 
   describe("GET /matches/current-match/:serverId", () => {

@@ -7,6 +7,7 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "transformIgnorePatterns": [],
+  "setupFiles": ["./test-env.ts"],
   "globalSetup": "./setup.ts",
   "globalTeardown": "./teardown.ts",
   "moduleNameMapper": {
