@@ -29,7 +29,7 @@ export class CheckForTournamentStart extends WorkerHost {
                 },
                 {
                   status: {
-                    _in: ["RegistrationOpen", "RegistrationClosed"],
+                    _eq: "RegistrationClosed",
                   },
                 },
               ],
