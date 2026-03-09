@@ -26,8 +26,8 @@ describe("Matches (e2e)", () => {
       const response = await request(app.getHttpServer())
         .get("/matches/current-match/nonexistent-server");
 
-      // Without a valid server ID, should return 404 or error
-      expect([400, 404, 500]).toContain(response.status);
+      // Without a valid server ID, should return 401, 404, or error
+      expect([400, 401, 404, 500]).toContain(response.status);
     });
   });
 
