@@ -781,6 +781,70 @@ describe("MatchmakeService", () => {
     });
   });
 
+  describe("matchmake - region lock", () => {
+    it("returns early when region lock cannot be acquired", async () => {
+      mockRedis.set.mockResolvedValueOnce(null); // NX fails
+
+      const createMatchesSpy = jest.spyOn(service as any, "createMatches");
+
+      await service.matchmake("Competitive", "us-east");
+
+      expect(createMatchesSpy).not.toHaveBeenCalled();
+      createMatchesSpy.mockRestore();
+    });
+
+    it("releases lock and returns when queue is empty", async () => {
+      mockRedis.set.mockResolvedValueOnce("OK"); // lock acquired
+      mockRedis.zrange.mockResolvedValueOnce([]); // empty queue
+
+      await service.matchmake("Competitive", "us-east");
+
+      expect(mockRedis.del).toHaveBeenCalledWith("matchmaking:lock:us-east");
+    });
+  });
+
+  describe("getNumberOfPlayersInQueue", () => {
+    it("returns zcard count for the queue key", async () => {
+      mockRedis.zcard.mockResolvedValueOnce(7);
+
+      const count = await service.getNumberOfPlayersInQueue(
+        "Competitive",
+        "eu-west",
+      );
+
+      expect(count).toBe(7);
+    });
+  });
+
+  describe("addLobbyToQueue", () => {
+    it("adds lobby to rank and queue sorted sets for each region", async () => {
+      const lobby: MatchmakingLobby = {
+        lobbyId: "lobby-add",
+        type: "Wingman",
+        regions: ["us-east", "eu-west"],
+        players: [{ steam_id: "s1", rank: 3000 }],
+        avgRank: 3000,
+        joinedAt: new Date(),
+        regionPositions: {},
+      };
+
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(lobby);
+
+      await service.addLobbyToQueue("lobby-add");
+
+      // 2 regions × 2 sorted sets (rank + queue) = 4 zadd calls
+      expect(mockRedis.zadd).toHaveBeenCalledTimes(4);
+    });
+
+    it("does not add to queue when lobby details not found", async () => {
+      mockMatchmakingLobbyService.getLobbyDetails.mockResolvedValue(null);
+
+      await service.addLobbyToQueue("missing-lobby");
+
+      expect(mockRedis.zadd).not.toHaveBeenCalled();
+    });
+  });
+
   describe("releaseLobbyAndRequeue", () => {
     it("should release the lock and re-add lobby to all regional queues", async () => {
       const lobby: MatchmakingLobby = {
