@@ -6,9 +6,7 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "transformIgnorePatterns": [
-    "node_modules/(?!@kubernetes/client-node|openid-client|oauth4webapi|rfc4648|jsonpath-plus)"
-  ],
+  "transformIgnorePatterns": [],
   "globalSetup": "./setup.ts",
   "globalTeardown": "./teardown.ts",
   "moduleNameMapper": {
