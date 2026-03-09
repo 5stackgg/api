@@ -6,6 +6,9 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "transformIgnorePatterns": [
+    "node_modules/(?!@kubernetes/client-node)"
+  ],
   "globalSetup": "./setup.ts",
   "globalTeardown": "./teardown.ts",
   "moduleNameMapper": {
