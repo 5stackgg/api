@@ -87,52 +87,52 @@ Tests the Redis-backed caching layer with TTL and invalidation.
 - **Error handling:** handles Redis connection errors gracefully
 - **Batch operations:** multi-key get and delete
 
-#### `src/cache/CacheTag.spec.ts` — Cache Tag Constants (13 tests)
-Tests cache tag string generation for various entity types.
-- Generates correct tags for match entities
-- Generates correct tags for player entities
-- Generates correct tags for tournament entities
-- Handles parameterized tags with IDs
-- Returns consistent tag format
-- Validates tag uniqueness across entity types
+#### `src/cache/CacheTag.spec.ts` — Cache Tag Class (14 tests)
+Tests the CacheTag class for key-value caching with tag-based grouping.
+- **Constructor:** joins tags with colon separator
+- **put:** stores value under tag key, merges with existing values, sets forgetTag TTL when seconds provided, returns false on error
+- **get:** returns all values when no key specified, returns specific key value, returns undefined for missing key, returns undefined when tag not in cache
+- **has:** returns true when key exists, returns false when key missing
+- **forget:** removes specific key from tag values, forgets entire tag when no key specified
+- **waitForLock:** delegates to cacheStore.lock with 60s expiry
 
-#### `src/matchmaking/matchmake.service.spec.ts` — Matchmaking Engine (23 tests)
-Tests the core matchmaking algorithm with Elo-based team balancing.
-- **Queue management:** adds/removes players from queue
-- **Elo balancing:** creates balanced teams within Elo threshold
-- **Party support:** keeps party members on same team
-- **Region matching:** matches players in same region
-- **Map preferences:** considers map pool overlap
-- **Edge cases:** handles odd player counts, insufficient players, empty queues
-- **Cooldowns:** respects matchmaking cooldown timers
+#### `src/matchmaking/matchmake.service.spec.ts` — Matchmaking Engine (15 tests)
+Tests the core matchmaking algorithm with Elo-based team balancing and multi-region lobby claiming.
+- **createMatches:** creates 1 match from 15 players, rejects insufficient players, handles exactly 10 players, creates 2 matches for distinct ELO groups, balances teams with variable lobby sizes
+- **claimLobby:** returns false when already claimed by another region, passes all regional queue/rank keys to Lua script, returns false when lobby details not found
+- **Multi-region lobbies:** skips lobbies that fail to claim (already claimed by another region)
+- **Region lock:** returns early when lock cannot be acquired, releases lock and returns when queue is empty
+- **getNumberOfPlayersInQueue:** returns zcard count for the queue key
+- **addLobbyToQueue:** adds lobby to rank and queue sorted sets for each region, does not add when lobby details not found
+- **releaseLobbyAndRequeue:** releases lock and re-adds lobby to all regional queues
 
-#### `src/matchmaking/matchmaking-lobby.service.spec.ts` — Lobby Management (21 tests)
-Tests pre-match lobby lifecycle from creation to launch.
-- **Lobby creation:** creates lobby with correct parameters
-- **Player ready-up:** tracks ready status per player
-- **Timeout handling:** cancels lobby if not all players ready
-- **Map voting:** tallies votes, resolves ties
-- **Server assignment:** requests game server allocation
-- **Lobby dissolution:** cleans up on cancel or timeout
-- **Notifications:** sends correct events to lobby members
+#### `src/matchmaking/matchmaking-lobby.service.spec.ts` — Lobby Verification (15 tests)
+Tests lobby verification logic including captain checks, team size validation, and player eligibility.
+- **Captain check:** throws when user is not the captain, accepts when user is the captain
+- **Competitive team sizes:** accepts 1-5 players, accepts exactly 10 players, rejects 6-9 players
+- **Wingman team sizes:** accepts 1-2 players, accepts exactly 4 players, rejects 3 players
+- **Duel team sizes:** accepts 1 player, accepts exactly 2 players
+- **Player verification:** rejects banned player, rejects player with matchmaking cooldown, rejects player already in another match, rejects player already in a different queue, accepts player in same lobby
 
-#### `src/matches/match-assistant/match-assistant.service.spec.ts` — Match Assistant (14 tests)
-Tests match lifecycle management (scheduling, canceling, server assignment).
-- **Match creation:** validates required fields
-- **Server assignment:** assigns available game servers
-- **Match cancellation:** handles graceful cancel flow
-- **Status transitions:** enforces valid state machine transitions
-- **Lineup management:** adds/removes players from match lineups
-- **Match data retrieval:** returns correct match details
+#### `src/matches/match-assistant/match-assistant.service.spec.ts` — Match Assistant (16 tests)
+Tests match lifecycle management (scheduling, canceling, server assignment, maps).
+- **GetMatchServerJobId:** returns job name prefixed with m-
+- **canSchedule:** returns true/false based on Hasura response, passes user steam_id
+- **canCancel:** returns true/false based on match can_cancel field
+- **canStart:** returns true/false based on match can_start field
+- **isOrganizer:** returns true/false for organizer check, passes user steam_id to Hasura query
+- **updateMatchStatus:** sends mutation with correct status
+- **assignServer:** assigns dedicated server when preferred and available, sets WaitingForServer when none available and on-demand fails
+- **isDedicatedServerAvailable:** throws when match has no server
+- **getAvailableMaps:** filters out banned and picked maps, throws when map pool not found
 
-#### `src/notifications/notifications.service.spec.ts` — Push Notifications (14 tests)
-Tests the notification dispatch system across channels.
-- **Delivery:** sends to correct recipients
-- **Channel routing:** routes to Discord, in-app, or both
-- **Templates:** renders notification templates correctly
-- **Batching:** groups notifications for efficiency
-- **Preferences:** respects user notification preferences
-- **Error handling:** handles delivery failures gracefully
+#### `src/notifications/notifications.service.spec.ts` — Match Status Notifications (8 tests)
+Tests match status notification dispatch with Discord webhook support.
+- **Non-notifiable status:** skips statuses not in NOTIFIABLE_STATUSES
+- **Standalone match:** notifies organizer and players, returns early if match not found
+- **Tournament match:** notifies tournament organizers
+- **Discord webhook cascade:** uses tournament webhook when available, falls back to match webhook, skips invalid webhook URL
+- **Error handling:** logs error and does not throw
 
 #### `src/encryption/encryption.service.spec.ts` — Encryption Service (3 tests)
 Tests the encryption service decrypt functionality.
@@ -140,11 +140,11 @@ Tests the encryption service decrypt functionality.
 - Passes correct openpgp parameters
 - Logs error on decryption failure
 
-#### `src/rcon/rcon.service.spec.ts` — RCON Service (12 tests)
-Tests RCON service parsing and locking.
-- **Cvar parsing:** handles various output formats (headers, empty lines, noisy status)
-- **Disconnect:** cleans up connections
-- **Lock methods:** Redis-based lock acquisition/release for cvars and prefixes
+#### `src/rcon/rcon.service.spec.ts` — RCON Service (13 tests)
+Tests RCON service cvar parsing, connection management, and Redis-based locking.
+- **parseCvarList:** parses standard 4-column output, skips empty/header/footer lines, skips noisy status lines, handles empty description, logs warning for unparseable lines, returns empty array for empty input
+- **Disconnect:** ends connection and cleans up when exists, does nothing when no connection exists
+- **Lock methods:** acquireCvarsLock returns true/false, releaseCvarsLock deletes key, acquirePrefixLock returns true, releasePrefixLock deletes key
 
 #### `src/system/system.service.spec.ts` — System Settings Service (10 tests)
 Tests system settings retrieval and updates.
@@ -164,16 +164,28 @@ Tests match relay/broadcast service.
 
 ### Controllers
 
-#### `src/matches/matches.controller.spec.ts` — Match REST Endpoints (12 tests)
-Tests HTTP request handling for match operations.
-- **Authentication:** rejects unauthenticated requests
-- **Authorization:** enforces role-based access
-- **Validation:** rejects invalid request bodies
-- **CRUD operations:** handles match creation, retrieval, update, cancel
-- **Error responses:** returns correct HTTP status codes
-- **Server lookup:** handles server assignment endpoints
+#### `src/matches/matches.controller.spec.ts` — Match Controller (62 tests)
+Tests match event handling, scheduling, starting, canceling, forfeiting, lineup management, and server availability.
+- **match_events — status notification (2):** sends notification when status changes, does not notify when unchanged
+- **match_events — terminal status (8):** queues ELO calculation on Finished/Canceled/Forfeit/Tie/Surrendered, cancels matchmaking, schedules on-demand server stop for non-dedicated, does not schedule for dedicated, uses 0 delay for Canceled
+- **match_events — DELETE (1):** removes chat lobby on DELETE
+- **match_events — server changes (2):** stops on-demand server when server_id changes, assigns server when transitioning to Live without server
+- **scheduleMatch (5):** throws when cannot schedule, throws when time in past, sets Scheduled with time, sets WaitingForCheckIn without time, throws on wrong status
+- **startMatch (5):** throws when cannot start, sets Live with server_id, returns success on Veto, throws when not Live/Veto, throws when update returns null
+- **cancelMatch (2):** throws when cannot cancel, calls updateMatchStatus with Canceled
+- **forfeitMatch (5):** throws when not organizer, throws when not found, throws when already terminal, sets Forfeit with winning_lineup_id, throws on wrong result
+- **setMatchWinner (2):** throws when not organizer, sets winning_lineup_id via mutation
+- **joinLineup (4):** throws for Private, throws for Invite with wrong code, allows with correct code, allows Open
+- **leaveLineup (2):** returns success, returns false when no player found
+- **switchLineup (4):** throws for Private, throws when not on lineup, throws when target full, switches successfully
+- **deleteMatch (3):** throws when Live, removes demos from S3 and deletes match, handles match_options deletion error gracefully
+- **checkIntoMatch (3):** throws when not WaitingForCheckIn, marks player as checked_in, transitions to Live when both lineups ready
+- **server_availability (5):** returns early when disabled/disconnected/reserved, assigns server to oldest waiting match, does nothing when none waiting
+- **node_server_availability (4):** returns early when disabled/not Online, assigns servers to multiple waiting matches, handles no waiting matches
+- **match_veto_pick (1):** calls updateMatchOverview with matchId
+- **match_lineup_players (3):** sends server match id when Live, does nothing when not Live, does nothing when not found
 
-#### `src/tournaments/tournaments.controller.spec.ts` — Tournament Controller (9 tests)
+#### `src/tournaments/tournaments.controller.spec.ts` — Tournament Controller (7 tests)
 Tests tournament deletion and cleanup operations.
 - Throws when tournament not found
 - Throws when not the organizer
@@ -190,14 +202,14 @@ Tests authentication endpoints and session management.
 - **logout:** destroys session and deletes Redis latency key, handles missing session
 - **createApiKey:** throws BadRequestException when label is empty, returns key
 
-#### `src/system/system.controller.spec.ts` — System Controller (11 tests)
+#### `src/system/system.controller.spec.ts` — System Controller (13 tests)
 Tests system controller endpoints and event handlers.
-- **updateServices:** delegates service updates
-- **restartService:** delegates service restarts
-- **registerName:** handles player name registration
-- **approveNameChange:** approves player name changes
-- **requestNameChange:** validates name change requests
-- **settings event:** handles demo network limiters and chat TTL
+- **updateServices:** delegates to system.updateServices
+- **restartService:** delegates to system.restartService
+- **registerName:** updates player name and sets name_registered
+- **approveNameChange:** updates player name by steam_id
+- **requestNameChange:** throws when pending request exists, throws when player not found, sends notification with approve action
+- **settings event:** updates demo network limiters on change, does not update when unchanged, updates on INSERT, updates chat TTL, defaults chat TTL to 3600 when NaN, always calls updateDefaultOptions
 
 ---
 
@@ -244,12 +256,14 @@ Tests match events gateway authentication and event processing.
 - Inserts round with upsert on_conflict
 - Cleanup deletes soft-deleted records filtering by match_map_id
 
-#### `src/matches/events/MatchMapStatusEvent.spec.ts` — Match Map Status Event (7 tests)
+#### `src/matches/events/MatchMapStatusEvent.spec.ts` — Match Map Status Event (8 tests)
 - Returns early when match has no current_match_map_id
 - Updates match map status
-- Includes/excludes winning_lineup_id based on presence
+- Includes winning_lineup_id when provided
+- Does not include winning_lineup_id when not provided
 - Sends pause notification when status is Paused
 - Calls sendServerMatchId when map finished but more maps remain
+- Does not call sendServerMatchId when no more maps remain
 - Does not send pause notification for non-Paused status
 
 #### `src/matches/events/MatchForfeited.spec.ts` — Match Forfeited Event (1 test)
@@ -266,10 +280,11 @@ Tests match events gateway authentication and event processing.
 - Upserts player with on_conflict update name
 - Joins chat lobby via game
 
-#### `src/matches/events/MatchMapResetRoundEvent.spec.ts` — Match Map Reset Round Event (5 tests)
-- Clears deleted_at on stats tables for rounds > target
-- Sets deleted_at on stats tables for rounds > target
-- Clears/sets deleted_at on match_map_rounds
+#### `src/matches/events/MatchMapResetRoundEvent.spec.ts` — Match Map Reset Round Event (6 tests)
+- First mutation clears deleted_at on stats tables for rounds > target
+- Second mutation sets deleted_at on stats tables for rounds > target
+- Clears deleted_at on match_map_rounds
+- Queries rounds > target and marks them with deleted_at
 - Restores timeout availability from target round
 - Calls matchAssistant.restoreMatchRound
 
