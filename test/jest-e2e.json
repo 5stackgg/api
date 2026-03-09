@@ -10,6 +10,7 @@
   "globalSetup": "./setup.ts",
   "globalTeardown": "./teardown.ts",
   "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/../src/$1"
+    "^src/(.*)$": "<rootDir>/../src/$1",
+    "^@utilities/(.*)$": "<rootDir>/../src/utilities/$1"
   }
 }
