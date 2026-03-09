@@ -8,7 +8,7 @@ export function buildMatch(overrides: Partial<any> = {}) {
     organizer_steam_id: "76561198000000001",
     type: "Competitive",
     region: "eu-west",
-    cancels_at: null,
+    cancels_at: null as string | null,
     ...overrides,
   };
 }
@@ -30,7 +30,7 @@ export function buildLineup(overrides: Partial<any> = {}) {
     match_id: uuid(),
     name: "Team A",
     is_ready: false,
-    lineup_players: [],
+    lineup_players: [] as any[],
     ...overrides,
   };
 }
@@ -64,11 +64,11 @@ export function buildTournamentBracket(overrides: Partial<any> = {}) {
     match_number: 1,
     finished: false,
     bye: false,
-    tournament_team_id_1: null,
-    tournament_team_id_2: null,
-    match_id: null,
-    parent_bracket_id: null,
-    loser_parent_bracket_id: null,
+    tournament_team_id_1: null as string | null,
+    tournament_team_id_2: null as string | null,
+    match_id: null as string | null,
+    parent_bracket_id: null as string | null,
+    loser_parent_bracket_id: null as string | null,
     ...overrides,
   };
 }
