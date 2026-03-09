@@ -493,11 +493,17 @@ export class DedicatedServersService {
     // TODO - fix steam relay for csgo
     const steamRelayeEnabled =
       server.game === "csgo" ? false : server.server_region?.steam_relay;
-    const { steamId, clients_human, map } = await this.getServerStatusInfo(
+    const statusInfo = await this.getServerStatusInfo(
       serverId,
       server.game,
       steamRelayeEnabled,
     );
+
+    if (!statusInfo) {
+      return;
+    }
+
+    const { steamId, clients_human, map } = statusInfo;
 
     await this.redis.hset(
       "dedicated-servers:stats",
