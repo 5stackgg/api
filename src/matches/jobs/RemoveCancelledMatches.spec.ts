@@ -8,7 +8,7 @@ jest.mock("../../utilities/QueueProcessors", () => ({
 
 import { RemoveCancelledMatches } from "./RemoveCancelledMatches";
 
-function createProcessor(matches = []) {
+function createProcessor(matches: any[] = []) {
   const hasura = {
     query: jest.fn().mockResolvedValue({ matches }),
     mutation: jest.fn().mockResolvedValue({}),
@@ -63,7 +63,7 @@ describe("RemoveCancelledMatches", () => {
               { id: "d1", file: "demos/d1.dem" },
               { id: "d2", file: "demos/d2.dem" },
             ],
-            rounds: [],
+            rounds: [] as any[],
           },
         ],
       },
@@ -92,8 +92,8 @@ describe("RemoveCancelledMatches", () => {
 
   it("deletes match records after demo cleanup", async () => {
     const matches = [
-      { id: "m1", server_id: "s1", match_maps: [{ demos: [], rounds: [] }] },
-      { id: "m2", server_id: "s2", match_maps: [{ demos: [], rounds: [] }] },
+      { id: "m1", server_id: "s1", match_maps: [{ demos: [] as any[], rounds: [] as any[] }] },
+      { id: "m2", server_id: "s2", match_maps: [{ demos: [] as any[], rounds: [] as any[] }] },
     ];
     const { processor, hasura } = createProcessor(matches);
 
@@ -117,8 +117,8 @@ describe("RemoveCancelledMatches", () => {
 
   it("logs count when matches removed", async () => {
     const matches = [
-      { id: "m1", server_id: "s1", match_maps: [{ demos: [], rounds: [] }] },
-      { id: "m2", server_id: "s2", match_maps: [{ demos: [], rounds: [] }] },
+      { id: "m1", server_id: "s1", match_maps: [{ demos: [] as any[], rounds: [] as any[] }] },
+      { id: "m2", server_id: "s2", match_maps: [{ demos: [] as any[], rounds: [] as any[] }] },
     ];
     const { processor, logger } = createProcessor(matches);
 

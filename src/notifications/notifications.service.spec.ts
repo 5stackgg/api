@@ -97,8 +97,8 @@ describe("NotificationsService", () => {
         organizer_steam_id: "org-1",
         organizers: [{ steam_id: "org-2" }],
         discord_notifications_enabled: false,
-        discord_webhook: null,
-        discord_role_id: null,
+        discord_webhook: null as string | null,
+        discord_role_id: null as string | null,
         discord_notify_Live: false,
       };
 
@@ -125,10 +125,10 @@ describe("NotificationsService", () => {
         id: "t1",
         name: "Cup",
         organizer_steam_id: "org-1",
-        organizers: [],
+        organizers: [] as any[],
         discord_notifications_enabled: true,
         discord_webhook: "https://discord.com/api/webhooks/123/abc",
-        discord_role_id: null,
+        discord_role_id: null as string | null,
         discord_notify_Live: true,
       };
 
