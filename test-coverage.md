@@ -3,7 +3,7 @@
 ## Overview
 
 - **Framework:** Jest + ts-jest
-- **Coverage threshold:** 40% global minimum (branches, functions, lines, statements)
+- **Coverage threshold:** 10% global minimum (branches, functions, lines, statements)
 - **Test command:** `npx jest --no-cache --coverage`
 - **E2E command:** `npx jest --config test/jest-e2e.json --no-cache`
 
@@ -106,13 +106,22 @@ Tests the core matchmaking algorithm with Elo-based team balancing and multi-reg
 - **addLobbyToQueue:** adds lobby to rank and queue sorted sets for each region, does not add when lobby details not found
 - **releaseLobbyAndRequeue:** releases lock and re-adds lobby to all regional queues
 
-#### `src/matchmaking/matchmaking-lobby.service.spec.ts` — Lobby Verification (15 tests)
-Tests lobby verification logic including captain checks, team size validation, and player eligibility.
+#### `src/matchmaking/matchmaking-lobby.service.spec.ts` — Lobby Management & Verification (36 tests)
+Tests lobby verification, details management, queue operations, and player notifications.
 - **Captain check:** throws when user is not the captain, accepts when user is the captain
 - **Competitive team sizes:** accepts 1-5 players, accepts exactly 10 players, rejects 6-9 players
 - **Wingman team sizes:** accepts 1-2 players, accepts exactly 4 players, rejects 3 players
 - **Duel team sizes:** accepts 1 player, accepts exactly 2 players
 - **Player verification:** rejects banned player, rejects player with matchmaking cooldown, rejects player already in another match, rejects player already in a different queue, accepts player in same lobby
+- **getPlayerLobby:** returns solo player lobby when no lobby exists, returns lobby with multiple players for valid UUID, falls back to solo when lobby query returns null
+- **setLobbyDetails:** stores correct ELO data and avgRank in Redis, defaults ELO to 5000 for missing data, uses match type to look up correct ELO field
+- **removeLobbyDetails:** does nothing when details don't exist, removes details and notifies all players
+- **getLobbyDetails:** returns undefined when no data in Redis, returns parsed details with 1-based region positions
+- **setMatchConformationIdForLobby / removeConfirmationIdFromLobby:** stores and removes confirmation ID in Redis hash
+- **removeLobbyFromQueue:** returns false when lobby not found, removes from queue and rank sorted sets per region
+- **sendQueueDetailsToLobby:** returns early when details don't exist, publishes details without confirmation data
+- **sendQueueDetailsToAllUsers:** queries correct cache key, sends details to all lobbies
+- **sendQueueDetailsToPlayer:** does nothing when no queue details exist
 
 #### `src/matches/match-assistant/match-assistant.service.spec.ts` — Match Assistant (16 tests)
 Tests match lifecycle management (scheduling, canceling, server assignment, maps).
@@ -125,6 +134,29 @@ Tests match lifecycle management (scheduling, canceling, server assignment, maps
 - **assignServer:** assigns dedicated server when preferred and available, sets WaitingForServer when none available and on-demand fails
 - **isDedicatedServerAvailable:** throws when match has no server
 - **getAvailableMaps:** filters out banned and picked maps, throws when map pool not found
+
+#### `src/dedicated-servers/dedicated-servers.service.spec.ts` — Dedicated Server Management (22 tests)
+Tests K8s deployment lifecycle, game server configuration, RCON ping, and Redis stats.
+- **removeDedicatedServer:** deletes K8s deployment, cleans Redis stats, updates Hasura; swallows 404 errors; rethrows non-404 errors
+- **getGameType (private):** returns 0 for Ranked/Casual/Competitive/Wingman, 1 for Deathmatch/ArmsRace, 3 for Retake/Custom
+- **getGameMode (private):** returns 1 for Ranked/Competitive, 0 for ArmsRace/Casual/Retake/Custom, 2 for Wingman/Deathmatch
+- **getWarGameType (private):** returns 12 for Retake, 0 for all others
+- **getDedicatedServerDeploymentName (private):** returns `dedicated-server-{serverId}` format
+- **getAllDedicatedServerStats:** returns empty array for no data/null, parses valid server data, filters malformed JSON, returns empty on Redis error
+- **restartDedicatedServer:** delegates to systemService.restartDeployment with correct namespace
+- **pingDedicatedServer:** marks server connected when not already, stores stats in Redis with TTL, handles csgo text-based status parsing, disconnects RCON after ping
+
+#### `src/hasura/hasura.service.spec.ts` — Hasura GraphQL & Migration Service (30 tests)
+Tests GraphQL client wrapper, secret validation, cache key helpers, SQL digest, migrations, and settings.
+- **PLAYER_NAME_CACHE_KEY / PLAYER_ROLE_CACHE_KEY:** correct format for string and bigint inputs
+- **checkSecret:** matches configured secret, rejects mismatches, handles empty strings
+- **calcSqlDigest:** SHA-256 for string and array inputs, consistent hashing, different inputs produce different digests
+- **getHasuraHeaders:** returns role/id headers, uses correct cache key with TTL
+- **query:** delegates to GraphQL client, extracts first error message from response errors, rethrows non-response errors
+- **mutation:** delegates to GraphQL client, extracts first error message, rethrows non-response errors
+- **getSetting:** returns hash from postgres, returns undefined when no row, wraps errors with context
+- **setSetting:** upserts hash via postgres, wraps errors with context
+- **apply:** recurses directories, skips when digest matches, applies when digest differs, applies when no prior setting exists, throws with file context on failure
 
 #### `src/notifications/notifications.service.spec.ts` — Match Status Notifications (8 tests)
 Tests match status notification dispatch with Discord webhook support.
@@ -152,13 +184,19 @@ Tests system settings retrieval and updates.
 - **Defaults:** applies default values when missing/null
 - **updateDefaultOptions:** handles default_models setting changes
 
-#### `src/matches/match-relay/match-relay.service.spec.ts` — Match Relay Service (8 tests)
-Tests match relay/broadcast service.
+#### `src/matches/match-relay/match-relay.service.spec.ts` — Match Relay / GOTV Broadcast Service (52 tests)
+Tests GOTV relay broadcast management including fragment storage, sync info, and data streaming.
 - **removeBroadcast:** removes broadcast data
-- **getStart:** serves start fragment with 404 handling
-- **getFragment:** retrieves broadcast fragments
-- **isSyncReady:** validates sync readiness (requires full/delta data with ticks/timestamps)
-- **cleanupOldFragments:** cleans old fragments while preserving index 0
+- **getStart:** signup_fragment mismatch returns 404, gzipped start blob served with Content-Encoding header
+- **getFragment:** broadcast not found returns 404, fragment not found returns 404, delta field served with gzip encoding
+- **getSyncInfo:** broadcast not found, start with no data, start missing entirely, no sync-ready fragment returns 405, valid sync JSON without/with fragment param, clamping to signup_fragment, skipping non-sync-ready fragments, Expires header
+- **postField:** new broadcast creation, fragment clearing on steamId/masterCookie mismatch, start field forces fragmentIndex=0, 205 for full/delta without start, gzip success/failure paths, signup_fragment initialization, query param copying, cleanupOldFragments called after store
+- **isSyncReady:** validates sync readiness (requires full/delta data with ticks/timestamps), delta.tick as alternative, false for empty objects
+- **cleanupOldFragments:** no-op when broadcast missing, preserves fragments without timestamp, keeps recent fragments
+- **getMatchBroadcastEndTick:** empty map, highest endtick by descending key, skips fragments without endtick
+- **getLastFragment:** empty map, highest key selection, single element
+- **serveBlob:** undefined fragment, missing field, non-gzipped blob, gzipped blob with encoding, gipped=false omits encoding
+- **relayError:** X-Reason header and response end
 
 ---
 
@@ -201,6 +239,13 @@ Tests authentication endpoints and session management.
 - **unlinkDiscord:** removes discord_id via Hasura mutation, clears from session
 - **logout:** destroys session and deletes Redis latency key, handles missing session
 - **createApiKey:** throws BadRequestException when label is empty, returns key
+
+#### `src/hasura/hasura.controller.spec.ts` — Hasura Webhook Controller (12 tests)
+Tests Hasura auth webhook, action dispatch, and event handling.
+- **hasura() GET:** returns guest headers when no user, returns user headers for authenticated user via hasuraService
+- **actions() POST:** successful action resolution and response, 401 for unauthorized "me" action without user, 400 on handler throw with error message, 400 with string fallback error, injects user and session into input
+- **events() POST:** successful event resolution, null old/new data coerced to empty objects, error logging without rethrowing
+- **getResolver (private):** throws on unregistered action, caches resolved handler on repeat calls
 
 #### `src/system/system.controller.spec.ts` — System Controller (13 tests)
 Tests system controller endpoints and event handlers.
