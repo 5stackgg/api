@@ -169,4 +169,123 @@ describe("MatchAssistantService", () => {
       );
     });
   });
+
+  describe("assignServer", () => {
+    it("assigns dedicated server when prefer_dedicated_server and available", async () => {
+      const { service, hasura } = createService();
+
+      // First call: get match options
+      hasura.query.mockResolvedValueOnce({
+        matches_by_pk: {
+          id: "m1",
+          region: "eu-west",
+          options: { prefer_dedicated_server: true },
+        },
+      });
+      // Second call: find available dedicated server
+      hasura.query.mockResolvedValueOnce({
+        servers: [{ id: "server-1" }],
+      });
+
+      await service.assignServer("m1");
+
+      // Should assign server and set match to Live
+      expect(hasura.mutation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update_matches_by_pk: expect.objectContaining({
+            __args: expect.objectContaining({
+              _set: expect.objectContaining({ server_id: "server-1" }),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it("sets WaitingForServer when prefer_dedicated but none available and on-demand fails", async () => {
+      const { service, hasura } = createService();
+
+      // Match with prefer_dedicated_server
+      hasura.query.mockResolvedValueOnce({
+        matches_by_pk: {
+          id: "m1",
+          region: "eu-west",
+          options: { prefer_dedicated_server: true },
+        },
+      });
+      // No dedicated servers available
+      hasura.query.mockResolvedValueOnce({ servers: [] });
+      // On-demand: match query
+      hasura.query.mockResolvedValueOnce({
+        matches_by_pk: {
+          region: "eu-west",
+          password: "pw",
+          server_id: null,
+          max_players_per_lineup: 5,
+          match_maps: [{ map: { name: "de_dust2", workshop_map_id: null }, order: 1 }],
+        },
+      });
+      // No game server nodes available
+      hasura.query.mockResolvedValueOnce({ game_server_nodes: [] });
+
+      await service.assignServer("m1");
+
+      expect(hasura.mutation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update_matches_by_pk: expect.objectContaining({
+            __args: expect.objectContaining({
+              _set: { status: "WaitingForServer" },
+            }),
+          }),
+        }),
+      );
+    });
+  });
+
+  describe("isDedicatedServerAvailable", () => {
+    it("throws when match has no server", async () => {
+      const { service, hasura } = createService();
+      hasura.query.mockResolvedValueOnce({
+        matches_by_pk: { server: null },
+      });
+
+      await expect(service.isDedicatedServerAvailable("m1")).rejects.toThrow(
+        "match has no server assigned",
+      );
+    });
+  });
+
+  describe("getAvailableMaps", () => {
+    it("filters out banned and picked maps", async () => {
+      const { service, hasura } = createService();
+      hasura.query.mockResolvedValueOnce({
+        matches_by_pk: {
+          options: {
+            map_pool: {
+              maps: [
+                { id: "map1", name: "de_dust2" },
+                { id: "map2", name: "de_mirage" },
+                { id: "map3", name: "de_inferno" },
+              ],
+            },
+          },
+          map_veto_picks: [{ map_id: "map1" }],
+        },
+      });
+
+      const available = await service.getAvailableMaps("m1");
+      expect(available).toHaveLength(2);
+      expect(available.map((m) => m.id)).toEqual(["map2", "map3"]);
+    });
+
+    it("throws when map pool not found", async () => {
+      const { service, hasura } = createService();
+      hasura.query.mockResolvedValueOnce({
+        matches_by_pk: { options: { map_pool: null }, map_veto_picks: [] },
+      });
+
+      await expect(service.getAvailableMaps("m1")).rejects.toThrow(
+        "unable to find match maps",
+      );
+    });
+  });
 });
