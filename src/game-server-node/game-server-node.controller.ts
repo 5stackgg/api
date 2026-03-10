@@ -199,18 +199,41 @@ export class GameServerNodeController {
   public async script(@Req() request: Request, @Res() response: Response) {
     const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");
 
-    const { game_server_nodes_by_pk } = await this.hasura.query({
+    const { game_server_nodes_by_pk, settings } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: {
           id: gameServerNodeId,
         },
         token: true,
       },
+      settings: {
+        __args: {
+          where: {
+            _or: [
+              { name: { _eq: "reserved_disk_space_fresh_gb" } },
+              { name: { _eq: "reserved_disk_space_existing_gb" } },
+            ],
+          },
+        },
+        name: true,
+        value: true,
+      },
     });
 
     if (!game_server_nodes_by_pk || game_server_nodes_by_pk.token === null) {
       throw new Error("Game server not found");
     }
+
+    const freshDiskGb =
+      parseInt(
+        settings.find((s) => s.name === "reserved_disk_space_fresh_gb")
+          ?.value,
+      ) || 120;
+    const existingDiskGb =
+      parseInt(
+        settings.find((s) => s.name === "reserved_disk_space_existing_gb")
+          ?.value,
+      ) || 60;
 
     response.setHeader("Content-Type", "text/plain");
     response.setHeader(
@@ -222,16 +245,18 @@ export class GameServerNodeController {
         sudo -i
 
         if [ -d "/opt/5stack/serverfiles/game/csgo" ]; then
-            REQUIRED_GB=60
+            REQUIRED_GB=${existingDiskGb}
         else
-            REQUIRED_GB=120
+            REQUIRED_GB=${freshDiskGb}
         fi
-        AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
-        if [ "$AVAILABLE_GB" -lt "$REQUIRED_GB" ]; then
-            echo "Error: Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
-            exit 1
+        if [ "$REQUIRED_GB" -gt 0 ]; then
+            AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
+            if [ "$AVAILABLE_GB" -lt "$REQUIRED_GB" ]; then
+                echo "Error: Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
+                exit 1
+            fi
+            echo "Disk space check passed: \${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
         fi
-        echo "Disk space check passed: \${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
 
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
