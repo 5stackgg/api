@@ -25,6 +25,8 @@ import { DISCORD_COLORS } from "../notifications/utilities/constants";
 @Controller("game-server-node")
 export class GameServerNodeController {
   private appConfig: AppConfig;
+  private diskWarningCooldowns = new Map<string, number>();
+  private static DISK_WARNING_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
   constructor(
     protected readonly logger: Logger,
@@ -113,6 +115,95 @@ export class GameServerNodeController {
           removeOnComplete: true,
         },
       );
+    }
+
+    if (rootDisk) {
+      const diskUsedPercent = parseInt(rootDisk.usedPercent);
+      const now = Date.now();
+      const cooldownKey = (level: string) => `${payload.node}:${level}`;
+
+      const shouldNotify = (level: string) => {
+        const last = this.diskWarningCooldowns.get(cooldownKey(level));
+        return !last || now - last > GameServerNodeController.DISK_WARNING_COOLDOWN_MS;
+      };
+
+      const { settings } = await this.hasura.query({
+        settings: {
+          __args: {
+            where: {
+              _or: [
+                { name: { _eq: "disk_warning_percent" } },
+                { name: { _eq: "disk_critical_percent" } },
+              ],
+            },
+          },
+          name: true,
+          value: true,
+        },
+      });
+
+      const warningThreshold =
+        parseInt(
+          settings.find((s) => s.name === "disk_warning_percent")?.value,
+        ) || 75;
+      const criticalThreshold =
+        parseInt(
+          settings.find((s) => s.name === "disk_critical_percent")?.value,
+        ) || 90;
+
+      if (
+        criticalThreshold > 0 &&
+        diskUsedPercent >= criticalThreshold &&
+        shouldNotify("critical")
+      ) {
+        this.diskWarningCooldowns.set(cooldownKey("critical"), now);
+        await this.notifications.send(
+          "GameNodeStatus",
+          {
+            message: `Game Server Node (${result?.label || payload.node}) disk usage critical: ${diskUsedPercent}% used.`,
+            title: "Game Server Node Disk Space Critical",
+            role: "administrator",
+            entity_id: payload.node,
+          },
+          undefined,
+          DISCORD_COLORS.RED,
+          false,
+        );
+      } else if (
+        warningThreshold > 0 &&
+        diskUsedPercent >= warningThreshold &&
+        shouldNotify("warning")
+      ) {
+        this.diskWarningCooldowns.set(cooldownKey("warning"), now);
+        await this.notifications.send(
+          "GameNodeStatus",
+          {
+            message: `Game Server Node (${result?.label || payload.node}) disk usage warning: ${diskUsedPercent}% used.`,
+            title: "Game Server Node Low Disk Space",
+            role: "administrator",
+            entity_id: payload.node,
+          },
+          undefined,
+          DISCORD_COLORS.RED,
+        );
+      }
+
+      if (diskUsedPercent < criticalThreshold) {
+        await this.hasura.mutation({
+          update_notifications: {
+            __args: {
+              where: {
+                type: { _eq: "GameNodeStatus" },
+                entity_id: { _eq: payload.node },
+                deletable: { _eq: false },
+                deleted_at: { _is_null: true },
+              },
+              _set: { deletable: true },
+            },
+            __typename: true,
+          },
+        });
+      }
     }
 
     if (payload.nodeStats && payload.podStats) {
