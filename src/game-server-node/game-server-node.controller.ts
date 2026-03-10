@@ -252,15 +252,6 @@ export class GameServerNodeController {
         rm -f /etc/rancher/k3s/config.yaml
         rm -f /var/lib/kubelet/cpu_manager_state
 
-        mkdir -p /etc/systemd/system/k3s-agent.service.d
-
-cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
-	[Service]
-	ExecStartPre=/bin/bash -c 'STATE=/var/lib/kubelet/cpu_manager_state; [ ! -f "$STATE" ] && exit 0; CACHE="$(dirname "$STATE")/cpu_count"; CURRENT=$(nproc); PREVIOUS=$(cat "$CACHE" 2>/dev/null || echo "$CURRENT"); if [ "$CURRENT" != "$PREVIOUS" ]; then echo "CPU count changed from $PREVIOUS to $CURRENT, removing $STATE"; rm -f "$STATE"; fi; echo "$CURRENT" > "$CACHE"'
-DROPIN
-
-        systemctl daemon-reload
-
         echo "Installing k3s";
         curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerNodeId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}"
 
@@ -301,6 +292,30 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "system-reserved=cpu=1"
 	  - "kube-reserved=cpu=1"
 EOF
+
+cat <<-'SCRIPT' >/usr/local/bin/5stack-cpu-state-check.sh
+	#!/bin/bash
+	STATE=/var/lib/kubelet/cpu_manager_state
+	[ ! -f "$STATE" ] && exit 0
+	CACHE="$(dirname "$STATE")/cpu_count"
+	CURRENT=$(nproc)
+	PREVIOUS=$(cat "$CACHE" 2>/dev/null || echo "$CURRENT")
+	if [ "$CURRENT" != "$PREVIOUS" ]; then
+	  echo "CPU count changed from $PREVIOUS to $CURRENT, removing $STATE"
+	  rm -f "$STATE"
+	fi
+	echo "$CURRENT" > "$CACHE"
+SCRIPT
+        chmod +x /usr/local/bin/5stack-cpu-state-check.sh
+
+        mkdir -p /etc/systemd/system/k3s-agent.service.d
+
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
+	[Service]
+	ExecStartPre=/usr/local/bin/5stack-cpu-state-check.sh
+DROPIN
+
+        systemctl daemon-reload
 
         rm -f /var/lib/kubelet/cpu_manager_state
 
