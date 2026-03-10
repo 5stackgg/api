@@ -250,7 +250,16 @@ export class GameServerNodeController {
         fi
 
         rm -f /etc/rancher/k3s/config.yaml
-        rm -f /var/lib/kubelet/cpu_manager_state
+        find /var/lib -name "cpu_manager_state" -delete 2>/dev/null
+
+        mkdir -p /etc/systemd/system/k3s-agent.service.d
+
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
+	[Service]
+	ExecStartPre=/bin/bash -c 'STATE=$(find /var/lib -name "cpu_manager_state" 2>/dev/null | head -n 1); [ -z "$STATE" ] && exit 0; CACHE="$(dirname "$STATE")/cpu_count"; CURRENT=$(nproc); PREVIOUS=$(cat "$CACHE" 2>/dev/null || echo "$CURRENT"); if [ "$CURRENT" != "$PREVIOUS" ]; then echo "CPU count changed from $PREVIOUS to $CURRENT, removing $STATE"; rm -f "$STATE"; fi; echo "$CURRENT" > "$CACHE"'
+DROPIN
+
+        systemctl daemon-reload
 
         echo "Installing k3s";
         curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerNodeId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}"
@@ -293,7 +302,7 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "kube-reserved=cpu=1"
 EOF
 
-        rm -f /var/lib/kubelet/cpu_manager_state
+        find /var/lib -name "cpu_manager_state" -delete 2>/dev/null
 
         systemctl restart k3s-agent
     `;
