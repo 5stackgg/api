@@ -12,6 +12,7 @@ import { LoggingService } from "src/k8s/logging/logging.service";
 import { PassThrough } from "stream";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { isJsonEqual } from "@utilities/isJsonEqual";
+import { NodeDisk } from "./interfaces/NodeDisk";
 
 @Injectable()
 export class GameServerNodeService {
@@ -146,6 +147,7 @@ export class GameServerNodeService {
     },
     nvidiaGPU: boolean,
     status: e_game_server_node_statuses_enum,
+    rootDisk?: NodeDisk,
   ) {
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
@@ -237,6 +239,12 @@ export class GameServerNodeService {
               cpu_threads_per_core: cpuInfo.threadsPerCore,
               cpu_governor_info: cpuGovernorInfo,
               cpu_frequency_info: cpuFrequencyInfo,
+              disk_available_gb: rootDisk
+                ? Math.round(parseInt(rootDisk.available) / (1024 * 1024))
+                : null,
+              disk_used_percent: rootDisk
+                ? parseInt(rootDisk.usedPercent)
+                : null,
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
           },
