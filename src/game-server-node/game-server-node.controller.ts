@@ -250,13 +250,13 @@ export class GameServerNodeController {
         fi
 
         rm -f /etc/rancher/k3s/config.yaml
-        find /var/lib -name "cpu_manager_state" -delete 2>/dev/null
+        rm -f /var/lib/kubelet/cpu_manager_state
 
         mkdir -p /etc/systemd/system/k3s-agent.service.d
 
 cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
 	[Service]
-	ExecStartPre=/bin/bash -c 'STATE=$(find /var/lib -name "cpu_manager_state" 2>/dev/null | head -n 1); [ -z "$STATE" ] && exit 0; CACHE="$(dirname "$STATE")/cpu_count"; CURRENT=$(nproc); PREVIOUS=$(cat "$CACHE" 2>/dev/null || echo "$CURRENT"); if [ "$CURRENT" != "$PREVIOUS" ]; then echo "CPU count changed from $PREVIOUS to $CURRENT, removing $STATE"; rm -f "$STATE"; fi; echo "$CURRENT" > "$CACHE"'
+	ExecStartPre=/bin/bash -c 'STATE=/var/lib/kubelet/cpu_manager_state; [ ! -f "$STATE" ] && exit 0; CACHE="$(dirname "$STATE")/cpu_count"; CURRENT=$(nproc); PREVIOUS=$(cat "$CACHE" 2>/dev/null || echo "$CURRENT"); if [ "$CURRENT" != "$PREVIOUS" ]; then echo "CPU count changed from $PREVIOUS to $CURRENT, removing $STATE"; rm -f "$STATE"; fi; echo "$CURRENT" > "$CACHE"'
 DROPIN
 
         systemctl daemon-reload
@@ -302,7 +302,7 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "kube-reserved=cpu=1"
 EOF
 
-        find /var/lib -name "cpu_manager_state" -delete 2>/dev/null
+        rm -f /var/lib/kubelet/cpu_manager_state
 
         systemctl restart k3s-agent
     `;
