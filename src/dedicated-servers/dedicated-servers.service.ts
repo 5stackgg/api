@@ -461,7 +461,7 @@ export class DedicatedServersService {
     } else {
       const status = JSON.parse(await rcon.send("status_json"));
       return {
-        steamId: steamRelayEnabled ? status.server.steamid : null,
+        steamId: steamRelayEnabled ? status?.server?.steamid : null,
         clients_human: status.server.clients_human,
         map: status.server.map || "unknown",
       };
