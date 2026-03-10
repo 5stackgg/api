@@ -12,6 +12,7 @@ import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import { RconService } from "src/rcon/rcon.service";
+import { CacheService } from "src/cache/cache.service";
 import { EventPattern } from "@nestjs/microservices";
 import { NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
@@ -33,6 +34,7 @@ export class GameServerNodeController {
     protected readonly rcon: RconService,
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
+    protected readonly cache: CacheService,
     protected readonly tailscale: TailscaleService,
     protected readonly loggingService: LoggingService,
     protected readonly gameServerNodeService: GameServerNodeService,
@@ -119,6 +121,10 @@ export class GameServerNodeController {
 
     if (rootDisk) {
       const diskUsedPercent = parseInt(rootDisk.usedPercent);
+      if (Number.isNaN(diskUsedPercent)) {
+        this.logger.warn(`Invalid disk usedPercent from node ${payload.node}: "${rootDisk.usedPercent}"`);
+        return;
+      }
       const now = Date.now();
       const cooldownKey = (level: string) => `${payload.node}:${level}`;
 
@@ -127,20 +133,29 @@ export class GameServerNodeController {
         return !last || now - last > GameServerNodeController.DISK_WARNING_COOLDOWN_MS;
       };
 
-      const { settings } = await this.hasura.query({
-        settings: {
-          __args: {
-            where: {
-              _or: [
-                { name: { _eq: "disk_warning_percent" } },
-                { name: { _eq: "disk_critical_percent" } },
-              ],
+      const settings = await this.cache.remember<
+        Array<{ name: string; value: string }>
+      >(
+        "disk_threshold_settings",
+        async () => {
+          const { settings } = await this.hasura.query({
+            settings: {
+              __args: {
+                where: {
+                  _or: [
+                    { name: { _eq: "disk_warning_percent" } },
+                    { name: { _eq: "disk_critical_percent" } },
+                  ],
+                },
+              },
+              name: true,
+              value: true,
             },
-          },
-          name: true,
-          value: true,
+          });
+          return settings;
         },
-      });
+        60,
+      );
 
       const warningThreshold =
         parseInt(
