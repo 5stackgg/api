@@ -184,7 +184,24 @@ export class GameServerNodeController {
             entity_id: payload.node,
           },
           undefined,
-          DISCORD_COLORS.RED,
+          DISCORD_COLORS.ORANGE,
+        );
+      } else if (
+        diskUsedPercent < warningThreshold &&
+        this.diskWarningCooldowns.has(cooldownKey("warning"))
+      ) {
+        this.diskWarningCooldowns.delete(cooldownKey("warning"));
+        this.diskWarningCooldowns.delete(cooldownKey("critical"));
+        await this.notifications.send(
+          "GameNodeStatus",
+          {
+            message: `Game Server Node (${result?.label || payload.node}) disk usage back to normal: ${diskUsedPercent}% used.`,
+            title: "Game Server Node Disk Space OK",
+            role: "administrator",
+            entity_id: payload.node,
+          },
+          undefined,
+          DISCORD_COLORS.GREEN,
         );
       }
 
