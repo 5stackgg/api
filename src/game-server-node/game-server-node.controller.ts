@@ -220,7 +220,19 @@ export class GameServerNodeController {
     // Set the content length to avoid download issues
     const scriptContent = `
         sudo -i
-        
+
+        if [ -d "/opt/5stack/serverfiles/game/csgo" ]; then
+            REQUIRED_GB=60
+        else
+            REQUIRED_GB=120
+        fi
+        AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
+        if [ "$AVAILABLE_GB" -lt "$REQUIRED_GB" ]; then
+            echo "Error: Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
+            exit 1
+        fi
+        echo "Disk space check passed: \${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
+
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
         mkdir -p /opt/5stack/serverfiles
@@ -292,6 +304,18 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "system-reserved=cpu=1"
 	  - "kube-reserved=cpu=1"
 EOF
+
+        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
+        mkdir -p /etc/systemd/system/k3s-agent.service.d
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
+	[Service]
+	ExecStartPre=/bin/bash -c 'TSIP=$(tailscale ip -4 2>/dev/null | head -n 1); if [ -n "$TSIP" ] && [ -f /etc/rancher/k3s/config.yaml ]; then sed -i "s/^node-ip:.*/node-ip: $TSIP/" /etc/rancher/k3s/config.yaml; echo "[5stack] Updated k3s node-ip to $TSIP"; fi'
+DROPIN
+
+        # Remove one-time auth key from k3s-agent service to prevent
+        # re-auth failures with expired key on future reboots
+        sed -i '/--vpn-auth/d' /etc/systemd/system/k3s-agent.service
+        systemctl daemon-reload
 
         rm -f /var/lib/kubelet/cpu_manager_state
 
