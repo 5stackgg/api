@@ -1,28 +1,37 @@
 CREATE OR REPLACE FUNCTION public.assign_seeds_to_teams(tournament tournaments) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
-DECLARE
-    stage record;
-    max_existing_seed int;
 BEGIN
-    WITH max_existing_seed AS (
-        SELECT COALESCE(MAX(seed), 0) as max_seed
+    WITH eligible_count AS (
+        SELECT COUNT(*) as total
         FROM tournament_teams
-        WHERE tournament_id = tournament.id 
+        WHERE tournament_id = tournament.id
           AND eligible_at IS NOT NULL
     ),
-    teams_to_seed AS (
-        SELECT id,
-               mes.max_seed + ROW_NUMBER() OVER (ORDER BY RANDOM()) as assigned_seed
+    taken_seeds AS (
+        SELECT seed
         FROM tournament_teams
-        CROSS JOIN max_existing_seed mes
-        WHERE tournament_id = tournament.id 
+        WHERE tournament_id = tournament.id
+          AND eligible_at IS NOT NULL
+          AND seed IS NOT NULL
+    ),
+    available_seeds AS (
+        SELECT s AS seed_number, ROW_NUMBER() OVER (ORDER BY RANDOM()) as rn
+        FROM eligible_count ec
+        CROSS JOIN LATERAL generate_series(1, ec.total::int) s
+        WHERE s NOT IN (SELECT seed FROM taken_seeds)
+    ),
+    teams_to_seed AS (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY RANDOM()) as rn
+        FROM tournament_teams
+        WHERE tournament_id = tournament.id
           AND eligible_at IS NOT NULL
           AND seed IS NULL
     )
     UPDATE tournament_teams tt
-    SET seed = tts.assigned_seed
+    SET seed = avs.seed_number
     FROM teams_to_seed tts
+    JOIN available_seeds avs ON avs.rn = tts.rn
     WHERE tt.id = tts.id;
 END;
 $$;
