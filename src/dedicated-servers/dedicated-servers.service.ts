@@ -458,14 +458,14 @@ export class DedicatedServersService {
         clients_human: playersMatch ? parseInt(playersMatch[1]) : 0,
         map: mapMatch ? mapMatch[1] : "unknown",
       };
-    } else {
-      const status = JSON.parse(await rcon.send("status_json"));
-      return {
-        steamId: steamRelayEnabled ? status?.server?.steamid : null,
-        clients_human: status.server.clients_human,
-        map: status.server.map || "unknown",
-      };
-    }
+    } 
+    
+    const status = JSON.parse(await rcon.send("status_json"));
+    return {
+      steamId: steamRelayEnabled ? status?.server?.steamid : null,
+      clients_human: status.server.clients_human,
+      map: status.server.map || "unknown",
+    };
   }
 
   public async pingDedicatedServer(serverId: string): Promise<void> {
