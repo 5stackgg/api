@@ -25774,6 +25774,9 @@ export default {
             "created_at": [
                 2209
             ],
+            "deletable": [
+                4
+            ],
             "deleted_at": [
                 2209
             ],
@@ -25847,6 +25850,9 @@ export default {
             ],
             "created_at": [
                 2208
+            ],
+            "deletable": [
+                3
             ],
             "deleted_at": [
                 2208
@@ -26077,6 +26083,9 @@ export default {
             ],
             "created_at": [
                 2208
+            ],
+            "deletable": [
+                3
             ],
             "deleted_at": [
                 2208

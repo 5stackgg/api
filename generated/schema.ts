@@ -28259,7 +28259,7 @@ export interface notifications_avg_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "notifications". All fields are combined with a logical 'AND'. */
-export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),actions?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
+export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),actions?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deletable?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -28279,7 +28279,7 @@ export interface notifications_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "notifications" */
-export interface notifications_insert_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_insert_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -28346,7 +28346,7 @@ export interface notifications_prepend_input {actions?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "notifications" */
-export interface notifications_set_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_set_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate stddev on columns */

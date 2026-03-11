@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
+import { Controller, Get, Post, Logger, Req, Res } from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
 import { TailscaleService } from "../tailscale/tailscale.service";
@@ -12,6 +12,7 @@ import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import { RconService } from "src/rcon/rcon.service";
+import { CacheService } from "src/cache/cache.service";
 import { EventPattern } from "@nestjs/microservices";
 import { NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
@@ -19,19 +20,25 @@ import { MarkGameServerNodeOffline } from "./jobs/MarkGameServerNodeOffline";
 import { MarkGameServerNodeOnline } from "./jobs/MarkGameServerNodeOnline";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { game_server_nodes_set_input } from "generated/schema";
+import { NotificationsService } from "../notifications/notifications.service";
+import { DISCORD_COLORS } from "../notifications/utilities/constants";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
   private appConfig: AppConfig;
+  private diskWarningCooldowns = new Map<string, number>();
+  private static DISK_WARNING_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
   constructor(
     protected readonly logger: Logger,
     protected readonly rcon: RconService,
     protected readonly config: ConfigService,
     protected readonly hasura: HasuraService,
+    protected readonly cache: CacheService,
     protected readonly tailscale: TailscaleService,
     protected readonly loggingService: LoggingService,
     protected readonly gameServerNodeService: GameServerNodeService,
+    protected readonly notifications: NotificationsService,
     @InjectQueue(GameServerQueues.GameUpdate) private gameUpdateQueue: Queue,
     @InjectQueue(GameServerQueues.NodeOffline)
     private readonly nodeOfflineQueue: Queue,
@@ -75,6 +82,10 @@ export class GameServerNodeController {
       );
     }
 
+    const rootDisk = payload.nodeStats?.disks?.find(
+      (d) => d.mountpoint === "/",
+    );
+
     const result = await this.gameServerNodeService.updateStatus(
       payload.node,
       payload.nodeIP,
@@ -89,6 +100,7 @@ export class GameServerNodeController {
       payload.cpuFrequencyInfo,
       payload.nodeStats.nvidiaGPU,
       "Online",
+      rootDisk,
     );
 
     if (result?.previousStatus === "Offline") {
@@ -105,6 +117,125 @@ export class GameServerNodeController {
           removeOnComplete: true,
         },
       );
+    }
+
+    if (rootDisk) {
+      const diskUsedPercent = parseInt(rootDisk.usedPercent);
+      if (Number.isNaN(diskUsedPercent)) {
+        this.logger.warn(`Invalid disk usedPercent from node ${payload.node}: "${rootDisk.usedPercent}"`);
+        return;
+      }
+      const now = Date.now();
+      const cooldownKey = (level: string) => `${payload.node}:${level}`;
+
+      const shouldNotify = (level: string) => {
+        const last = this.diskWarningCooldowns.get(cooldownKey(level));
+        return !last || now - last > GameServerNodeController.DISK_WARNING_COOLDOWN_MS;
+      };
+
+      const settings = await this.cache.remember<
+        Array<{ name: string; value: string }>
+      >(
+        "disk_threshold_settings",
+        async () => {
+          const { settings } = await this.hasura.query({
+            settings: {
+              __args: {
+                where: {
+                  _or: [
+                    { name: { _eq: "disk_warning_percent" } },
+                    { name: { _eq: "disk_critical_percent" } },
+                  ],
+                },
+              },
+              name: true,
+              value: true,
+            },
+          });
+          return settings;
+        },
+        60,
+      );
+
+      const warningThreshold =
+        parseInt(
+          settings.find((s) => s.name === "disk_warning_percent")?.value,
+        ) || 75;
+      const criticalThreshold =
+        parseInt(
+          settings.find((s) => s.name === "disk_critical_percent")?.value,
+        ) || 90;
+
+      if (
+        criticalThreshold > 0 &&
+        diskUsedPercent >= criticalThreshold &&
+        shouldNotify("critical")
+      ) {
+        this.diskWarningCooldowns.set(cooldownKey("critical"), now);
+        await this.notifications.send(
+          "GameNodeStatus",
+          {
+            message: `Game Server Node (${result?.label || payload.node}) disk usage critical: ${diskUsedPercent}% used.`,
+            title: "Game Server Node Disk Space Critical",
+            role: "administrator",
+            entity_id: payload.node,
+          },
+          undefined,
+          DISCORD_COLORS.RED,
+          false,
+        );
+      } else if (
+        warningThreshold > 0 &&
+        diskUsedPercent >= warningThreshold &&
+        shouldNotify("warning")
+      ) {
+        this.diskWarningCooldowns.set(cooldownKey("warning"), now);
+        await this.notifications.send(
+          "GameNodeStatus",
+          {
+            message: `Game Server Node (${result?.label || payload.node}) disk usage warning: ${diskUsedPercent}% used.`,
+            title: "Game Server Node Low Disk Space",
+            role: "administrator",
+            entity_id: payload.node,
+          },
+          undefined,
+          DISCORD_COLORS.ORANGE,
+        );
+      } else if (
+        diskUsedPercent < warningThreshold &&
+        this.diskWarningCooldowns.has(cooldownKey("warning"))
+      ) {
+        this.diskWarningCooldowns.delete(cooldownKey("warning"));
+        this.diskWarningCooldowns.delete(cooldownKey("critical"));
+        await this.notifications.send(
+          "GameNodeStatus",
+          {
+            message: `Game Server Node (${result?.label || payload.node}) disk usage back to normal: ${diskUsedPercent}% used.`,
+            title: "Game Server Node Disk Space OK",
+            role: "administrator",
+            entity_id: payload.node,
+          },
+          undefined,
+          DISCORD_COLORS.GREEN,
+        );
+      }
+
+      if (diskUsedPercent < criticalThreshold) {
+        await this.hasura.mutation({
+          update_notifications: {
+            __args: {
+              where: {
+                type: { _eq: "GameNodeStatus" },
+                entity_id: { _eq: payload.node },
+                deletable: { _eq: false },
+                deleted_at: { _is_null: true },
+              },
+              _set: { deletable: true },
+            },
+            __typename: true,
+          },
+        });
+      }
     }
 
     if (payload.nodeStats && payload.podStats) {
@@ -195,22 +326,81 @@ export class GameServerNodeController {
     };
   }
 
-  @Get("/script/:gameServerNodeId")
-  public async script(@Req() request: Request, @Res() response: Response) {
-    const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");
+  @Post("/script/:gameServerNodeId/error")
+  public async scriptError(@Req() request: Request, @Res() response: Response) {
+    const gameServerNodeId = request.params.gameServerNodeId;
 
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: {
           id: gameServerNodeId,
         },
+        label: true,
+      },
+    });
+
+    if (!game_server_nodes_by_pk) {
+      response.status(404).json({ error: "Node not found" });
+      return;
+    }
+
+    const errorMessage =
+      request.body?.error || "Unknown provisioning error";
+
+    await this.notifications.send(
+      "GameNodeStatus",
+      {
+        message: `Game Server Node (${game_server_nodes_by_pk.label || gameServerNodeId}) provisioning failed: ${errorMessage}`,
+        title: "Game Server Node Provisioning Failed",
+        role: "administrator",
+        entity_id: gameServerNodeId,
+      },
+      undefined,
+      DISCORD_COLORS.RED,
+    );
+
+    response.status(200).json({ success: true });
+  }
+
+  @Get("/script/:gameServerNodeId")
+  public async script(@Req() request: Request, @Res() response: Response) {
+    const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");
+
+    const { game_server_nodes_by_pk, settings } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: {
+          id: gameServerNodeId,
+        },
         token: true,
+      },
+      settings: {
+        __args: {
+          where: {
+            _or: [
+              { name: { _eq: "reserved_disk_space_fresh_gb" } },
+              { name: { _eq: "reserved_disk_space_existing_gb" } },
+            ],
+          },
+        },
+        name: true,
+        value: true,
       },
     });
 
     if (!game_server_nodes_by_pk || game_server_nodes_by_pk.token === null) {
       throw new Error("Game server not found");
     }
+
+    const freshDiskGb =
+      parseInt(
+        settings.find((s) => s.name === "reserved_disk_space_fresh_gb")
+          ?.value,
+      ) || 120;
+    const existingDiskGb =
+      parseInt(
+        settings.find((s) => s.name === "reserved_disk_space_existing_gb")
+          ?.value,
+      ) || 60;
 
     response.setHeader("Content-Type", "text/plain");
     response.setHeader(
@@ -220,7 +410,24 @@ export class GameServerNodeController {
     // Set the content length to avoid download issues
     const scriptContent = `
         sudo -i
-        
+
+        if [ -d "/opt/5stack/serverfiles/game/csgo" ]; then
+            REQUIRED_GB=${existingDiskGb}
+        else
+            REQUIRED_GB=${freshDiskGb}
+        fi
+        if [ "$REQUIRED_GB" -gt 0 ]; then
+            AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
+            if [ "$AVAILABLE_GB" -lt "$REQUIRED_GB" ]; then
+                echo "Error: Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
+                curl -s -X POST "${this.appConfig.apiDomain}/game-server-node/script/${gameServerNodeId}/error" \
+                  -H "Content-Type: application/json" \
+                  -d "{\\"error\\":\\"Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB\\"}"
+                exit 1
+            fi
+            echo "Disk space check passed: \${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
+        fi
+
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
         mkdir -p /opt/5stack/serverfiles
@@ -314,6 +521,16 @@ cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
 	[Service]
 	ExecStartPre=/usr/local/bin/5stack-cpu-state-check.sh
 DROPIN
+
+        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
+	[Service]
+	ExecStartPre=/bin/bash -c 'TSIP=$(tailscale ip -4 2>/dev/null | head -n 1); if [ -n "$TSIP" ] && [ -f /etc/rancher/k3s/config.yaml ]; then sed -i "s/^node-ip:.*/node-ip: $TSIP/" /etc/rancher/k3s/config.yaml; echo "[5stack] Updated k3s node-ip to $TSIP"; fi'
+DROPIN
+
+        # Remove one-time auth key from k3s-agent service to prevent
+        # re-auth failures with expired key on future reboots
+        sed -i '/--vpn-auth/d' /etc/systemd/system/k3s-agent.service
 
         systemctl daemon-reload
 

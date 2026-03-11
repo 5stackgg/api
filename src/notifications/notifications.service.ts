@@ -46,6 +46,7 @@ export class NotificationsService {
       };
     }>,
     color?: number,
+    deletable?: boolean,
   ) {
     const { settings_by_pk: discord_support_webhook } = await this.hasura.query(
       {
@@ -74,6 +75,7 @@ export class NotificationsService {
             type,
             ...notification,
             actions,
+            ...(deletable === false ? { deletable: false } : {}),
           },
         },
         id: true,
@@ -412,6 +414,7 @@ export class NotificationsService {
     entity_id?: string;
     role: e_player_roles_enum;
     steam_id?: string;
+    deletable?: boolean;
   }) {
     await this.hasura.mutation({
       insert_notifications_one: {
