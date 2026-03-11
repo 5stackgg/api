@@ -120,10 +120,10 @@ export class RconService {
       const version = server.game_server_node?.version;
       if (server.is_dedicated && !version) {
         if ((await this.cache.has("cvars")) === false) {
-          void this.genreateCvars(serverId);
+          this.genreateCvars(serverId).catch(() => {});
         }
       } else if (version?.current === true && version?.cvars === false) {
-        void this.genreateCvars(serverId);
+        this.genreateCvars(serverId).catch(() => {});
       }
     } catch {
       try {
@@ -251,6 +251,9 @@ export class RconService {
         throw Error(`unable to connect to server ${serverId}`);
       }
 
+      clearTimeout(this.connectTimeouts[serverId]);
+      delete this.connectTimeouts[serverId];
+
       const prefixes = [
         "+",
         "-",
@@ -303,8 +306,8 @@ export class RconService {
         `unable to generate cvars for build: ${buildId}`,
         error,
       );
-      throw error;
     } finally {
+      this.setupConnectionTimeout(serverId);
       await this.releaseCvarsLock(buildId);
     }
     this.logger.log(`generated ${totalCvars} cvars for build: ${buildId}`);
