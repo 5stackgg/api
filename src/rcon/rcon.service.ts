@@ -124,7 +124,9 @@ export class RconService {
           this.genreateCvars(serverId).catch(() => {});
         }
       } else if (version?.current === true && version?.cvars === false) {
-        this.genreateCvars(serverId).catch(() => {});
+        if ((await this.cache.has("cvars")) === false) {
+          this.genreateCvars(serverId).catch(() => {});
+        }
       }
     } catch {
       try {
@@ -243,13 +245,13 @@ export class RconService {
       return;
     }
 
-    this.logger.log(`generating cvars for build: ${buildId}`);
-
     const hasLock = await this.aquireCvarsLock(buildId);
     if (!hasLock) {
       this.logger.warn(`unable to aquire cvars lock for build: ${buildId}`);
       return;
     }
+
+    this.logger.log(`generating cvars for build: ${buildId}`);
 
     try {
       const rcon = await this.connect(serverId);
@@ -375,7 +377,7 @@ export class RconService {
     const lockKey = `cvars:lock:${buildId}`;
     const result = await this.redisManager
       .getConnection()
-      .set(lockKey, 1, "EX", 60, "NX");
+      .set(lockKey, 1, "EX", 300, "NX");
     if (result === null) {
       return false;
     }
