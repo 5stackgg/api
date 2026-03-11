@@ -500,8 +500,29 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "kube-reserved=cpu=1"
 EOF
 
-        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
+cat <<-'SCRIPT' >/usr/local/bin/5stack-cpu-state-check.sh
+	#!/bin/bash
+	STATE=/var/lib/kubelet/cpu_manager_state
+	[ ! -f "$STATE" ] && exit 0
+	CACHE="$(dirname "$STATE")/cpu_count"
+	CURRENT=$(nproc)
+	PREVIOUS=$(cat "$CACHE" 2>/dev/null || echo "$CURRENT")
+	if [ "$CURRENT" != "$PREVIOUS" ]; then
+	  echo "CPU count changed from $PREVIOUS to $CURRENT, removing $STATE"
+	  rm -f "$STATE"
+	fi
+	echo "$CURRENT" > "$CACHE"
+SCRIPT
+        chmod +x /usr/local/bin/5stack-cpu-state-check.sh
+
         mkdir -p /etc/systemd/system/k3s-agent.service.d
+
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
+	[Service]
+	ExecStartPre=/usr/local/bin/5stack-cpu-state-check.sh
+DROPIN
+
+        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
 cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
 	[Service]
 	ExecStartPre=/bin/bash -c 'TSIP=$(tailscale ip -4 2>/dev/null | head -n 1); if [ -n "$TSIP" ] && [ -f /etc/rancher/k3s/config.yaml ]; then sed -i "s/^node-ip:.*/node-ip: $TSIP/" /etc/rancher/k3s/config.yaml; echo "[5stack] Updated k3s node-ip to $TSIP"; fi'
@@ -510,6 +531,7 @@ DROPIN
         # Remove one-time auth key from k3s-agent service to prevent
         # re-auth failures with expired key on future reboots
         sed -i '/--vpn-auth/d' /etc/systemd/system/k3s-agent.service
+
         systemctl daemon-reload
 
         rm -f /var/lib/kubelet/cpu_manager_state
