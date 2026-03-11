@@ -317,7 +317,7 @@ BEGIN
 
     -- We need to correctly handle the cancels_at field, since matches open 15 minutes before the scheduled time.
     -- Therefore, cancels_at should be set relative to the scheduled time, not the current time.
-    IF (scheduled_at IS NOT NULL AND scheduled_at < NOW()) THEN
+    IF (scheduled_at IS NOT NULL AND scheduled_at < NOW() AND NEW.status = 'Scheduled') THEN
         NEW.scheduled_at = NOW();
     END IF;
 
