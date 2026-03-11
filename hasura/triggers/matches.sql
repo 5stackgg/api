@@ -333,6 +333,7 @@ BEGIN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
+        NEW.scheduled_at = null;
     END IF;
 
     IF NEW.status = 'WaitingForServer' AND OLD.status != 'WaitingForServer' THEN
