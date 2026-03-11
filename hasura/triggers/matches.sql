@@ -314,11 +314,15 @@ BEGIN
     END IF;
 
     scheduled_at := COALESCE(NEW.scheduled_at);
-    
+
     -- We need to correctly handle the cancels_at field, since matches open 15 minutes before the scheduled time.
     -- Therefore, cancels_at should be set relative to the scheduled time, not the current time.
     IF (scheduled_at IS NOT NULL AND scheduled_at < NOW()) THEN
         NEW.scheduled_at = NOW();
+    END IF;
+
+    IF NEW.status != 'Scheduled' THEN
+        NEW.scheduled_at = null;
     END IF;
 
     IF (NEW.status = 'WaitingForCheckIn' AND OLD.status != 'WaitingForCheckIn')  THEN
@@ -333,7 +337,6 @@ BEGIN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
-        NEW.scheduled_at = null;
     END IF;
 
     IF NEW.status = 'WaitingForServer' AND OLD.status != 'WaitingForServer' THEN
