@@ -24,6 +24,7 @@ export class RconService {
 
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
+  private activeOperations = new Set<string>();
 
   public async connect(serverId: string): Promise<RconClient | null> {
     if (this.connections[serverId]) {
@@ -171,6 +172,9 @@ export class RconService {
 
   private setupConnectionTimeout(serverId: string) {
     clearTimeout(this.connectTimeouts[serverId]);
+    if (this.activeOperations.has(serverId)) {
+      return;
+    }
     this.connectTimeouts[serverId] = setTimeout(async () => {
       await this.disconnect(serverId);
     }, this.CONNECTION_TIMEOUT);
@@ -234,6 +238,11 @@ export class RconService {
       return;
     }
 
+    const failureCacheKey = `cvars:failure:${buildId}`;
+    if (await this.cache.has(failureCacheKey)) {
+      return;
+    }
+
     this.logger.log(`generating cvars for build: ${buildId}`);
 
     const hasLock = await this.aquireCvarsLock(buildId);
@@ -242,15 +251,13 @@ export class RconService {
       return;
     }
 
-    await this.typeSenseService.resetCvars();
-
-    let totalCvars = 0;
     try {
       const rcon = await this.connect(serverId);
       if (!rcon) {
         throw Error(`unable to connect to server ${serverId}`);
       }
 
+      this.activeOperations.add(serverId);
       clearTimeout(this.connectTimeouts[serverId]);
       delete this.connectTimeouts[serverId];
 
@@ -261,34 +268,27 @@ export class RconService {
         ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)),
       ];
 
-      for (const prefix of prefixes) {
-        const cacheKey = this.getCvarsCacheKey(buildId, prefix);
+      const allCvars: Array<{
+        name: string;
+        kind: string;
+        flags: string;
+        description: string;
+      }> = [];
 
-        if (await this.cache.has(cacheKey)) {
-          continue;
-        }
-
-        const hasLock = await this.aquirePrefixLock(buildId, prefix);
-        if (!hasLock) {
-          this.logger.warn(
-            `unable to aquire lock for prefix: ${prefix}, skipping`,
-          );
-          continue;
-        }
-
-        try {
+      try {
+        for (const prefix of prefixes) {
           const parsedCvars = this.parseCvarList(
             await rcon.send(`Cvarlist ${prefix}`),
           );
-
-          await this.typeSenseService.upsertCvars(parsedCvars);
-          await this.cache.put(cacheKey, true);
-
-          totalCvars = totalCvars + parsedCvars.length;
-        } finally {
-          await this.releasePrefixLock(buildId, prefix);
+          allCvars.push(...parsedCvars);
         }
+      } finally {
+        this.activeOperations.delete(serverId);
+        this.setupConnectionTimeout(serverId);
       }
+
+      await this.typeSenseService.resetCvars();
+      await this.typeSenseService.upsertCvars(allCvars);
 
       await this.hasuraService.mutation({
         update_game_versions_by_pk: {
@@ -301,20 +301,18 @@ export class RconService {
       });
 
       await this.cache.put("cvars", true);
+      this.logger.log(
+        `generated ${allCvars.length} cvars for build: ${buildId}`,
+      );
     } catch (error) {
       this.logger.error(
         `unable to generate cvars for build: ${buildId}`,
         error,
       );
+      await this.cache.put(failureCacheKey, true, 600);
     } finally {
-      this.setupConnectionTimeout(serverId);
       await this.releaseCvarsLock(buildId);
     }
-    this.logger.log(`generated ${totalCvars} cvars for build: ${buildId}`);
-  }
-
-  private getCvarsCacheKey(buildId: string, prefix: string): string {
-    return `cvars:${buildId}:${prefix}`;
   }
 
   private parseCvarList(
@@ -389,22 +387,4 @@ export class RconService {
     await this.redisManager.getConnection().del(lockKey);
   }
 
-  private async aquirePrefixLock(
-    buildId: string,
-    prefix: string,
-  ): Promise<boolean> {
-    const lockKey = `cvars:lock:${buildId}:${prefix}`;
-    const result = await this.redisManager
-      .getConnection()
-      .set(lockKey, 1, "EX", 60, "NX");
-    if (result === null) {
-      return false;
-    }
-    return true;
-  }
-
-  private async releasePrefixLock(buildId: string, prefix: string) {
-    const lockKey = `cvars:lock:${buildId}:${prefix}`;
-    await this.redisManager.getConnection().del(lockKey);
-  }
 }
