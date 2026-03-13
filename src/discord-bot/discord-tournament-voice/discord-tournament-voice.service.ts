@@ -161,6 +161,13 @@ export class DiscordTournamentVoiceService {
       return;
     }
 
+    const lineup1 = bracket.match?.lineup_1;
+
+    const existingMatchVoice = await this.voiceChannels.getVoiceCache(matchId, lineup1?.id as string);
+    if (existingMatchVoice) {
+      return; // Already created (e.g., from WaitingForCheckIn trigger)
+    }
+
     const totalStages = bracket.stage.tournament.stages?.length || 1;
     const stageOrder = bracket.stage.order as number;
     const bracketRound = bracket.round as number;
@@ -223,7 +230,6 @@ export class DiscordTournamentVoiceService {
       isLastRound,
     );
 
-    const lineup1 = bracket.match?.lineup_1;
     const lineup2 = bracket.match?.lineup_2;
 
     if (!lineup1 || !lineup2) {

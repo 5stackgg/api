@@ -334,6 +334,16 @@ export class MatchesController {
       await this.tournamentVoice.movePlayersToMatchChannels(matchId);
     }
 
+    // Also create voice channels on Veto or Live (fallback for skipped check-in)
+    if (
+      data.op === "UPDATE" &&
+      (data.new.status === "Veto" || data.new.status === "Live") &&
+      data.old.status !== data.new.status
+    ) {
+      await this.tournamentVoice.createMatchVoiceChannels(matchId);
+      await this.tournamentVoice.movePlayersToMatchChannels(matchId);
+    }
+
     if (data.op === "DELETE") {
       await this.chatService.removeLobby(ChatLobbyType.Match, matchId);
     }
