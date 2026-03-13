@@ -1,8 +1,11 @@
 import { Controller, Logger } from "@nestjs/common";
-import { HasuraAction } from "../hasura/hasura.controller";
+import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraService } from "../hasura/hasura.service";
+import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { S3Service } from "../s3/s3.service";
 import { User } from "../auth/types/User";
+import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
+import { tournaments_set_input } from "../../generated";
 
 @Controller("tournaments")
 export class TournamentsController {
@@ -10,7 +13,29 @@ export class TournamentsController {
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
+    private readonly tournamentVoice: DiscordTournamentVoiceService,
   ) {}
+
+  @HasuraEvent()
+  public async tournament_events(
+    data: HasuraEventData<tournaments_set_input>,
+  ) {
+    const tournamentId = (data.new.id || data.old.id) as string;
+    const status = data.new.status as string;
+
+    if (
+      status === "Live" &&
+      data.old.status !== "Live"
+    ) {
+      await this.tournamentVoice.createTournamentReadyRoom(tournamentId);
+    }
+
+    if (
+      ["Finished", "Cancelled", "CancelledMinTeams"].includes(status)
+    ) {
+      await this.tournamentVoice.removeTournamentVoice(tournamentId);
+    }
+  }
 
   @HasuraAction()
   public async deleteTournament(data: { user: User; tournament_id: string }) {
