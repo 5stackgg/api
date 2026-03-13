@@ -30,9 +30,6 @@ export function getBracketRoundLabel(
     }
 
     if (totalMatchesInRound === 2) {
-      if (isLastRound && stageType === "SingleElimination") {
-        return "Final";
-      }
       return isDE ? "WB Semi-Finals" : "Semi-Finals";
     }
 

@@ -361,18 +361,6 @@ export class DiscordTournamentVoiceService {
       const guild = await this.bot.client.guilds.fetch(voiceCache.guildId);
 
       try {
-        const readyRoom = await guild.channels.fetch(voiceCache.readyRoomId);
-        if (readyRoom) {
-          await readyRoom.delete();
-        }
-      } catch (error) {
-        this.logger.warn(
-          `[${tournamentId}] unable to delete ready room`,
-          error,
-        );
-      }
-
-      try {
         const category = await guild.channels.fetch(voiceCache.categoryId);
         if (category && category.type === ChannelType.GuildCategory) {
           for (const [, child] of (category as CategoryChannel).children.cache) {
@@ -413,7 +401,7 @@ export class DiscordTournamentVoiceService {
     await this.cache.put(
       this.getVoiceCacheKey(tournamentId),
       data,
-      7 * 24 * 60 * 60,
+      30 * 24 * 60 * 60,
     );
   }
 

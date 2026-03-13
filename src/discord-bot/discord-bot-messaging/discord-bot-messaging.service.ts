@@ -207,19 +207,22 @@ export class DiscordBotMessagingService {
   }
 
   private async getArchiveCategoryName() {
-    const { settings_by_pk } = await this.hasura.query({
-      settings_by_pk: {
-        __args: {
-          name: "public.brand_name",
-        },
-        value: true,
+    const brandName = await this.cache.remember<string>(
+      "settings:brand_name",
+      async () => {
+        const { settings_by_pk } = await this.hasura.query({
+          settings_by_pk: {
+            __args: {
+              name: "public.brand_name",
+            },
+            value: true,
+          },
+        });
+        return settings_by_pk?.value || this.config.get<AppConfig>("app").name;
       },
-    });
-
-    const name =
-      settings_by_pk?.value || this.config.get<AppConfig>("app").name;
-
-    return `${name} Matches Archive`;
+      60 * 60,
+    );
+    return `${brandName} Matches Archive`;
   }
 
   public async removeArchivedThreads() {
