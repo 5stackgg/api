@@ -78,16 +78,21 @@ export class RconService {
       return payload;
     };
 
-    rcon
-      .on("error", async () => {
-        await this.disconnect(serverId);
-      })
-      .on("end", () => {
-        if (!this.connections[serverId]) {
-          return;
-        }
-        delete this.connections[serverId];
-      });
+    const onError = async () => {
+      (rcon as any).off("error", onError);
+      (rcon as any).off("end", onEnd);
+      await this.disconnect(serverId);
+    };
+    const onEnd = () => {
+      (rcon as any).off("error", onError);
+      (rcon as any).off("end", onEnd);
+      if (!this.connections[serverId]) {
+        return;
+      }
+      delete this.connections[serverId];
+    };
+
+    rcon.on("error", onError).on("end", onEnd);
 
     try {
       const timeoutPromise = new Promise<never>((_, reject) => {

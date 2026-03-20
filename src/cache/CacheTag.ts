@@ -11,6 +11,7 @@ export class CacheTag {
     this.tag = tags.join(":");
     this.forgetTag = `forget:${this.tag}`;
   }
+  
   async get(key?: string): Promise<CachedValue> {
     return await this.waitForLock(async () => {
       const values = await this.cacheStore.get(this.tag);
@@ -20,9 +21,11 @@ export class CacheTag {
       return values;
     });
   }
+
   async has(key: string): Promise<boolean> {
     return (await this.get(key)) !== undefined;
   }
+
   async put(key: string, value: CachedValue, seconds?: number) {
     return await this.waitForLock(async () => {
       const values = (await this.cacheStore.get(this.tag)) || {};
@@ -39,6 +42,7 @@ export class CacheTag {
       return true;
     });
   }
+
   async forget(key?: string) {
     return await this.waitForLock(async () => {
       if (key) {
@@ -55,9 +59,10 @@ export class CacheTag {
       return true;
     });
   }
+
   async waitForLock(
     callback: () => Promise<CachedValue>,
   ): Promise<CachedValue> {
-    return await this.cacheStore.lock(this.tag, callback, 60);
+    return await this.cacheStore.lock(this.tag, callback, 10);
   }
 }

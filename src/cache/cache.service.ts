@@ -87,22 +87,22 @@ export class CacheService {
     key: string,
     callback: () => Promise<CachedValue>,
     expires = 60,
+    maxAttempts = 10,
   ): Promise<CachedValue> {
     const lockKey = `lock:${key}`;
-    if (await this.connection.set(lockKey, 1, "EX", expires, "NX")) {
-      try {
-        return await callback();
-      } finally {
-        await this.forget(lockKey);
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (await this.connection.set(lockKey, 1, "EX", expires, "NX")) {
+        try {
+          return await callback();
+        } finally {
+          await this.forget(lockKey);
+        }
       }
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      }, 100);
-    });
-    return await this.lock(key, callback);
+    throw new Error(`Failed to acquire lock for ${key} after ${maxAttempts} attempts`);
   }
+
   private async expireIn(key: string, seconds: number) {
     return this.connection.expire(key, seconds);
   }
