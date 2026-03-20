@@ -61,9 +61,8 @@ export class SystemService {
   }
 
   public async detectFeatures() {
-    while (this.featuresDetected === false) {
-      try {
-        const tailscaleConfig = this.config.get<TailscaleConfig>("tailscale");
+    try {
+      const tailscaleConfig = this.config.get<TailscaleConfig>("tailscale");
 
         let supportsGameServerNodes = false;
         if (
@@ -141,11 +140,11 @@ export class SystemService {
         });
 
         this.featuresDetected = true;
-        return;
-      } catch (error) {
-        this.logger.warn("Error detecting features", error);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+    } catch (error) {
+      this.logger.warn("Error detecting features", error);
+      setTimeout(() => {
+        void this.detectFeatures();
+      }, 5000);
     }
   }
 

@@ -36,16 +36,14 @@ export class TypeSenseService {
       connectionTimeoutSeconds: 2,
     });
 
-    let setup = false;
-    while (!setup) {
-      try {
-        await this.createCvarsCollection();
-        await this.createPlayerCollection();
-        setup = true;
-      } catch (error) {
-        this.logger.error(`unable to setup typesense: ${error}`);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+    try {
+      await this.createCvarsCollection();
+      await this.createPlayerCollection();
+    } catch (error) {
+      this.logger.error(`unable to setup typesense: ${error}`);
+      setTimeout(() => {
+        void this.setup();
+      }, 1000);
     }
   }
 

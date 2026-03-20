@@ -590,7 +590,7 @@ export class GameServerNodeService {
     gameServerNodeId: string,
     attempts = 0,
     game = "cs2",
-  ) {
+  ): Promise<void> {
     try {
       const pod = await this.loggingService.getJobPod(
         GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId, game),
@@ -641,7 +641,9 @@ export class GameServerNodeService {
       }
 
       const stream = new PassThrough();
-      void this.loggingService.getLogsForPod(pod, stream);
+      void this.loggingService.getLogsForPod(pod, stream).catch(() => {
+        stream.destroy();
+      });
 
       stream.on("data", async (data) => {
         const { log } = JSON.parse(data.toString());

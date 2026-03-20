@@ -11,6 +11,10 @@ export class RedisManagerService {
     [key: string]: Redis;
   } = {};
 
+  private healthCheckIntervals: {
+    [key: string]: NodeJS.Timeout;
+  } = {};
+
   constructor(
     private readonly logger: Logger,
     private readonly configService: ConfigService,
@@ -36,16 +40,14 @@ export class RedisManagerService {
       /**
        * We may get disconnected, and we may need to force a re-connect.
        */
-      let setupPingPong = false;
+      const pingTimeoutError = `did not receive ping in time (5 seconds)`;
+
       currentConnection.on("online", () => {
-        if (setupPingPong) {
-          return;
+        if (this.healthCheckIntervals[connection]) {
+          clearInterval(this.healthCheckIntervals[connection]);
         }
-        setupPingPong = true;
 
-        const pingTimeoutError = `did not receive ping in time (5 seconds)`;
-
-        setInterval(async () => {
+        this.healthCheckIntervals[connection] = setInterval(async () => {
           if (currentConnection.status === "ready") {
             await new Promise(async (resolve, reject) => {
               const timer = setTimeout(() => {

@@ -601,6 +601,8 @@ export class DedicatedServersService {
     this.logger.log(`[${serverId}] waiting for pod to be ready`);
 
     return new Promise((resolve, reject) => {
+      let timer: NodeJS.Timeout;
+
       const checkPodStatus = async () => {
         try {
           const deployment = await this.apps.readNamespacedDeployment({
@@ -615,33 +617,22 @@ export class DedicatedServersService {
             resolve();
             return;
           }
-
-          if (Date.now() - startTime >= maxWaitTime) {
-            reject(
-              new Error(
-                `[${serverId}] timeout waiting for pod to be ready after ${maxWaitTime}ms`,
-              ),
-            );
-            return;
-          }
-
-          setTimeout(checkPodStatus, 5000);
         } catch (error) {
           this.logger.warn(
             `[${serverId}] error checking pod status: ${error.message}`,
           );
-
-          if (Date.now() - startTime >= maxWaitTime) {
-            reject(
-              new Error(
-                `[${serverId}] timeout waiting for pod to be ready after ${maxWaitTime}ms`,
-              ),
-            );
-            return;
-          }
-
-          setTimeout(checkPodStatus, 5000);
         }
+
+        if (Date.now() - startTime >= maxWaitTime) {
+          reject(
+            new Error(
+              `[${serverId}] timeout waiting for pod to be ready after ${maxWaitTime}ms`,
+            ),
+          );
+          return;
+        }
+
+        timer = setTimeout(checkPodStatus, 5000);
       };
 
       void checkPodStatus();
