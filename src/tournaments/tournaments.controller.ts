@@ -17,22 +17,15 @@ export class TournamentsController {
   ) {}
 
   @HasuraEvent()
-  public async tournament_events(
-    data: HasuraEventData<tournaments_set_input>,
-  ) {
+  public async tournament_events(data: HasuraEventData<tournaments_set_input>) {
     const tournamentId = (data.new.id || data.old.id) as string;
     const status = data.new.status as string;
 
-    if (
-      status === "Live" &&
-      data.old.status !== "Live"
-    ) {
+    if (status === "Live" && data.old.status !== "Live") {
       await this.tournamentVoice.createTournamentReadyRoom(tournamentId);
     }
 
-    if (
-      ["Finished", "Cancelled", "CancelledMinTeams"].includes(status)
-    ) {
+    if (["Finished", "Cancelled", "CancelledMinTeams"].includes(status)) {
       await this.tournamentVoice.removeTournamentVoice(tournamentId);
     }
   }

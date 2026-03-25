@@ -1,9 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
-import {
-  CategoryChannel,
-  ChannelType,
-  PermissionsBitField,
-} from "discord.js";
+import { CategoryChannel, ChannelType, PermissionsBitField } from "discord.js";
 import { CacheService } from "../../cache/cache.service";
 import { HasuraService } from "../../hasura/hasura.service";
 import { DiscordBotService } from "../discord-bot.service";
@@ -43,7 +39,11 @@ export class DiscordTournamentVoiceService {
       },
     });
 
-    if (!tournament || !tournament.discord_voice_enabled || !tournament.discord_guild_id) {
+    if (
+      !tournament ||
+      !tournament.discord_voice_enabled ||
+      !tournament.discord_guild_id
+    ) {
       return;
     }
 
@@ -163,7 +163,10 @@ export class DiscordTournamentVoiceService {
 
     const lineup1 = bracket.match?.lineup_1;
 
-    const existingMatchVoice = await this.voiceChannels.getVoiceCache(matchId, lineup1?.id as string);
+    const existingMatchVoice = await this.voiceChannels.getVoiceCache(
+      matchId,
+      lineup1?.id as string,
+    );
     if (existingMatchVoice) {
       return; // Already created (e.g., from WaitingForCheckIn trigger)
     }
@@ -194,7 +197,8 @@ export class DiscordTournamentVoiceService {
     });
 
     const totalMatchesInRound =
-      (bracketsInSameRound.tournament_brackets_aggregate.aggregate.count as number) || 1;
+      (bracketsInSameRound.tournament_brackets_aggregate.aggregate
+        .count as number) || 1;
 
     const maxRound = await this.hasura.query({
       tournament_brackets_aggregate: {
@@ -216,7 +220,8 @@ export class DiscordTournamentVoiceService {
     });
 
     const highestRound =
-      (maxRound.tournament_brackets_aggregate.aggregate.max?.round as number) || bracketRound;
+      (maxRound.tournament_brackets_aggregate.aggregate.max?.round as number) ||
+      bracketRound;
     const isLastRound = bracketRound === highestRound;
     const isLoserBracket = bracketPath === "loser";
 
@@ -311,9 +316,7 @@ export class DiscordTournamentVoiceService {
         const playerName = lineupPlayer.player?.name as string | undefined;
 
         if (!discordId) {
-          unlinkedPlayers.push(
-            playerName || (lineupPlayer.steam_id as string),
-          );
+          unlinkedPlayers.push(playerName || (lineupPlayer.steam_id as string));
           continue;
         }
 
@@ -363,23 +366,19 @@ export class DiscordTournamentVoiceService {
       try {
         const category = await guild.channels.fetch(voiceCache.categoryId);
         if (category && category.type === ChannelType.GuildCategory) {
-          for (const [, child] of (category as CategoryChannel).children.cache) {
+          for (const [, child] of (category as CategoryChannel).children
+            .cache) {
             await child.delete().catch(() => {});
           }
           await category.delete();
         }
       } catch (error) {
-        this.logger.warn(
-          `[${tournamentId}] unable to delete category`,
-          error,
-        );
+        this.logger.warn(`[${tournamentId}] unable to delete category`, error);
       }
 
       await this.cache.forget(this.getVoiceCacheKey(tournamentId));
 
-      this.logger.log(
-        `[${tournamentId}] removed tournament voice channels`,
-      );
+      this.logger.log(`[${tournamentId}] removed tournament voice channels`);
     } catch (error) {
       this.logger.error(
         `[${tournamentId}] failed to remove tournament voice channels`,

@@ -11,7 +11,7 @@ export class CacheTag {
     this.tag = tags.join(":");
     this.forgetTag = `forget:${this.tag}`;
   }
-  
+
   async get(key?: string): Promise<CachedValue> {
     return await this.waitForLock(async () => {
       const values = await this.cacheStore.get(this.tag);

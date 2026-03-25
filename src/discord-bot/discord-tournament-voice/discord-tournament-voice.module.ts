@@ -6,11 +6,7 @@ import { CacheModule } from "../../cache/cache.module";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 
 @Module({
-  imports: [
-    forwardRef(() => DiscordBotModule),
-    HasuraModule,
-    CacheModule,
-  ],
+  imports: [forwardRef(() => DiscordBotModule), HasuraModule, CacheModule],
   providers: [DiscordTournamentVoiceService, loggerFactory()],
   exports: [DiscordTournamentVoiceService],
 })

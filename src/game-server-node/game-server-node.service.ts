@@ -240,10 +240,14 @@ export class GameServerNodeService {
               cpu_governor_info: cpuGovernorInfo,
               cpu_frequency_info: cpuFrequencyInfo,
               disk_available_gb: rootDisk
-                ? (Number.isNaN(parseInt(rootDisk.available)) ? null : Math.round(parseInt(rootDisk.available) / (1024 * 1024)))
+                ? Number.isNaN(parseInt(rootDisk.available))
+                  ? null
+                  : Math.round(parseInt(rootDisk.available) / (1024 * 1024))
                 : null,
               disk_used_percent: rootDisk
-                ? (Number.isNaN(parseInt(rootDisk.usedPercent)) ? null : parseInt(rootDisk.usedPercent))
+                ? Number.isNaN(parseInt(rootDisk.usedPercent))
+                  ? null
+                  : parseInt(rootDisk.usedPercent)
                 : null,
               ...(game_server_nodes_by_pk.token ? { token: null } : {}),
             },
