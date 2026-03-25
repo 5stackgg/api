@@ -21,6 +21,7 @@ export class RconService {
   ) {}
 
   private CONNECTION_TIMEOUT = 3 * 1000;
+  private readonly GENERATE_CVARS_CACHE_KEY = "generate_cvars";
 
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
@@ -124,12 +125,12 @@ export class RconService {
 
       const version = server.game_server_node?.version;
       if (server.is_dedicated && !version) {
-        if ((await this.cache.has("cvars")) === false) {
-          this.genreateCvars(serverId).catch(() => {});
+        if ((await this.cache.has(this.GENERATE_CVARS_CACHE_KEY)) === false) {
+          this.generateCvars(serverId).catch(() => {});
         }
       } else if (version?.current === true && version?.cvars === false) {
-        if ((await this.cache.has("cvars")) === false) {
-          this.genreateCvars(serverId).catch(() => {});
+        if ((await this.cache.has(this.GENERATE_CVARS_CACHE_KEY)) === false) {
+          this.generateCvars(serverId).catch(() => {});
         }
       }
     } catch {
@@ -193,7 +194,7 @@ export class RconService {
     }
   }
 
-  public async genreateCvars(serverId: string) {
+  public async generateCvars(serverId: string) {
     const { servers_by_pk: server } = await this.hasuraService.query({
       servers_by_pk: {
         __args: {
@@ -306,7 +307,7 @@ export class RconService {
         },
       });
 
-      await this.cache.put("cvars", true);
+      await this.cache.put(this.GENERATE_CVARS_CACHE_KEY, true);
       this.logger.log(
         `generated ${allCvars.length} cvars for build: ${buildId}`,
       );
