@@ -122,7 +122,9 @@ export class GameServerNodeController {
     if (rootDisk) {
       const diskUsedPercent = parseInt(rootDisk.usedPercent);
       if (Number.isNaN(diskUsedPercent)) {
-        this.logger.warn(`Invalid disk usedPercent from node ${payload.node}: "${rootDisk.usedPercent}"`);
+        this.logger.warn(
+          `Invalid disk usedPercent from node ${payload.node}: "${rootDisk.usedPercent}"`,
+        );
         return;
       }
       const now = Date.now();
@@ -130,7 +132,10 @@ export class GameServerNodeController {
 
       const shouldNotify = (level: string) => {
         const last = this.diskWarningCooldowns.get(cooldownKey(level));
-        return !last || now - last > GameServerNodeController.DISK_WARNING_COOLDOWN_MS;
+        return (
+          !last ||
+          now - last > GameServerNodeController.DISK_WARNING_COOLDOWN_MS
+        );
       };
 
       const settings = await this.cache.remember<
@@ -344,8 +349,7 @@ export class GameServerNodeController {
       return;
     }
 
-    const errorMessage =
-      request.body?.error || "Unknown provisioning error";
+    const errorMessage = request.body?.error || "Unknown provisioning error";
 
     await this.notifications.send(
       "GameNodeStatus",
@@ -393,8 +397,7 @@ export class GameServerNodeController {
 
     const freshDiskGb =
       parseInt(
-        settings.find((s) => s.name === "reserved_disk_space_fresh_gb")
-          ?.value,
+        settings.find((s) => s.name === "reserved_disk_space_fresh_gb")?.value,
       ) || 120;
     const existingDiskGb =
       parseInt(

@@ -64,82 +64,82 @@ export class SystemService {
     try {
       const tailscaleConfig = this.config.get<TailscaleConfig>("tailscale");
 
-        let supportsGameServerNodes = false;
-        if (
-          tailscaleConfig.key &&
-          tailscaleConfig.secret &&
-          tailscaleConfig.netName
-        ) {
-          supportsGameServerNodes = true;
-        }
+      let supportsGameServerNodes = false;
+      if (
+        tailscaleConfig.key &&
+        tailscaleConfig.secret &&
+        tailscaleConfig.netName
+      ) {
+        supportsGameServerNodes = true;
+      }
 
-        await this.hasura.mutation({
-          insert_settings_one: {
-            __args: {
-              object: {
-                name: SystemSettingName.SupportsGameServerNodes,
-                value: supportsGameServerNodes.toString(),
-              },
-              on_conflict: {
-                constraint: "settings_pkey",
-                update_columns: ["value"],
-              },
+      await this.hasura.mutation({
+        insert_settings_one: {
+          __args: {
+            object: {
+              name: SystemSettingName.SupportsGameServerNodes,
+              value: supportsGameServerNodes.toString(),
             },
-            __typename: true,
-          },
-        });
-
-        const discordConfig = this.config.get<DiscordConfig>("discord");
-
-        let supportsDiscordBot = false;
-        if (
-          discordConfig.clientId &&
-          discordConfig.clientSecret &&
-          discordConfig.token
-        ) {
-          supportsDiscordBot = true;
-        }
-
-        await this.hasura.mutation({
-          insert_settings_one: {
-            __args: {
-              object: {
-                name: SystemSettingName.SupportsDiscordBot,
-                value: supportsDiscordBot.toString(),
-              },
-              on_conflict: {
-                constraint: "settings_pkey",
-                update_columns: ["value"],
-              },
+            on_conflict: {
+              constraint: "settings_pkey",
+              update_columns: ["value"],
             },
-            __typename: true,
           },
-        });
+          __typename: true,
+        },
+      });
 
-        const steamConfig = this.config.get<SteamConfig>("steam");
+      const discordConfig = this.config.get<DiscordConfig>("discord");
 
-        let supportsGameServerNodeVersionPinning = false;
-        if (steamConfig.steamUser && steamConfig.steamPassword) {
-          supportsGameServerNodeVersionPinning = true;
-        }
+      let supportsDiscordBot = false;
+      if (
+        discordConfig.clientId &&
+        discordConfig.clientSecret &&
+        discordConfig.token
+      ) {
+        supportsDiscordBot = true;
+      }
 
-        await this.hasura.mutation({
-          insert_settings_one: {
-            __args: {
-              object: {
-                name: SystemSettingName.SupportsGameServerVersionPinning,
-                value: supportsGameServerNodeVersionPinning.toString(),
-              },
-              on_conflict: {
-                constraint: "settings_pkey",
-                update_columns: ["value"],
-              },
+      await this.hasura.mutation({
+        insert_settings_one: {
+          __args: {
+            object: {
+              name: SystemSettingName.SupportsDiscordBot,
+              value: supportsDiscordBot.toString(),
             },
-            __typename: true,
+            on_conflict: {
+              constraint: "settings_pkey",
+              update_columns: ["value"],
+            },
           },
-        });
+          __typename: true,
+        },
+      });
 
-        this.featuresDetected = true;
+      const steamConfig = this.config.get<SteamConfig>("steam");
+
+      let supportsGameServerNodeVersionPinning = false;
+      if (steamConfig.steamUser && steamConfig.steamPassword) {
+        supportsGameServerNodeVersionPinning = true;
+      }
+
+      await this.hasura.mutation({
+        insert_settings_one: {
+          __args: {
+            object: {
+              name: SystemSettingName.SupportsGameServerVersionPinning,
+              value: supportsGameServerNodeVersionPinning.toString(),
+            },
+            on_conflict: {
+              constraint: "settings_pkey",
+              update_columns: ["value"],
+            },
+          },
+          __typename: true,
+        },
+      });
+
+      this.featuresDetected = true;
     } catch (error) {
       this.logger.warn("Error detecting features", error);
       setTimeout(() => {

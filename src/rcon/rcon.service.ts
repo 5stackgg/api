@@ -393,5 +393,4 @@ export class RconService {
     const lockKey = `cvars:lock:${buildId}`;
     await this.redisManager.getConnection().del(lockKey);
   }
-
 }

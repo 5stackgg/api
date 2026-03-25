@@ -100,7 +100,9 @@ export class CacheService {
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    throw new Error(`Failed to acquire lock for ${key} after ${maxAttempts} attempts`);
+    throw new Error(
+      `Failed to acquire lock for ${key} after ${maxAttempts} attempts`,
+    );
   }
 
   private async expireIn(key: string, seconds: number) {
