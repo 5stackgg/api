@@ -128,7 +128,9 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -178,7 +180,9 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -227,7 +231,9 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -278,7 +284,9 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -325,7 +333,9 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -373,7 +383,9 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -429,7 +441,9 @@ select_permissions:
         - auto_start
         - created_at
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -477,7 +491,9 @@ update_permissions:
       columns:
         - auto_start
         - description
+        - discord_guild_id
         - discord_notifications_enabled
+        - discord_voice_enabled
         - discord_notify_Canceled
         - discord_notify_Finished
         - discord_notify_Forfeit
@@ -502,3 +518,15 @@ update_permissions:
         is_organizer:
           _eq: true
     comment: ""
+event_triggers:
+  - name: tournament_events
+    definition:
+      enable_manual: true
+      update:
+        columns:
+          - status
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

@@ -19,11 +19,12 @@ export class DiscordBotVoiceChannelsService {
     originalChannelId: string,
     categoryChannelId: string,
     lineupId: string,
+    channelName?: string,
   ) {
     const guild = await this.getGuild(guildId);
 
     const voiceChannel = await guild.channels.create<ChannelType.GuildVoice>({
-      name: `${lineupId} [${matchId}]`,
+      name: channelName || `${lineupId} [${matchId}]`,
       parent: categoryChannelId,
       type: ChannelType.GuildVoice,
       permissionOverwrites: [

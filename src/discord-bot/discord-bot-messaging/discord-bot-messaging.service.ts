@@ -12,6 +12,7 @@ import {
 } from "discord.js";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
+import { HasuraService } from "../../hasura/hasura.service";
 
 @Injectable()
 export class DiscordBotMessagingService {
@@ -21,6 +22,7 @@ export class DiscordBotMessagingService {
     @Inject(forwardRef(() => DiscordBotService))
     private readonly bot: DiscordBotService,
     protected readonly config: ConfigService,
+    private readonly hasura: HasuraService,
   ) {}
 
   public async getMatchChannel(matchId: string): Promise<TextChannel> {
@@ -46,7 +48,7 @@ export class DiscordBotMessagingService {
 
       if (channel) {
         const categoryChannel = await this.getCategory(
-          this.getArchiveCategoryName(),
+          await this.getArchiveCategoryName(),
           channel.guild,
         );
         await channel.setParent(categoryChannel);
@@ -204,8 +206,23 @@ export class DiscordBotMessagingService {
     return `bot:${matchId}:thread`;
   }
 
-  private getArchiveCategoryName() {
-    return `${this.config.get<AppConfig>("app").name} Matches Archive`;
+  private async getArchiveCategoryName() {
+    const brandName = await this.cache.remember<string>(
+      "settings:brand_name",
+      async () => {
+        const { settings_by_pk } = await this.hasura.query({
+          settings_by_pk: {
+            __args: {
+              name: "public.brand_name",
+            },
+            value: true,
+          },
+        });
+        return settings_by_pk?.value || this.config.get<AppConfig>("app").name;
+      },
+      60 * 60,
+    );
+    return `${brandName} Matches Archive`;
   }
 
   public async removeArchivedThreads() {
@@ -219,7 +236,7 @@ export class DiscordBotMessagingService {
 
     for (const guild of guilds) {
       const categoryChannel = await this.getCategory(
-        this.getArchiveCategoryName(),
+        await this.getArchiveCategoryName(),
         guild,
       );
       const channels = categoryChannel.children.cache.values();

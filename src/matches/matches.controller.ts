@@ -32,6 +32,7 @@ import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
 import { MatchRelayService } from "./match-relay/match-relay.service";
+import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -62,6 +63,7 @@ export class MatchesController {
     private scheduledMatchesQueue: Queue,
     private s3: S3Service,
     private readonly matchRelayService: MatchRelayService,
+    private readonly tournamentVoice: DiscordTournamentVoiceService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -321,6 +323,25 @@ export class MatchesController {
         data.new.status as e_match_status_enum,
         data.old.status as e_match_status_enum,
       );
+    }
+
+    if (
+      data.op === "UPDATE" &&
+      data.new.status === "WaitingForCheckIn" &&
+      data.old.status !== "WaitingForCheckIn"
+    ) {
+      await this.tournamentVoice.createMatchVoiceChannels(matchId);
+      await this.tournamentVoice.movePlayersToMatchChannels(matchId);
+    }
+
+    // Also create voice channels on Veto or Live (fallback for skipped check-in)
+    if (
+      data.op === "UPDATE" &&
+      (data.new.status === "Veto" || data.new.status === "Live") &&
+      data.old.status !== data.new.status
+    ) {
+      await this.tournamentVoice.createMatchVoiceChannels(matchId);
+      await this.tournamentVoice.movePlayersToMatchChannels(matchId);
     }
 
     if (data.op === "DELETE") {
