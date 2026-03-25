@@ -21,10 +21,10 @@ export class RconService {
   ) {}
 
   private CONNECTION_TIMEOUT = 3 * 1000;
+  private readonly GENERATE_CVARS_CACHE_KEY = "generate_cvars";
 
   private connections: Record<string, RconClient> = {};
   private connectTimeouts: Record<string, NodeJS.Timeout> = {};
-  private activeOperations = new Set<string>();
 
   public async connect(serverId: string): Promise<RconClient | null> {
     if (this.connections[serverId]) {
@@ -125,12 +125,12 @@ export class RconService {
 
       const version = server.game_server_node?.version;
       if (server.is_dedicated && !version) {
-        if ((await this.cache.has("cvars")) === false) {
-          this.genreateCvars(serverId).catch(() => {});
+        if ((await this.cache.has(this.GENERATE_CVARS_CACHE_KEY)) === false) {
+          this.generateCvars(serverId).catch(() => {});
         }
       } else if (version?.current === true && version?.cvars === false) {
-        if ((await this.cache.has("cvars")) === false) {
-          this.genreateCvars(serverId).catch(() => {});
+        if ((await this.cache.has(this.GENERATE_CVARS_CACHE_KEY)) === false) {
+          this.generateCvars(serverId).catch(() => {});
         }
       }
     } catch {
@@ -179,9 +179,6 @@ export class RconService {
 
   private setupConnectionTimeout(serverId: string) {
     clearTimeout(this.connectTimeouts[serverId]);
-    if (this.activeOperations.has(serverId)) {
-      return;
-    }
     this.connectTimeouts[serverId] = setTimeout(async () => {
       await this.disconnect(serverId);
     }, this.CONNECTION_TIMEOUT);
@@ -197,7 +194,7 @@ export class RconService {
     }
   }
 
-  public async genreateCvars(serverId: string) {
+  public async generateCvars(serverId: string) {
     const { servers_by_pk: server } = await this.hasuraService.query({
       servers_by_pk: {
         __args: {
@@ -258,13 +255,13 @@ export class RconService {
 
     this.logger.log(`generating cvars for build: ${buildId}`);
 
+    let rcon: RconClient | null = null;
     try {
-      const rcon = await this.connect(serverId);
+      rcon = await this.connect(serverId);
       if (!rcon) {
         throw Error(`unable to connect to server ${serverId}`);
       }
 
-      this.activeOperations.add(serverId);
       clearTimeout(this.connectTimeouts[serverId]);
       delete this.connectTimeouts[serverId];
 
@@ -282,16 +279,19 @@ export class RconService {
         description: string;
       }> = [];
 
-      try {
-        for (const prefix of prefixes) {
+      for (const prefix of prefixes) {
+        try {
           const parsedCvars = this.parseCvarList(
             await rcon.send(`Cvarlist ${prefix}`),
           );
           allCvars.push(...parsedCvars);
+        } catch (error) {
+          this.logger.error(
+            `unable to generate cvars for build: ${buildId} on prefix ${prefix}`,
+            error,
+          );
+          throw error;
         }
-      } finally {
-        this.activeOperations.delete(serverId);
-        this.setupConnectionTimeout(serverId);
       }
 
       await this.typeSenseService.resetCvars();
@@ -307,7 +307,7 @@ export class RconService {
         },
       });
 
-      await this.cache.put("cvars", true);
+      await this.cache.put(this.GENERATE_CVARS_CACHE_KEY, true);
       this.logger.log(
         `generated ${allCvars.length} cvars for build: ${buildId}`,
       );
@@ -318,6 +318,7 @@ export class RconService {
       );
       await this.cache.put(failureCacheKey, true, 600);
     } finally {
+      await this.disconnect(serverId);
       await this.releaseCvarsLock(buildId);
     }
   }
