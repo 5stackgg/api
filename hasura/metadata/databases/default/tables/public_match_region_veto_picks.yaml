@@ -29,6 +29,7 @@ insert_permissions:
         - match_id
         - match_lineup_id
         - region
+        - type
     comment: ""
   - role: user
     permission:
