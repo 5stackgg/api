@@ -10,28 +10,38 @@ CREATE OR REPLACE FUNCTION public.resolve_bracket_bye(
     LANGUAGE plpgsql
 AS $$
 DECLARE
+    current_bracket tournament_brackets%ROWTYPE;
     pending_feeders int;
     lone_team_id uuid;
     tournament_id uuid;
 BEGIN
+    -- Re-read from disk: the passed-in row may be stale when called from
+    -- a resume loop where earlier iterations cascaded and already resolved this bracket.
+    SELECT * INTO current_bracket
+    FROM tournament_brackets WHERE id = _bracket.id;
+
+    IF current_bracket IS NULL THEN
+        RETURN false;
+    END IF;
+
     -- Only applies when exactly one team is present
-    IF (_bracket.tournament_team_id_1 IS NOT NULL AND _bracket.tournament_team_id_2 IS NOT NULL) THEN
+    IF (current_bracket.tournament_team_id_1 IS NOT NULL AND current_bracket.tournament_team_id_2 IS NOT NULL) THEN
         RETURN false;
     END IF;
 
-    IF (_bracket.tournament_team_id_1 IS NULL AND _bracket.tournament_team_id_2 IS NULL) THEN
+    IF (current_bracket.tournament_team_id_1 IS NULL AND current_bracket.tournament_team_id_2 IS NULL) THEN
         RETURN false;
     END IF;
 
-    IF _bracket.finished = true OR _bracket.match_id IS NOT NULL THEN
+    IF current_bracket.finished = true OR current_bracket.match_id IS NOT NULL THEN
         RETURN false;
     END IF;
 
     -- Count unfinished, non-bye feeder brackets that could still send a team
     SELECT COUNT(*) INTO pending_feeders
     FROM tournament_brackets child
-    WHERE (child.parent_bracket_id = _bracket.id
-           OR child.loser_parent_bracket_id = _bracket.id)
+    WHERE (child.parent_bracket_id = current_bracket.id
+           OR child.loser_parent_bracket_id = current_bracket.id)
       AND child.finished = false
       AND child.bye = false;
 
@@ -40,25 +50,28 @@ BEGIN
     END IF;
 
     -- Runtime bye confirmed: one team, no pending feeders
-    lone_team_id := COALESCE(_bracket.tournament_team_id_1, _bracket.tournament_team_id_2);
+    lone_team_id := COALESCE(current_bracket.tournament_team_id_1, current_bracket.tournament_team_id_2);
 
     RAISE NOTICE 'Resolving runtime bye: bracket %, team % advanced to parent %',
-        _bracket.id, lone_team_id, _bracket.parent_bracket_id;
+        current_bracket.id, lone_team_id, current_bracket.parent_bracket_id;
 
     -- Mark as bye and finished
     UPDATE tournament_brackets
     SET bye = true, finished = true
-    WHERE id = _bracket.id;
+    WHERE id = current_bracket.id;
 
     -- Advance the lone team to the parent bracket
-    IF _bracket.parent_bracket_id IS NOT NULL THEN
-        PERFORM public.assign_team_to_bracket_slot(_bracket.parent_bracket_id, lone_team_id);
+    IF current_bracket.parent_bracket_id IS NOT NULL THEN
+        PERFORM public.assign_team_to_bracket_slot(current_bracket.parent_bracket_id, lone_team_id);
+    ELSE
+        RAISE WARNING 'resolve_bracket_bye: bracket % has no parent, team % cannot advance',
+            current_bracket.id, lone_team_id;
     END IF;
 
     -- Check if tournament is now complete
     SELECT ts.tournament_id INTO tournament_id
     FROM tournament_stages ts
-    WHERE ts.id = _bracket.tournament_stage_id;
+    WHERE ts.id = current_bracket.tournament_stage_id;
 
     IF tournament_id IS NOT NULL THEN
         PERFORM check_tournament_finished(tournament_id);
