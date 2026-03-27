@@ -9,10 +9,18 @@ BEGIN
      IF OLD.match_id IS NOT NULL THEN
         return NEW;
      END IF;
-     
+
      -- Don't schedule if bracket is already finished
      IF NEW.finished = true THEN
         return NEW;
+     END IF;
+
+     -- Only run scheduling logic when team columns actually change.
+     -- Other updates (scheduled_eta, scheduled_at, etc.) should not
+     -- trigger scheduling or bye resolution.
+     IF (OLD.tournament_team_id_1 IS NOT DISTINCT FROM NEW.tournament_team_id_1) AND
+        (OLD.tournament_team_id_2 IS NOT DISTINCT FROM NEW.tournament_team_id_2) THEN
+        RETURN NEW;
      END IF;
 
      IF NEW.match_id IS NULL THEN
