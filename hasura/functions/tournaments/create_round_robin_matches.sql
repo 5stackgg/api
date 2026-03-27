@@ -14,7 +14,7 @@ DECLARE
     team_count int;
     round_count int;
     matches_per_round int;
-    match_counter int;
+
     round_num int;
     i int;
     k int;
@@ -57,8 +57,6 @@ BEGIN
     
     RAISE NOTICE 'Creating round robin matches for % teams: % rounds, % matches per round, starting at round %', 
         team_count, round_count, matches_per_round, _start_round;
-    
-    match_counter := 0;
     
     -- Generate round robin matches using rotating algorithm
     FOR round_num IN 1..round_count LOOP
@@ -110,37 +108,35 @@ BEGIN
                 team_2_id := NULL;
             END IF;
             
-            match_counter := match_counter + 1;
-            
             INSERT INTO tournament_brackets (
-                round, 
-                tournament_stage_id, 
-                match_number, 
-                "group", 
-                team_1_seed, 
-                team_2_seed, 
+                round,
+                tournament_stage_id,
+                match_number,
+                "group",
+                team_1_seed,
+                team_2_seed,
                 path,
                 tournament_team_id_1,
                 tournament_team_id_2
             )
             VALUES (
-                _start_round + round_num - 1, 
-                _stage_id, 
-                match_counter, 
-                _group, 
-                team_1_seed, 
-                team_2_seed, 
+                _start_round + round_num - 1,
+                _stage_id,
+                i,
+                _group,
+                team_1_seed,
+                team_2_seed,
                 'WB',
                 team_1_id,
                 team_2_id
             );
-            
+
             IF use_team_ids THEN
-                RAISE NOTICE 'Created match %: round %, team % vs team %', 
-                    match_counter, _start_round + round_num - 1, team_1_id, team_2_id;
+                RAISE NOTICE 'Created match %: round %, team % vs team %',
+                    i, _start_round + round_num - 1, team_1_id, team_2_id;
             ELSE
-                RAISE NOTICE 'Created match %: round %, seed % vs seed %', 
-                    match_counter, _start_round + round_num - 1, team_1_seed, team_2_seed;
+                RAISE NOTICE 'Created match %: round %, seed % vs seed %',
+                    i, _start_round + round_num - 1, team_1_seed, team_2_seed;
             END IF;
         END LOOP;
     END LOOP;
@@ -161,7 +157,7 @@ BEGIN
         END LOOP;
     END IF;
     
-    RAISE NOTICE 'Created % round robin matches starting at round %', match_counter, _start_round;
+    RAISE NOTICE 'Created % round robin matches starting at round %', round_count * matches_per_round, _start_round;
 END;
 $$;
 

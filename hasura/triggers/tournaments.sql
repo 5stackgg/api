@@ -37,6 +37,24 @@ BEGIN
         OLD.status = 'Paused' AND NEW.status = 'Live'
         AND NEW.auto_start
     ) THEN
+        -- Resolve runtime byes first (one team, no pending feeders)
+        -- Process lower rounds first so cascading byes propagate correctly
+        FOR bracket_row IN
+            SELECT tb.*
+            FROM tournament_brackets tb
+            INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+            WHERE ts.tournament_id = NEW.id
+              AND tb.match_id IS NULL
+              AND tb.finished = false
+              AND tb.bye = false
+              AND ((tb.tournament_team_id_1 IS NOT NULL AND tb.tournament_team_id_2 IS NULL)
+                OR (tb.tournament_team_id_1 IS NULL AND tb.tournament_team_id_2 IS NOT NULL))
+            ORDER BY tb.round, tb.match_number
+        LOOP
+            PERFORM resolve_bracket_bye(bracket_row);
+        END LOOP;
+
+        -- Then schedule matches with both teams present
         FOR bracket_row IN
             SELECT tb.*
             FROM tournament_brackets tb
