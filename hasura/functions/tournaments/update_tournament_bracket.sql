@@ -34,11 +34,11 @@ BEGIN
     WHERE id = bracket.id;
 
     IF bracket.parent_bracket_id IS NOT NULL THEN
-        PERFORM public.assign_team_to_bracket_slot(bracket.parent_bracket_id, winning_team_id);
+        PERFORM public.assign_team_to_bracket_slot(bracket.parent_bracket_id, winning_team_id, bracket.id);
     END IF;
 
     IF bracket.loser_parent_bracket_id IS NOT NULL THEN
-        PERFORM public.assign_team_to_bracket_slot(bracket.loser_parent_bracket_id, losing_team_id);
+        PERFORM public.assign_team_to_bracket_slot(bracket.loser_parent_bracket_id, losing_team_id, bracket.id);
     END IF;
 
     SELECT ts.tournament_id, ts.type INTO tournament_id, stage_type

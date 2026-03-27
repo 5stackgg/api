@@ -11,7 +11,6 @@ CREATE OR REPLACE FUNCTION public.resolve_bracket_bye(
 AS $$
 DECLARE
     current_bracket tournament_brackets%ROWTYPE;
-    total_feeders int;
     pending_feeders int;
     lone_team_id uuid;
     tournament_id uuid;
@@ -38,25 +37,14 @@ BEGIN
         RETURN false;
     END IF;
 
-    -- A bracket with 2+ total feeders is designed to receive 2 teams through
-    -- normal match play (e.g. LB R1 fed by two WB R1 matches). It should
-    -- never be a bye — the second team will arrive when the other feeder finishes.
-    SELECT COUNT(*) INTO total_feeders
-    FROM tournament_brackets child
-    WHERE child.parent_bracket_id = current_bracket.id
-       OR child.loser_parent_bracket_id = current_bracket.id;
-
-    IF total_feeders >= 2 THEN
-        RETURN false;
-    END IF;
-
-    -- For brackets with 0-1 feeders, check if any are still pending
+    -- Check if any feeders can still provide a team.
+    -- A finished bye feeder via loser_parent_bracket_id will never send a loser,
+    -- so it doesn't count as pending. Only unfinished feeders are pending.
     SELECT COUNT(*) INTO pending_feeders
     FROM tournament_brackets child
     WHERE (child.parent_bracket_id = current_bracket.id
            OR child.loser_parent_bracket_id = current_bracket.id)
-      AND child.finished = false
-      AND child.bye = false;
+      AND child.finished = false;
 
     IF pending_feeders > 0 THEN
         RETURN false;
@@ -75,7 +63,7 @@ BEGIN
 
     -- Advance the lone team to the parent bracket
     IF current_bracket.parent_bracket_id IS NOT NULL THEN
-        PERFORM public.assign_team_to_bracket_slot(current_bracket.parent_bracket_id, lone_team_id);
+        PERFORM public.assign_team_to_bracket_slot(current_bracket.parent_bracket_id, lone_team_id, current_bracket.id);
     ELSE
         RAISE WARNING 'resolve_bracket_bye: bracket % has no parent, team % cannot advance',
             current_bracket.id, lone_team_id;

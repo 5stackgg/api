@@ -46,6 +46,12 @@ BEGIN
             WHERE id = v_parent_bracket_id;
         END IF;
 
+        -- Mark the bye bracket as finished so downstream bye resolution
+        -- (e.g. LB R1 brackets) can detect that no loser will arrive
+        UPDATE tournament_brackets
+        SET finished = true
+        WHERE id = bracket.id;
+
         RAISE NOTICE '  Advanced team % from bracket % to parent %', winner_id, bracket.id, v_parent_bracket_id;
     END LOOP;
 
