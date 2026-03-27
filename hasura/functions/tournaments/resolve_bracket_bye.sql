@@ -24,12 +24,8 @@ BEGIN
         RETURN false;
     END IF;
 
-    -- Only applies when exactly one team is present
+    -- Both teams present: nothing to resolve
     IF (current_bracket.tournament_team_id_1 IS NOT NULL AND current_bracket.tournament_team_id_2 IS NOT NULL) THEN
-        RETURN false;
-    END IF;
-
-    IF (current_bracket.tournament_team_id_1 IS NULL AND current_bracket.tournament_team_id_2 IS NULL) THEN
         RETURN false;
     END IF;
 
@@ -38,8 +34,6 @@ BEGIN
     END IF;
 
     -- Check if any feeders can still provide a team.
-    -- A finished bye feeder via loser_parent_bracket_id will never send a loser,
-    -- so it doesn't count as pending. Only unfinished feeders are pending.
     SELECT COUNT(*) INTO pending_feeders
     FROM tournament_brackets child
     WHERE (child.parent_bracket_id = current_bracket.id
@@ -50,23 +44,52 @@ BEGIN
         RETURN false;
     END IF;
 
-    -- Runtime bye confirmed: one team, no pending feeders
     lone_team_id := COALESCE(current_bracket.tournament_team_id_1, current_bracket.tournament_team_id_2);
-
-    RAISE NOTICE 'Resolving runtime bye: bracket %, team % advanced to parent %',
-        current_bracket.id, lone_team_id, current_bracket.parent_bracket_id;
 
     -- Mark as bye and finished
     UPDATE tournament_brackets
     SET bye = true, finished = true
     WHERE id = current_bracket.id;
 
-    -- Advance the lone team to the parent bracket
-    IF current_bracket.parent_bracket_id IS NOT NULL THEN
-        PERFORM public.assign_team_to_bracket_slot(current_bracket.parent_bracket_id, lone_team_id, current_bracket.id);
+    IF lone_team_id IS NOT NULL THEN
+        -- Runtime bye: one team, no pending feeders → advance
+        RAISE NOTICE 'Resolving runtime bye: bracket %, team % advanced to parent %',
+            current_bracket.id, lone_team_id, current_bracket.parent_bracket_id;
+
+        IF current_bracket.parent_bracket_id IS NOT NULL THEN
+            PERFORM public.assign_team_to_bracket_slot(current_bracket.parent_bracket_id, lone_team_id, current_bracket.id);
+        END IF;
+
+        -- A bye produces no loser. Check if the loser_parent bracket is now
+        -- a dead bracket (0 teams, all feeders finished).
+        IF current_bracket.loser_parent_bracket_id IS NOT NULL THEN
+            DECLARE
+                loser_target tournament_brackets%ROWTYPE;
+            BEGIN
+                SELECT * INTO loser_target
+                FROM tournament_brackets WHERE id = current_bracket.loser_parent_bracket_id;
+                IF loser_target IS NOT NULL THEN
+                    PERFORM resolve_bracket_bye(loser_target);
+                END IF;
+            END;
+        END IF;
     ELSE
-        RAISE WARNING 'resolve_bracket_bye: bracket % has no parent, team % cannot advance',
-            current_bracket.id, lone_team_id;
+        -- Dead bracket: zero teams, all feeders finished (e.g. all feeders were byes)
+        RAISE NOTICE 'Resolving dead bracket: bracket % has no teams and no pending feeders',
+            current_bracket.id;
+
+        -- Check if parent bracket should now resolve as bye (it lost a feeder)
+        IF current_bracket.parent_bracket_id IS NOT NULL THEN
+            DECLARE
+                parent_bracket tournament_brackets%ROWTYPE;
+            BEGIN
+                SELECT * INTO parent_bracket
+                FROM tournament_brackets WHERE id = current_bracket.parent_bracket_id;
+                IF parent_bracket IS NOT NULL THEN
+                    PERFORM resolve_bracket_bye(parent_bracket);
+                END IF;
+            END;
+        END IF;
     END IF;
 
     -- Check if tournament is now complete

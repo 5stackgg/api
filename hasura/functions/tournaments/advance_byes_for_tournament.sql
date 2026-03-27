@@ -55,6 +55,37 @@ BEGIN
         RAISE NOTICE '  Advanced team % from bracket % to parent %', winner_id, bracket.id, v_parent_bracket_id;
     END LOOP;
 
+    -- After all WB byes are resolved, check for dead LB brackets:
+    -- brackets with 0 teams where all feeders are finished (e.g. both WB feeders were byes).
+    -- Process by round so cascading dead byes propagate correctly.
+    DECLARE
+        dead_bracket tournament_brackets%ROWTYPE;
+    BEGIN
+        FOR dead_bracket IN
+            SELECT tb.*
+            FROM tournament_brackets tb
+            JOIN tournament_stages ts ON tb.tournament_stage_id = ts.id
+            WHERE ts.tournament_id = p_tournament_id
+              AND tb.match_id IS NULL
+              AND tb.finished = false
+              AND tb.tournament_team_id_1 IS NULL
+              AND tb.tournament_team_id_2 IS NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM tournament_brackets child
+                  WHERE (child.parent_bracket_id = tb.id OR child.loser_parent_bracket_id = tb.id)
+                    AND child.finished = false
+              )
+              AND EXISTS (
+                  SELECT 1 FROM tournament_brackets child
+                  WHERE child.parent_bracket_id = tb.id OR child.loser_parent_bracket_id = tb.id
+              )
+            ORDER BY tb.round, tb.match_number
+        LOOP
+            RAISE NOTICE '  Resolving dead bracket % (% R%M%)', dead_bracket.id, dead_bracket.path, dead_bracket.round, dead_bracket.match_number;
+            PERFORM resolve_bracket_bye(dead_bracket);
+        END LOOP;
+    END;
+
     RETURN;
 END;
 $$;
