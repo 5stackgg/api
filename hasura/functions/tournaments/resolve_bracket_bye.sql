@@ -11,6 +11,7 @@ CREATE OR REPLACE FUNCTION public.resolve_bracket_bye(
 AS $$
 DECLARE
     current_bracket tournament_brackets%ROWTYPE;
+    total_feeders int;
     pending_feeders int;
     lone_team_id uuid;
     tournament_id uuid;
@@ -37,7 +38,19 @@ BEGIN
         RETURN false;
     END IF;
 
-    -- Count unfinished, non-bye feeder brackets that could still send a team
+    -- A bracket with 2+ total feeders is designed to receive 2 teams through
+    -- normal match play (e.g. LB R1 fed by two WB R1 matches). It should
+    -- never be a bye — the second team will arrive when the other feeder finishes.
+    SELECT COUNT(*) INTO total_feeders
+    FROM tournament_brackets child
+    WHERE child.parent_bracket_id = current_bracket.id
+       OR child.loser_parent_bracket_id = current_bracket.id;
+
+    IF total_feeders >= 2 THEN
+        RETURN false;
+    END IF;
+
+    -- For brackets with 0-1 feeders, check if any are still pending
     SELECT COUNT(*) INTO pending_feeders
     FROM tournament_brackets child
     WHERE (child.parent_bracket_id = current_bracket.id
