@@ -256,6 +256,10 @@ export class InvitesController {
               tournament_team_invites_by_pk.tournament_team_id,
             player_steam_id: user.steam_id,
           },
+          on_conflict: {
+            constraint: "tournament_roster_pkey",
+            update_columns: ["role"],
+          },
         },
         __typename: true,
       },
