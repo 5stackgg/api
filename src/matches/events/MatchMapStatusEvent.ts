@@ -2,10 +2,11 @@ import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 import { e_match_map_status_enum } from "../../../generated";
 import { HasuraService } from "../../hasura/hasura.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
-import { Logger } from "@nestjs/common";
+import { Injectable, Logger, Scope } from "@nestjs/common";
 import { ChatService } from "../../chat/chat.service";
 import { NotificationsService } from "../../notifications/notifications.service";
 
+@Injectable({ scope: Scope.REQUEST })
 export default class MatchMapStatusEvent extends MatchEventProcessor<{
   status: e_match_map_status_enum;
   winning_lineup_id?: string;
