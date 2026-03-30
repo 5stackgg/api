@@ -1,22 +1,9 @@
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
-import { HasuraService } from "../../hasura/hasura.service";
-import { MatchAssistantService } from "../match-assistant/match-assistant.service";
-import { Logger } from "@nestjs/common";
-import { ChatService } from "../../chat/chat.service";
 
 export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
   round: string;
   match_map_id: string;
 }> {
-  constructor(
-    logger: Logger,
-    hasura: HasuraService,
-    matchAssistant: MatchAssistantService,
-    chat: ChatService,
-  ) {
-    super(logger, hasura, matchAssistant, chat);
-  }
-
   public async process() {
     const statsRound = parseInt(this.data.round);
 
