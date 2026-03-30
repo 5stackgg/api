@@ -762,7 +762,7 @@ export class MatchesController {
       throw Error("match is not accepting check in's at this time");
     }
 
-    await this.hasura.mutation({
+    const { update_match_lineup_players } = await this.hasura.mutation({
       update_match_lineup_players: {
         __args: {
           where: {
@@ -826,7 +826,7 @@ export class MatchesController {
     });
 
     return {
-      success: false,
+      success: (update_match_lineup_players?.affected_rows ?? 0) > 0,
     };
   }
 
