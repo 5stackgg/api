@@ -52,7 +52,9 @@ export class MatchEventsGateway {
 
       const base64Credentials = authHeader.split(" ").at(1);
       if (!base64Credentials) {
-        this.logger.warn("game server connection rejected: malformed auth");
+        this.logger.warn("game server connection rejected: malformed auth", {
+          ip: request.headers["cf-connecting-ip"],
+        });
         client.close();
         return;
       }
@@ -60,7 +62,9 @@ export class MatchEventsGateway {
       const decoded = Buffer.from(base64Credentials, "base64").toString();
       const colonIndex = decoded.indexOf(":");
       if (colonIndex === -1) {
-        this.logger.warn("game server connection rejected: invalid credentials format");
+        this.logger.warn("game server connection rejected: invalid credentials format", {
+          ip: request.headers["cf-connecting-ip"],
+        });
         client.close();
         return;
       }
