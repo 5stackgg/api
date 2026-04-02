@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { CacheService } from "src/cache/cache.service";
 import { Request, Response, NextFunction } from "express";
 import { HasuraService } from "src/hasura/hasura.service";
@@ -11,11 +12,25 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
     private readonly hasura: HasuraService,
   ) {}
 
+  private safeCompare(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  }
+
   async use(request: Request, response: Response, next: NextFunction) {
     try {
-      const [matchId, apiPassword] = (
-        request.headers["x-origin-auth"] as string
-      )?.split(":");
+      const originAuth = request.headers["x-origin-auth"];
+      if (!originAuth || typeof originAuth !== "string") {
+        return response.status(401).end();
+      }
+
+      const colonIndex = originAuth.indexOf(":");
+      if (colonIndex === -1) {
+        return response.status(401).end();
+      }
+
+      const matchId = originAuth.substring(0, colonIndex);
+      const apiPassword = originAuth.substring(colonIndex + 1);
 
       const token = request.url.split("/")?.[3];
 
@@ -36,7 +51,7 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
         60 * 1000,
       );
 
-      if (matchPassword !== apiPassword) {
+      if (!matchPassword || !this.safeCompare(matchPassword, apiPassword)) {
         return response.status(401).end();
       }
     } catch (error) {
