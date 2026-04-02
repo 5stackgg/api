@@ -63,10 +63,7 @@ async function bootstrap() {
     },
   });
 
-  app.set("trust proxy", () => {
-    // TODO - trust proxy
-    return true;
-  });
+  app.set("trust proxy", 1);
 
   const appConfig = configService.get<AppConfig>("app");
 

@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
+import { timingSafeEqual } from "crypto";
 import WebSocket from "ws";
 import { Request } from "express";
 import { ModuleRef } from "@nestjs/core";
@@ -29,6 +30,11 @@ export class MatchEventsGateway {
     private readonly cache: CacheService,
   ) {}
 
+  private safeCompare(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  }
+
   async handleConnection(
     @ConnectedSocket() client: WebSocket.WebSocket,
     request: Request,
@@ -36,30 +42,46 @@ export class MatchEventsGateway {
     try {
       const authHeader = request.headers.authorization;
 
-      if (authHeader && authHeader.startsWith("Basic ")) {
-        const base64Credentials = authHeader.split(" ").at(1);
+      if (!authHeader || !authHeader.startsWith("Basic ")) {
+        client.close();
+        return;
+      }
 
-        const [serverId, apiPassword] = Buffer.from(base64Credentials, "base64")
-          .toString()
-          .split(":");
+      const base64Credentials = authHeader.split(" ").at(1);
+      if (!base64Credentials) {
+        client.close();
+        return;
+      }
 
-        const { servers_by_pk } = await this.hasura.query({
-          servers_by_pk: {
-            __args: {
-              id: serverId,
-            },
-            id: true,
-            api_password: true,
+      const decoded = Buffer.from(base64Credentials, "base64").toString();
+      const colonIndex = decoded.indexOf(":");
+      if (colonIndex === -1) {
+        client.close();
+        return;
+      }
+
+      const serverId = decoded.substring(0, colonIndex);
+      const apiPassword = decoded.substring(colonIndex + 1);
+
+      const { servers_by_pk } = await this.hasura.query({
+        servers_by_pk: {
+          __args: {
+            id: serverId,
           },
-        });
+          id: true,
+          api_password: true,
+        },
+      });
 
-        if (servers_by_pk?.api_password !== apiPassword) {
-          client.close();
-          this.logger.warn("game server auth failure", {
-            serverId,
-            ip: request.headers["cf-connecting-ip"],
-          });
-        }
+      if (
+        !servers_by_pk?.api_password ||
+        !this.safeCompare(servers_by_pk.api_password, apiPassword)
+      ) {
+        client.close();
+        this.logger.warn("game server auth failure", {
+          serverId,
+          ip: request.headers["cf-connecting-ip"],
+        });
       }
     } catch {
       client.close();
