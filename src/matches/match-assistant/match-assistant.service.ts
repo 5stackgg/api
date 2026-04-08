@@ -232,14 +232,21 @@ export class MatchAssistantService {
     });
 
     if (match.options.prefer_dedicated_server) {
-      const assignedDedicated = await this.assignDedicatedServer(
-        match.id,
-        match.region,
-      );
+      try {
+        const assignedDedicated = await this.assignDedicatedServer(
+          match.id,
+          match.region,
+        );
 
-      if (assignedDedicated) {
-        await this.startMatch(matchId);
-        return;
+        if (assignedDedicated) {
+          await this.startMatch(matchId);
+          return;
+        }
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] unable to assign dedicated server`,
+          error,
+        );
       }
     }
 
@@ -272,9 +279,16 @@ export class MatchAssistantService {
       return;
     }
 
-    if (await this.assignDedicatedServer(match.id, match.region)) {
-      await this.startMatch(matchId);
-      return;
+    try {
+      if (await this.assignDedicatedServer(match.id, match.region)) {
+        await this.startMatch(matchId);
+        return;
+      }
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] unable to assign dedicated server`,
+        error,
+      );
     }
 
     this.logger.log(
@@ -392,6 +406,7 @@ export class MatchAssistantService {
 
         return true;
       },
+      10,
     );
   }
 
