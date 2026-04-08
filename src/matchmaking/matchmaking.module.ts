@@ -3,6 +3,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchmakingGateway } from "./matchmaking.gateway";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { RedisModule } from "src/redis/redis.module";
+import { CacheModule } from "src/cache/cache.module";
 import { MatchesModule } from "src/matches/matches.module";
 import { MatchmakeService } from "./matchmake.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
@@ -19,6 +20,7 @@ import { MarkPlayerOffline } from "./jobs/MarkPlayerOffline";
   imports: [
     RedisModule,
     HasuraModule,
+    CacheModule,
     forwardRef(() => MatchesModule),
     BullModule.registerQueue({
       name: MatchmakingQueues.Matchmaking,

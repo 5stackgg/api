@@ -22,10 +22,14 @@ export class SocketsGateway {
     await this.sockets.updateClient(client.user.steam_id, client.id);
   }
 
-  private async handleConnection(
+  public async handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
     request: Request,
   ) {
     await this.sockets.setupSocket(client, request);
+  }
+
+  public handleDisconnect(client: FiveStackWebSocketClient) {
+    // Cleanup is handled by client.on("close") in SocketsService.setupSocket
   }
 }

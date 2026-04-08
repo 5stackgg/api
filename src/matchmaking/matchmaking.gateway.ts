@@ -4,6 +4,7 @@ import { e_match_types_enum } from "generated";
 import { MatchmakeService } from "./matchmake.service";
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
+import { CacheService } from "src/cache/cache.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import {
   ConnectedSocket,
@@ -12,6 +13,7 @@ import {
   WebSocketGateway,
 } from "@nestjs/websockets";
 import { JoinQueueError } from "./utilities/joinQueueError";
+import { PlayerLobby } from "./types/PlayerLobby";
 import { HasuraService } from "src/hasura/hasura.service";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { e_player_roles_enum } from "generated";
@@ -29,6 +31,7 @@ export class MatchmakingGateway {
     public readonly redisManager: RedisManagerService,
     public readonly matchmakeService: MatchmakeService,
     public readonly matchmakingLobbyService: MatchmakingLobbyService,
+    private readonly cache: CacheService,
   ) {
     this.redis = this.redisManager.getConnection();
   }
@@ -122,7 +125,7 @@ export class MatchmakingGateway {
       throw new JoinQueueError("You do not have permission to join this queue");
     }
 
-    let lobby;
+    let lobby: PlayerLobby | undefined;
     const user = client.user;
 
     if (!user) {
@@ -220,16 +223,24 @@ export class MatchmakingGateway {
         throw new JoinQueueError("Unable to find Player Lobby");
       }
 
-      await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
-
       try {
-        await this.matchmakingLobbyService.setLobbyDetails(
-          regions,
-          type,
-          lobby,
+        await this.cache.lock(
+          `matchmaking:verify:${lobby.id}`,
+          async () => {
+            await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
+            await this.matchmakingLobbyService.setLobbyDetails(
+              regions,
+              type,
+              lobby,
+            );
+            await this.matchmakeService.addLobbyToQueue(lobby.id);
+            return true;
+          },
         );
-        await this.matchmakeService.addLobbyToQueue(lobby.id);
       } catch (error) {
+        if (error instanceof JoinQueueError) {
+          throw error;
+        }
         this.logger.error(`unable to add lobby to queue`, error);
         await this.matchmakingLobbyService.removeLobbyFromQueue(lobby.id);
         await this.matchmakingLobbyService.removeLobbyDetails(lobby.id);
