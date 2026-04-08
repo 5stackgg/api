@@ -33,8 +33,12 @@ export class SocketsService {
 
     const sub = this.redisManager.getConnection("sub");
 
-    void sub.subscribe("broadcast-message");
-    void sub.subscribe("send-message-to-steam-id");
+    sub.subscribe("broadcast-message").catch((err) => {
+      this.logger.error("Failed to subscribe to broadcast-message", err);
+    });
+    sub.subscribe("send-message-to-steam-id").catch((err) => {
+      this.logger.error("Failed to subscribe to send-message-to-steam-id", err);
+    });
     sub.on("message", (channel, message) => {
       const { steamId, event, data } = JSON.parse(message) as {
         steamId: string;
@@ -44,10 +48,14 @@ export class SocketsService {
 
       switch (channel) {
         case "broadcast-message":
-          void this.broadcastMessage(event, data);
+          this.broadcastMessage(event, data).catch((err) => {
+            this.logger.error("broadcast-message error", err);
+          });
           break;
         case "send-message-to-steam-id":
-          void this.sendMessageToSteamId(steamId, event, data);
+          this.sendMessageToSteamId(steamId, event, data).catch((err) => {
+            this.logger.error("send-message-to-steam-id error", err);
+          });
           break;
       }
     });

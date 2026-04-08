@@ -125,67 +125,93 @@ export class MatchesModule implements NestModule {
       return;
     }
 
-    void scheduleMatchQueue.add(
-      CheckForScheduledMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
+    scheduleMatchQueue
+      .add(
+        CheckForScheduledMatches.name,
+        {},
+        {
+          repeat: {
+            pattern: "* * * * *",
+          },
         },
-      },
-    );
+      )
+      .catch((err) => {
+        this.logger.error("Failed to add CheckForScheduledMatches job", err);
+      });
 
-    void scheduleMatchQueue.add(
-      CancelExpiredMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
+    scheduleMatchQueue
+      .add(
+        CancelExpiredMatches.name,
+        {},
+        {
+          repeat: {
+            pattern: "* * * * *",
+          },
         },
-      },
-    );
+      )
+      .catch((err) => {
+        this.logger.error("Failed to add CancelExpiredMatches job", err);
+      });
 
-    void scheduleMatchQueue.add(
-      RemoveCancelledMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
+    scheduleMatchQueue
+      .add(
+        RemoveCancelledMatches.name,
+        {},
+        {
+          repeat: {
+            pattern: "* * * * *",
+          },
         },
-      },
-    );
+      )
+      .catch((err) => {
+        this.logger.error("Failed to add RemoveCancelledMatches job", err);
+      });
 
-    void matchServersQueue.add(
-      CheckForTournamentStart.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
+    matchServersQueue
+      .add(
+        CheckForTournamentStart.name,
+        {},
+        {
+          repeat: {
+            pattern: "* * * * *",
+          },
         },
-      },
-    );
+      )
+      .catch((err) => {
+        this.logger.error("Failed to add CheckForTournamentStart job", err);
+      });
 
-    void matchServersQueue.add(
-      CleanAbandonedMatches.name,
-      {},
-      {
-        repeat: {
-          pattern: "0 0 * * *",
+    matchServersQueue
+      .add(
+        CleanAbandonedMatches.name,
+        {},
+        {
+          repeat: {
+            pattern: "0 0 * * *",
+          },
         },
-      },
-    );
+      )
+      .catch((err) => {
+        this.logger.error("Failed to add CleanAbandonedMatches job", err);
+      });
 
-    void matchServersQueue.add(
-      CancelInvalidTournaments.name,
-      {},
-      {
-        repeat: {
-          pattern: "* * * * *",
+    matchServersQueue
+      .add(
+        CancelInvalidTournaments.name,
+        {},
+        {
+          repeat: {
+            pattern: "* * * * *",
+          },
         },
-      },
-    );
+      )
+      .catch((err) => {
+        this.logger.error("Failed to add CancelInvalidTournaments job", err);
+      });
 
-    void this.generatePlayerRatings();
+    this.generatePlayerRatings().catch((err) => {
+      this.logger.error("Failed to generate player ratings", err);
+    });
   }
 
   /**

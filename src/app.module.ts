@@ -142,7 +142,9 @@ export class AppModule implements OnApplicationBootstrap {
 
   public async onApplicationBootstrap() {
     try {
-      void this.discordBot.setup();
+      this.discordBot.setup().catch((error) => {
+        this.logger.error("Discord bot setup failed", error);
+      });
       await this.typesense.setup();
       await this.system.detectFeatures();
     } catch (error) {
