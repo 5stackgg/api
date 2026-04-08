@@ -1,5 +1,7 @@
 import {
   ConnectedSocket,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
@@ -10,7 +12,9 @@ import { SocketsService } from "./sockets.service";
 @WebSocketGateway({
   path: "/ws/web",
 })
-export class SocketsGateway {
+export class SocketsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(private readonly sockets: SocketsService) {}
 
   @SubscribeMessage("ping")
