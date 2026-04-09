@@ -232,14 +232,21 @@ export class MatchAssistantService {
     });
 
     if (match.options.prefer_dedicated_server) {
-      const assignedDedicated = await this.assignDedicatedServer(
-        match.id,
-        match.region,
-      );
+      try {
+        const assignedDedicated = await this.assignDedicatedServer(
+          match.id,
+          match.region,
+        );
 
-      if (assignedDedicated) {
-        await this.startMatch(matchId);
-        return;
+        if (assignedDedicated) {
+          await this.startMatch(matchId);
+          return;
+        }
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] unable to assign dedicated server`,
+          error,
+        );
       }
     }
 
@@ -272,9 +279,16 @@ export class MatchAssistantService {
       return;
     }
 
-    if (await this.assignDedicatedServer(match.id, match.region)) {
-      await this.startMatch(matchId);
-      return;
+    try {
+      if (await this.assignDedicatedServer(match.id, match.region)) {
+        await this.startMatch(matchId);
+        return;
+      }
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] unable to assign dedicated server`,
+        error,
+      );
     }
 
     this.logger.log(
@@ -322,72 +336,78 @@ export class MatchAssistantService {
     matchId: string,
     region: string,
   ): Promise<boolean> {
-    const { servers } = await this.hasura.query({
-      servers: {
-        __args: {
-          limit: 1,
-          where: {
-            connected: {
-              _eq: true,
+    return this.cache.lock(
+      `assign-dedicated-server:${region}`,
+      async () => {
+        const { servers } = await this.hasura.query({
+          servers: {
+            __args: {
+              limit: 1,
+              where: {
+                connected: {
+                  _eq: true,
+                },
+                enabled: {
+                  _eq: true,
+                },
+                is_dedicated: {
+                  _eq: true,
+                },
+                type: {
+                  _eq: "Ranked",
+                },
+                reserved_by_match_id: {
+                  _is_null: true,
+                },
+                region: {
+                  _eq: region,
+                },
+              },
             },
-            enabled: {
-              _eq: true,
-            },
-            is_dedicated: {
-              _eq: true,
-            },
-            type: {
-              _eq: "Ranked",
-            },
-            reserved_by_match_id: {
-              _is_null: true,
-            },
-            region: {
-              _eq: region,
-            },
+            id: true,
           },
-        },
-        id: true,
+        });
+
+        const server = servers.at(0);
+
+        if (!server) {
+          return false;
+        }
+
+        this.logger.log(`[${matchId}] assigning on dedicated server`);
+
+        await this.hasura.mutation({
+          update_matches_by_pk: {
+            __args: {
+              pk_columns: {
+                id: matchId,
+              },
+              _set: {
+                server_id: server.id,
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: {
+                id: server.id,
+              },
+              _set: {
+                reserved_by_match_id: matchId,
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        return true;
       },
-    });
-
-    const server = servers.at(0);
-
-    if (!server) {
-      return false;
-    }
-
-    this.logger.log(`[${matchId}] assigning on dedicated server`);
-
-    await this.hasura.mutation({
-      update_matches_by_pk: {
-        __args: {
-          pk_columns: {
-            id: matchId,
-          },
-          _set: {
-            server_id: server.id,
-          },
-        },
-        __typename: true,
-      },
-    });
-
-    await this.hasura.mutation({
-      update_servers_by_pk: {
-        __args: {
-          pk_columns: {
-            id: server.id,
-          },
-          _set: {
-            reserved_by_match_id: matchId,
-          },
-        },
-        __typename: true,
-      },
-    });
-
-    return true;
+      10,
+    );
   }
 
   private async assignOnDemandServer(matchId: string): Promise<boolean> {
