@@ -345,17 +345,11 @@ export class DedicatedServersService {
             await this.pingDedicatedServer(serverId);
           }, 10000);
         })
-        .catch(async (error) => {
+        .catch((error) => {
           this.logger.error(
-            `[${serverId}] error waiting for pod to be ready, recovering server state`,
+            `[${serverId}] error waiting for pod to be ready`,
             error,
           );
-          await this.removeDedicatedServer(serverId).catch((removeError) => {
-            this.logger.error(
-              `[${serverId}] failed to clean up server after pod readiness failure`,
-              removeError,
-            );
-          });
         });
 
       return true;

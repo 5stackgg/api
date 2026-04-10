@@ -7,9 +7,10 @@ import { PostgresService } from "../../postgres/postgres.service";
 
 @UseQueue("Matches", MatchQueues.EloCalculation)
 export class EloCalculation extends WorkerHost {
-  private readonly logger = new Logger(EloCalculation.name);
-
-  constructor(private readonly postgres: PostgresService) {
+  constructor(
+    private readonly logger: Logger,
+    private readonly postgres: PostgresService,
+  ) {
     super();
   }
 
