@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-  Param,
-  ParseIntPipe,
-} from "@nestjs/common";
+import { Controller, Get, Post, Req, Res, Param } from "@nestjs/common";
 import { Request, Response } from "express";
 import { MatchRelayService } from "./match-relay.service";
 
@@ -26,22 +18,22 @@ export class MatchRelayController {
   @Get(":fragment/start")
   public handleGetStart(
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getStart(response, matchId, fragment);
+    this.matchRelayService.getStart(response, matchId, parseInt(fragment));
   }
 
   @Get(":fragment/full")
   public handleGetFull(
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
     this.matchRelayService.getFragment(
       response,
       matchId,
-      fragment,
+      parseInt(fragment),
       "full",
     );
   }
@@ -49,13 +41,13 @@ export class MatchRelayController {
   @Get(":fragment/delta")
   public handleGetDelta(
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
     this.matchRelayService.getFragment(
       response,
       matchId,
-      fragment,
+      parseInt(fragment),
       "delta",
     );
   }
@@ -63,22 +55,22 @@ export class MatchRelayController {
   @Get(":token/:fragment/start")
   public handleGetStartWithToken(
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
-    this.matchRelayService.getStart(response, matchId, fragment);
+    this.matchRelayService.getStart(response, matchId, parseInt(fragment));
   }
 
   @Get(":token/:fragment/full")
   public handleGetFullWithToken(
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
     this.matchRelayService.getFragment(
       response,
       matchId,
-      fragment,
+      parseInt(fragment),
       "full",
     );
   }
@@ -86,13 +78,13 @@ export class MatchRelayController {
   @Get(":token/:fragment/delta")
   public handleGetDeltaWithToken(
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Res() response: Response,
   ) {
     this.matchRelayService.getFragment(
       response,
       matchId,
-      fragment,
+      parseInt(fragment),
       "delta",
     );
   }
@@ -101,7 +93,7 @@ export class MatchRelayController {
   public async handlePostStart(
     @Param("token") token: string,
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Req() request: Request,
     @Res() response: Response,
   ) {
@@ -111,7 +103,7 @@ export class MatchRelayController {
       token,
       "start",
       matchId,
-      fragment,
+      parseInt(fragment),
     );
   }
 
@@ -119,7 +111,7 @@ export class MatchRelayController {
   public async handlePostFull(
     @Param("token") token: string,
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Req() request: Request,
     @Res() response: Response,
   ) {
@@ -129,7 +121,7 @@ export class MatchRelayController {
       token,
       "full",
       matchId,
-      fragment,
+      parseInt(fragment),
     );
   }
 
@@ -137,7 +129,7 @@ export class MatchRelayController {
   public async handlePostDelta(
     @Param("token") token: string,
     @Param("id") matchId: string,
-    @Param("fragment", ParseIntPipe) fragment: number,
+    @Param("fragment") fragment: string,
     @Req() request: Request,
     @Res() response: Response,
   ) {
@@ -147,7 +139,7 @@ export class MatchRelayController {
       token,
       "delta",
       matchId,
-      fragment,
+      parseInt(fragment),
     );
   }
 }
