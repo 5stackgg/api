@@ -1,7 +1,6 @@
 import {
   ConnectedSocket,
   OnGatewayConnection,
-  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
@@ -12,9 +11,7 @@ import { SocketsService } from "./sockets.service";
 @WebSocketGateway({
   path: "/ws/web",
 })
-export class SocketsGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class SocketsGateway implements OnGatewayConnection {
   constructor(private readonly sockets: SocketsService) {}
 
   @SubscribeMessage("ping")
@@ -31,9 +28,5 @@ export class SocketsGateway
     request: Request,
   ) {
     await this.sockets.setupSocket(client, request);
-  }
-
-  public handleDisconnect(client: FiveStackWebSocketClient) {
-    // Cleanup is handled by client.on("close") in SocketsService.setupSocket
   }
 }
