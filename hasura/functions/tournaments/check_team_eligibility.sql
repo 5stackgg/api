@@ -28,7 +28,8 @@ BEGIN
 
     IF roster_count < min_players THEN
         UPDATE tournament_teams
-            SET eligible_at = NULL
+            SET eligible_at = NULL,
+                seed = NULL
             WHERE id = roster.tournament_team_id;
         RETURN;
     END IF;
