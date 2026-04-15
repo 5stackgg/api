@@ -16,6 +16,10 @@ BEGIN
         RETURN false;
     END IF;
 
+    IF tournament_has_max_teams(tournament) THEN
+        RETURN false;
+    END IF;
+
     SELECT EXISTS (
         SELECT 1
         FROM tournament_stages ts

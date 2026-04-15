@@ -86,6 +86,12 @@ computed_fields:
         name: can_resume_tournament
         schema: public
       session_argument: hasura_session
+  - name: can_setup
+    definition:
+      function:
+        name: can_setup_tournament
+        schema: public
+      session_argument: hasura_session
   - name: can_start
     definition:
       function:
@@ -180,23 +186,6 @@ insert_permissions:
       columns:
         - auto_start
         - description
-        - discord_guild_id
-        - discord_notifications_enabled
-        - discord_voice_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
         - match_options_id
         - name
         - start
@@ -231,23 +220,6 @@ insert_permissions:
       columns:
         - auto_start
         - description
-        - discord_guild_id
-        - discord_notifications_enabled
-        - discord_voice_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
         - match_options_id
         - name
         - start
@@ -333,23 +305,6 @@ insert_permissions:
       columns:
         - auto_start
         - description
-        - discord_guild_id
-        - discord_notifications_enabled
-        - discord_voice_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
         - match_options_id
         - name
         - start
@@ -383,23 +338,6 @@ insert_permissions:
       columns:
         - auto_start
         - description
-        - discord_guild_id
-        - discord_notifications_enabled
-        - discord_voice_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
         - match_options_id
         - name
         - start
@@ -424,6 +362,7 @@ select_permissions:
         - can_open_registration
         - can_pause
         - can_resume
+        - can_setup
         - can_start
         - has_min_teams
         - is_organizer
@@ -436,6 +375,40 @@ select_permissions:
       allow_aggregations: true
     comment: ""
   - role: user
+    permission:
+      columns:
+        - auto_start
+        - created_at
+        - description
+        - id
+        - match_options_id
+        - name
+        - organizer_steam_id
+        - start
+        - status
+      computed_fields:
+        - can_cancel
+        - can_close_registration
+        - can_join
+        - can_open_registration
+        - can_pause
+        - can_resume
+        - can_setup
+        - can_start
+        - has_min_teams
+        - is_organizer
+        - joined_tournament
+        - max_players_per_lineup
+        - min_players_per_lineup
+      filter:
+        _or:
+          - is_organizer:
+              _eq: true
+          - status:
+              _neq: Setup
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
     permission:
       columns:
         - auto_start
@@ -471,6 +444,7 @@ select_permissions:
         - can_open_registration
         - can_pause
         - can_resume
+        - can_setup
         - can_start
         - has_min_teams
         - is_organizer
@@ -487,6 +461,21 @@ select_permissions:
     comment: ""
 update_permissions:
   - role: user
+    permission:
+      columns:
+        - auto_start
+        - description
+        - name
+        - start
+        - status
+      filter:
+        is_organizer:
+          _eq: true
+      check:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: tournament_organizer
     permission:
       columns:
         - auto_start

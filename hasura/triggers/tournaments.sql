@@ -100,6 +100,10 @@ CREATE OR REPLACE FUNCTION public.tbu_tournaments() RETURNS TRIGGER
 BEGIN
     IF NEW.status IS DISTINCT FROM OLD.status THEN
         CASE NEW.status
+            WHEN 'Setup' THEN
+                IF NOT can_setup_tournament(OLD, current_setting('hasura.user', true)::json) THEN
+                    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot reset tournament to setup';
+                END IF;
             WHEN 'Cancelled' THEN
                 IF NOT can_cancel_tournament(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot cancel tournament';
@@ -108,7 +112,7 @@ BEGIN
                 IF NOT can_open_tournament_registration(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot open tournament registration';
                 END IF;
-            WHEN 'RegistrationClose' THEN
+            WHEN 'RegistrationClosed' THEN
                 IF NOT can_close_tournament_registration(OLD, current_setting('hasura.user', true)::json) THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot close tournament registration';
                 END IF;

@@ -30,10 +30,13 @@ export class CancelInvalidTournaments extends WorkerHost {
               },
               {
                 start: {
-                  _gte: new Date(),
+                  _lte: new Date(),
                 },
               },
             ],
+          },
+          _set: {
+            status: "CancelledMinTeams",
           },
         },
         affected_rows: true,
@@ -41,7 +44,9 @@ export class CancelInvalidTournaments extends WorkerHost {
     });
 
     if (update_tournaments.affected_rows > 0) {
-      this.logger.log(`${update_tournaments.affected_rows} matches started`);
+      this.logger.log(
+        `${update_tournaments.affected_rows} tournaments cancelled due to insufficient teams`,
+      );
     }
 
     return update_tournaments.affected_rows;
