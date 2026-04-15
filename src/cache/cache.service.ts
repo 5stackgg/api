@@ -55,10 +55,10 @@ export class CacheService {
 
   public async remember<T>(
     key: string,
-    callback: () => CachedValue,
+    callback: () => T | Promise<T>,
     seconds: number,
-  ): Promise<T> {
-    const value = await this.get(key);
+  ): Promise<T | undefined> {
+    const value = (await this.get(key)) as T | undefined;
     if (value !== undefined) {
       return value;
     }
@@ -70,8 +70,11 @@ export class CacheService {
     }
   }
 
-  public async rememberForever(key: string, callback: () => CachedValue) {
-    const value = await this.get(key);
+  public async rememberForever<T>(
+    key: string,
+    callback: () => T | Promise<T>,
+  ): Promise<T | undefined> {
+    const value = (await this.get(key)) as T | undefined;
     if (value !== undefined) {
       return value;
     }
