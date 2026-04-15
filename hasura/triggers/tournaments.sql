@@ -163,3 +163,28 @@ CREATE TRIGGER tbd_tournaments
     BEFORE DELETE ON public.tournaments
     FOR EACH ROW
     EXECUTE FUNCTION public.tbd_tournaments();
+
+CREATE OR REPLACE FUNCTION public.tbi_tournaments() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.discord_notifications_enabled IS NULL THEN
+        IF EXISTS (
+            SELECT 1
+            FROM public.settings
+            WHERE name LIKE 'discord_match_notify_%'
+              AND value = 'true'
+        ) THEN
+            NEW.discord_notifications_enabled := true;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbi_tournaments ON public.tournaments;
+CREATE TRIGGER tbi_tournaments
+    BEFORE INSERT ON public.tournaments
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbi_tournaments();
