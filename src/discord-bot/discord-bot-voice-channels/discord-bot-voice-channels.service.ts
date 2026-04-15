@@ -100,6 +100,10 @@ export class DiscordBotVoiceChannelsService {
     try {
       const voiceCache = await this.getVoiceCache(matchId, lineupId);
 
+      if (!voiceCache) {
+        return;
+      }
+
       const guild = await this.getGuild(voiceCache.guildId);
 
       const member = await guild.members.fetch(user.id);
