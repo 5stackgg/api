@@ -8,10 +8,14 @@ DECLARE
   available_regions text[];
   regions text[];
 BEGIN
-    select * into regions from match_options where id = match_region_veto_pick.match_id;
+    SELECT * INTO _match FROM matches WHERE id = match_region_veto_pick.match_id LIMIT 1;
+
+    SELECT mo.regions INTO regions
+    FROM match_options mo
+    WHERE mo.id = _match.match_options_id;
 
     IF (regions IS NULL OR array_length(regions, 1) = 0) THEN
-        SELECT array_agg(sr.value) INTO available_regions 
+        SELECT array_agg(sr.value) INTO available_regions
         FROM server_regions sr
         LEFT JOIN match_region_veto_picks mvp ON mvp.region = sr.value AND mvp.match_id = match_region_veto_pick.match_id
         WHERE mvp.region IS NULL
@@ -20,7 +24,6 @@ BEGIN
     END IF;
 
   IF array_length(available_regions, 1) = 1 THEN
-    SELECT * INTO _match FROM matches WHERE id = match_region_veto_pick.match_id LIMIT 1;
     SELECT * INTO lineup_id FROM get_region_veto_picking_lineup_id(_match);
 
     INSERT INTO match_region_veto_picks (match_id, type, match_lineup_id, region)

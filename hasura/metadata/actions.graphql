@@ -203,6 +203,13 @@ type Query {
 }
 
 type Mutation {
+  overrideMatchRegion(
+    match_id: uuid!
+    region: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   moveServerItem(
     node_id: String!
     server_id: String
