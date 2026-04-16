@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.can_start_tournament(
+CREATE OR REPLACE FUNCTION public.can_setup_tournament(
     tournament public.tournaments,
     hasura_session json
 )
@@ -6,11 +6,7 @@ RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
 BEGIN
-    IF tournament.status NOT IN ('Setup', 'RegistrationOpen', 'RegistrationClosed') THEN
-        RETURN false;
-    END IF;
-
-    IF NOT tournament_has_min_teams(tournament) THEN
+    IF tournament.status != 'Cancelled' AND tournament.status != 'CancelledMinTeams' THEN
         RETURN false;
     END IF;
 

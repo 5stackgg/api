@@ -109,17 +109,21 @@ BEGIN
             -- Otherwise, lookup teams by seed
             IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
                 IF team_1_seed_val IS NOT NULL THEN
-                    SELECT tournament_team_id INTO team_1_id
-                    FROM v_team_stage_results
-                    WHERE tournament_stage_id = previous_stage.id
+                    SELECT vtsr.tournament_team_id INTO team_1_id
+                    FROM v_team_stage_results vtsr
+                    JOIN tournament_teams tt ON tt.id = vtsr.tournament_team_id
+                    WHERE vtsr.tournament_stage_id = previous_stage.id
+                      AND tt.eligible_at IS NOT NULL
                     OFFSET team_1_seed_val - 1
                     LIMIT 1;
                 END IF;
 
                 IF team_2_seed_val IS NOT NULL THEN
-                    SELECT tournament_team_id INTO team_2_id
-                    FROM v_team_stage_results
-                    WHERE tournament_stage_id = previous_stage.id
+                    SELECT vtsr.tournament_team_id INTO team_2_id
+                    FROM v_team_stage_results vtsr
+                    JOIN tournament_teams tt ON tt.id = vtsr.tournament_team_id
+                    WHERE vtsr.tournament_stage_id = previous_stage.id
+                      AND tt.eligible_at IS NOT NULL
                     OFFSET team_2_seed_val - 1
                     LIMIT 1;
                 END IF;

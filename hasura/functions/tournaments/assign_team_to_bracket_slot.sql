@@ -18,6 +18,11 @@ BEGIN
         RETURN;
     END IF;
 
+    IF target_bracket.tournament_team_id_1 = _team_id
+       OR target_bracket.tournament_team_id_2 = _team_id THEN
+        RETURN;
+    END IF;
+
     -- Determine the correct slot from feeder ordering:
     -- 1. Loser drops (loser_parent_bracket_id) come before winner feeds (parent_bracket_id)
     -- 2. Within same type, order by round then match_number
@@ -40,15 +45,25 @@ BEGIN
     END IF;
 
     IF slot_position = 1 THEN
-        UPDATE tournament_brackets
-        SET tournament_team_id_1 = _team_id
-        WHERE id = _target_bracket_id
-          AND tournament_team_id_1 IS NULL;
+        IF target_bracket.tournament_team_id_1 IS NULL THEN
+            UPDATE tournament_brackets
+            SET tournament_team_id_1 = _team_id
+            WHERE id = _target_bracket_id;
+        ELSIF target_bracket.tournament_team_id_2 IS NULL THEN
+            UPDATE tournament_brackets
+            SET tournament_team_id_2 = _team_id
+            WHERE id = _target_bracket_id;
+        END IF;
     ELSIF slot_position = 2 THEN
-        UPDATE tournament_brackets
-        SET tournament_team_id_2 = _team_id
-        WHERE id = _target_bracket_id
-          AND tournament_team_id_2 IS NULL;
+        IF target_bracket.tournament_team_id_2 IS NULL THEN
+            UPDATE tournament_brackets
+            SET tournament_team_id_2 = _team_id
+            WHERE id = _target_bracket_id;
+        ELSIF target_bracket.tournament_team_id_1 IS NULL THEN
+            UPDATE tournament_brackets
+            SET tournament_team_id_1 = _team_id
+            WHERE id = _target_bracket_id;
+        END IF;
     ELSE
         -- Fallback: first empty slot (for callers without source bracket)
         IF target_bracket.tournament_team_id_1 IS NULL THEN

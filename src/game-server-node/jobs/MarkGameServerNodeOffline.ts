@@ -32,6 +32,7 @@ export class MarkGameServerNodeOffline extends WorkerHost {
           },
         },
         label: true,
+        region: true,
       },
     });
 
@@ -46,5 +47,128 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       undefined,
       DISCORD_COLORS.RED,
     );
+
+    const region = update_game_server_nodes_by_pk.region;
+    if (!region) {
+      return;
+    }
+
+    const { server_regions_by_pk } = await this.hasura.query({
+      server_regions_by_pk: {
+        __args: { value: region },
+        value: true,
+        description: true,
+        status: true,
+      },
+    });
+
+    if (!server_regions_by_pk || server_regions_by_pk.status !== "Offline") {
+      return;
+    }
+
+    await this.notifications.send(
+      "GameNodeStatus",
+      {
+        message: `Region ${server_regions_by_pk.description || region} is Offline. All nodes in this region are unavailable.`,
+        title: "Region Offline",
+        role: "administrator",
+        entity_id: region,
+      },
+      undefined,
+      DISCORD_COLORS.RED,
+    );
+
+    await this.notifyStuckMatches(region);
+  }
+
+  private async notifyStuckMatches(region: string): Promise<void> {
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: {
+              _in: [
+                "Veto",
+                "WaitingForServer",
+                "Scheduled",
+                "WaitingForCheckIn",
+              ],
+            },
+            _or: [
+              { region: { _eq: region } },
+              { options: { regions: { _contains: [region] } } },
+            ],
+          },
+        },
+        id: true,
+        region: true,
+        status: true,
+        options: {
+          regions: true,
+        },
+      },
+    });
+
+    if (matches.length === 0) {
+      return;
+    }
+
+    const regionValues = new Set<string>();
+    for (const match of matches) {
+      if (match.region) {
+        regionValues.add(match.region);
+      }
+      for (const r of match.options?.regions || []) {
+        regionValues.add(r);
+      }
+    }
+
+    const { server_regions } = await this.hasura.query({
+      server_regions: {
+        __args: {
+          where: { value: { _in: Array.from(regionValues) } },
+        },
+        value: true,
+        status: true,
+      },
+    });
+
+    const statusByRegion = new Map<string, string>();
+    for (const sr of server_regions) {
+      statusByRegion.set(sr.value, sr.status);
+    }
+
+    const unusable = (status: string | undefined) =>
+      status === "Offline" || status === "Disabled";
+
+    for (const match of matches) {
+      const assignedRegions = match.region
+        ? [match.region]
+        : match.options?.regions || [];
+
+      if (assignedRegions.length === 0) {
+        continue;
+      }
+
+      const allDown = assignedRegions.every((r) =>
+        unusable(statusByRegion.get(r)),
+      );
+
+      if (!allDown) {
+        continue;
+      }
+
+      await this.notifications.send(
+        "GameNodeStatus",
+        {
+          message: `Match ${match.id} has no available regions (${assignedRegions.join(", ")} are offline). An admin must override the region to unblock it.`,
+          title: "Match stuck: no regions available",
+          role: "administrator",
+          entity_id: match.id,
+        },
+        undefined,
+        DISCORD_COLORS.RED,
+      );
+    }
   }
 }

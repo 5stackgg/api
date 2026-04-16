@@ -1,7 +1,26 @@
 CREATE OR REPLACE FUNCTION public.assign_seeds_to_teams(tournament tournaments) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    min_players int;
 BEGIN
+    min_players := tournament_min_players_per_lineup(tournament);
+
+    UPDATE tournament_teams tt
+    SET eligible_at = CASE
+            WHEN (SELECT COUNT(*) FROM tournament_team_roster ttr
+                  WHERE ttr.tournament_team_id = tt.id) >= min_players
+            THEN COALESCE(tt.eligible_at, NOW())
+            ELSE NULL
+        END,
+        seed = CASE
+            WHEN (SELECT COUNT(*) FROM tournament_team_roster ttr
+                  WHERE ttr.tournament_team_id = tt.id) >= min_players
+            THEN tt.seed
+            ELSE NULL
+        END
+    WHERE tt.tournament_id = tournament.id;
+
     WITH eligible_count AS (
         SELECT COUNT(*) as total
         FROM tournament_teams

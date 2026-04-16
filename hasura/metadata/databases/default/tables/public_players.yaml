@@ -295,6 +295,7 @@ select_permissions:
         - role
         - steam_id
       computed_fields:
+        - current_lobby_id
         - elo
         - is_banned
         - is_gagged
