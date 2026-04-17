@@ -27,7 +27,10 @@ SELECT
     (elo_data->>'kda')::FLOAT AS kda,
     (elo_data->>'team_avg_kda')::FLOAT AS team_avg_kda,
     (elo_data->>'damage_percent')::FLOAT AS damage_percent,
-    (elo_data->>'performance_multiplier')::FLOAT AS performance_multiplier
+    (elo_data->>'performance_multiplier')::FLOAT AS performance_multiplier,
+    (elo_data->>'map_wins')::INTEGER AS map_wins,
+    (elo_data->>'map_losses')::INTEGER AS map_losses,
+    (elo_data->>'series_multiplier')::INTEGER AS series_multiplier
 FROM 
     matches m
 JOIN 
