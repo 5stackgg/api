@@ -267,6 +267,13 @@ export class MatchAssistantService {
         error,
       );
       if (error instanceof FailedToCreateOnDemandServer) {
+        if (tries >= 10) {
+          this.logger.error(
+            `[${matchId}] max retries reached for server assignment`,
+          );
+          await this.updateMatchStatus(matchId, "WaitingForServer");
+          return;
+        }
         setTimeout(async () => {
           this.logger.log(`[${matchId}] try retry assign server....`);
           await this.assignServer(matchId, ++tries);

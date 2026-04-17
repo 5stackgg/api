@@ -1,10 +1,10 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnApplicationShutdown } from "@nestjs/common";
 import IORedis, { Redis, RedisOptions } from "ioredis";
 import { ConfigService } from "@nestjs/config";
 import { RedisConfig } from "../../configs/types/RedisConfig";
 
 @Injectable()
-export class RedisManagerService {
+export class RedisManagerService implements OnApplicationShutdown {
   private config: RedisConfig;
 
   protected connections: {
@@ -20,6 +20,15 @@ export class RedisManagerService {
     private readonly configService: ConfigService,
   ) {
     this.config = this.configService.get("redis");
+  }
+
+  onApplicationShutdown() {
+    for (const [, interval] of Object.entries(this.healthCheckIntervals)) {
+      clearInterval(interval);
+    }
+    for (const [, conn] of Object.entries(this.connections)) {
+      conn.disconnect();
+    }
   }
 
   public getConnection(connection = "default"): Redis {
