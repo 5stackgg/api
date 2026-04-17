@@ -35387,6 +35387,9 @@ export default {
             "current_lobby_id": [
                 2518
             ],
+            "custom_avatar_url": [
+                35
+            ],
             "damage_dealt": [
                 1542,
                 {
@@ -36674,6 +36677,9 @@ export default {
             "current_lobby_id": [
                 2519
             ],
+            "custom_avatar_url": [
+                37
+            ],
             "damage_dealt": [
                 1551
             ],
@@ -36916,6 +36922,9 @@ export default {
             "created_at": [
                 2208
             ],
+            "custom_avatar_url": [
+                35
+            ],
             "damage_dealt": [
                 1548
             ],
@@ -37032,6 +37041,9 @@ export default {
             "current_lobby_id": [
                 2518
             ],
+            "custom_avatar_url": [
+                35
+            ],
             "discord_id": [
                 35
             ],
@@ -37078,6 +37090,9 @@ export default {
             ],
             "current_lobby_id": [
                 2518
+            ],
+            "custom_avatar_url": [
+                35
             ],
             "discord_id": [
                 35
@@ -37172,6 +37187,9 @@ export default {
                 1496
             ],
             "current_lobby_id": [
+                1496
+            ],
+            "custom_avatar_url": [
                 1496
             ],
             "damage_dealt_aggregate": [
@@ -37332,6 +37350,9 @@ export default {
             "created_at": [
                 2208
             ],
+            "custom_avatar_url": [
+                35
+            ],
             "discord_id": [
                 35
             ],
@@ -37431,6 +37452,9 @@ export default {
             ],
             "created_at": [
                 2208
+            ],
+            "custom_avatar_url": [
+                35
             ],
             "discord_id": [
                 35
@@ -40952,6 +40976,9 @@ export default {
             ]
         },
         "teams": {
+            "avatar_url": [
+                35
+            ],
             "can_change_role": [
                 3
             ],
@@ -41339,6 +41366,9 @@ export default {
             "_or": [
                 2174
             ],
+            "avatar_url": [
+                37
+            ],
             "can_change_role": [
                 4
             ],
@@ -41407,6 +41437,9 @@ export default {
             ]
         },
         "teams_insert_input": {
+            "avatar_url": [
+                35
+            ],
             "id": [
                 2518
             ],
@@ -41439,6 +41472,9 @@ export default {
             ]
         },
         "teams_max_fields": {
+            "avatar_url": [
+                35
+            ],
             "id": [
                 2518
             ],
@@ -41459,6 +41495,9 @@ export default {
             ]
         },
         "teams_max_order_by": {
+            "avatar_url": [
+                1496
+            ],
             "id": [
                 1496
             ],
@@ -41476,6 +41515,9 @@ export default {
             ]
         },
         "teams_min_fields": {
+            "avatar_url": [
+                35
+            ],
             "id": [
                 2518
             ],
@@ -41496,6 +41538,9 @@ export default {
             ]
         },
         "teams_min_order_by": {
+            "avatar_url": [
+                1496
+            ],
             "id": [
                 1496
             ],
@@ -41549,6 +41594,9 @@ export default {
             ]
         },
         "teams_order_by": {
+            "avatar_url": [
+                1496
+            ],
             "can_change_role": [
                 1496
             ],
@@ -41605,6 +41653,9 @@ export default {
         },
         "teams_select_column": {},
         "teams_set_input": {
+            "avatar_url": [
+                35
+            ],
             "id": [
                 2518
             ],
@@ -41681,6 +41732,9 @@ export default {
             ]
         },
         "teams_stream_cursor_value_input": {
+            "avatar_url": [
+                35
+            ],
             "id": [
                 2518
             ],

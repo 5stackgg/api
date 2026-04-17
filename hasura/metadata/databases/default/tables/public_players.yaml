@@ -288,6 +288,7 @@ select_permissions:
       columns:
         - avatar_url
         - country
+        - custom_avatar_url
         - language
         - name
         - name_registered
@@ -311,6 +312,7 @@ select_permissions:
       columns:
         - avatar_url
         - country
+        - custom_avatar_url
         - language
         - last_sign_in_at
         - name
@@ -337,6 +339,7 @@ select_permissions:
       columns:
         - avatar_url
         - country
+        - custom_avatar_url
         - language
         - name
         - name_registered
