@@ -1,5 +1,6 @@
 import {
   ConnectedSocket,
+  OnGatewayConnection,
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
@@ -10,7 +11,7 @@ import { SocketsService } from "./sockets.service";
 @WebSocketGateway({
   path: "/ws/web",
 })
-export class SocketsGateway {
+export class SocketsGateway implements OnGatewayConnection {
   constructor(private readonly sockets: SocketsService) {}
 
   @SubscribeMessage("ping")
@@ -22,7 +23,7 @@ export class SocketsGateway {
     await this.sockets.updateClient(client.user.steam_id, client.id);
   }
 
-  private async handleConnection(
+  public async handleConnection(
     @ConnectedSocket() client: FiveStackWebSocketClient,
     request: Request,
   ) {
