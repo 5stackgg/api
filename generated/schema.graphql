@@ -29486,6 +29486,7 @@ type players {
   A computed field, executes function "get_player_current_lobby_id"
   """
   current_lobby_id: uuid
+  custom_avatar_url: String
 
   """An array relationship"""
   damage_dealt(
@@ -30519,6 +30520,7 @@ input players_bool_exp {
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   current_lobby_id: uuid_comparison_exp
+  custom_avatar_url: String_comparison_exp
   damage_dealt: player_damages_bool_exp
   damage_dealt_aggregate: player_damages_aggregate_bool_exp
   damage_taken: player_damages_bool_exp
@@ -30628,6 +30630,7 @@ input players_insert_input {
   coach_lineups: match_lineups_arr_rel_insert_input
   country: String
   created_at: timestamptz
+  custom_avatar_url: String
   damage_dealt: player_damages_arr_rel_insert_input
   damage_taken: player_damages_arr_rel_insert_input
   deaths: player_kills_arr_rel_insert_input
@@ -30673,6 +30676,7 @@ type players_max_fields {
   A computed field, executes function "get_player_current_lobby_id"
   """
   current_lobby_id: uuid
+  custom_avatar_url: String
   discord_id: String
   language: String
   last_sign_in_at: timestamptz
@@ -30711,6 +30715,7 @@ type players_min_fields {
   A computed field, executes function "get_player_current_lobby_id"
   """
   current_lobby_id: uuid
+  custom_avatar_url: String
   discord_id: String
   language: String
   last_sign_in_at: timestamptz
@@ -30779,6 +30784,7 @@ input players_order_by {
   country: order_by
   created_at: order_by
   current_lobby_id: order_by
+  custom_avatar_url: order_by
   damage_dealt_aggregate: player_damages_aggregate_order_by
   damage_taken_aggregate: player_damages_aggregate_order_by
   deaths_aggregate: player_kills_aggregate_order_by
@@ -30845,6 +30851,9 @@ enum players_select_column {
   created_at
 
   """column name"""
+  custom_avatar_url
+
+  """column name"""
   discord_id
 
   """column name"""
@@ -30876,6 +30885,7 @@ input players_set_input {
   avatar_url: String
   country: String
   created_at: timestamptz
+  custom_avatar_url: String
   discord_id: String
   language: String
   last_sign_in_at: timestamptz
@@ -30959,6 +30969,7 @@ input players_stream_cursor_value_input {
   avatar_url: String
   country: String
   created_at: timestamptz
+  custom_avatar_url: String
   discord_id: String
   language: String
   last_sign_in_at: timestamptz
@@ -31000,6 +31011,9 @@ enum players_update_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  custom_avatar_url
 
   """column name"""
   discord_id
@@ -42529,6 +42543,8 @@ input team_roster_variance_order_by {
 columns and relationships of "teams"
 """
 type teams {
+  avatar_url: String
+
   """
   A computed field, executes function "can_change_team_role"
   """
@@ -42803,6 +42819,7 @@ input teams_bool_exp {
   _and: [teams_bool_exp!]
   _not: teams_bool_exp
   _or: [teams_bool_exp!]
+  avatar_url: String_comparison_exp
   can_change_role: Boolean_comparison_exp
   can_invite: Boolean_comparison_exp
   can_remove: Boolean_comparison_exp
@@ -42849,6 +42866,7 @@ input teams_inc_input {
 input type for inserting data into table "teams"
 """
 input teams_insert_input {
+  avatar_url: String
   id: uuid
   invites: team_invites_arr_rel_insert_input
   match_lineups: match_lineups_arr_rel_insert_input
@@ -42862,6 +42880,7 @@ input teams_insert_input {
 
 """aggregate max on columns"""
 type teams_max_fields {
+  avatar_url: String
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -42877,6 +42896,7 @@ type teams_max_fields {
 order by max() on columns of table "teams"
 """
 input teams_max_order_by {
+  avatar_url: order_by
   id: order_by
   name: order_by
   owner_steam_id: order_by
@@ -42885,6 +42905,7 @@ input teams_max_order_by {
 
 """aggregate min on columns"""
 type teams_min_fields {
+  avatar_url: String
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -42900,6 +42921,7 @@ type teams_min_fields {
 order by min() on columns of table "teams"
 """
 input teams_min_order_by {
+  avatar_url: order_by
   id: order_by
   name: order_by
   owner_steam_id: order_by
@@ -42938,6 +42960,7 @@ input teams_on_conflict {
 
 """Ordering options when selecting data from "teams"."""
 input teams_order_by {
+  avatar_url: order_by
   can_change_role: order_by
   can_invite: order_by
   can_remove: order_by
@@ -42964,6 +42987,9 @@ select columns of table "teams"
 """
 enum teams_select_column {
   """column name"""
+  avatar_url
+
+  """column name"""
   id
 
   """column name"""
@@ -42980,6 +43006,7 @@ enum teams_select_column {
 input type for updating data in table "teams"
 """
 input teams_set_input {
+  avatar_url: String
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -43035,6 +43062,7 @@ input teams_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input teams_stream_cursor_value_input {
+  avatar_url: String
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -43057,6 +43085,9 @@ input teams_sum_order_by {
 update columns of table "teams"
 """
 enum teams_update_column {
+  """column name"""
+  avatar_url
+
   """column name"""
   id
 
