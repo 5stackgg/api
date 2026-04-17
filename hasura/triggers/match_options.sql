@@ -195,3 +195,22 @@ $$;
 
 DROP TRIGGER IF EXISTS tad_match_options ON public.match_options;
 CREATE TRIGGER tad_match_options AFTER DELETE ON public.match_options FOR EACH ROW EXECUTE FUNCTION public.tad_match_options();
+
+CREATE OR REPLACE FUNCTION public.cleanup_orphaned_match_options(target_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF target_id IS NULL THEN
+        RETURN;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM public.matches             WHERE match_options_id = target_id)
+       AND NOT EXISTS (SELECT 1 FROM public.tournaments         WHERE match_options_id = target_id)
+       AND NOT EXISTS (SELECT 1 FROM public.tournament_stages   WHERE match_options_id = target_id)
+       AND NOT EXISTS (SELECT 1 FROM public.tournament_brackets WHERE match_options_id = target_id)
+    THEN
+        DELETE FROM public.match_options WHERE id = target_id;
+    END IF;
+END;
+$$;

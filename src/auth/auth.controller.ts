@@ -58,6 +58,25 @@ export class AuthController {
       HasuraService.PLAYER_ROLE_CACHE_KEY(request.user.steam_id),
     );
 
+    const lastSignInKey = HasuraService.PLAYER_LAST_SIGN_IN_CACHE_KEY(
+      request.user.steam_id,
+    );
+
+    if (!(await this.cache.has(lastSignInKey))) {
+      const now = new Date();
+      await this.hasura.mutation({
+        update_players_by_pk: {
+          __args: {
+            pk_columns: { steam_id: request.user.steam_id },
+            _set: { last_sign_in_at: now },
+          },
+          __typename: true,
+        },
+      });
+      await this.cache.put(lastSignInKey, true, 60 * 60 * 1000);
+      user.last_sign_in_at = now;
+    }
+
     return user;
   }
 

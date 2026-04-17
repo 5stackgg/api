@@ -83,8 +83,7 @@ CREATE OR REPLACE FUNCTION public.tad_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-  DELETE FROM match_options
-       WHERE id = OLD.match_options_id;
+  PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
 
   RETURN NEW;
 END;

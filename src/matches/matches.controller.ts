@@ -1320,22 +1320,6 @@ export class MatchesController {
       },
     });
 
-    try {
-      await this.hasura.mutation({
-        delete_match_options_by_pk: {
-          __args: {
-            id: match_id,
-          },
-          __typename: true,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `[${match_id}] match options being used by other matches`,
-        error,
-      );
-    }
-
     return {
       success: true,
     };

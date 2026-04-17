@@ -9464,6 +9464,12 @@ export default {
             "demo_network_limiter": [
                 21
             ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
+                21
+            ],
             "e_region": [
                 1988
             ],
@@ -9789,6 +9795,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -9822,6 +9834,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -9872,6 +9890,12 @@ export default {
                 22
             ],
             "demo_network_limiter": [
+                22
+            ],
+            "disk_available_gb": [
+                22
+            ],
+            "disk_used_percent": [
                 22
             ],
             "e_region": [
@@ -10009,6 +10033,12 @@ export default {
             "demo_network_limiter": [
                 21
             ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
+                21
+            ],
             "end_port_range": [
                 21
             ],
@@ -10045,6 +10075,12 @@ export default {
                 21
             ],
             "demo_network_limiter": [
+                21
+            ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
                 21
             ],
             "e_region": [
@@ -10142,6 +10178,12 @@ export default {
             "demo_network_limiter": [
                 21
             ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
+                21
+            ],
             "end_port_range": [
                 21
             ],
@@ -10196,6 +10238,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -10254,6 +10302,12 @@ export default {
             "demo_network_limiter": [
                 21
             ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
+                21
+            ],
             "end_port_range": [
                 21
             ],
@@ -10308,6 +10362,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -10406,6 +10466,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "e_region": [
@@ -10534,6 +10600,12 @@ export default {
             "demo_network_limiter": [
                 21
             ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
+                21
+            ],
             "enabled": [
                 3
             ],
@@ -10614,6 +10686,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -10647,6 +10725,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -10684,6 +10768,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -10717,6 +10807,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -10754,6 +10850,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -10787,6 +10889,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -10836,6 +10944,12 @@ export default {
                 21
             ],
             "demo_network_limiter": [
+                21
+            ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
                 21
             ],
             "enabled": [
@@ -10918,6 +11032,12 @@ export default {
             "demo_network_limiter": [
                 21
             ],
+            "disk_available_gb": [
+                21
+            ],
+            "disk_used_percent": [
+                21
+            ],
             "end_port_range": [
                 21
             ],
@@ -10951,6 +11071,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -11018,6 +11144,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -11051,6 +11183,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -11088,6 +11226,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -11121,6 +11265,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -11158,6 +11308,12 @@ export default {
             "demo_network_limiter": [
                 16
             ],
+            "disk_available_gb": [
+                16
+            ],
+            "disk_used_percent": [
+                16
+            ],
             "end_port_range": [
                 16
             ],
@@ -11191,6 +11347,12 @@ export default {
                 1496
             ],
             "demo_network_limiter": [
+                1496
+            ],
+            "disk_available_gb": [
+                1496
+            ],
+            "disk_used_percent": [
                 1496
             ],
             "end_port_range": [
@@ -22838,6 +23000,9 @@ export default {
             "server": [
                 2015
             ],
+            "server_error": [
+                35
+            ],
             "server_id": [
                 2518
             ],
@@ -23344,6 +23509,9 @@ export default {
             "server": [
                 2026
             ],
+            "server_error": [
+                37
+            ],
             "server_id": [
                 2519
             ],
@@ -23493,6 +23661,9 @@ export default {
             "server": [
                 2035
             ],
+            "server_error": [
+                35
+            ],
             "server_id": [
                 2518
             ],
@@ -23582,6 +23753,9 @@ export default {
             "scheduled_at": [
                 2208
             ],
+            "server_error": [
+                35
+            ],
             "server_id": [
                 2518
             ],
@@ -23639,6 +23813,9 @@ export default {
                 1496
             ],
             "scheduled_at": [
+                1496
+            ],
+            "server_error": [
                 1496
             ],
             "server_id": [
@@ -23718,6 +23895,9 @@ export default {
             "scheduled_at": [
                 2208
             ],
+            "server_error": [
+                35
+            ],
             "server_id": [
                 2518
             ],
@@ -23775,6 +23955,9 @@ export default {
                 1496
             ],
             "scheduled_at": [
+                1496
+            ],
+            "server_error": [
                 1496
             ],
             "server_id": [
@@ -23992,6 +24175,9 @@ export default {
             "server": [
                 2037
             ],
+            "server_error": [
+                1496
+            ],
             "server_id": [
                 1496
             ],
@@ -24074,6 +24260,9 @@ export default {
             ],
             "scheduled_at": [
                 2208
+            ],
+            "server_error": [
+                35
             ],
             "server_id": [
                 2518
@@ -24204,6 +24393,9 @@ export default {
             ],
             "scheduled_at": [
                 2208
+            ],
+            "server_error": [
+                35
             ],
             "server_id": [
                 2518
@@ -25528,6 +25720,9 @@ export default {
             "created_at": [
                 2208
             ],
+            "deletable": [
+                3
+            ],
             "deleted_at": [
                 2208
             ],
@@ -26024,6 +26219,9 @@ export default {
             "created_at": [
                 1496
             ],
+            "deletable": [
+                1496
+            ],
             "deleted_at": [
                 1496
             ],
@@ -26183,6 +26381,9 @@ export default {
             ],
             "created_at": [
                 2208
+            ],
+            "deletable": [
+                3
             ],
             "deleted_at": [
                 2208
@@ -46662,6 +46863,9 @@ export default {
             "can_resume": [
                 3
             ],
+            "can_setup": [
+                3
+            ],
             "can_start": [
                 3
             ],
@@ -46669,6 +46873,9 @@ export default {
                 2208
             ],
             "description": [
+                35
+            ],
+            "discord_guild_id": [
                 35
             ],
             "discord_notifications_enabled": [
@@ -46712,6 +46919,9 @@ export default {
             ],
             "discord_role_id": [
                 35
+            ],
+            "discord_voice_enabled": [
+                3
             ],
             "discord_webhook": [
                 35
@@ -47207,6 +47417,9 @@ export default {
             "can_resume": [
                 4
             ],
+            "can_setup": [
+                4
+            ],
             "can_start": [
                 4
             ],
@@ -47214,6 +47427,9 @@ export default {
                 2209
             ],
             "description": [
+                37
+            ],
+            "discord_guild_id": [
                 37
             ],
             "discord_notifications_enabled": [
@@ -47257,6 +47473,9 @@ export default {
             ],
             "discord_role_id": [
                 37
+            ],
+            "discord_voice_enabled": [
+                4
             ],
             "discord_webhook": [
                 37
@@ -47356,6 +47575,9 @@ export default {
             "description": [
                 35
             ],
+            "discord_guild_id": [
+                35
+            ],
             "discord_notifications_enabled": [
                 3
             ],
@@ -47397,6 +47619,9 @@ export default {
             ],
             "discord_role_id": [
                 35
+            ],
+            "discord_voice_enabled": [
+                3
             ],
             "discord_webhook": [
                 35
@@ -47451,6 +47676,9 @@ export default {
             "description": [
                 35
             ],
+            "discord_guild_id": [
+                35
+            ],
             "discord_role_id": [
                 35
             ],
@@ -47489,6 +47717,9 @@ export default {
             "description": [
                 1496
             ],
+            "discord_guild_id": [
+                1496
+            ],
             "discord_role_id": [
                 1496
             ],
@@ -47519,6 +47750,9 @@ export default {
                 2208
             ],
             "description": [
+                35
+            ],
+            "discord_guild_id": [
                 35
             ],
             "discord_role_id": [
@@ -47557,6 +47791,9 @@ export default {
                 1496
             ],
             "description": [
+                1496
+            ],
+            "discord_guild_id": [
                 1496
             ],
             "discord_role_id": [
@@ -47645,6 +47882,9 @@ export default {
             "can_resume": [
                 1496
             ],
+            "can_setup": [
+                1496
+            ],
             "can_start": [
                 1496
             ],
@@ -47652,6 +47892,9 @@ export default {
                 1496
             ],
             "description": [
+                1496
+            ],
+            "discord_guild_id": [
                 1496
             ],
             "discord_notifications_enabled": [
@@ -47694,6 +47937,9 @@ export default {
                 1496
             ],
             "discord_role_id": [
+                1496
+            ],
+            "discord_voice_enabled": [
                 1496
             ],
             "discord_webhook": [
@@ -47778,6 +48024,9 @@ export default {
             "description": [
                 35
             ],
+            "discord_guild_id": [
+                35
+            ],
             "discord_notifications_enabled": [
                 3
             ],
@@ -47819,6 +48068,9 @@ export default {
             ],
             "discord_role_id": [
                 35
+            ],
+            "discord_voice_enabled": [
+                3
             ],
             "discord_webhook": [
                 35
@@ -47932,6 +48184,9 @@ export default {
             "description": [
                 35
             ],
+            "discord_guild_id": [
+                35
+            ],
             "discord_notifications_enabled": [
                 3
             ],
@@ -47973,6 +48228,9 @@ export default {
             ],
             "discord_role_id": [
                 35
+            ],
+            "discord_voice_enabled": [
+                3
             ],
             "discord_webhook": [
                 35
@@ -64506,6 +64764,19 @@ export default {
                         35
                     ],
                     "source_path": [
+                        35,
+                        "String!"
+                    ]
+                }
+            ],
+            "overrideMatchRegion": [
+                38,
+                {
+                    "match_id": [
+                        2518,
+                        "uuid!"
+                    ],
+                    "region": [
                         35,
                         "String!"
                     ]
