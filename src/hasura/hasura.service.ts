@@ -15,6 +15,7 @@ import path from "path";
 import crypto from "crypto";
 import { PostgresService } from "../postgres/postgres.service";
 import { AppConfig } from "../configs/types/AppConfig";
+import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 
 @Injectable()
 export class HasuraService {
@@ -44,7 +45,7 @@ export class HasuraService {
   }
 
   public checkSecret(secret: string) {
-    return secret === this.config.secret;
+    return timingSafeStringEqual(secret, this.config.secret);
   }
 
   public async query<R extends query_rootGenqlSelection>(

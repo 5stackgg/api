@@ -2,6 +2,7 @@ import { validate } from "uuid";
 import { Req, Res, Injectable, NestMiddleware, Logger } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { HasuraService } from "../../hasura/hasura.service";
+import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 
 @Injectable()
 export class MatchServerMiddlewareMiddleware implements NestMiddleware {
@@ -50,7 +51,7 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
           },
         });
 
-        if (server?.api_password !== apiPassword) {
+        if (!timingSafeStringEqual(server?.api_password, apiPassword)) {
           return response.status(401).end();
         }
       } catch (error) {
@@ -82,7 +83,7 @@ export class MatchServerMiddlewareMiddleware implements NestMiddleware {
 
     if (
       !match?.server?.current_match.id ||
-      match?.server.api_password !== apiPassword ||
+      !timingSafeStringEqual(match?.server.api_password, apiPassword) ||
       match?.server.current_match.id !== matchId
     ) {
       return response.status(401).end();
