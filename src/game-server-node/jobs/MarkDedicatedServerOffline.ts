@@ -36,7 +36,7 @@ export class MarkDedicatedServerOffline extends WorkerHost {
       },
     });
 
-    if (!update_servers_by_pk.is_dedicated) {
+    if (!update_servers_by_pk?.is_dedicated) {
       return;
     }
 
