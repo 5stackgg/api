@@ -1,4 +1,3 @@
-import { WebSocket } from "ws";
 import { HasuraService } from "src/hasura/hasura.service";
 import {
   SubscribeMessage,
@@ -9,11 +8,7 @@ import {
 import { Inject } from "@nestjs/common";
 import { RegionSignalData } from "./types/SignalData";
 import { ClientProxy } from "@nestjs/microservices";
-
-interface WebRTCClient extends WebSocket {
-  id: string;
-  sessionId: string;
-}
+import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 
 @WebSocketGateway({
   path: "/ws/web",
@@ -28,7 +23,7 @@ export class SignalServerGateway {
   public async handleOffer(
     @MessageBody()
     data: RegionSignalData,
-    @ConnectedSocket() client: WebRTCClient,
+    @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
     const { region, signal, peerId } = data;
 
@@ -37,6 +32,8 @@ export class SignalServerGateway {
     if (!server) {
       return;
     }
+
+    client.peerNodes?.add(server.id);
 
     this.client.emit(`offer.${server.id}`, {
       region,
@@ -51,7 +48,7 @@ export class SignalServerGateway {
   public async handleIceCandidate(
     @MessageBody()
     data: RegionSignalData,
-    @ConnectedSocket() client: WebRTCClient,
+    @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
     const { region, signal, peerId } = data;
     const server = await this.getRegionServer(region);
@@ -59,6 +56,8 @@ export class SignalServerGateway {
     if (!server) {
       return;
     }
+
+    client.peerNodes?.add(server.id);
 
     this.client.emit(`candidate.${server.id}`, {
       region,
