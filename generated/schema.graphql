@@ -7030,6 +7030,8 @@ type game_server_nodes {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
 
   """An object relationship"""
   e_region: server_regions
@@ -7205,6 +7207,8 @@ type game_server_nodes_avg_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -7225,6 +7229,8 @@ input game_server_nodes_avg_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -7246,6 +7252,8 @@ input game_server_nodes_bool_exp {
   cpu_threads_per_core: Int_comparison_exp
   csgo_build_id: Int_comparison_exp
   demo_network_limiter: Int_comparison_exp
+  disk_available_gb: Int_comparison_exp
+  disk_used_percent: Int_comparison_exp
   e_region: server_regions_bool_exp
   e_status: e_game_server_node_statuses_bool_exp
   enabled: Boolean_comparison_exp
@@ -7318,6 +7326,8 @@ input game_server_nodes_inc_input {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   end_port_range: Int
   pin_build_id: Int
   start_port_range: Int
@@ -7335,6 +7345,8 @@ input game_server_nodes_insert_input {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   e_region: server_regions_obj_rel_insert_input
   e_status: e_game_server_node_statuses_obj_rel_insert_input
   enabled: Boolean
@@ -7372,6 +7384,8 @@ type game_server_nodes_max_fields {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   end_port_range: Int
   id: String
   label: String
@@ -7399,6 +7413,8 @@ input game_server_nodes_max_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   id: order_by
   label: order_by
@@ -7423,6 +7439,8 @@ type game_server_nodes_min_fields {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   end_port_range: Int
   id: String
   label: String
@@ -7450,6 +7468,8 @@ input game_server_nodes_min_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   id: order_by
   label: order_by
@@ -7503,6 +7523,8 @@ input game_server_nodes_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   e_region: server_regions_order_by
   e_status: e_game_server_node_statuses_order_by
   enabled: order_by
@@ -7568,6 +7590,12 @@ enum game_server_nodes_select_column {
 
   """column name"""
   demo_network_limiter
+
+  """column name"""
+  disk_available_gb
+
+  """column name"""
+  disk_used_percent
 
   """column name"""
   enabled
@@ -7670,6 +7698,8 @@ input game_server_nodes_set_input {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
@@ -7702,6 +7732,8 @@ type game_server_nodes_stddev_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -7722,6 +7754,8 @@ input game_server_nodes_stddev_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -7739,6 +7773,8 @@ type game_server_nodes_stddev_pop_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -7759,6 +7795,8 @@ input game_server_nodes_stddev_pop_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -7776,6 +7814,8 @@ type game_server_nodes_stddev_samp_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -7796,6 +7836,8 @@ input game_server_nodes_stddev_samp_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -7822,6 +7864,8 @@ input game_server_nodes_stream_cursor_value_input {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
@@ -7854,6 +7898,8 @@ type game_server_nodes_sum_fields {
   cpu_threads_per_core: Int
   csgo_build_id: Int
   demo_network_limiter: Int
+  disk_available_gb: Int
+  disk_used_percent: Int
   end_port_range: Int
   pin_build_id: Int
   start_port_range: Int
@@ -7874,6 +7920,8 @@ input game_server_nodes_sum_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -7906,6 +7954,12 @@ enum game_server_nodes_update_column {
 
   """column name"""
   demo_network_limiter
+
+  """column name"""
+  disk_available_gb
+
+  """column name"""
+  disk_used_percent
 
   """column name"""
   enabled
@@ -8006,6 +8060,8 @@ type game_server_nodes_var_pop_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -8026,6 +8082,8 @@ input game_server_nodes_var_pop_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -8043,6 +8101,8 @@ type game_server_nodes_var_samp_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -8063,6 +8123,8 @@ input game_server_nodes_var_samp_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -8080,6 +8142,8 @@ type game_server_nodes_variance_fields {
   cpu_threads_per_core: Float
   csgo_build_id: Float
   demo_network_limiter: Float
+  disk_available_gb: Float
+  disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
   start_port_range: Float
@@ -8100,6 +8164,8 @@ input game_server_nodes_variance_order_by {
   cpu_threads_per_core: order_by
   csgo_build_id: order_by
   demo_network_limiter: order_by
+  disk_available_gb: order_by
+  disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
   start_port_range: order_by
@@ -16078,6 +16144,7 @@ type matches {
 
   """An object relationship"""
   server: servers
+  server_error: String
   server_id: uuid
 
   """
@@ -16353,6 +16420,7 @@ input matches_bool_exp {
   requested_organizer: Boolean_comparison_exp
   scheduled_at: timestamptz_comparison_exp
   server: servers_bool_exp
+  server_error: String_comparison_exp
   server_id: uuid_comparison_exp
   server_region: String_comparison_exp
   server_type: String_comparison_exp
@@ -16436,6 +16504,7 @@ input matches_insert_input {
   region_veto_picks: match_region_veto_picks_arr_rel_insert_input
   scheduled_at: timestamptz
   server: servers_obj_rel_insert_input
+  server_error: String
   server_id: uuid
   started_at: timestamptz
   status: e_match_status_enum
@@ -16504,6 +16573,7 @@ type matches_max_fields {
   """
   region_veto_picking_lineup_id: uuid
   scheduled_at: timestamptz
+  server_error: String
   server_id: uuid
 
   """
@@ -16540,6 +16610,7 @@ input matches_max_order_by {
   password: order_by
   region: order_by
   scheduled_at: order_by
+  server_error: order_by
   server_id: order_by
   started_at: order_by
   winning_lineup_id: order_by
@@ -16604,6 +16675,7 @@ type matches_min_fields {
   """
   region_veto_picking_lineup_id: uuid
   scheduled_at: timestamptz
+  server_error: String
   server_id: uuid
 
   """
@@ -16640,6 +16712,7 @@ input matches_min_order_by {
   password: order_by
   region: order_by
   scheduled_at: order_by
+  server_error: order_by
   server_id: order_by
   started_at: order_by
   winning_lineup_id: order_by
@@ -16732,6 +16805,7 @@ input matches_order_by {
   requested_organizer: order_by
   scheduled_at: order_by
   server: servers_order_by
+  server_error: order_by
   server_id: order_by
   server_region: order_by
   server_type: order_by
@@ -16791,6 +16865,9 @@ enum matches_select_column {
   scheduled_at
 
   """column name"""
+  server_error
+
+  """column name"""
   server_id
 
   """column name"""
@@ -16819,6 +16896,7 @@ input matches_set_input {
   password: String
   region: String
   scheduled_at: timestamptz
+  server_error: String
   server_id: uuid
   started_at: timestamptz
   status: e_match_status_enum
@@ -16913,6 +16991,7 @@ input matches_stream_cursor_value_input {
   password: String
   region: String
   scheduled_at: timestamptz
+  server_error: String
   server_id: uuid
   started_at: timestamptz
   status: e_match_status_enum
@@ -16979,6 +17058,9 @@ enum matches_update_column {
 
   """column name"""
   scheduled_at
+
+  """column name"""
+  server_error
 
   """column name"""
   server_id
@@ -20049,6 +20131,7 @@ type mutation_root {
 
   """Move file or directory on game server"""
   moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
+  overrideMatchRegion(match_id: uuid!, region: String!): SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
 
   """Refresh all players in Typesense index"""
@@ -23340,6 +23423,7 @@ type notifications {
     path: String
   ): jsonb
   created_at: timestamptz!
+  deletable: Boolean!
   deleted_at: timestamptz
   entity_id: String
   id: uuid!
@@ -23459,6 +23543,7 @@ input notifications_bool_exp {
   _or: [notifications_bool_exp!]
   actions: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
+  deletable: Boolean_comparison_exp
   deleted_at: timestamptz_comparison_exp
   entity_id: String_comparison_exp
   id: uuid_comparison_exp
@@ -23515,6 +23600,7 @@ input type for inserting data into table "notifications"
 input notifications_insert_input {
   actions: jsonb
   created_at: timestamptz
+  deletable: Boolean
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -23599,6 +23685,7 @@ input notifications_on_conflict {
 input notifications_order_by {
   actions: order_by
   created_at: order_by
+  deletable: order_by
   deleted_at: order_by
   entity_id: order_by
   id: order_by
@@ -23630,6 +23717,9 @@ enum notifications_select_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  deletable
 
   """column name"""
   deleted_at
@@ -23664,6 +23754,9 @@ select "notifications_aggregate_bool_exp_bool_and_arguments_columns" columns of 
 """
 enum notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
+  deletable
+
+  """column name"""
   is_read
 }
 
@@ -23671,6 +23764,9 @@ enum notifications_select_column_notifications_aggregate_bool_exp_bool_and_argum
 select "notifications_aggregate_bool_exp_bool_or_arguments_columns" columns of table "notifications"
 """
 enum notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  deletable
+
   """column name"""
   is_read
 }
@@ -23681,6 +23777,7 @@ input type for updating data in table "notifications"
 input notifications_set_input {
   actions: jsonb
   created_at: timestamptz
+  deletable: Boolean
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -23743,6 +23840,7 @@ input notifications_stream_cursor_input {
 input notifications_stream_cursor_value_input {
   actions: jsonb
   created_at: timestamptz
+  deletable: Boolean
   deleted_at: timestamptz
   entity_id: String
   id: uuid
@@ -23775,6 +23873,9 @@ enum notifications_update_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  deletable
 
   """column name"""
   deleted_at
@@ -46273,11 +46374,17 @@ type tournaments {
   can_resume: Boolean
 
   """
+  A computed field, executes function "can_setup_tournament"
+  """
+  can_setup: Boolean
+
+  """
   A computed field, executes function "can_start_tournament"
   """
   can_start: Boolean
   created_at: timestamptz
   description: String
+  discord_guild_id: String
   discord_notifications_enabled: Boolean
   discord_notify_Canceled: Boolean
   discord_notify_Finished: Boolean
@@ -46292,6 +46399,7 @@ type tournaments {
   discord_notify_WaitingForCheckIn: Boolean
   discord_notify_WaitingForServer: Boolean
   discord_role_id: String
+  discord_voice_enabled: Boolean!
   discord_webhook: String
 
   """An object relationship"""
@@ -46627,9 +46735,11 @@ input tournaments_bool_exp {
   can_open_registration: Boolean_comparison_exp
   can_pause: Boolean_comparison_exp
   can_resume: Boolean_comparison_exp
+  can_setup: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   description: String_comparison_exp
+  discord_guild_id: String_comparison_exp
   discord_notifications_enabled: Boolean_comparison_exp
   discord_notify_Canceled: Boolean_comparison_exp
   discord_notify_Finished: Boolean_comparison_exp
@@ -46644,6 +46754,7 @@ input tournaments_bool_exp {
   discord_notify_WaitingForCheckIn: Boolean_comparison_exp
   discord_notify_WaitingForServer: Boolean_comparison_exp
   discord_role_id: String_comparison_exp
+  discord_voice_enabled: Boolean_comparison_exp
   discord_webhook: String_comparison_exp
   e_tournament_status: e_tournament_status_bool_exp
   has_min_teams: Boolean_comparison_exp
@@ -46700,6 +46811,7 @@ input tournaments_insert_input {
   auto_start: Boolean
   created_at: timestamptz
   description: String
+  discord_guild_id: String
   discord_notifications_enabled: Boolean
   discord_notify_Canceled: Boolean
   discord_notify_Finished: Boolean
@@ -46714,6 +46826,7 @@ input tournaments_insert_input {
   discord_notify_WaitingForCheckIn: Boolean
   discord_notify_WaitingForServer: Boolean
   discord_role_id: String
+  discord_voice_enabled: Boolean
   discord_webhook: String
   e_tournament_status: e_tournament_status_obj_rel_insert_input
   id: uuid
@@ -46734,6 +46847,7 @@ input tournaments_insert_input {
 type tournaments_max_fields {
   created_at: timestamptz
   description: String
+  discord_guild_id: String
   discord_role_id: String
   discord_webhook: String
   id: uuid
@@ -46759,6 +46873,7 @@ order by max() on columns of table "tournaments"
 input tournaments_max_order_by {
   created_at: order_by
   description: order_by
+  discord_guild_id: order_by
   discord_role_id: order_by
   discord_webhook: order_by
   id: order_by
@@ -46772,6 +46887,7 @@ input tournaments_max_order_by {
 type tournaments_min_fields {
   created_at: timestamptz
   description: String
+  discord_guild_id: String
   discord_role_id: String
   discord_webhook: String
   id: uuid
@@ -46797,6 +46913,7 @@ order by min() on columns of table "tournaments"
 input tournaments_min_order_by {
   created_at: order_by
   description: order_by
+  discord_guild_id: order_by
   discord_role_id: order_by
   discord_webhook: order_by
   id: order_by
@@ -46846,9 +46963,11 @@ input tournaments_order_by {
   can_open_registration: order_by
   can_pause: order_by
   can_resume: order_by
+  can_setup: order_by
   can_start: order_by
   created_at: order_by
   description: order_by
+  discord_guild_id: order_by
   discord_notifications_enabled: order_by
   discord_notify_Canceled: order_by
   discord_notify_Finished: order_by
@@ -46863,6 +46982,7 @@ input tournaments_order_by {
   discord_notify_WaitingForCheckIn: order_by
   discord_notify_WaitingForServer: order_by
   discord_role_id: order_by
+  discord_voice_enabled: order_by
   discord_webhook: order_by
   e_tournament_status: e_tournament_status_order_by
   has_min_teams: order_by
@@ -46901,6 +47021,9 @@ enum tournaments_select_column {
 
   """column name"""
   description
+
+  """column name"""
+  discord_guild_id
 
   """column name"""
   discord_notifications_enabled
@@ -46943,6 +47066,9 @@ enum tournaments_select_column {
 
   """column name"""
   discord_role_id
+
+  """column name"""
+  discord_voice_enabled
 
   """column name"""
   discord_webhook
@@ -47011,6 +47137,9 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments
 
   """column name"""
   discord_notify_WaitingForServer
+
+  """column name"""
+  discord_voice_enabled
 }
 
 """
@@ -47058,6 +47187,9 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_
 
   """column name"""
   discord_notify_WaitingForServer
+
+  """column name"""
+  discord_voice_enabled
 }
 
 """
@@ -47067,6 +47199,7 @@ input tournaments_set_input {
   auto_start: Boolean
   created_at: timestamptz
   description: String
+  discord_guild_id: String
   discord_notifications_enabled: Boolean
   discord_notify_Canceled: Boolean
   discord_notify_Finished: Boolean
@@ -47081,6 +47214,7 @@ input tournaments_set_input {
   discord_notify_WaitingForCheckIn: Boolean
   discord_notify_WaitingForServer: Boolean
   discord_role_id: String
+  discord_voice_enabled: Boolean
   discord_webhook: String
   id: uuid
   match_options_id: uuid
@@ -47169,6 +47303,7 @@ input tournaments_stream_cursor_value_input {
   auto_start: Boolean
   created_at: timestamptz
   description: String
+  discord_guild_id: String
   discord_notifications_enabled: Boolean
   discord_notify_Canceled: Boolean
   discord_notify_Finished: Boolean
@@ -47183,6 +47318,7 @@ input tournaments_stream_cursor_value_input {
   discord_notify_WaitingForCheckIn: Boolean
   discord_notify_WaitingForServer: Boolean
   discord_role_id: String
+  discord_voice_enabled: Boolean
   discord_webhook: String
   id: uuid
   match_options_id: uuid
@@ -47227,6 +47363,9 @@ enum tournaments_update_column {
   description
 
   """column name"""
+  discord_guild_id
+
+  """column name"""
   discord_notifications_enabled
 
   """column name"""
@@ -47267,6 +47406,9 @@ enum tournaments_update_column {
 
   """column name"""
   discord_role_id
+
+  """column name"""
+  discord_voice_enabled
 
   """column name"""
   discord_webhook

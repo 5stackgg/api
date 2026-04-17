@@ -268,6 +268,7 @@ CREATE OR REPLACE FUNCTION public.tad_tournament_stages() RETURNS TRIGGER
     AS $$
 BEGIN
     PERFORM update_tournament_stages(OLD.tournament_id);
+    PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
     RETURN OLD;
 END;
 $$;

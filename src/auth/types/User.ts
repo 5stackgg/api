@@ -9,4 +9,5 @@ export interface User {
   avatar_url?: string;
   discord_id?: string;
   language?: string;
+  last_sign_in_at?: Date | string;
 }

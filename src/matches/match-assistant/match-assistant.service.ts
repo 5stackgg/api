@@ -5,6 +5,7 @@ import {
   CoreV1Api,
   KubeConfig,
   Exec,
+  V1Pod,
 } from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
@@ -218,6 +219,10 @@ export class MatchAssistantService {
   }
 
   public async assignServer(matchId: string, tries = 0): Promise<void> {
+    if (tries === 0) {
+      await this.setServerError(matchId, null);
+    }
+
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -299,6 +304,8 @@ export class MatchAssistantService {
   }
 
   private async startMatch(matchId: string) {
+    await this.setServerError(matchId, null);
+
     await this.updateMatchStatus(matchId, "Live");
 
     await this.sendServerMatchId(matchId);
@@ -853,6 +860,8 @@ export class MatchAssistantService {
         });
         for (const pod of podList.items) {
           if (pod.status!.phase !== "Running") {
+            const podError = await this.derivePodError(core, pod);
+            await this.setServerError(matchId, podError);
             return false;
           }
         }
@@ -871,14 +880,94 @@ export class MatchAssistantService {
 
       await this.rcon.disconnect(server.id);
 
+      await this.setServerError(matchId, null);
+
       return true;
     } catch (error) {
-      this.logger.warn(
-        `unable to check server status`,
-        error?.response?.body?.message || error,
-      );
+      const message = error?.response?.body?.message || error?.message || null;
+      this.logger.warn(`unable to check server status`, message || error);
+      if (message) {
+        await this.setServerError(matchId, message);
+      }
       return false;
     }
+  }
+
+  private async derivePodError(
+    core: CoreV1Api,
+    pod: V1Pod,
+  ): Promise<string | null> {
+    const scheduled = pod.status?.conditions?.find(
+      (condition) => condition.type === "PodScheduled",
+    );
+    if (scheduled?.status === "False" && (scheduled.reason || scheduled.message)) {
+      return [scheduled.reason, scheduled.message].filter(Boolean).join(": ");
+    }
+
+    const waiting = pod.status?.containerStatuses?.find(
+      (status) => status.state?.waiting?.reason,
+    )?.state?.waiting;
+    if (waiting?.reason && waiting.reason !== "ContainerCreating") {
+      return [waiting.reason, waiting.message].filter(Boolean).join(": ");
+    }
+
+    const podName = pod.metadata?.name;
+    if (podName) {
+      try {
+        const events = await core.listNamespacedEvent({
+          namespace: this.namespace,
+          fieldSelector: `involvedObject.name=${podName},involvedObject.kind=Pod`,
+        });
+        const latestWarning = events.items
+          .filter((event) => event.type === "Warning")
+          .sort((a, b) => {
+            const at = new Date(a.lastTimestamp || a.eventTime || 0).getTime();
+            const bt = new Date(b.lastTimestamp || b.eventTime || 0).getTime();
+            return bt - at;
+          })[0];
+        if (latestWarning?.reason || latestWarning?.message) {
+          return [latestWarning.reason, latestWarning.message]
+            .filter(Boolean)
+            .join(": ");
+        }
+      } catch (error) {
+        this.logger.warn(
+          `unable to list pod events`,
+          error?.response?.body?.message || error?.message || error,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  private async setServerError(matchId: string, message: string | null) {
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        server_error: true,
+      },
+    });
+
+    if ((matches_by_pk?.server_error ?? null) === (message ?? null)) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: {
+            id: matchId,
+          },
+          _set: {
+            server_error: message,
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   public async delayCheckOnDemandServer(matchId: string) {
@@ -983,6 +1072,8 @@ export class MatchAssistantService {
         __typename: true,
       },
     });
+
+    await this.setServerError(matchId, null);
   }
 
   public async getAvailableMaps(matchId: string) {

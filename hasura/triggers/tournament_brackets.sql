@@ -96,3 +96,16 @@ CREATE TRIGGER tbd_tournament_brackets
     BEFORE DELETE ON public.tournament_brackets
     FOR EACH ROW
     EXECUTE FUNCTION public.tbd_tournament_brackets();
+
+CREATE OR REPLACE FUNCTION public.tad_tournament_brackets() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tad_tournament_brackets ON public.tournament_brackets;
+CREATE TRIGGER tad_tournament_brackets AFTER DELETE ON public.tournament_brackets
+    FOR EACH ROW EXECUTE FUNCTION public.tad_tournament_brackets();

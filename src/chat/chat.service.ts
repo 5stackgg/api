@@ -11,7 +11,6 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 @Injectable()
 export class ChatService {
   private redis: Redis;
-  private sessions: Map<string, FiveStackWebSocketClient[]> = new Map();
 
   private expiresIn = 60 * 60;
 
@@ -137,23 +136,20 @@ export class ChatService {
 
     const userData = await this.addUserToLobby(type, id, client.user, false);
 
-    if (!this.sessions.has(client.user.steam_id)) {
-      this.sessions.set(client.user.steam_id, []);
-    }
+    const [added, count] = await this.addSession(
+      type,
+      id,
+      client.user.steam_id,
+      client.id,
+    );
 
-    const userSessions = this.sessions.get(client.user.steam_id);
-
-    if (userSessions.length === 0) {
+    if (added === 1 && count === 1) {
       void this.to(type, id, "joined", {
         user: {
           ...userData.user,
           inGame: userData.inGame,
         },
       });
-    }
-
-    if (!userSessions.includes(client)) {
-      userSessions.push(client);
     }
 
     const allUsers = await this.getAllUsersInLobby(type, id);
@@ -253,26 +249,19 @@ export class ChatService {
     id: string,
     event: "chat" | "list" | "messages" | "joined" | "left",
     data: Record<string, any>,
-    sender?: FiveStackWebSocketClient,
   ) {
     const users = await this.getAllUsersInLobby(type, id);
+    const eventName = `lobby:${type}:${id}:${event}`;
 
     for (const { steamId } of users) {
-      const sessions = this.sessions.get(steamId) || [];
-      for (const session of sessions) {
-        if (sender === session) {
-          continue;
-        }
-
-        session.send(
-          JSON.stringify({
-            event: `lobby:${type}:${id}:${event}`,
-            data: {
-              ...data,
-            },
-          }),
-        );
-      }
+      await this.redis.publish(
+        "send-message-to-steam-id",
+        JSON.stringify({
+          steamId,
+          event: eventName,
+          data,
+        }),
+      );
     }
   }
 
@@ -286,11 +275,14 @@ export class ChatService {
       return;
     }
 
-    const sessions = this.sessions.get(client.user.steam_id) || [];
-    const updatedSessions = sessions.filter((session) => session !== client);
+    const [removed, count] = await this.removeSession(
+      type,
+      id,
+      client.user.steam_id,
+      client.id,
+    );
 
-    if (updatedSessions.length === 0) {
-      this.sessions.delete(client.user.steam_id);
+    if (removed === 1 && count === 0) {
       await this.removeUserData(type, id, client.user.steam_id);
       void this.to(type, id, "left", {
         user: {
@@ -301,9 +293,7 @@ export class ChatService {
       return;
     }
 
-    this.sessions.set(client.user.steam_id, updatedSessions);
-
-    if (userData.inGame) {
+    if (removed === 1 && userData.inGame) {
       void this.to(type, id, "joined", {
         user: {
           ...userData.user,
@@ -393,8 +383,10 @@ export class ChatService {
     userData.inGame = false;
     await this.setUserData(ChatLobbyType.Match, matchId, steamId, userData);
 
-    const sessions = this.sessions.get(steamId) || [];
-    if (sessions.length > 0) {
+    const sessionCount = await this.redis.scard(
+      this.sessionsKey(ChatLobbyType.Match, matchId, steamId),
+    );
+    if (sessionCount > 0) {
       void this.to(ChatLobbyType.Match, matchId, "joined", {
         user: {
           ...userData.user,
@@ -440,6 +432,48 @@ export class ChatService {
     return `chat:${type}:${id}`;
   }
 
+  private sessionsKey(
+    type: ChatLobbyType,
+    id: string,
+    steamId: string,
+  ): string {
+    return `${this.getLobbyKey(type, id)}:sessions:${steamId}`;
+  }
+
+  private async addSession(
+    type: ChatLobbyType,
+    id: string,
+    steamId: string,
+    clientId: string,
+  ): Promise<[number, number]> {
+    const result = (await this.redis.eval(
+      `local added = redis.call('SADD', KEYS[1], ARGV[1])
+       redis.call('EXPIRE', KEYS[1], ARGV[2])
+       return {added, redis.call('SCARD', KEYS[1])}`,
+      1,
+      this.sessionsKey(type, id, steamId),
+      clientId,
+      60 * 60 * 24,
+    )) as [number, number];
+    return result;
+  }
+
+  private async removeSession(
+    type: ChatLobbyType,
+    id: string,
+    steamId: string,
+    clientId: string,
+  ): Promise<[number, number]> {
+    const result = (await this.redis.eval(
+      `local removed = redis.call('SREM', KEYS[1], ARGV[1])
+       return {removed, redis.call('SCARD', KEYS[1])}`,
+      1,
+      this.sessionsKey(type, id, steamId),
+      clientId,
+    )) as [number, number];
+    return result;
+  }
+
   private async getUserData(type: ChatLobbyType, id: string, steamId: string) {
     const lobbyKey = this.getLobbyKey(type, id);
     const userData = await this.redis.hget(lobbyKey, steamId);
@@ -476,6 +510,8 @@ export class ChatService {
   }
 
   public async removeLobby(type: ChatLobbyType, id: string) {
-    await this.redis.del(this.getLobbyKey(type, id));
+    const lobbyKey = this.getLobbyKey(type, id);
+    const sessionKeys = await this.redis.keys(`${lobbyKey}:sessions:*`);
+    await this.redis.del(lobbyKey, ...sessionKeys);
   }
 }

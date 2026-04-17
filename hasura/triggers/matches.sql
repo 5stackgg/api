@@ -2,7 +2,6 @@ CREATE OR REPLACE FUNCTION public.tbi_match() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
-    lan_match BOOLEAN;
     _lineup_1_id UUID;
     _lineup_2_id UUID;
     _regions text[];
@@ -39,15 +38,22 @@ BEGIN
     SELECT regions INTO _regions FROM match_options WHERE id = NEW.match_options_id;
 
     IF array_length(_regions, 1) != 0 THEN
-        SELECT array_agg(sr.value) INTO available_regions 
+        SELECT array_agg(sr.value) INTO available_regions
         FROM server_regions sr
         WHERE sr.value = ANY(_regions)
-        AND total_region_server_count(sr) > 0;
+        AND region_status(sr) != 'Disabled';
     ELSE
-        SELECT array_agg(sr.value) INTO available_regions 
+        SELECT array_agg(sr.value) INTO available_regions
         FROM server_regions sr
-        WHERE total_region_server_count(sr) > 0
+        WHERE region_status(sr) != 'Disabled'
         and sr.is_lan = false;
+    END IF;
+
+    -- Fallback: if nothing matched above (e.g. LAN-only)
+    IF available_regions IS NULL OR array_length(available_regions, 1) = 0 THEN
+        SELECT array_agg(sr.value) INTO available_regions
+        FROM server_regions sr
+        WHERE region_status(sr) != 'Disabled';
     END IF;
 
     IF array_length(available_regions, 1) = 1 THEN
@@ -377,15 +383,7 @@ CREATE OR REPLACE FUNCTION public.tad_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM tournaments
-        WHERE match_options_id = OLD.match_options_id
-    )
-    THEN
-        DELETE FROM match_options
-        WHERE id = OLD.match_options_id;
-    END IF;
+    PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
 
     update servers set reserved_by_match_id = null where reserved_by_match_id = OLD.id;
 

@@ -487,6 +487,7 @@ select_permissions:
         - organizer_steam_id
         - region
         - scheduled_at
+        - server_error
         - server_id
         - started_at
         - status
@@ -539,6 +540,7 @@ select_permissions:
         - organizer_steam_id
         - region
         - scheduled_at
+        - server_error
         - server_id
         - started_at
         - status
