@@ -4,6 +4,7 @@ import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { safeJsonStringify } from "../utilities/safeJsonStringify";
+import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 import { HasuraService } from "../hasura/hasura.service";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
@@ -971,7 +972,7 @@ export class MatchesController {
     }
 
     if (matches_by_pk.options.lobby_access === "Invite") {
-      if (data.code !== matches_by_pk.options.invite_code) {
+      if (!timingSafeStringEqual(data.code, matches_by_pk.options.invite_code)) {
         throw Error("Invalid Code for Match");
       }
     }

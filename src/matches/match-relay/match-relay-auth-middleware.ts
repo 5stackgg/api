@@ -1,8 +1,8 @@
-import { timingSafeEqual } from "crypto";
 import { CacheService } from "src/cache/cache.service";
 import { Request, Response, NextFunction } from "express";
 import { HasuraService } from "src/hasura/hasura.service";
 import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
+import { timingSafeStringEqual } from "src/utilities/timingSafeStringEqual";
 
 @Injectable()
 export class MatchRelayAuthMiddleware implements NestMiddleware {
@@ -11,11 +11,6 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
   ) {}
-
-  private safeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-  }
 
   async use(request: Request, response: Response, next: NextFunction) {
     try {
@@ -51,7 +46,7 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
         60 * 1000,
       );
 
-      if (!matchPassword || !this.safeCompare(matchPassword, apiPassword)) {
+      if (!timingSafeStringEqual(matchPassword, apiPassword)) {
         return response.status(401).end();
       }
     } catch (error) {
