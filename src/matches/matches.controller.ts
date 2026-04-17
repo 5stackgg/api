@@ -630,6 +630,30 @@ export class MatchesController {
       throw Error("you are not a match organizer");
     }
 
+    const { matches_by_pk: current } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: match_id },
+        winning_lineup_id: true,
+      },
+    });
+
+    if (!current) {
+      throw Error("match not found");
+    }
+
+    const isReassignment =
+      current.winning_lineup_id != null &&
+      current.winning_lineup_id !== winning_lineup_id;
+
+    if (
+      isReassignment &&
+      !(await this.matchAssistant.canReassignWinner(match_id, user))
+    ) {
+      throw Error(
+        "cannot change winner: match is not finished or a downstream tournament match has already started",
+      );
+    }
+
     await this.hasura.mutation({
       update_matches_by_pk: {
         __args: {

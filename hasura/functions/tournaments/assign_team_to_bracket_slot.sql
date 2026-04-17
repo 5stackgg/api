@@ -7,23 +7,17 @@ CREATE OR REPLACE FUNCTION public.assign_team_to_bracket_slot(
 AS $$
 DECLARE
     target_bracket tournament_brackets%ROWTYPE;
+    source_bracket tournament_brackets%ROWTYPE;
     slot_position int;
 BEGIN
     -- Lock the target row so concurrent callers (e.g. two feeder matches
-    -- finishing simultaneously) serialize on the same bracket. Combined with
-    -- the IS NULL guards on the UPDATEs below, this prevents either caller
-    -- from overwriting a team the other just placed.
+    -- finishing simultaneously) serialize on the same bracket.
     SELECT * INTO target_bracket
     FROM tournament_brackets
     WHERE id = _target_bracket_id
     FOR UPDATE;
 
     IF target_bracket IS NULL OR _team_id IS NULL THEN
-        RETURN;
-    END IF;
-
-    IF target_bracket.tournament_team_id_1 = _team_id
-       OR target_bracket.tournament_team_id_2 = _team_id THEN
         RETURN;
     END IF;
 
@@ -48,35 +42,70 @@ BEGIN
         WHERE ranked.id = _source_bracket_id;
     END IF;
 
-    -- Every UPDATE carries an IS NULL guard as defense-in-depth alongside the
-    -- row lock, so a slot can never be overwritten even if a caller bypasses
-    -- the lock (e.g. direct mutation outside this function).
-    IF slot_position = 1 THEN
-        IF target_bracket.tournament_team_id_1 IS NULL THEN
-            UPDATE tournament_brackets
-            SET tournament_team_id_1 = _team_id
-            WHERE id = _target_bracket_id
-              AND tournament_team_id_1 IS NULL;
-        ELSIF target_bracket.tournament_team_id_2 IS NULL THEN
-            UPDATE tournament_brackets
-            SET tournament_team_id_2 = _team_id
-            WHERE id = _target_bracket_id
-              AND tournament_team_id_2 IS NULL;
-        END IF;
-    ELSIF slot_position = 2 THEN
-        IF target_bracket.tournament_team_id_2 IS NULL THEN
-            UPDATE tournament_brackets
-            SET tournament_team_id_2 = _team_id
-            WHERE id = _target_bracket_id
-              AND tournament_team_id_2 IS NULL;
-        ELSIF target_bracket.tournament_team_id_1 IS NULL THEN
-            UPDATE tournament_brackets
-            SET tournament_team_id_1 = _team_id
-            WHERE id = _target_bracket_id
-              AND tournament_team_id_1 IS NULL;
+    -- Slot-aware short-circuit: only return when the team is already in the
+    -- CORRECT owned slot. If it's in the wrong slot (e.g. from a prior buggy
+    -- placement), fall through and correct it.
+    IF _source_bracket_id IS NOT NULL AND slot_position IS NOT NULL THEN
+        IF slot_position = 1 AND target_bracket.tournament_team_id_1 = _team_id THEN
+            RETURN;
+        ELSIF slot_position = 2 AND target_bracket.tournament_team_id_2 = _team_id THEN
+            RETURN;
         END IF;
     ELSE
-        -- Fallback: first empty slot (for callers without source bracket)
+        -- Unowned callers: keep the original "already present in either slot" short-circuit.
+        IF target_bracket.tournament_team_id_1 = _team_id
+           OR target_bracket.tournament_team_id_2 = _team_id THEN
+            RETURN;
+        END IF;
+    END IF;
+
+    -- Load the feeder row so we can identify which teams belong to this feeder
+    -- (needed to clean up stale placements in the wrong slot).
+    IF _source_bracket_id IS NOT NULL THEN
+        SELECT * INTO source_bracket
+        FROM tournament_brackets
+        WHERE id = _source_bracket_id;
+    END IF;
+
+    IF slot_position = 1 THEN
+        -- Clear the OTHER slot if it currently holds a team contributed by
+        -- this feeder (cleanup for reassignment or prior buggy placement).
+        IF source_bracket.id IS NOT NULL
+           AND target_bracket.tournament_team_id_2 IS NOT NULL
+           AND target_bracket.tournament_team_id_2 IN (
+               source_bracket.tournament_team_id_1,
+               source_bracket.tournament_team_id_2
+           ) THEN
+            UPDATE tournament_brackets
+            SET tournament_team_id_2 = NULL
+            WHERE id = _target_bracket_id;
+        END IF;
+
+        -- Overwrite the owned slot unconditionally. The row lock above
+        -- serializes concurrent feeders, so this is safe.
+        UPDATE tournament_brackets
+        SET tournament_team_id_1 = _team_id
+        WHERE id = _target_bracket_id;
+
+    ELSIF slot_position = 2 THEN
+        IF source_bracket.id IS NOT NULL
+           AND target_bracket.tournament_team_id_1 IS NOT NULL
+           AND target_bracket.tournament_team_id_1 IN (
+               source_bracket.tournament_team_id_1,
+               source_bracket.tournament_team_id_2
+           ) THEN
+            UPDATE tournament_brackets
+            SET tournament_team_id_1 = NULL
+            WHERE id = _target_bracket_id;
+        END IF;
+
+        UPDATE tournament_brackets
+        SET tournament_team_id_2 = _team_id
+        WHERE id = _target_bracket_id;
+
+    ELSE
+        -- Fallback for callers without a source bracket: first empty slot,
+        -- IS NULL guarded as defense-in-depth against concurrent writes.
         IF target_bracket.tournament_team_id_1 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_1 = _team_id
