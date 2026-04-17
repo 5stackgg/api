@@ -21,15 +21,19 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
     
     -- If bracket is already finished, don't try to schedule it
     IF bracket.finished = true THEN
+        RAISE NOTICE 'schedule_tournament_match: bracket % already finished, skipping', bracket.id;
         RETURN NULL;
     END IF;
-    
+
     IF bracket.tournament_team_id_1 IS NULL AND bracket.tournament_team_id_2 IS NULL THEN
+        RAISE NOTICE 'schedule_tournament_match: bracket % has no teams, skipping', bracket.id;
         RETURN NULL;
     END IF;
 
      -- For all other cases, we require two teams to schedule a match
      IF bracket.tournament_team_id_1 IS NULL OR bracket.tournament_team_id_2 IS NULL THEN
+         RAISE NOTICE 'schedule_tournament_match: bracket % missing one team (t1=%, t2=%), skipping',
+             bracket.id, bracket.tournament_team_id_1, bracket.tournament_team_id_2;
          RETURN NULL;
      END IF;
 
@@ -63,6 +67,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
         FROM match_options mo WHERE mo.id = _match_options_id;
 
         IF _match_mode = 'admin' THEN
+            RAISE NOTICE 'schedule_tournament_match: bracket % is admin-mode, skipping auto-schedule', bracket.id;
             RETURN NULL;
         END IF;
     END;

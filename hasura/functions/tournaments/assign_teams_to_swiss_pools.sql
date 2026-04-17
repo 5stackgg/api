@@ -41,10 +41,23 @@ BEGIN
                 RAISE NOTICE '  Pool %-% (group %): % teams', 
                     pool_record.wins, pool_record.losses, pool_group, team_count;
             
+            -- Filter out any teams already used by an earlier pool iteration.
+            -- pool_record.team_ids is a stale snapshot from when the outer
+            -- FOR...SELECT was materialized (used_teams was empty then), so a
+            -- team borrowed by an earlier pool could otherwise be paired twice.
+            SELECT COALESCE(array_agg(t), ARRAY[]::uuid[]) INTO teams_to_pair
+            FROM unnest(pool_record.team_ids) AS t
+            WHERE NOT (t = ANY(used_teams));
+
+            team_count := COALESCE(array_length(teams_to_pair, 1), 0);
+
+            IF team_count = 0 THEN
+                CONTINUE;
+            END IF;
+
             -- Handle odd number of teams
             adjacent_team_id := NULL;
-            teams_to_pair := pool_record.team_ids;
-            
+
             IF team_count % 2 != 0 THEN
                 -- Find a team from an adjacent pool
                 adjacent_team_id := find_adjacent_swiss_team(_stage_id, pool_record.wins, pool_record.losses, used_teams);
