@@ -996,7 +996,9 @@ export class MatchesController {
     }
 
     if (matches_by_pk.options.lobby_access === "Invite") {
-      if (!timingSafeStringEqual(data.code, matches_by_pk.options.invite_code)) {
+      if (
+        !timingSafeStringEqual(data.code, matches_by_pk.options.invite_code)
+      ) {
         throw Error("Invalid Code for Match");
       }
     }
@@ -1205,10 +1207,7 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async overrideMatchRegion(data: {
-    match_id: string;
-    region: string;
-  }) {
+  public async overrideMatchRegion(data: { match_id: string; region: string }) {
     const { match_id, region } = data;
 
     const { server_regions_by_pk } = await this.hasura.query({
