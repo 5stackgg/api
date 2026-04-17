@@ -9,10 +9,14 @@ DECLARE
     target_bracket tournament_brackets%ROWTYPE;
     slot_position int;
 BEGIN
+    -- Lock the target row so concurrent callers (e.g. two feeder matches
+    -- finishing simultaneously) serialize on the same bracket. Combined with
+    -- the IS NULL guards on the UPDATEs below, this prevents either caller
+    -- from overwriting a team the other just placed.
     SELECT * INTO target_bracket
     FROM tournament_brackets
     WHERE id = _target_bracket_id
-    LIMIT 1;
+    FOR UPDATE;
 
     IF target_bracket IS NULL OR _team_id IS NULL THEN
         RETURN;
@@ -44,36 +48,45 @@ BEGIN
         WHERE ranked.id = _source_bracket_id;
     END IF;
 
+    -- Every UPDATE carries an IS NULL guard as defense-in-depth alongside the
+    -- row lock, so a slot can never be overwritten even if a caller bypasses
+    -- the lock (e.g. direct mutation outside this function).
     IF slot_position = 1 THEN
         IF target_bracket.tournament_team_id_1 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_1 = _team_id
-            WHERE id = _target_bracket_id;
+            WHERE id = _target_bracket_id
+              AND tournament_team_id_1 IS NULL;
         ELSIF target_bracket.tournament_team_id_2 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_2 = _team_id
-            WHERE id = _target_bracket_id;
+            WHERE id = _target_bracket_id
+              AND tournament_team_id_2 IS NULL;
         END IF;
     ELSIF slot_position = 2 THEN
         IF target_bracket.tournament_team_id_2 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_2 = _team_id
-            WHERE id = _target_bracket_id;
+            WHERE id = _target_bracket_id
+              AND tournament_team_id_2 IS NULL;
         ELSIF target_bracket.tournament_team_id_1 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_1 = _team_id
-            WHERE id = _target_bracket_id;
+            WHERE id = _target_bracket_id
+              AND tournament_team_id_1 IS NULL;
         END IF;
     ELSE
         -- Fallback: first empty slot (for callers without source bracket)
         IF target_bracket.tournament_team_id_1 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_1 = _team_id
-            WHERE id = _target_bracket_id;
+            WHERE id = _target_bracket_id
+              AND tournament_team_id_1 IS NULL;
         ELSIF target_bracket.tournament_team_id_2 IS NULL THEN
             UPDATE tournament_brackets
             SET tournament_team_id_2 = _team_id
-            WHERE id = _target_bracket_id;
+            WHERE id = _target_bracket_id
+              AND tournament_team_id_2 IS NULL;
         END IF;
     END IF;
 END;

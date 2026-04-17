@@ -270,8 +270,11 @@ ORDER BY
         THEN (COALESCE(ass.rounds_won, 0)::float / ass.rounds_lost::float)
         ELSE COALESCE(ass.rounds_won, 0)::float
     END DESC,
-    CASE 
-        WHEN COALESCE(tkd.total_deaths, 0) > 0 
+    CASE
+        WHEN COALESCE(tkd.total_deaths, 0) > 0
         THEN (COALESCE(tkd.total_kills, 0)::float / tkd.total_deaths::float)
         ELSE COALESCE(tkd.total_kills, 0)::float
-    END DESC;
+    END DESC,
+    -- Deterministic final tiebreaker so identical stats produce a stable
+    -- ordering across calls (e.g. for OFFSET-based seeding in seed_stage).
+    ass.team_id ASC;
