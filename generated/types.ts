@@ -22306,6 +22306,9 @@ export default {
             "can_check_in": [
                 3
             ],
+            "can_reassign_winner": [
+                3
+            ],
             "can_schedule": [
                 3
             ],
@@ -23314,6 +23317,9 @@ export default {
             "can_check_in": [
                 4
             ],
+            "can_reassign_winner": [
+                4
+            ],
             "can_schedule": [
                 4
             ],
@@ -24017,6 +24023,9 @@ export default {
                 1496
             ],
             "can_check_in": [
+                1496
+            ],
+            "can_reassign_winner": [
                 1496
             ],
             "can_schedule": [
@@ -49747,6 +49756,12 @@ export default {
             "kills": [
                 21
             ],
+            "map_losses": [
+                21
+            ],
+            "map_wins": [
+                21
+            ],
             "match": [
                 1338
             ],
@@ -49773,6 +49788,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 695
+            ],
+            "series_multiplier": [
+                21
             ],
             "team_avg_kda": [
                 695
@@ -50132,6 +50150,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -50142,6 +50166,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -50188,6 +50215,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -50198,6 +50231,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -50253,6 +50289,12 @@ export default {
             "kills": [
                 22
             ],
+            "map_losses": [
+                22
+            ],
+            "map_wins": [
+                22
+            ],
             "match": [
                 1347
             ],
@@ -50279,6 +50321,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 696
+            ],
+            "series_multiplier": [
+                22
             ],
             "team_avg_kda": [
                 696
@@ -50327,6 +50372,12 @@ export default {
             "kills": [
                 21
             ],
+            "map_losses": [
+                21
+            ],
+            "map_wins": [
+                21
+            ],
             "match": [
                 1356
             ],
@@ -50353,6 +50404,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 695
+            ],
+            "series_multiplier": [
+                21
             ],
             "team_avg_kda": [
                 695
@@ -50401,6 +50455,12 @@ export default {
             "kills": [
                 21
             ],
+            "map_losses": [
+                21
+            ],
+            "map_wins": [
+                21
+            ],
             "match_created_at": [
                 2208
             ],
@@ -50424,6 +50484,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 695
+            ],
+            "series_multiplier": [
+                21
             ],
             "team_avg_kda": [
                 695
@@ -50472,6 +50535,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "match_created_at": [
                 1496
             ],
@@ -50494,6 +50563,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -50543,6 +50615,12 @@ export default {
             "kills": [
                 21
             ],
+            "map_losses": [
+                21
+            ],
+            "map_wins": [
+                21
+            ],
             "match_created_at": [
                 2208
             ],
@@ -50566,6 +50644,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 695
+            ],
+            "series_multiplier": [
+                21
             ],
             "team_avg_kda": [
                 695
@@ -50614,6 +50695,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "match_created_at": [
                 1496
             ],
@@ -50636,6 +50723,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -50685,6 +50775,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "match": [
                 1358
             ],
@@ -50710,6 +50806,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -50768,6 +50867,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -50778,6 +50883,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -50824,6 +50932,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -50834,6 +50948,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -50880,6 +50997,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -50890,6 +51013,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -50936,6 +51062,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -50946,6 +51078,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -50992,6 +51127,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -51002,6 +51143,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -51048,6 +51192,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -51058,6 +51208,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -51115,6 +51268,12 @@ export default {
             "kills": [
                 21
             ],
+            "map_losses": [
+                21
+            ],
+            "map_wins": [
+                21
+            ],
             "match_created_at": [
                 2208
             ],
@@ -51138,6 +51297,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 695
+            ],
+            "series_multiplier": [
+                21
             ],
             "team_avg_kda": [
                 695
@@ -51186,6 +51348,12 @@ export default {
             "kills": [
                 21
             ],
+            "map_losses": [
+                21
+            ],
+            "map_wins": [
+                21
+            ],
             "opponent_team_elo_avg": [
                 695
             ],
@@ -51197,6 +51365,9 @@ export default {
             ],
             "player_team_elo_avg": [
                 695
+            ],
+            "series_multiplier": [
+                21
             ],
             "team_avg_kda": [
                 695
@@ -51242,6 +51413,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -51252,6 +51429,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -51298,6 +51478,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -51308,6 +51494,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -51354,6 +51543,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -51364,6 +51559,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -51410,6 +51608,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -51420,6 +51624,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -51466,6 +51673,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -51476,6 +51689,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [
@@ -51522,6 +51738,12 @@ export default {
             "kills": [
                 16
             ],
+            "map_losses": [
+                16
+            ],
+            "map_wins": [
+                16
+            ],
             "opponent_team_elo_avg": [
                 16
             ],
@@ -51532,6 +51754,9 @@ export default {
                 16
             ],
             "player_team_elo_avg": [
+                16
+            ],
+            "series_multiplier": [
                 16
             ],
             "team_avg_kda": [
@@ -51578,6 +51803,12 @@ export default {
             "kills": [
                 1496
             ],
+            "map_losses": [
+                1496
+            ],
+            "map_wins": [
+                1496
+            ],
             "opponent_team_elo_avg": [
                 1496
             ],
@@ -51588,6 +51819,9 @@ export default {
                 1496
             ],
             "player_team_elo_avg": [
+                1496
+            ],
+            "series_multiplier": [
                 1496
             ],
             "team_avg_kda": [

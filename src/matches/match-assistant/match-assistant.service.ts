@@ -907,7 +907,10 @@ export class MatchAssistantService {
     const scheduled = pod.status?.conditions?.find(
       (condition) => condition.type === "PodScheduled",
     );
-    if (scheduled?.status === "False" && (scheduled.reason || scheduled.message)) {
+    if (
+      scheduled?.status === "False" &&
+      (scheduled.reason || scheduled.message)
+    ) {
       return [scheduled.reason, scheduled.message].filter(Boolean).join(": ");
     }
 

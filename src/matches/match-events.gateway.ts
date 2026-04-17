@@ -57,9 +57,12 @@ export class MatchEventsGateway {
       const decoded = Buffer.from(base64Credentials, "base64").toString();
       const colonIndex = decoded.indexOf(":");
       if (colonIndex === -1) {
-        this.logger.warn("game server connection rejected: invalid credentials format", {
-          ip: request.headers["cf-connecting-ip"],
-        });
+        this.logger.warn(
+          "game server connection rejected: invalid credentials format",
+          {
+            ip: request.headers["cf-connecting-ip"],
+          },
+        );
         client.close();
         return;
       }

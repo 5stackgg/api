@@ -224,19 +224,16 @@ export class MatchmakingGateway {
       }
 
       try {
-        await this.cache.lock(
-          `matchmaking:verify:${lobby.id}`,
-          async () => {
-            await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
-            await this.matchmakingLobbyService.setLobbyDetails(
-              regions,
-              type,
-              lobby,
-            );
-            await this.matchmakeService.addLobbyToQueue(lobby.id);
-            return true;
-          },
-        );
+        await this.cache.lock(`matchmaking:verify:${lobby.id}`, async () => {
+          await this.matchmakingLobbyService.verifyLobby(lobby, user, type);
+          await this.matchmakingLobbyService.setLobbyDetails(
+            regions,
+            type,
+            lobby,
+          );
+          await this.matchmakeService.addLobbyToQueue(lobby.id);
+          return true;
+        });
       } catch (error) {
         if (error instanceof JoinQueueError) {
           throw error;

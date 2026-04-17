@@ -82,10 +82,10 @@ export class RedisManagerService implements OnApplicationShutdown {
   }
 
   public getConfig(connection: string): RedisOptions {
-    if(!this.config.connections[connection]) {
+    if (!this.config.connections[connection]) {
       throw new Error(`Redis connection ${connection} not found`);
     }
-    
+
     return Object.assign(
       {},
       {
