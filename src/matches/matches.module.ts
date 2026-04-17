@@ -75,6 +75,10 @@ import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-
       },
       {
         name: MatchQueues.EloCalculation,
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+        },
       },
     ),
     BullBoardModule.forFeature(
