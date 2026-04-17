@@ -4,7 +4,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from "@nestjs/websockets";
-import { timingSafeEqual } from "crypto";
 import WebSocket from "ws";
 import { Request } from "express";
 import { ModuleRef } from "@nestjs/core";
@@ -13,6 +12,7 @@ import MatchEventProcessor from "./events/abstracts/MatchEventProcessor";
 import { Logger } from "@nestjs/common";
 import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
+import { timingSafeStringEqual } from "src/utilities/timingSafeStringEqual";
 
 export type FiveStackGameServerWebSocketClient = WebSocket.WebSocket & {
   id: string;
@@ -29,11 +29,6 @@ export class MatchEventsGateway {
     private readonly hasura: HasuraService,
     private readonly cache: CacheService,
   ) {}
-
-  private safeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-  }
 
   async handleConnection(
     @ConnectedSocket() client: WebSocket.WebSocket,
@@ -82,10 +77,7 @@ export class MatchEventsGateway {
         },
       });
 
-      if (
-        !servers_by_pk?.api_password ||
-        !this.safeCompare(servers_by_pk.api_password, apiPassword)
-      ) {
+      if (!timingSafeStringEqual(servers_by_pk?.api_password, apiPassword)) {
         client.close();
         this.logger.warn("game server auth failure", {
           serverId,
