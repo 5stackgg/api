@@ -1211,6 +1211,20 @@ export class MatchAssistantService {
     return matches_by_pk.is_organizer;
   }
 
+  public async canReassignWinner(matchId: string, user: User) {
+    const { matches_by_pk } = await this.hasura.query(
+      {
+        matches_by_pk: {
+          __args: { id: matchId },
+          can_reassign_winner: true,
+        },
+      },
+      user.steam_id,
+    );
+
+    return matches_by_pk?.can_reassign_winner ?? false;
+  }
+
   public async createMatchBasedOnType(
     matchType: e_match_types_enum,
     mapPoolType: e_map_pool_types_enum,

@@ -205,7 +205,8 @@ CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
 DECLARE
     _server_id UUID;
 BEGIN
-    IF is_tournament_match(NEW) THEN
+    IF is_tournament_match(NEW)
+       AND NEW.winning_lineup_id IS DISTINCT FROM OLD.winning_lineup_id THEN
         PERFORM update_tournament_bracket(NEW);
     END IF;
 

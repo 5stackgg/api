@@ -165,6 +165,12 @@ computed_fields:
         name: can_check_in
         schema: public
       session_argument: hasura_session
+  - name: can_reassign_winner
+    definition:
+      function:
+        name: can_reassign_winner
+        schema: public
+      session_argument: hasura_session
   - name: can_schedule
     definition:
       function:
@@ -496,6 +502,7 @@ select_permissions:
         - can_assign_server
         - can_cancel
         - can_check_in
+        - can_reassign_winner
         - can_schedule
         - can_start
         - connection_link
@@ -549,6 +556,7 @@ select_permissions:
         - can_assign_server
         - can_cancel
         - can_check_in
+        - can_reassign_winner
         - can_schedule
         - can_start
         - connection_link
