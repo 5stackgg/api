@@ -22483,6 +22483,9 @@ export default {
             "is_coach": [
                 3
             ],
+            "is_friend_in_match_lineup": [
+                3
+            ],
             "is_in_lineup": [
                 3
             ],
@@ -23380,6 +23383,9 @@ export default {
             "is_coach": [
                 4
             ],
+            "is_friend_in_match_lineup": [
+                4
+            ],
             "is_in_lineup": [
                 4
             ],
@@ -24077,6 +24083,9 @@ export default {
                 1496
             ],
             "is_coach": [
+                1496
+            ],
+            "is_friend_in_match_lineup": [
                 1496
             ],
             "is_in_lineup": [

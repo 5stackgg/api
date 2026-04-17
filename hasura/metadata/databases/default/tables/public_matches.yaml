@@ -218,6 +218,12 @@ computed_fields:
         name: is_coach
         schema: public
       session_argument: hasura_session
+  - name: is_friend_in_match_lineup
+    definition:
+      function:
+        name: is_friend_in_match_lineup
+        schema: public
+      session_argument: hasura_session
   - name: is_in_lineup
     definition:
       function:
@@ -511,6 +517,7 @@ select_permissions:
         - invite_code
         - is_captain
         - is_coach
+        - is_friend_in_match_lineup
         - is_in_lineup
         - is_match_server_available
         - is_organizer
@@ -565,6 +572,7 @@ select_permissions:
         - invite_code
         - is_captain
         - is_coach
+        - is_friend_in_match_lineup
         - is_in_lineup
         - is_match_server_available
         - is_organizer
@@ -595,19 +603,8 @@ select_permissions:
                   - Invite
           - is_in_lineup:
               _eq: true
-          - _or:
-              - lineup_1:
-                  lineup_players:
-                    player:
-                      friends:
-                        steam_id:
-                          _eq: X-Hasura-User-Id
-              - lineup_2:
-                  lineup_players:
-                    player:
-                      friends:
-                        steam_id:
-                          _eq: X-Hasura-User-Id
+          - is_friend_in_match_lineup:
+              _eq: true
       allow_aggregations: true
     comment: ""
 update_permissions:
