@@ -11,7 +11,8 @@ import { ConfigService } from "@nestjs/config";
 import { FiveStackWebSocketClient } from "./types/FiveStackWebSocketClient";
 import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { MatchmakingLobbyService } from "src/matchmaking/matchmaking-lobby.service";
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { ClientProxy } from "@nestjs/microservices";
 
 @Injectable()
 export class SocketsService {
@@ -27,6 +28,8 @@ export class SocketsService {
     private readonly matchmaking: MatchmakeService,
     private readonly redisManager: RedisManagerService,
     private readonly matchmakingLobbyService: MatchmakingLobbyService,
+    @Inject("GAME_SERVER_NODE_CLIENT_SERVICE")
+    private readonly gameServerNodeClient: ClientProxy,
   ) {
     this.redis = this.redisManager.getConnection();
     this.appConfig = this.config.get<AppConfig>("app");
@@ -103,6 +106,7 @@ export class SocketsService {
         client.user = request.user;
         client.sessionId = request.session.id;
         client.node = this.nodeId;
+        client.peerNodes = new Set();
 
         this.clients.set(client.id, client);
 
@@ -118,6 +122,14 @@ export class SocketsService {
 
         client.on("close", async () => {
           this.clients.delete(client.id);
+
+          for (const nodeId of client.peerNodes) {
+            this.gameServerNodeClient.emit(`peer-close.${nodeId}`, {
+              clientId: client.id,
+            });
+          }
+          client.peerNodes.clear();
+
           await this.redis.del(
             SocketsService.GET_PLAYER_CLIENT(
               client.user.steam_id,
@@ -179,7 +191,6 @@ export class SocketsService {
     const client = this.clients.get(clientId);
 
     if (!client) {
-      this.logger.warn(`Client not found: ${clientId}`);
       return;
     }
 
