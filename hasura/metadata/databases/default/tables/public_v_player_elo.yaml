@@ -26,6 +26,8 @@ select_permissions:
         - k_factor
         - kda
         - kills
+        - map_losses
+        - map_wins
         - match_created_at
         - match_id
         - match_result
@@ -34,6 +36,7 @@ select_permissions:
         - player_name
         - player_steam_id
         - player_team_elo_avg
+        - series_multiplier
         - team_avg_kda
         - type
         - updated_elo

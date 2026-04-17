@@ -193,20 +193,27 @@ export class MatchesModule implements NestModule {
   }
 
   /**
-   * TODO - this is required one time
+   * Runs once per ELO formula change. Keyed off a settings marker so upgrades
+   * that change the ELO math (e.g. best-of series multiplier) re-generate
+   * historical rows. Bump SERIES_MULTIPLIER_BACKFILL_MARKER when the formula
+   * changes again.
    */
   async generatePlayerRatings() {
-    const { player_elo_aggregate } = await this.hasuraService.query({
-      player_elo_aggregate: {
-        aggregate: {
-          count: true,
-        },
+    const SERIES_MULTIPLIER_BACKFILL_MARKER =
+      "player_elo_backfill_series_multiplier_v1";
+
+    const { settings_by_pk } = await this.hasuraService.query({
+      settings_by_pk: {
+        __args: { name: SERIES_MULTIPLIER_BACKFILL_MARKER },
+        value: true,
       },
     });
 
-    if (player_elo_aggregate.aggregate.count > 0) {
+    if (settings_by_pk) {
       return;
     }
+
+    await this.postgres.query(`TRUNCATE TABLE player_elo`);
 
     const matches = await this.hasuraService.query({
       matches: {
@@ -240,9 +247,24 @@ export class MatchesModule implements NestModule {
           `Failed to generate player ratings for match ${match.id}:`,
           error,
         );
-        // Continue with the next match instead of failing completely
       }
     }
+
+    await this.hasuraService.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: SERIES_MULTIPLIER_BACKFILL_MARKER,
+            value: new Date().toISOString(),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
   configure(consumer: MiddlewareConsumer) {

@@ -49,6 +49,11 @@ DECLARE
     _team_avg_kda FLOAT;
     _player_damage_percent FLOAT;
     match_type text;
+
+    -- Series (best-of) scaling
+    _player_map_wins INT := 0;
+    _player_map_losses INT := 0;
+    _series_multiplier INT := 1;
 BEGIN
     SELECT "type" INTO match_type FROM match_options WHERE id = match_record.match_options_id;
 
@@ -78,6 +83,19 @@ BEGIN
     ELSE
         _opponent_lineup_id := match_record.lineup_1_id;
     END IF;
+
+    -- Series multiplier: scale ELO by the net map differential for this player's team.
+    -- BO1 win gives 1x, BO3 2-0 gives 2x, BO3 2-1 gives 1x, BO5 3-0 gives 3x, etc.
+    -- GREATEST(..., 1) keeps ELO moving for ties / zero-recorded-winner forfeits.
+    SELECT
+        COUNT(*) FILTER (WHERE mm.winning_lineup_id = _player_lineup_id),
+        COUNT(*) FILTER (WHERE mm.winning_lineup_id = _opponent_lineup_id)
+    INTO _player_map_wins, _player_map_losses
+    FROM match_maps mm
+    WHERE mm.match_id = match_record.id
+      AND mm.winning_lineup_id IS NOT NULL;
+
+    _series_multiplier := GREATEST(ABS(_player_map_wins - _player_map_losses), 1);
 
     -- Calculate average ELO for player's team
     -- First get the sum of all previous ELO changes for each player in the team
@@ -215,8 +233,8 @@ BEGIN
     END IF;
 
     -- Calculate the elo change (round to nearest integer)
-    -- ELO change formula: New Rating = Old Rating + K * (Actual Score - Expected Score) * Performance Multiplier
-    _elo_change := ROUND(_k_factor * (_actual_score - _expected_score) * _performance_multiplier);
+    -- ELO change formula: New Rating = Old Rating + K * (Actual Score - Expected Score) * Performance Multiplier * Series Multiplier
+    _elo_change := ROUND(_k_factor * (_actual_score - _expected_score) * _performance_multiplier * _series_multiplier);
 
     -- Return the elo change as JSON with detailed information
     RETURN jsonb_build_object(
@@ -234,7 +252,10 @@ BEGIN
         'kda', _player_kda::FLOAT,
         'team_avg_kda', _team_avg_kda::FLOAT,
         'damage_percent', _player_damage_percent,
-        'performance_multiplier', _performance_multiplier
+        'performance_multiplier', _performance_multiplier,
+        'map_wins', _player_map_wins,
+        'map_losses', _player_map_losses,
+        'series_multiplier', _series_multiplier
     );
 END;
 $$ LANGUAGE plpgsql;
