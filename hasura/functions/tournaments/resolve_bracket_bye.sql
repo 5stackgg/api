@@ -44,6 +44,16 @@ BEGIN
         RETURN false;
     END IF;
 
+    -- A non-NULL team_N_seed on this row means link_tournament_stage_matches()
+    -- promoted a bye-advanced seed into this slot and deleted its feeder bracket.
+    -- The paired feeder is live and will (or already did) fill the other slot via
+    -- assign_team_to_bracket_slot — so this is a real match, not a runtime bye.
+    -- Leave the row alone rather than marking it finished.
+    IF current_bracket.team_1_seed IS NOT NULL
+       OR current_bracket.team_2_seed IS NOT NULL THEN
+        RETURN false;
+    END IF;
+
     lone_team_id := COALESCE(current_bracket.tournament_team_id_1, current_bracket.tournament_team_id_2);
 
     -- Mark as bye and finished
