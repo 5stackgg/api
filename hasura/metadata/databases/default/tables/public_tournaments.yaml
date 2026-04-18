@@ -49,6 +49,29 @@ array_relationships:
         table:
           name: tournament_teams
           schema: public
+  - name: trophies
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_trophies
+          schema: public
+  - name: trophy_configs
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_trophy_configs
+          schema: public
+  - name: player_stats
+    using:
+      manual_configuration:
+        column_mapping:
+          id: tournament_id
+        insertion_order: null
+        remote_table:
+          name: v_tournament_player_stats
+          schema: public
 computed_fields:
   - name: can_cancel
     definition:

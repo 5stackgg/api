@@ -18346,6 +18346,32 @@ type mutation_root {
   delete_tournament_teams_by_pk(id: uuid!): tournament_teams
 
   """
+  delete data from the table: "tournament_trophies"
+  """
+  delete_tournament_trophies(
+    """filter the rows which have to be deleted"""
+    where: tournament_trophies_bool_exp!
+  ): tournament_trophies_mutation_response
+
+  """
+  delete single row from the table: "tournament_trophies"
+  """
+  delete_tournament_trophies_by_pk(id: uuid!): tournament_trophies
+
+  """
+  delete data from the table: "tournament_trophy_configs"
+  """
+  delete_tournament_trophy_configs(
+    """filter the rows which have to be deleted"""
+    where: tournament_trophy_configs_bool_exp!
+  ): tournament_trophy_configs_mutation_response
+
+  """
+  delete single row from the table: "tournament_trophy_configs"
+  """
+  delete_tournament_trophy_configs_by_pk(id: uuid!): tournament_trophy_configs
+
+  """
   delete data from the table: "tournaments"
   """
   delete_tournaments(
@@ -20082,6 +20108,50 @@ type mutation_root {
   ): tournament_teams
 
   """
+  insert data into the table: "tournament_trophies"
+  """
+  insert_tournament_trophies(
+    """the rows to be inserted"""
+    objects: [tournament_trophies_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_trophies_on_conflict
+  ): tournament_trophies_mutation_response
+
+  """
+  insert a single row into the table: "tournament_trophies"
+  """
+  insert_tournament_trophies_one(
+    """the row to be inserted"""
+    object: tournament_trophies_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_trophies_on_conflict
+  ): tournament_trophies
+
+  """
+  insert data into the table: "tournament_trophy_configs"
+  """
+  insert_tournament_trophy_configs(
+    """the rows to be inserted"""
+    objects: [tournament_trophy_configs_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_trophy_configs_on_conflict
+  ): tournament_trophy_configs_mutation_response
+
+  """
+  insert a single row into the table: "tournament_trophy_configs"
+  """
+  insert_tournament_trophy_configs_one(
+    """the row to be inserted"""
+    object: tournament_trophy_configs_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_trophy_configs_on_conflict
+  ): tournament_trophy_configs
+
+  """
   insert data into the table: "tournaments"
   """
   insert_tournaments(
@@ -20147,6 +20217,31 @@ type mutation_root {
   moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
   overrideMatchRegion(match_id: uuid!, region: String!): SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
+
+  """
+  execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies"
+  """
+  recalculate_tournament_trophies(
+    """
+    input parameters for function "recalculate_tournament_trophies"
+    """
+    args: recalculate_tournament_trophies_args!
+
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): [tournament_trophies!]!
 
   """Refresh all players in Typesense index"""
   refreshAllPlayers: SuccessOutput
@@ -22778,6 +22873,74 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [tournament_teams_updates!]!
   ): [tournament_teams_mutation_response]
+
+  """
+  update data of the table: "tournament_trophies"
+  """
+  update_tournament_trophies(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_trophies_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_trophies_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_trophies_bool_exp!
+  ): tournament_trophies_mutation_response
+
+  """
+  update single row of the table: "tournament_trophies"
+  """
+  update_tournament_trophies_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_trophies_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_trophies_set_input
+    pk_columns: tournament_trophies_pk_columns_input!
+  ): tournament_trophies
+
+  """
+  update multiples rows of table: "tournament_trophies"
+  """
+  update_tournament_trophies_many(
+    """updates to execute, in order"""
+    updates: [tournament_trophies_updates!]!
+  ): [tournament_trophies_mutation_response]
+
+  """
+  update data of the table: "tournament_trophy_configs"
+  """
+  update_tournament_trophy_configs(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_trophy_configs_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_trophy_configs_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_trophy_configs_bool_exp!
+  ): tournament_trophy_configs_mutation_response
+
+  """
+  update single row of the table: "tournament_trophy_configs"
+  """
+  update_tournament_trophy_configs_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_trophy_configs_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_trophy_configs_set_input
+    pk_columns: tournament_trophy_configs_pk_columns_input!
+  ): tournament_trophy_configs
+
+  """
+  update multiples rows of table: "tournament_trophy_configs"
+  """
+  update_tournament_trophy_configs_many(
+    """updates to execute, in order"""
+    updates: [tournament_trophy_configs_updates!]!
+  ): [tournament_trophy_configs_mutation_response]
 
   """
   update data of the table: "tournaments"
@@ -30387,6 +30550,42 @@ type players {
   ): tournament_team_roster_aggregate!
 
   """An array relationship"""
+  tournament_trophies(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): [tournament_trophies!]!
+
+  """An aggregate relationship"""
+  tournament_trophies_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): tournament_trophies_aggregate!
+
+  """An array relationship"""
   tournaments(
     """distinct select on columns"""
     distinct_on: [tournaments_select_column!]
@@ -30592,6 +30791,8 @@ input players_bool_exp {
   tournament_organizers_aggregate: tournament_organizers_aggregate_bool_exp
   tournament_rosters: tournament_team_roster_bool_exp
   tournament_rosters_aggregate: tournament_team_roster_aggregate_bool_exp
+  tournament_trophies: tournament_trophies_bool_exp
+  tournament_trophies_aggregate: tournament_trophies_aggregate_bool_exp
   tournaments: tournaments_bool_exp
   tournaments_aggregate: tournaments_aggregate_bool_exp
   utility_thrown: player_utility_bool_exp
@@ -30669,6 +30870,7 @@ input players_insert_input {
   team_members: team_roster_arr_rel_insert_input
   tournament_organizers: tournament_organizers_arr_rel_insert_input
   tournament_rosters: tournament_team_roster_arr_rel_insert_input
+  tournament_trophies: tournament_trophies_arr_rel_insert_input
   tournaments: tournaments_arr_rel_insert_input
   utility_thrown: player_utility_arr_rel_insert_input
 }
@@ -30834,6 +31036,7 @@ input players_order_by {
   total_matches: order_by
   tournament_organizers_aggregate: tournament_organizers_aggregate_order_by
   tournament_rosters_aggregate: tournament_team_roster_aggregate_order_by
+  tournament_trophies_aggregate: tournament_trophies_aggregate_order_by
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
   wins: order_by
@@ -34781,6 +34984,92 @@ type query_root {
   tournament_teams_by_pk(id: uuid!): tournament_teams
 
   """An array relationship"""
+  tournament_trophies(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): [tournament_trophies!]!
+
+  """An aggregate relationship"""
+  tournament_trophies_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): tournament_trophies_aggregate!
+
+  """
+  fetch data from the table: "tournament_trophies" using primary key columns
+  """
+  tournament_trophies_by_pk(id: uuid!): tournament_trophies
+
+  """
+  fetch data from the table: "tournament_trophy_configs"
+  """
+  tournament_trophy_configs(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophy_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophy_configs_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): [tournament_trophy_configs!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_trophy_configs"
+  """
+  tournament_trophy_configs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophy_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophy_configs_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): tournament_trophy_configs_aggregate!
+
+  """
+  fetch data from the table: "tournament_trophy_configs" using primary key columns
+  """
+  tournament_trophy_configs_by_pk(id: uuid!): tournament_trophy_configs
+
+  """An array relationship"""
   tournaments(
     """distinct select on columns"""
     distinct_on: [tournaments_select_column!]
@@ -35258,6 +35547,50 @@ type query_root {
     """filter the rows returned"""
     where: v_team_tournament_results_bool_exp
   ): v_team_tournament_results_aggregate!
+
+  """
+  fetch data from the table: "v_tournament_player_stats"
+  """
+  v_tournament_player_stats(
+    """distinct select on columns"""
+    distinct_on: [v_tournament_player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_tournament_player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): [v_tournament_player_stats!]!
+
+  """
+  fetch aggregated fields from the table: "v_tournament_player_stats"
+  """
+  v_tournament_player_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_tournament_player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_tournament_player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): v_tournament_player_stats_aggregate!
+}
+
+input recalculate_tournament_trophies_args {
+  _tournament_id: uuid
 }
 
 """
@@ -41090,6 +41423,120 @@ type subscription_root {
   ): [tournament_teams!]!
 
   """An array relationship"""
+  tournament_trophies(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): [tournament_trophies!]!
+
+  """An aggregate relationship"""
+  tournament_trophies_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): tournament_trophies_aggregate!
+
+  """
+  fetch data from the table: "tournament_trophies" using primary key columns
+  """
+  tournament_trophies_by_pk(id: uuid!): tournament_trophies
+
+  """
+  fetch data from the table in a streaming manner: "tournament_trophies"
+  """
+  tournament_trophies_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_trophies_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): [tournament_trophies!]!
+
+  """
+  fetch data from the table: "tournament_trophy_configs"
+  """
+  tournament_trophy_configs(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophy_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophy_configs_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): [tournament_trophy_configs!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_trophy_configs"
+  """
+  tournament_trophy_configs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophy_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophy_configs_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): tournament_trophy_configs_aggregate!
+
+  """
+  fetch data from the table: "tournament_trophy_configs" using primary key columns
+  """
+  tournament_trophy_configs_by_pk(id: uuid!): tournament_trophy_configs
+
+  """
+  fetch data from the table in a streaming manner: "tournament_trophy_configs"
+  """
+  tournament_trophy_configs_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_trophy_configs_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): [tournament_trophy_configs!]!
+
+  """An array relationship"""
   tournaments(
     """distinct select on columns"""
     distinct_on: [tournaments_select_column!]
@@ -41735,6 +42182,60 @@ type subscription_root {
     """filter the rows returned"""
     where: v_team_tournament_results_bool_exp
   ): [v_team_tournament_results!]!
+
+  """
+  fetch data from the table: "v_tournament_player_stats"
+  """
+  v_tournament_player_stats(
+    """distinct select on columns"""
+    distinct_on: [v_tournament_player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_tournament_player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): [v_tournament_player_stats!]!
+
+  """
+  fetch aggregated fields from the table: "v_tournament_player_stats"
+  """
+  v_tournament_player_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_tournament_player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_tournament_player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): v_tournament_player_stats_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_tournament_player_stats"
+  """
+  v_tournament_player_stats_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_tournament_player_stats_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): [v_tournament_player_stats!]!
 }
 
 """
@@ -46381,6 +46882,1003 @@ input tournament_teams_variance_order_by {
 }
 
 """
+columns and relationships of "tournament_trophies"
+"""
+type tournament_trophies {
+  created_at: timestamptz!
+  custom_name: String
+  id: uuid!
+  image_url: String
+  placement: Int!
+  placement_tier: String
+
+  """An object relationship"""
+  player: players!
+  player_steam_id: bigint!
+  silhouette: Int
+
+  """An object relationship"""
+  tournament: tournaments!
+  tournament_id: uuid!
+  tournament_name: String!
+  tournament_start: timestamptz
+
+  """An object relationship"""
+  tournament_team: tournament_teams!
+  tournament_team_id: uuid!
+  tournament_type: String
+}
+
+"""
+aggregated selection of "tournament_trophies"
+"""
+type tournament_trophies_aggregate {
+  aggregate: tournament_trophies_aggregate_fields
+  nodes: [tournament_trophies!]!
+}
+
+input tournament_trophies_aggregate_bool_exp {
+  count: tournament_trophies_aggregate_bool_exp_count
+}
+
+input tournament_trophies_aggregate_bool_exp_count {
+  arguments: [tournament_trophies_select_column!]
+  distinct: Boolean
+  filter: tournament_trophies_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "tournament_trophies"
+"""
+type tournament_trophies_aggregate_fields {
+  avg: tournament_trophies_avg_fields
+  count(columns: [tournament_trophies_select_column!], distinct: Boolean): Int!
+  max: tournament_trophies_max_fields
+  min: tournament_trophies_min_fields
+  stddev: tournament_trophies_stddev_fields
+  stddev_pop: tournament_trophies_stddev_pop_fields
+  stddev_samp: tournament_trophies_stddev_samp_fields
+  sum: tournament_trophies_sum_fields
+  var_pop: tournament_trophies_var_pop_fields
+  var_samp: tournament_trophies_var_samp_fields
+  variance: tournament_trophies_variance_fields
+}
+
+"""
+order by aggregate values of table "tournament_trophies"
+"""
+input tournament_trophies_aggregate_order_by {
+  avg: tournament_trophies_avg_order_by
+  count: order_by
+  max: tournament_trophies_max_order_by
+  min: tournament_trophies_min_order_by
+  stddev: tournament_trophies_stddev_order_by
+  stddev_pop: tournament_trophies_stddev_pop_order_by
+  stddev_samp: tournament_trophies_stddev_samp_order_by
+  sum: tournament_trophies_sum_order_by
+  var_pop: tournament_trophies_var_pop_order_by
+  var_samp: tournament_trophies_var_samp_order_by
+  variance: tournament_trophies_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "tournament_trophies"
+"""
+input tournament_trophies_arr_rel_insert_input {
+  data: [tournament_trophies_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: tournament_trophies_on_conflict
+}
+
+"""aggregate avg on columns"""
+type tournament_trophies_avg_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by avg() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_avg_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_trophies". All fields are combined with a logical 'AND'.
+"""
+input tournament_trophies_bool_exp {
+  _and: [tournament_trophies_bool_exp!]
+  _not: tournament_trophies_bool_exp
+  _or: [tournament_trophies_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  custom_name: String_comparison_exp
+  id: uuid_comparison_exp
+  image_url: String_comparison_exp
+  placement: Int_comparison_exp
+  placement_tier: String_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  silhouette: Int_comparison_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+  tournament_name: String_comparison_exp
+  tournament_start: timestamptz_comparison_exp
+  tournament_team: tournament_teams_bool_exp
+  tournament_team_id: uuid_comparison_exp
+  tournament_type: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_trophies"
+"""
+enum tournament_trophies_constraint {
+  """
+  unique or primary key constraint on columns "tournament_id"
+  """
+  tournament_trophies_one_mvp_per_tournament
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  tournament_trophies_pkey
+
+  """
+  unique or primary key constraint on columns "player_steam_id", "tournament_team_id", "tournament_id"
+  """
+  tournament_trophies_tournament_id_tournament_team_id_player_key
+}
+
+"""
+input type for incrementing numeric columns in table "tournament_trophies"
+"""
+input tournament_trophies_inc_input {
+  placement: Int
+  player_steam_id: bigint
+  silhouette: Int
+}
+
+"""
+input type for inserting data into table "tournament_trophies"
+"""
+input tournament_trophies_insert_input {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+  silhouette: Int
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+  tournament_name: String
+  tournament_start: timestamptz
+  tournament_team: tournament_teams_obj_rel_insert_input
+  tournament_team_id: uuid
+  tournament_type: String
+}
+
+"""aggregate max on columns"""
+type tournament_trophies_max_fields {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  placement_tier: String
+  player_steam_id: bigint
+  silhouette: Int
+  tournament_id: uuid
+  tournament_name: String
+  tournament_start: timestamptz
+  tournament_team_id: uuid
+  tournament_type: String
+}
+
+"""
+order by max() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_max_order_by {
+  created_at: order_by
+  custom_name: order_by
+  id: order_by
+  image_url: order_by
+  placement: order_by
+  placement_tier: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+  tournament_id: order_by
+  tournament_name: order_by
+  tournament_start: order_by
+  tournament_team_id: order_by
+  tournament_type: order_by
+}
+
+"""aggregate min on columns"""
+type tournament_trophies_min_fields {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  placement_tier: String
+  player_steam_id: bigint
+  silhouette: Int
+  tournament_id: uuid
+  tournament_name: String
+  tournament_start: timestamptz
+  tournament_team_id: uuid
+  tournament_type: String
+}
+
+"""
+order by min() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_min_order_by {
+  created_at: order_by
+  custom_name: order_by
+  id: order_by
+  image_url: order_by
+  placement: order_by
+  placement_tier: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+  tournament_id: order_by
+  tournament_name: order_by
+  tournament_start: order_by
+  tournament_team_id: order_by
+  tournament_type: order_by
+}
+
+"""
+response of any mutation on the table "tournament_trophies"
+"""
+type tournament_trophies_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_trophies!]!
+}
+
+"""
+on_conflict condition type for table "tournament_trophies"
+"""
+input tournament_trophies_on_conflict {
+  constraint: tournament_trophies_constraint!
+  update_columns: [tournament_trophies_update_column!]! = []
+  where: tournament_trophies_bool_exp
+}
+
+"""Ordering options when selecting data from "tournament_trophies"."""
+input tournament_trophies_order_by {
+  created_at: order_by
+  custom_name: order_by
+  id: order_by
+  image_url: order_by
+  placement: order_by
+  placement_tier: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  silhouette: order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+  tournament_name: order_by
+  tournament_start: order_by
+  tournament_team: tournament_teams_order_by
+  tournament_team_id: order_by
+  tournament_type: order_by
+}
+
+"""primary key columns input for table: tournament_trophies"""
+input tournament_trophies_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "tournament_trophies"
+"""
+enum tournament_trophies_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  custom_name
+
+  """column name"""
+  id
+
+  """column name"""
+  image_url
+
+  """column name"""
+  placement
+
+  """column name"""
+  placement_tier
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  silhouette
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  tournament_name
+
+  """column name"""
+  tournament_start
+
+  """column name"""
+  tournament_team_id
+
+  """column name"""
+  tournament_type
+}
+
+"""
+input type for updating data in table "tournament_trophies"
+"""
+input tournament_trophies_set_input {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  player_steam_id: bigint
+  silhouette: Int
+  tournament_id: uuid
+  tournament_name: String
+  tournament_start: timestamptz
+  tournament_team_id: uuid
+  tournament_type: String
+}
+
+"""aggregate stddev on columns"""
+type tournament_trophies_stddev_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by stddev() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_stddev_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type tournament_trophies_stddev_pop_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by stddev_pop() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_stddev_pop_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type tournament_trophies_stddev_samp_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by stddev_samp() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_stddev_samp_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""
+Streaming cursor of the table "tournament_trophies"
+"""
+input tournament_trophies_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_trophies_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_trophies_stream_cursor_value_input {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  placement_tier: String
+  player_steam_id: bigint
+  silhouette: Int
+  tournament_id: uuid
+  tournament_name: String
+  tournament_start: timestamptz
+  tournament_team_id: uuid
+  tournament_type: String
+}
+
+"""aggregate sum on columns"""
+type tournament_trophies_sum_fields {
+  placement: Int
+  player_steam_id: bigint
+  silhouette: Int
+}
+
+"""
+order by sum() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_sum_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""
+update columns of table "tournament_trophies"
+"""
+enum tournament_trophies_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  custom_name
+
+  """column name"""
+  id
+
+  """column name"""
+  image_url
+
+  """column name"""
+  placement
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  silhouette
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  tournament_name
+
+  """column name"""
+  tournament_start
+
+  """column name"""
+  tournament_team_id
+
+  """column name"""
+  tournament_type
+}
+
+input tournament_trophies_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: tournament_trophies_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_trophies_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_trophies_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type tournament_trophies_var_pop_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by var_pop() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_var_pop_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""aggregate var_samp on columns"""
+type tournament_trophies_var_samp_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by var_samp() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_var_samp_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""aggregate variance on columns"""
+type tournament_trophies_variance_fields {
+  placement: Float
+  player_steam_id: Float
+  silhouette: Float
+}
+
+"""
+order by variance() on columns of table "tournament_trophies"
+"""
+input tournament_trophies_variance_order_by {
+  placement: order_by
+  player_steam_id: order_by
+  silhouette: order_by
+}
+
+"""
+columns and relationships of "tournament_trophy_configs"
+"""
+type tournament_trophy_configs {
+  created_at: timestamptz!
+  custom_name: String
+  id: uuid!
+  image_url: String
+  placement: Int!
+  silhouette: Int
+
+  """An object relationship"""
+  tournament: tournaments!
+  tournament_id: uuid!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "tournament_trophy_configs"
+"""
+type tournament_trophy_configs_aggregate {
+  aggregate: tournament_trophy_configs_aggregate_fields
+  nodes: [tournament_trophy_configs!]!
+}
+
+input tournament_trophy_configs_aggregate_bool_exp {
+  count: tournament_trophy_configs_aggregate_bool_exp_count
+}
+
+input tournament_trophy_configs_aggregate_bool_exp_count {
+  arguments: [tournament_trophy_configs_select_column!]
+  distinct: Boolean
+  filter: tournament_trophy_configs_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "tournament_trophy_configs"
+"""
+type tournament_trophy_configs_aggregate_fields {
+  avg: tournament_trophy_configs_avg_fields
+  count(columns: [tournament_trophy_configs_select_column!], distinct: Boolean): Int!
+  max: tournament_trophy_configs_max_fields
+  min: tournament_trophy_configs_min_fields
+  stddev: tournament_trophy_configs_stddev_fields
+  stddev_pop: tournament_trophy_configs_stddev_pop_fields
+  stddev_samp: tournament_trophy_configs_stddev_samp_fields
+  sum: tournament_trophy_configs_sum_fields
+  var_pop: tournament_trophy_configs_var_pop_fields
+  var_samp: tournament_trophy_configs_var_samp_fields
+  variance: tournament_trophy_configs_variance_fields
+}
+
+"""
+order by aggregate values of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_aggregate_order_by {
+  avg: tournament_trophy_configs_avg_order_by
+  count: order_by
+  max: tournament_trophy_configs_max_order_by
+  min: tournament_trophy_configs_min_order_by
+  stddev: tournament_trophy_configs_stddev_order_by
+  stddev_pop: tournament_trophy_configs_stddev_pop_order_by
+  stddev_samp: tournament_trophy_configs_stddev_samp_order_by
+  sum: tournament_trophy_configs_sum_order_by
+  var_pop: tournament_trophy_configs_var_pop_order_by
+  var_samp: tournament_trophy_configs_var_samp_order_by
+  variance: tournament_trophy_configs_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_arr_rel_insert_input {
+  data: [tournament_trophy_configs_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: tournament_trophy_configs_on_conflict
+}
+
+"""aggregate avg on columns"""
+type tournament_trophy_configs_avg_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by avg() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_avg_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_trophy_configs". All fields are combined with a logical 'AND'.
+"""
+input tournament_trophy_configs_bool_exp {
+  _and: [tournament_trophy_configs_bool_exp!]
+  _not: tournament_trophy_configs_bool_exp
+  _or: [tournament_trophy_configs_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  custom_name: String_comparison_exp
+  id: uuid_comparison_exp
+  image_url: String_comparison_exp
+  placement: Int_comparison_exp
+  silhouette: Int_comparison_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_trophy_configs"
+"""
+enum tournament_trophy_configs_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  tournament_trophy_configs_pkey
+
+  """
+  unique or primary key constraint on columns "placement", "tournament_id"
+  """
+  tournament_trophy_configs_tournament_id_placement_key
+}
+
+"""
+input type for incrementing numeric columns in table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_inc_input {
+  placement: Int
+  silhouette: Int
+}
+
+"""
+input type for inserting data into table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_insert_input {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  silhouette: Int
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type tournament_trophy_configs_max_fields {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  silhouette: Int
+  tournament_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+order by max() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_max_order_by {
+  created_at: order_by
+  custom_name: order_by
+  id: order_by
+  image_url: order_by
+  placement: order_by
+  silhouette: order_by
+  tournament_id: order_by
+  updated_at: order_by
+}
+
+"""aggregate min on columns"""
+type tournament_trophy_configs_min_fields {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  silhouette: Int
+  tournament_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+order by min() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_min_order_by {
+  created_at: order_by
+  custom_name: order_by
+  id: order_by
+  image_url: order_by
+  placement: order_by
+  silhouette: order_by
+  tournament_id: order_by
+  updated_at: order_by
+}
+
+"""
+response of any mutation on the table "tournament_trophy_configs"
+"""
+type tournament_trophy_configs_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_trophy_configs!]!
+}
+
+"""
+on_conflict condition type for table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_on_conflict {
+  constraint: tournament_trophy_configs_constraint!
+  update_columns: [tournament_trophy_configs_update_column!]! = []
+  where: tournament_trophy_configs_bool_exp
+}
+
+"""Ordering options when selecting data from "tournament_trophy_configs"."""
+input tournament_trophy_configs_order_by {
+  created_at: order_by
+  custom_name: order_by
+  id: order_by
+  image_url: order_by
+  placement: order_by
+  silhouette: order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: tournament_trophy_configs"""
+input tournament_trophy_configs_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "tournament_trophy_configs"
+"""
+enum tournament_trophy_configs_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  custom_name
+
+  """column name"""
+  id
+
+  """column name"""
+  image_url
+
+  """column name"""
+  placement
+
+  """column name"""
+  silhouette
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_set_input {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  silhouette: Int
+  tournament_id: uuid
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type tournament_trophy_configs_stddev_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by stddev() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_stddev_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type tournament_trophy_configs_stddev_pop_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by stddev_pop() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_stddev_pop_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type tournament_trophy_configs_stddev_samp_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by stddev_samp() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_stddev_samp_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""
+Streaming cursor of the table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_trophy_configs_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_trophy_configs_stream_cursor_value_input {
+  created_at: timestamptz
+  custom_name: String
+  id: uuid
+  image_url: String
+  placement: Int
+  silhouette: Int
+  tournament_id: uuid
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type tournament_trophy_configs_sum_fields {
+  placement: Int
+  silhouette: Int
+}
+
+"""
+order by sum() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_sum_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""
+update columns of table "tournament_trophy_configs"
+"""
+enum tournament_trophy_configs_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  custom_name
+
+  """column name"""
+  id
+
+  """column name"""
+  image_url
+
+  """column name"""
+  placement
+
+  """column name"""
+  silhouette
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  updated_at
+}
+
+input tournament_trophy_configs_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: tournament_trophy_configs_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_trophy_configs_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_trophy_configs_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type tournament_trophy_configs_var_pop_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by var_pop() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_var_pop_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""aggregate var_samp on columns"""
+type tournament_trophy_configs_var_samp_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by var_samp() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_var_samp_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""aggregate variance on columns"""
+type tournament_trophy_configs_variance_fields {
+  placement: Float
+  silhouette: Float
+}
+
+"""
+order by variance() on columns of table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_variance_order_by {
+  placement: order_by
+  silhouette: order_by
+}
+
+"""
 columns and relationships of "tournaments"
 """
 type tournaments {
@@ -46517,6 +48015,42 @@ type tournaments {
     """filter the rows returned"""
     where: tournament_organizers_bool_exp
   ): tournament_organizers_aggregate!
+
+  """An array relationship"""
+  player_stats(
+    """distinct select on columns"""
+    distinct_on: [v_tournament_player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_tournament_player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): [v_tournament_player_stats!]!
+
+  """An aggregate relationship"""
+  player_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_tournament_player_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_tournament_player_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_tournament_player_stats_bool_exp
+  ): v_tournament_player_stats_aggregate!
 
   """An array relationship"""
   results(
@@ -46663,6 +48197,78 @@ type tournaments {
     """filter the rows returned"""
     where: tournament_teams_bool_exp
   ): tournament_teams_aggregate!
+
+  """An array relationship"""
+  trophies(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): [tournament_trophies!]!
+
+  """An aggregate relationship"""
+  trophies_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophies_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophies_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophies_bool_exp
+  ): tournament_trophies_aggregate!
+
+  """An array relationship"""
+  trophy_configs(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophy_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophy_configs_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): [tournament_trophy_configs!]!
+
+  """An aggregate relationship"""
+  trophy_configs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_trophy_configs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_trophy_configs_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_trophy_configs_bool_exp
+  ): tournament_trophy_configs_aggregate!
 }
 
 """
@@ -46814,6 +48420,8 @@ input tournaments_bool_exp {
   organizer_steam_id: bigint_comparison_exp
   organizers: tournament_organizers_bool_exp
   organizers_aggregate: tournament_organizers_aggregate_bool_exp
+  player_stats: v_tournament_player_stats_bool_exp
+  player_stats_aggregate: v_tournament_player_stats_aggregate_bool_exp
   results: v_team_tournament_results_bool_exp
   results_aggregate: v_team_tournament_results_aggregate_bool_exp
   rosters: tournament_team_roster_bool_exp
@@ -46824,6 +48432,10 @@ input tournaments_bool_exp {
   status: e_tournament_status_enum_comparison_exp
   teams: tournament_teams_bool_exp
   teams_aggregate: tournament_teams_aggregate_bool_exp
+  trophies: tournament_trophies_bool_exp
+  trophies_aggregate: tournament_trophies_aggregate_bool_exp
+  trophy_configs: tournament_trophy_configs_bool_exp
+  trophy_configs_aggregate: tournament_trophy_configs_aggregate_bool_exp
 }
 
 """
@@ -46880,12 +48492,15 @@ input tournaments_insert_input {
   options: match_options_obj_rel_insert_input
   organizer_steam_id: bigint
   organizers: tournament_organizers_arr_rel_insert_input
+  player_stats: v_tournament_player_stats_arr_rel_insert_input
   results: v_team_tournament_results_arr_rel_insert_input
   rosters: tournament_team_roster_arr_rel_insert_input
   stages: tournament_stages_arr_rel_insert_input
   start: timestamptz
   status: e_tournament_status_enum
   teams: tournament_teams_arr_rel_insert_input
+  trophies: tournament_trophies_arr_rel_insert_input
+  trophy_configs: tournament_trophy_configs_arr_rel_insert_input
 }
 
 """aggregate max on columns"""
@@ -47041,12 +48656,15 @@ input tournaments_order_by {
   options: match_options_order_by
   organizer_steam_id: order_by
   organizers_aggregate: tournament_organizers_aggregate_order_by
+  player_stats_aggregate: v_tournament_player_stats_aggregate_order_by
   results_aggregate: v_team_tournament_results_aggregate_order_by
   rosters_aggregate: tournament_team_roster_aggregate_order_by
   stages_aggregate: tournament_stages_aggregate_order_by
   start: order_by
   status: order_by
   teams_aggregate: tournament_teams_aggregate_order_by
+  trophies_aggregate: tournament_trophies_aggregate_order_by
+  trophy_configs_aggregate: tournament_trophy_configs_aggregate_order_by
 }
 
 """primary key columns input for table: tournaments"""
@@ -51861,4 +53479,619 @@ input v_team_tournament_results_variance_order_by {
   total_deaths: order_by
   total_kills: order_by
   wins: order_by
+}
+
+"""
+columns and relationships of "v_tournament_player_stats"
+"""
+type v_tournament_player_stats {
+  assists: Int
+  deaths: Int
+  headshot_percentage: float8
+  headshots: Int
+  kdr: float8
+  kills: Int
+  matches_played: Int
+
+  """An object relationship"""
+  player: players
+  player_steam_id: bigint
+
+  """An object relationship"""
+  tournament: tournaments
+  tournament_id: uuid
+}
+
+"""
+aggregated selection of "v_tournament_player_stats"
+"""
+type v_tournament_player_stats_aggregate {
+  aggregate: v_tournament_player_stats_aggregate_fields
+  nodes: [v_tournament_player_stats!]!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp {
+  avg: v_tournament_player_stats_aggregate_bool_exp_avg
+  corr: v_tournament_player_stats_aggregate_bool_exp_corr
+  count: v_tournament_player_stats_aggregate_bool_exp_count
+  covar_samp: v_tournament_player_stats_aggregate_bool_exp_covar_samp
+  max: v_tournament_player_stats_aggregate_bool_exp_max
+  min: v_tournament_player_stats_aggregate_bool_exp_min
+  stddev_samp: v_tournament_player_stats_aggregate_bool_exp_stddev_samp
+  sum: v_tournament_player_stats_aggregate_bool_exp_sum
+  var_samp: v_tournament_player_stats_aggregate_bool_exp_var_samp
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_avg {
+  arguments: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_avg_arguments_columns!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_corr {
+  arguments: v_tournament_player_stats_aggregate_bool_exp_corr_arguments!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_corr_arguments {
+  X: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns!
+  Y: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_count {
+  arguments: [v_tournament_player_stats_select_column!]
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_covar_samp {
+  arguments: v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments {
+  X: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns!
+  Y: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_max {
+  arguments: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_max_arguments_columns!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_min {
+  arguments: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_min_arguments_columns!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_stddev_samp {
+  arguments: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_sum {
+  arguments: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_sum_arguments_columns!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input v_tournament_player_stats_aggregate_bool_exp_var_samp {
+  arguments: v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_var_samp_arguments_columns!
+  distinct: Boolean
+  filter: v_tournament_player_stats_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+"""
+aggregate fields of "v_tournament_player_stats"
+"""
+type v_tournament_player_stats_aggregate_fields {
+  avg: v_tournament_player_stats_avg_fields
+  count(columns: [v_tournament_player_stats_select_column!], distinct: Boolean): Int!
+  max: v_tournament_player_stats_max_fields
+  min: v_tournament_player_stats_min_fields
+  stddev: v_tournament_player_stats_stddev_fields
+  stddev_pop: v_tournament_player_stats_stddev_pop_fields
+  stddev_samp: v_tournament_player_stats_stddev_samp_fields
+  sum: v_tournament_player_stats_sum_fields
+  var_pop: v_tournament_player_stats_var_pop_fields
+  var_samp: v_tournament_player_stats_var_samp_fields
+  variance: v_tournament_player_stats_variance_fields
+}
+
+"""
+order by aggregate values of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_aggregate_order_by {
+  avg: v_tournament_player_stats_avg_order_by
+  count: order_by
+  max: v_tournament_player_stats_max_order_by
+  min: v_tournament_player_stats_min_order_by
+  stddev: v_tournament_player_stats_stddev_order_by
+  stddev_pop: v_tournament_player_stats_stddev_pop_order_by
+  stddev_samp: v_tournament_player_stats_stddev_samp_order_by
+  sum: v_tournament_player_stats_sum_order_by
+  var_pop: v_tournament_player_stats_var_pop_order_by
+  var_samp: v_tournament_player_stats_var_samp_order_by
+  variance: v_tournament_player_stats_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_arr_rel_insert_input {
+  data: [v_tournament_player_stats_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type v_tournament_player_stats_avg_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_avg_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "v_tournament_player_stats". All fields are combined with a logical 'AND'.
+"""
+input v_tournament_player_stats_bool_exp {
+  _and: [v_tournament_player_stats_bool_exp!]
+  _not: v_tournament_player_stats_bool_exp
+  _or: [v_tournament_player_stats_bool_exp!]
+  assists: Int_comparison_exp
+  deaths: Int_comparison_exp
+  headshot_percentage: float8_comparison_exp
+  headshots: Int_comparison_exp
+  kdr: float8_comparison_exp
+  kills: Int_comparison_exp
+  matches_played: Int_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+}
+
+"""
+input type for inserting data into table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_insert_input {
+  assists: Int
+  deaths: Int
+  headshot_percentage: float8
+  headshots: Int
+  kdr: float8
+  kills: Int
+  matches_played: Int
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+}
+
+"""aggregate max on columns"""
+type v_tournament_player_stats_max_fields {
+  assists: Int
+  deaths: Int
+  headshot_percentage: float8
+  headshots: Int
+  kdr: float8
+  kills: Int
+  matches_played: Int
+  player_steam_id: bigint
+  tournament_id: uuid
+}
+
+"""
+order by max() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_max_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+  tournament_id: order_by
+}
+
+"""aggregate min on columns"""
+type v_tournament_player_stats_min_fields {
+  assists: Int
+  deaths: Int
+  headshot_percentage: float8
+  headshots: Int
+  kdr: float8
+  kills: Int
+  matches_played: Int
+  player_steam_id: bigint
+  tournament_id: uuid
+}
+
+"""
+order by min() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_min_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+  tournament_id: order_by
+}
+
+"""Ordering options when selecting data from "v_tournament_player_stats"."""
+input v_tournament_player_stats_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+}
+
+"""
+select columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column {
+  """column name"""
+  assists
+
+  """column name"""
+  deaths
+
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  headshots
+
+  """column name"""
+  kdr
+
+  """column name"""
+  kills
+
+  """column name"""
+  matches_played
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  tournament_id
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_avg_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_avg_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_corr_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_covar_samp_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_max_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_max_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_min_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_min_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_stddev_samp_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_sum_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_sum_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""
+select "v_tournament_player_stats_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_tournament_player_stats"
+"""
+enum v_tournament_player_stats_select_column_v_tournament_player_stats_aggregate_bool_exp_var_samp_arguments_columns {
+  """column name"""
+  headshot_percentage
+
+  """column name"""
+  kdr
+}
+
+"""aggregate stddev on columns"""
+type v_tournament_player_stats_stddev_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_stddev_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type v_tournament_player_stats_stddev_pop_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_stddev_pop_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type v_tournament_player_stats_stddev_samp_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_stddev_samp_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_tournament_player_stats_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_tournament_player_stats_stream_cursor_value_input {
+  assists: Int
+  deaths: Int
+  headshot_percentage: float8
+  headshots: Int
+  kdr: float8
+  kills: Int
+  matches_played: Int
+  player_steam_id: bigint
+  tournament_id: uuid
+}
+
+"""aggregate sum on columns"""
+type v_tournament_player_stats_sum_fields {
+  assists: Int
+  deaths: Int
+  headshot_percentage: float8
+  headshots: Int
+  kdr: float8
+  kills: Int
+  matches_played: Int
+  player_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_sum_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate var_pop on columns"""
+type v_tournament_player_stats_var_pop_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_var_pop_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type v_tournament_player_stats_var_samp_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_var_samp_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type v_tournament_player_stats_variance_fields {
+  assists: Float
+  deaths: Float
+  headshot_percentage: Float
+  headshots: Float
+  kdr: Float
+  kills: Float
+  matches_played: Float
+  player_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "v_tournament_player_stats"
+"""
+input v_tournament_player_stats_variance_order_by {
+  assists: order_by
+  deaths: order_by
+  headshot_percentage: order_by
+  headshots: order_by
+  kdr: order_by
+  kills: order_by
+  matches_played: order_by
+  player_steam_id: order_by
 }

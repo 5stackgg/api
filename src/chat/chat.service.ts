@@ -32,6 +32,11 @@ export class ChatService {
     type: ChatLobbyType,
     id: string,
   ) {
+    const user = await this.refreshClientUser(client);
+    if (!user) {
+      return;
+    }
+
     switch (type) {
       case ChatLobbyType.Match:
         const { matches_by_pk } = await this.hasuraService.query(
@@ -45,7 +50,7 @@ export class ChatService {
               is_in_lineup: true,
             },
           },
-          client.user.steam_id,
+          user.steam_id,
         );
 
         if (!matches_by_pk) {
@@ -66,7 +71,7 @@ export class ChatService {
           lobby_players_by_pk: {
             __args: {
               lobby_id: id,
-              steam_id: client.user.steam_id,
+              steam_id: user.steam_id,
             },
             status: true,
           },
@@ -97,13 +102,13 @@ export class ChatService {
                         _or: [
                           {
                             owner_steam_id: {
-                              _eq: client.user.steam_id,
+                              _eq: user.steam_id,
                             },
                           },
                           {
                             roster: {
                               player_steam_id: {
-                                _eq: client.user.steam_id,
+                                _eq: user.steam_id,
                               },
                             },
                           },
@@ -116,7 +121,7 @@ export class ChatService {
               id: true,
             },
           },
-          client.user.steam_id,
+          user.steam_id,
         );
 
         if (tournaments.length === 0) {
@@ -124,7 +129,7 @@ export class ChatService {
         }
         break;
       case ChatLobbyType.Organizer:
-        if (!isRoleAbove(client.user.role, "match_organizer")) {
+        if (!isRoleAbove(user.role, "match_organizer")) {
           return;
         }
 
@@ -134,12 +139,12 @@ export class ChatService {
         return;
     }
 
-    const userData = await this.addUserToLobby(type, id, client.user, false);
+    const userData = await this.addUserToLobby(type, id, user, false);
 
     const [added, count] = await this.addSession(
       type,
       id,
-      client.user.steam_id,
+      user.steam_id,
       client.id,
     );
 
@@ -189,6 +194,52 @@ export class ChatService {
     client.on("close", () => {
       void this.removeFromLobby(type, id, client);
     });
+  }
+
+  private async refreshClientUser(client: FiveStackWebSocketClient) {
+    if (!client.user?.steam_id) {
+      return;
+    }
+
+    const currentUser = await this.getCurrentUser(client.user.steam_id);
+    if (!currentUser) {
+      return;
+    }
+
+    client.user = {
+      ...client.user,
+      ...currentUser,
+    };
+
+    return client.user;
+  }
+
+  private async getCurrentUser(steamId: string): Promise<User | undefined> {
+    const { players_by_pk } = await this.hasuraService.query({
+      players_by_pk: {
+        __args: {
+          steam_id: steamId,
+        },
+        name: true,
+        role: true,
+        steam_id: true,
+        country: true,
+        profile_url: true,
+        avatar_url: true,
+        discord_id: true,
+        language: true,
+        last_sign_in_at: true,
+      },
+    });
+
+    if (!players_by_pk) {
+      return;
+    }
+
+    return {
+      ...players_by_pk,
+      steam_id: String(players_by_pk.steam_id),
+    } as User;
   }
 
   public async sendMessageToChat(

@@ -1,0 +1,8 @@
+function:
+  name: recalculate_tournament_trophies
+  schema: public
+configuration:
+  custom_root_fields: {}
+  exposed_as: mutation
+permissions:
+  - role: administrator

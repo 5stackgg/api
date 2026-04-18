@@ -1,0 +1,10 @@
+DROP TRIGGER IF EXISTS tad_tournament_trophy_configs ON public.tournament_trophy_configs;
+DROP TRIGGER IF EXISTS tau_tournament_trophy_configs ON public.tournament_trophy_configs;
+DROP FUNCTION IF EXISTS public.tad_tournament_trophy_configs();
+DROP FUNCTION IF EXISTS public.tau_tournament_trophy_configs();
+DROP TRIGGER IF EXISTS tau_tournaments_trophies ON public.tournaments;
+DROP FUNCTION IF EXISTS public.tau_tournaments_trophies();
+DROP FUNCTION IF EXISTS public.recalculate_tournament_trophies(uuid);
+DROP FUNCTION IF EXISTS public.calculate_tournament_trophies(uuid);
+DROP TABLE IF EXISTS public.tournament_trophy_configs;
+DROP TABLE IF EXISTS public.tournament_trophies;
