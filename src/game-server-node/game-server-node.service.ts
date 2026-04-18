@@ -188,14 +188,33 @@ export class GameServerNodeService {
       return;
     }
 
-    const previousStatus = game_server_nodes_by_pk.status;
+    const storedStatus = game_server_nodes_by_pk.status;
     const label = game_server_nodes_by_pk.label;
     const offlineAt = game_server_nodes_by_pk.offline_at;
+
+    let transitionedFromOffline = false;
+    if (status === "Online" && storedStatus === "Offline") {
+      const { update_game_server_nodes } = await this.hasura.mutation({
+        update_game_server_nodes: {
+          __args: {
+            where: {
+              id: { _eq: node },
+              status: { _eq: "Offline" },
+            },
+            _set: {
+              status: "Online",
+              offline_at: null,
+            },
+          },
+          affected_rows: true,
+        },
+      });
+      transitionedFromOffline = update_game_server_nodes.affected_rows === 1;
+    }
 
     if (
       game_server_nodes_by_pk.lan_ip !== lanIP ||
       game_server_nodes_by_pk.public_ip !== publicIP ||
-      game_server_nodes_by_pk.status !== status ||
       (game_server_nodes_by_pk.build_id !== csBulid &&
         game_server_nodes_by_pk.update_status === null) ||
       (game_server_nodes_by_pk.csgo_build_id !== csgoBuildId &&
@@ -220,8 +239,6 @@ export class GameServerNodeService {
               id: node,
             },
             _set: {
-              status,
-              offline_at: null,
               lan_ip: lanIP,
               node_ip: nodeIP,
               public_ip: publicIP,
@@ -257,15 +274,13 @@ export class GameServerNodeService {
       });
     }
 
-    if (
-      status === "Online" &&
-      game_server_nodes_by_pk.build_id &&
-      game_server_nodes_by_pk.status !== status
-    ) {
+    if (transitionedFromOffline && game_server_nodes_by_pk.build_id) {
       await this.updateCsServer(node);
     }
 
-    return { previousStatus, label, offlineAt };
+    const previousStatus = transitionedFromOffline ? "Offline" : storedStatus;
+
+    return { previousStatus, label, offlineAt, transitionedFromOffline };
   }
 
   public async updateIdLabel(nodeId: string) {

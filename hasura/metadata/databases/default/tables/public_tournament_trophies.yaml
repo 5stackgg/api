@@ -1,0 +1,90 @@
+table:
+  name: tournament_trophies
+  schema: public
+object_relationships:
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+  - name: tournament_team
+    using:
+      foreign_key_constraint_on: tournament_team_id
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - tournament_team_id
+        - player_steam_id
+        - placement
+        - placement_tier
+        - tournament_name
+        - tournament_start
+        - tournament_type
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - tournament_team_id
+        - player_steam_id
+        - placement
+        - placement_tier
+        - tournament_name
+        - tournament_start
+        - tournament_type
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - tournament_team_id
+        - player_steam_id
+        - placement
+        - placement_tier
+        - tournament_name
+        - tournament_start
+        - tournament_type
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - tournament_team_id
+        - player_steam_id
+        - placement
+        - placement_tier
+        - tournament_name
+        - tournament_start
+        - tournament_type
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

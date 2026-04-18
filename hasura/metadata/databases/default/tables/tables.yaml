@@ -75,6 +75,8 @@
 - "!include public_tournament_team_invites.yaml"
 - "!include public_tournament_team_roster.yaml"
 - "!include public_tournament_teams.yaml"
+- "!include public_tournament_trophies.yaml"
+- "!include public_tournament_trophy_configs.yaml"
 - "!include public_tournaments.yaml"
 - "!include public_v_match_captains.yaml"
 - "!include public_v_match_lineups.yaml"
@@ -88,3 +90,4 @@
 - "!include public_v_pool_maps.yaml"
 - "!include public_v_team_stage_results.yaml"
 - "!include public_v_team_tournament_results.yaml"
+- "!include public_v_tournament_player_stats.yaml"

@@ -1,0 +1,53 @@
+table:
+  name: v_tournament_player_stats
+  schema: public
+object_relationships:
+  - name: tournament
+    using:
+      manual_configuration:
+        column_mapping:
+          tournament_id: id
+        insertion_order: null
+        remote_table:
+          name: tournaments
+          schema: public
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          player_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - tournament_id
+        - player_steam_id
+        - kills
+        - headshots
+        - deaths
+        - assists
+        - matches_played
+        - kdr
+        - headshot_percentage
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - tournament_id
+        - player_steam_id
+        - kills
+        - headshots
+        - deaths
+        - assists
+        - matches_played
+        - kdr
+        - headshot_percentage
+      filter: {}
+      allow_aggregations: true
+    comment: ""

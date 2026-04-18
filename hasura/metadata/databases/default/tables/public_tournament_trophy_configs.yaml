@@ -1,0 +1,137 @@
+table:
+  name: tournament_trophy_configs
+  schema: public
+object_relationships:
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      columns:
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+    comment: ""
+  - role: user
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      columns:
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: tournament_organizer
+    permission:
+      columns:
+        - custom_name
+        - silhouette
+        - image_url
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+      check: null
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - custom_name
+        - silhouette
+        - image_url
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+      check: null
+    comment: ""
+delete_permissions:
+  - role: tournament_organizer
+    permission:
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+    comment: ""
+  - role: user
+    permission:
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+    comment: ""

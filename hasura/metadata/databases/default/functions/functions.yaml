@@ -1,1 +1,2 @@
 - "!include public_get_leaderboard.yaml"
+- "!include public_recalculate_tournament_trophies.yaml"

@@ -82,7 +82,14 @@ export class GameServerNodeController {
       );
     }
 
-    const rootDisk = payload.nodeStats?.disks?.find(
+    if (!payload.nodeStats?.cpuInfo) {
+      this.logger.warn(
+        `Skipping ping from ${payload.node}: missing nodeStats.cpuInfo`,
+      );
+      return;
+    }
+
+    const rootDisk = payload.nodeStats.disks?.find(
       (d) => d.mountpoint === "/",
     );
 
@@ -103,7 +110,7 @@ export class GameServerNodeController {
       rootDisk,
     );
 
-    if (result?.previousStatus === "Offline") {
+    if (result?.transitionedFromOffline) {
       await this.nodeOfflineQueue.add(
         MarkGameServerNodeOnline.name,
         {
@@ -112,6 +119,7 @@ export class GameServerNodeController {
           offlineAt: result.offlineAt,
         },
         {
+          jobId: `node-online.${payload.node}`,
           attempts: 1,
           removeOnFail: false,
           removeOnComplete: true,

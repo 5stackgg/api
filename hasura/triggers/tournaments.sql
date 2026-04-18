@@ -191,3 +191,22 @@ CREATE TRIGGER tbi_tournaments
     BEFORE INSERT ON public.tournaments
     FOR EACH ROW
     EXECUTE FUNCTION public.tbi_tournaments();
+
+CREATE OR REPLACE FUNCTION public.tau_tournaments_trophies() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM 'Finished' THEN
+        PERFORM public.calculate_tournament_trophies(NEW.id);
+    ELSIF OLD.status = 'Finished' AND NEW.status IS DISTINCT FROM 'Finished' THEN
+        DELETE FROM public.tournament_trophies WHERE tournament_id = OLD.id;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tau_tournaments_trophies ON public.tournaments;
+CREATE TRIGGER tau_tournaments_trophies
+    AFTER UPDATE ON public.tournaments
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tau_tournaments_trophies();

@@ -20,8 +20,11 @@ BEGIN
   ELSIF _category = 'highest_hs_pct' THEN
     RETURN QUERY SELECT * FROM _leaderboard_hs_pct(_window_days, _match_type, _exclude_tournaments);
 
+  ELSIF _category = 'trophies' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_trophies(_window_days);
+
   ELSE
-    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct', _category;
+    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, trophies', _category;
   END IF;
 END;
 $$;
@@ -330,5 +333,46 @@ BEGIN
   GROUP BY pk.attacker_steam_id, p.name, p.avatar_url, p.country
   HAVING COUNT(*) >= 25
   ORDER BY value DESC;
+END;
+$$;
+
+-- ============================================================
+-- Trophies leaderboard
+-- value = gold count, secondary = silver count, tertiary = bronze count
+-- matches_played = total trophies. Olympic medal-table ordering.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public._leaderboard_trophies(
+  _window_days INT
+)
+RETURNS SETOF public.leaderboard_entries
+LANGUAGE plpgsql STABLE
+AS $$
+BEGIN
+  RETURN QUERY
+  WITH counts AS (
+    SELECT
+      tt.player_steam_id,
+      SUM(CASE WHEN tt.placement = 0 THEN 1 ELSE 0 END)::int as mvp,
+      SUM(CASE WHEN tt.placement = 1 THEN 1 ELSE 0 END)::int as gold,
+      SUM(CASE WHEN tt.placement = 2 THEN 1 ELSE 0 END)::int as silver,
+      SUM(CASE WHEN tt.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
+      COUNT(*)::int as total
+    FROM tournament_trophies tt
+    WHERE (_window_days = 0 OR tt.tournament_start >= NOW() - make_interval(days => _window_days))
+    GROUP BY tt.player_steam_id
+  )
+  SELECT
+    c.player_steam_id::text   as player_steam_id,
+    p.name                    as player_name,
+    p.avatar_url              as player_avatar_url,
+    p.country                 as player_country,
+    c.gold::float             as value,
+    c.silver::float           as secondary_value,
+    c.bronze::float           as tertiary_value,
+    c.mvp                     as matches_played
+  FROM counts c
+  JOIN players p ON p.steam_id = c.player_steam_id
+  WHERE c.total > 0
+  ORDER BY c.mvp DESC, c.gold DESC, c.silver DESC, c.bronze DESC;
 END;
 $$;
