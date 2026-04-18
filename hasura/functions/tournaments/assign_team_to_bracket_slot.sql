@@ -42,6 +42,22 @@ BEGIN
         WHERE ranked.id = _source_bracket_id;
     END IF;
 
+    -- Bye-feeder promotion: link_tournament_stage_matches() pushes a round-1 bye's
+    -- seed into the parent's team_N_seed and deletes that bye bracket. The surviving
+    -- live feeder is then the only row in the ordering query above, so it would
+    -- always land in slot 1 — overwriting the bye team that seed_stage already
+    -- placed there. When exactly one team_N_seed is set on the target, force the
+    -- incoming feeder to the opposite slot.
+    IF slot_position IS NOT NULL THEN
+        IF target_bracket.team_1_seed IS NOT NULL
+           AND target_bracket.team_2_seed IS NULL THEN
+            slot_position := 2;
+        ELSIF target_bracket.team_2_seed IS NOT NULL
+              AND target_bracket.team_1_seed IS NULL THEN
+            slot_position := 1;
+        END IF;
+    END IF;
+
     -- Slot-aware short-circuit: only return when the team is already in the
     -- CORRECT owned slot. If it's in the wrong slot (e.g. from a prior buggy
     -- placement), fall through and correct it.
