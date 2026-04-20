@@ -25481,6 +25481,7 @@ type player_elo {
   change: numeric!
   created_at: timestamptz!
   current: numeric!
+  impact: numeric
 
   """An object relationship"""
   match: matches!
@@ -25521,6 +25522,7 @@ type player_elo_aggregate_fields {
 type player_elo_avg_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -25534,6 +25536,7 @@ input player_elo_bool_exp {
   change: numeric_comparison_exp
   created_at: timestamptz_comparison_exp
   current: numeric_comparison_exp
+  impact: numeric_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   player: players_bool_exp
@@ -25557,6 +25560,7 @@ input type for incrementing numeric columns in table "player_elo"
 input player_elo_inc_input {
   change: numeric
   current: numeric
+  impact: numeric
   steam_id: bigint
 }
 
@@ -25567,6 +25571,7 @@ input player_elo_insert_input {
   change: numeric
   created_at: timestamptz
   current: numeric
+  impact: numeric
   match: matches_obj_rel_insert_input
   match_id: uuid
   player: players_obj_rel_insert_input
@@ -25579,6 +25584,7 @@ type player_elo_max_fields {
   change: numeric
   created_at: timestamptz
   current: numeric
+  impact: numeric
   match_id: uuid
   steam_id: bigint
 }
@@ -25588,6 +25594,7 @@ type player_elo_min_fields {
   change: numeric
   created_at: timestamptz
   current: numeric
+  impact: numeric
   match_id: uuid
   steam_id: bigint
 }
@@ -25617,6 +25624,7 @@ input player_elo_order_by {
   change: order_by
   created_at: order_by
   current: order_by
+  impact: order_by
   match: matches_order_by
   match_id: order_by
   player: players_order_by
@@ -25645,6 +25653,9 @@ enum player_elo_select_column {
   current
 
   """column name"""
+  impact
+
+  """column name"""
   match_id
 
   """column name"""
@@ -25661,6 +25672,7 @@ input player_elo_set_input {
   change: numeric
   created_at: timestamptz
   current: numeric
+  impact: numeric
   match_id: uuid
   steam_id: bigint
   type: e_match_types_enum
@@ -25670,6 +25682,7 @@ input player_elo_set_input {
 type player_elo_stddev_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -25677,6 +25690,7 @@ type player_elo_stddev_fields {
 type player_elo_stddev_pop_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -25684,6 +25698,7 @@ type player_elo_stddev_pop_fields {
 type player_elo_stddev_samp_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -25703,6 +25718,7 @@ input player_elo_stream_cursor_value_input {
   change: numeric
   created_at: timestamptz
   current: numeric
+  impact: numeric
   match_id: uuid
   steam_id: bigint
   type: e_match_types_enum
@@ -25712,6 +25728,7 @@ input player_elo_stream_cursor_value_input {
 type player_elo_sum_fields {
   change: numeric
   current: numeric
+  impact: numeric
   steam_id: bigint
 }
 
@@ -25727,6 +25744,9 @@ enum player_elo_update_column {
 
   """column name"""
   current
+
+  """column name"""
+  impact
 
   """column name"""
   match_id
@@ -25753,6 +25773,7 @@ input player_elo_updates {
 type player_elo_var_pop_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -25760,6 +25781,7 @@ type player_elo_var_pop_fields {
 type player_elo_var_samp_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -25767,6 +25789,7 @@ type player_elo_var_samp_fields {
 type player_elo_variance_fields {
   change: Float
   current: Float
+  impact: Float
   steam_id: Float
 }
 
@@ -46886,27 +46909,25 @@ columns and relationships of "tournament_trophies"
 """
 type tournament_trophies {
   created_at: timestamptz!
-  custom_name: String
   id: uuid!
-  image_url: String
+  manual: Boolean!
   placement: Int!
   placement_tier: String
 
   """An object relationship"""
   player: players!
   player_steam_id: bigint!
-  silhouette: Int
 
   """An object relationship"""
   tournament: tournaments!
   tournament_id: uuid!
-  tournament_name: String!
-  tournament_start: timestamptz
 
   """An object relationship"""
   tournament_team: tournament_teams!
   tournament_team_id: uuid!
-  tournament_type: String
+
+  """An object relationship"""
+  trophy_config: tournament_trophy_configs
 }
 
 """
@@ -46918,7 +46939,23 @@ type tournament_trophies_aggregate {
 }
 
 input tournament_trophies_aggregate_bool_exp {
+  bool_and: tournament_trophies_aggregate_bool_exp_bool_and
+  bool_or: tournament_trophies_aggregate_bool_exp_bool_or
   count: tournament_trophies_aggregate_bool_exp_count
+}
+
+input tournament_trophies_aggregate_bool_exp_bool_and {
+  arguments: tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: tournament_trophies_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input tournament_trophies_aggregate_bool_exp_bool_or {
+  arguments: tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: tournament_trophies_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input tournament_trophies_aggregate_bool_exp_count {
@@ -46976,7 +47013,6 @@ input tournament_trophies_arr_rel_insert_input {
 type tournament_trophies_avg_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -46985,7 +47021,6 @@ order by avg() on columns of table "tournament_trophies"
 input tournament_trophies_avg_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """
@@ -46996,21 +47031,17 @@ input tournament_trophies_bool_exp {
   _not: tournament_trophies_bool_exp
   _or: [tournament_trophies_bool_exp!]
   created_at: timestamptz_comparison_exp
-  custom_name: String_comparison_exp
   id: uuid_comparison_exp
-  image_url: String_comparison_exp
+  manual: Boolean_comparison_exp
   placement: Int_comparison_exp
   placement_tier: String_comparison_exp
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
-  silhouette: Int_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
-  tournament_name: String_comparison_exp
-  tournament_start: timestamptz_comparison_exp
   tournament_team: tournament_teams_bool_exp
   tournament_team_id: uuid_comparison_exp
-  tournament_type: String_comparison_exp
+  trophy_config: tournament_trophy_configs_bool_exp
 }
 
 """
@@ -47039,7 +47070,6 @@ input type for incrementing numeric columns in table "tournament_trophies"
 input tournament_trophies_inc_input {
   placement: Int
   player_steam_id: bigint
-  silhouette: Int
 }
 
 """
@@ -47047,37 +47077,27 @@ input type for inserting data into table "tournament_trophies"
 """
 input tournament_trophies_insert_input {
   created_at: timestamptz
-  custom_name: String
   id: uuid
-  image_url: String
+  manual: Boolean
   placement: Int
   player: players_obj_rel_insert_input
   player_steam_id: bigint
-  silhouette: Int
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
-  tournament_name: String
-  tournament_start: timestamptz
   tournament_team: tournament_teams_obj_rel_insert_input
   tournament_team_id: uuid
-  tournament_type: String
+  trophy_config: tournament_trophy_configs_obj_rel_insert_input
 }
 
 """aggregate max on columns"""
 type tournament_trophies_max_fields {
   created_at: timestamptz
-  custom_name: String
   id: uuid
-  image_url: String
   placement: Int
   placement_tier: String
   player_steam_id: bigint
-  silhouette: Int
   tournament_id: uuid
-  tournament_name: String
-  tournament_start: timestamptz
   tournament_team_id: uuid
-  tournament_type: String
 }
 
 """
@@ -47085,35 +47105,23 @@ order by max() on columns of table "tournament_trophies"
 """
 input tournament_trophies_max_order_by {
   created_at: order_by
-  custom_name: order_by
   id: order_by
-  image_url: order_by
   placement: order_by
   placement_tier: order_by
   player_steam_id: order_by
-  silhouette: order_by
   tournament_id: order_by
-  tournament_name: order_by
-  tournament_start: order_by
   tournament_team_id: order_by
-  tournament_type: order_by
 }
 
 """aggregate min on columns"""
 type tournament_trophies_min_fields {
   created_at: timestamptz
-  custom_name: String
   id: uuid
-  image_url: String
   placement: Int
   placement_tier: String
   player_steam_id: bigint
-  silhouette: Int
   tournament_id: uuid
-  tournament_name: String
-  tournament_start: timestamptz
   tournament_team_id: uuid
-  tournament_type: String
 }
 
 """
@@ -47121,18 +47129,12 @@ order by min() on columns of table "tournament_trophies"
 """
 input tournament_trophies_min_order_by {
   created_at: order_by
-  custom_name: order_by
   id: order_by
-  image_url: order_by
   placement: order_by
   placement_tier: order_by
   player_steam_id: order_by
-  silhouette: order_by
   tournament_id: order_by
-  tournament_name: order_by
-  tournament_start: order_by
   tournament_team_id: order_by
-  tournament_type: order_by
 }
 
 """
@@ -47158,21 +47160,17 @@ input tournament_trophies_on_conflict {
 """Ordering options when selecting data from "tournament_trophies"."""
 input tournament_trophies_order_by {
   created_at: order_by
-  custom_name: order_by
   id: order_by
-  image_url: order_by
+  manual: order_by
   placement: order_by
   placement_tier: order_by
   player: players_order_by
   player_steam_id: order_by
-  silhouette: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
-  tournament_name: order_by
-  tournament_start: order_by
   tournament_team: tournament_teams_order_by
   tournament_team_id: order_by
-  tournament_type: order_by
+  trophy_config: tournament_trophy_configs_order_by
 }
 
 """primary key columns input for table: tournament_trophies"""
@@ -47188,13 +47186,10 @@ enum tournament_trophies_select_column {
   created_at
 
   """column name"""
-  custom_name
-
-  """column name"""
   id
 
   """column name"""
-  image_url
+  manual
 
   """column name"""
   placement
@@ -47206,22 +47201,26 @@ enum tournament_trophies_select_column {
   player_steam_id
 
   """column name"""
-  silhouette
-
-  """column name"""
   tournament_id
 
   """column name"""
-  tournament_name
-
-  """column name"""
-  tournament_start
-
-  """column name"""
   tournament_team_id
+}
 
+"""
+select "tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_trophies"
+"""
+enum tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
-  tournament_type
+  manual
+}
+
+"""
+select "tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_trophies"
+"""
+enum tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  manual
 }
 
 """
@@ -47229,24 +47228,18 @@ input type for updating data in table "tournament_trophies"
 """
 input tournament_trophies_set_input {
   created_at: timestamptz
-  custom_name: String
   id: uuid
-  image_url: String
+  manual: Boolean
   placement: Int
   player_steam_id: bigint
-  silhouette: Int
   tournament_id: uuid
-  tournament_name: String
-  tournament_start: timestamptz
   tournament_team_id: uuid
-  tournament_type: String
 }
 
 """aggregate stddev on columns"""
 type tournament_trophies_stddev_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -47255,14 +47248,12 @@ order by stddev() on columns of table "tournament_trophies"
 input tournament_trophies_stddev_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type tournament_trophies_stddev_pop_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -47271,14 +47262,12 @@ order by stddev_pop() on columns of table "tournament_trophies"
 input tournament_trophies_stddev_pop_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type tournament_trophies_stddev_samp_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -47287,7 +47276,6 @@ order by stddev_samp() on columns of table "tournament_trophies"
 input tournament_trophies_stddev_samp_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """
@@ -47304,25 +47292,19 @@ input tournament_trophies_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input tournament_trophies_stream_cursor_value_input {
   created_at: timestamptz
-  custom_name: String
   id: uuid
-  image_url: String
+  manual: Boolean
   placement: Int
   placement_tier: String
   player_steam_id: bigint
-  silhouette: Int
   tournament_id: uuid
-  tournament_name: String
-  tournament_start: timestamptz
   tournament_team_id: uuid
-  tournament_type: String
 }
 
 """aggregate sum on columns"""
 type tournament_trophies_sum_fields {
   placement: Int
   player_steam_id: bigint
-  silhouette: Int
 }
 
 """
@@ -47331,7 +47313,6 @@ order by sum() on columns of table "tournament_trophies"
 input tournament_trophies_sum_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """
@@ -47342,13 +47323,10 @@ enum tournament_trophies_update_column {
   created_at
 
   """column name"""
-  custom_name
-
-  """column name"""
   id
 
   """column name"""
-  image_url
+  manual
 
   """column name"""
   placement
@@ -47357,22 +47335,10 @@ enum tournament_trophies_update_column {
   player_steam_id
 
   """column name"""
-  silhouette
-
-  """column name"""
   tournament_id
 
   """column name"""
-  tournament_name
-
-  """column name"""
-  tournament_start
-
-  """column name"""
   tournament_team_id
-
-  """column name"""
-  tournament_type
 }
 
 input tournament_trophies_updates {
@@ -47390,7 +47356,6 @@ input tournament_trophies_updates {
 type tournament_trophies_var_pop_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -47399,14 +47364,12 @@ order by var_pop() on columns of table "tournament_trophies"
 input tournament_trophies_var_pop_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """aggregate var_samp on columns"""
 type tournament_trophies_var_samp_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -47415,14 +47378,12 @@ order by var_samp() on columns of table "tournament_trophies"
 input tournament_trophies_var_samp_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """aggregate variance on columns"""
 type tournament_trophies_variance_fields {
   placement: Float
   player_steam_id: Float
-  silhouette: Float
 }
 
 """
@@ -47431,7 +47392,6 @@ order by variance() on columns of table "tournament_trophies"
 input tournament_trophies_variance_order_by {
   placement: order_by
   player_steam_id: order_by
-  silhouette: order_by
 }
 
 """
@@ -47645,6 +47605,16 @@ type tournament_trophy_configs_mutation_response {
 
   """data from the rows affected by the mutation"""
   returning: [tournament_trophy_configs!]!
+}
+
+"""
+input type for inserting object relation for remote table "tournament_trophy_configs"
+"""
+input tournament_trophy_configs_obj_rel_insert_input {
+  data: tournament_trophy_configs_insert_input!
+
+  """upsert condition"""
+  on_conflict: tournament_trophy_configs_on_conflict
 }
 
 """
@@ -48233,6 +48203,7 @@ type tournaments {
     """filter the rows returned"""
     where: tournament_trophies_bool_exp
   ): tournament_trophies_aggregate!
+  trophies_enabled: Boolean!
 
   """An array relationship"""
   trophy_configs(
@@ -48434,6 +48405,7 @@ input tournaments_bool_exp {
   teams_aggregate: tournament_teams_aggregate_bool_exp
   trophies: tournament_trophies_bool_exp
   trophies_aggregate: tournament_trophies_aggregate_bool_exp
+  trophies_enabled: Boolean_comparison_exp
   trophy_configs: tournament_trophy_configs_bool_exp
   trophy_configs_aggregate: tournament_trophy_configs_aggregate_bool_exp
 }
@@ -48500,6 +48472,7 @@ input tournaments_insert_input {
   status: e_tournament_status_enum
   teams: tournament_teams_arr_rel_insert_input
   trophies: tournament_trophies_arr_rel_insert_input
+  trophies_enabled: Boolean
   trophy_configs: tournament_trophy_configs_arr_rel_insert_input
 }
 
@@ -48664,6 +48637,7 @@ input tournaments_order_by {
   status: order_by
   teams_aggregate: tournament_teams_aggregate_order_by
   trophies_aggregate: tournament_trophies_aggregate_order_by
+  trophies_enabled: order_by
   trophy_configs_aggregate: tournament_trophy_configs_aggregate_order_by
 }
 
@@ -48753,6 +48727,9 @@ enum tournaments_select_column {
 
   """column name"""
   status
+
+  """column name"""
+  trophies_enabled
 }
 
 """
@@ -48803,6 +48780,9 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments
 
   """column name"""
   discord_voice_enabled
+
+  """column name"""
+  trophies_enabled
 }
 
 """
@@ -48853,6 +48833,9 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_
 
   """column name"""
   discord_voice_enabled
+
+  """column name"""
+  trophies_enabled
 }
 
 """
@@ -48885,6 +48868,7 @@ input tournaments_set_input {
   organizer_steam_id: bigint
   start: timestamptz
   status: e_tournament_status_enum
+  trophies_enabled: Boolean
 }
 
 """aggregate stddev on columns"""
@@ -48989,6 +48973,7 @@ input tournaments_stream_cursor_value_input {
   organizer_steam_id: bigint
   start: timestamptz
   status: e_tournament_status_enum
+  trophies_enabled: Boolean
 }
 
 """aggregate sum on columns"""
@@ -49093,6 +49078,9 @@ enum tournaments_update_column {
 
   """column name"""
   status
+
+  """column name"""
+  trophies_enabled
 }
 
 input tournaments_updates {

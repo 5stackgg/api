@@ -6,6 +6,8 @@ DECLARE
     _trophies_enabled boolean;
     _final_stage_id uuid;
     _final_stage_type text;
+    _final_stage_third_place_match boolean;
+    _final_round int;
     _winning_team_id uuid;
     _runner_up_team_id uuid;
     _third_team_id uuid;
@@ -27,8 +29,8 @@ BEGIN
     -- Placement is decided by the LAST stage. Earlier stages are qualifiers;
     -- their standings don't reflect the tournament result (a team can go
     -- undefeated in Swiss yet lose the playoff final).
-    SELECT id, type
-      INTO _final_stage_id, _final_stage_type
+    SELECT id, type, third_place_match
+      INTO _final_stage_id, _final_stage_type, _final_stage_third_place_match
     FROM public.tournament_stages
     WHERE tournament_id = _tournament_id
     ORDER BY "order" DESC
@@ -45,6 +47,7 @@ BEGIN
         -- In double-elim the grand final is WB at round = wb_rounds + 1.
         WITH final_match AS (
             SELECT
+                tb.round,
                 tb.tournament_team_id_1,
                 tb.tournament_team_id_2,
                 m.winning_lineup_id,
@@ -59,6 +62,7 @@ BEGIN
             LIMIT 1
         )
         SELECT
+            fm.round,
             CASE
                 WHEN fm.winning_lineup_id = fm.lineup_1_id THEN fm.tournament_team_id_1
                 WHEN fm.winning_lineup_id = fm.lineup_2_id THEN fm.tournament_team_id_2
@@ -67,36 +71,45 @@ BEGIN
                 WHEN fm.winning_lineup_id = fm.lineup_1_id THEN fm.tournament_team_id_2
                 WHEN fm.winning_lineup_id = fm.lineup_2_id THEN fm.tournament_team_id_1
             END
-          INTO _winning_team_id, _runner_up_team_id
+          INTO _final_round, _winning_team_id, _runner_up_team_id
         FROM final_match fm;
 
         IF _final_stage_type = 'SingleElimination' THEN
-            -- Bronze match (optional): same round as final, match_number = 2.
-            WITH third_match AS (
+            -- Single-elim has a definite 3rd place only when the stage
+            -- explicitly created and completed a bronze match. Otherwise the
+            -- semifinal losers are tied for 3rd, so no bronze is awarded.
+            IF _final_stage_third_place_match = true THEN
+                WITH third_match AS (
+                    SELECT
+                        tb.tournament_team_id_1,
+                        tb.tournament_team_id_2,
+                        m.winning_lineup_id,
+                        m.lineup_1_id,
+                        m.lineup_2_id
+                    FROM public.tournament_brackets tb
+                    LEFT JOIN public.matches m ON m.id = tb.match_id
+                    WHERE tb.tournament_stage_id = _final_stage_id
+                      AND tb.path = 'WB'
+                      AND tb.round = _final_round
+                      AND tb.match_number = 2
+                      AND tb.finished = true
+                      AND m.winning_lineup_id IS NOT NULL
+                    ORDER BY tb.round DESC
+                    LIMIT 1
+                )
                 SELECT
-                    tb.tournament_team_id_1,
-                    tb.tournament_team_id_2,
-                    m.winning_lineup_id,
-                    m.lineup_1_id,
-                    m.lineup_2_id
-                FROM public.tournament_brackets tb
-                LEFT JOIN public.matches m ON m.id = tb.match_id
-                WHERE tb.tournament_stage_id = _final_stage_id
-                  AND tb.path = 'WB'
-                  AND tb.match_number = 2
-                ORDER BY tb.round DESC
-                LIMIT 1
-            )
-            SELECT
-                CASE
-                    WHEN tm.winning_lineup_id = tm.lineup_1_id THEN tm.tournament_team_id_1
-                    WHEN tm.winning_lineup_id = tm.lineup_2_id THEN tm.tournament_team_id_2
-                END
-              INTO _third_team_id
-            FROM third_match tm;
+                    CASE
+                        WHEN tm.winning_lineup_id = tm.lineup_1_id THEN tm.tournament_team_id_1
+                        WHEN tm.winning_lineup_id = tm.lineup_2_id THEN tm.tournament_team_id_2
+                    END
+                  INTO _third_team_id
+                FROM third_match tm;
 
-            -- Without a 3rd place match, both semifinal losers tie => no bronze.
-            _award_third := _third_team_id IS NOT NULL;
+                _award_third := _third_team_id IS NOT NULL;
+            ELSE
+                _third_team_id := NULL;
+                _award_third := false;
+            END IF;
         ELSE
             -- Double-elim: loser of the LB final takes 3rd.
             WITH lb_final AS (
@@ -110,6 +123,8 @@ BEGIN
                 LEFT JOIN public.matches m ON m.id = tb.match_id
                 WHERE tb.tournament_stage_id = _final_stage_id
                   AND tb.path = 'LB'
+                  AND tb.finished = true
+                  AND m.winning_lineup_id IS NOT NULL
                 ORDER BY tb.round DESC, tb.match_number ASC
                 LIMIT 1
             )
@@ -161,6 +176,14 @@ BEGIN
         _award_third := _third_team_id IS NOT NULL;
     END IF;
 
+    -- Defensive guard for malformed brackets or stale data: a team cannot
+    -- receive both a placement medal and bronze in the same calculation.
+    IF _third_team_id IS NOT NULL
+       AND (_third_team_id = _winning_team_id OR _third_team_id = _runner_up_team_id) THEN
+        _third_team_id := NULL;
+        _award_third := false;
+    END IF;
+
     -- MVP: highest avg in-match impact on the WINNING team across all tournament matches.
     -- Impact is a level 0.8-1.2 metric (KDA-vs-team + damage share), so MVP reflects
     -- match performance rather than ELO swings, which favor low-rated upsetters.
@@ -205,7 +228,9 @@ BEGIN
     END IF;
 
     -- Roster-wide gold / silver / bronze. ON CONFLICT skips any player who
-    -- already has a matching manual award at this placement.
+    -- already has a matching manual award at this placement. Leaving the
+    -- conflict target unspecified keeps this function tolerant of both the
+    -- placement-aware trophy key and the partial MVP index.
     IF _winning_team_id IS NOT NULL THEN
         INSERT INTO public.tournament_trophies
             (tournament_id, tournament_team_id, player_steam_id, placement)
@@ -214,7 +239,7 @@ BEGIN
         FROM public.tournament_team_roster roster
         WHERE roster.tournament_team_id = _winning_team_id
           AND roster.tournament_id = _tournament_id
-        ON CONFLICT (tournament_id, tournament_team_id, player_steam_id, placement) DO NOTHING;
+        ON CONFLICT DO NOTHING;
     END IF;
 
     IF _runner_up_team_id IS NOT NULL THEN
@@ -225,7 +250,7 @@ BEGIN
         FROM public.tournament_team_roster roster
         WHERE roster.tournament_team_id = _runner_up_team_id
           AND roster.tournament_id = _tournament_id
-        ON CONFLICT (tournament_id, tournament_team_id, player_steam_id, placement) DO NOTHING;
+        ON CONFLICT DO NOTHING;
     END IF;
 
     IF _award_third AND _third_team_id IS NOT NULL THEN
@@ -236,7 +261,7 @@ BEGIN
         FROM public.tournament_team_roster roster
         WHERE roster.tournament_team_id = _third_team_id
           AND roster.tournament_id = _tournament_id
-        ON CONFLICT (tournament_id, tournament_team_id, player_steam_id, placement) DO NOTHING;
+        ON CONFLICT DO NOTHING;
     END IF;
 END;
 $$;
