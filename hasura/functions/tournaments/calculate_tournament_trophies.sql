@@ -227,6 +227,45 @@ BEGIN
         END IF;
     END IF;
 
+    -- Team-level placement trophies. These are only awarded when the tournament
+    -- entry is backed by a real team (tournament_teams.team_id); ad-hoc
+    -- tournament-only teams still only award player trophies.
+    IF _winning_team_id IS NOT NULL THEN
+        INSERT INTO public.tournament_trophies
+            (tournament_id, tournament_team_id, team_id, placement)
+        SELECT
+            _tournament_id, tournament_team.id, tournament_team.team_id, 1
+        FROM public.tournament_teams tournament_team
+        WHERE tournament_team.id = _winning_team_id
+          AND tournament_team.tournament_id = _tournament_id
+          AND tournament_team.team_id IS NOT NULL
+        ON CONFLICT DO NOTHING;
+    END IF;
+
+    IF _runner_up_team_id IS NOT NULL THEN
+        INSERT INTO public.tournament_trophies
+            (tournament_id, tournament_team_id, team_id, placement)
+        SELECT
+            _tournament_id, tournament_team.id, tournament_team.team_id, 2
+        FROM public.tournament_teams tournament_team
+        WHERE tournament_team.id = _runner_up_team_id
+          AND tournament_team.tournament_id = _tournament_id
+          AND tournament_team.team_id IS NOT NULL
+        ON CONFLICT DO NOTHING;
+    END IF;
+
+    IF _award_third AND _third_team_id IS NOT NULL THEN
+        INSERT INTO public.tournament_trophies
+            (tournament_id, tournament_team_id, team_id, placement)
+        SELECT
+            _tournament_id, tournament_team.id, tournament_team.team_id, 3
+        FROM public.tournament_teams tournament_team
+        WHERE tournament_team.id = _third_team_id
+          AND tournament_team.tournament_id = _tournament_id
+          AND tournament_team.team_id IS NOT NULL
+        ON CONFLICT DO NOTHING;
+    END IF;
+
     -- Roster-wide gold / silver / bronze. ON CONFLICT skips any player who
     -- already has a matching manual award at this placement. Leaving the
     -- conflict target unspecified keeps this function tolerant of both the
