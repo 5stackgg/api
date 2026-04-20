@@ -44,6 +44,7 @@ DECLARE
     _team_total_deaths INTEGER;
     _team_total_assists INTEGER;
     _team_total_damage INTEGER;
+    _impact FLOAT;
     _performance_multiplier FLOAT;
     _player_kda FLOAT;
     _team_avg_kda FLOAT;
@@ -201,14 +202,15 @@ BEGIN
         ELSE 0
     END;
     
-    -- Calculate performance multiplier based on KDA ratio and damage percentage
-    -- This will be a value between 0.8 and 1.2, with 1.0 being average performance
-    _performance_multiplier := 1.0 + 
-        (0.1 * (_player_kda / GREATEST(_team_avg_kda, 0.1) - 1.0)) + 
+    -- Impact: pre-loss-transform performance multiplier (0.8 - 1.2), driven by
+    -- KDA-vs-team and damage share. Persisted on player_elo as a level metric
+    -- so consumers like MVP selection can rank without ELO bias.
+    _impact := 1.0 +
+        (0.1 * (_player_kda / GREATEST(_team_avg_kda, 0.1) - 1.0)) +
         (0.1 * (_player_damage_percent - 0.2)); -- Assuming 20% damage is average for a 5-player team
-    
-    -- Ensure the multiplier stays within reasonable bounds
-    _performance_multiplier := GREATEST(0.8, LEAST(1.2, _performance_multiplier));
+    _impact := GREATEST(0.8, LEAST(1.2, _impact));
+
+    _performance_multiplier := _impact;
 
     -- Calculate the expected score based on team ELO averages
     -- ELO formula: Expected Score = 1 / (1 + 10^((Opponent Rating - Player Rating) / Scale Factor))
@@ -252,6 +254,7 @@ BEGIN
         'kda', _player_kda::FLOAT,
         'team_avg_kda', _team_avg_kda::FLOAT,
         'damage_percent', _player_damage_percent,
+        'impact', _impact,
         'performance_multiplier', _performance_multiplier,
         'map_wins', _player_map_wins,
         'map_losses', _player_map_losses,
@@ -353,6 +356,7 @@ BEGIN
             steam_id,
             current,
             change,
+            impact,
             created_at
         ) VALUES (
             match_type,
@@ -360,6 +364,7 @@ BEGIN
             player_record.steam_id,
             new_elo,
             elo_change,
+            COALESCE((elo_data->>'impact')::NUMERIC, 1.0),
             match_record.ended_at
         );
         

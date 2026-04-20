@@ -1,6 +1,13 @@
--- Propagate tournament_trophy_configs changes into already-awarded tournament_trophies rows
--- so profile trophy cards (and any other consumers) reflect the latest organizer config
--- without needing to re-run calculate_tournament_trophies.
+ALTER TABLE public.tournament_trophies
+    DROP COLUMN IF EXISTS manual,
+    ADD COLUMN tournament_name text,
+    ADD COLUMN tournament_start timestamptz,
+    ADD COLUMN tournament_type text,
+    ADD COLUMN custom_name text,
+    ADD COLUMN silhouette int CHECK (silhouette IS NULL OR (silhouette >= 0 AND silhouette <= 4)),
+    ADD COLUMN image_url text;
+
+ALTER TABLE public.tournaments DROP COLUMN IF EXISTS trophies_enabled;
 
 CREATE OR REPLACE FUNCTION public.tau_tournament_trophy_configs() RETURNS TRIGGER
     LANGUAGE plpgsql

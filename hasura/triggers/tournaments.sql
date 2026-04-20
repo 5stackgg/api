@@ -199,8 +199,23 @@ BEGIN
     IF NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM 'Finished' THEN
         PERFORM public.calculate_tournament_trophies(NEW.id);
     ELSIF OLD.status = 'Finished' AND NEW.status IS DISTINCT FROM 'Finished' THEN
-        DELETE FROM public.tournament_trophies WHERE tournament_id = OLD.id;
+        -- Manual awards survive status rollbacks; only the auto-calculated
+        -- placements drop so recalc can reseat them on the next finish.
+        DELETE FROM public.tournament_trophies
+        WHERE tournament_id = OLD.id AND manual = false;
     END IF;
+
+    -- Trophies toggle: clearing it wipes the auto placements; turning it
+    -- back on for a finished tournament rebuilds them.
+    IF NEW.trophies_enabled IS DISTINCT FROM OLD.trophies_enabled THEN
+        IF NEW.trophies_enabled = false THEN
+            DELETE FROM public.tournament_trophies
+            WHERE tournament_id = NEW.id AND manual = false;
+        ELSIF NEW.status = 'Finished' THEN
+            PERFORM public.calculate_tournament_trophies(NEW.id);
+        END IF;
+    END IF;
+
     RETURN NEW;
 END;
 $$;

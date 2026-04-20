@@ -3,9 +3,7 @@ RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    _tournament_name text;
-    _tournament_start timestamptz;
-    _tournament_type text;
+    _trophies_enabled boolean;
     _final_stage_id uuid;
     _final_stage_type text;
     _winning_team_id uuid;
@@ -14,19 +12,19 @@ DECLARE
     _award_third boolean := false;
     _mvp_steam_id bigint;
 BEGIN
-    DELETE FROM public.tournament_trophies WHERE tournament_id = _tournament_id;
+    SELECT trophies_enabled INTO _trophies_enabled
+    FROM public.tournaments WHERE id = _tournament_id;
 
-    SELECT t.name, t.start INTO _tournament_name, _tournament_start
-    FROM public.tournaments t WHERE t.id = _tournament_id;
+    -- Always clear prior auto rows so disabling / recalculating lands in a known state.
+    -- Manual awards survive; organizers own those explicitly.
+    DELETE FROM public.tournament_trophies
+    WHERE tournament_id = _tournament_id AND manual = false;
 
-    -- First stage type is the organizer-facing label (e.g. "Single Elimination").
-    SELECT type INTO _tournament_type
-    FROM public.tournament_stages
-    WHERE tournament_id = _tournament_id
-    ORDER BY "order" ASC
-    LIMIT 1;
+    IF _trophies_enabled IS DISTINCT FROM true THEN
+        RETURN;
+    END IF;
 
-    -- Placement is decided by the LAST stage. Prior stages are qualifiers;
+    -- Placement is decided by the LAST stage. Earlier stages are qualifiers;
     -- their standings don't reflect the tournament result (a team can go
     -- undefeated in Swiss yet lose the playoff final).
     SELECT id, type
@@ -125,64 +123,11 @@ BEGIN
 
             _award_third := _third_team_id IS NOT NULL;
         END IF;
-
-        -- Roster-wide trophy inserts for each placing team.
-        IF _winning_team_id IS NOT NULL THEN
-            INSERT INTO public.tournament_trophies
-                (tournament_id, tournament_team_id, player_steam_id, placement,
-                 tournament_name, tournament_start, tournament_type,
-                 custom_name, silhouette, image_url)
-            SELECT
-                _tournament_id, _winning_team_id, roster.player_steam_id, 1,
-                _tournament_name, _tournament_start, _tournament_type,
-                cfg.custom_name, cfg.silhouette, cfg.image_url
-            FROM public.tournament_team_roster roster
-            LEFT JOIN public.tournament_trophy_configs cfg
-              ON cfg.tournament_id = _tournament_id AND cfg.placement = 1
-            WHERE roster.tournament_team_id = _winning_team_id
-              AND roster.tournament_id = _tournament_id;
-        END IF;
-
-        IF _runner_up_team_id IS NOT NULL THEN
-            INSERT INTO public.tournament_trophies
-                (tournament_id, tournament_team_id, player_steam_id, placement,
-                 tournament_name, tournament_start, tournament_type,
-                 custom_name, silhouette, image_url)
-            SELECT
-                _tournament_id, _runner_up_team_id, roster.player_steam_id, 2,
-                _tournament_name, _tournament_start, _tournament_type,
-                cfg.custom_name, cfg.silhouette, cfg.image_url
-            FROM public.tournament_team_roster roster
-            LEFT JOIN public.tournament_trophy_configs cfg
-              ON cfg.tournament_id = _tournament_id AND cfg.placement = 2
-            WHERE roster.tournament_team_id = _runner_up_team_id
-              AND roster.tournament_id = _tournament_id;
-        END IF;
-
-        IF _award_third AND _third_team_id IS NOT NULL THEN
-            INSERT INTO public.tournament_trophies
-                (tournament_id, tournament_team_id, player_steam_id, placement,
-                 tournament_name, tournament_start, tournament_type,
-                 custom_name, silhouette, image_url)
-            SELECT
-                _tournament_id, _third_team_id, roster.player_steam_id, 3,
-                _tournament_name, _tournament_start, _tournament_type,
-                cfg.custom_name, cfg.silhouette, cfg.image_url
-            FROM public.tournament_team_roster roster
-            LEFT JOIN public.tournament_trophy_configs cfg
-              ON cfg.tournament_id = _tournament_id AND cfg.placement = 3
-            WHERE roster.tournament_team_id = _third_team_id
-              AND roster.tournament_id = _tournament_id;
-        END IF;
-
     ELSE
         -- Round-robin / Swiss finals: no bracket to read, so fall back to
-        -- standings — but scoped to the final stage only, not summed across
-        -- stages. Tie for 3rd => no bronze, matching the bracket behavior.
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, player_steam_id, placement,
-             tournament_name, tournament_start, tournament_type,
-             custom_name, silhouette, image_url)
+        -- standings scoped to the final stage only. Gold/silver pick the
+        -- first team at each rank (ties still award all tied teams below);
+        -- 3rd place only awards when a single team holds it.
         WITH ranked AS (
             SELECT
                 r.tournament_team_id,
@@ -206,34 +151,20 @@ BEGIN
             FROM ranked GROUP BY placement
         )
         SELECT
-            _tournament_id,
-            r.tournament_team_id,
-            roster.player_steam_id,
-            r.placement,
-            _tournament_name,
-            _tournament_start,
-            _tournament_type,
-            cfg.custom_name,
-            cfg.silhouette,
-            cfg.image_url
+            MIN(CASE WHEN r.placement = 1 THEN r.tournament_team_id END),
+            MIN(CASE WHEN r.placement = 2 THEN r.tournament_team_id END),
+            MIN(CASE WHEN r.placement = 3 AND tc.team_count = 1 THEN r.tournament_team_id END)
+          INTO _winning_team_id, _runner_up_team_id, _third_team_id
         FROM ranked r
-        JOIN tie_counts tc USING (placement)
-        JOIN public.tournament_team_roster roster
-          ON roster.tournament_team_id = r.tournament_team_id
-         AND roster.tournament_id = _tournament_id
-        LEFT JOIN public.tournament_trophy_configs cfg
-          ON cfg.tournament_id = _tournament_id
-         AND cfg.placement = r.placement
-        WHERE r.placement <= 3
-          AND NOT (r.placement = 3 AND tc.team_count > 1);
+        JOIN tie_counts tc USING (placement);
 
-        SELECT tournament_team_id INTO _winning_team_id
-        FROM public.tournament_trophies
-        WHERE tournament_id = _tournament_id AND placement = 1
-        LIMIT 1;
+        _award_third := _third_team_id IS NOT NULL;
     END IF;
 
-    -- MVP: highest avg ELO impact on the WINNING team across all tournament matches.
+    -- MVP: highest avg in-match impact on the WINNING team across all tournament matches.
+    -- Impact is a level 0.8-1.2 metric (KDA-vs-team + damage share), so MVP reflects
+    -- match performance rather than ELO swings, which favor low-rated upsetters.
+    -- Uniqueness key includes placement, so the MVP player also keeps their gold row.
     IF _winning_team_id IS NOT NULL THEN
         WITH t_matches AS (
             SELECT DISTINCT tb.match_id
@@ -242,49 +173,70 @@ BEGIN
             WHERE ts.tournament_id = _tournament_id
               AND tb.match_id IS NOT NULL
         ),
-        elo_impact AS (
+        player_impact AS (
             SELECT
                 pe.steam_id,
-                AVG(pe.change)::float AS avg_change,
-                SUM(pe.change)::float AS total_change,
+                AVG(COALESCE(pe.impact, 1.0))::float AS avg_impact,
+                SUM(COALESCE(pe.impact, 1.0))::float AS total_impact,
                 COUNT(*)::int AS matches
             FROM public.player_elo pe
             WHERE pe.match_id IN (SELECT match_id FROM t_matches)
             GROUP BY pe.steam_id
         )
-        SELECT ei.steam_id INTO _mvp_steam_id
-        FROM elo_impact ei
+        SELECT pi.steam_id INTO _mvp_steam_id
+        FROM player_impact pi
         JOIN public.tournament_team_roster roster
-          ON roster.player_steam_id = ei.steam_id
+          ON roster.player_steam_id = pi.steam_id
          AND roster.tournament_id = _tournament_id
          AND roster.tournament_team_id = _winning_team_id
-        WHERE ei.matches > 0
-        ORDER BY ei.avg_change DESC,
-                 ei.total_change DESC,
-                 ei.steam_id ASC
+        WHERE pi.matches > 0
+        ORDER BY pi.avg_impact DESC,
+                 pi.total_impact DESC,
+                 pi.steam_id ASC
         LIMIT 1;
 
         IF _mvp_steam_id IS NOT NULL THEN
             INSERT INTO public.tournament_trophies
-                (tournament_id, tournament_team_id, player_steam_id, placement,
-                 tournament_name, tournament_start, tournament_type,
-                 custom_name, silhouette, image_url)
-            SELECT
-                _tournament_id,
-                _winning_team_id,
-                _mvp_steam_id,
-                0,
-                _tournament_name,
-                _tournament_start,
-                _tournament_type,
-                cfg.custom_name,
-                cfg.silhouette,
-                cfg.image_url
-            FROM (SELECT 1) dummy
-            LEFT JOIN public.tournament_trophy_configs cfg
-              ON cfg.tournament_id = _tournament_id
-             AND cfg.placement = 0;
+                (tournament_id, tournament_team_id, player_steam_id, placement)
+            VALUES
+                (_tournament_id, _winning_team_id, _mvp_steam_id, 0)
+            ON CONFLICT DO NOTHING;
         END IF;
+    END IF;
+
+    -- Roster-wide gold / silver / bronze. ON CONFLICT skips any player who
+    -- already has a matching manual award at this placement.
+    IF _winning_team_id IS NOT NULL THEN
+        INSERT INTO public.tournament_trophies
+            (tournament_id, tournament_team_id, player_steam_id, placement)
+        SELECT
+            _tournament_id, _winning_team_id, roster.player_steam_id, 1
+        FROM public.tournament_team_roster roster
+        WHERE roster.tournament_team_id = _winning_team_id
+          AND roster.tournament_id = _tournament_id
+        ON CONFLICT (tournament_id, tournament_team_id, player_steam_id, placement) DO NOTHING;
+    END IF;
+
+    IF _runner_up_team_id IS NOT NULL THEN
+        INSERT INTO public.tournament_trophies
+            (tournament_id, tournament_team_id, player_steam_id, placement)
+        SELECT
+            _tournament_id, _runner_up_team_id, roster.player_steam_id, 2
+        FROM public.tournament_team_roster roster
+        WHERE roster.tournament_team_id = _runner_up_team_id
+          AND roster.tournament_id = _tournament_id
+        ON CONFLICT (tournament_id, tournament_team_id, player_steam_id, placement) DO NOTHING;
+    END IF;
+
+    IF _award_third AND _third_team_id IS NOT NULL THEN
+        INSERT INTO public.tournament_trophies
+            (tournament_id, tournament_team_id, player_steam_id, placement)
+        SELECT
+            _tournament_id, _third_team_id, roster.player_steam_id, 3
+        FROM public.tournament_team_roster roster
+        WHERE roster.tournament_team_id = _third_team_id
+          AND roster.tournament_id = _tournament_id
+        ON CONFLICT (tournament_id, tournament_team_id, player_steam_id, placement) DO NOTHING;
     END IF;
 END;
 $$;
