@@ -49978,6 +49978,7 @@ type v_player_elo {
   deaths: Int
   elo_change: Int
   expected_score: float8
+  impact: float8
   k_factor: Int
   kda: float8
   kills: Int
@@ -50144,6 +50145,7 @@ type v_player_elo_avg_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -50170,6 +50172,7 @@ input v_player_elo_avg_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50199,6 +50202,7 @@ input v_player_elo_bool_exp {
   deaths: Int_comparison_exp
   elo_change: Int_comparison_exp
   expected_score: float8_comparison_exp
+  impact: float8_comparison_exp
   k_factor: Int_comparison_exp
   kda: float8_comparison_exp
   kills: Int_comparison_exp
@@ -50231,6 +50235,7 @@ input v_player_elo_insert_input {
   deaths: Int
   elo_change: Int
   expected_score: float8
+  impact: float8
   k_factor: Int
   kda: float8
   kills: Int
@@ -50261,6 +50266,7 @@ type v_player_elo_max_fields {
   deaths: Int
   elo_change: Int
   expected_score: float8
+  impact: float8
   k_factor: Int
   kda: float8
   kills: Int
@@ -50292,6 +50298,7 @@ input v_player_elo_max_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50321,6 +50328,7 @@ type v_player_elo_min_fields {
   deaths: Int
   elo_change: Int
   expected_score: float8
+  impact: float8
   k_factor: Int
   kda: float8
   kills: Int
@@ -50352,6 +50360,7 @@ input v_player_elo_min_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50381,6 +50390,7 @@ input v_player_elo_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50428,6 +50438,9 @@ enum v_player_elo_select_column {
 
   """column name"""
   expected_score
+
+  """column name"""
+  impact
 
   """column name"""
   k_factor
@@ -50495,6 +50508,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_avg_arguments_co
   expected_score
 
   """column name"""
+  impact
+
+  """column name"""
   kda
 
   """column name"""
@@ -50522,6 +50538,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_corr_arguments_c
 
   """column name"""
   expected_score
+
+  """column name"""
+  impact
 
   """column name"""
   kda
@@ -50553,6 +50572,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_covar_samp_argum
   expected_score
 
   """column name"""
+  impact
+
+  """column name"""
   kda
 
   """column name"""
@@ -50580,6 +50602,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_max_arguments_co
 
   """column name"""
   expected_score
+
+  """column name"""
+  impact
 
   """column name"""
   kda
@@ -50611,6 +50636,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_min_arguments_co
   expected_score
 
   """column name"""
+  impact
+
+  """column name"""
   kda
 
   """column name"""
@@ -50638,6 +50666,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_stddev_samp_argu
 
   """column name"""
   expected_score
+
+  """column name"""
+  impact
 
   """column name"""
   kda
@@ -50669,6 +50700,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_sum_arguments_co
   expected_score
 
   """column name"""
+  impact
+
+  """column name"""
   kda
 
   """column name"""
@@ -50698,6 +50732,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_var_samp_argumen
   expected_score
 
   """column name"""
+  impact
+
+  """column name"""
   kda
 
   """column name"""
@@ -50723,6 +50760,7 @@ type v_player_elo_stddev_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -50749,6 +50787,7 @@ input v_player_elo_stddev_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50773,6 +50812,7 @@ type v_player_elo_stddev_pop_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -50799,6 +50839,7 @@ input v_player_elo_stddev_pop_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50823,6 +50864,7 @@ type v_player_elo_stddev_samp_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -50849,6 +50891,7 @@ input v_player_elo_stddev_samp_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50884,6 +50927,7 @@ input v_player_elo_stream_cursor_value_input {
   deaths: Int
   elo_change: Int
   expected_score: float8
+  impact: float8
   k_factor: Int
   kda: float8
   kills: Int
@@ -50913,6 +50957,7 @@ type v_player_elo_sum_fields {
   deaths: Int
   elo_change: Int
   expected_score: float8
+  impact: float8
   k_factor: Int
   kda: float8
   kills: Int
@@ -50939,6 +50984,7 @@ input v_player_elo_sum_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -50963,6 +51009,7 @@ type v_player_elo_var_pop_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -50989,6 +51036,7 @@ input v_player_elo_var_pop_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -51013,6 +51061,7 @@ type v_player_elo_var_samp_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -51039,6 +51088,7 @@ input v_player_elo_var_samp_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by
@@ -51063,6 +51113,7 @@ type v_player_elo_variance_fields {
   deaths: Float
   elo_change: Float
   expected_score: Float
+  impact: Float
   k_factor: Float
   kda: Float
   kills: Float
@@ -51089,6 +51140,7 @@ input v_player_elo_variance_order_by {
   deaths: order_by
   elo_change: order_by
   expected_score: order_by
+  impact: order_by
   k_factor: order_by
   kda: order_by
   kills: order_by

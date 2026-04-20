@@ -14264,6 +14264,7 @@ export interface v_player_elo {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14322,6 +14323,7 @@ export interface v_player_elo_avg_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14348,6 +14350,7 @@ export interface v_player_elo_max_fields {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14379,6 +14382,7 @@ export interface v_player_elo_min_fields {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14401,39 +14405,39 @@ export interface v_player_elo_min_fields {
 
 
 /** select columns of table "v_player_elo" */
-export type v_player_elo_select_column = 'actual_score' | 'assists' | 'current_elo' | 'damage' | 'damage_percent' | 'deaths' | 'elo_change' | 'expected_score' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_created_at' | 'match_id' | 'match_result' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_name' | 'player_steam_id' | 'player_team_elo_avg' | 'series_multiplier' | 'team_avg_kda' | 'type' | 'updated_elo'
+export type v_player_elo_select_column = 'actual_score' | 'assists' | 'current_elo' | 'damage' | 'damage_percent' | 'deaths' | 'elo_change' | 'expected_score' | 'impact' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_created_at' | 'match_id' | 'match_result' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_name' | 'player_steam_id' | 'player_team_elo_avg' | 'series_multiplier' | 'team_avg_kda' | 'type' | 'updated_elo'
 
 
 /** select "v_player_elo_aggregate_bool_exp_avg_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_avg_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_avg_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_corr_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_corr_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_corr_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_covar_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_covar_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_max_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_max_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_max_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_min_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_min_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_min_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_stddev_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_stddev_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_sum_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_sum_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_sum_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_var_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_var_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** aggregate stddev on columns */
@@ -14446,6 +14450,7 @@ export interface v_player_elo_stddev_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14472,6 +14477,7 @@ export interface v_player_elo_stddev_pop_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14498,6 +14504,7 @@ export interface v_player_elo_stddev_samp_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14524,6 +14531,7 @@ export interface v_player_elo_sum_fields {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14550,6 +14558,7 @@ export interface v_player_elo_var_pop_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14576,6 +14585,7 @@ export interface v_player_elo_var_samp_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14602,6 +14612,7 @@ export interface v_player_elo_variance_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -44226,6 +44237,7 @@ export interface v_player_eloGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44319,6 +44331,7 @@ export interface v_player_elo_avg_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44337,15 +44350,15 @@ export interface v_player_elo_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "v_player_elo" */
-export interface v_player_elo_avg_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_avg_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "v_player_elo". All fields are combined with a logical 'AND'. */
-export interface v_player_elo_bool_exp {_and?: (v_player_elo_bool_exp[] | null),_not?: (v_player_elo_bool_exp | null),_or?: (v_player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),current_elo?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),elo_change?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_result?: (String_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player_name?: (String_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (String_comparison_exp | null),updated_elo?: (Int_comparison_exp | null)}
+export interface v_player_elo_bool_exp {_and?: (v_player_elo_bool_exp[] | null),_not?: (v_player_elo_bool_exp | null),_or?: (v_player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),current_elo?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),elo_change?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),impact?: (float8_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_result?: (String_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player_name?: (String_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (String_comparison_exp | null),updated_elo?: (Int_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_player_elo" */
-export interface v_player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
+export interface v_player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -44358,6 +44371,7 @@ export interface v_player_elo_max_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44381,7 +44395,7 @@ export interface v_player_elo_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_player_elo" */
-export interface v_player_elo_max_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_max_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -44394,6 +44408,7 @@ export interface v_player_elo_min_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44417,11 +44432,11 @@ export interface v_player_elo_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_player_elo" */
-export interface v_player_elo_min_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_min_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Ordering options when selecting data from "v_player_elo". */
-export interface v_player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
@@ -44434,6 +44449,7 @@ export interface v_player_elo_stddev_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44452,7 +44468,7 @@ export interface v_player_elo_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "v_player_elo" */
-export interface v_player_elo_stddev_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_stddev_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -44465,6 +44481,7 @@ export interface v_player_elo_stddev_pop_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44483,7 +44500,7 @@ export interface v_player_elo_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "v_player_elo" */
-export interface v_player_elo_stddev_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_stddev_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -44496,6 +44513,7 @@ export interface v_player_elo_stddev_samp_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44514,7 +44532,7 @@ export interface v_player_elo_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "v_player_elo" */
-export interface v_player_elo_stddev_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_stddev_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Streaming cursor of the table "v_player_elo" */
@@ -44526,7 +44544,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
+export interface v_player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -44539,6 +44557,7 @@ export interface v_player_elo_sum_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44557,7 +44576,7 @@ export interface v_player_elo_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "v_player_elo" */
-export interface v_player_elo_sum_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_sum_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate var_pop on columns */
@@ -44570,6 +44589,7 @@ export interface v_player_elo_var_pop_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44588,7 +44608,7 @@ export interface v_player_elo_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "v_player_elo" */
-export interface v_player_elo_var_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_var_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -44601,6 +44621,7 @@ export interface v_player_elo_var_samp_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44619,7 +44640,7 @@ export interface v_player_elo_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "v_player_elo" */
-export interface v_player_elo_var_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_var_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -44632,6 +44653,7 @@ export interface v_player_elo_variance_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44650,7 +44672,7 @@ export interface v_player_elo_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "v_player_elo" */
-export interface v_player_elo_variance_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_variance_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** columns and relationships of "v_player_map_losses" */
@@ -56973,6 +56995,7 @@ export const enumVPlayerEloSelectColumn = {
    deaths: 'deaths' as const,
    elo_change: 'elo_change' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    k_factor: 'k_factor' as const,
    kda: 'kda' as const,
    kills: 'kills' as const,
@@ -56996,6 +57019,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpAvgArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57007,6 +57031,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpCorrArgumentsCo
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57018,6 +57043,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpCovarSampArgume
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57029,6 +57055,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpMaxArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57040,6 +57067,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpMinArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57051,6 +57079,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpStddevSampArgum
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57062,6 +57091,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpSumArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57073,6 +57103,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpVarSampArgument
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,

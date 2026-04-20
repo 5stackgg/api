@@ -51623,6 +51623,9 @@ export default {
             "expected_score": [
                 695
             ],
+            "impact": [
+                695
+            ],
             "k_factor": [
                 21
             ],
@@ -52017,6 +52020,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -52080,6 +52086,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -52154,6 +52163,9 @@ export default {
                 22
             ],
             "expected_score": [
+                696
+            ],
+            "impact": [
                 696
             ],
             "k_factor": [
@@ -52239,6 +52251,9 @@ export default {
             "expected_score": [
                 695
             ],
+            "impact": [
+                695
+            ],
             "k_factor": [
                 21
             ],
@@ -52322,6 +52337,9 @@ export default {
             "expected_score": [
                 695
             ],
+            "impact": [
+                695
+            ],
             "k_factor": [
                 21
             ],
@@ -52400,6 +52418,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -52482,6 +52503,9 @@ export default {
             "expected_score": [
                 695
             ],
+            "impact": [
+                695
+            ],
             "k_factor": [
                 21
             ],
@@ -52562,6 +52586,9 @@ export default {
             "expected_score": [
                 1496
             ],
+            "impact": [
+                1496
+            ],
             "k_factor": [
                 1496
             ],
@@ -52640,6 +52667,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -52734,6 +52764,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -52797,6 +52830,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -52864,6 +52900,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -52927,6 +52966,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -52994,6 +53036,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -53057,6 +53102,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -53133,6 +53181,9 @@ export default {
                 21
             ],
             "expected_score": [
+                695
+            ],
+            "impact": [
                 695
             ],
             "k_factor": [
@@ -53215,6 +53266,9 @@ export default {
             "expected_score": [
                 695
             ],
+            "impact": [
+                695
+            ],
             "k_factor": [
                 21
             ],
@@ -53278,6 +53332,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -53345,6 +53402,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -53408,6 +53468,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -53475,6 +53538,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -53538,6 +53604,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
@@ -53605,6 +53674,9 @@ export default {
             "expected_score": [
                 16
             ],
+            "impact": [
+                16
+            ],
             "k_factor": [
                 16
             ],
@@ -53668,6 +53740,9 @@ export default {
                 1496
             ],
             "expected_score": [
+                1496
+            ],
+            "impact": [
                 1496
             ],
             "k_factor": [
