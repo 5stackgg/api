@@ -1,7 +1,7 @@
 -- In-match performance multiplier (0.8 - 1.2) driven by KDA-vs-team and damage share.
 -- Stored as a level metric independent of ELO swings so MVP and similar
 -- consumers can rank players without favoring those whose ELO moved most.
-ALTER TABLE public.player_elo ADD COLUMN impact numeric;
+ALTER TABLE public.player_elo ADD COLUMN IF NOT EXISTS impact numeric;
 
 -- Backfill from raw player_kills / player_assists / player_damages.
 -- Mirrors the pre-loss-transform formula in get_player_elo_for_match.

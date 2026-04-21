@@ -358,7 +358,9 @@ BEGIN
       SUM(CASE WHEN tt.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
       COUNT(*)::int as total
     FROM tournament_trophies tt
-    WHERE (_window_days = 0 OR tt.tournament_start >= NOW() - make_interval(days => _window_days))
+    JOIN tournaments t ON t.id = tt.tournament_id
+    WHERE tt.player_steam_id IS NOT NULL
+      AND (_window_days = 0 OR t.start >= NOW() - make_interval(days => _window_days))
     GROUP BY tt.player_steam_id
   )
   SELECT

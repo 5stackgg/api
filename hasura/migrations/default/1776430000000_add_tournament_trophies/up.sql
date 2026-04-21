@@ -1,4 +1,4 @@
-CREATE TABLE public.tournament_trophies (
+CREATE TABLE IF NOT EXISTS public.tournament_trophies (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tournament_id uuid NOT NULL REFERENCES public.tournaments(id) ON DELETE CASCADE,
     tournament_team_id uuid NOT NULL REFERENCES public.tournament_teams(id) ON DELETE CASCADE,
@@ -22,15 +22,15 @@ CREATE TABLE public.tournament_trophies (
     UNIQUE (tournament_id, tournament_team_id, player_steam_id)
 );
 
-CREATE INDEX idx_tournament_trophies_player
+CREATE INDEX IF NOT EXISTS idx_tournament_trophies_player
     ON public.tournament_trophies(player_steam_id, placement);
-CREATE INDEX idx_tournament_trophies_tournament
+CREATE INDEX IF NOT EXISTS idx_tournament_trophies_tournament
     ON public.tournament_trophies(tournament_id);
-CREATE UNIQUE INDEX tournament_trophies_one_mvp_per_tournament
+CREATE UNIQUE INDEX IF NOT EXISTS tournament_trophies_one_mvp_per_tournament
     ON public.tournament_trophies(tournament_id)
     WHERE placement = 0;
 
-CREATE TABLE public.tournament_trophy_configs (
+CREATE TABLE IF NOT EXISTS public.tournament_trophy_configs (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tournament_id uuid NOT NULL REFERENCES public.tournaments(id) ON DELETE CASCADE,
     placement int NOT NULL CHECK (placement IN (0, 1, 2, 3)),
@@ -42,5 +42,5 @@ CREATE TABLE public.tournament_trophy_configs (
     UNIQUE (tournament_id, placement)
 );
 
-CREATE INDEX idx_tournament_trophy_configs_tournament
+CREATE INDEX IF NOT EXISTS idx_tournament_trophy_configs_tournament
     ON public.tournament_trophy_configs(tournament_id);
