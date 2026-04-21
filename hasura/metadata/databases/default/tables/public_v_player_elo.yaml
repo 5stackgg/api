@@ -23,6 +23,7 @@ select_permissions:
         - deaths
         - elo_change
         - expected_score
+        - impact
         - k_factor
         - kda
         - kills

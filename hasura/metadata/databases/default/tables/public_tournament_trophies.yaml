@@ -11,6 +11,48 @@ object_relationships:
   - name: player
     using:
       foreign_key_constraint_on: player_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+  - name: trophy_config
+    using:
+      manual_configuration:
+        remote_table:
+          schema: public
+          name: tournament_trophy_configs
+        column_mapping:
+          tournament_id: tournament_id
+          placement: placement
+        insertion_order: null
+insert_permissions:
+  - role: tournament_organizer
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      set:
+        manual: "true"
+      columns:
+        - tournament_id
+        - tournament_team_id
+        - player_steam_id
+        - placement
+    comment: ""
+  - role: user
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      set:
+        manual: "true"
+      columns:
+        - tournament_id
+        - tournament_team_id
+        - player_steam_id
+        - placement
+    comment: ""
 select_permissions:
   - role: guest
     permission:
@@ -18,15 +60,11 @@ select_permissions:
         - id
         - tournament_id
         - tournament_team_id
+        - team_id
         - player_steam_id
         - placement
         - placement_tier
-        - tournament_name
-        - tournament_start
-        - tournament_type
-        - custom_name
-        - silhouette
-        - image_url
+        - manual
         - created_at
       filter: {}
       allow_aggregations: true
@@ -37,15 +75,11 @@ select_permissions:
         - id
         - tournament_id
         - tournament_team_id
+        - team_id
         - player_steam_id
         - placement
         - placement_tier
-        - tournament_name
-        - tournament_start
-        - tournament_type
-        - custom_name
-        - silhouette
-        - image_url
+        - manual
         - created_at
       filter: {}
       allow_aggregations: true
@@ -56,15 +90,11 @@ select_permissions:
         - id
         - tournament_id
         - tournament_team_id
+        - team_id
         - player_steam_id
         - placement
         - placement_tier
-        - tournament_name
-        - tournament_start
-        - tournament_type
-        - custom_name
-        - silhouette
-        - image_url
+        - manual
         - created_at
       filter: {}
       allow_aggregations: true
@@ -75,16 +105,27 @@ select_permissions:
         - id
         - tournament_id
         - tournament_team_id
+        - team_id
         - player_steam_id
         - placement
         - placement_tier
-        - tournament_name
-        - tournament_start
-        - tournament_type
-        - custom_name
-        - silhouette
-        - image_url
+        - manual
         - created_at
       filter: {}
       allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: tournament_organizer
+    permission:
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+    comment: ""
+  - role: user
+    permission:
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
     comment: ""

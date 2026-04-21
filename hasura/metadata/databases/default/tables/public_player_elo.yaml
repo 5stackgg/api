@@ -15,6 +15,7 @@ select_permissions:
         - steam_id
         - change
         - current
+        - impact
         - created_at
         - match_id
       filter: {}

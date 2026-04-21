@@ -378,6 +378,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+        - trophies_enabled
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -409,6 +410,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+        - trophies_enabled
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -460,6 +462,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+        - trophies_enabled
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -491,6 +494,7 @@ update_permissions:
         - name
         - start
         - status
+        - trophies_enabled
       filter:
         is_organizer:
           _eq: true
@@ -523,6 +527,7 @@ update_permissions:
         - name
         - start
         - status
+        - trophies_enabled
       filter:
         is_organizer:
           _eq: true

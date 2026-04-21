@@ -7863,6 +7863,7 @@ export interface player_elo {
     change: Scalars['numeric']
     created_at: Scalars['timestamptz']
     current: Scalars['numeric']
+    impact: (Scalars['numeric'] | null)
     /** An object relationship */
     match: matches
     match_id: Scalars['uuid']
@@ -7903,6 +7904,7 @@ export interface player_elo_aggregate_fields {
 export interface player_elo_avg_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_avg_fields'
 }
@@ -7917,6 +7919,7 @@ export interface player_elo_max_fields {
     change: (Scalars['numeric'] | null)
     created_at: (Scalars['timestamptz'] | null)
     current: (Scalars['numeric'] | null)
+    impact: (Scalars['numeric'] | null)
     match_id: (Scalars['uuid'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_elo_max_fields'
@@ -7928,6 +7931,7 @@ export interface player_elo_min_fields {
     change: (Scalars['numeric'] | null)
     created_at: (Scalars['timestamptz'] | null)
     current: (Scalars['numeric'] | null)
+    impact: (Scalars['numeric'] | null)
     match_id: (Scalars['uuid'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_elo_min_fields'
@@ -7945,13 +7949,14 @@ export interface player_elo_mutation_response {
 
 
 /** select columns of table "player_elo" */
-export type player_elo_select_column = 'change' | 'created_at' | 'current' | 'match_id' | 'steam_id' | 'type'
+export type player_elo_select_column = 'change' | 'created_at' | 'current' | 'impact' | 'match_id' | 'steam_id' | 'type'
 
 
 /** aggregate stddev on columns */
 export interface player_elo_stddev_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_stddev_fields'
 }
@@ -7961,6 +7966,7 @@ export interface player_elo_stddev_fields {
 export interface player_elo_stddev_pop_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_stddev_pop_fields'
 }
@@ -7970,6 +7976,7 @@ export interface player_elo_stddev_pop_fields {
 export interface player_elo_stddev_samp_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_stddev_samp_fields'
 }
@@ -7979,19 +7986,21 @@ export interface player_elo_stddev_samp_fields {
 export interface player_elo_sum_fields {
     change: (Scalars['numeric'] | null)
     current: (Scalars['numeric'] | null)
+    impact: (Scalars['numeric'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_elo_sum_fields'
 }
 
 
 /** update columns of table "player_elo" */
-export type player_elo_update_column = 'change' | 'created_at' | 'current' | 'match_id' | 'steam_id' | 'type'
+export type player_elo_update_column = 'change' | 'created_at' | 'current' | 'impact' | 'match_id' | 'steam_id' | 'type'
 
 
 /** aggregate var_pop on columns */
 export interface player_elo_var_pop_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_var_pop_fields'
 }
@@ -8001,6 +8010,7 @@ export interface player_elo_var_pop_fields {
 export interface player_elo_var_samp_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_var_samp_fields'
 }
@@ -8010,6 +8020,7 @@ export interface player_elo_var_samp_fields {
 export interface player_elo_variance_fields {
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_elo_variance_fields'
 }
@@ -13111,24 +13122,24 @@ export interface tournament_teams_variance_fields {
 /** columns and relationships of "tournament_trophies" */
 export interface tournament_trophies {
     created_at: Scalars['timestamptz']
-    custom_name: (Scalars['String'] | null)
     id: Scalars['uuid']
-    image_url: (Scalars['String'] | null)
+    manual: Scalars['Boolean']
     placement: Scalars['Int']
     placement_tier: (Scalars['String'] | null)
     /** An object relationship */
-    player: players
-    player_steam_id: Scalars['bigint']
-    silhouette: (Scalars['Int'] | null)
+    player: (players | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
     /** An object relationship */
     tournament: tournaments
     tournament_id: Scalars['uuid']
-    tournament_name: Scalars['String']
-    tournament_start: (Scalars['timestamptz'] | null)
     /** An object relationship */
     tournament_team: tournament_teams
     tournament_team_id: Scalars['uuid']
-    tournament_type: (Scalars['String'] | null)
+    /** An object relationship */
+    trophy_config: (tournament_trophy_configs | null)
     __typename: 'tournament_trophies'
 }
 
@@ -13162,30 +13173,24 @@ export interface tournament_trophies_aggregate_fields {
 export interface tournament_trophies_avg_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_avg_fields'
 }
 
 
 /** unique or primary key constraints on table "tournament_trophies" */
-export type tournament_trophies_constraint = 'tournament_trophies_one_mvp_per_tournament' | 'tournament_trophies_pkey' | 'tournament_trophies_tournament_id_tournament_team_id_player_key'
+export type tournament_trophies_constraint = 'tournament_trophies_one_mvp_per_tournament' | 'tournament_trophies_pkey' | 'tournament_trophies_player_recipient_key' | 'tournament_trophies_team_recipient_key'
 
 
 /** aggregate max on columns */
 export interface tournament_trophies_max_fields {
     created_at: (Scalars['timestamptz'] | null)
-    custom_name: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
-    image_url: (Scalars['String'] | null)
     placement: (Scalars['Int'] | null)
     placement_tier: (Scalars['String'] | null)
     player_steam_id: (Scalars['bigint'] | null)
-    silhouette: (Scalars['Int'] | null)
+    team_id: (Scalars['uuid'] | null)
     tournament_id: (Scalars['uuid'] | null)
-    tournament_name: (Scalars['String'] | null)
-    tournament_start: (Scalars['timestamptz'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
-    tournament_type: (Scalars['String'] | null)
     __typename: 'tournament_trophies_max_fields'
 }
 
@@ -13193,18 +13198,13 @@ export interface tournament_trophies_max_fields {
 /** aggregate min on columns */
 export interface tournament_trophies_min_fields {
     created_at: (Scalars['timestamptz'] | null)
-    custom_name: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
-    image_url: (Scalars['String'] | null)
     placement: (Scalars['Int'] | null)
     placement_tier: (Scalars['String'] | null)
     player_steam_id: (Scalars['bigint'] | null)
-    silhouette: (Scalars['Int'] | null)
+    team_id: (Scalars['uuid'] | null)
     tournament_id: (Scalars['uuid'] | null)
-    tournament_name: (Scalars['String'] | null)
-    tournament_start: (Scalars['timestamptz'] | null)
     tournament_team_id: (Scalars['uuid'] | null)
-    tournament_type: (Scalars['String'] | null)
     __typename: 'tournament_trophies_min_fields'
 }
 
@@ -13220,14 +13220,21 @@ export interface tournament_trophies_mutation_response {
 
 
 /** select columns of table "tournament_trophies" */
-export type tournament_trophies_select_column = 'created_at' | 'custom_name' | 'id' | 'image_url' | 'placement' | 'placement_tier' | 'player_steam_id' | 'silhouette' | 'tournament_id' | 'tournament_name' | 'tournament_start' | 'tournament_team_id' | 'tournament_type'
+export type tournament_trophies_select_column = 'created_at' | 'id' | 'manual' | 'placement' | 'placement_tier' | 'player_steam_id' | 'team_id' | 'tournament_id' | 'tournament_team_id'
+
+
+/** select "tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_trophies" */
+export type tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns = 'manual'
+
+
+/** select "tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_trophies" */
+export type tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns = 'manual'
 
 
 /** aggregate stddev on columns */
 export interface tournament_trophies_stddev_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_stddev_fields'
 }
 
@@ -13236,7 +13243,6 @@ export interface tournament_trophies_stddev_fields {
 export interface tournament_trophies_stddev_pop_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_stddev_pop_fields'
 }
 
@@ -13245,7 +13251,6 @@ export interface tournament_trophies_stddev_pop_fields {
 export interface tournament_trophies_stddev_samp_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_stddev_samp_fields'
 }
 
@@ -13254,20 +13259,18 @@ export interface tournament_trophies_stddev_samp_fields {
 export interface tournament_trophies_sum_fields {
     placement: (Scalars['Int'] | null)
     player_steam_id: (Scalars['bigint'] | null)
-    silhouette: (Scalars['Int'] | null)
     __typename: 'tournament_trophies_sum_fields'
 }
 
 
 /** update columns of table "tournament_trophies" */
-export type tournament_trophies_update_column = 'created_at' | 'custom_name' | 'id' | 'image_url' | 'placement' | 'player_steam_id' | 'silhouette' | 'tournament_id' | 'tournament_name' | 'tournament_start' | 'tournament_team_id' | 'tournament_type'
+export type tournament_trophies_update_column = 'created_at' | 'id' | 'manual' | 'placement' | 'player_steam_id' | 'team_id' | 'tournament_id' | 'tournament_team_id'
 
 
 /** aggregate var_pop on columns */
 export interface tournament_trophies_var_pop_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_var_pop_fields'
 }
 
@@ -13276,7 +13279,6 @@ export interface tournament_trophies_var_pop_fields {
 export interface tournament_trophies_var_samp_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_var_samp_fields'
 }
 
@@ -13285,7 +13287,6 @@ export interface tournament_trophies_var_samp_fields {
 export interface tournament_trophies_variance_fields {
     placement: (Scalars['Float'] | null)
     player_steam_id: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
     __typename: 'tournament_trophies_variance_fields'
 }
 
@@ -13533,6 +13534,7 @@ export interface tournaments {
     trophies: tournament_trophies[]
     /** An aggregate relationship */
     trophies_aggregate: tournament_trophies_aggregate
+    trophies_enabled: Scalars['Boolean']
     /** An array relationship */
     trophy_configs: tournament_trophy_configs[]
     /** An aggregate relationship */
@@ -13632,15 +13634,15 @@ export interface tournaments_mutation_response {
 
 
 /** select columns of table "tournaments" */
-export type tournaments_select_column = 'auto_start' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+export type tournaments_select_column = 'auto_start' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status' | 'trophies_enabled'
 
 
 /** select "tournaments_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'trophies_enabled'
 
 
 /** select "tournaments_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'trophies_enabled'
 
 
 /** aggregate stddev on columns */
@@ -13688,7 +13690,7 @@ export interface tournaments_sum_fields {
 
 
 /** update columns of table "tournaments" */
-export type tournaments_update_column = 'auto_start' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status'
+export type tournaments_update_column = 'auto_start' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'id' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'start' | 'status' | 'trophies_enabled'
 
 
 /** aggregate var_pop on columns */
@@ -14262,6 +14264,7 @@ export interface v_player_elo {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14320,6 +14323,7 @@ export interface v_player_elo_avg_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14346,6 +14350,7 @@ export interface v_player_elo_max_fields {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14377,6 +14382,7 @@ export interface v_player_elo_min_fields {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14399,39 +14405,39 @@ export interface v_player_elo_min_fields {
 
 
 /** select columns of table "v_player_elo" */
-export type v_player_elo_select_column = 'actual_score' | 'assists' | 'current_elo' | 'damage' | 'damage_percent' | 'deaths' | 'elo_change' | 'expected_score' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_created_at' | 'match_id' | 'match_result' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_name' | 'player_steam_id' | 'player_team_elo_avg' | 'series_multiplier' | 'team_avg_kda' | 'type' | 'updated_elo'
+export type v_player_elo_select_column = 'actual_score' | 'assists' | 'current_elo' | 'damage' | 'damage_percent' | 'deaths' | 'elo_change' | 'expected_score' | 'impact' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_created_at' | 'match_id' | 'match_result' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_name' | 'player_steam_id' | 'player_team_elo_avg' | 'series_multiplier' | 'team_avg_kda' | 'type' | 'updated_elo'
 
 
 /** select "v_player_elo_aggregate_bool_exp_avg_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_avg_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_avg_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_corr_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_corr_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_corr_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_covar_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_covar_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_max_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_max_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_max_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_min_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_min_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_min_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_stddev_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_stddev_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_sum_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_sum_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_sum_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** select "v_player_elo_aggregate_bool_exp_var_samp_arguments_columns" columns of table "v_player_elo" */
-export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_var_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
+export type v_player_elo_select_column_v_player_elo_aggregate_bool_exp_var_samp_arguments_columns = 'actual_score' | 'damage_percent' | 'expected_score' | 'impact' | 'kda' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'team_avg_kda'
 
 
 /** aggregate stddev on columns */
@@ -14444,6 +14450,7 @@ export interface v_player_elo_stddev_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14470,6 +14477,7 @@ export interface v_player_elo_stddev_pop_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14496,6 +14504,7 @@ export interface v_player_elo_stddev_samp_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14522,6 +14531,7 @@ export interface v_player_elo_sum_fields {
     deaths: (Scalars['Int'] | null)
     elo_change: (Scalars['Int'] | null)
     expected_score: (Scalars['float8'] | null)
+    impact: (Scalars['float8'] | null)
     k_factor: (Scalars['Int'] | null)
     kda: (Scalars['float8'] | null)
     kills: (Scalars['Int'] | null)
@@ -14548,6 +14558,7 @@ export interface v_player_elo_var_pop_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14574,6 +14585,7 @@ export interface v_player_elo_var_samp_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -14600,6 +14612,7 @@ export interface v_player_elo_variance_fields {
     deaths: (Scalars['Float'] | null)
     elo_change: (Scalars['Float'] | null)
     expected_score: (Scalars['Float'] | null)
+    impact: (Scalars['Float'] | null)
     k_factor: (Scalars['Float'] | null)
     kda: (Scalars['Float'] | null)
     kills: (Scalars['Float'] | null)
@@ -29934,6 +29947,7 @@ export interface player_eloGenqlSelection{
     change?: boolean | number
     created_at?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
     match_id?: boolean | number
@@ -29977,6 +29991,7 @@ export interface player_elo_aggregate_fieldsGenqlSelection{
 export interface player_elo_avg_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -29984,15 +29999,15 @@ export interface player_elo_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "player_elo". All fields are combined with a logical 'AND'. */
-export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),impact?: (numeric_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_elo" */
-export interface player_elo_inc_input {change?: (Scalars['numeric'] | null),current?: (Scalars['numeric'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_elo_inc_input {change?: (Scalars['numeric'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "player_elo" */
-export interface player_elo_insert_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_insert_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -30000,6 +30015,7 @@ export interface player_elo_max_fieldsGenqlSelection{
     change?: boolean | number
     created_at?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     match_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
@@ -30012,6 +30028,7 @@ export interface player_elo_min_fieldsGenqlSelection{
     change?: boolean | number
     created_at?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     match_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
@@ -30035,7 +30052,7 @@ export interface player_elo_on_conflict {constraint: player_elo_constraint,updat
 
 
 /** Ordering options when selecting data from "player_elo". */
-export interface player_elo_order_by {change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),type?: (order_by | null)}
+export interface player_elo_order_by {change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),impact?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: player_elo */
@@ -30043,13 +30060,14 @@ export interface player_elo_pk_columns_input {match_id: Scalars['uuid'],steam_id
 
 
 /** input type for updating data in table "player_elo" */
-export interface player_elo_set_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_set_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
 export interface player_elo_stddev_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30060,6 +30078,7 @@ export interface player_elo_stddev_fieldsGenqlSelection{
 export interface player_elo_stddev_pop_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30070,6 +30089,7 @@ export interface player_elo_stddev_pop_fieldsGenqlSelection{
 export interface player_elo_stddev_samp_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30085,13 +30105,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_elo_stream_cursor_value_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_stream_cursor_value_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
 export interface player_elo_sum_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30110,6 +30131,7 @@ where: player_elo_bool_exp}
 export interface player_elo_var_pop_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30120,6 +30142,7 @@ export interface player_elo_var_pop_fieldsGenqlSelection{
 export interface player_elo_var_samp_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30130,6 +30153,7 @@ export interface player_elo_var_samp_fieldsGenqlSelection{
 export interface player_elo_variance_fieldsGenqlSelection{
     change?: boolean | number
     current?: boolean | number
+    impact?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -42442,24 +42466,24 @@ export interface tournament_teams_variance_order_by {owner_steam_id?: (order_by 
 /** columns and relationships of "tournament_trophies" */
 export interface tournament_trophiesGenqlSelection{
     created_at?: boolean | number
-    custom_name?: boolean | number
     id?: boolean | number
-    image_url?: boolean | number
+    manual?: boolean | number
     placement?: boolean | number
     placement_tier?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
     /** An object relationship */
     tournament?: tournamentsGenqlSelection
     tournament_id?: boolean | number
-    tournament_name?: boolean | number
-    tournament_start?: boolean | number
     /** An object relationship */
     tournament_team?: tournament_teamsGenqlSelection
     tournament_team_id?: boolean | number
-    tournament_type?: boolean | number
+    /** An object relationship */
+    trophy_config?: tournament_trophy_configsGenqlSelection
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -42473,7 +42497,11 @@ export interface tournament_trophies_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface tournament_trophies_aggregate_bool_exp {count?: (tournament_trophies_aggregate_bool_exp_count | null)}
+export interface tournament_trophies_aggregate_bool_exp {bool_and?: (tournament_trophies_aggregate_bool_exp_bool_and | null),bool_or?: (tournament_trophies_aggregate_bool_exp_bool_or | null),count?: (tournament_trophies_aggregate_bool_exp_count | null)}
+
+export interface tournament_trophies_aggregate_bool_exp_bool_and {arguments: tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophies_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface tournament_trophies_aggregate_bool_exp_bool_or {arguments: tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophies_bool_exp | null),predicate: Boolean_comparison_exp}
 
 export interface tournament_trophies_aggregate_bool_exp_count {arguments?: (tournament_trophies_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophies_bool_exp | null),predicate: Int_comparison_exp}
 
@@ -42510,74 +42538,63 @@ on_conflict?: (tournament_trophies_on_conflict | null)}
 export interface tournament_trophies_avg_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by avg() on columns of table "tournament_trophies" */
-export interface tournament_trophies_avg_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_avg_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "tournament_trophies". All fields are combined with a logical 'AND'. */
-export interface tournament_trophies_bool_exp {_and?: (tournament_trophies_bool_exp[] | null),_not?: (tournament_trophies_bool_exp | null),_or?: (tournament_trophies_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),custom_name?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),image_url?: (String_comparison_exp | null),placement?: (Int_comparison_exp | null),placement_tier?: (String_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),silhouette?: (Int_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_name?: (String_comparison_exp | null),tournament_start?: (timestamptz_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null),tournament_type?: (String_comparison_exp | null)}
+export interface tournament_trophies_bool_exp {_and?: (tournament_trophies_bool_exp[] | null),_not?: (tournament_trophies_bool_exp | null),_or?: (tournament_trophies_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),manual?: (Boolean_comparison_exp | null),placement?: (Int_comparison_exp | null),placement_tier?: (String_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null),trophy_config?: (tournament_trophy_configs_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_trophies" */
-export interface tournament_trophies_inc_input {placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),silhouette?: (Scalars['Int'] | null)}
+export interface tournament_trophies_inc_input {placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "tournament_trophies" */
-export interface tournament_trophies_insert_input {created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),silhouette?: (Scalars['Int'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_name?: (Scalars['String'] | null),tournament_start?: (Scalars['timestamptz'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null),tournament_type?: (Scalars['String'] | null)}
+export interface tournament_trophies_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),manual?: (Scalars['Boolean'] | null),placement?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null),trophy_config?: (tournament_trophy_configs_obj_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
 export interface tournament_trophies_max_fieldsGenqlSelection{
     created_at?: boolean | number
-    custom_name?: boolean | number
     id?: boolean | number
-    image_url?: boolean | number
     placement?: boolean | number
     placement_tier?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
+    team_id?: boolean | number
     tournament_id?: boolean | number
-    tournament_name?: boolean | number
-    tournament_start?: boolean | number
     tournament_team_id?: boolean | number
-    tournament_type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by max() on columns of table "tournament_trophies" */
-export interface tournament_trophies_max_order_by {created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null),tournament_id?: (order_by | null),tournament_name?: (order_by | null),tournament_start?: (order_by | null),tournament_team_id?: (order_by | null),tournament_type?: (order_by | null)}
+export interface tournament_trophies_max_order_by {created_at?: (order_by | null),id?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface tournament_trophies_min_fieldsGenqlSelection{
     created_at?: boolean | number
-    custom_name?: boolean | number
     id?: boolean | number
-    image_url?: boolean | number
     placement?: boolean | number
     placement_tier?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
+    team_id?: boolean | number
     tournament_id?: boolean | number
-    tournament_name?: boolean | number
-    tournament_start?: boolean | number
     tournament_team_id?: boolean | number
-    tournament_type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by min() on columns of table "tournament_trophies" */
-export interface tournament_trophies_min_order_by {created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null),tournament_id?: (order_by | null),tournament_name?: (order_by | null),tournament_start?: (order_by | null),tournament_team_id?: (order_by | null),tournament_type?: (order_by | null)}
+export interface tournament_trophies_min_order_by {created_at?: (order_by | null),id?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_trophies" */
@@ -42596,7 +42613,7 @@ export interface tournament_trophies_on_conflict {constraint: tournament_trophie
 
 
 /** Ordering options when selecting data from "tournament_trophies". */
-export interface tournament_trophies_order_by {created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_name?: (order_by | null),tournament_start?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null),tournament_type?: (order_by | null)}
+export interface tournament_trophies_order_by {created_at?: (order_by | null),id?: (order_by | null),manual?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null),trophy_config?: (tournament_trophy_configs_order_by | null)}
 
 
 /** primary key columns input for table: tournament_trophies */
@@ -42604,49 +42621,46 @@ export interface tournament_trophies_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournament_trophies" */
-export interface tournament_trophies_set_input {created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),silhouette?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_name?: (Scalars['String'] | null),tournament_start?: (Scalars['timestamptz'] | null),tournament_team_id?: (Scalars['uuid'] | null),tournament_type?: (Scalars['String'] | null)}
+export interface tournament_trophies_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),manual?: (Scalars['Boolean'] | null),placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface tournament_trophies_stddev_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev() on columns of table "tournament_trophies" */
-export interface tournament_trophies_stddev_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_stddev_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface tournament_trophies_stddev_pop_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_pop() on columns of table "tournament_trophies" */
-export interface tournament_trophies_stddev_pop_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_stddev_pop_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface tournament_trophies_stddev_samp_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_samp() on columns of table "tournament_trophies" */
-export interface tournament_trophies_stddev_samp_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_stddev_samp_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** Streaming cursor of the table "tournament_trophies" */
@@ -42658,21 +42672,20 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_trophies_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),placement_tier?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),silhouette?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_name?: (Scalars['String'] | null),tournament_start?: (Scalars['timestamptz'] | null),tournament_team_id?: (Scalars['uuid'] | null),tournament_type?: (Scalars['String'] | null)}
+export interface tournament_trophies_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),manual?: (Scalars['Boolean'] | null),placement?: (Scalars['Int'] | null),placement_tier?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
 export interface tournament_trophies_sum_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by sum() on columns of table "tournament_trophies" */
-export interface tournament_trophies_sum_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_sum_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 export interface tournament_trophies_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -42687,42 +42700,39 @@ where: tournament_trophies_bool_exp}
 export interface tournament_trophies_var_pop_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_pop() on columns of table "tournament_trophies" */
-export interface tournament_trophies_var_pop_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_var_pop_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface tournament_trophies_var_samp_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_samp() on columns of table "tournament_trophies" */
-export interface tournament_trophies_var_samp_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_var_samp_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface tournament_trophies_variance_fieldsGenqlSelection{
     placement?: boolean | number
     player_steam_id?: boolean | number
-    silhouette?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by variance() on columns of table "tournament_trophies" */
-export interface tournament_trophies_variance_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null),silhouette?: (order_by | null)}
+export interface tournament_trophies_variance_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "tournament_trophy_configs" */
@@ -42855,6 +42865,12 @@ export interface tournament_trophy_configs_mutation_responseGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** input type for inserting object relation for remote table "tournament_trophy_configs" */
+export interface tournament_trophy_configs_obj_rel_insert_input {data: tournament_trophy_configs_insert_input,
+/** upsert condition */
+on_conflict?: (tournament_trophy_configs_on_conflict | null)}
 
 
 /** on_conflict condition type for table "tournament_trophy_configs" */
@@ -43212,6 +43228,7 @@ export interface tournamentsGenqlSelection{
     order_by?: (tournament_trophies_order_by[] | null), 
     /** filter the rows returned */
     where?: (tournament_trophies_bool_exp | null)} })
+    trophies_enabled?: boolean | number
     /** An array relationship */
     trophy_configs?: (tournament_trophy_configsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -43303,7 +43320,7 @@ export interface tournaments_avg_order_by {organizer_steam_id?: (order_by | null
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null),trophies?: (tournament_trophies_bool_exp | null),trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),trophy_configs?: (tournament_trophy_configs_bool_exp | null),trophy_configs_aggregate?: (tournament_trophy_configs_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null),trophies?: (tournament_trophies_bool_exp | null),trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),trophies_enabled?: (Boolean_comparison_exp | null),trophy_configs?: (tournament_trophy_configs_bool_exp | null),trophy_configs_aggregate?: (tournament_trophy_configs_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -43311,7 +43328,7 @@ export interface tournaments_inc_input {organizer_steam_id?: (Scalars['bigint'] 
 
 
 /** input type for inserting data into table "tournaments" */
-export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null),trophies?: (tournament_trophies_arr_rel_insert_input | null),trophy_configs?: (tournament_trophy_configs_arr_rel_insert_input | null)}
+export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null),trophies?: (tournament_trophies_arr_rel_insert_input | null),trophies_enabled?: (Scalars['Boolean'] | null),trophy_configs?: (tournament_trophy_configs_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -43386,7 +43403,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null),trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),trophy_configs_aggregate?: (tournament_trophy_configs_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),id?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null),trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),trophies_enabled?: (order_by | null),trophy_configs_aggregate?: (tournament_trophy_configs_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -43394,7 +43411,7 @@ export interface tournaments_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournaments" */
-export interface tournaments_set_input {auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+export interface tournaments_set_input {auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),trophies_enabled?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -43454,7 +43471,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournaments_stream_cursor_value_input {auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+export interface tournaments_stream_cursor_value_input {auto_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),trophies_enabled?: (Scalars['Boolean'] | null)}
 
 
 /** aggregate sum on columns */
@@ -44220,6 +44237,7 @@ export interface v_player_eloGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44313,6 +44331,7 @@ export interface v_player_elo_avg_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44331,15 +44350,15 @@ export interface v_player_elo_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "v_player_elo" */
-export interface v_player_elo_avg_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_avg_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "v_player_elo". All fields are combined with a logical 'AND'. */
-export interface v_player_elo_bool_exp {_and?: (v_player_elo_bool_exp[] | null),_not?: (v_player_elo_bool_exp | null),_or?: (v_player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),current_elo?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),elo_change?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_result?: (String_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player_name?: (String_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (String_comparison_exp | null),updated_elo?: (Int_comparison_exp | null)}
+export interface v_player_elo_bool_exp {_and?: (v_player_elo_bool_exp[] | null),_not?: (v_player_elo_bool_exp | null),_or?: (v_player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),current_elo?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),elo_change?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),impact?: (float8_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_created_at?: (timestamptz_comparison_exp | null),match_id?: (uuid_comparison_exp | null),match_result?: (String_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player_name?: (String_comparison_exp | null),player_steam_id?: (bigint_comparison_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (String_comparison_exp | null),updated_elo?: (Int_comparison_exp | null)}
 
 
 /** input type for inserting data into table "v_player_elo" */
-export interface v_player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
+export interface v_player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -44352,6 +44371,7 @@ export interface v_player_elo_max_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44375,7 +44395,7 @@ export interface v_player_elo_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "v_player_elo" */
-export interface v_player_elo_max_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_max_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -44388,6 +44408,7 @@ export interface v_player_elo_min_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44411,11 +44432,11 @@ export interface v_player_elo_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "v_player_elo" */
-export interface v_player_elo_min_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_min_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Ordering options when selecting data from "v_player_elo". */
-export interface v_player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_created_at?: (order_by | null),match_id?: (order_by | null),match_result?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_name?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
@@ -44428,6 +44449,7 @@ export interface v_player_elo_stddev_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44446,7 +44468,7 @@ export interface v_player_elo_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "v_player_elo" */
-export interface v_player_elo_stddev_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_stddev_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -44459,6 +44481,7 @@ export interface v_player_elo_stddev_pop_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44477,7 +44500,7 @@ export interface v_player_elo_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "v_player_elo" */
-export interface v_player_elo_stddev_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_stddev_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -44490,6 +44513,7 @@ export interface v_player_elo_stddev_samp_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44508,7 +44532,7 @@ export interface v_player_elo_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "v_player_elo" */
-export interface v_player_elo_stddev_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_stddev_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** Streaming cursor of the table "v_player_elo" */
@@ -44520,7 +44544,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
+export interface v_player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),current_elo?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),elo_change?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['float8'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_created_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_result?: (Scalars['String'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_name?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (Scalars['String'] | null),updated_elo?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -44533,6 +44557,7 @@ export interface v_player_elo_sum_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44551,7 +44576,7 @@ export interface v_player_elo_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "v_player_elo" */
-export interface v_player_elo_sum_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_sum_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate var_pop on columns */
@@ -44564,6 +44589,7 @@ export interface v_player_elo_var_pop_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44582,7 +44608,7 @@ export interface v_player_elo_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "v_player_elo" */
-export interface v_player_elo_var_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_var_pop_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -44595,6 +44621,7 @@ export interface v_player_elo_var_samp_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44613,7 +44640,7 @@ export interface v_player_elo_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "v_player_elo" */
-export interface v_player_elo_var_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_var_samp_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -44626,6 +44653,7 @@ export interface v_player_elo_variance_fieldsGenqlSelection{
     deaths?: boolean | number
     elo_change?: boolean | number
     expected_score?: boolean | number
+    impact?: boolean | number
     k_factor?: boolean | number
     kda?: boolean | number
     kills?: boolean | number
@@ -44644,7 +44672,7 @@ export interface v_player_elo_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "v_player_elo" */
-export interface v_player_elo_variance_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
+export interface v_player_elo_variance_order_by {actual_score?: (order_by | null),assists?: (order_by | null),current_elo?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),elo_change?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player_steam_id?: (order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),team_avg_kda?: (order_by | null),updated_elo?: (order_by | null)}
 
 
 /** columns and relationships of "v_player_map_losses" */
@@ -56092,6 +56120,7 @@ export const enumPlayerEloSelectColumn = {
    change: 'change' as const,
    created_at: 'created_at' as const,
    current: 'current' as const,
+   impact: 'impact' as const,
    match_id: 'match_id' as const,
    steam_id: 'steam_id' as const,
    type: 'type' as const
@@ -56101,6 +56130,7 @@ export const enumPlayerEloUpdateColumn = {
    change: 'change' as const,
    created_at: 'created_at' as const,
    current: 'current' as const,
+   impact: 'impact' as const,
    match_id: 'match_id' as const,
    steam_id: 'steam_id' as const,
    type: 'type' as const
@@ -56761,38 +56791,39 @@ export const enumTournamentTeamsUpdateColumn = {
 export const enumTournamentTrophiesConstraint = {
    tournament_trophies_one_mvp_per_tournament: 'tournament_trophies_one_mvp_per_tournament' as const,
    tournament_trophies_pkey: 'tournament_trophies_pkey' as const,
-   tournament_trophies_tournament_id_tournament_team_id_player_key: 'tournament_trophies_tournament_id_tournament_team_id_player_key' as const
+   tournament_trophies_player_recipient_key: 'tournament_trophies_player_recipient_key' as const,
+   tournament_trophies_team_recipient_key: 'tournament_trophies_team_recipient_key' as const
 }
 
 export const enumTournamentTrophiesSelectColumn = {
    created_at: 'created_at' as const,
-   custom_name: 'custom_name' as const,
    id: 'id' as const,
-   image_url: 'image_url' as const,
+   manual: 'manual' as const,
    placement: 'placement' as const,
    placement_tier: 'placement_tier' as const,
    player_steam_id: 'player_steam_id' as const,
-   silhouette: 'silhouette' as const,
+   team_id: 'team_id' as const,
    tournament_id: 'tournament_id' as const,
-   tournament_name: 'tournament_name' as const,
-   tournament_start: 'tournament_start' as const,
-   tournament_team_id: 'tournament_team_id' as const,
-   tournament_type: 'tournament_type' as const
+   tournament_team_id: 'tournament_team_id' as const
+}
+
+export const enumTournamentTrophiesSelectColumnTournamentTrophiesAggregateBoolExpBoolAndArgumentsColumns = {
+   manual: 'manual' as const
+}
+
+export const enumTournamentTrophiesSelectColumnTournamentTrophiesAggregateBoolExpBoolOrArgumentsColumns = {
+   manual: 'manual' as const
 }
 
 export const enumTournamentTrophiesUpdateColumn = {
    created_at: 'created_at' as const,
-   custom_name: 'custom_name' as const,
    id: 'id' as const,
-   image_url: 'image_url' as const,
+   manual: 'manual' as const,
    placement: 'placement' as const,
    player_steam_id: 'player_steam_id' as const,
-   silhouette: 'silhouette' as const,
+   team_id: 'team_id' as const,
    tournament_id: 'tournament_id' as const,
-   tournament_name: 'tournament_name' as const,
-   tournament_start: 'tournament_start' as const,
-   tournament_team_id: 'tournament_team_id' as const,
-   tournament_type: 'tournament_type' as const
+   tournament_team_id: 'tournament_team_id' as const
 }
 
 export const enumTournamentTrophyConfigsConstraint = {
@@ -56853,7 +56884,8 @@ export const enumTournamentsSelectColumn = {
    name: 'name' as const,
    organizer_steam_id: 'organizer_steam_id' as const,
    start: 'start' as const,
-   status: 'status' as const
+   status: 'status' as const,
+   trophies_enabled: 'trophies_enabled' as const
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgumentsColumns = {
@@ -56871,7 +56903,8 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgume
    discord_notify_Veto: 'discord_notify_Veto' as const,
    discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
    discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const,
-   discord_voice_enabled: 'discord_voice_enabled' as const
+   discord_voice_enabled: 'discord_voice_enabled' as const,
+   trophies_enabled: 'trophies_enabled' as const
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumentsColumns = {
@@ -56889,7 +56922,8 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumen
    discord_notify_Veto: 'discord_notify_Veto' as const,
    discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
    discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const,
-   discord_voice_enabled: 'discord_voice_enabled' as const
+   discord_voice_enabled: 'discord_voice_enabled' as const,
+   trophies_enabled: 'trophies_enabled' as const
 }
 
 export const enumTournamentsUpdateColumn = {
@@ -56918,7 +56952,8 @@ export const enumTournamentsUpdateColumn = {
    name: 'name' as const,
    organizer_steam_id: 'organizer_steam_id' as const,
    start: 'start' as const,
-   status: 'status' as const
+   status: 'status' as const,
+   trophies_enabled: 'trophies_enabled' as const
 }
 
 export const enumVMatchCaptainsSelectColumn = {
@@ -56960,6 +56995,7 @@ export const enumVPlayerEloSelectColumn = {
    deaths: 'deaths' as const,
    elo_change: 'elo_change' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    k_factor: 'k_factor' as const,
    kda: 'kda' as const,
    kills: 'kills' as const,
@@ -56983,6 +57019,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpAvgArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -56994,6 +57031,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpCorrArgumentsCo
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57005,6 +57043,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpCovarSampArgume
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57016,6 +57055,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpMaxArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57027,6 +57067,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpMinArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57038,6 +57079,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpStddevSampArgum
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57049,6 +57091,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpSumArgumentsCol
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
@@ -57060,6 +57103,7 @@ export const enumVPlayerEloSelectColumnVPlayerEloAggregateBoolExpVarSampArgument
    actual_score: 'actual_score' as const,
    damage_percent: 'damage_percent' as const,
    expected_score: 'expected_score' as const,
+   impact: 'impact' as const,
    kda: 'kda' as const,
    opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
    performance_multiplier: 'performance_multiplier' as const,
