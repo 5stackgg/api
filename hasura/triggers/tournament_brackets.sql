@@ -6,6 +6,17 @@ DECLARE
     stage_has_matches boolean;
     tournament_status text;
 BEGIN
+     -- Keep linked match schedule in sync with bracket schedule updates.
+     -- If organizers reschedule a non-live match, move it back to Scheduled.
+     IF NEW.match_id IS NOT NULL
+        AND OLD.scheduled_at IS DISTINCT FROM NEW.scheduled_at THEN
+        UPDATE matches
+        SET scheduled_at = NEW.scheduled_at,
+            status = 'Scheduled'
+        WHERE id = NEW.match_id
+          AND status = 'WaitingForCheckIn';
+     END IF;
+
      IF OLD.match_id IS NOT NULL THEN
         return NEW;
      END IF;
