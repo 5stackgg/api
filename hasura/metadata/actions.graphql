@@ -241,12 +241,6 @@ type Query {
 }
 
 type Mutation {
-  rebootMatchServer(
-    match_id: uuid!
-  ): SuccessOutput
-}
-
-type Mutation {
   refreshAllPlayers: SuccessOutput
 }
 
@@ -273,6 +267,12 @@ type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  rebootMatchServer(
+    match_id: uuid!
   ): SuccessOutput
 }
 
