@@ -456,6 +456,9 @@ export class MatchesController {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
+    const regionChanged =
+      data.op === "UPDATE" && data.old.region !== data.new.region;
+
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -476,6 +479,20 @@ export class MatchesController {
 
     if (!match) {
       throw Error("unable to find match");
+    }
+
+    if (regionChanged) {
+      // Admins can change region via a direct Hasura mutation (see
+      // MatchRegionVeto.vue -> update_matches_by_pk). Treat that like a
+      // reassignment: tear down any existing on-demand job on the OLD region
+      // synchronously so the k8s job name is free, then dispatch assignServer
+      // which will reselect a server in the NEW region.
+      if (match.server && !match.server.is_dedicated) {
+        await this.matchAssistant.stopOnDemandServer(matchId, true);
+      }
+      await this.matchAssistant.assignServer(matchId);
+      await this.discordMatchOverview.updateMatchOverview(matchId);
+      return;
     }
 
     if (
@@ -607,6 +624,21 @@ export class MatchesController {
         "Server is not available, another match is using this server currently",
       );
     }
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async rebootMatchServer(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a match organizer");
+    }
+
+    await this.matchAssistant.rebootOnDemandServer(match_id);
 
     return {
       success: true,
