@@ -211,6 +211,7 @@ BEGIN
             DELETE FROM tournament_trophies
             WHERE tournament_id = source_tournament_id;
         END IF;
+
     END IF;
 END;
 $$;
