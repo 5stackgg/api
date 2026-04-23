@@ -191,6 +191,20 @@ export class MatchesController {
             },
           },
         },
+        tournament_brackets: {
+          team_1: {
+            name: true,
+            team: {
+              short_name: true,
+            },
+          },
+          team_2: {
+            name: true,
+            team: {
+              short_name: true,
+            },
+          },
+        },
       },
     });
 
@@ -263,7 +277,13 @@ export class MatchesController {
       }
     }
 
-    match.lineup_1.tag = match.lineup_1.team?.short_name;
+    const tournamentBracket = match.tournament_brackets?.at(0);
+    const lineup1TournamentTag =
+      tournamentBracket?.team_1?.team?.short_name || tournamentBracket?.team_1?.name;
+    const lineup2TournamentTag =
+      tournamentBracket?.team_2?.team?.short_name || tournamentBracket?.team_2?.name;
+
+    match.lineup_1.tag = lineup1TournamentTag || match.lineup_1.team?.short_name;
     delete match.lineup_1.team;
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
       (player) => ({
@@ -277,7 +297,7 @@ export class MatchesController {
       }),
     );
 
-    match.lineup_2.tag = match.lineup_2.team?.short_name;
+    match.lineup_2.tag = lineup2TournamentTag || match.lineup_2.team?.short_name;
     delete match.lineup_2.team;
     match.lineup_2.lineup_players = match.lineup_2.lineup_players.map(
       (player) => ({
