@@ -778,27 +778,19 @@ export class MatchesController {
 
     const resolvedScheduledAt =
       scheduled_at && scheduled_at.trim().length > 0 ? scheduled_at : null;
-    const shouldFallbackToWaitingForCheckIn =
-      reset_status === "Scheduled" &&
-      resolvedScheduledAt === null &&
-      !winning_lineup_id;
     const resolvedResetStatus =
-      reset_status === "Scheduled" ? "Scheduled" : "Setup";
+      reset_status === "Scheduled"
+        ? resolvedScheduledAt
+          ? "Scheduled"
+          : "WaitingForCheckIn"
+        : reset_status === "WaitingForCheckIn"
+          ? "WaitingForCheckIn"
+          : "Setup";
 
     await this.postgres.query(
       `SELECT * FROM reset_tournament_match($1::uuid, NULLIF($2::text, '')::uuid, $3::text, $4::timestamptz)`,
       [match_id, winning_lineup_id ?? "", resolvedResetStatus, resolvedScheduledAt],
     );
-
-    if (shouldFallbackToWaitingForCheckIn) {
-      await this.postgres.query(
-        `UPDATE matches
-         SET status = 'WaitingForCheckIn',
-             scheduled_at = NULL
-         WHERE id = $1::uuid`,
-        [match_id],
-      );
-    }
 
     return {
       success: true,
