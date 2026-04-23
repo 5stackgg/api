@@ -61,15 +61,17 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _match_options_id := tournament.match_options_id;
      END IF;
 
-    -- Enforce match_mode: skip auto-scheduling for admin-only matches
+    -- Enforce match_mode:
+    -- - admin mode requires an explicit organizer-set schedule on the bracket
+    -- - other modes can continue existing auto-scheduling behavior
     DECLARE
         _match_mode text;
     BEGIN
         SELECT mo.match_mode INTO _match_mode
         FROM match_options mo WHERE mo.id = _match_options_id;
 
-        IF _match_mode = 'admin' THEN
-            RAISE NOTICE 'schedule_tournament_match: bracket % is admin-mode, skipping auto-schedule', bracket.id;
+        IF _match_mode = 'admin' AND bracket.scheduled_at IS NULL THEN
+            RAISE NOTICE 'schedule_tournament_match: bracket % is admin-mode without schedule, skipping auto-schedule', bracket.id;
             RETURN NULL;
         END IF;
     END;
