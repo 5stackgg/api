@@ -453,10 +453,17 @@ export class MatchesController {
      * Server was removed from match
      */
     if (
-      (data.old.server_id && !data.new.server_id) ||
-      data.old.server_id !== data.new.server_id
+      data.old.server_id !== data.new.server_id ||
+      data.old.region !== data.new.region
     ) {
-      await this.matchAssistant.stopOnDemandServer(matchId);
+      try {
+        await this.matchAssistant.stopOnDemandServer(matchId);
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] unable to stop on demand server`,
+          error,
+        );
+      }
     }
 
     const { matches_by_pk: match } = await this.hasura.query({
