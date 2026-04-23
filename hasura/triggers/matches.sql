@@ -369,6 +369,14 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
+        SELECT region_veto INTO has_region_veto
+        FROM match_options
+        WHERE id = NEW.match_options_id;
+
+        IF has_region_veto THEN
+            NEW.region = NULL;
+        END IF;
+
         IF _auto_cancellation THEN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
