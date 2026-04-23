@@ -5,7 +5,35 @@ DECLARE
     stage_type text;
     stage_has_matches boolean;
     tournament_status text;
+    tournament_id uuid;
+    should_refresh_eta boolean;
 BEGIN
+     should_refresh_eta := OLD.scheduled_at IS DISTINCT FROM NEW.scheduled_at
+        OR OLD.match_id IS DISTINCT FROM NEW.match_id
+        OR OLD.match_options_id IS DISTINCT FROM NEW.match_options_id;
+
+     SELECT ts.tournament_id
+     INTO tournament_id
+     FROM tournament_stages ts
+     WHERE ts.id = NEW.tournament_stage_id;
+
+     -- Keep linked match schedule in sync with bracket schedule updates.
+     -- If organizers reschedule a non-live match, move it back to Scheduled.
+     IF NEW.match_id IS NOT NULL
+        AND OLD.scheduled_at IS DISTINCT FROM NEW.scheduled_at THEN
+        UPDATE matches
+        SET scheduled_at = NEW.scheduled_at,
+            status = 'Scheduled'
+        WHERE id = NEW.match_id
+          AND status = 'WaitingForCheckIn';
+     END IF;
+
+     IF should_refresh_eta AND tournament_id IS NOT NULL THEN
+        RAISE NOTICE '[ETA_TRIGGER] tau_tournament_brackets bracket=% tournament=% old_match_id=% new_match_id=% old_sched=% new_sched=%',
+            NEW.id, tournament_id, OLD.match_id, NEW.match_id, OLD.scheduled_at, NEW.scheduled_at;
+        PERFORM calculate_tournament_bracket_start_times(tournament_id);
+     END IF;
+
      IF OLD.match_id IS NOT NULL THEN
         return NEW;
      END IF;

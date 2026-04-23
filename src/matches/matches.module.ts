@@ -30,6 +30,7 @@ import { CheckForScheduledMatches } from "./jobs/CheckForScheduledMatches";
 import { CancelExpiredMatches } from "./jobs/CancelExpiredMatches";
 import { RemoveCancelledMatches } from "./jobs/RemoveCancelledMatches";
 import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
+import { CheckForScheduledTournamentBrackets } from "./jobs/CheckForScheduledTournamentBrackets";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
@@ -106,6 +107,7 @@ import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,
     CheckForTournamentStart,
+    CheckForScheduledTournamentBrackets,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     StopOnDemandServer,
@@ -128,6 +130,16 @@ export class MatchesModule implements NestModule {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
+
+    void scheduleMatchQueue.add(
+      CheckForScheduledTournamentBrackets.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
 
     void scheduleMatchQueue.add(
       CheckForScheduledMatches.name,

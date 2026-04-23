@@ -62,6 +62,7 @@ DECLARE
     available_regions text[];
     _lobby_id UUID;
     lobby_players bigint[];
+    _tournament_id UUID;
 
     lineup_1_team_id UUID;
     lineup_2_team_id UUID;
@@ -183,6 +184,21 @@ BEGIN
         END IF;
    END IF;
 
+    IF is_tournament_match(NEW) THEN
+        SELECT ts.tournament_id
+        INTO _tournament_id
+        FROM tournament_brackets tb
+        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+        WHERE tb.match_id = NEW.id
+        LIMIT 1;
+
+        IF _tournament_id IS NOT NULL THEN
+            RAISE NOTICE '[ETA_TRIGGER] tai_match match=% tournament=% status=% scheduled_at=% started_at=% ended_at=%',
+                NEW.id, _tournament_id, NEW.status, NEW.scheduled_at, NEW.started_at, NEW.ended_at;
+            PERFORM calculate_tournament_bracket_start_times(_tournament_id);
+        END IF;
+    END IF;
+
     RETURN NEW;
 END;
 $$;
@@ -196,6 +212,7 @@ CREATE OR REPLACE FUNCTION public.tau_matches() RETURNS TRIGGER
     AS $$
 DECLARE
     _server_id UUID;
+    _tournament_id UUID;
 BEGIN
     IF is_tournament_match(NEW)
        AND NEW.winning_lineup_id IS DISTINCT FROM OLD.winning_lineup_id THEN
@@ -215,6 +232,28 @@ BEGIN
     IF NEW.status IN ('Tie', 'Forfeit', 'Canceled', 'Finished', 'Surrendered') THEN
         select server_id into _server_id from matches where id = NEW.id;
         UPDATE servers SET reserved_by_match_id = null WHERE id = _server_id;
+    END IF;
+
+    IF is_tournament_match(NEW)
+       AND (
+            OLD.status IS DISTINCT FROM NEW.status
+            OR OLD.scheduled_at IS DISTINCT FROM NEW.scheduled_at
+            OR OLD.started_at IS DISTINCT FROM NEW.started_at
+            OR OLD.ended_at IS DISTINCT FROM NEW.ended_at
+            OR OLD.match_options_id IS DISTINCT FROM NEW.match_options_id
+       ) THEN
+        SELECT ts.tournament_id
+        INTO _tournament_id
+        FROM tournament_brackets tb
+        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+        WHERE tb.match_id = NEW.id
+        LIMIT 1;
+
+        IF _tournament_id IS NOT NULL THEN
+            RAISE NOTICE '[ETA_TRIGGER] tau_matches match=% tournament=% old_status=% new_status=% old_sched=% new_sched=%',
+                NEW.id, _tournament_id, OLD.status, NEW.status, OLD.scheduled_at, NEW.scheduled_at;
+            PERFORM calculate_tournament_bracket_start_times(_tournament_id);
+        END IF;
     END IF;
 
     -- No refresh needed - v_team_stage_results is now a regular view that's always up-to-date
@@ -377,12 +416,27 @@ CREATE TRIGGER tbu_matches BEFORE UPDATE ON public.matches FOR EACH ROW EXECUTE 
 CREATE OR REPLACE FUNCTION public.tad_matches() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
+DECLARE
+    _tournament_id UUID;
 BEGIN
+    SELECT ts.tournament_id
+    INTO _tournament_id
+    FROM tournament_brackets tb
+    INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+    WHERE tb.match_id = OLD.id
+    LIMIT 1;
+
     PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
 
     update servers set reserved_by_match_id = null where reserved_by_match_id = OLD.id;
 
     delete from match_lineups where id = OLD.lineup_1_id or id = OLD.lineup_2_id;
+
+    IF _tournament_id IS NOT NULL THEN
+        RAISE NOTICE '[ETA_TRIGGER] tad_matches match=% tournament=%', OLD.id, _tournament_id;
+        PERFORM calculate_tournament_bracket_start_times(_tournament_id);
+    END IF;
+
   RETURN NEW;
 END;
 $$;

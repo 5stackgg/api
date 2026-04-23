@@ -1,13 +1,21 @@
 CREATE OR REPLACE FUNCTION calculate_tournament_bracket_start_times(_tournament_id uuid) RETURNS void AS $$
 DECLARE
-    stage_record RECORD;
-    round_record RECORD;
-    bracket_record RECORD;
-    base_start_time timestamptz;
-    child_finish_time timestamptz;
     tournament_status text;
+    base_start_time timestamptz;
+    bracket_record RECORD;
+    stage_record RECORD;
+    queue_record RECORD;
+    feeder_ready timestamptz;
+    server_capacity int;
+    region_capacity int;
+    server_free timestamptz[];
+    min_index int;
+    min_value timestamptz;
+    duration_interval interval;
+    i int;
 BEGIN
-    SELECT status INTO tournament_status
+    SELECT status, start
+    INTO tournament_status, base_start_time
     FROM tournaments
     WHERE id = _tournament_id;
 
@@ -15,188 +23,286 @@ BEGIN
         RETURN;
     END IF;
 
-    UPDATE tournament_brackets 
+    IF base_start_time IS NULL THEN
+        base_start_time := NOW();
+    END IF;
+    -- A Live tournament should never project unscheduled rounds from a future
+    -- start baseline; clamp to now when start is ahead.
+    base_start_time := LEAST(base_start_time, NOW());
+
+    RAISE NOTICE '[ETA] tournament=% status=% base_start=%', _tournament_id, tournament_status, base_start_time;
+
+    UPDATE tournament_brackets
     SET scheduled_eta = NULL
     WHERE tournament_stage_id IN (
         SELECT id FROM tournament_stages WHERE tournament_id = _tournament_id
     );
-    
-    -- Get the tournament start time
-    SELECT start INTO base_start_time
-    FROM tournaments 
-    WHERE id = _tournament_id;
-    
-    -- Process stages for the specific tournament
-    FOR stage_record IN 
-        SELECT ts."order", ts.id as tournament_stage_id, ts.type as stage_type
-        FROM tournament_stages ts
-        WHERE ts.tournament_id = _tournament_id 
-        ORDER BY ts."order"
+    CREATE TEMP TABLE IF NOT EXISTS eta_work (
+        id uuid PRIMARY KEY,
+        tournament_stage_id uuid NOT NULL,
+        stage_order int NOT NULL,
+        stage_type text NOT NULL,
+        round int NOT NULL,
+        match_number int NOT NULL,
+        path text,
+        bracket_group int,
+        parent_bracket_id uuid,
+        loser_parent_bracket_id uuid,
+        bracket_scheduled_at timestamptz,
+        bracket_finished boolean NOT NULL,
+        best_of int NOT NULL,
+        duration_minutes int NOT NULL,
+        eta_seed timestamptz,
+        has_live_match boolean NOT NULL,
+        computed_eta timestamptz
+    ) ON COMMIT DROP;
+
+    TRUNCATE eta_work;
+
+    INSERT INTO eta_work (
+        id,
+        tournament_stage_id,
+        stage_order,
+        stage_type,
+        round,
+        match_number,
+        path,
+        bracket_group,
+        parent_bracket_id,
+        loser_parent_bracket_id,
+        bracket_scheduled_at,
+        bracket_finished,
+        best_of,
+        duration_minutes,
+        eta_seed,
+        has_live_match,
+        computed_eta
+    )
+    SELECT
+        tb.id,
+        tb.tournament_stage_id,
+        ts."order",
+        ts.type::text,
+        tb.round,
+        tb.match_number,
+        tb.path,
+        tb."group",
+        tb.parent_bracket_id,
+        tb.loser_parent_bracket_id,
+        tb.scheduled_at,
+        tb.finished,
+        COALESCE(
+            get_bracket_best_of(
+                ts.id,
+                CASE
+                    WHEN ts.type::text = 'Swiss' THEN
+                        CASE
+                            WHEN ((tb."group" / 100)::int) = 2 THEN 'advancement'
+                            WHEN ((tb."group" % 100)::int) = 2 THEN 'elimination'
+                            ELSE 'regular'
+                        END
+                    ELSE COALESCE(tb.path, 'WB')
+                END,
+                tb.round
+            ),
+            1
+        ) AS best_of,
+        (COALESCE(
+            get_bracket_best_of(
+                ts.id,
+                CASE
+                    WHEN ts.type::text = 'Swiss' THEN
+                        CASE
+                            WHEN ((tb."group" / 100)::int) = 2 THEN 'advancement'
+                            WHEN ((tb."group" % 100)::int) = 2 THEN 'elimination'
+                            ELSE 'regular'
+                        END
+                    ELSE COALESCE(tb.path, 'WB')
+                END,
+                tb.round
+            ),
+            1
+        ) * 60) + 15 AS duration_minutes,
+        CASE
+            WHEN m.status = 'Live' AND m.started_at IS NOT NULL THEN m.started_at
+            WHEN m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')
+                 AND m.started_at IS NOT NULL THEN m.started_at
+            WHEN m.scheduled_at IS NOT NULL THEN m.scheduled_at
+            WHEN tb.scheduled_at IS NOT NULL THEN tb.scheduled_at
+            ELSE NULL
+        END AS eta_seed,
+        COALESCE(m.status = 'Live', false) AS has_live_match,
+        NULL::timestamptz
+    FROM tournament_brackets tb
+    INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+    LEFT JOIN matches m ON m.id = tb.match_id
+    WHERE ts.tournament_id = _tournament_id;
+
+    RAISE NOTICE '[ETA] seeded brackets=% live=% finished=%',
+        (SELECT COUNT(*) FROM eta_work),
+        (SELECT COUNT(*) FROM eta_work WHERE has_live_match = true),
+        (SELECT COUNT(*) FROM eta_work WHERE bracket_finished = true);
+
+    UPDATE eta_work
+    SET computed_eta = COALESCE(eta_seed, base_start_time);
+
+    FOR stage_record IN
+        SELECT DISTINCT stage_order, tournament_stage_id, stage_type
+        FROM eta_work
+        ORDER BY stage_order
     LOOP
-        -- For RoundRobin stages, calculate ETAs based on round number (each round +1 hour)
-        IF stage_record.stage_type = 'RoundRobin' THEN
-            -- Process rounds within RoundRobin stage
-            FOR round_record IN 
-                SELECT DISTINCT tb.round 
-                FROM tournament_brackets tb
-                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
-                ORDER BY tb.round
-            LOOP
-                -- Round 1 starts at tournament start time
-                -- Each subsequent round starts 1 hour after the previous round
-                DECLARE
-                    round_start_time timestamptz;
-                BEGIN
-                    IF round_record.round = 1 THEN
-                        round_start_time := base_start_time;
-                    ELSE
-                        -- Previous round's start time + 1 hour
-                        round_start_time := base_start_time + ((round_record.round - 1) * interval '1 hour');
-                    END IF;
-                    
-                    -- Update all brackets in this round
-                    UPDATE tournament_brackets
-                    SET scheduled_eta = CASE
-                        -- If bracket has a match, use its actual start time
-                        WHEN match_id IS NOT NULL THEN (
-                            SELECT COALESCE(m.started_at, m.scheduled_at)
-                            FROM matches m
-                            WHERE m.id = tournament_brackets.match_id
-                        )
-                        -- If organizer pre-set a schedule, use that
-                        WHEN tournament_brackets.scheduled_at IS NOT NULL THEN tournament_brackets.scheduled_at
-                        -- Otherwise use the calculated round start time
-                        ELSE round_start_time
-                    END
-                    WHERE tournament_stage_id = stage_record.tournament_stage_id
-                      AND round = round_record.round;
-                END;
-            END LOOP;
-        ELSIF stage_record.stage_type = 'Swiss' THEN
-            -- For Swiss stages: find latest finished round, then calculate based on round difference
-            DECLARE
-                latest_finished_round int;
-                latest_finished_round_time timestamptz;
-                swiss_base_start_time timestamptz;
-            BEGIN
-                -- Find the latest round that has finished
-                SELECT MAX(tb.round)
-                INTO latest_finished_round
-                FROM tournament_brackets tb
-                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id
-                  AND tb.finished = true;
-                
-                -- Get the finish time of the latest finished round
-                IF latest_finished_round IS NOT NULL THEN
-                    SELECT MAX(COALESCE(m.ended_at, m.started_at + interval '1 hour'))
-                    INTO latest_finished_round_time
-                    FROM tournament_brackets tb
-                    INNER JOIN matches m ON m.id = tb.match_id
-                    WHERE tb.tournament_stage_id = stage_record.tournament_stage_id
-                      AND tb.round = latest_finished_round
-                      AND m.id IS NOT NULL;
-                END IF;
-                
-                -- Get base start time (earliest match start or tournament start)
-                SELECT MIN(COALESCE(m.started_at, m.scheduled_at))
-                INTO swiss_base_start_time
-                FROM tournament_brackets tb
-                INNER JOIN matches m ON m.id = tb.match_id
-                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id
-                  AND (m.started_at IS NOT NULL OR (m.scheduled_at IS NOT NULL AND m.scheduled_at <= now()));
-                
-                IF swiss_base_start_time IS NULL THEN
-                    swiss_base_start_time := base_start_time;
-                END IF;
-                
-                FOR round_record IN 
-                    SELECT DISTINCT tb.round 
-                    FROM tournament_brackets tb
-                    WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
-                    ORDER BY tb.round
-                LOOP
-                    DECLARE
-                        round_start_time timestamptz;
-                        round_diff int;
-                    BEGIN
-                        -- If we have a finished round, calculate from its finish time
-                        IF latest_finished_round IS NOT NULL AND latest_finished_round_time IS NOT NULL AND round_record.round > latest_finished_round THEN
-                            round_diff := round_record.round - latest_finished_round;
-                            round_start_time := latest_finished_round_time + (round_diff * interval '1 hour');
-                        ELSE
-                            -- No finished rounds yet, use base calculation (round * 1 hour)
-                            round_start_time := swiss_base_start_time + (round_record.round * interval '1 hour');
-                        END IF;
-                    
-                    -- Update all brackets in this round
-                    UPDATE tournament_brackets
-                    SET scheduled_eta = CASE
-                        -- If bracket has a match, use its actual start time
-                        WHEN match_id IS NOT NULL THEN (
-                            SELECT COALESCE(m.started_at, m.scheduled_at)
-                            FROM matches m
-                            WHERE m.id = tournament_brackets.match_id
-                        )
-                        -- If organizer pre-set a schedule, use that
-                        WHEN tournament_brackets.scheduled_at IS NOT NULL THEN tournament_brackets.scheduled_at
-                        -- Otherwise use the calculated round start time
-                        ELSE round_start_time
-                    END
-                    WHERE tournament_stage_id = stage_record.tournament_stage_id
-                      AND round = round_record.round;
-                    END;
-                END LOOP;
-            END;
-        ELSE
-            -- For elimination brackets, use the existing logic (parent bracket based)
-            FOR round_record IN 
-                SELECT DISTINCT tb.round 
-                FROM tournament_brackets tb
-                WHERE tb.tournament_stage_id = stage_record.tournament_stage_id 
-                ORDER BY tb.round
-            LOOP
-                -- Process all brackets in this specific round
-                FOR bracket_record IN 
-                    SELECT * FROM tournament_brackets 
-                    WHERE tournament_stage_id = stage_record.tournament_stage_id 
-                    AND round = round_record.round
-                    ORDER BY match_number
-                LOOP
-                    -- Case A: If bracket has a match, use its actual start time
-                    IF bracket_record.match_id IS NOT NULL THEN
-                        UPDATE tournament_brackets
-                        SET scheduled_eta = (
-                            SELECT COALESCE(m.started_at, m.scheduled_at)
-                            FROM matches m
-                            WHERE m.id = bracket_record.match_id
-                        )
-                        WHERE id = bracket_record.id;
-                    ELSIF bracket_record.scheduled_at IS NOT NULL THEN
-                        UPDATE tournament_brackets
-                        SET scheduled_eta = bracket_record.scheduled_at
-                        WHERE id = bracket_record.id;
-                    ELSE
-                        -- Case B: Check if this bracket has children
-                        SELECT MAX(child.scheduled_eta + interval '1 hour') INTO child_finish_time
-                        FROM tournament_brackets child
-                        WHERE child.parent_bracket_id = bracket_record.id;
-                        
-                        IF child_finish_time IS NOT NULL THEN
-                            -- Use children completion time + 1 hour
-                            UPDATE tournament_brackets 
-                            SET scheduled_eta = child_finish_time
-                            WHERE id = bracket_record.id;
-                        ELSE
-                            -- Case C: No children, use tournament start time
-                            UPDATE tournament_brackets 
-                            SET scheduled_eta = base_start_time
-                            WHERE id = bracket_record.id;
-                        END IF;
-                    END IF;
-                END LOOP;
-            END LOOP;
-        END IF;
+        FOR bracket_record IN
+            SELECT *
+            FROM eta_work
+            WHERE tournament_stage_id = stage_record.tournament_stage_id
+            ORDER BY round ASC, match_number ASC
+        LOOP
+            IF bracket_record.eta_seed IS NOT NULL THEN
+                CONTINUE;
+            END IF;
+
+            IF stage_record.stage_type IN ('RoundRobin', 'Swiss') THEN
+                SELECT MAX(ew.computed_eta + make_interval(mins => ew.duration_minutes))
+                INTO feeder_ready
+                FROM eta_work ew
+                WHERE ew.tournament_stage_id = bracket_record.tournament_stage_id
+                  AND ew.round = bracket_record.round - 1
+                  AND (
+                    stage_record.stage_type != 'Swiss'
+                    OR COALESCE(ew.bracket_group, -1) = COALESCE(bracket_record.bracket_group, -1)
+                  )
+                  AND (
+                    stage_record.stage_type != 'Swiss'
+                    OR COALESCE(ew.path, 'WB') = COALESCE(bracket_record.path, 'WB')
+                  );
+            ELSE
+                SELECT MAX(ew.computed_eta + make_interval(mins => ew.duration_minutes))
+                INTO feeder_ready
+                FROM eta_work ew
+                WHERE ew.parent_bracket_id = bracket_record.id
+                   OR ew.loser_parent_bracket_id = bracket_record.id;
+            END IF;
+
+            feeder_ready := COALESCE(feeder_ready, base_start_time);
+
+            IF bracket_record.bracket_scheduled_at IS NOT NULL THEN
+                feeder_ready := GREATEST(feeder_ready, bracket_record.bracket_scheduled_at);
+            END IF;
+
+            UPDATE eta_work
+            SET computed_eta = feeder_ready
+            WHERE id = bracket_record.id;
+
+            RAISE NOTICE '[ETA] feeder bracket=% stage_type=% round=% match=% feeder_ready=% bracket_scheduled_at=% final=%',
+                bracket_record.id,
+                stage_record.stage_type,
+                bracket_record.round,
+                bracket_record.match_number,
+                feeder_ready,
+                bracket_record.bracket_scheduled_at,
+                (SELECT computed_eta FROM eta_work WHERE id = bracket_record.id);
+        END LOOP;
     END LOOP;
+
+    WITH resolved_match_options AS (
+        SELECT DISTINCT COALESCE(tb.match_options_id, ts.match_options_id, t.match_options_id) AS match_options_id
+        FROM tournament_brackets tb
+        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+        INNER JOIN tournaments t ON t.id = ts.tournament_id
+        WHERE t.id = _tournament_id
+    ),
+    tournament_regions AS (
+        SELECT DISTINCT unnest(mo.regions) AS region
+        FROM resolved_match_options rmo
+        INNER JOIN match_options mo ON mo.id = rmo.match_options_id
+        WHERE mo.regions IS NOT NULL
+          AND cardinality(mo.regions) > 0
+    )
+    SELECT COALESCE(SUM(total_region_server_count(sr)), 0)::int
+    INTO region_capacity
+    FROM tournament_regions tr
+    INNER JOIN server_regions sr ON sr.value = tr.region;
+
+    server_capacity := GREATEST(COALESCE(region_capacity, 0), 1);
+    RAISE NOTICE '[ETA] region_capacity=% effective_server_capacity=%', region_capacity, server_capacity;
+    server_free := ARRAY[]::timestamptz[];
+
+    FOR i IN 1..server_capacity LOOP
+        server_free := array_append(server_free, NOW());
+    END LOOP;
+
+    FOR queue_record IN
+        SELECT *
+        FROM eta_work
+        WHERE has_live_match = true
+          AND bracket_finished = false
+        ORDER BY computed_eta ASC, stage_order ASC, round ASC, match_number ASC
+    LOOP
+        min_index := 1;
+        min_value := server_free[1];
+
+        FOR i IN 2..array_length(server_free, 1) LOOP
+            IF server_free[i] < min_value THEN
+                min_index := i;
+                min_value := server_free[i];
+            END IF;
+        END LOOP;
+
+        duration_interval := make_interval(mins => queue_record.duration_minutes);
+        server_free[min_index] := GREATEST(
+            server_free[min_index],
+            COALESCE(queue_record.computed_eta, NOW())
+        ) + duration_interval;
+        RAISE NOTICE '[ETA] live_queue bracket=% server_slot=% eta=% duration_mins=% server_free_until=%',
+            queue_record.id,
+            min_index,
+            queue_record.computed_eta,
+            queue_record.duration_minutes,
+            server_free[min_index];
+    END LOOP;
+
+    FOR queue_record IN
+        SELECT *
+        FROM eta_work
+        WHERE has_live_match = false
+          AND bracket_finished = false
+        ORDER BY computed_eta ASC, stage_order ASC, round ASC, match_number ASC
+    LOOP
+        min_index := 1;
+        min_value := server_free[1];
+
+        FOR i IN 2..array_length(server_free, 1) LOOP
+            IF server_free[i] < min_value THEN
+                min_index := i;
+                min_value := server_free[i];
+            END IF;
+        END LOOP;
+
+        duration_interval := make_interval(mins => queue_record.duration_minutes);
+
+        UPDATE eta_work
+        SET computed_eta = GREATEST(
+            COALESCE(queue_record.computed_eta, base_start_time),
+            server_free[min_index]
+        )
+        WHERE id = queue_record.id
+        RETURNING computed_eta INTO min_value;
+
+        server_free[min_index] := min_value + duration_interval;
+        RAISE NOTICE '[ETA] schedule_queue bracket=% server_slot=% assigned_eta=% duration_mins=% server_free_until=%',
+            queue_record.id,
+            min_index,
+            min_value,
+            queue_record.duration_minutes,
+            server_free[min_index];
+    END LOOP;
+
+    UPDATE tournament_brackets tb
+    SET scheduled_eta = ew.computed_eta
+    FROM eta_work ew
+    WHERE ew.id = tb.id;
+
+    RAISE NOTICE '[ETA] write_complete tournament=% rows=%', _tournament_id, (SELECT COUNT(*) FROM eta_work);
 END;
 $$ LANGUAGE plpgsql;
 
