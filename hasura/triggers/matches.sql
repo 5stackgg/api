@@ -193,8 +193,6 @@ BEGIN
         LIMIT 1;
 
         IF _tournament_id IS NOT NULL THEN
-            RAISE NOTICE '[ETA_TRIGGER] tai_match match=% tournament=% status=% scheduled_at=% started_at=% ended_at=%',
-                NEW.id, _tournament_id, NEW.status, NEW.scheduled_at, NEW.started_at, NEW.ended_at;
             PERFORM calculate_tournament_bracket_start_times(_tournament_id);
         END IF;
     END IF;
@@ -250,8 +248,6 @@ BEGIN
         LIMIT 1;
 
         IF _tournament_id IS NOT NULL THEN
-            RAISE NOTICE '[ETA_TRIGGER] tau_matches match=% tournament=% old_status=% new_status=% old_sched=% new_sched=%',
-                NEW.id, _tournament_id, OLD.status, NEW.status, OLD.scheduled_at, NEW.scheduled_at;
             PERFORM calculate_tournament_bracket_start_times(_tournament_id);
         END IF;
     END IF;
@@ -373,6 +369,14 @@ BEGIN
     END IF;
 
     IF (NEW.status = 'Veto' AND OLD.status != 'Veto')  THEN
+        SELECT region_veto INTO has_region_veto
+        FROM match_options
+        WHERE id = NEW.match_options_id;
+
+        IF has_region_veto THEN
+            NEW.region = NULL;
+        END IF;
+
         IF _auto_cancellation THEN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
@@ -433,7 +437,6 @@ BEGIN
     delete from match_lineups where id = OLD.lineup_1_id or id = OLD.lineup_2_id;
 
     IF _tournament_id IS NOT NULL THEN
-        RAISE NOTICE '[ETA_TRIGGER] tad_matches match=% tournament=%', OLD.id, _tournament_id;
         PERFORM calculate_tournament_bracket_start_times(_tournament_id);
     END IF;
 
