@@ -1085,16 +1085,28 @@ export class MatchAssistantService {
         this.logger.verbose(`[${matchId}] remove pod`);
 
         if (!remove) {
-          await new Exec(kc).exec(
-            this.namespace,
-            pod.metadata!.name!,
-            pod.spec!.containers?.at(0)?.name,
-            ["kill", "-SIGUSR1", "1"],
-            process.stdout,
-            process.stderr,
-            process.stdin,
-            false,
-          );
+          // Only Running pods accept exec; anything else (Succeeded / Failed /
+          // Pending) responds 400 to the upgrade request. Skip those — there's
+          // nothing to signal.
+          if (pod.status?.phase !== "Running") {
+            continue;
+          }
+          try {
+            await new Exec(kc).exec(
+              this.namespace,
+              pod.metadata!.name!,
+              pod.spec!.containers?.at(0)?.name,
+              ["kill", "-SIGUSR1", "1"],
+              process.stdout,
+              process.stderr,
+              process.stdin,
+              false,
+            );
+          } catch (error) {
+            this.logger.warn(
+              `[${matchId}] graceful shutdown signal failed: ${error?.message || "exec error"}`,
+            );
+          }
           continue;
         }
         await core

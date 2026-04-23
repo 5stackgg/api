@@ -452,7 +452,10 @@ export class MatchesController {
     /**
      * Server was removed from match
      */
-    if (data.old.server_id && !data.new.server_id || data.old.server_id !== data.new.server_id) {
+    if (
+      (data.old.server_id && !data.new.server_id) ||
+      data.old.server_id !== data.new.server_id
+    ) {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
@@ -479,7 +482,8 @@ export class MatchesController {
     }
 
     if (
-      (status === "Live" && data.old.status !== "WaitingForServer") ||
+      (status === "Live" &&
+        (!match.server || data.old.status !== "WaitingForServer")) ||
       (status === "WaitingForServer" &&
         data.old.server_id !== data.new.server_id)
     ) {

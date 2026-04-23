@@ -73,7 +73,9 @@ describe("MatchAssistantService", () => {
       .spyOn(service, "delayCheckOnDemandServer")
       .mockResolvedValue(undefined);
 
-    await expect(service.rebootOnDemandServer("match-1")).resolves.toBeUndefined();
+    await expect(
+      service.rebootOnDemandServer("match-1"),
+    ).resolves.toBeUndefined();
 
     expect(setServerError).toHaveBeenCalledWith("match-1", null);
     expect(assignOnDemandServer).toHaveBeenCalledWith("match-1", {
@@ -147,9 +149,7 @@ describe("MatchAssistantService", () => {
     });
 
     jest.spyOn(service as any, "setServerError").mockResolvedValue(undefined);
-    jest
-      .spyOn(service as any, "assignOnDemandServer")
-      .mockResolvedValue(false);
+    jest.spyOn(service as any, "assignOnDemandServer").mockResolvedValue(false);
 
     await expect(service.rebootOnDemandServer("match-1")).rejects.toThrow(
       "no on demand servers are available to reboot this match",
