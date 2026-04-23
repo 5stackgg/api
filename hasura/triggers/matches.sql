@@ -81,10 +81,16 @@ BEGIN
 
        IF lineup_1_team_id IS NOT NULL THEN
             FOR member IN
-            SELECT * FROM team_roster
-            WHERE team_id = lineup_1_team_id
+            SELECT tr.player_steam_id
+            FROM team_roster tr
+            INNER JOIN teams t ON t.id = tr.team_id
+            WHERE tr.team_id = lineup_1_team_id
             ORDER BY
-                CASE status
+                CASE
+                    WHEN tr.player_steam_id = t.captain_steam_id THEN 0
+                    ELSE 1
+                END,
+                CASE tr.status
                     WHEN 'Starter' THEN 1
                     WHEN 'Substitute' THEN 2
                     WHEN 'Benched' THEN 3
@@ -99,10 +105,16 @@ BEGIN
 
         IF lineup_2_team_id IS NOT NULL THEN
             FOR member IN
-            SELECT * FROM team_roster
-            WHERE team_id = lineup_2_team_id
+            SELECT tr.player_steam_id
+            FROM team_roster tr
+            INNER JOIN teams t ON t.id = tr.team_id
+            WHERE tr.team_id = lineup_2_team_id
             ORDER BY
-                CASE status
+                CASE
+                    WHEN tr.player_steam_id = t.captain_steam_id THEN 0
+                    ELSE 1
+                END,
+                CASE tr.status
                     WHEN 'Starter' THEN 1
                     WHEN 'Substitute' THEN 2
                     WHEN 'Benched' THEN 3

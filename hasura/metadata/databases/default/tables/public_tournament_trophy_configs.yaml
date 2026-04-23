@@ -56,19 +56,6 @@ select_permissions:
         - updated_at
       filter: {}
     comment: ""
-  - role: user
-    permission:
-      columns:
-        - id
-        - tournament_id
-        - placement
-        - custom_name
-        - silhouette
-        - image_url
-        - created_at
-        - updated_at
-      filter: {}
-    comment: ""
   - role: match_organizer
     permission:
       columns:
@@ -83,6 +70,19 @@ select_permissions:
       filter: {}
     comment: ""
   - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - tournament_id
+        - placement
+        - custom_name
+        - silhouette
+        - image_url
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+  - role: user
     permission:
       columns:
         - id

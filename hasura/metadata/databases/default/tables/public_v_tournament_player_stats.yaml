@@ -2,15 +2,6 @@ table:
   name: v_tournament_player_stats
   schema: public
 object_relationships:
-  - name: tournament
-    using:
-      manual_configuration:
-        column_mapping:
-          tournament_id: id
-        insertion_order: null
-        remote_table:
-          name: tournaments
-          schema: public
   - name: player
     using:
       manual_configuration:
@@ -19,6 +10,15 @@ object_relationships:
         insertion_order: null
         remote_table:
           name: players
+          schema: public
+  - name: tournament
+    using:
+      manual_configuration:
+        column_mapping:
+          tournament_id: id
+        insertion_order: null
+        remote_table:
+          name: tournaments
           schema: public
 select_permissions:
   - role: guest

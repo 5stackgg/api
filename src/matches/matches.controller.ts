@@ -47,6 +47,8 @@ export class MatchesController {
     "Surrendered",
   ];
 
+  private static readonly BLOCKING_RESET_STATUSES: string[] = ["Live", "Veto"];
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -688,6 +690,115 @@ export class MatchesController {
         status: true,
       },
     });
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async PreviewTournamentMatchReset(data: {
+    user: User;
+    match_id: string;
+  }) {
+    const { match_id, user } = data;
+
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a tournament organizer");
+    }
+
+    type PreviewRow = {
+      bracket_id: string;
+      match_id: string | null;
+      depth: number;
+      round: number;
+      match_number: number;
+      path: string | null;
+      stage_type: string;
+      match_status: string | null;
+      is_source: boolean;
+      will_delete_match: boolean;
+    };
+
+    const rows = await this.postgres.query<PreviewRow[]>(
+      `SELECT * FROM preview_tournament_match_reset($1::uuid)`,
+      [match_id],
+    );
+
+    if (!rows.length) {
+      throw Error("match is not linked to a tournament bracket");
+    }
+
+    const blockingStatuses = new Set(MatchesController.BLOCKING_RESET_STATUSES);
+    const hasBlockingMatch = rows.some(
+      (row) => row.will_delete_match && blockingStatuses.has(row.match_status || ""),
+    );
+
+    if (hasBlockingMatch) {
+      throw Error("cannot reset while an affected downstream match is live");
+    }
+
+    return {
+      impacts: rows,
+    };
+  }
+
+  @HasuraAction()
+  public async ResetTournamentMatch(data: {
+    user: User;
+    match_id: string;
+    winning_lineup_id?: string | null;
+    reset_status?: string | null;
+    scheduled_at?: string | null;
+  }) {
+    const { match_id, user, winning_lineup_id, reset_status, scheduled_at } = data;
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a tournament organizer");
+    }
+
+    const previewRows = await this.postgres.query<
+      { will_delete_match: boolean; match_status: string | null }[]
+    >(
+      `SELECT will_delete_match, match_status FROM preview_tournament_match_reset($1::uuid)`,
+      [match_id],
+    );
+
+    if (!previewRows.length) {
+      throw Error("match is not linked to a tournament bracket");
+    }
+
+    const blockingStatuses = new Set(MatchesController.BLOCKING_RESET_STATUSES);
+    const hasBlockingMatch = previewRows.some(
+      (row) => row.will_delete_match && blockingStatuses.has(row.match_status || ""),
+    );
+
+    if (hasBlockingMatch) {
+      throw Error("cannot reset while an affected downstream match is live");
+    }
+
+    const resolvedScheduledAt =
+      scheduled_at && scheduled_at.trim().length > 0 ? scheduled_at : null;
+    const shouldFallbackToWaitingForCheckIn =
+      reset_status === "Scheduled" &&
+      resolvedScheduledAt === null &&
+      !winning_lineup_id;
+    const resolvedResetStatus =
+      reset_status === "Scheduled" ? "Scheduled" : "Setup";
+
+    await this.postgres.query(
+      `SELECT * FROM reset_tournament_match($1::uuid, NULLIF($2::text, '')::uuid, $3::text, $4::timestamptz)`,
+      [match_id, winning_lineup_id ?? "", resolvedResetStatus, resolvedScheduledAt],
+    );
+
+    if (shouldFallbackToWaitingForCheckIn) {
+      await this.postgres.query(
+        `UPDATE matches
+         SET status = 'WaitingForCheckIn',
+             scheduled_at = NULL
+         WHERE id = $1::uuid`,
+        [match_id],
+      );
+    }
 
     return {
       success: true,

@@ -4,13 +4,26 @@ CREATE OR REPLACE FUNCTION public.tbi_tournament_team()
 AS $$
 DECLARE
     tournament tournaments;
+    _team_captain_steam_id bigint;
+    _session_steam_id bigint;
 BEGIN
     SELECT * INTO tournament
     FROM tournaments
     WHERE id = NEW.tournament_id;
 
+    _session_steam_id = nullif(current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id', '')::bigint;
+
     IF NEW.team_id IS NOT NULL THEN
-       select owner_steam_id into NEW.owner_steam_id from teams where id = NEW.team_id;
+       SELECT owner_steam_id, captain_steam_id
+       INTO NEW.owner_steam_id, _team_captain_steam_id
+       FROM teams
+       WHERE id = NEW.team_id;
+
+       IF NEW.captain_steam_id IS NULL THEN
+           NEW.captain_steam_id = COALESCE(_session_steam_id, _team_captain_steam_id, NEW.owner_steam_id);
+       END IF;
+    ELSIF NEW.captain_steam_id IS NULL THEN
+       NEW.captain_steam_id = COALESCE(NEW.owner_steam_id, _session_steam_id);
     END IF;
 
     RETURN NEW;
@@ -91,6 +104,39 @@ BEGIN
             );
         END LOOP;
 
+        IF NEW.captain_steam_id IS NOT NULL
+            AND NOT EXISTS (
+                SELECT 1
+                FROM tournament_team_roster ttr
+                WHERE ttr.tournament_team_id = NEW.id
+                  AND ttr.player_steam_id = NEW.captain_steam_id
+            ) THEN
+            INSERT INTO tournament_team_roster (
+                tournament_team_id,
+                player_steam_id,
+                tournament_id
+            )
+            SELECT
+                NEW.id,
+                NEW.captain_steam_id,
+                NEW.tournament_id
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM tournament_team_roster ttr
+                WHERE ttr.tournament_id = NEW.tournament_id
+                  AND ttr.player_steam_id = NEW.captain_steam_id
+            );
+
+            IF NOT EXISTS (
+                SELECT 1
+                FROM tournament_team_roster ttr
+                WHERE ttr.tournament_team_id = NEW.id
+                  AND ttr.player_steam_id = NEW.captain_steam_id
+            ) THEN
+                RAISE EXCEPTION 'Tournament captain must be part of the tournament team roster' USING ERRCODE = '22000';
+            END IF;
+        END IF;
+
     END IF;
 
     RETURN NEW;
@@ -99,3 +145,26 @@ $$;
 
 DROP TRIGGER IF EXISTS tai_tournament_team ON public.tournament_teams;
 CREATE TRIGGER tai_tournament_team AFTER INSERT ON public.tournament_teams FOR EACH ROW EXECUTE FUNCTION public.tai_tournament_team();
+
+CREATE OR REPLACE FUNCTION public.tbu_tournament_team()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.captain_steam_id IS NOT NULL
+        AND NEW.captain_steam_id IS DISTINCT FROM OLD.captain_steam_id
+        AND NOT EXISTS (
+            SELECT 1
+            FROM tournament_team_roster ttr
+            WHERE ttr.tournament_team_id = NEW.id
+              AND ttr.player_steam_id = NEW.captain_steam_id
+        ) THEN
+        RAISE EXCEPTION 'Tournament captain must be part of the tournament team roster' USING ERRCODE = '22000';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbu_tournament_team ON public.tournament_teams;
+CREATE TRIGGER tbu_tournament_team BEFORE UPDATE ON public.tournament_teams FOR EACH ROW EXECUTE FUNCTION public.tbu_tournament_team();

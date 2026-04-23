@@ -250,6 +250,10 @@ type PodStats {
   node: String!
 }
 
+type PreviewTournamentMatchResetOutput {
+  impacts: [TournamentMatchResetImpact!]!
+}
+
 type QueryDetail {
   explain_plan: String
   query: String!
@@ -429,6 +433,19 @@ type TimescaleStats {
   chunks_count: Int!
   hypertables: [HypertableInfo]!
   jobs: [TimescaleJob]!
+}
+
+type TournamentMatchResetImpact {
+  bracket_id: uuid!
+  depth: Int!
+  is_source: Boolean!
+  match_id: uuid
+  match_number: Int!
+  match_status: String
+  path: String
+  round: Int!
+  stage_type: String!
+  will_delete_match: Boolean!
 }
 
 """
@@ -17317,6 +17334,9 @@ input migration_hashes_hashes_updates {
 
 """mutation root"""
 type mutation_root {
+  PreviewTournamentMatchReset(match_id: uuid!): PreviewTournamentMatchResetOutput!
+  ResetTournamentMatch(match_id: uuid!, winning_lineup_id: uuid): SuccessOutput
+
   """accept team invite"""
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
   approveNameChange(name: String!, steam_id: bigint!): SuccessOutput
@@ -43090,6 +43110,10 @@ type teams {
   A computed field, executes function "can_remove_from_team"
   """
   can_remove: Boolean
+
+  """An object relationship"""
+  captain: players
+  captain_steam_id: bigint
   id: uuid!
 
   """An array relationship"""
@@ -43333,6 +43357,7 @@ input teams_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type teams_avg_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43340,6 +43365,7 @@ type teams_avg_fields {
 order by avg() on columns of table "teams"
 """
 input teams_avg_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
@@ -43354,6 +43380,8 @@ input teams_bool_exp {
   can_change_role: Boolean_comparison_exp
   can_invite: Boolean_comparison_exp
   can_remove: Boolean_comparison_exp
+  captain: players_bool_exp
+  captain_steam_id: bigint_comparison_exp
   id: uuid_comparison_exp
   invites: team_invites_bool_exp
   invites_aggregate: team_invites_aggregate_bool_exp
@@ -43390,6 +43418,7 @@ enum teams_constraint {
 input type for incrementing numeric columns in table "teams"
 """
 input teams_inc_input {
+  captain_steam_id: bigint
   owner_steam_id: bigint
 }
 
@@ -43398,6 +43427,8 @@ input type for inserting data into table "teams"
 """
 input teams_insert_input {
   avatar_url: String
+  captain: players_obj_rel_insert_input
+  captain_steam_id: bigint
   id: uuid
   invites: team_invites_arr_rel_insert_input
   match_lineups: match_lineups_arr_rel_insert_input
@@ -43412,6 +43443,7 @@ input teams_insert_input {
 """aggregate max on columns"""
 type teams_max_fields {
   avatar_url: String
+  captain_steam_id: bigint
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -43428,6 +43460,7 @@ order by max() on columns of table "teams"
 """
 input teams_max_order_by {
   avatar_url: order_by
+  captain_steam_id: order_by
   id: order_by
   name: order_by
   owner_steam_id: order_by
@@ -43437,6 +43470,7 @@ input teams_max_order_by {
 """aggregate min on columns"""
 type teams_min_fields {
   avatar_url: String
+  captain_steam_id: bigint
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -43453,6 +43487,7 @@ order by min() on columns of table "teams"
 """
 input teams_min_order_by {
   avatar_url: order_by
+  captain_steam_id: order_by
   id: order_by
   name: order_by
   owner_steam_id: order_by
@@ -43495,6 +43530,8 @@ input teams_order_by {
   can_change_role: order_by
   can_invite: order_by
   can_remove: order_by
+  captain: players_order_by
+  captain_steam_id: order_by
   id: order_by
   invites_aggregate: team_invites_aggregate_order_by
   match_lineups_aggregate: match_lineups_aggregate_order_by
@@ -43521,6 +43558,9 @@ enum teams_select_column {
   avatar_url
 
   """column name"""
+  captain_steam_id
+
+  """column name"""
   id
 
   """column name"""
@@ -43538,6 +43578,7 @@ input type for updating data in table "teams"
 """
 input teams_set_input {
   avatar_url: String
+  captain_steam_id: bigint
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -43546,6 +43587,7 @@ input teams_set_input {
 
 """aggregate stddev on columns"""
 type teams_stddev_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43553,11 +43595,13 @@ type teams_stddev_fields {
 order by stddev() on columns of table "teams"
 """
 input teams_stddev_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type teams_stddev_pop_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43565,11 +43609,13 @@ type teams_stddev_pop_fields {
 order by stddev_pop() on columns of table "teams"
 """
 input teams_stddev_pop_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type teams_stddev_samp_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43577,6 +43623,7 @@ type teams_stddev_samp_fields {
 order by stddev_samp() on columns of table "teams"
 """
 input teams_stddev_samp_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
@@ -43594,6 +43641,7 @@ input teams_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input teams_stream_cursor_value_input {
   avatar_url: String
+  captain_steam_id: bigint
   id: uuid
   name: String
   owner_steam_id: bigint
@@ -43602,6 +43650,7 @@ input teams_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type teams_sum_fields {
+  captain_steam_id: bigint
   owner_steam_id: bigint
 }
 
@@ -43609,6 +43658,7 @@ type teams_sum_fields {
 order by sum() on columns of table "teams"
 """
 input teams_sum_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
@@ -43618,6 +43668,9 @@ update columns of table "teams"
 enum teams_update_column {
   """column name"""
   avatar_url
+
+  """column name"""
+  captain_steam_id
 
   """column name"""
   id
@@ -43645,6 +43698,7 @@ input teams_updates {
 
 """aggregate var_pop on columns"""
 type teams_var_pop_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43652,11 +43706,13 @@ type teams_var_pop_fields {
 order by var_pop() on columns of table "teams"
 """
 input teams_var_pop_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
 """aggregate var_samp on columns"""
 type teams_var_samp_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43664,11 +43720,13 @@ type teams_var_samp_fields {
 order by var_samp() on columns of table "teams"
 """
 input teams_var_samp_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
 """aggregate variance on columns"""
 type teams_variance_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
 }
 
@@ -43676,6 +43734,7 @@ type teams_variance_fields {
 order by variance() on columns of table "teams"
 """
 input teams_variance_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
 }
 
@@ -46339,6 +46398,10 @@ type tournament_teams {
   A computed field, executes function "can_manage_tournament_team"
   """
   can_manage: Boolean
+
+  """An object relationship"""
+  captain: players
+  captain_steam_id: bigint
   created_at: timestamptz!
 
   """An object relationship"""
@@ -46498,6 +46561,7 @@ input tournament_teams_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type tournament_teams_avg_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46506,6 +46570,7 @@ type tournament_teams_avg_fields {
 order by avg() on columns of table "tournament_teams"
 """
 input tournament_teams_avg_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
@@ -46518,6 +46583,8 @@ input tournament_teams_bool_exp {
   _not: tournament_teams_bool_exp
   _or: [tournament_teams_bool_exp!]
   can_manage: Boolean_comparison_exp
+  captain: players_bool_exp
+  captain_steam_id: bigint_comparison_exp
   created_at: timestamptz_comparison_exp
   creator: players_bool_exp
   eligible_at: timestamptz_comparison_exp
@@ -46570,6 +46637,7 @@ enum tournament_teams_constraint {
 input type for incrementing numeric columns in table "tournament_teams"
 """
 input tournament_teams_inc_input {
+  captain_steam_id: bigint
   owner_steam_id: bigint
   seed: Int
 }
@@ -46578,6 +46646,8 @@ input tournament_teams_inc_input {
 input type for inserting data into table "tournament_teams"
 """
 input tournament_teams_insert_input {
+  captain: players_obj_rel_insert_input
+  captain_steam_id: bigint
   created_at: timestamptz
   creator: players_obj_rel_insert_input
   eligible_at: timestamptz
@@ -46596,6 +46666,7 @@ input tournament_teams_insert_input {
 
 """aggregate max on columns"""
 type tournament_teams_max_fields {
+  captain_steam_id: bigint
   created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
@@ -46610,6 +46681,7 @@ type tournament_teams_max_fields {
 order by max() on columns of table "tournament_teams"
 """
 input tournament_teams_max_order_by {
+  captain_steam_id: order_by
   created_at: order_by
   eligible_at: order_by
   id: order_by
@@ -46622,6 +46694,7 @@ input tournament_teams_max_order_by {
 
 """aggregate min on columns"""
 type tournament_teams_min_fields {
+  captain_steam_id: bigint
   created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
@@ -46636,6 +46709,7 @@ type tournament_teams_min_fields {
 order by min() on columns of table "tournament_teams"
 """
 input tournament_teams_min_order_by {
+  captain_steam_id: order_by
   created_at: order_by
   eligible_at: order_by
   id: order_by
@@ -46679,6 +46753,8 @@ input tournament_teams_on_conflict {
 """Ordering options when selecting data from "tournament_teams"."""
 input tournament_teams_order_by {
   can_manage: order_by
+  captain: players_order_by
+  captain_steam_id: order_by
   created_at: order_by
   creator: players_order_by
   eligible_at: order_by
@@ -46704,6 +46780,9 @@ input tournament_teams_pk_columns_input {
 select columns of table "tournament_teams"
 """
 enum tournament_teams_select_column {
+  """column name"""
+  captain_steam_id
+
   """column name"""
   created_at
 
@@ -46733,6 +46812,7 @@ enum tournament_teams_select_column {
 input type for updating data in table "tournament_teams"
 """
 input tournament_teams_set_input {
+  captain_steam_id: bigint
   created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
@@ -46745,6 +46825,7 @@ input tournament_teams_set_input {
 
 """aggregate stddev on columns"""
 type tournament_teams_stddev_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46753,12 +46834,14 @@ type tournament_teams_stddev_fields {
 order by stddev() on columns of table "tournament_teams"
 """
 input tournament_teams_stddev_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type tournament_teams_stddev_pop_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46767,12 +46850,14 @@ type tournament_teams_stddev_pop_fields {
 order by stddev_pop() on columns of table "tournament_teams"
 """
 input tournament_teams_stddev_pop_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type tournament_teams_stddev_samp_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46781,6 +46866,7 @@ type tournament_teams_stddev_samp_fields {
 order by stddev_samp() on columns of table "tournament_teams"
 """
 input tournament_teams_stddev_samp_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
@@ -46798,6 +46884,7 @@ input tournament_teams_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_teams_stream_cursor_value_input {
+  captain_steam_id: bigint
   created_at: timestamptz
   eligible_at: timestamptz
   id: uuid
@@ -46810,6 +46897,7 @@ input tournament_teams_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type tournament_teams_sum_fields {
+  captain_steam_id: bigint
   owner_steam_id: bigint
   seed: Int
 }
@@ -46818,6 +46906,7 @@ type tournament_teams_sum_fields {
 order by sum() on columns of table "tournament_teams"
 """
 input tournament_teams_sum_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
@@ -46826,6 +46915,9 @@ input tournament_teams_sum_order_by {
 update columns of table "tournament_teams"
 """
 enum tournament_teams_update_column {
+  """column name"""
+  captain_steam_id
+
   """column name"""
   created_at
 
@@ -46864,6 +46956,7 @@ input tournament_teams_updates {
 
 """aggregate var_pop on columns"""
 type tournament_teams_var_pop_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46872,12 +46965,14 @@ type tournament_teams_var_pop_fields {
 order by var_pop() on columns of table "tournament_teams"
 """
 input tournament_teams_var_pop_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
 
 """aggregate var_samp on columns"""
 type tournament_teams_var_samp_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46886,12 +46981,14 @@ type tournament_teams_var_samp_fields {
 order by var_samp() on columns of table "tournament_teams"
 """
 input tournament_teams_var_samp_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
 
 """aggregate variance on columns"""
 type tournament_teams_variance_fields {
+  captain_steam_id: Float
   owner_steam_id: Float
   seed: Float
 }
@@ -46900,6 +46997,7 @@ type tournament_teams_variance_fields {
 order by variance() on columns of table "tournament_teams"
 """
 input tournament_teams_variance_order_by {
+  captain_steam_id: order_by
   owner_steam_id: order_by
   seed: order_by
 }
