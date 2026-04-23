@@ -17335,7 +17335,7 @@ input migration_hashes_hashes_updates {
 """mutation root"""
 type mutation_root {
   PreviewTournamentMatchReset(match_id: uuid!): PreviewTournamentMatchResetOutput!
-  ResetTournamentMatch(match_id: uuid!, winning_lineup_id: uuid): SuccessOutput
+  ResetTournamentMatch(match_id: uuid!, reset_status: String, scheduled_at: timestamptz, winning_lineup_id: uuid): SuccessOutput
 
   """accept team invite"""
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput

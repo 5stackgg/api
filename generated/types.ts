@@ -64827,6 +64827,12 @@ export default {
                         2608,
                         "uuid!"
                     ],
+                    "reset_status": [
+                        36
+                    ],
+                    "scheduled_at": [
+                        2211
+                    ],
                     "winning_lineup_id": [
                         2608
                     ]

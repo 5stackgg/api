@@ -25823,7 +25823,7 @@ where: migration_hashes_hashes_bool_exp}
 /** mutation root */
 export interface mutation_rootGenqlSelection{
     PreviewTournamentMatchReset?: (PreviewTournamentMatchResetOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
-    ResetTournamentMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id?: (Scalars['uuid'] | null)} })
+    ResetTournamentMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], reset_status?: (Scalars['String'] | null), scheduled_at?: (Scalars['timestamptz'] | null), winning_lineup_id?: (Scalars['uuid'] | null)} })
     /** accept team invite */
     acceptInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     approveNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
