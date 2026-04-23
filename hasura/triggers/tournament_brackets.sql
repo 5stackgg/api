@@ -29,8 +29,6 @@ BEGIN
      END IF;
 
      IF should_refresh_eta AND tournament_id IS NOT NULL THEN
-        RAISE NOTICE '[ETA_TRIGGER] tau_tournament_brackets bracket=% tournament=% old_match_id=% new_match_id=% old_sched=% new_sched=%',
-            NEW.id, tournament_id, OLD.match_id, NEW.match_id, OLD.scheduled_at, NEW.scheduled_at;
         PERFORM calculate_tournament_bracket_start_times(tournament_id);
      END IF;
 

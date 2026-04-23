@@ -30,8 +30,6 @@ BEGIN
     -- start baseline; clamp to now when start is ahead.
     base_start_time := LEAST(base_start_time, NOW());
 
-    RAISE NOTICE '[ETA] tournament=% status=% base_start=%', _tournament_id, tournament_status, base_start_time;
-
     UPDATE tournament_brackets
     SET scheduled_eta = NULL
     WHERE tournament_stage_id IN (
@@ -138,11 +136,6 @@ BEGIN
     LEFT JOIN matches m ON m.id = tb.match_id
     WHERE ts.tournament_id = _tournament_id;
 
-    RAISE NOTICE '[ETA] seeded brackets=% live=% finished=%',
-        (SELECT COUNT(*) FROM eta_work),
-        (SELECT COUNT(*) FROM eta_work WHERE has_live_match = true),
-        (SELECT COUNT(*) FROM eta_work WHERE bracket_finished = true);
-
     UPDATE eta_work
     SET computed_eta = COALESCE(eta_seed, base_start_time);
 
@@ -193,14 +186,6 @@ BEGIN
             SET computed_eta = feeder_ready
             WHERE id = bracket_record.id;
 
-            RAISE NOTICE '[ETA] feeder bracket=% stage_type=% round=% match=% feeder_ready=% bracket_scheduled_at=% final=%',
-                bracket_record.id,
-                stage_record.stage_type,
-                bracket_record.round,
-                bracket_record.match_number,
-                feeder_ready,
-                bracket_record.bracket_scheduled_at,
-                (SELECT computed_eta FROM eta_work WHERE id = bracket_record.id);
         END LOOP;
     END LOOP;
 
@@ -224,7 +209,6 @@ BEGIN
     INNER JOIN server_regions sr ON sr.value = tr.region;
 
     server_capacity := GREATEST(COALESCE(region_capacity, 0), 1);
-    RAISE NOTICE '[ETA] region_capacity=% effective_server_capacity=%', region_capacity, server_capacity;
     server_free := ARRAY[]::timestamptz[];
 
     FOR i IN 1..server_capacity LOOP
@@ -253,12 +237,6 @@ BEGIN
             server_free[min_index],
             COALESCE(queue_record.computed_eta, NOW())
         ) + duration_interval;
-        RAISE NOTICE '[ETA] live_queue bracket=% server_slot=% eta=% duration_mins=% server_free_until=%',
-            queue_record.id,
-            min_index,
-            queue_record.computed_eta,
-            queue_record.duration_minutes,
-            server_free[min_index];
     END LOOP;
 
     FOR queue_record IN
@@ -289,12 +267,6 @@ BEGIN
         RETURNING computed_eta INTO min_value;
 
         server_free[min_index] := min_value + duration_interval;
-        RAISE NOTICE '[ETA] schedule_queue bracket=% server_slot=% assigned_eta=% duration_mins=% server_free_until=%',
-            queue_record.id,
-            min_index,
-            min_value,
-            queue_record.duration_minutes,
-            server_free[min_index];
     END LOOP;
 
     UPDATE tournament_brackets tb
@@ -302,7 +274,6 @@ BEGIN
     FROM eta_work ew
     WHERE ew.id = tb.id;
 
-    RAISE NOTICE '[ETA] write_complete tournament=% rows=%', _tournament_id, (SELECT COUNT(*) FROM eta_work);
 END;
 $$ LANGUAGE plpgsql;
 

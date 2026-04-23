@@ -10,7 +10,7 @@ BEGIN
     FROM match_options mo
     WHERE mo.id = _match_options_id;
 
-    IF _regions IS NOT NULL AND array_length(_regions, 1) > 0 THEN
+    IF _regions IS NOT NULL AND COALESCE(array_length(_regions, 1), 0) > 0 THEN
         SELECT array_agg(s.value ORDER BY s.ordinality) INTO _sanitized_regions
         FROM (
             SELECT DISTINCT ON (lower(sr.value))
@@ -23,26 +23,33 @@ BEGIN
         ) s;
     END IF;
 
-    IF _regions IS NULL OR array_length(_regions, 1) = 0 THEN
-        _sanitized_regions := COALESCE(_regions, ARRAY[]::text[]);
+    IF _sanitized_regions IS NULL THEN
+        _sanitized_regions := ARRAY[]::text[];
+    END IF;
+
+    IF COALESCE(array_length(_sanitized_regions, 1), 0) = 0 THEN
+        SELECT array_agg(sr.value ORDER BY sr.value) INTO _sanitized_regions
+        FROM server_regions sr
+        WHERE sr.is_lan = false
+          AND total_region_server_count(sr) > 0;
     END IF;
 
     IF _sanitized_regions IS NULL THEN
         _sanitized_regions := ARRAY[]::text[];
     END IF;
 
-    IF array_length(_sanitized_regions, 1) = 0 THEN
+    IF COALESCE(array_length(_sanitized_regions, 1), 0) = 0 THEN
         SELECT array_agg(sr.value ORDER BY sr.value) INTO _sanitized_regions
         FROM server_regions sr
         WHERE sr.is_lan = true
-        AND total_region_server_count(sr) > 0;
+          AND total_region_server_count(sr) > 0;
     END IF;
 
     IF _sanitized_regions IS NULL THEN
         _sanitized_regions := ARRAY[]::text[];
     END IF;
 
-    IF array_length(_sanitized_regions, 1) = 0 THEN
+    IF COALESCE(array_length(_sanitized_regions, 1), 0) = 0 THEN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'No regions with attached servers available for match veto.';
     END IF;
 
