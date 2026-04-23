@@ -44,7 +44,9 @@ export class CheckForScheduledTournamentBrackets extends WorkerHost {
     const scheduledCount = rows[0]?.scheduled_count ?? 0;
 
     if (scheduledCount > 0) {
-      this.logger.log(`${scheduledCount} scheduled tournament brackets started`);
+      this.logger.log(
+        `${scheduledCount} scheduled tournament brackets started`,
+      );
     }
 
     return scheduledCount;

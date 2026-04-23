@@ -89,9 +89,7 @@ export class GameServerNodeController {
       return;
     }
 
-    const rootDisk = payload.nodeStats.disks?.find(
-      (d) => d.mountpoint === "/",
-    );
+    const rootDisk = payload.nodeStats.disks?.find((d) => d.mountpoint === "/");
 
     const result = await this.gameServerNodeService.updateStatus(
       payload.node,

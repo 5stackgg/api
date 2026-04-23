@@ -281,11 +281,14 @@ export class MatchesController {
 
     const tournamentBracket = match.tournament_brackets?.at(0);
     const lineup1TournamentTag =
-      tournamentBracket?.team_1?.team?.short_name || tournamentBracket?.team_1?.name;
+      tournamentBracket?.team_1?.team?.short_name ||
+      tournamentBracket?.team_1?.name;
     const lineup2TournamentTag =
-      tournamentBracket?.team_2?.team?.short_name || tournamentBracket?.team_2?.name;
+      tournamentBracket?.team_2?.team?.short_name ||
+      tournamentBracket?.team_2?.name;
 
-    match.lineup_1.tag = lineup1TournamentTag || match.lineup_1.team?.short_name;
+    match.lineup_1.tag =
+      lineup1TournamentTag || match.lineup_1.team?.short_name;
     delete match.lineup_1.team;
     match.lineup_1.lineup_players = match.lineup_1.lineup_players.map(
       (player) => ({
@@ -299,7 +302,8 @@ export class MatchesController {
       }),
     );
 
-    match.lineup_2.tag = lineup2TournamentTag || match.lineup_2.team?.short_name;
+    match.lineup_2.tag =
+      lineup2TournamentTag || match.lineup_2.team?.short_name;
     delete match.lineup_2.team;
     match.lineup_2.lineup_players = match.lineup_2.lineup_players.map(
       (player) => ({
@@ -448,7 +452,7 @@ export class MatchesController {
     /**
      * Server was removed from match
      */
-    if (data.old.server_id && data.old.server_id != data.new.server_id) {
+    if (data.old.server_id && !data.new.server_id) {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
@@ -731,7 +735,8 @@ export class MatchesController {
 
     const blockingStatuses = new Set(MatchesController.BLOCKING_RESET_STATUSES);
     const hasBlockingMatch = rows.some(
-      (row) => row.will_delete_match && blockingStatuses.has(row.match_status || ""),
+      (row) =>
+        row.will_delete_match && blockingStatuses.has(row.match_status || ""),
     );
 
     if (hasBlockingMatch) {
@@ -751,7 +756,8 @@ export class MatchesController {
     reset_status?: string | null;
     scheduled_at?: string | null;
   }) {
-    const { match_id, user, winning_lineup_id, reset_status, scheduled_at } = data;
+    const { match_id, user, winning_lineup_id, reset_status, scheduled_at } =
+      data;
     if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a tournament organizer");
     }
@@ -769,7 +775,8 @@ export class MatchesController {
 
     const blockingStatuses = new Set(MatchesController.BLOCKING_RESET_STATUSES);
     const hasBlockingMatch = previewRows.some(
-      (row) => row.will_delete_match && blockingStatuses.has(row.match_status || ""),
+      (row) =>
+        row.will_delete_match && blockingStatuses.has(row.match_status || ""),
     );
 
     if (hasBlockingMatch) {
@@ -789,7 +796,12 @@ export class MatchesController {
 
     await this.postgres.query(
       `SELECT * FROM reset_tournament_match($1::uuid, NULLIF($2::text, '')::uuid, $3::text, $4::timestamptz)`,
-      [match_id, winning_lineup_id ?? "", resolvedResetStatus, resolvedScheduledAt],
+      [
+        match_id,
+        winning_lineup_id ?? "",
+        resolvedResetStatus,
+        resolvedScheduledAt,
+      ],
     );
 
     return {
@@ -1359,8 +1371,12 @@ export class MatchesController {
         __args: { id: match_id },
         id: true,
         status: true,
+        server_id: true,
         options: {
           map_veto: true,
+        },
+        server: {
+          is_dedicated: true,
         },
       },
     });
@@ -1377,15 +1393,9 @@ export class MatchesController {
       `[${match_id}] admin override region -> ${region} (was status ${matches_by_pk.status})`,
     );
 
-    await this.hasura.mutation({
-      update_matches_by_pk: {
-        __args: {
-          pk_columns: { id: match_id },
-          _set: { region },
-        },
-        __typename: true,
-      },
-    });
+    if (matches_by_pk.server_id && !matches_by_pk.server?.is_dedicated) {
+      await this.matchAssistant.stopOnDemandServer(match_id, true);
+    }
 
     if (matches_by_pk.status === "Veto") {
       await this.hasura.mutation({
@@ -1396,16 +1406,37 @@ export class MatchesController {
           __typename: true,
         },
       });
-
-      if (!matches_by_pk.options?.map_veto) {
-        await this.matchAssistant.updateMatchStatus(
-          match_id,
-          "WaitingForServer",
-        );
-      }
     }
 
-    await this.matchAssistant.assignServer(match_id);
+    const shouldResetToWaiting =
+      matches_by_pk.server_id !== null ||
+      (matches_by_pk.status === "Veto" && !matches_by_pk.options?.map_veto);
+
+    const updateSet: matches_set_input = { region };
+    if (matches_by_pk.server_id) {
+      updateSet.server_id = null;
+    }
+    if (shouldResetToWaiting) {
+      updateSet.status = "WaitingForServer";
+    }
+
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: { id: match_id },
+          _set: updateSet,
+        },
+        __typename: true,
+      },
+    });
+
+    // If server_id was cleared, the match_events handler will dispatch
+    // assignServer via the (status=WaitingForServer && server_id changed)
+    // branch. Otherwise there's no row change the handler acts on, so dispatch
+    // directly here — no other dispatcher races in this path.
+    if (!matches_by_pk.server_id) {
+      await this.matchAssistant.assignServer(match_id);
+    }
 
     return {
       success: true,
