@@ -32,6 +32,17 @@ BEGIN
     END IF;
 
     IF array_length(_sanitized_regions, 1) = 0 THEN
+        SELECT array_agg(sr.value ORDER BY sr.value) INTO _sanitized_regions
+        FROM server_regions sr
+        WHERE sr.is_lan = true
+        AND total_region_server_count(sr) > 0;
+    END IF;
+
+    IF _sanitized_regions IS NULL THEN
+        _sanitized_regions := ARRAY[]::text[];
+    END IF;
+
+    IF array_length(_sanitized_regions, 1) = 0 THEN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'No regions with attached servers available for match veto.';
     END IF;
 
