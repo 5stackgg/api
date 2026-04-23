@@ -38,6 +38,7 @@ select_permissions:
         - match_map_id
         - round
         - time
+        - winning_reason
         - winning_side
       computed_fields:
         - has_backup_file
