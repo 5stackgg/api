@@ -456,9 +456,6 @@ export class MatchesController {
       await this.matchAssistant.stopOnDemandServer(matchId);
     }
 
-    const regionChanged =
-      data.op === "UPDATE" && data.old.region !== data.new.region;
-
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -479,20 +476,6 @@ export class MatchesController {
 
     if (!match) {
       throw Error("unable to find match");
-    }
-
-    if (regionChanged) {
-      // Admins can change region via a direct Hasura mutation (see
-      // MatchRegionVeto.vue -> update_matches_by_pk). Treat that like a
-      // reassignment: tear down any existing on-demand job on the OLD region
-      // synchronously so the k8s job name is free, then dispatch assignServer
-      // which will reselect a server in the NEW region.
-      if (match.server && !match.server.is_dedicated) {
-        await this.matchAssistant.stopOnDemandServer(matchId, true);
-      }
-      await this.matchAssistant.assignServer(matchId);
-      await this.discordMatchOverview.updateMatchOverview(matchId);
-      return;
     }
 
     if (
@@ -1403,12 +1386,8 @@ export class MatchesController {
         __args: { id: match_id },
         id: true,
         status: true,
-        server_id: true,
         options: {
           map_veto: true,
-        },
-        server: {
-          is_dedicated: true,
         },
       },
     });
@@ -1425,9 +1404,15 @@ export class MatchesController {
       `[${match_id}] admin override region -> ${region} (was status ${matches_by_pk.status})`,
     );
 
-    if (matches_by_pk.server_id && !matches_by_pk.server?.is_dedicated) {
-      await this.matchAssistant.stopOnDemandServer(match_id, true);
-    }
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: { id: match_id },
+          _set: { region },
+        },
+        __typename: true,
+      },
+    });
 
     if (matches_by_pk.status === "Veto") {
       await this.hasura.mutation({
@@ -1438,37 +1423,16 @@ export class MatchesController {
           __typename: true,
         },
       });
+
+      if (!matches_by_pk.options?.map_veto) {
+        await this.matchAssistant.updateMatchStatus(
+          match_id,
+          "WaitingForServer",
+        );
+      }
     }
 
-    const shouldResetToWaiting =
-      matches_by_pk.server_id !== null ||
-      (matches_by_pk.status === "Veto" && !matches_by_pk.options?.map_veto);
-
-    const updateSet: matches_set_input = { region };
-    if (matches_by_pk.server_id) {
-      updateSet.server_id = null;
-    }
-    if (shouldResetToWaiting) {
-      updateSet.status = "WaitingForServer";
-    }
-
-    await this.hasura.mutation({
-      update_matches_by_pk: {
-        __args: {
-          pk_columns: { id: match_id },
-          _set: updateSet,
-        },
-        __typename: true,
-      },
-    });
-
-    // If server_id was cleared, the match_events handler will dispatch
-    // assignServer via the (status=WaitingForServer && server_id changed)
-    // branch. Otherwise there's no row change the handler acts on, so dispatch
-    // directly here — no other dispatcher races in this path.
-    if (!matches_by_pk.server_id) {
-      await this.matchAssistant.assignServer(match_id);
-    }
+    await this.matchAssistant.assignServer(match_id);
 
     return {
       success: true,
