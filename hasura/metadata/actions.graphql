@@ -278,6 +278,12 @@ type Mutation {
 }
 
 type Mutation {
+  rebootMatchServer(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   restartService(
     service: String!
   ): SuccessOutput
@@ -702,4 +708,3 @@ type TableSizeInfo {
   n_dead_tup: Int!
   estimated_dead_tuple_bytes: Float!
 }
-

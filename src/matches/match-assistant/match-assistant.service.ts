@@ -32,6 +32,15 @@ export class MatchAssistantService {
   private gameServerConfig: GameServersConfig;
 
   private readonly namespace: string;
+  private static readonly REBOOTABLE_ON_DEMAND_STATUSES: readonly e_match_status_enum[] =
+    [
+      "Scheduled",
+      "WaitingForCheckIn",
+      "WaitingForServer",
+      "Veto",
+      "PickingPlayers",
+      "Live",
+    ];
 
   constructor(
     private readonly logger: Logger,
@@ -310,6 +319,55 @@ export class MatchAssistantService {
     await this.updateMatchStatus(match.id, "WaitingForServer");
   }
 
+  public async rebootOnDemandServer(matchId: string) {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        id: true,
+        status: true,
+        server_id: true,
+        server: {
+          id: true,
+          game_server_node_id: true,
+        },
+      },
+    });
+
+    if (!match) {
+      throw Error("match not found");
+    }
+
+    if (!match.server_id || !match.server?.id) {
+      throw Error("match has no assigned server");
+    }
+
+    if (
+      !MatchAssistantService.REBOOTABLE_ON_DEMAND_STATUSES.includes(
+        match.status,
+      )
+    ) {
+      throw Error("match server cannot be rebooted in the current match state");
+    }
+
+    if (!match.server.game_server_node_id) {
+      throw Error("only on demand servers can be rebooted");
+    }
+
+    await this.setServerError(matchId, null);
+
+    const rebooted = await this.assignOnDemandServer(matchId, {
+      preserveMatchStatus: true,
+    });
+
+    if (!rebooted) {
+      throw Error("no on demand servers are available to reboot this match");
+    }
+
+    await this.delayCheckOnDemandServer(matchId);
+  }
+
   private async startMatch(matchId: string) {
     await this.setServerError(matchId, null);
 
@@ -424,7 +482,12 @@ export class MatchAssistantService {
     );
   }
 
-  private async assignOnDemandServer(matchId: string): Promise<boolean> {
+  private async assignOnDemandServer(
+    matchId: string,
+    options?: {
+      preserveMatchStatus?: boolean;
+    },
+  ): Promise<boolean> {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -451,6 +514,10 @@ export class MatchAssistantService {
       },
     });
 
+    if (!match) {
+      throw Error("unable to find match");
+    }
+
     const { game_server_nodes } = await this.hasura.query({
       game_server_nodes: {
         __args: {
@@ -474,10 +541,6 @@ export class MatchAssistantService {
       return false;
     }
 
-    if (!match) {
-      throw Error("unable to find match");
-    }
-
     const map = match.match_maps.at(0).map;
 
     return this.cache.lock(
@@ -485,9 +548,12 @@ export class MatchAssistantService {
       async () => {
         this.logger.log(`[${matchId}] assigning on demand server`);
 
-        if (match.server_id) {
-          await this.stopOnDemandServer(matchId, true);
-        }
+        // Always tear down any existing k8s job for this match before creating
+        // a new one. Covers three cases: (a) the match still has server_id set,
+        // (b) server_id was cleared but a stale job is left over from a prior
+        // assignment, (c) delete propagation is slow — the wait-until-gone loop
+        // inside stopOnDemandServer(remove=true) ensures the name is free.
+        await this.stopOnDemandServer(matchId, true);
 
         const kc = new KubeConfig();
         kc.loadFromDefault();
@@ -563,7 +629,9 @@ export class MatchAssistantService {
         const server = servers.at(-1);
 
         if (!server) {
-          await this.updateMatchStatus(matchId, "WaitingForServer");
+          if (!options?.preserveMatchStatus) {
+            await this.updateMatchStatus(matchId, "WaitingForServer");
+          }
           return false;
         }
 
@@ -1033,6 +1101,7 @@ export class MatchAssistantService {
           .deleteNamespacedPod({
             name: pod.metadata!.name!,
             namespace: this.namespace,
+            gracePeriodSeconds: 0,
           })
           .catch((error) => {
             if (error.code.toString() !== "404") {
@@ -1051,12 +1120,33 @@ export class MatchAssistantService {
         .deleteNamespacedJob({
           name: jobName,
           namespace: this.namespace,
+          propagationPolicy: "Background",
+          gracePeriodSeconds: 0,
         })
         .catch((error) => {
           if (error.code.toString() !== "404") {
             throw error;
           }
         });
+
+      // Wait for the job to be fully gone from the k8s API before returning.
+      // Without this, a subsequent createNamespacedJob with the same name races
+      // against delete propagation and gets HTTP 409 AlreadyExists.
+      const deadline = Date.now() + 15_000;
+      while (Date.now() < deadline) {
+        try {
+          await batch.readNamespacedJob({
+            name: jobName,
+            namespace: this.namespace,
+          });
+        } catch (error) {
+          if (error.code?.toString() === "404") {
+            break;
+          }
+          throw error;
+        }
+        await new Promise((r) => setTimeout(r, 200));
+      }
 
       this.logger.verbose(`[${matchId}] stopped on demand server`);
     } catch (error) {
