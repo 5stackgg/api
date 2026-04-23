@@ -227,13 +227,6 @@ type Mutation {
 }
 
 type Mutation {
-  overrideMatchRegion(
-    match_id: uuid!
-    region: String!
-  ): SuccessOutput
-}
-
-type Mutation {
   randomizeTeams(
     match_id: uuid!
   ): SuccessOutput
@@ -245,6 +238,12 @@ type Query {
     server_id: String
     file_path: String!
   ): FileContentResponse!
+}
+
+type Mutation {
+  rebootMatchServer(
+    match_id: uuid!
+  ): SuccessOutput
 }
 
 type Mutation {
@@ -274,12 +273,6 @@ type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  rebootMatchServer(
-    match_id: uuid!
   ): SuccessOutput
 }
 
@@ -708,3 +701,4 @@ type TableSizeInfo {
   n_dead_tup: Int!
   estimated_dead_tuple_bytes: Float!
 }
+
