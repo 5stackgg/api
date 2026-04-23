@@ -10,18 +10,16 @@ DECLARE
 BEGIN
     SELECT * INTO _match FROM matches WHERE id = match_region_veto_pick.match_id LIMIT 1;
 
-    SELECT mo.regions INTO regions
-    FROM match_options mo
-    WHERE mo.id = _match.match_options_id;
+    SELECT sanitize_match_options_regions(_match.match_options_id) INTO regions;
 
-    IF (regions IS NULL OR array_length(regions, 1) = 0) THEN
-        SELECT array_agg(sr.value) INTO available_regions
-        FROM server_regions sr
-        LEFT JOIN match_region_veto_picks mvp ON mvp.region = sr.value AND mvp.match_id = match_region_veto_pick.match_id
-        WHERE mvp.region IS NULL
-        AND sr.is_lan = false
-        AND region_status(sr) != 'Disabled';
-    END IF;
+    SELECT array_agg(r) INTO available_regions
+    FROM unnest(regions) AS r
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM match_region_veto_picks mvp
+      WHERE mvp.match_id = match_region_veto_pick.match_id
+      AND lower(mvp.region) = lower(r)
+    );
 
   IF array_length(available_regions, 1) = 1 THEN
     SELECT * INTO lineup_id FROM get_region_veto_picking_lineup_id(_match);

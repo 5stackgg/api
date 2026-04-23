@@ -5,7 +5,6 @@ DECLARE
     _lineup_1_id UUID;
     _lineup_2_id UUID;
     _regions text[];
-    available_regions text[];
     has_region_veto BOOLEAN;
     user_match_count int;
 BEGIN
@@ -35,29 +34,10 @@ BEGIN
        NEW.lineup_2_id = _lineup_2_id;
     END IF;
 
-    SELECT regions INTO _regions FROM match_options WHERE id = NEW.match_options_id;
+    SELECT sanitize_match_options_regions(NEW.match_options_id) INTO _regions;
 
-    IF array_length(_regions, 1) != 0 THEN
-        SELECT array_agg(sr.value) INTO available_regions
-        FROM server_regions sr
-        WHERE sr.value = ANY(_regions)
-        AND region_status(sr) != 'Disabled';
-    ELSE
-        SELECT array_agg(sr.value) INTO available_regions
-        FROM server_regions sr
-        WHERE region_status(sr) != 'Disabled'
-        and sr.is_lan = false;
-    END IF;
-
-    -- Fallback: if nothing matched above (e.g. LAN-only)
-    IF available_regions IS NULL OR array_length(available_regions, 1) = 0 THEN
-        SELECT array_agg(sr.value) INTO available_regions
-        FROM server_regions sr
-        WHERE region_status(sr) != 'Disabled';
-    END IF;
-
-    IF array_length(available_regions, 1) = 1 THEN
-        NEW.region = available_regions[1];
+    IF array_length(_regions, 1) = 1 THEN
+        NEW.region = _regions[1];
     END IF;
 
 
@@ -270,10 +250,11 @@ BEGIN
     ) THEN
         SELECT map_veto, region_veto INTO has_map_veto, has_region_veto FROM match_options WHERE id = NEW.match_options_id;
 
-        SELECT regions INTO _regions FROM match_options WHERE id = NEW.match_options_id;
+        SELECT sanitize_match_options_regions(NEW.match_options_id) INTO _regions;
 
         IF has_region_veto AND array_length(_regions, 1) > 1 THEN
             DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
+            NEW.region = NULL;
         END IF;
 
         SELECT map_pool_id INTO _map_pool_id FROM match_options WHERE id = NEW.match_options_id;
@@ -290,6 +271,7 @@ BEGIN
 
     IF NEW.status IN ('Setup', 'PickingPlayers', 'WaitingForCheckIn', 'Veto') THEN
         PERFORM setup_match_maps(NEW.id, NEW.match_options_id);
+        PERFORM sanitize_match_options_regions(NEW.match_options_id);
     END IF;
 
     IF(NEW.status = 'Live') THEN
