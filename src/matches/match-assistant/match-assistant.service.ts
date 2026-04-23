@@ -1085,12 +1085,6 @@ export class MatchAssistantService {
         this.logger.verbose(`[${matchId}] remove pod`);
 
         if (!remove) {
-          // Only Running pods accept exec; anything else (Succeeded / Failed /
-          // Pending) responds 400 to the upgrade request. Skip those — there's
-          // nothing to signal.
-          if (pod.status?.phase !== "Running") {
-            continue;
-          }
           try {
             await new Exec(kc).exec(
               this.namespace,

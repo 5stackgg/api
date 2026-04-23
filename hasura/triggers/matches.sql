@@ -324,8 +324,9 @@ BEGIN
     IF(NEW.status = 'Live') THEN
         SELECT COUNT(*) INTO _match_map_count FROM match_maps WHERE match_id = NEW.id;
         SELECT * INTO _match_options FROM match_options WHERE id = NEW.match_options_id;
-
-        IF NEW.region IS NULL AND _match_options.region_veto = true THEN
+        
+        -- Check if region veto is needed (no region selected and no maps yet)
+        IF NEW.region IS NULL AND _match_map_count = 0 AND _match_options.region_veto = true THEN
             NEW.status = 'Veto';
         END IF;
 
