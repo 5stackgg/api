@@ -252,6 +252,11 @@ export interface PodStats {
     __typename: 'PodStats'
 }
 
+export interface PreviewTournamentMatchResetOutput {
+    impacts: TournamentMatchResetImpact[]
+    __typename: 'PreviewTournamentMatchResetOutput'
+}
+
 export interface QueryDetail {
     explain_plan: (Scalars['String'] | null)
     query: Scalars['String']
@@ -371,6 +376,20 @@ export interface TimescaleStats {
     hypertables: (HypertableInfo | null)[]
     jobs: (TimescaleJob | null)[]
     __typename: 'TimescaleStats'
+}
+
+export interface TournamentMatchResetImpact {
+    bracket_id: Scalars['uuid']
+    depth: Scalars['Int']
+    is_source: Scalars['Boolean']
+    match_id: (Scalars['uuid'] | null)
+    match_number: Scalars['Int']
+    match_status: (Scalars['String'] | null)
+    path: (Scalars['String'] | null)
+    round: Scalars['Int']
+    stage_type: Scalars['String']
+    will_delete_match: Scalars['Boolean']
+    __typename: 'TournamentMatchResetImpact'
 }
 
 
@@ -5887,6 +5906,8 @@ export type migration_hashes_hashes_update_column = 'hash' | 'name'
 
 /** mutation root */
 export interface mutation_root {
+    PreviewTournamentMatchReset: PreviewTournamentMatchResetOutput
+    ResetTournamentMatch: (SuccessOutput | null)
     /** accept team invite */
     acceptInvite: (SuccessOutput | null)
     approveNameChange: (SuccessOutput | null)
@@ -11926,6 +11947,9 @@ export interface teams {
     can_invite: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_remove_from_team" */
     can_remove: (Scalars['Boolean'] | null)
+    /** An object relationship */
+    captain: (players | null)
+    captain_steam_id: (Scalars['bigint'] | null)
     id: Scalars['uuid']
     /** An array relationship */
     invites: team_invites[]
@@ -11983,6 +12007,7 @@ export interface teams_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface teams_avg_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_avg_fields'
 }
@@ -11995,6 +12020,7 @@ export type teams_constraint = 'teams_name_key' | 'teams_pkey'
 /** aggregate max on columns */
 export interface teams_max_fields {
     avatar_url: (Scalars['String'] | null)
+    captain_steam_id: (Scalars['bigint'] | null)
     id: (Scalars['uuid'] | null)
     name: (Scalars['String'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
@@ -12008,6 +12034,7 @@ export interface teams_max_fields {
 /** aggregate min on columns */
 export interface teams_min_fields {
     avatar_url: (Scalars['String'] | null)
+    captain_steam_id: (Scalars['bigint'] | null)
     id: (Scalars['uuid'] | null)
     name: (Scalars['String'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
@@ -12029,11 +12056,12 @@ export interface teams_mutation_response {
 
 
 /** select columns of table "teams" */
-export type teams_select_column = 'avatar_url' | 'id' | 'name' | 'owner_steam_id' | 'short_name'
+export type teams_select_column = 'avatar_url' | 'captain_steam_id' | 'id' | 'name' | 'owner_steam_id' | 'short_name'
 
 
 /** aggregate stddev on columns */
 export interface teams_stddev_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_stddev_fields'
 }
@@ -12041,6 +12069,7 @@ export interface teams_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface teams_stddev_pop_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_stddev_pop_fields'
 }
@@ -12048,6 +12077,7 @@ export interface teams_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface teams_stddev_samp_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_stddev_samp_fields'
 }
@@ -12055,17 +12085,19 @@ export interface teams_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface teams_sum_fields {
+    captain_steam_id: (Scalars['bigint'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
     __typename: 'teams_sum_fields'
 }
 
 
 /** update columns of table "teams" */
-export type teams_update_column = 'avatar_url' | 'id' | 'name' | 'owner_steam_id' | 'short_name'
+export type teams_update_column = 'avatar_url' | 'captain_steam_id' | 'id' | 'name' | 'owner_steam_id' | 'short_name'
 
 
 /** aggregate var_pop on columns */
 export interface teams_var_pop_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_var_pop_fields'
 }
@@ -12073,6 +12105,7 @@ export interface teams_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface teams_var_samp_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_var_samp_fields'
 }
@@ -12080,6 +12113,7 @@ export interface teams_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface teams_variance_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_variance_fields'
 }
@@ -12952,6 +12986,9 @@ export interface tournament_team_roster_variance_fields {
 export interface tournament_teams {
     /** A computed field, executes function "can_manage_tournament_team" */
     can_manage: (Scalars['Boolean'] | null)
+    /** An object relationship */
+    captain: (players | null)
+    captain_steam_id: (Scalars['bigint'] | null)
     created_at: Scalars['timestamptz']
     /** An object relationship */
     creator: players
@@ -13007,6 +13044,7 @@ export interface tournament_teams_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface tournament_teams_avg_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_avg_fields'
@@ -13019,6 +13057,7 @@ export type tournament_teams_constraint = 'tournament_teams_creator_steam_id_tou
 
 /** aggregate max on columns */
 export interface tournament_teams_max_fields {
+    captain_steam_id: (Scalars['bigint'] | null)
     created_at: (Scalars['timestamptz'] | null)
     eligible_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
@@ -13033,6 +13072,7 @@ export interface tournament_teams_max_fields {
 
 /** aggregate min on columns */
 export interface tournament_teams_min_fields {
+    captain_steam_id: (Scalars['bigint'] | null)
     created_at: (Scalars['timestamptz'] | null)
     eligible_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
@@ -13056,11 +13096,12 @@ export interface tournament_teams_mutation_response {
 
 
 /** select columns of table "tournament_teams" */
-export type tournament_teams_select_column = 'created_at' | 'eligible_at' | 'id' | 'name' | 'owner_steam_id' | 'seed' | 'team_id' | 'tournament_id'
+export type tournament_teams_select_column = 'captain_steam_id' | 'created_at' | 'eligible_at' | 'id' | 'name' | 'owner_steam_id' | 'seed' | 'team_id' | 'tournament_id'
 
 
 /** aggregate stddev on columns */
 export interface tournament_teams_stddev_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_stddev_fields'
@@ -13069,6 +13110,7 @@ export interface tournament_teams_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface tournament_teams_stddev_pop_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_stddev_pop_fields'
@@ -13077,6 +13119,7 @@ export interface tournament_teams_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface tournament_teams_stddev_samp_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_stddev_samp_fields'
@@ -13085,6 +13128,7 @@ export interface tournament_teams_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface tournament_teams_sum_fields {
+    captain_steam_id: (Scalars['bigint'] | null)
     owner_steam_id: (Scalars['bigint'] | null)
     seed: (Scalars['Int'] | null)
     __typename: 'tournament_teams_sum_fields'
@@ -13092,11 +13136,12 @@ export interface tournament_teams_sum_fields {
 
 
 /** update columns of table "tournament_teams" */
-export type tournament_teams_update_column = 'created_at' | 'eligible_at' | 'id' | 'name' | 'owner_steam_id' | 'seed' | 'team_id' | 'tournament_id'
+export type tournament_teams_update_column = 'captain_steam_id' | 'created_at' | 'eligible_at' | 'id' | 'name' | 'owner_steam_id' | 'seed' | 'team_id' | 'tournament_id'
 
 
 /** aggregate var_pop on columns */
 export interface tournament_teams_var_pop_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_var_pop_fields'
@@ -13105,6 +13150,7 @@ export interface tournament_teams_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface tournament_teams_var_samp_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_var_samp_fields'
@@ -13113,6 +13159,7 @@ export interface tournament_teams_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface tournament_teams_variance_fields {
+    captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     seed: (Scalars['Float'] | null)
     __typename: 'tournament_teams_variance_fields'
@@ -16132,6 +16179,12 @@ export interface PodStatsGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface PreviewTournamentMatchResetOutputGenqlSelection{
+    impacts?: TournamentMatchResetImpactGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface QueryDetailGenqlSelection{
     explain_plan?: boolean | number
     query?: boolean | number
@@ -16294,6 +16347,21 @@ export interface TimescaleStatsGenqlSelection{
     chunks_count?: boolean | number
     hypertables?: HypertableInfoGenqlSelection
     jobs?: TimescaleJobGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TournamentMatchResetImpactGenqlSelection{
+    bracket_id?: boolean | number
+    depth?: boolean | number
+    is_source?: boolean | number
+    match_id?: boolean | number
+    match_number?: boolean | number
+    match_status?: boolean | number
+    path?: boolean | number
+    round?: boolean | number
+    stage_type?: boolean | number
+    will_delete_match?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -25754,6 +25822,8 @@ where: migration_hashes_hashes_bool_exp}
 
 /** mutation root */
 export interface mutation_rootGenqlSelection{
+    PreviewTournamentMatchReset?: (PreviewTournamentMatchResetOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    ResetTournamentMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], reset_status?: (Scalars['String'] | null), scheduled_at?: (Scalars['timestamptz'] | null), winning_lineup_id?: (Scalars['uuid'] | null)} })
     /** accept team invite */
     acceptInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     approveNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
@@ -40310,6 +40380,9 @@ export interface teamsGenqlSelection{
     can_invite?: boolean | number
     /** A computed field, executes function "can_remove_from_team" */
     can_remove?: boolean | number
+    /** An object relationship */
+    captain?: playersGenqlSelection
+    captain_steam_id?: boolean | number
     id?: boolean | number
     /** An array relationship */
     invites?: (team_invitesGenqlSelection & { __args?: {
@@ -40474,6 +40547,7 @@ on_conflict?: (teams_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface teams_avg_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40481,24 +40555,25 @@ export interface teams_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "teams" */
-export interface teams_avg_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_avg_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "teams". All fields are combined with a logical 'AND'. */
-export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),can_remove?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),role?: (String_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),can_remove?: (Boolean_comparison_exp | null),captain?: (players_bool_exp | null),captain_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),role?: (String_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "teams" */
-export interface teams_inc_input {owner_steam_id?: (Scalars['bigint'] | null)}
+export interface teams_inc_input {captain_steam_id?: (Scalars['bigint'] | null),owner_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "teams" */
-export interface teams_insert_input {avatar_url?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invites?: (team_invites_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),roster?: (team_roster_arr_rel_insert_input | null),short_name?: (Scalars['String'] | null),tournament_teams?: (tournament_teams_arr_rel_insert_input | null)}
+export interface teams_insert_input {avatar_url?: (Scalars['String'] | null),captain?: (players_obj_rel_insert_input | null),captain_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invites?: (team_invites_arr_rel_insert_input | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),roster?: (team_roster_arr_rel_insert_input | null),short_name?: (Scalars['String'] | null),tournament_teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
 export interface teams_max_fieldsGenqlSelection{
     avatar_url?: boolean | number
+    captain_steam_id?: boolean | number
     id?: boolean | number
     name?: boolean | number
     owner_steam_id?: boolean | number
@@ -40511,12 +40586,13 @@ export interface teams_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "teams" */
-export interface teams_max_order_by {avatar_url?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
+export interface teams_max_order_by {avatar_url?: (order_by | null),captain_steam_id?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface teams_min_fieldsGenqlSelection{
     avatar_url?: boolean | number
+    captain_steam_id?: boolean | number
     id?: boolean | number
     name?: boolean | number
     owner_steam_id?: boolean | number
@@ -40529,7 +40605,7 @@ export interface teams_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "teams" */
-export interface teams_min_order_by {avatar_url?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
+export interface teams_min_order_by {avatar_url?: (order_by | null),captain_steam_id?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),short_name?: (order_by | null)}
 
 
 /** response of any mutation on the table "teams" */
@@ -40554,7 +40630,7 @@ export interface teams_on_conflict {constraint: teams_constraint,update_columns?
 
 
 /** Ordering options when selecting data from "teams". */
-export interface teams_order_by {avatar_url?: (order_by | null),can_change_role?: (order_by | null),can_invite?: (order_by | null),can_remove?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),role?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface teams_order_by {avatar_url?: (order_by | null),can_change_role?: (order_by | null),can_invite?: (order_by | null),can_remove?: (order_by | null),captain?: (players_order_by | null),captain_steam_id?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),role?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: teams */
@@ -40562,11 +40638,12 @@ export interface teams_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "teams" */
-export interface teams_set_input {avatar_url?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
+export interface teams_set_input {avatar_url?: (Scalars['String'] | null),captain_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface teams_stddev_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40574,11 +40651,12 @@ export interface teams_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "teams" */
-export interface teams_stddev_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_stddev_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface teams_stddev_pop_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40586,11 +40664,12 @@ export interface teams_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "teams" */
-export interface teams_stddev_pop_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_stddev_pop_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface teams_stddev_samp_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40598,7 +40677,7 @@ export interface teams_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "teams" */
-export interface teams_stddev_samp_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_stddev_samp_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** Streaming cursor of the table "teams" */
@@ -40610,11 +40689,12 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface teams_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
+export interface teams_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),captain_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),short_name?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
 export interface teams_sum_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40622,7 +40702,7 @@ export interface teams_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "teams" */
-export interface teams_sum_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_sum_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 export interface teams_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -40635,6 +40715,7 @@ where: teams_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface teams_var_pop_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40642,11 +40723,12 @@ export interface teams_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "teams" */
-export interface teams_var_pop_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_var_pop_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface teams_var_samp_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40654,11 +40736,12 @@ export interface teams_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "teams" */
-export interface teams_var_samp_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_var_samp_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface teams_variance_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -40666,7 +40749,7 @@ export interface teams_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "teams" */
-export interface teams_variance_order_by {owner_steam_id?: (order_by | null)}
+export interface teams_variance_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to compare columns of type "timestamptz". All fields are combined with logical 'AND'. */
@@ -42146,6 +42229,9 @@ export interface tournament_team_roster_variance_order_by {player_steam_id?: (or
 export interface tournament_teamsGenqlSelection{
     /** A computed field, executes function "can_manage_tournament_team" */
     can_manage?: boolean | number
+    /** An object relationship */
+    captain?: playersGenqlSelection
+    captain_steam_id?: boolean | number
     created_at?: boolean | number
     /** An object relationship */
     creator?: playersGenqlSelection
@@ -42258,6 +42344,7 @@ on_conflict?: (tournament_teams_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface tournament_teams_avg_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42266,23 +42353,24 @@ export interface tournament_teams_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "tournament_teams" */
-export interface tournament_teams_avg_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_avg_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "tournament_teams". All fields are combined with a logical 'AND'. */
-export interface tournament_teams_bool_exp {_and?: (tournament_teams_bool_exp[] | null),_not?: (tournament_teams_bool_exp | null),_or?: (tournament_teams_bool_exp[] | null),can_manage?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),creator?: (players_bool_exp | null),eligible_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (tournament_team_invites_bool_exp | null),invites_aggregate?: (tournament_team_invites_aggregate_bool_exp | null),name?: (String_comparison_exp | null),owner_steam_id?: (bigint_comparison_exp | null),results?: (v_team_stage_results_bool_exp | null),roster?: (tournament_team_roster_bool_exp | null),roster_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),seed?: (Int_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
+export interface tournament_teams_bool_exp {_and?: (tournament_teams_bool_exp[] | null),_not?: (tournament_teams_bool_exp | null),_or?: (tournament_teams_bool_exp[] | null),can_manage?: (Boolean_comparison_exp | null),captain?: (players_bool_exp | null),captain_steam_id?: (bigint_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),creator?: (players_bool_exp | null),eligible_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (tournament_team_invites_bool_exp | null),invites_aggregate?: (tournament_team_invites_aggregate_bool_exp | null),name?: (String_comparison_exp | null),owner_steam_id?: (bigint_comparison_exp | null),results?: (v_team_stage_results_bool_exp | null),roster?: (tournament_team_roster_bool_exp | null),roster_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),seed?: (Int_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_teams" */
-export interface tournament_teams_inc_input {owner_steam_id?: (Scalars['bigint'] | null),seed?: (Scalars['Int'] | null)}
+export interface tournament_teams_inc_input {captain_steam_id?: (Scalars['bigint'] | null),owner_steam_id?: (Scalars['bigint'] | null),seed?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "tournament_teams" */
-export interface tournament_teams_insert_input {created_at?: (Scalars['timestamptz'] | null),creator?: (players_obj_rel_insert_input | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invites?: (tournament_team_invites_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),results?: (v_team_stage_results_obj_rel_insert_input | null),roster?: (tournament_team_roster_arr_rel_insert_input | null),seed?: (Scalars['Int'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_teams_insert_input {captain?: (players_obj_rel_insert_input | null),captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),creator?: (players_obj_rel_insert_input | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invites?: (tournament_team_invites_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),results?: (v_team_stage_results_obj_rel_insert_input | null),roster?: (tournament_team_roster_arr_rel_insert_input | null),seed?: (Scalars['Int'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
 export interface tournament_teams_max_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     created_at?: boolean | number
     eligible_at?: boolean | number
     id?: boolean | number
@@ -42297,11 +42385,12 @@ export interface tournament_teams_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "tournament_teams" */
-export interface tournament_teams_max_order_by {created_at?: (order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_teams_max_order_by {captain_steam_id?: (order_by | null),created_at?: (order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface tournament_teams_min_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     created_at?: boolean | number
     eligible_at?: boolean | number
     id?: boolean | number
@@ -42316,7 +42405,7 @@ export interface tournament_teams_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "tournament_teams" */
-export interface tournament_teams_min_order_by {created_at?: (order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_teams_min_order_by {captain_steam_id?: (order_by | null),created_at?: (order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournament_teams" */
@@ -42341,7 +42430,7 @@ export interface tournament_teams_on_conflict {constraint: tournament_teams_cons
 
 
 /** Ordering options when selecting data from "tournament_teams". */
-export interface tournament_teams_order_by {can_manage?: (order_by | null),created_at?: (order_by | null),creator?: (players_order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),invites_aggregate?: (tournament_team_invites_aggregate_order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),results?: (v_team_stage_results_order_by | null),roster_aggregate?: (tournament_team_roster_aggregate_order_by | null),seed?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_teams_order_by {can_manage?: (order_by | null),captain?: (players_order_by | null),captain_steam_id?: (order_by | null),created_at?: (order_by | null),creator?: (players_order_by | null),eligible_at?: (order_by | null),id?: (order_by | null),invites_aggregate?: (tournament_team_invites_aggregate_order_by | null),name?: (order_by | null),owner_steam_id?: (order_by | null),results?: (v_team_stage_results_order_by | null),roster_aggregate?: (tournament_team_roster_aggregate_order_by | null),seed?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_teams */
@@ -42349,11 +42438,12 @@ export interface tournament_teams_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournament_teams" */
-export interface tournament_teams_set_input {created_at?: (Scalars['timestamptz'] | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),seed?: (Scalars['Int'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_teams_set_input {captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),seed?: (Scalars['Int'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface tournament_teams_stddev_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42362,11 +42452,12 @@ export interface tournament_teams_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "tournament_teams" */
-export interface tournament_teams_stddev_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_stddev_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface tournament_teams_stddev_pop_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42375,11 +42466,12 @@ export interface tournament_teams_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "tournament_teams" */
-export interface tournament_teams_stddev_pop_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_stddev_pop_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface tournament_teams_stddev_samp_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42388,7 +42480,7 @@ export interface tournament_teams_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "tournament_teams" */
-export interface tournament_teams_stddev_samp_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_stddev_samp_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** Streaming cursor of the table "tournament_teams" */
@@ -42400,11 +42492,12 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_teams_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),seed?: (Scalars['Int'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_teams_stream_cursor_value_input {captain_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),eligible_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),seed?: (Scalars['Int'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
 export interface tournament_teams_sum_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42413,7 +42506,7 @@ export interface tournament_teams_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "tournament_teams" */
-export interface tournament_teams_sum_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_sum_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 export interface tournament_teams_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -42426,6 +42519,7 @@ where: tournament_teams_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface tournament_teams_var_pop_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42434,11 +42528,12 @@ export interface tournament_teams_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "tournament_teams" */
-export interface tournament_teams_var_pop_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_var_pop_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface tournament_teams_var_samp_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42447,11 +42542,12 @@ export interface tournament_teams_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "tournament_teams" */
-export interface tournament_teams_var_samp_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_var_samp_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface tournament_teams_variance_fieldsGenqlSelection{
+    captain_steam_id?: boolean | number
     owner_steam_id?: boolean | number
     seed?: boolean | number
     __typename?: boolean | number
@@ -42460,7 +42556,7 @@ export interface tournament_teams_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "tournament_teams" */
-export interface tournament_teams_variance_order_by {owner_steam_id?: (order_by | null),seed?: (order_by | null)}
+export interface tournament_teams_variance_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
 /** columns and relationships of "tournament_trophies" */
@@ -46532,6 +46628,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const PreviewTournamentMatchResetOutput_possibleTypes: string[] = ['PreviewTournamentMatchResetOutput']
+    export const isPreviewTournamentMatchResetOutput = (obj?: { __typename?: any } | null): obj is PreviewTournamentMatchResetOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isPreviewTournamentMatchResetOutput"')
+      return PreviewTournamentMatchResetOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const QueryDetail_possibleTypes: string[] = ['QueryDetail']
     export const isQueryDetail = (obj?: { __typename?: any } | null): obj is QueryDetail => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isQueryDetail"')
@@ -46632,6 +46736,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isTimescaleStats = (obj?: { __typename?: any } | null): obj is TimescaleStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTimescaleStats"')
       return TimescaleStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TournamentMatchResetImpact_possibleTypes: string[] = ['TournamentMatchResetImpact']
+    export const isTournamentMatchResetImpact = (obj?: { __typename?: any } | null): obj is TournamentMatchResetImpact => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTournamentMatchResetImpact"')
+      return TournamentMatchResetImpact_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -56589,6 +56701,7 @@ export const enumTeamsConstraint = {
 
 export const enumTeamsSelectColumn = {
    avatar_url: 'avatar_url' as const,
+   captain_steam_id: 'captain_steam_id' as const,
    id: 'id' as const,
    name: 'name' as const,
    owner_steam_id: 'owner_steam_id' as const,
@@ -56597,6 +56710,7 @@ export const enumTeamsSelectColumn = {
 
 export const enumTeamsUpdateColumn = {
    avatar_url: 'avatar_url' as const,
+   captain_steam_id: 'captain_steam_id' as const,
    id: 'id' as const,
    name: 'name' as const,
    owner_steam_id: 'owner_steam_id' as const,
@@ -56767,6 +56881,7 @@ export const enumTournamentTeamsConstraint = {
 }
 
 export const enumTournamentTeamsSelectColumn = {
+   captain_steam_id: 'captain_steam_id' as const,
    created_at: 'created_at' as const,
    eligible_at: 'eligible_at' as const,
    id: 'id' as const,
@@ -56778,6 +56893,7 @@ export const enumTournamentTeamsSelectColumn = {
 }
 
 export const enumTournamentTeamsUpdateColumn = {
+   captain_steam_id: 'captain_steam_id' as const,
    created_at: 'created_at' as const,
    eligible_at: 'eligible_at' as const,
    id: 'id' as const,

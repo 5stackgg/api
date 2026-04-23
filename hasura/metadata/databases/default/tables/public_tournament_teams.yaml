@@ -2,6 +2,9 @@ table:
   name: tournament_teams
   schema: public
 object_relationships:
+  - name: captain
+    using:
+      foreign_key_constraint_on: captain_steam_id
   - name: creator
     using:
       foreign_key_constraint_on: owner_steam_id
@@ -54,6 +57,7 @@ insert_permissions:
                   - CancelledMinTeams
                   - Finished
       columns:
+        - captain_steam_id
         - name
         - owner_steam_id
         - seed
@@ -83,11 +87,18 @@ insert_permissions:
                               _eq: Admin
                           - player_steam_id:
                               _eq: X-Hasura-User-Id
+                  - team:
+                      owner_steam_id:
+                        _eq: X-Hasura-User-Id
+                  - team:
+                      captain_steam_id:
+                        _eq: X-Hasura-User-Id
                   - team_id:
                       _is_null: true
       set:
         owner_steam_id: x-hasura-user-id
       columns:
+        - captain_steam_id
         - name
         - team_id
         - tournament_id
@@ -96,6 +107,7 @@ select_permissions:
   - role: guest
     permission:
       columns:
+        - captain_steam_id
         - created_at
         - eligible_at
         - id
@@ -113,6 +125,7 @@ update_permissions:
   - role: tournament_organizer
     permission:
       columns:
+        - captain_steam_id
         - name
         - seed
       filter: {}
@@ -121,6 +134,7 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - captain_steam_id
         - name
       filter:
         _or:

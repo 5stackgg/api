@@ -1,4 +1,19 @@
 type Mutation {
+  PreviewTournamentMatchReset(
+    match_id: uuid!
+  ): PreviewTournamentMatchResetOutput!
+}
+
+type Mutation {
+  ResetTournamentMatch(
+    match_id: uuid!
+    winning_lineup_id: uuid
+    reset_status: String
+    scheduled_at: timestamptz
+  ): SuccessOutput
+}
+
+type Mutation {
   acceptInvite(
     invite_id: uuid!
     type: String!
@@ -203,18 +218,18 @@ type Query {
 }
 
 type Mutation {
-  overrideMatchRegion(
-    match_id: uuid!
-    region: String!
-  ): SuccessOutput
-}
-
-type Mutation {
   moveServerItem(
     node_id: String!
     server_id: String
     source_path: String!
     dest_path: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  overrideMatchRegion(
+    match_id: uuid!
+    region: String!
   ): SuccessOutput
 }
 
@@ -351,6 +366,23 @@ type Mutation {
 input SampleInput {
   username: String!
   password: String!
+}
+
+type TournamentMatchResetImpact {
+  bracket_id: uuid!
+  match_id: uuid
+  depth: Int!
+  round: Int!
+  match_number: Int!
+  path: String
+  stage_type: String!
+  match_status: String
+  is_source: Boolean!
+  will_delete_match: Boolean!
+}
+
+type PreviewTournamentMatchResetOutput {
+  impacts: [TournamentMatchResetImpact!]!
 }
 
 type MeResponse {

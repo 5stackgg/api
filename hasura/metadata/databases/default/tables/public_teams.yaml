@@ -2,6 +2,9 @@ table:
   name: teams
   schema: public
 object_relationships:
+  - name: captain
+    using:
+      foreign_key_constraint_on: captain_steam_id
   - name: owner
     using:
       foreign_key_constraint_on: owner_steam_id
@@ -79,6 +82,7 @@ select_permissions:
     permission:
       columns:
         - avatar_url
+        - captain_steam_id
         - id
         - name
         - owner_steam_id
@@ -95,6 +99,7 @@ update_permissions:
   - role: administrator
     permission:
       columns:
+        - captain_steam_id
         - name
         - owner_steam_id
         - short_name
@@ -104,12 +109,20 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - captain_steam_id
         - name
         - owner_steam_id
         - short_name
       filter:
-        owner_steam_id:
-          _eq: x-hasura-user-id
+        _or:
+          - owner_steam_id:
+              _eq: X-Hasura-User-Id
+          - roster:
+              _and:
+                - role:
+                    _eq: Admin
+                - player_steam_id:
+                    _eq: X-Hasura-User-Id
       check: {}
     comment: ""
 delete_permissions:

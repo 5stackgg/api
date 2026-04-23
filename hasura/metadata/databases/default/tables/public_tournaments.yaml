@@ -19,6 +19,15 @@ array_relationships:
         table:
           name: tournament_organizers
           schema: public
+  - name: player_stats
+    using:
+      manual_configuration:
+        column_mapping:
+          id: tournament_id
+        insertion_order: null
+        remote_table:
+          name: v_tournament_player_stats
+          schema: public
   - name: results
     using:
       manual_configuration:
@@ -62,15 +71,6 @@ array_relationships:
         column: tournament_id
         table:
           name: tournament_trophy_configs
-          schema: public
-  - name: player_stats
-    using:
-      manual_configuration:
-        column_mapping:
-          id: tournament_id
-        insertion_order: null
-        remote_table:
-          name: v_tournament_player_stats
           schema: public
 computed_fields:
   - name: can_cancel
@@ -398,12 +398,29 @@ select_permissions:
           _neq: Setup
       allow_aggregations: true
     comment: ""
-  - role: user
+  - role: tournament_organizer
     permission:
       columns:
         - auto_start
         - created_at
         - description
+        - discord_guild_id
+        - discord_notifications_enabled
+        - discord_voice_enabled
+        - discord_notify_Canceled
+        - discord_notify_Finished
+        - discord_notify_Forfeit
+        - discord_notify_Live
+        - discord_notify_MapPaused
+        - discord_notify_PickingPlayers
+        - discord_notify_Scheduled
+        - discord_notify_Surrendered
+        - discord_notify_Tie
+        - discord_notify_Veto
+        - discord_notify_WaitingForCheckIn
+        - discord_notify_WaitingForServer
+        - discord_role_id
+        - discord_webhook
         - id
         - match_options_id
         - name
@@ -433,29 +450,12 @@ select_permissions:
               _neq: Setup
       allow_aggregations: true
     comment: ""
-  - role: tournament_organizer
+  - role: user
     permission:
       columns:
         - auto_start
         - created_at
         - description
-        - discord_guild_id
-        - discord_notifications_enabled
-        - discord_voice_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
         - id
         - match_options_id
         - name
@@ -486,22 +486,6 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: user
-    permission:
-      columns:
-        - auto_start
-        - description
-        - name
-        - start
-        - status
-        - trophies_enabled
-      filter:
-        is_organizer:
-          _eq: true
-      check:
-        is_organizer:
-          _eq: true
-    comment: ""
   - role: tournament_organizer
     permission:
       columns:
@@ -524,6 +508,22 @@ update_permissions:
         - discord_notify_WaitingForServer
         - discord_role_id
         - discord_webhook
+        - name
+        - start
+        - status
+        - trophies_enabled
+      filter:
+        is_organizer:
+          _eq: true
+      check:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - auto_start
+        - description
         - name
         - start
         - status

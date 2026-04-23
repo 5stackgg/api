@@ -7,6 +7,8 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      member RECORD;
      _lineup_1_id UUID;
      _lineup_2_id UUID;
+     _captain_steam_id_1 bigint;
+     _captain_steam_id_2 bigint;
      _match_id UUID;
      feeder RECORD;
      feeders_with_team int := 0;
@@ -135,6 +137,16 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          lineup_2_id = _lineup_2_id
      WHERE id = _match_id;
 
+     SELECT tt.captain_steam_id
+     INTO _captain_steam_id_1
+     FROM tournament_teams tt
+     WHERE tt.id = bracket.tournament_team_id_1;
+
+     SELECT tt.captain_steam_id
+     INTO _captain_steam_id_2
+     FROM tournament_teams tt
+     WHERE tt.id = bracket.tournament_team_id_2;
+
      FOR member IN
          SELECT * FROM tournament_team_roster
          WHERE tournament_team_id = bracket.tournament_team_id_1
@@ -150,6 +162,20 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_2_id, member.player_steam_id);
      END LOOP;
+
+     IF _captain_steam_id_1 IS NOT NULL THEN
+         UPDATE match_lineup_players
+         SET captain = true
+         WHERE match_lineup_id = _lineup_1_id
+           AND steam_id = _captain_steam_id_1;
+     END IF;
+
+     IF _captain_steam_id_2 IS NOT NULL THEN
+         UPDATE match_lineup_players
+         SET captain = true
+         WHERE match_lineup_id = _lineup_2_id
+           AND steam_id = _captain_steam_id_2;
+     END IF;
 
      UPDATE matches
      SET status = 'WaitingForCheckIn'
