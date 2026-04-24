@@ -38525,6 +38525,12 @@ export default {
             "api_password": [
                 2608
             ],
+            "boot_status": [
+                36
+            ],
+            "boot_status_detail": [
+                36
+            ],
             "connect_password": [
                 36
             ],
@@ -38864,6 +38870,12 @@ export default {
             "api_password": [
                 2609
             ],
+            "boot_status": [
+                38
+            ],
+            "boot_status_detail": [
+                38
+            ],
             "connect_password": [
                 38
             ],
@@ -38971,6 +38983,12 @@ export default {
             "api_password": [
                 2608
             ],
+            "boot_status": [
+                36
+            ],
+            "boot_status_detail": [
+                36
+            ],
             "connect_password": [
                 36
             ],
@@ -39054,6 +39072,12 @@ export default {
             "api_password": [
                 2608
             ],
+            "boot_status": [
+                36
+            ],
+            "boot_status_detail": [
+                36
+            ],
             "connect_password": [
                 36
             ],
@@ -39113,6 +39137,12 @@ export default {
             "api_password": [
                 1498
             ],
+            "boot_status": [
+                1498
+            ],
+            "boot_status_detail": [
+                1498
+            ],
             "connect_password": [
                 1498
             ],
@@ -39165,6 +39195,12 @@ export default {
         "servers_min_fields": {
             "api_password": [
                 2608
+            ],
+            "boot_status": [
+                36
+            ],
+            "boot_status_detail": [
+                36
             ],
             "connect_password": [
                 36
@@ -39223,6 +39259,12 @@ export default {
         },
         "servers_min_order_by": {
             "api_password": [
+                1498
+            ],
+            "boot_status": [
+                1498
+            ],
+            "boot_status_detail": [
                 1498
             ],
             "connect_password": [
@@ -39312,6 +39354,12 @@ export default {
         },
         "servers_order_by": {
             "api_password": [
+                1498
+            ],
+            "boot_status": [
+                1498
+            ],
+            "boot_status_detail": [
                 1498
             ],
             "connect_password": [
@@ -39413,6 +39461,12 @@ export default {
         "servers_set_input": {
             "api_password": [
                 2608
+            ],
+            "boot_status": [
+                36
+            ],
+            "boot_status_detail": [
+                36
             ],
             "connect_password": [
                 36
@@ -39579,6 +39633,12 @@ export default {
         "servers_stream_cursor_value_input": {
             "api_password": [
                 2608
+            ],
+            "boot_status": [
+                36
+            ],
+            "boot_status_detail": [
+                36
             ],
             "connect_password": [
                 36
@@ -68560,20 +68620,16 @@ export default {
                     ]
                 }
             ],
-            "overrideMatchRegion": [
+            "randomizeTeams": [
                 39,
                 {
                     "match_id": [
                         2608,
                         "uuid!"
-                    ],
-                    "region": [
-                        36,
-                        "String!"
                     ]
                 }
             ],
-            "randomizeTeams": [
+            "rebootMatchServer": [
                 39,
                 {
                     "match_id": [

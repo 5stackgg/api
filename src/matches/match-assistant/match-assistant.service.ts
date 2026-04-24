@@ -5,7 +5,6 @@ import {
   CoreV1Api,
   KubeConfig,
   Exec,
-  V1Pod,
 } from "@kubernetes/client-node";
 import { RconService } from "../../rcon/rcon.service";
 import { User } from "../../auth/types/User";
@@ -25,6 +24,8 @@ import { CacheService } from "../../cache/cache.service";
 import { EncryptionService } from "../../encryption/encryption.service";
 import { AppConfig } from "src/configs/types/AppConfig";
 import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandServer";
+import { LoggingService } from "src/k8s/logging/logging.service";
+import type { MatchServerBootDiagnostic } from "src/k8s/logging/bootDiagnostics";
 
 @Injectable()
 export class MatchAssistantService {
@@ -41,6 +42,11 @@ export class MatchAssistantService {
       "PickingPlayers",
       "Live",
     ];
+  private static readonly TERMINAL_MATCH_STATUSES: readonly e_match_status_enum[] =
+    ["Finished", "Canceled", "Forfeit", "Tie", "Surrendered"];
+  public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
+  private static readonly INITIAL_BOOT_STATUS_DETAIL =
+    "Waiting for Kubernetes to create the match server pod.";
 
   constructor(
     private readonly logger: Logger,
@@ -49,6 +55,7 @@ export class MatchAssistantService {
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly encryption: EncryptionService,
+    private readonly loggingService: LoggingService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
@@ -267,7 +274,6 @@ export class MatchAssistantService {
     try {
       const isAssignedOnDemand = await this.assignOnDemandServer(matchId);
       if (isAssignedOnDemand) {
-        await this.startMatch(matchId);
         return;
       }
     } catch (error) {
@@ -364,8 +370,6 @@ export class MatchAssistantService {
     if (!rebooted) {
       throw Error("no on demand servers are available to reboot this match");
     }
-
-    await this.delayCheckOnDemandServer(matchId);
   }
 
   private async startMatch(matchId: string) {
@@ -647,7 +651,11 @@ export class MatchAssistantService {
                   id: server.id,
                 },
                 _set: {
+                  boot_status: "Creating",
+                  boot_status_detail:
+                    MatchAssistantService.INITIAL_BOOT_STATUS_DETAIL,
                   connected: false,
+                  offline_at: null,
                   reserved_by_match_id: matchId,
                 },
               },
@@ -892,6 +900,8 @@ export class MatchAssistantService {
             },
           });
 
+          await this.delayCheckOnDemandServer(matchId);
+
           return true;
         } catch (error) {
           await this.stopOnDemandServer(matchId, true);
@@ -908,115 +918,159 @@ export class MatchAssistantService {
     );
   }
 
-  public async isOnDemandServerRunning(matchId: string) {
-    const server = await this.getMatchServer(matchId);
+  public async monitorOnDemandServerBoot(
+    matchId: string,
+  ): Promise<"ready" | "pending" | "stopped"> {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        id: true,
+        status: true,
+        server_id: true,
+        server: {
+          id: true,
+          boot_status: true,
+          boot_status_detail: true,
+          connected: true,
+          game_server_node_id: true,
+          is_dedicated: true,
+          reserved_by_match_id: true,
+        },
+      },
+    });
 
-    if (!server) {
-      return;
+    if (
+      !match ||
+      MatchAssistantService.TERMINAL_MATCH_STATUSES.includes(match.status)
+    ) {
+      return "stopped";
+    }
+
+    const server = match.server;
+    if (
+      !match.server_id ||
+      !server ||
+      server.is_dedicated ||
+      !server.game_server_node_id ||
+      server.reserved_by_match_id !== matchId
+    ) {
+      return "stopped";
+    }
+
+    if (server.connected) {
+      await this.clearOnDemandServerBootDiagnostics(
+        server.id,
+        matchId,
+        server.boot_status,
+        server.boot_status_detail,
+      );
+
+      if (match.status === "WaitingForServer") {
+        await this.startMatch(matchId);
+      } else {
+        await this.setServerError(matchId, null);
+        await this.sendServerMatchId(matchId);
+      }
+
+      return "ready";
     }
 
     try {
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
+      const diagnostics = await this.loggingService.getJobBootDiagnostics(
+        MatchAssistantService.GetMatchServerJobId(matchId),
+      );
 
-      const core = kc.makeApiClient(CoreV1Api);
-      const batch = kc.makeApiClient(BatchV1Api);
+      await this.syncOnDemandServerBootDiagnostics(
+        server.id,
+        matchId,
+        server.boot_status,
+        server.boot_status_detail,
+        diagnostics,
+      );
 
-      const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
-
-      const job = await batch.readNamespacedJob({
-        name: jobName,
-        namespace: this.namespace,
-      });
-      if (job.status?.active) {
-        const podList = await core.listNamespacedPod({
-          namespace: this.namespace,
-          labelSelector: `job-name=${jobName}`,
-        });
-        for (const pod of podList.items) {
-          if (pod.status!.phase !== "Running") {
-            const podError = await this.derivePodError(core, pod);
-            await this.setServerError(matchId, podError);
-            return false;
-          }
-        }
-      }
-
-      const server = await this.getMatchServer(matchId);
-
-      if (!server) {
-        return false;
-      }
-
-      const rcon = await this.rcon.connect(server.id);
-      if (!rcon) {
-        return false;
-      }
-
-      await this.rcon.disconnect(server.id);
-
-      await this.setServerError(matchId, null);
-
-      return true;
+      return diagnostics.terminal ? "stopped" : "pending";
     } catch (error) {
-      const message = error?.response?.body?.message || error?.message || null;
-      this.logger.warn(`unable to check server status`, message || error);
-      if (message) {
-        await this.setServerError(matchId, message);
-      }
-      return false;
+      const message =
+        error?.response?.body?.message ||
+        error?.message ||
+        "Unable to inspect match server boot status.";
+      this.logger.warn(`unable to monitor on demand server`, message);
+      await this.syncOnDemandServerBootDiagnostics(
+        server.id,
+        matchId,
+        server.boot_status,
+        server.boot_status_detail,
+        {
+          status:
+            (server.boot_status as MatchServerBootDiagnostic["status"]) ||
+            "Creating",
+          detail: message,
+          terminal: false,
+        },
+      );
+      return "pending";
     }
   }
 
-  private async derivePodError(
-    core: CoreV1Api,
-    pod: V1Pod,
-  ): Promise<string | null> {
-    const scheduled = pod.status?.conditions?.find(
-      (condition) => condition.type === "PodScheduled",
-    );
+  private async syncOnDemandServerBootDiagnostics(
+    serverId: string,
+    matchId: string,
+    currentStatus: string | null,
+    currentDetail: string | null,
+    diagnostics: MatchServerBootDiagnostic,
+  ) {
     if (
-      scheduled?.status === "False" &&
-      (scheduled.reason || scheduled.message)
+      currentStatus !== diagnostics.status ||
+      currentDetail !== diagnostics.detail
     ) {
-      return [scheduled.reason, scheduled.message].filter(Boolean).join(": ");
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: {
+              id: serverId,
+            },
+            _set: {
+              boot_status: diagnostics.status,
+              boot_status_detail: diagnostics.detail,
+            },
+          },
+          __typename: true,
+        },
+      });
     }
 
-    const waiting = pod.status?.containerStatuses?.find(
-      (status) => status.state?.waiting?.reason,
-    )?.state?.waiting;
-    if (waiting?.reason && waiting.reason !== "ContainerCreating") {
-      return [waiting.reason, waiting.message].filter(Boolean).join(": ");
+    await this.setServerError(
+      matchId,
+      diagnostics.terminal ? diagnostics.detail : null,
+    );
+  }
+
+  private async clearOnDemandServerBootDiagnostics(
+    serverId: string,
+    matchId: string,
+    currentStatus: string | null,
+    currentDetail: string | null,
+  ) {
+    if (currentStatus !== null || currentDetail !== null) {
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: {
+              id: serverId,
+            },
+            _set: {
+              boot_status: null,
+              boot_status_detail: null,
+            },
+          },
+          __typename: true,
+        },
+      });
     }
 
-    const podName = pod.metadata?.name;
-    if (podName) {
-      try {
-        const events = await core.listNamespacedEvent({
-          namespace: this.namespace,
-          fieldSelector: `involvedObject.name=${podName},involvedObject.kind=Pod`,
-        });
-        const latestWarning = events.items
-          .filter((event) => event.type === "Warning")
-          .sort((a, b) => {
-            const at = new Date(a.lastTimestamp || a.eventTime || 0).getTime();
-            const bt = new Date(b.lastTimestamp || b.eventTime || 0).getTime();
-            return bt - at;
-          })[0];
-        if (latestWarning?.reason || latestWarning?.message) {
-          return [latestWarning.reason, latestWarning.message]
-            .filter(Boolean)
-            .join(": ");
-        }
-      } catch (error) {
-        this.logger.warn(
-          `unable to list pod events`,
-          error?.response?.body?.message || error?.message || error,
-        );
-      }
-    }
-
-    return null;
+    await this.setServerError(matchId, null);
   }
 
   private async setServerError(matchId: string, message: string | null) {
@@ -1055,7 +1109,7 @@ export class MatchAssistantService {
         matchId,
       },
       {
-        delay: 10 * 1000,
+        delay: MatchAssistantService.ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS,
         attempts: 1,
         removeOnFail: true,
         removeOnComplete: true,
@@ -1085,16 +1139,22 @@ export class MatchAssistantService {
         this.logger.verbose(`[${matchId}] remove pod`);
 
         if (!remove) {
-          await new Exec(kc).exec(
-            this.namespace,
-            pod.metadata!.name!,
-            pod.spec!.containers?.at(0)?.name,
-            ["kill", "-SIGUSR1", "1"],
-            process.stdout,
-            process.stderr,
-            process.stdin,
-            false,
-          );
+          try {
+            await new Exec(kc).exec(
+              this.namespace,
+              pod.metadata!.name!,
+              pod.spec!.containers?.at(0)?.name,
+              ["kill", "-SIGUSR1", "1"],
+              process.stdout,
+              process.stderr,
+              process.stdin,
+              false,
+            );
+          } catch (error) {
+            this.logger.warn(
+              `[${matchId}] graceful shutdown signal failed: ${error?.message || "exec error"}`,
+            );
+          }
           continue;
         }
         await core
@@ -1165,6 +1225,8 @@ export class MatchAssistantService {
             },
           },
           _set: {
+            boot_status: null,
+            boot_status_detail: null,
             connected: false,
             reserved_by_match_id: null,
           },

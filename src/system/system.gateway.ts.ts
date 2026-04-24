@@ -42,6 +42,11 @@ export class SystemGateway {
     }
 
     const isJob = service.startsWith("cs-update:") || service.startsWith("m-");
+    const resolvedService = service.startsWith("cs-update:")
+      ? GameServerNodeService.GET_UPDATE_JOB_NAME(
+          service.replace("cs-update:", ""),
+        )
+      : service;
 
     const stream = new PassThrough();
 
@@ -61,8 +66,12 @@ export class SystemGateway {
     stream.on("end", async () => {
       let jobFinshed = false;
       if (isJob) {
-        const jobStatus = await this.loggingService.getJobStatus(service);
-        if (jobStatus?.succeeded) {
+        const jobStatus =
+          await this.loggingService.getJobStatus(resolvedService);
+        if (
+          jobStatus?.succeeded ||
+          (await this.loggingService.isJobTerminal(resolvedService))
+        ) {
           jobFinshed = true;
         }
       }
@@ -81,11 +90,7 @@ export class SystemGateway {
 
     try {
       await this.loggingService.getServiceLogs(
-        service.startsWith("cs-update:")
-          ? GameServerNodeService.GET_UPDATE_JOB_NAME(
-              service.replace("cs-update:", ""),
-            )
-          : service,
+        resolvedService,
         stream,
         tailLines,
         !!previous,

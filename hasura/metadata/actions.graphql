@@ -227,13 +227,6 @@ type Mutation {
 }
 
 type Mutation {
-  overrideMatchRegion(
-    match_id: uuid!
-    region: String!
-  ): SuccessOutput
-}
-
-type Mutation {
   randomizeTeams(
     match_id: uuid!
   ): SuccessOutput
@@ -708,3 +701,4 @@ type TableSizeInfo {
   n_dead_tup: Int!
   estimated_dead_tuple_bytes: Float!
 }
+

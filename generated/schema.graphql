@@ -20235,8 +20235,8 @@ type mutation_root {
 
   """Move file or directory on game server"""
   moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
-  overrideMatchRegion(match_id: uuid!, region: String!): SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
+  rebootMatchServer(match_id: uuid!): SuccessOutput
 
   """
   execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies"
@@ -36034,6 +36034,8 @@ columns and relationships of "servers"
 """
 type servers {
   api_password: uuid!
+  boot_status: String
+  boot_status_detail: String
   connect_password: String
   connected: Boolean!
 
@@ -36215,6 +36217,8 @@ input servers_bool_exp {
   _not: servers_bool_exp
   _or: [servers_bool_exp!]
   api_password: uuid_comparison_exp
+  boot_status: String_comparison_exp
+  boot_status_detail: String_comparison_exp
   connect_password: String_comparison_exp
   connected: Boolean_comparison_exp
   connection_link: String_comparison_exp
@@ -36274,6 +36278,8 @@ input type for inserting data into table "servers"
 """
 input servers_insert_input {
   api_password: uuid
+  boot_status: String
+  boot_status_detail: String
   connect_password: String
   connected: Boolean
   current_match: matches_obj_rel_insert_input
@@ -36304,6 +36310,8 @@ input servers_insert_input {
 """aggregate max on columns"""
 type servers_max_fields {
   api_password: uuid
+  boot_status: String
+  boot_status_detail: String
   connect_password: String
 
   """
@@ -36336,6 +36344,8 @@ order by max() on columns of table "servers"
 """
 input servers_max_order_by {
   api_password: order_by
+  boot_status: order_by
+  boot_status_detail: order_by
   connect_password: order_by
   game: order_by
   game_server_node_id: order_by
@@ -36356,6 +36366,8 @@ input servers_max_order_by {
 """aggregate min on columns"""
 type servers_min_fields {
   api_password: uuid
+  boot_status: String
+  boot_status_detail: String
   connect_password: String
 
   """
@@ -36388,6 +36400,8 @@ order by min() on columns of table "servers"
 """
 input servers_min_order_by {
   api_password: order_by
+  boot_status: order_by
+  boot_status_detail: order_by
   connect_password: order_by
   game: order_by
   game_server_node_id: order_by
@@ -36438,6 +36452,8 @@ input servers_on_conflict {
 """Ordering options when selecting data from "servers"."""
 input servers_order_by {
   api_password: order_by
+  boot_status: order_by
+  boot_status_detail: order_by
   connect_password: order_by
   connected: order_by
   connection_link: order_by
@@ -36478,6 +36494,12 @@ select columns of table "servers"
 enum servers_select_column {
   """column name"""
   api_password
+
+  """column name"""
+  boot_status
+
+  """column name"""
+  boot_status_detail
 
   """column name"""
   connect_password
@@ -36582,6 +36604,8 @@ input type for updating data in table "servers"
 """
 input servers_set_input {
   api_password: uuid
+  boot_status: String
+  boot_status_detail: String
   connect_password: String
   connected: Boolean
   enabled: Boolean
@@ -36667,6 +36691,8 @@ input servers_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input servers_stream_cursor_value_input {
   api_password: uuid
+  boot_status: String
+  boot_status_detail: String
   connect_password: String
   connected: Boolean
   enabled: Boolean
@@ -36712,6 +36738,12 @@ update columns of table "servers"
 enum servers_update_column {
   """column name"""
   api_password
+
+  """column name"""
+  boot_status
+
+  """column name"""
+  boot_status_detail
 
   """column name"""
   connect_password

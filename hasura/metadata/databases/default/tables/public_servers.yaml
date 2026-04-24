@@ -69,6 +69,8 @@ select_permissions:
     permission:
       columns:
         - api_password
+        - boot_status
+        - boot_status_detail
         - connect_password
         - connected
         - enabled
@@ -125,6 +127,8 @@ select_permissions:
   - role: match_organizer
     permission:
       columns:
+        - boot_status
+        - boot_status_detail
         - connected
         - enabled
         - game
