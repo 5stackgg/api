@@ -10,7 +10,7 @@ import {
   WorkerHost,
 } from "@nestjs/bullmq";
 
-@UseQueue("Matches", MatchQueues.ScheduledMatches)
+@UseQueue("Matches", MatchQueues.MatchServers)
 export class CheckOnDemandServerJob extends WorkerHost {
   constructor(
     private readonly matchAssistant: MatchAssistantService,
@@ -25,8 +25,14 @@ export class CheckOnDemandServerJob extends WorkerHost {
   ): Promise<void> {
     const { matchId } = job.data;
 
-    if (!(await this.matchAssistant.isOnDemandServerRunning(matchId))) {
-      throw Error("on demand server is not running");
+    const status = await this.matchAssistant.monitorOnDemandServerBoot(matchId);
+
+    if (status === "pending") {
+      throw Error("on demand server is still booting");
+    }
+
+    if (status !== "ready") {
+      return;
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);

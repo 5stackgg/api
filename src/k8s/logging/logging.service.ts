@@ -8,7 +8,15 @@ import {
   CoreV1Api,
   V1Pod,
   BatchV1Api,
+  CoreV1Event,
+  V1Job,
 } from "@kubernetes/client-node";
+import {
+  buildSyntheticMatchServerLogEntries,
+  deriveMatchServerBootDiagnostic,
+  type MatchServerBootDiagnostic,
+  type MatchServerSyntheticLogEntry,
+} from "./bootDiagnostics";
 
 @Injectable()
 export class LoggingService {
@@ -71,13 +79,32 @@ export class LoggingService {
     }
 
     let pods: V1Pod[] = [];
+    let syntheticLogs: MatchServerSyntheticLogEntry[] = [];
     if (isJob) {
       const pod = await this.getJobPod(service);
       if (pod) {
         pods.push(pod);
       }
+      syntheticLogs = await this.getSyntheticJobLogs(service, pod || null);
     } else {
       pods = await this.getPodsFromService(service);
+    }
+
+    if (syntheticLogs.length > 0) {
+      const filteredSyntheticLogs = this.filterSyntheticLogsByWindow(
+        syntheticLogs,
+        since,
+      );
+
+      if (download && archive && filteredSyntheticLogs.length > 0) {
+        archive.append(this.stringifySyntheticLogs(filteredSyntheticLogs), {
+          name: "events.txt",
+        });
+      } else {
+        for (const entry of filteredSyntheticLogs) {
+          stream.write(JSON.stringify(entry));
+        }
+      }
     }
 
     if (pods.length === 0) {
@@ -89,8 +116,16 @@ export class LoggingService {
       return;
     }
 
+    if (isJob && pods.every((pod) => pod.status?.phase !== "Running")) {
+      if (download && archive) {
+        void archive.finalize();
+        return;
+      }
+      stream.end();
+      return;
+    }
+
     const podLogs: Promise<void>[] = [];
-    let completedContainers = 0;
     let archiveFinalizePromise: Promise<void> | null = null;
     let archiveFinalizeResolve: (() => void) | null = null;
 
@@ -119,7 +154,6 @@ export class LoggingService {
     }
 
     const finalizeArchive = () => {
-      completedContainers++;
       if (download && archive) {
         try {
           void archive.finalize();
@@ -168,6 +202,39 @@ export class LoggingService {
       namespace,
     });
     return podList.items;
+  }
+
+  private filterSyntheticLogsByWindow(
+    logs: MatchServerSyntheticLogEntry[],
+    since?: {
+      start: string;
+      until: string;
+    },
+  ) {
+    if (!since) {
+      return logs;
+    }
+
+    const start = new Date(since.start).getTime();
+    const until = new Date(since.until).getTime();
+
+    return logs.filter((entry) => {
+      const entryTime = new Date(entry.timestamp).getTime();
+      if (Number.isNaN(entryTime)) {
+        return false;
+      }
+
+      return entryTime >= start && entryTime < until;
+    });
+  }
+
+  private stringifySyntheticLogs(logs: MatchServerSyntheticLogEntry[]) {
+    return logs
+      .map((entry) => {
+        const prefix = entry.timestamp ? `${entry.timestamp} ` : "";
+        return `${prefix}${entry.log}`;
+      })
+      .join("\n");
   }
 
   private async getFirstLogTimestamp(
@@ -480,27 +547,112 @@ export class LoggingService {
   }
 
   public async getJobPod(jobName: string) {
+    return (await this.getJobPods(jobName)).at(0);
+  }
+
+  public async getJobPods(jobName: string) {
     try {
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
-
-      const job = await this.batchApi.readNamespacedJob({
-        name: jobName,
+      const pods = await this.coreApi.listNamespacedPod({
         namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
       });
 
-      const coreV1Api = kc.makeApiClient(CoreV1Api);
+      return pods.items.sort((a, b) => {
+        const aTime = new Date(a.metadata?.creationTimestamp || 0).getTime();
+        const bTime = new Date(b.metadata?.creationTimestamp || 0).getTime();
 
-      const pods = await coreV1Api.listNamespacedPod({
-        namespace: this.namespace,
-        labelSelector: `job-name=${job.metadata.name}`,
+        return bTime - aTime;
       });
-
-      return pods.items.at(0);
     } catch (error) {
       if (error.code.toString() !== "404") {
         throw error;
       }
+
+      return [];
+    }
+  }
+
+  public async getJobBootDiagnostics(jobName: string): Promise<
+    MatchServerBootDiagnostic & {
+      job: V1Job | null;
+      pod: V1Pod | null;
+      events: CoreV1Event[];
+    }
+  > {
+    let job: V1Job | null = null;
+
+    try {
+      job = await this.batchApi.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+    } catch (error) {
+      if (error.code?.toString() !== "404") {
+        throw error;
+      }
+    }
+
+    const pod = (await this.getJobPods(jobName)).at(0) || null;
+    const jobEvents = await this.getEventsForObject("Job", jobName);
+    const podEvents = pod?.metadata?.name
+      ? await this.getEventsForObject("Pod", pod.metadata.name)
+      : [];
+    const events = [...jobEvents, ...podEvents];
+
+    const jobFailureCondition = job?.status?.conditions?.find(
+      (condition) => condition.type === "Failed" && condition.status === "True",
+    );
+
+    return {
+      ...deriveMatchServerBootDiagnostic({
+        jobFailed: !!jobFailureCondition,
+        jobFailureReason: jobFailureCondition?.reason,
+        jobFailureMessage: jobFailureCondition?.message,
+        podPhase: pod?.status?.phase,
+        podConditions: pod?.status?.conditions,
+        containerStatuses: pod?.status?.containerStatuses,
+        initContainerStatuses: pod?.status?.initContainerStatuses,
+        events,
+      }),
+      job,
+      pod,
+      events,
+    };
+  }
+
+  public async isJobTerminal(jobName: string): Promise<boolean> {
+    const diagnostics = await this.getJobBootDiagnostics(jobName);
+    return diagnostics.terminal;
+  }
+
+  private async getSyntheticJobLogs(jobName: string, pod?: V1Pod | null) {
+    const diagnostics = await this.getJobBootDiagnostics(jobName);
+    const syntheticPod = pod || diagnostics.pod;
+
+    return buildSyntheticMatchServerLogEntries({
+      diagnostic: diagnostics,
+      events: diagnostics.events,
+      podName: syntheticPod?.metadata?.name || jobName,
+      nodeName:
+        syntheticPod?.spec?.nodeName ||
+        diagnostics.job?.spec?.template?.spec?.nodeName,
+    });
+  }
+
+  private async getEventsForObject(kind: "Job" | "Pod", name: string) {
+    try {
+      const events = await this.coreApi.listNamespacedEvent({
+        namespace: this.namespace,
+        fieldSelector: `involvedObject.name=${name},involvedObject.kind=${kind}`,
+      });
+
+      return events.items;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to list ${kind} events for ${name}`,
+        error?.response?.body?.message || error?.message || error,
+      );
+      return [];
     }
   }
 

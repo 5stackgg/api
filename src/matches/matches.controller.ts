@@ -453,7 +453,7 @@ export class MatchesController {
      * Server was removed from match
      */
     if (
-      data.old.server_id !== data.new.server_id ||
+      (data.old.server_id && data.old.server_id !== data.new.server_id) ||
       data.old.region !== data.new.region
     ) {
       try {
