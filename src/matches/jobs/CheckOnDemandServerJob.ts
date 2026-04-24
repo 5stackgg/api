@@ -1,4 +1,4 @@
-import { Job } from "bullmq";
+import { DelayedError, Job } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
@@ -28,7 +28,11 @@ export class CheckOnDemandServerJob extends WorkerHost {
     const status = await this.matchAssistant.monitorOnDemandServerBoot(matchId);
 
     if (status === "pending") {
-      throw Error("on demand server is still booting");
+      await job.moveToDelayed(
+        Date.now() + MatchAssistantService.ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS,
+        job.token,
+      );
+      throw new DelayedError();
     }
 
     if (status !== "ready") {

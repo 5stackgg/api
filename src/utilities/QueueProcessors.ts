@@ -6,6 +6,12 @@ import { WorkerHost } from "@nestjs/bullmq/dist/hosts/worker-host.class";
 
 class QueueProcessors {}
 
+const BULLMQ_CONTROL_FLOW_ERRORS = [
+  "DelayedError",
+  "WaitingError",
+  "WaitingChildrenError",
+];
+
 type Modules =
   | "Matches"
   | "Demos"
@@ -65,7 +71,10 @@ export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
           try {
             await targetInstance.process(job);
           } catch (error) {
-            this.logger.error(`[${job.name}] job failed`, error);
+            const errorName = error instanceof Error ? error.name : undefined;
+            if (!BULLMQ_CONTROL_FLOW_ERRORS.includes(errorName)) {
+              this.logger.error(`[${job.name}] job failed`, error);
+            }
             throw error;
           }
         }

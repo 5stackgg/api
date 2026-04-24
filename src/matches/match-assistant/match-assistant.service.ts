@@ -44,7 +44,7 @@ export class MatchAssistantService {
     ];
   private static readonly TERMINAL_MATCH_STATUSES: readonly e_match_status_enum[] =
     ["Finished", "Canceled", "Forfeit", "Tie", "Surrendered"];
-  private static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
+  public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
   private static readonly INITIAL_BOOT_STATUS_DETAIL =
     "Waiting for Kubernetes to create the match server pod.";
 
@@ -893,11 +893,6 @@ export class MatchAssistantService {
                   id: matchId,
                 },
                 _set: {
-                  ...(options?.preserveMatchStatus
-                    ? {}
-                    : {
-                        status: "WaitingForServer",
-                      }),
                   server_id: server.id,
                 },
               },
