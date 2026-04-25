@@ -32,6 +32,7 @@ select_permissions:
         - coach
         - player_steam_id
         - role
+        - roster_image_url
         - status
         - team_id
       filter: {}
@@ -42,6 +43,7 @@ update_permissions:
       columns:
         - coach
         - role
+        - roster_image_url
         - status
       filter:
         team:

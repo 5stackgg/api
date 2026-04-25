@@ -156,6 +156,21 @@ type GetTestUploadResponse {
   link: String
 }
 
+type GpuDeviceStat {
+  index: Int
+  memory_mb: Int
+  memory_used_mb: Int
+  name: String
+  power_w: Int
+  temperature_c: Int
+  utilization_percent: Int
+}
+
+type GpuStats {
+  devices: [GpuDeviceStat]
+  time: timestamp
+}
+
 type HypertableInfo {
   compression_enabled: Boolean!
   hypertable_name: String!
@@ -238,6 +253,7 @@ type NicStat {
 type NodeStats {
   cpu: CpuStat
   disks: [DiskStats]
+  gpu: [GpuStats]
   memory: MemoryStat
   network: [NetworkStats]
   node: String!
@@ -7058,6 +7074,10 @@ type game_server_nodes {
   enabled: Boolean!
   end_port_range: Int
   gpu: Boolean!
+  gpu_info(
+    """JSON select path"""
+    path: String
+  ): jsonb
   id: String!
   label: String
   lan_ip: inet
@@ -7200,6 +7220,7 @@ input game_server_nodes_aggregate_order_by {
 input game_server_nodes_append_input {
   cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
+  gpu_info: jsonb
 }
 
 """
@@ -7276,6 +7297,7 @@ input game_server_nodes_bool_exp {
   enabled: Boolean_comparison_exp
   end_port_range: Int_comparison_exp
   gpu: Boolean_comparison_exp
+  gpu_info: jsonb_comparison_exp
   id: String_comparison_exp
   label: String_comparison_exp
   lan_ip: inet_comparison_exp
@@ -7315,6 +7337,7 @@ delete the field or element with specified path (for JSON arrays, negative integ
 input game_server_nodes_delete_at_path_input {
   cpu_frequency_info: [String!]
   cpu_governor_info: [String!]
+  gpu_info: [String!]
 }
 
 """
@@ -7323,6 +7346,7 @@ delete the array element with specified index (negative integers count from the 
 input game_server_nodes_delete_elem_input {
   cpu_frequency_info: Int
   cpu_governor_info: Int
+  gpu_info: Int
 }
 
 """
@@ -7331,6 +7355,7 @@ delete key/value pair or string element. key/value pairs are matched based on th
 input game_server_nodes_delete_key_input {
   cpu_frequency_info: String
   cpu_governor_info: String
+  gpu_info: String
 }
 
 """
@@ -7369,6 +7394,7 @@ input game_server_nodes_insert_input {
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
+  gpu_info: jsonb
   id: String
   label: String
   lan_ip: inet
@@ -7547,6 +7573,7 @@ input game_server_nodes_order_by {
   enabled: order_by
   end_port_range: order_by
   gpu: order_by
+  gpu_info: order_by
   id: order_by
   label: order_by
   lan_ip: order_by
@@ -7578,6 +7605,7 @@ input game_server_nodes_pk_columns_input {
 input game_server_nodes_prepend_input {
   cpu_frequency_info: jsonb
   cpu_governor_info: jsonb
+  gpu_info: jsonb
 }
 
 """
@@ -7622,6 +7650,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   gpu
+
+  """column name"""
+  gpu_info
 
   """column name"""
   id
@@ -7720,6 +7751,7 @@ input game_server_nodes_set_input {
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
+  gpu_info: jsonb
   id: String
   label: String
   lan_ip: inet
@@ -7886,6 +7918,7 @@ input game_server_nodes_stream_cursor_value_input {
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
+  gpu_info: jsonb
   id: String
   label: String
   lan_ip: inet
@@ -7986,6 +8019,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   gpu
+
+  """column name"""
+  gpu_info
 
   """column name"""
   id
@@ -15019,13 +15055,20 @@ input match_region_veto_picks_updates {
 columns and relationships of "match_streams"
 """
 type match_streams {
+  autodirector: Boolean!
+  error_message: String
   id: uuid!
+  is_game_streamer: Boolean!
+  is_live: Boolean!
+  last_status_at: timestamptz
   link: String!
 
   """An object relationship"""
   match: matches!
   match_id: uuid!
   priority: Int!
+  status: String
+  stream_url: String
   title: String!
 }
 
@@ -15038,7 +15081,23 @@ type match_streams_aggregate {
 }
 
 input match_streams_aggregate_bool_exp {
+  bool_and: match_streams_aggregate_bool_exp_bool_and
+  bool_or: match_streams_aggregate_bool_exp_bool_or
   count: match_streams_aggregate_bool_exp_count
+}
+
+input match_streams_aggregate_bool_exp_bool_and {
+  arguments: match_streams_select_column_match_streams_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: match_streams_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input match_streams_aggregate_bool_exp_bool_or {
+  arguments: match_streams_select_column_match_streams_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: match_streams_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input match_streams_aggregate_bool_exp_count {
@@ -15111,11 +15170,18 @@ input match_streams_bool_exp {
   _and: [match_streams_bool_exp!]
   _not: match_streams_bool_exp
   _or: [match_streams_bool_exp!]
+  autodirector: Boolean_comparison_exp
+  error_message: String_comparison_exp
   id: uuid_comparison_exp
+  is_game_streamer: Boolean_comparison_exp
+  is_live: Boolean_comparison_exp
+  last_status_at: timestamptz_comparison_exp
   link: String_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   priority: Int_comparison_exp
+  status: String_comparison_exp
+  stream_url: String_comparison_exp
   title: String_comparison_exp
 }
 
@@ -15140,20 +15206,31 @@ input match_streams_inc_input {
 input type for inserting data into table "match_streams"
 """
 input match_streams_insert_input {
+  autodirector: Boolean
+  error_message: String
   id: uuid
+  is_game_streamer: Boolean
+  is_live: Boolean
+  last_status_at: timestamptz
   link: String
   match: matches_obj_rel_insert_input
   match_id: uuid
   priority: Int
+  status: String
+  stream_url: String
   title: String
 }
 
 """aggregate max on columns"""
 type match_streams_max_fields {
+  error_message: String
   id: uuid
+  last_status_at: timestamptz
   link: String
   match_id: uuid
   priority: Int
+  status: String
+  stream_url: String
   title: String
 }
 
@@ -15161,19 +15238,27 @@ type match_streams_max_fields {
 order by max() on columns of table "match_streams"
 """
 input match_streams_max_order_by {
+  error_message: order_by
   id: order_by
+  last_status_at: order_by
   link: order_by
   match_id: order_by
   priority: order_by
+  status: order_by
+  stream_url: order_by
   title: order_by
 }
 
 """aggregate min on columns"""
 type match_streams_min_fields {
+  error_message: String
   id: uuid
+  last_status_at: timestamptz
   link: String
   match_id: uuid
   priority: Int
+  status: String
+  stream_url: String
   title: String
 }
 
@@ -15181,10 +15266,14 @@ type match_streams_min_fields {
 order by min() on columns of table "match_streams"
 """
 input match_streams_min_order_by {
+  error_message: order_by
   id: order_by
+  last_status_at: order_by
   link: order_by
   match_id: order_by
   priority: order_by
+  status: order_by
+  stream_url: order_by
   title: order_by
 }
 
@@ -15210,11 +15299,18 @@ input match_streams_on_conflict {
 
 """Ordering options when selecting data from "match_streams"."""
 input match_streams_order_by {
+  autodirector: order_by
+  error_message: order_by
   id: order_by
+  is_game_streamer: order_by
+  is_live: order_by
+  last_status_at: order_by
   link: order_by
   match: matches_order_by
   match_id: order_by
   priority: order_by
+  status: order_by
+  stream_url: order_by
   title: order_by
 }
 
@@ -15228,7 +15324,22 @@ select columns of table "match_streams"
 """
 enum match_streams_select_column {
   """column name"""
+  autodirector
+
+  """column name"""
+  error_message
+
+  """column name"""
   id
+
+  """column name"""
+  is_game_streamer
+
+  """column name"""
+  is_live
+
+  """column name"""
+  last_status_at
 
   """column name"""
   link
@@ -15240,17 +15351,58 @@ enum match_streams_select_column {
   priority
 
   """column name"""
+  status
+
+  """column name"""
+  stream_url
+
+  """column name"""
   title
+}
+
+"""
+select "match_streams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_streams"
+"""
+enum match_streams_select_column_match_streams_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  autodirector
+
+  """column name"""
+  is_game_streamer
+
+  """column name"""
+  is_live
+}
+
+"""
+select "match_streams_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_streams"
+"""
+enum match_streams_select_column_match_streams_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  autodirector
+
+  """column name"""
+  is_game_streamer
+
+  """column name"""
+  is_live
 }
 
 """
 input type for updating data in table "match_streams"
 """
 input match_streams_set_input {
+  autodirector: Boolean
+  error_message: String
   id: uuid
+  is_game_streamer: Boolean
+  is_live: Boolean
+  last_status_at: timestamptz
   link: String
   match_id: uuid
   priority: Int
+  status: String
+  stream_url: String
   title: String
 }
 
@@ -15303,10 +15455,17 @@ input match_streams_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_streams_stream_cursor_value_input {
+  autodirector: Boolean
+  error_message: String
   id: uuid
+  is_game_streamer: Boolean
+  is_live: Boolean
+  last_status_at: timestamptz
   link: String
   match_id: uuid
   priority: Int
+  status: String
+  stream_url: String
   title: String
 }
 
@@ -15327,7 +15486,22 @@ update columns of table "match_streams"
 """
 enum match_streams_update_column {
   """column name"""
+  autodirector
+
+  """column name"""
+  error_message
+
+  """column name"""
   id
+
+  """column name"""
+  is_game_streamer
+
+  """column name"""
+  is_live
+
+  """column name"""
+  last_status_at
 
   """column name"""
   link
@@ -15337,6 +15511,12 @@ enum match_streams_update_column {
 
   """column name"""
   priority
+
+  """column name"""
+  status
+
+  """column name"""
+  stream_url
 
   """column name"""
   title
@@ -17350,6 +17530,7 @@ type mutation_root {
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
   createApiKey(label: String!): ApiKeyResponse
+  createClips(match_id: uuid!): SuccessOutput
 
   """Create directory on game server"""
   createServerDirectory(dir_path: String!, node_id: String!, server_id: String): SuccessOutput
@@ -20282,9 +20463,16 @@ type mutation_root {
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
   setupGameServer: SetupGameServeOutput
+  specAutodirector(enabled: Boolean!, match_id: uuid!): SuccessOutput
+  specClick(button: String!, match_id: uuid!): SuccessOutput
+  specJump(match_id: uuid!): SuccessOutput
+  specPlayer(accountid: Int!, match_id: uuid!): SuccessOutput
+  specSlot(match_id: uuid!, slot: Int!): SuccessOutput
+  startLive(match_id: uuid!): SuccessOutput
 
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
+  stopLive(match_id: uuid!): SuccessOutput
   swapLineups(match_id: uuid!): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
   syncSteamFriends: SuccessOutput
@@ -30382,6 +30570,7 @@ type players {
   ): player_unused_utility_aggregate!
   profile_url: String
   role: e_player_roles_enum!
+  roster_image_url: String
 
   """An array relationship"""
   sanctions(
@@ -30820,6 +31009,7 @@ input players_bool_exp {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
   profile_url: String_comparison_exp
   role: e_player_roles_enum_comparison_exp
+  roster_image_url: String_comparison_exp
   sanctions: player_sanctions_bool_exp
   sanctions_aggregate: player_sanctions_aggregate_bool_exp
   stats: player_stats_bool_exp
@@ -30906,6 +31096,7 @@ input players_insert_input {
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
   profile_url: String
   role: e_player_roles_enum
+  roster_image_url: String
   sanctions: player_sanctions_arr_rel_insert_input
   stats: player_stats_obj_rel_insert_input
   steam_id: bigint
@@ -30944,6 +31135,7 @@ type players_max_fields {
   matchmaking_cooldown: timestamptz
   name: String
   profile_url: String
+  roster_image_url: String
   steam_id: bigint
 
   """
@@ -30983,6 +31175,7 @@ type players_min_fields {
   matchmaking_cooldown: timestamptz
   name: String
   profile_url: String
+  roster_image_url: String
   steam_id: bigint
 
   """
@@ -31070,6 +31263,7 @@ input players_order_by {
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   profile_url: order_by
   role: order_by
+  roster_image_url: order_by
   sanctions_aggregate: player_sanctions_aggregate_order_by
   stats: player_stats_order_by
   steam_id: order_by
@@ -31128,6 +31322,9 @@ enum players_select_column {
   role
 
   """column name"""
+  roster_image_url
+
+  """column name"""
   steam_id
 }
 
@@ -31146,6 +31343,7 @@ input players_set_input {
   name_registered: Boolean
   profile_url: String
   role: e_player_roles_enum
+  roster_image_url: String
   steam_id: bigint
 }
 
@@ -31230,6 +31428,7 @@ input players_stream_cursor_value_input {
   name_registered: Boolean
   profile_url: String
   role: e_player_roles_enum
+  roster_image_url: String
   steam_id: bigint
 }
 
@@ -31288,6 +31487,9 @@ enum players_update_column {
 
   """column name"""
   role
+
+  """column name"""
+  roster_image_url
 
   """column name"""
   steam_id
@@ -42731,6 +42933,7 @@ type team_roster {
   player: players!
   player_steam_id: bigint!
   role: e_team_roles_enum!
+  roster_image_url: String
   status: e_team_roster_statuses_enum!
 
   """An object relationship"""
@@ -42840,6 +43043,7 @@ input team_roster_bool_exp {
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
   role: e_team_roles_enum_comparison_exp
+  roster_image_url: String_comparison_exp
   status: e_team_roster_statuses_enum_comparison_exp
   team: teams_bool_exp
   team_id: uuid_comparison_exp
@@ -42870,6 +43074,7 @@ input team_roster_insert_input {
   player: players_obj_rel_insert_input
   player_steam_id: bigint
   role: e_team_roles_enum
+  roster_image_url: String
   status: e_team_roster_statuses_enum
   team: teams_obj_rel_insert_input
   team_id: uuid
@@ -42878,6 +43083,7 @@ input team_roster_insert_input {
 """aggregate max on columns"""
 type team_roster_max_fields {
   player_steam_id: bigint
+  roster_image_url: String
   team_id: uuid
 }
 
@@ -42886,12 +43092,14 @@ order by max() on columns of table "team_roster"
 """
 input team_roster_max_order_by {
   player_steam_id: order_by
+  roster_image_url: order_by
   team_id: order_by
 }
 
 """aggregate min on columns"""
 type team_roster_min_fields {
   player_steam_id: bigint
+  roster_image_url: String
   team_id: uuid
 }
 
@@ -42900,6 +43108,7 @@ order by min() on columns of table "team_roster"
 """
 input team_roster_min_order_by {
   player_steam_id: order_by
+  roster_image_url: order_by
   team_id: order_by
 }
 
@@ -42929,6 +43138,7 @@ input team_roster_order_by {
   player: players_order_by
   player_steam_id: order_by
   role: order_by
+  roster_image_url: order_by
   status: order_by
   team: teams_order_by
   team_id: order_by
@@ -42952,6 +43162,9 @@ enum team_roster_select_column {
 
   """column name"""
   role
+
+  """column name"""
+  roster_image_url
 
   """column name"""
   status
@@ -42983,6 +43196,7 @@ input team_roster_set_input {
   coach: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
+  roster_image_url: String
   status: e_team_roster_statuses_enum
   team_id: uuid
 }
@@ -43039,6 +43253,7 @@ input team_roster_stream_cursor_value_input {
   coach: Boolean
   player_steam_id: bigint
   role: e_team_roles_enum
+  roster_image_url: String
   status: e_team_roster_statuses_enum
   team_id: uuid
 }
@@ -43067,6 +43282,9 @@ enum team_roster_update_column {
 
   """column name"""
   role
+
+  """column name"""
+  roster_image_url
 
   """column name"""
   status

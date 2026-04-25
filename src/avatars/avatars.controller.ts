@@ -90,6 +90,83 @@ export class AvatarsController {
     return { success: true };
   }
 
+  @Post("roster-players/:steamId")
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadPlayerRoster(
+    @Req() request: Request,
+    @Param("steamId") steamId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const user = this.requireUser(request);
+    const path = await this.avatarsService.uploadPlayerRosterImage(
+      steamId,
+      user,
+      file.buffer,
+      file.mimetype,
+    );
+    return { success: true, path };
+  }
+
+  @Delete("roster-players/:steamId")
+  async removePlayerRoster(
+    @Req() request: Request,
+    @Param("steamId") steamId: string,
+  ) {
+    const user = this.requireUser(request);
+    await this.avatarsService.removePlayerRosterImage(steamId, user);
+    return { success: true };
+  }
+
+  @Post("roster-teams/:teamId/:steamId")
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadTeamRosterPlayer(
+    @Req() request: Request,
+    @Param("teamId") teamId: string,
+    @Param("steamId") steamId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const user = this.requireUser(request);
+    const path = await this.avatarsService.uploadTeamRosterPlayerImage(
+      teamId,
+      steamId,
+      user,
+      file.buffer,
+      file.mimetype,
+    );
+    return { success: true, path };
+  }
+
+  @Delete("roster-teams/:teamId/:steamId")
+  async removeTeamRosterPlayer(
+    @Req() request: Request,
+    @Param("teamId") teamId: string,
+    @Param("steamId") steamId: string,
+  ) {
+    const user = this.requireUser(request);
+    await this.avatarsService.removeTeamRosterPlayerImage(
+      teamId,
+      steamId,
+      user,
+    );
+    return { success: true };
+  }
+
   @Get("teams/:filename")
   async serveTeam(@Param("filename") filename: string, @Res() res: Response) {
     return this.serve("teams", filename, res);
@@ -100,8 +177,24 @@ export class AvatarsController {
     return this.serve("players", filename, res);
   }
 
+  @Get("roster-players/:filename")
+  async serveRosterPlayer(
+    @Param("filename") filename: string,
+    @Res() res: Response,
+  ) {
+    return this.serve("roster-players", filename, res);
+  }
+
+  @Get("roster-teams/:filename")
+  async serveRosterTeam(
+    @Param("filename") filename: string,
+    @Res() res: Response,
+  ) {
+    return this.serve("roster-teams", filename, res);
+  }
+
   private async serve(
-    kind: "teams" | "players",
+    kind: "teams" | "players" | "roster-players" | "roster-teams",
     filename: string,
     res: Response,
   ) {

@@ -67,6 +67,7 @@ select_permissions:
         - enabled
         - end_port_range
         - gpu
+        - gpu_info
         - id
         - label
         - lan_ip

@@ -16,11 +16,17 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
     try {
       const originAuth = request.headers["x-origin-auth"];
       if (!originAuth || typeof originAuth !== "string") {
+        this.logger.warn(
+          `auth: rejecting ${request.method} ${request.url} — missing x-origin-auth`,
+        );
         return response.status(401).end();
       }
 
       const colonIndex = originAuth.indexOf(":");
       if (colonIndex === -1) {
+        this.logger.warn(
+          `auth: rejecting ${request.method} ${request.url} — x-origin-auth missing colon`,
+        );
         return response.status(401).end();
       }
 
@@ -46,7 +52,17 @@ export class MatchRelayAuthMiddleware implements NestMiddleware {
         60 * 1000,
       );
 
+      if (!matchPassword) {
+        this.logger.warn(
+          `auth: rejecting ${request.method} ${request.url} — no match found for id ${matchId}`,
+        );
+        return response.status(401).end();
+      }
+
       if (!timingSafeStringEqual(matchPassword, apiPassword)) {
+        this.logger.warn(
+          `auth: rejecting ${request.method} ${request.url} — password mismatch for match ${matchId}`,
+        );
         return response.status(401).end();
       }
     } catch (error) {

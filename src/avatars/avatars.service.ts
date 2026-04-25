@@ -5,7 +5,11 @@ import { S3Service } from "../s3/s3.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { User } from "../auth/types/User";
 
-export type AvatarKind = "teams" | "players";
+export type AvatarKind =
+  | "teams"
+  | "players"
+  | "roster-players"
+  | "roster-teams";
 
 const EXTENSION_BY_MIMETYPE: Record<string, string> = {
   "image/png": "png",
@@ -184,6 +188,184 @@ export class AvatarsService {
     this.logger.log(`Removed player ${steamId} custom avatar`);
   }
 
+  async uploadPlayerRosterImage(
+    steamId: string,
+    user: User,
+    buffer: Buffer,
+    mimetype: string,
+  ): Promise<string> {
+    if (steamId !== user.steam_id && user.role !== "administrator") {
+      throw new ForbiddenException(
+        "You cannot change this player's roster image",
+      );
+    }
+
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: { steam_id: steamId },
+        roster_image_url: true,
+      },
+    });
+
+    if (!players_by_pk) {
+      throw new ForbiddenException("Player not found");
+    }
+
+    const path = this.buildPath("roster-players", steamId, mimetype);
+
+    await this.s3.put(path, buffer);
+
+    if (
+      players_by_pk.roster_image_url &&
+      players_by_pk.roster_image_url !== path
+    ) {
+      await this.s3.remove(players_by_pk.roster_image_url);
+    }
+
+    await this.hasura.mutation({
+      update_players_by_pk: {
+        __args: {
+          pk_columns: { steam_id: steamId },
+          _set: { roster_image_url: path },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(`Uploaded player ${steamId} roster image to ${path}`);
+    return path;
+  }
+
+  async removePlayerRosterImage(steamId: string, user: User): Promise<void> {
+    if (steamId !== user.steam_id && user.role !== "administrator") {
+      throw new ForbiddenException(
+        "You cannot change this player's roster image",
+      );
+    }
+
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: { steam_id: steamId },
+        roster_image_url: true,
+      },
+    });
+
+    if (!players_by_pk) {
+      throw new ForbiddenException("Player not found");
+    }
+
+    if (players_by_pk.roster_image_url) {
+      await this.s3.remove(players_by_pk.roster_image_url);
+    }
+
+    await this.hasura.mutation({
+      update_players_by_pk: {
+        __args: {
+          pk_columns: { steam_id: steamId },
+          _set: { roster_image_url: null },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(`Removed player ${steamId} roster image`);
+  }
+
+  async uploadTeamRosterPlayerImage(
+    teamId: string,
+    steamId: string,
+    user: User,
+    buffer: Buffer,
+    mimetype: string,
+  ): Promise<string> {
+    await this.assertTeamRosterEditor(teamId, user);
+
+    const { team_roster } = await this.hasura.query({
+      team_roster: {
+        __args: {
+          where: {
+            team_id: { _eq: teamId },
+            player_steam_id: { _eq: steamId },
+          },
+          limit: 1,
+        },
+        roster_image_url: true,
+      },
+    });
+
+    const existing = team_roster?.[0];
+    if (!existing) {
+      throw new ForbiddenException("Player is not on this team's roster");
+    }
+
+    const path = this.buildTeamRosterPath(teamId, steamId, mimetype);
+
+    await this.s3.put(path, buffer);
+
+    if (existing.roster_image_url && existing.roster_image_url !== path) {
+      await this.s3.remove(existing.roster_image_url);
+    }
+
+    await this.hasura.mutation({
+      update_team_roster_by_pk: {
+        __args: {
+          pk_columns: { team_id: teamId, player_steam_id: steamId },
+          _set: { roster_image_url: path },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(
+      `Uploaded team ${teamId} roster image for player ${steamId} to ${path}`,
+    );
+    return path;
+  }
+
+  async removeTeamRosterPlayerImage(
+    teamId: string,
+    steamId: string,
+    user: User,
+  ): Promise<void> {
+    await this.assertTeamRosterEditor(teamId, user);
+
+    const { team_roster } = await this.hasura.query({
+      team_roster: {
+        __args: {
+          where: {
+            team_id: { _eq: teamId },
+            player_steam_id: { _eq: steamId },
+          },
+          limit: 1,
+        },
+        roster_image_url: true,
+      },
+    });
+
+    const existing = team_roster?.[0];
+    if (!existing) {
+      throw new ForbiddenException("Player is not on this team's roster");
+    }
+
+    if (existing.roster_image_url) {
+      await this.s3.remove(existing.roster_image_url);
+    }
+
+    await this.hasura.mutation({
+      update_team_roster_by_pk: {
+        __args: {
+          pk_columns: { team_id: teamId, player_steam_id: steamId },
+          _set: { roster_image_url: null },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(
+      `Removed team ${teamId} roster image for player ${steamId}`,
+    );
+  }
+
   async getStream(
     kind: AvatarKind,
     filename: string,
@@ -211,6 +393,58 @@ export class AvatarsService {
     const ext = EXTENSION_BY_MIMETYPE[mimetype] || "png";
     const hash = crypto.randomBytes(6).toString("hex");
     return `avatars/${kind}/${id}-${hash}.${ext}`;
+  }
+
+  private buildTeamRosterPath(
+    teamId: string,
+    steamId: string,
+    mimetype: string,
+  ): string {
+    const ext = EXTENSION_BY_MIMETYPE[mimetype] || "png";
+    const hash = crypto.randomBytes(6).toString("hex");
+    return `avatars/roster-teams/${teamId}-${steamId}-${hash}.${ext}`;
+  }
+
+  private async assertTeamRosterEditor(
+    teamId: string,
+    user: User,
+  ): Promise<void> {
+    if (user.role === "administrator") {
+      return;
+    }
+
+    const { teams_by_pk } = await this.hasura.query({
+      teams_by_pk: {
+        __args: { id: teamId },
+        owner_steam_id: true,
+        roster: {
+          __args: {
+            where: {
+              player_steam_id: { _eq: user.steam_id },
+            },
+            limit: 1,
+          },
+          role: true,
+        },
+      },
+    });
+
+    if (!teams_by_pk) {
+      throw new ForbiddenException("Team not found");
+    }
+
+    if (teams_by_pk.owner_steam_id === user.steam_id) {
+      return;
+    }
+
+    const rosterEntry = teams_by_pk.roster?.[0];
+    if (rosterEntry?.role === "Admin") {
+      return;
+    }
+
+    throw new ForbiddenException(
+      "You do not have permission to manage this team's roster images",
+    );
   }
 
   private guessContentType(filename: string): string {
