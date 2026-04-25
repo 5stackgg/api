@@ -94,6 +94,7 @@ export class TypeSenseService {
         type: "string",
         symbols_to_index: ["~"],
         optional: true,
+        sort: true,
       },
     ];
 
