@@ -247,6 +247,12 @@ type Query {
 }
 
 type Mutation {
+  rebootMatchServer(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   refreshAllPlayers: SuccessOutput
 }
 
@@ -273,12 +279,6 @@ type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  rebootMatchServer(
-    match_id: uuid!
   ): SuccessOutput
 }
 
@@ -314,6 +314,13 @@ type Mutation {
 }
 
 type Mutation {
+  specAutodirector(
+    match_id: uuid!
+    enabled: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   specClick(
     match_id: uuid!
     button: String!
@@ -337,13 +344,6 @@ type Mutation {
   specSlot(
     match_id: uuid!
     slot: Int!
-  ): SuccessOutput
-}
-
-type Mutation {
-  specAutodirector(
-    match_id: uuid!
-    enabled: Boolean!
   ): SuccessOutput
 }
 

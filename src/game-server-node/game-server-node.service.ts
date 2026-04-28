@@ -156,8 +156,6 @@ export class GameServerNodeService {
   ) {
     const gpuDevicesAll = gpu?.devices ?? null;
     const hasGpu = (gpu?.count ?? 0) > 0 || (gpuDevicesAll?.length ?? 0) > 0;
-    // Persist only the static device info on the DB row. Runtime metrics
-    // (utilization, temp, power, memory_used) live in Redis history.
     const gpuDevices = gpuDevicesAll
       ? gpuDevicesAll.map((device) => ({
           index: device.index,

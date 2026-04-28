@@ -27,19 +27,13 @@ export class GameStreamerController {
   ) {
     this.logger.log(`[${matchId}] status POST: ${JSON.stringify(body ?? {})}`);
 
-    // MatchRelayAuthMiddleware authenticates on the matchId in the
-    // x-origin-auth header. Reject if the URL matchId disagrees so a
-    // pod with one match's password can't write into a different
-    // match's row.
-    const originAuth = request.headers["x-origin-auth"];
-    const headerMatchId =
-      typeof originAuth === "string"
-        ? originAuth.substring(0, originAuth.indexOf(":"))
-        : "";
-    if (headerMatchId !== matchId) {
-      this.logger.warn(
-        `[${matchId}] status POST rejected: x-origin-auth matchId="${headerMatchId}" does not match URL matchId`,
-      );
+    if (
+      !(await this.gameStreamer.validateStatusOriginAuth(
+        matchId,
+        request.headers["x-origin-auth"],
+      ))
+    ) {
+      this.logger.warn(`[${matchId}] status POST rejected: invalid x-origin-auth`);
       return response.status(401).end();
     }
 

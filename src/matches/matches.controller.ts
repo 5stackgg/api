@@ -700,13 +700,6 @@ export class MatchesController {
     };
   }
 
-  // ---- Spectator control (game-streamer pod, spec-server :1350) ----------
-  // These four actions proxy to the per-match Service the api creates
-  // alongside the live job. Auth: any user with role >= streamer can drive
-  // any active match's spectator slot. Tighter ownership rules (streamer
-  // assigned to this match only) belong in a follow-up; for now we trust
-  // that the streamer role gate is applied at the org level.
-
   @HasuraAction()
   public async specClick(data: {
     match_id: string;

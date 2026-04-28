@@ -7,5 +7,6 @@ export type AppConfig = {
   apiDomain: string;
   relayDomain: string;
   demosDomain: string;
+  gameStreamHlsBase: string;
   authCookieDomain: string;
 };

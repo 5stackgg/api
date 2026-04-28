@@ -9,17 +9,13 @@ import {
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../../hasura/hasura.service";
+import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { e_game_server_node_statuses_enum } from "../../../generated";
+import { AppConfig } from "../../configs/types/AppConfig";
 
 type StreamerMode = "live" | "create-clips";
-
-// Public HLS viewer base. Surfaced to the frontend via the match_streams
-// row's `link`. Defaults match the dev cluster; production should set
-// GAME_STREAM_HLS_BASE on the api deployment.
-const GAME_STREAM_HLS_BASE =
-  process.env.GAME_STREAM_HLS_BASE ?? "https://hls.5stack.gg";
 
 const GAME_STREAMER_TITLE = "5Stack Game Streamer";
 
@@ -27,6 +23,7 @@ const GAME_STREAMER_TITLE = "5Stack Game Streamer";
 export class GameStreamerService {
   private readonly namespace: string;
   private readonly gameServerConfig: GameServersConfig;
+  private readonly appConfig: AppConfig;
 
   constructor(
     private readonly logger: Logger,
@@ -34,6 +31,7 @@ export class GameStreamerService {
     private readonly hasura: HasuraService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
+    this.appConfig = this.config.get<AppConfig>("app");
     this.namespace = this.gameServerConfig.namespace;
   }
 
@@ -41,36 +39,15 @@ export class GameStreamerService {
     return `gs-live-${matchId}`;
   }
 
-  // Stable in-cluster DNS name for the live pod's HTTP endpoints
-  // (openhud admin UI on :1349, spec-server on :1350). Same name as
-  // the Job so it's easy to map by eye. Other services in the cluster
-  // (api, web) reach the pod via:
-  //   http://gs-live-<matchId>.<namespace>.svc.cluster.local:1349
-  //   http://gs-live-<matchId>.<namespace>.svc.cluster.local:1350
   public static GetLiveServiceName(matchId: string) {
     return `gs-live-${matchId}`;
   }
 
-  // Build the spec-server URL for a given match's pod. Used by
-  // startLive's caller (matches.controller spec* actions) to forward
-  // operator commands from the web UI into the streamer pod.
   private getSpecServerUrl(matchId: string, action: string) {
     const svc = GameStreamerService.GetLiveServiceName(matchId);
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
   }
 
-  // Thin proxy to the per-match spec-server. Caller is responsible
-  // for auth (isRoleAbove streamer); we just forward + parse JSON.
-  // 5s timeout — spec-server is fast (single xdotool roundtrip), so
-  // anything slower means the pod is unhealthy and we should surface
-  // the failure rather than block the operator's UI.
-  //
-  // Errors are caught and rethrown with a human-friendly message so
-  // operators see "no live stream is running for this match" instead of
-  // a raw `fetch failed` / `getaddrinfo ENOTFOUND`. The classification
-  // logic differentiates the most common cases — pod missing (DNS
-  // doesn't resolve), pod unreachable (TCP refused), and timeout — so
-  // the surfaced message matches reality.
   private async callSpec(
     matchId: string,
     action: "click" | "jump" | "player" | "slot" | "autodirector",
@@ -147,10 +124,6 @@ export class GameStreamerService {
 
   public async specAutodirector(matchId: string, enabled: boolean) {
     const result = await this.callSpec(matchId, "autodirector", { enabled });
-    // Persist the operator's choice so it survives page reloads,
-    // caster handoffs, and streamer pod restarts. Hasura subscriptions
-    // on match_streams pick up the change automatically; the toggle
-    // re-renders for any other caster watching the same match.
     await this.hasura.mutation({
       update_match_streams: {
         __args: {
@@ -158,9 +131,7 @@ export class GameStreamerService {
             match_id: { _eq: matchId },
             is_game_streamer: { _eq: true },
           },
-          // Cast: the `autodirector` column is added by migration
-          // 1777400000000_add_autodirector_to_match_streams. Generated
-          // Hasura types lag the migration until the next codegen run.
+          // Generated Hasura types lag this migration until codegen runs.
           _set: { autodirector: enabled } as any,
         },
         affected_rows: true,
@@ -207,10 +178,6 @@ export class GameStreamerService {
       usePlaycast,
     );
 
-    // Threaded into the pod so its status-reporter daemon can POST back
-    // to /game-streamer/:matchId/status with x-origin-auth: <id>:<password>.
-    // The API URL is hard-coded inside the streamer image (in-cluster
-    // Service name); only the per-match password needs to be injected.
     const reporterEnv: V1EnvVar[] = [
       { name: "MATCH_PASSWORD", value: match.password },
     ];
@@ -233,19 +200,8 @@ export class GameStreamerService {
       ]),
     });
 
-    // Service fronting the pod's openhud + spec-server endpoints,
-    // selecting on the same labels we put on the Job's pod template.
-    // Created BEFORE the pod is ready — kube-proxy will start
-    // routing as soon as the pod's readiness probes pass (we have
-    // none defined, so as soon as the container is running).
     await this.createLiveService(matchId);
 
-    // Insert the row immediately so the web UI flips the "Start Live
-    // Stream" button to a "booting" state without having to wait for
-    // the pod to come up and post its first status. `reportStatus`
-    // upserts on top of this row, and is the fallback path that
-    // recreates the row if this insert fails (DB hiccup) or a stale
-    // row from a prior run is in the way.
     await this.registerStreamRow(matchId);
   }
 
@@ -253,11 +209,6 @@ export class GameStreamerService {
     const jobName = GameStreamerService.GetLiveJobId(matchId);
     this.logger.log(`[${matchId}] stopping live stream`);
 
-    // Always tear down the Job, the per-match Service, AND the
-    // match_streams row, even if any individual step errors. A user
-    // clicking "stop" expects the UI to reflect that — a stranded
-    // row, dangling Service, or zombie pod each breaks the UX in
-    // different ways.
     let kubeError: unknown = null;
     try {
       await this.deleteJob(jobName);
@@ -271,8 +222,6 @@ export class GameStreamerService {
     try {
       await this.deleteLiveService(matchId);
     } catch (error) {
-      // Don't override an earlier kubeError — the job tear-down is
-      // the more important signal to the operator. Just log.
       this.logger.error(
         `[${matchId}] deleteLiveService failed: ${(error as Error)?.message}`,
       );
@@ -284,12 +233,10 @@ export class GameStreamerService {
       this.logger.error(
         `[${matchId}] unregisterStreamRow failed: ${(error as Error)?.message}`,
       );
-      // Re-throw the original kube error if we had one; otherwise this one.
       throw kubeError ?? error;
     }
 
     if (kubeError) {
-      // Row is gone but the job wasn't — surface so the operator knows.
       throw kubeError;
     }
   }
@@ -325,8 +272,6 @@ export class GameStreamerService {
     });
   }
 
-  // Reads the global use_playcast setting that game-streamer's connect mode
-  // depends on. Mirrors how matches.controller.ts populates match.options.
   private async readUsePlaycast(): Promise<boolean> {
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
@@ -338,9 +283,6 @@ export class GameStreamerService {
     return settings_by_pk?.value === "true";
   }
 
-  // Selects a GPU-capable game-server-node to pin the streamer Job to.
-  // Prefers the match region; counts active streamer Jobs per node and picks
-  // the least-loaded so multi-node clusters round-robin under load.
   private async pickGpuNode(matchRegion: string | null): Promise<string> {
     const baseWhere = {
       status: {
@@ -361,7 +303,6 @@ export class GameStreamerService {
       },
     });
 
-    // Fallback: any region with a GPU node.
     if (nodes.length === 0 && matchRegion) {
       ({ game_server_nodes: nodes } = await this.hasura.query({
         game_server_nodes: {
@@ -444,13 +385,6 @@ export class GameStreamerService {
     ];
   }
 
-  // Create the per-match Service that fronts the live pod's HTTP
-  // endpoints (openhud :1349 + spec-server :1350). Idempotent: if a
-  // Service with this name already exists (back-to-back start/stop),
-  // delete it first so the selector + ports are guaranteed fresh.
-  // ClusterIP only — these ports are for in-cluster api/web callers,
-  // not the public internet (the K8s Ingress can expose specific
-  // routes to the public web app if needed).
   private async createLiveService(matchId: string) {
     const serviceName = GameStreamerService.GetLiveServiceName(matchId);
     const kc = new KubeConfig();
@@ -472,10 +406,6 @@ export class GameStreamerService {
       },
       spec: {
         type: "ClusterIP",
-        // Selector matches buildJobSpec()'s pod template labels —
-        // app=game-streamer + role=live + match-id=<id> uniquely
-        // picks this match's pod, even if another match's pod is
-        // running on the same node.
         selector: {
           app: "game-streamer",
           role: "live",
@@ -549,9 +479,7 @@ export class GameStreamerService {
         }
       });
 
-    // Wait until the Job name is fully released; otherwise an immediate
-    // createNamespacedJob with the same name races against delete propagation
-    // and gets HTTP 409 AlreadyExists.
+    // Avoid a create/delete race while Kubernetes releases the Job name.
     const deadline = Date.now() + 15_000;
     while (Date.now() < deadline) {
       try {
@@ -569,9 +497,6 @@ export class GameStreamerService {
     }
   }
 
-  // INSERT the row in the booting state so the UI can pick it up
-  // immediately. Idempotent: drops any prior row for this match first
-  // so a stale row from a previous start doesn't duplicate.
   private async registerStreamRow(matchId: string) {
     await this.unregisterStreamRow(matchId);
     await this.hasura.mutation({
@@ -580,7 +505,7 @@ export class GameStreamerService {
           object: {
             match_id: matchId,
             title: GAME_STREAMER_TITLE,
-            link: `${GAME_STREAM_HLS_BASE}/${matchId}/`,
+            link: `${this.appConfig.gameStreamHlsBase}/${matchId}/`,
             priority: 0,
             is_game_streamer: true,
             is_live: false,
@@ -593,18 +518,42 @@ export class GameStreamerService {
     });
   }
 
-  // Apply a status update from the streamer pod. Latest-wins: the pod's
-  // reporter daemon retries with the latest desired state until a 200,
-  // so each call from there is the current truth. is_live mirrors
-  // status === "live" so the existing frontend subscription column
-  // keeps working unchanged.
-  //
-  // Upsert semantics: the streamer is the source of truth for whether
-  // a row should exist. If the update touches no rows we delete any
-  // stale is_game_streamer row for this match and insert a fresh one.
-  // That covers (a) first status POST after a clean startLive, (b) a
-  // DB failure during startLive that left the row missing, and (c) a
-  // pod that survived a stopLive long enough to keep posting.
+  public async validateStatusOriginAuth(
+    matchId: string,
+    originAuth: unknown,
+  ): Promise<boolean> {
+    if (!originAuth || typeof originAuth !== "string") {
+      return false;
+    }
+    const colonIndex = originAuth.indexOf(":");
+    if (colonIndex === -1) {
+      return false;
+    }
+    const headerMatchId = originAuth.substring(0, colonIndex);
+    const apiPassword = originAuth.substring(colonIndex + 1);
+
+    if (!timingSafeStringEqual(headerMatchId, matchId)) {
+      return false;
+    }
+
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        password: true,
+      },
+    });
+
+    const matchPassword = match?.password ?? null;
+
+    if (!matchPassword || typeof matchPassword !== "string") {
+      return false;
+    }
+
+    return timingSafeStringEqual(matchPassword, apiPassword);
+  }
+
   public async reportStatus(matchId: string, body: GameStreamerStatusDto) {
     const setClause = {
       status: body.status,
@@ -651,7 +600,7 @@ export class GameStreamerService {
             object: {
               match_id: matchId,
               title: GAME_STREAMER_TITLE,
-              link: `${GAME_STREAM_HLS_BASE}/${matchId}/`,
+              link: `${this.appConfig.gameStreamHlsBase}/${matchId}/`,
               priority: 0,
               is_game_streamer: true,
               ...setClause,
@@ -755,19 +704,10 @@ export class GameStreamerService {
               {
                 name: containerName,
                 image: "ghcr.io/5stackgg/game-streamer:latest",
-                // We push to the mutable :latest tag, so each pod
-                // start has to re-resolve the digest. IfNotPresent
-                // would keep running the node-cached old image
-                // indefinitely, even after a fresh push.
+                // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },
-                // The image's ENTRYPOINT is `game-streamer.sh`. Pass the
-                // subcommand explicitly so the pod actually runs the
-                // flow on container start instead of printing help.
                 args: [mode === "live" ? "live" : "create-clips"],
-                // Container-side declarations for the HTTP endpoints
-                // the per-match Service routes to. Only meaningful for
-                // the live mode — clips renders don't expose either.
                 ports:
                   mode === "live"
                     ? [
@@ -797,14 +737,7 @@ export class GameStreamerService {
                 },
                 volumeMounts: [
                   { name: "dshm", mountPath: "/dev/shm" },
-                  // Single cache mount. Steam state lives at
-                  // /mnt/game-streamer/steam (a real subdir of this
-                  // mount); setup-steam symlinks /root/.local/share/Steam
-                  // to it so everything Steam writes is on ONE filesystem.
-                  // A second bind mount on /root/.local/share/Steam
-                  // (subPath: steam) caused EXDEV during Steam
-                  // self-update — rename(2) across the two mount entries
-                  // failed even though they pointed at the same data.
+                  // Keep Steam on one mount; a second subPath mount caused EXDEV.
                   { name: "cache", mountPath: "/mnt/game-streamer" },
                 ],
               },

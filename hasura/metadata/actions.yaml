@@ -558,6 +558,8 @@ custom_types:
     - name: CpuStat
     - name: MemoryStat
     - name: NodeStats
+    - name: GpuStats
+    - name: GpuDeviceStat
     - name: PodStats
     - name: TelemetryStats
     - name: TestUploadResponse
