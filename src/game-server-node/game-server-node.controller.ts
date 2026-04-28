@@ -457,47 +457,14 @@ export class GameServerNodeController {
         rm -f /etc/rancher/k3s/config.yaml
         rm -f /var/lib/kubelet/cpu_manager_state
 
-        echo "Installing k3s";
-        curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerNodeId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}"
-
-        echo "Waiting for k3s agent and tailscale ip to be available...";
-
-        for i in {1..60}; do
-          TAILSCALE_IP=$(tailscale ip -4 2>/dev/null | head -n 1)
-          if [ -n "$TAILSCALE_IP" ]; then
-            break
-          fi
-          sleep 2
-        done
-
-        if [ -z "$TAILSCALE_IP" ]; then
-            echo "Failed to get Tailscale IP automatically. Please enter the IP manually (find it at https://login.tailscale.com/admin/machines):"
-            while true; do
-                read -p "Tailscale IP: " TAILSCALE_IP
-                if [ -n "$TAILSCALE_IP" ]; then
-                    break
-                else
-                    echo "Tailscale IP cannot be empty. Please enter a valid IP."
-                fi
-            done
-        else
-            echo "Tailscale IP detected: $TAILSCALE_IP"
-        fi
-
-        mkdir -p /etc/rancher/k3s
-
-        rm -f /etc/rancher/k3s/config.yaml
-
-cat <<-EOF >/etc/rancher/k3s/config.yaml
-	node-ip: $TAILSCALE_IP
-
-	kubelet-arg:
-	  - "cpu-manager-policy=static"
-	  - "cpu-manager-reconcile-period=5s"
-	  - "system-reserved=cpu=1"
-	  - "kube-reserved=cpu=1"
-EOF
-
+        # Write helper scripts (but NOT the drop-ins/timer) before k3s
+        # install. The scripts must exist on disk before any drop-in
+        # references them, otherwise k3s-agent will crash-loop on
+        # ExecStartPre with status=203/EXEC if a re-run bails out
+        # before the scripts get rewritten.
+        # Drop-ins/timer are deferred until *after* k3s-agent is
+        # installed so we don't risk firing tailscaled-restart logic
+        # mid-join during the initial bring-up.
 cat <<-'SCRIPT' >/usr/local/bin/5stack-cpu-state-check.sh
 	#!/bin/bash
 	STATE=/var/lib/kubelet/cpu_manager_state
@@ -512,19 +479,6 @@ cat <<-'SCRIPT' >/usr/local/bin/5stack-cpu-state-check.sh
 	echo "$CURRENT" > "$CACHE"
 SCRIPT
         chmod +x /usr/local/bin/5stack-cpu-state-check.sh
-
-        mkdir -p /etc/systemd/system/k3s-agent.service.d
-
-cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
-	[Service]
-	ExecStartPre=/usr/local/bin/5stack-cpu-state-check.sh
-DROPIN
-
-        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
-cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
-	[Service]
-	ExecStartPre=/bin/bash -c 'TSIP=$(tailscale ip -4 2>/dev/null | head -n 1); if [ -n "$TSIP" ] && [ -f /etc/rancher/k3s/config.yaml ]; then sed -i "s/^node-ip:.*/node-ip: $TSIP/" /etc/rancher/k3s/config.yaml; echo "[5stack] Updated k3s node-ip to $TSIP"; fi'
-DROPIN
 
 cat <<-'SCRIPT' >/usr/local/bin/5stack-tailscale-state-check.sh
 	#!/bin/bash
@@ -560,6 +514,76 @@ cat <<-'SCRIPT' >/usr/local/bin/5stack-tailscale-state-check.sh
 	exit 0
 SCRIPT
         chmod +x /usr/local/bin/5stack-tailscale-state-check.sh
+
+        # Clean up any stale drop-ins from a previous incomplete install
+        # so k3s-agent's first start during install isn't affected by
+        # them. We re-create them below once k3s-agent is in place.
+        rm -f /etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
+        rm -f /etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
+        rm -f /etc/systemd/system/k3s-agent.service.d/tailscale-state-check.conf
+
+        echo "Installing k3s";
+        curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerNodeId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}"
+
+        echo "Waiting for k3s agent and tailscale ip to be available...";
+
+        for i in {1..60}; do
+          TAILSCALE_IP=$(tailscale ip -4 2>/dev/null | head -n 1)
+          if [ -n "$TAILSCALE_IP" ]; then
+            break
+          fi
+          sleep 2
+        done
+
+        if [ -z "$TAILSCALE_IP" ]; then
+            if [ ! -t 0 ] && [ ! -e /dev/tty ]; then
+                echo "Error: Failed to get Tailscale IP after 2 minutes and no terminal available for manual entry."
+                echo "Check tailscale status with: tailscale status"
+                echo "Check k3s-agent status with: systemctl status k3s-agent"
+                exit 1
+            fi
+            echo "Failed to get Tailscale IP automatically. Please enter the IP manually (find it at https://login.tailscale.com/admin/machines):"
+            while true; do
+                read -p "Tailscale IP: " TAILSCALE_IP </dev/tty
+                if [ -n "$TAILSCALE_IP" ]; then
+                    break
+                fi
+                echo "Tailscale IP cannot be empty. Please enter a valid IP."
+            done
+        else
+            echo "Tailscale IP detected: $TAILSCALE_IP"
+        fi
+
+        mkdir -p /etc/rancher/k3s
+
+        rm -f /etc/rancher/k3s/config.yaml
+
+cat <<-EOF >/etc/rancher/k3s/config.yaml
+	node-ip: $TAILSCALE_IP
+
+	kubelet-arg:
+	  - "cpu-manager-policy=static"
+	  - "cpu-manager-reconcile-period=5s"
+	  - "system-reserved=cpu=1"
+	  - "kube-reserved=cpu=1"
+EOF
+
+        # k3s-agent is now installed and tailscale is up — safe to
+        # install the drop-ins and the periodic tailscale state-check
+        # timer. Doing this earlier risks firing tailscaled-restart
+        # logic mid-join during the initial bring-up.
+        mkdir -p /etc/systemd/system/k3s-agent.service.d
+
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
+	[Service]
+	ExecStartPre=/usr/local/bin/5stack-cpu-state-check.sh
+DROPIN
+
+        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
+	[Service]
+	ExecStartPre=/bin/bash -c 'TSIP=$(tailscale ip -4 2>/dev/null | head -n 1); if [ -n "$TSIP" ] && [ -f /etc/rancher/k3s/config.yaml ]; then sed -i "s/^node-ip:.*/node-ip: $TSIP/" /etc/rancher/k3s/config.yaml; echo "[5stack] Updated k3s node-ip to $TSIP"; fi'
+DROPIN
 
 cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/tailscale-state-check.conf
 	[Service]
