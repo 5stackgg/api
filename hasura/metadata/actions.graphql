@@ -52,6 +52,12 @@ type Mutation {
 }
 
 type Mutation {
+  createClips(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   createServerDirectory(
     node_id: String!
     server_id: String
@@ -241,6 +247,12 @@ type Query {
 }
 
 type Mutation {
+  rebootMatchServer(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   refreshAllPlayers: SuccessOutput
 }
 
@@ -267,12 +279,6 @@ type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!
-  ): SuccessOutput
-}
-
-type Mutation {
-  rebootMatchServer(
-    match_id: uuid!
   ): SuccessOutput
 }
 
@@ -308,9 +314,55 @@ type Mutation {
 }
 
 type Mutation {
+  specAutodirector(
+    match_id: uuid!
+    enabled: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specClick(
+    match_id: uuid!
+    button: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specJump(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specPlayer(
+    match_id: uuid!
+    accountid: Int!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specSlot(
+    match_id: uuid!
+    slot: Int!
+  ): SuccessOutput
+}
+
+type Mutation {
+  startLive(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   startMatch(
     match_id: uuid!
     server_id: uuid
+  ): SuccessOutput
+}
+
+type Mutation {
+  stopLive(
+    match_id: uuid!
   ): SuccessOutput
 }
 
@@ -427,6 +479,22 @@ type NodeStats {
   memory: MemoryStat
   disks: [DiskStats]
   network: [NetworkStats]
+  gpu: [GpuStats]
+}
+
+type GpuStats {
+  time: timestamp
+  devices: [GpuDeviceStat]
+}
+
+type GpuDeviceStat {
+  index: Int
+  name: String
+  memory_mb: Int
+  memory_used_mb: Int
+  temperature_c: Int
+  power_w: Int
+  utilization_percent: Int
 }
 
 type PodStats {

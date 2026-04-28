@@ -8,7 +8,9 @@ object_relationships:
 insert_permissions:
   - role: match_organizer
     permission:
-      check: {}
+      check:
+        is_game_streamer:
+          _eq: false
       columns:
         - link
         - match_id
@@ -17,7 +19,9 @@ insert_permissions:
     comment: ""
   - role: streamer
     permission:
-      check: {}
+      check:
+        is_game_streamer:
+          _eq: false
       columns:
         - link
         - match_id
@@ -27,9 +31,12 @@ insert_permissions:
   - role: user
     permission:
       check:
-        match:
-          is_organizer:
-            _eq: true
+        _and:
+          - match:
+              is_organizer:
+                _eq: true
+          - is_game_streamer:
+              _eq: false
       columns:
         - link
         - match_id
@@ -45,6 +52,13 @@ select_permissions:
         - title
         - id
         - match_id
+        - is_game_streamer
+        - is_live
+        - status
+        - stream_url
+        - error_message
+        - last_status_at
+        - autodirector
       filter: {}
     comment: ""
 update_permissions:
@@ -54,8 +68,12 @@ update_permissions:
         - link
         - priority
         - title
-      filter: {}
-      check: null
+      filter:
+        is_game_streamer:
+          _eq: false
+      check:
+        is_game_streamer:
+          _eq: false
     comment: ""
   - role: streamer
     permission:
@@ -63,8 +81,12 @@ update_permissions:
         - link
         - priority
         - title
-      filter: {}
-      check: null
+      filter:
+        is_game_streamer:
+          _eq: false
+      check:
+        is_game_streamer:
+          _eq: false
     comment: ""
   - role: user
     permission:
@@ -73,27 +95,40 @@ update_permissions:
         - priority
         - title
       filter:
-        match:
-          is_organizer:
-            _eq: true
+        _and:
+          - match:
+              is_organizer:
+                _eq: true
+          - is_game_streamer:
+              _eq: false
       check:
-        match:
-          is_organizer:
-            _eq: true
+        _and:
+          - match:
+              is_organizer:
+                _eq: true
+          - is_game_streamer:
+              _eq: false
     comment: ""
 delete_permissions:
   - role: match_organizer
     permission:
-      filter: {}
+      filter:
+        is_game_streamer:
+          _eq: false
     comment: ""
   - role: streamer
     permission:
-      filter: {}
+      filter:
+        is_game_streamer:
+          _eq: false
     comment: ""
   - role: user
     permission:
       filter:
-        match:
-          is_organizer:
-            _eq: true
+        _and:
+          - match:
+              is_organizer:
+                _eq: true
+          - is_game_streamer:
+              _eq: false
     comment: ""

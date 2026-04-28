@@ -34,6 +34,8 @@ import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
 import { MatchRelayService } from "./match-relay/match-relay.service";
 import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
+import { GameStreamerService } from "./game-streamer/game-streamer.service";
+import { isRoleAbove } from "../utilities/isRoleAbove";
 
 @Controller("matches")
 export class MatchesController {
@@ -67,6 +69,7 @@ export class MatchesController {
     private s3: S3Service,
     private readonly matchRelayService: MatchRelayService,
     private readonly tournamentVoice: DiscordTournamentVoiceService,
+    private readonly gameStreamer: GameStreamerService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -155,6 +158,7 @@ export class MatchesController {
           id: true,
           name: true,
           team: {
+            id: true,
             short_name: true,
           },
           coach_steam_id: true,
@@ -169,6 +173,11 @@ export class MatchesController {
               is_banned: true,
               is_gagged: true,
               is_muted: true,
+              roster_image_url: true,
+              team_members: {
+                team_id: true,
+                roster_image_url: true,
+              },
             },
           },
         },
@@ -176,6 +185,7 @@ export class MatchesController {
           id: true,
           name: true,
           team: {
+            id: true,
             short_name: true,
           },
           coach_steam_id: true,
@@ -190,6 +200,11 @@ export class MatchesController {
               is_banned: true,
               is_gagged: true,
               is_muted: true,
+              roster_image_url: true,
+              team_members: {
+                team_id: true,
+                roster_image_url: true,
+              },
             },
           },
         },
@@ -287,6 +302,7 @@ export class MatchesController {
       tournamentBracket?.team_2?.team?.short_name ||
       tournamentBracket?.team_2?.name;
 
+    const lineup1TeamId = match.lineup_1.team?.id;
     match.lineup_1.tag =
       lineup1TournamentTag || match.lineup_1.team?.short_name;
     delete match.lineup_1.team;
@@ -298,10 +314,18 @@ export class MatchesController {
         is_banned: player.player?.is_banned || false,
         is_gagged: player.player?.is_gagged || false,
         is_muted: player.player?.is_muted || false,
+        roster_image_url:
+          (lineup1TeamId &&
+            player.player?.team_members?.find(
+              (m) => m.team_id === lineup1TeamId,
+            )?.roster_image_url) ||
+          player.player?.roster_image_url ||
+          null,
         player: undefined as undefined,
       }),
     );
 
+    const lineup2TeamId = match.lineup_2.team?.id;
     match.lineup_2.tag =
       lineup2TournamentTag || match.lineup_2.team?.short_name;
     delete match.lineup_2.team;
@@ -313,6 +337,13 @@ export class MatchesController {
         is_banned: player.player?.is_banned || false,
         is_gagged: player.player?.is_gagged || false,
         is_muted: player.player?.is_muted || false,
+        roster_image_url:
+          (lineup2TeamId &&
+            player.player?.team_members?.find(
+              (m) => m.team_id === lineup2TeamId,
+            )?.roster_image_url) ||
+          player.player?.roster_image_url ||
+          null,
         player: undefined as undefined,
       }),
     );
@@ -633,6 +664,116 @@ export class MatchesController {
     }
 
     await this.matchAssistant.rebootOnDemandServer(match_id);
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async startLive(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a match organizer");
+    }
+
+    await this.gameStreamer.startLive(match_id);
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async stopLive(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a match organizer");
+    }
+
+    await this.gameStreamer.stopLive(match_id);
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async specClick(data: {
+    match_id: string;
+    button: "left" | "right";
+    user: User;
+  }) {
+    const { match_id, button, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specClick(match_id, button);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specJump(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specJump(match_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specPlayer(data: {
+    match_id: string;
+    accountid: number;
+    user: User;
+  }) {
+    const { match_id, accountid, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specPlayer(match_id, accountid);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specSlot(data: { match_id: string; slot: number; user: User }) {
+    const { match_id, slot, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    if (!Number.isInteger(slot) || slot < 1 || slot > 12) {
+      throw Error("slot must be an integer in 1..12");
+    }
+    await this.gameStreamer.specSlot(match_id, slot);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specAutodirector(data: {
+    match_id: string;
+    enabled: boolean;
+    user: User;
+  }) {
+    const { match_id, enabled, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specAutodirector(match_id, enabled);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async createClips(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a match organizer");
+    }
+
+    await this.gameStreamer.createClips(match_id);
 
     return {
       success: true,

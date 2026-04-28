@@ -91,6 +91,33 @@ export class GameServerNodeController {
 
     const rootDisk = payload.nodeStats.disks?.find((d) => d.mountpoint === "/");
 
+    // Backwards compat: older connectors sent `nvidiaGPU` (boolean)
+    // and `gpuInfo` (array) at the top level of nodeStats instead of
+    // the grouped `gpu` object. Synthesize the new shape from the
+    // legacy fields so a fleet mid-rollout doesn't lose its GPU
+    // signal during the upgrade window.
+    const legacy = payload.nodeStats as unknown as {
+      nvidiaGPU?: boolean;
+      gpuInfo?: Array<{
+        name: string;
+        memory_mb: number;
+      }> | null;
+    };
+    const gpu = payload.nodeStats.gpu ?? {
+      count: legacy.nvidiaGPU ? 1 : 0,
+      devices:
+        legacy.gpuInfo?.map((device, index) => ({
+          index,
+          name: device.name,
+          memory_mb: device.memory_mb,
+        })) ?? null,
+    };
+
+    // updateStatus only persists the static device info to the
+    // gpu_info column; runtime metrics (utilization, temp, power,
+    // memory_used) are pushed to Redis history by captureNodeStats.
+    payload.nodeStats.gpu = gpu;
+
     const result = await this.gameServerNodeService.updateStatus(
       payload.node,
       payload.nodeIP,
@@ -103,7 +130,7 @@ export class GameServerNodeController {
       payload.nodeStats.cpuInfo,
       payload.cpuGovernorInfo,
       payload.cpuFrequencyInfo,
-      payload.nodeStats.nvidiaGPU,
+      gpu,
       "Online",
       rootDisk,
     );

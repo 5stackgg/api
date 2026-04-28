@@ -4,7 +4,7 @@ import { e_game_server_node_statuses_enum } from "../../generated";
 import { KubeConfig, CoreV1Api, BatchV1Api } from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
-import { NodeStats } from "./interfaces/NodeStats";
+import { GpuDevice, NodeStats } from "./interfaces/NodeStats";
 import { PodStats } from "./interfaces/PodStats";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Redis } from "ioredis";
@@ -145,10 +145,26 @@ export class GameServerNodeService {
       cpus: Record<number, number>;
       frequency: number;
     },
-    nvidiaGPU: boolean,
+    gpu:
+      | {
+          count?: number;
+          devices?: Array<GpuDevice> | null;
+        }
+      | undefined,
     status: e_game_server_node_statuses_enum,
     rootDisk?: NodeDisk,
   ) {
+    const gpuDevicesAll = gpu?.devices ?? null;
+    const hasGpu = (gpu?.count ?? 0) > 0 || (gpuDevicesAll?.length ?? 0) > 0;
+    const gpuDevices = gpuDevicesAll
+      ? gpuDevicesAll.map((device) => ({
+          index: device.index,
+          name: device.name,
+          ...(device.memory_mb !== undefined
+            ? { memory_mb: device.memory_mb }
+            : {}),
+        }))
+      : null;
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: {
@@ -164,6 +180,7 @@ export class GameServerNodeService {
         csgo_build_id: true,
         public_ip: true,
         gpu: true,
+        gpu_info: true,
         cpu_sockets: true,
         cpu_cores_per_socket: true,
         cpu_threads_per_core: true,
@@ -193,13 +210,16 @@ export class GameServerNodeService {
     const offlineAt = game_server_nodes_by_pk.offline_at;
 
     let transitionedFromOffline = false;
-    if (status === "Online" && storedStatus === "Offline") {
+    if (
+      status === "Online" &&
+      (storedStatus === "Offline" || storedStatus === "Setup")
+    ) {
       const { update_game_server_nodes } = await this.hasura.mutation({
         update_game_server_nodes: {
           __args: {
             where: {
               id: { _eq: node },
-              status: { _eq: "Offline" },
+              status: { _in: ["Offline", "Setup"] },
             },
             _set: {
               status: "Online",
@@ -209,7 +229,9 @@ export class GameServerNodeService {
           affected_rows: true,
         },
       });
-      transitionedFromOffline = update_game_server_nodes.affected_rows === 1;
+      transitionedFromOffline =
+        storedStatus === "Offline" &&
+        update_game_server_nodes.affected_rows === 1;
     }
 
     if (
@@ -221,7 +243,8 @@ export class GameServerNodeService {
         game_server_nodes_by_pk.update_status === null) ||
       game_server_nodes_by_pk.supports_cpu_pinning !== supportsCpuPinning ||
       game_server_nodes_by_pk.supports_low_latency !== supportsLowLatency ||
-      game_server_nodes_by_pk.gpu !== nvidiaGPU ||
+      game_server_nodes_by_pk.gpu !== hasGpu ||
+      !isJsonEqual(game_server_nodes_by_pk.gpu_info, gpuDevices) ||
       game_server_nodes_by_pk.cpu_sockets !== cpuInfo.sockets ||
       game_server_nodes_by_pk.cpu_cores_per_socket !== cpuInfo.coresPerSocket ||
       game_server_nodes_by_pk.cpu_threads_per_core !== cpuInfo.threadsPerCore ||
@@ -250,7 +273,8 @@ export class GameServerNodeService {
               ...(game_server_nodes_by_pk.update_status === null
                 ? { csgo_build_id: csgoBuildId }
                 : {}),
-              gpu: nvidiaGPU,
+              gpu: hasGpu,
+              gpu_info: gpuDevices,
               cpu_sockets: cpuInfo.sockets,
               cpu_cores_per_socket: cpuInfo.coresPerSocket,
               cpu_threads_per_core: cpuInfo.threadsPerCore,
@@ -875,12 +899,15 @@ export class GameServerNodeService {
 
     const networkStats = await this.redis.lrange(`${baseKey}:network`, 0, -1);
 
+    const gpuStats = await this.redis.lrange(`${baseKey}:gpu`, 0, -1);
+
     return {
       node,
       cpu: cpuStats.map((stat) => JSON.parse(stat)).reverse(),
       memory: memoryStats.map((stat) => JSON.parse(stat)).reverse(),
       disks: disksStats.map((stat) => JSON.parse(stat)).reverse(),
       network: networkStats.map((stat) => JSON.parse(stat)).reverse(),
+      gpu: gpuStats.map((stat) => JSON.parse(stat)).reverse(),
     };
   }
 
@@ -985,15 +1012,27 @@ export class GameServerNodeService {
       );
     }
 
+    if (stats.gpu?.devices && stats.gpu.devices.length > 0) {
+      await this.redis.lpush(
+        `${baseKey}:gpu`,
+        JSON.stringify({
+          time: new Date(),
+          devices: stats.gpu.devices,
+        }),
+      );
+    }
+
     await this.redis.ltrim(`${baseKey}:cpu`, 0, this.maxStatsHistory);
     await this.redis.ltrim(`${baseKey}:memory`, 0, this.maxStatsHistory);
     await this.redis.ltrim(`${baseKey}:network`, 0, this.maxStatsHistory);
     await this.redis.ltrim(`${baseKey}:disks`, 0, this.maxStatsHistory);
+    await this.redis.ltrim(`${baseKey}:gpu`, 0, this.maxStatsHistory);
 
     await this.redis.expire(`${baseKey}:cpu`, this.maxOfflineStatsHistory);
     await this.redis.expire(`${baseKey}:memory`, this.maxOfflineStatsHistory);
     await this.redis.expire(`${baseKey}:network`, this.maxOfflineStatsHistory);
     await this.redis.expire(`${baseKey}:disks`, this.maxOfflineStatsHistory);
+    await this.redis.expire(`${baseKey}:gpu`, this.maxOfflineStatsHistory);
   }
 
   public async capturePodStats(

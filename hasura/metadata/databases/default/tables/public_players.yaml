@@ -301,6 +301,7 @@ select_permissions:
         - name_registered
         - profile_url
         - role
+        - roster_image_url
         - steam_id
       computed_fields:
         - current_lobby_id
@@ -326,6 +327,7 @@ select_permissions:
         - name_registered
         - profile_url
         - role
+        - roster_image_url
         - steam_id
       computed_fields:
         - current_lobby_id
@@ -352,6 +354,7 @@ select_permissions:
         - name_registered
         - profile_url
         - role
+        - roster_image_url
         - steam_id
       computed_fields:
         - current_lobby_id
