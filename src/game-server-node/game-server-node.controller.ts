@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Logger, Req, Res } from "@nestjs/common";
+import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { GameServerNodeService } from "./game-server-node.service";
 import { TailscaleService } from "../tailscale/tailscale.service";
@@ -364,41 +364,6 @@ export class GameServerNodeController {
     };
   }
 
-  @Post("/script/:gameServerNodeId/error")
-  public async scriptError(@Req() request: Request, @Res() response: Response) {
-    const gameServerNodeId = request.params.gameServerNodeId;
-
-    const { game_server_nodes_by_pk } = await this.hasura.query({
-      game_server_nodes_by_pk: {
-        __args: {
-          id: gameServerNodeId,
-        },
-        label: true,
-      },
-    });
-
-    if (!game_server_nodes_by_pk) {
-      response.status(404).json({ error: "Node not found" });
-      return;
-    }
-
-    const errorMessage = request.body?.error || "Unknown provisioning error";
-
-    await this.notifications.send(
-      "GameNodeStatus",
-      {
-        message: `Game Server Node (${game_server_nodes_by_pk.label || gameServerNodeId}) provisioning failed: ${errorMessage}`,
-        title: "Game Server Node Provisioning Failed",
-        role: "administrator",
-        entity_id: gameServerNodeId,
-      },
-      undefined,
-      DISCORD_COLORS.RED,
-    );
-
-    response.status(200).json({ success: true });
-  }
-
   @Get("/script/:gameServerNodeId")
   public async script(@Req() request: Request, @Res() response: Response) {
     const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");
@@ -456,9 +421,6 @@ export class GameServerNodeController {
             AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
             if [ "$AVAILABLE_GB" -lt "$REQUIRED_GB" ]; then
                 echo "Error: Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
-                curl -s -X POST "${this.appConfig.apiDomain}/game-server-node/script/${gameServerNodeId}/error" \
-                  -H "Content-Type: application/json" \
-                  -d "{\\"error\\":\\"Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB\\"}"
                 exit 1
             fi
             echo "Disk space check passed: \${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
