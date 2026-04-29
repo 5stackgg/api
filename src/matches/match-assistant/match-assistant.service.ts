@@ -435,9 +435,13 @@ export class MatchAssistantService {
                 reserved_by_match_id: {
                   _is_null: true,
                 },
-                region: {
-                  _eq: region,
-                },
+                ...(region
+                  ? {
+                      region: {
+                        _eq: region,
+                      },
+                    }
+                  : {}),
               },
             },
             id: true,
@@ -532,9 +536,13 @@ export class MatchAssistantService {
             enabled: {
               _eq: true,
             },
-            region: {
-              _eq: match.region,
-            },
+            ...(match.region
+              ? {
+                  region: {
+                    _eq: match.region,
+                  },
+                }
+              : {}),
           },
         },
         id: true,
