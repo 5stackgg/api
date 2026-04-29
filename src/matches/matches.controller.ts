@@ -36,6 +36,7 @@ import { MatchRelayService } from "./match-relay/match-relay.service";
 import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
 import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
+import { DemoMetadataService } from "../demos/demo-metadata.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -70,6 +71,7 @@ export class MatchesController {
     private readonly matchRelayService: MatchRelayService,
     private readonly tournamentVoice: DiscordTournamentVoiceService,
     private readonly gameStreamer: GameStreamerService,
+    private readonly demoMetadata: DemoMetadataService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -764,6 +766,72 @@ export class MatchesController {
     await this.gameStreamer.specAutodirector(match_id, enabled);
     return { success: true };
   }
+
+  @HasuraAction()
+  public async watchDemo(data: { match_map_id: string; user: User }) {
+    const { match_map_id, user } = data;
+    this.logger.log(
+      `watchDemo invoked: match_map_id=${match_map_id} user=${user?.steam_id}`,
+    );
+
+    const demo = await this.demoMetadata.getDemoForMap(match_map_id);
+    if (!demo) {
+      throw Error(`no uploaded demo for match_map ${match_map_id}`);
+    }
+    const isOrganizer = await this.matchAssistant.isOrganizer(
+      demo.match_id,
+      user,
+    );
+    if (!isOrganizer && !isRoleAbove(user.role, "streamer")) {
+      throw Error(
+        "you must be the match organizer or have the streamer role or above",
+      );
+    }
+
+    if (!demo.metadata_parsed_at || !demo.total_ticks) {
+      throw Error("demo metadata not ready — try again in a moment");
+    }
+
+    const presignedDemoUrl = await this.s3.getPresignedUrl(
+      demo.file,
+      undefined,
+      // 60 minutes — covers a normal demo viewing window.
+      60 * 60,
+      "get",
+    );
+
+    const session = await this.gameStreamer.startDemoPlayback(
+      match_map_id,
+      user.steam_id,
+      {
+        demoFile: demo.file,
+        presignedDemoUrl,
+        roundTicks: demo.round_ticks ?? null,
+        totalTicks: demo.total_ticks ?? null,
+        tickRate: demo.tick_rate ?? null,
+        workshopId: demo.workshop_id ?? null,
+        cs2Build: demo.cs2_build ?? null,
+      },
+    );
+
+    return {
+      success: true,
+      session_id: session.sessionId,
+      stream_url: session.streamUrl,
+    };
+  }
+
+  // Explicit Cancel button path. The popup's WS-close handler
+  // (DemoSessionWatcherService.clientClosed) tears the session down
+  // automatically when the window is closed — this action is for when
+  // the user wants to stop without closing the popup.
+  @HasuraAction()
+  public async stopWatchDemo(data: { match_map_id: string; user: User }) {
+    const { match_map_id, user } = data;
+    await this.gameStreamer.stopDemoPlayback(match_map_id, user.steam_id);
+    return { success: true };
+  }
+
 
   @HasuraAction()
   public async createClips(data: { match_id: string; user: User }) {

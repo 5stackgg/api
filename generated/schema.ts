@@ -410,6 +410,13 @@ export interface TournamentMatchResetImpact {
     __typename: 'TournamentMatchResetImpact'
 }
 
+export interface WatchDemoOutput {
+    session_id: Scalars['String']
+    stream_url: Scalars['String']
+    success: Scalars['Boolean']
+    __typename: 'WatchDemoOutput'
+}
+
 
 /** columns and relationships of "_map_pool" */
 export interface _map_pool {
@@ -3771,6 +3778,170 @@ export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns
 export type maps_update_column = 'active_pool' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
+/** columns and relationships of "match_demo_sessions" */
+export interface match_demo_sessions {
+    created_at: Scalars['timestamptz']
+    error_message: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    k8s_job_name: Scalars['String']
+    last_activity_at: Scalars['timestamptz']
+    last_status_at: Scalars['timestamptz']
+    /** An object relationship */
+    match: matches
+    match_id: Scalars['uuid']
+    /** An object relationship */
+    match_map: match_maps
+    match_map_id: Scalars['uuid']
+    session_token: Scalars['String']
+    status: Scalars['String']
+    status_history: Scalars['jsonb']
+    stream_url: (Scalars['String'] | null)
+    /** An object relationship */
+    watcher: players
+    watcher_steam_id: Scalars['bigint']
+    __typename: 'match_demo_sessions'
+}
+
+
+/** aggregated selection of "match_demo_sessions" */
+export interface match_demo_sessions_aggregate {
+    aggregate: (match_demo_sessions_aggregate_fields | null)
+    nodes: match_demo_sessions[]
+    __typename: 'match_demo_sessions_aggregate'
+}
+
+
+/** aggregate fields of "match_demo_sessions" */
+export interface match_demo_sessions_aggregate_fields {
+    avg: (match_demo_sessions_avg_fields | null)
+    count: Scalars['Int']
+    max: (match_demo_sessions_max_fields | null)
+    min: (match_demo_sessions_min_fields | null)
+    stddev: (match_demo_sessions_stddev_fields | null)
+    stddev_pop: (match_demo_sessions_stddev_pop_fields | null)
+    stddev_samp: (match_demo_sessions_stddev_samp_fields | null)
+    sum: (match_demo_sessions_sum_fields | null)
+    var_pop: (match_demo_sessions_var_pop_fields | null)
+    var_samp: (match_demo_sessions_var_samp_fields | null)
+    variance: (match_demo_sessions_variance_fields | null)
+    __typename: 'match_demo_sessions_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface match_demo_sessions_avg_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "match_demo_sessions" */
+export type match_demo_sessions_constraint = 'match_demo_sessions_per_user_per_map_uniq' | 'match_demo_sessions_pkey'
+
+
+/** aggregate max on columns */
+export interface match_demo_sessions_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    error_message: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    k8s_job_name: (Scalars['String'] | null)
+    last_activity_at: (Scalars['timestamptz'] | null)
+    last_status_at: (Scalars['timestamptz'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    session_token: (Scalars['String'] | null)
+    status: (Scalars['String'] | null)
+    stream_url: (Scalars['String'] | null)
+    watcher_steam_id: (Scalars['bigint'] | null)
+    __typename: 'match_demo_sessions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface match_demo_sessions_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    error_message: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    k8s_job_name: (Scalars['String'] | null)
+    last_activity_at: (Scalars['timestamptz'] | null)
+    last_status_at: (Scalars['timestamptz'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    session_token: (Scalars['String'] | null)
+    status: (Scalars['String'] | null)
+    stream_url: (Scalars['String'] | null)
+    watcher_steam_id: (Scalars['bigint'] | null)
+    __typename: 'match_demo_sessions_min_fields'
+}
+
+
+/** response of any mutation on the table "match_demo_sessions" */
+export interface match_demo_sessions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: match_demo_sessions[]
+    __typename: 'match_demo_sessions_mutation_response'
+}
+
+
+/** select columns of table "match_demo_sessions" */
+export type match_demo_sessions_select_column = 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_id' | 'session_token' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
+
+
+/** aggregate stddev on columns */
+export interface match_demo_sessions_stddev_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface match_demo_sessions_stddev_pop_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface match_demo_sessions_stddev_samp_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface match_demo_sessions_sum_fields {
+    watcher_steam_id: (Scalars['bigint'] | null)
+    __typename: 'match_demo_sessions_sum_fields'
+}
+
+
+/** update columns of table "match_demo_sessions" */
+export type match_demo_sessions_update_column = 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_id' | 'session_token' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface match_demo_sessions_var_pop_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface match_demo_sessions_var_samp_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface match_demo_sessions_variance_fields {
+    watcher_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_demo_sessions_variance_fields'
+}
+
+
 /** columns and relationships of "match_invites" */
 export interface match_invites {
     created_at: Scalars['timestamptz']
@@ -4242,17 +4413,26 @@ export interface match_lineups_variance_fields {
 
 /** columns and relationships of "match_map_demos" */
 export interface match_map_demos {
+    bombs: (Scalars['jsonb'] | null)
     /** A computed field, executes function "demo_download_url" */
     download_url: (Scalars['String'] | null)
+    duration_seconds: (Scalars['Float'] | null)
     file: Scalars['String']
     id: Scalars['uuid']
+    kills: (Scalars['jsonb'] | null)
+    map_name: (Scalars['String'] | null)
     /** An object relationship */
     match: matches
     match_id: Scalars['uuid']
     /** An object relationship */
     match_map: match_maps
     match_map_id: Scalars['uuid']
+    metadata_parsed_at: (Scalars['timestamptz'] | null)
+    round_ticks: (Scalars['jsonb'] | null)
     size: Scalars['Int']
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Int'] | null)
+    workshop_id: (Scalars['String'] | null)
     __typename: 'match_map_demos'
 }
 
@@ -4284,7 +4464,10 @@ export interface match_map_demos_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface match_map_demos_avg_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_avg_fields'
 }
 
@@ -4297,11 +4480,17 @@ export type match_map_demos_constraint = 'match_demos_pkey'
 export interface match_map_demos_max_fields {
     /** A computed field, executes function "demo_download_url" */
     download_url: (Scalars['String'] | null)
+    duration_seconds: (Scalars['Float'] | null)
     file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
+    metadata_parsed_at: (Scalars['timestamptz'] | null)
     size: (Scalars['Int'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Int'] | null)
+    workshop_id: (Scalars['String'] | null)
     __typename: 'match_map_demos_max_fields'
 }
 
@@ -4310,11 +4499,17 @@ export interface match_map_demos_max_fields {
 export interface match_map_demos_min_fields {
     /** A computed field, executes function "demo_download_url" */
     download_url: (Scalars['String'] | null)
+    duration_seconds: (Scalars['Float'] | null)
     file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
+    metadata_parsed_at: (Scalars['timestamptz'] | null)
     size: (Scalars['Int'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Int'] | null)
+    workshop_id: (Scalars['String'] | null)
     __typename: 'match_map_demos_min_fields'
 }
 
@@ -4330,58 +4525,79 @@ export interface match_map_demos_mutation_response {
 
 
 /** select columns of table "match_map_demos" */
-export type match_map_demos_select_column = 'file' | 'id' | 'match_id' | 'match_map_id' | 'size'
+export type match_map_demos_select_column = 'bombs' | 'duration_seconds' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate stddev on columns */
 export interface match_map_demos_stddev_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_stddev_fields'
 }
 
 
 /** aggregate stddev_pop on columns */
 export interface match_map_demos_stddev_pop_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_stddev_pop_fields'
 }
 
 
 /** aggregate stddev_samp on columns */
 export interface match_map_demos_stddev_samp_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_stddev_samp_fields'
 }
 
 
 /** aggregate sum on columns */
 export interface match_map_demos_sum_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Int'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Int'] | null)
     __typename: 'match_map_demos_sum_fields'
 }
 
 
 /** update columns of table "match_map_demos" */
-export type match_map_demos_update_column = 'file' | 'id' | 'match_id' | 'match_map_id' | 'size'
+export type match_map_demos_update_column = 'bombs' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate var_pop on columns */
 export interface match_map_demos_var_pop_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_var_pop_fields'
 }
 
 
 /** aggregate var_samp on columns */
 export interface match_map_demos_var_samp_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_var_samp_fields'
 }
 
 
 /** aggregate variance on columns */
 export interface match_map_demos_variance_fields {
+    duration_seconds: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
+    tick_rate: (Scalars['Float'] | null)
+    total_ticks: (Scalars['Float'] | null)
     __typename: 'match_map_demos_variance_fields'
 }
 
@@ -5291,6 +5507,7 @@ export interface match_streams {
     match_id: Scalars['uuid']
     priority: Scalars['Int']
     status: (Scalars['String'] | null)
+    status_history: Scalars['jsonb']
     stream_url: (Scalars['String'] | null)
     title: Scalars['String']
     __typename: 'match_streams'
@@ -5374,7 +5591,7 @@ export interface match_streams_mutation_response {
 
 
 /** select columns of table "match_streams" */
-export type match_streams_select_column = 'autodirector' | 'error_message' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'priority' | 'status' | 'stream_url' | 'title'
+export type match_streams_select_column = 'autodirector' | 'error_message' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** select "match_streams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_streams" */
@@ -5414,7 +5631,7 @@ export interface match_streams_sum_fields {
 
 
 /** update columns of table "match_streams" */
-export type match_streams_update_column = 'autodirector' | 'error_message' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'priority' | 'status' | 'stream_url' | 'title'
+export type match_streams_update_column = 'autodirector' | 'error_message' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** aggregate var_pop on columns */
@@ -6118,6 +6335,10 @@ export interface mutation_root {
     delete_maps: (maps_mutation_response | null)
     /** delete single row from the table: "maps" */
     delete_maps_by_pk: (maps | null)
+    /** delete data from the table: "match_demo_sessions" */
+    delete_match_demo_sessions: (match_demo_sessions_mutation_response | null)
+    /** delete single row from the table: "match_demo_sessions" */
+    delete_match_demo_sessions_by_pk: (match_demo_sessions | null)
     /** delete data from the table: "match_invites" */
     delete_match_invites: (match_invites_mutation_response | null)
     /** delete single row from the table: "match_invites" */
@@ -6447,6 +6668,10 @@ export interface mutation_root {
     insert_maps: (maps_mutation_response | null)
     /** insert a single row into the table: "maps" */
     insert_maps_one: (maps | null)
+    /** insert data into the table: "match_demo_sessions" */
+    insert_match_demo_sessions: (match_demo_sessions_mutation_response | null)
+    /** insert a single row into the table: "match_demo_sessions" */
+    insert_match_demo_sessions_one: (match_demo_sessions | null)
     /** insert data into the table: "match_invites" */
     insert_match_invites: (match_invites_mutation_response | null)
     /** insert a single row into the table: "match_invites" */
@@ -6663,6 +6888,7 @@ export interface mutation_root {
     /** startMatch */
     startMatch: (SuccessOutput | null)
     stopLive: (SuccessOutput | null)
+    stopWatchDemo: (SuccessOutput | null)
     swapLineups: (SuccessOutput | null)
     switchLineup: (SuccessOutput | null)
     syncSteamFriends: (SuccessOutput | null)
@@ -6896,6 +7122,12 @@ export interface mutation_root {
     update_maps_by_pk: (maps | null)
     /** update multiples rows of table: "maps" */
     update_maps_many: ((maps_mutation_response | null)[] | null)
+    /** update data of the table: "match_demo_sessions" */
+    update_match_demo_sessions: (match_demo_sessions_mutation_response | null)
+    /** update single row of the table: "match_demo_sessions" */
+    update_match_demo_sessions_by_pk: (match_demo_sessions | null)
+    /** update multiples rows of table: "match_demo_sessions" */
+    update_match_demo_sessions_many: ((match_demo_sessions_mutation_response | null)[] | null)
     /** update data of the table: "match_invites" */
     update_match_invites: (match_invites_mutation_response | null)
     /** update single row of the table: "match_invites" */
@@ -7160,6 +7392,8 @@ export interface mutation_root {
     update_v_pool_maps: (v_pool_maps_mutation_response | null)
     /** update multiples rows of table: "v_pool_maps" */
     update_v_pool_maps_many: ((v_pool_maps_mutation_response | null)[] | null)
+    /** Spawn a per-user game-streamer pod to play back a finished match's demo */
+    watchDemo: (WatchDemoOutput | null)
     /** Write content to file on game server */
     writeServerFile: (SuccessOutput | null)
     __typename: 'mutation_root'
@@ -10201,6 +10435,12 @@ export interface query_root {
     maps_aggregate: maps_aggregate
     /** fetch data from the table: "maps" using primary key columns */
     maps_by_pk: (maps | null)
+    /** fetch data from the table: "match_demo_sessions" */
+    match_demo_sessions: match_demo_sessions[]
+    /** fetch aggregated fields from the table: "match_demo_sessions" */
+    match_demo_sessions_aggregate: match_demo_sessions_aggregate
+    /** fetch data from the table: "match_demo_sessions" using primary key columns */
+    match_demo_sessions_by_pk: (match_demo_sessions | null)
     /** fetch data from the table: "match_invites" */
     match_invites: match_invites[]
     /** fetch aggregated fields from the table: "match_invites" */
@@ -11287,6 +11527,14 @@ export interface subscription_root {
     maps_by_pk: (maps | null)
     /** fetch data from the table in a streaming manner: "maps" */
     maps_stream: maps[]
+    /** fetch data from the table: "match_demo_sessions" */
+    match_demo_sessions: match_demo_sessions[]
+    /** fetch aggregated fields from the table: "match_demo_sessions" */
+    match_demo_sessions_aggregate: match_demo_sessions_aggregate
+    /** fetch data from the table: "match_demo_sessions" using primary key columns */
+    match_demo_sessions_by_pk: (match_demo_sessions | null)
+    /** fetch data from the table in a streaming manner: "match_demo_sessions" */
+    match_demo_sessions_stream: match_demo_sessions[]
     /** fetch data from the table: "match_invites" */
     match_invites: match_invites[]
     /** fetch aggregated fields from the table: "match_invites" */
@@ -16131,6 +16379,10 @@ export interface FileListResponseGenqlSelection{
     __scalar?: boolean | number
 }
 
+
+/** Boolean expression to compare columns of type "Float". All fields are combined with logical 'AND'. */
+export interface Float_comparison_exp {_eq?: (Scalars['Float'] | null),_gt?: (Scalars['Float'] | null),_gte?: (Scalars['Float'] | null),_in?: (Scalars['Float'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Float'] | null),_lte?: (Scalars['Float'] | null),_neq?: (Scalars['Float'] | null),_nin?: (Scalars['Float'][] | null)}
+
 export interface GetTestUploadResponseGenqlSelection{
     error?: boolean | number
     link?: boolean | number
@@ -16444,6 +16696,14 @@ export interface TournamentMatchResetImpactGenqlSelection{
     round?: boolean | number
     stage_type?: boolean | number
     will_delete_match?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface WatchDemoOutputGenqlSelection{
+    session_id?: boolean | number
+    stream_url?: boolean | number
+    success?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -22071,6 +22331,252 @@ _set?: (maps_set_input | null),
 where: maps_bool_exp}
 
 
+/** columns and relationships of "match_demo_sessions" */
+export interface match_demo_sessionsGenqlSelection{
+    created_at?: boolean | number
+    error_message?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    last_activity_at?: boolean | number
+    last_status_at?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
+    match_map_id?: boolean | number
+    session_token?: boolean | number
+    status?: boolean | number
+    status_history?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    stream_url?: boolean | number
+    /** An object relationship */
+    watcher?: playersGenqlSelection
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "match_demo_sessions" */
+export interface match_demo_sessions_aggregateGenqlSelection{
+    aggregate?: match_demo_sessions_aggregate_fieldsGenqlSelection
+    nodes?: match_demo_sessionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "match_demo_sessions" */
+export interface match_demo_sessions_aggregate_fieldsGenqlSelection{
+    avg?: match_demo_sessions_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (match_demo_sessions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: match_demo_sessions_max_fieldsGenqlSelection
+    min?: match_demo_sessions_min_fieldsGenqlSelection
+    stddev?: match_demo_sessions_stddev_fieldsGenqlSelection
+    stddev_pop?: match_demo_sessions_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: match_demo_sessions_stddev_samp_fieldsGenqlSelection
+    sum?: match_demo_sessions_sum_fieldsGenqlSelection
+    var_pop?: match_demo_sessions_var_pop_fieldsGenqlSelection
+    var_samp?: match_demo_sessions_var_samp_fieldsGenqlSelection
+    variance?: match_demo_sessions_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface match_demo_sessions_append_input {status_history?: (Scalars['jsonb'] | null)}
+
+
+/** aggregate avg on columns */
+export interface match_demo_sessions_avg_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "match_demo_sessions". All fields are combined with a logical 'AND'. */
+export interface match_demo_sessions_bool_exp {_and?: (match_demo_sessions_bool_exp[] | null),_not?: (match_demo_sessions_bool_exp | null),_or?: (match_demo_sessions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_activity_at?: (timestamptz_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),session_token?: (String_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),watcher?: (players_bool_exp | null),watcher_steam_id?: (bigint_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface match_demo_sessions_delete_at_path_input {status_history?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface match_demo_sessions_delete_elem_input {status_history?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface match_demo_sessions_delete_key_input {status_history?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "match_demo_sessions" */
+export interface match_demo_sessions_inc_input {watcher_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "match_demo_sessions" */
+export interface match_demo_sessions_insert_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher?: (players_obj_rel_insert_input | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface match_demo_sessions_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    error_message?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    last_activity_at?: boolean | number
+    last_status_at?: boolean | number
+    match_id?: boolean | number
+    match_map_id?: boolean | number
+    session_token?: boolean | number
+    status?: boolean | number
+    stream_url?: boolean | number
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface match_demo_sessions_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    error_message?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    last_activity_at?: boolean | number
+    last_status_at?: boolean | number
+    match_id?: boolean | number
+    match_map_id?: boolean | number
+    session_token?: boolean | number
+    status?: boolean | number
+    stream_url?: boolean | number
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "match_demo_sessions" */
+export interface match_demo_sessions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: match_demo_sessionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "match_demo_sessions" */
+export interface match_demo_sessions_on_conflict {constraint: match_demo_sessions_constraint,update_columns?: match_demo_sessions_update_column[],where?: (match_demo_sessions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "match_demo_sessions". */
+export interface match_demo_sessions_order_by {created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),watcher?: (players_order_by | null),watcher_steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: match_demo_sessions */
+export interface match_demo_sessions_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface match_demo_sessions_prepend_input {status_history?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "match_demo_sessions" */
+export interface match_demo_sessions_set_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface match_demo_sessions_stddev_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface match_demo_sessions_stddev_pop_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface match_demo_sessions_stddev_samp_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "match_demo_sessions" */
+export interface match_demo_sessions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: match_demo_sessions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface match_demo_sessions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface match_demo_sessions_sum_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface match_demo_sessions_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (match_demo_sessions_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (match_demo_sessions_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (match_demo_sessions_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (match_demo_sessions_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (match_demo_sessions_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (match_demo_sessions_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (match_demo_sessions_set_input | null),
+/** filter the rows which have to be updated */
+where: match_demo_sessions_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface match_demo_sessions_var_pop_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface match_demo_sessions_var_samp_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface match_demo_sessions_variance_fieldsGenqlSelection{
+    watcher_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "match_invites" */
 export interface match_invitesGenqlSelection{
     created_at?: boolean | number
@@ -22896,17 +23402,32 @@ export interface match_lineups_variance_order_by {coach_steam_id?: (order_by | n
 
 /** columns and relationships of "match_map_demos" */
 export interface match_map_demosGenqlSelection{
+    bombs?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     /** A computed field, executes function "demo_download_url" */
     download_url?: boolean | number
+    duration_seconds?: boolean | number
     file?: boolean | number
     id?: boolean | number
+    kills?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    map_name?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
     match_id?: boolean | number
     /** An object relationship */
     match_map?: match_mapsGenqlSelection
     match_map_id?: boolean | number
+    metadata_parsed_at?: boolean | number
+    round_ticks?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
+    workshop_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -22947,6 +23468,10 @@ export interface match_map_demos_aggregate_fieldsGenqlSelection{
 export interface match_map_demos_aggregate_order_by {avg?: (match_map_demos_avg_order_by | null),count?: (order_by | null),max?: (match_map_demos_max_order_by | null),min?: (match_map_demos_min_order_by | null),stddev?: (match_map_demos_stddev_order_by | null),stddev_pop?: (match_map_demos_stddev_pop_order_by | null),stddev_samp?: (match_map_demos_stddev_samp_order_by | null),sum?: (match_map_demos_sum_order_by | null),var_pop?: (match_map_demos_var_pop_order_by | null),var_samp?: (match_map_demos_var_samp_order_by | null),variance?: (match_map_demos_variance_order_by | null)}
 
 
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface match_map_demos_append_input {bombs?: (Scalars['jsonb'] | null),kills?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null)}
+
+
 /** input type for inserting array relation for remote table "match_map_demos" */
 export interface match_map_demos_arr_rel_insert_input {data: match_map_demos_insert_input[],
 /** upsert condition */
@@ -22955,62 +23480,89 @@ on_conflict?: (match_map_demos_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface match_map_demos_avg_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by avg() on columns of table "match_map_demos" */
-export interface match_map_demos_avg_order_by {size?: (order_by | null)}
+export interface match_map_demos_avg_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_map_demos". All fields are combined with a logical 'AND'. */
-export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),download_url?: (String_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),size?: (Int_comparison_exp | null)}
+export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface match_map_demos_delete_at_path_input {bombs?: (Scalars['String'][] | null),kills?: (Scalars['String'][] | null),round_ticks?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface match_map_demos_delete_elem_input {bombs?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),round_ticks?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface match_map_demos_delete_key_input {bombs?: (Scalars['String'] | null),kills?: (Scalars['String'] | null),round_ticks?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_demos" */
-export interface match_map_demos_inc_input {size?: (Scalars['Int'] | null)}
+export interface match_map_demos_inc_input {size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_map_demos" */
-export interface match_map_demos_insert_input {file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['Int'] | null)}
+export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_map_demos_max_fieldsGenqlSelection{
     /** A computed field, executes function "demo_download_url" */
     download_url?: boolean | number
+    duration_seconds?: boolean | number
     file?: boolean | number
     id?: boolean | number
+    map_name?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
+    metadata_parsed_at?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
+    workshop_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by max() on columns of table "match_map_demos" */
-export interface match_map_demos_max_order_by {file?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),size?: (order_by | null)}
+export interface match_map_demos_max_order_by {duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface match_map_demos_min_fieldsGenqlSelection{
     /** A computed field, executes function "demo_download_url" */
     download_url?: boolean | number
+    duration_seconds?: boolean | number
     file?: boolean | number
     id?: boolean | number
+    map_name?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
+    metadata_parsed_at?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
+    workshop_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by min() on columns of table "match_map_demos" */
-export interface match_map_demos_min_order_by {file?: (order_by | null),id?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),size?: (order_by | null)}
+export interface match_map_demos_min_order_by {duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_map_demos" */
@@ -23029,51 +23581,64 @@ export interface match_map_demos_on_conflict {constraint: match_map_demos_constr
 
 
 /** Ordering options when selecting data from "match_map_demos". */
-export interface match_map_demos_order_by {download_url?: (order_by | null),file?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),size?: (order_by | null)}
+export interface match_map_demos_order_by {bombs?: (order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_demos */
 export interface match_map_demos_pk_columns_input {id: Scalars['uuid']}
 
 
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface match_map_demos_prepend_input {bombs?: (Scalars['jsonb'] | null),kills?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null)}
+
+
 /** input type for updating data in table "match_map_demos" */
-export interface match_map_demos_set_input {file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['Int'] | null)}
+export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface match_map_demos_stddev_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev() on columns of table "match_map_demos" */
-export interface match_map_demos_stddev_order_by {size?: (order_by | null)}
+export interface match_map_demos_stddev_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface match_map_demos_stddev_pop_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_pop() on columns of table "match_map_demos" */
-export interface match_map_demos_stddev_pop_order_by {size?: (order_by | null)}
+export interface match_map_demos_stddev_pop_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface match_map_demos_stddev_samp_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_samp() on columns of table "match_map_demos" */
-export interface match_map_demos_stddev_samp_order_by {size?: (order_by | null)}
+export interface match_map_demos_stddev_samp_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** Streaming cursor of the table "match_map_demos" */
@@ -23085,23 +23650,36 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_demos_stream_cursor_value_input {file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['Int'] | null)}
+export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
 export interface match_map_demos_sum_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by sum() on columns of table "match_map_demos" */
-export interface match_map_demos_sum_order_by {size?: (order_by | null)}
+export interface match_map_demos_sum_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 export interface match_map_demos_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (match_map_demos_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (match_map_demos_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (match_map_demos_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (match_map_demos_delete_key_input | null),
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (match_map_demos_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (match_map_demos_prepend_input | null),
 /** sets the columns of the filtered rows to the given values */
 _set?: (match_map_demos_set_input | null),
 /** filter the rows which have to be updated */
@@ -23110,38 +23688,47 @@ where: match_map_demos_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface match_map_demos_var_pop_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_pop() on columns of table "match_map_demos" */
-export interface match_map_demos_var_pop_order_by {size?: (order_by | null)}
+export interface match_map_demos_var_pop_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface match_map_demos_var_samp_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_samp() on columns of table "match_map_demos" */
-export interface match_map_demos_var_samp_order_by {size?: (order_by | null)}
+export interface match_map_demos_var_samp_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface match_map_demos_variance_fieldsGenqlSelection{
+    duration_seconds?: boolean | number
     size?: boolean | number
+    tick_rate?: boolean | number
+    total_ticks?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by variance() on columns of table "match_map_demos" */
-export interface match_map_demos_variance_order_by {size?: (order_by | null)}
+export interface match_map_demos_variance_order_by {duration_seconds?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null)}
 
 
 /** columns and relationships of "match_map_rounds" */
@@ -24675,6 +25262,9 @@ export interface match_streamsGenqlSelection{
     match_id?: boolean | number
     priority?: boolean | number
     status?: boolean | number
+    status_history?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     stream_url?: boolean | number
     title?: boolean | number
     __typename?: boolean | number
@@ -24721,6 +25311,10 @@ export interface match_streams_aggregate_fieldsGenqlSelection{
 export interface match_streams_aggregate_order_by {avg?: (match_streams_avg_order_by | null),count?: (order_by | null),max?: (match_streams_max_order_by | null),min?: (match_streams_min_order_by | null),stddev?: (match_streams_stddev_order_by | null),stddev_pop?: (match_streams_stddev_pop_order_by | null),stddev_samp?: (match_streams_stddev_samp_order_by | null),sum?: (match_streams_sum_order_by | null),var_pop?: (match_streams_var_pop_order_by | null),var_samp?: (match_streams_var_samp_order_by | null),variance?: (match_streams_variance_order_by | null)}
 
 
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface match_streams_append_input {status_history?: (Scalars['jsonb'] | null)}
+
+
 /** input type for inserting array relation for remote table "match_streams" */
 export interface match_streams_arr_rel_insert_input {data: match_streams_insert_input[],
 /** upsert condition */
@@ -24740,7 +25334,19 @@ export interface match_streams_avg_order_by {priority?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_streams". All fields are combined with a logical 'AND'. */
-export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
+export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface match_streams_delete_at_path_input {status_history?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface match_streams_delete_elem_input {status_history?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface match_streams_delete_key_input {status_history?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "match_streams" */
@@ -24748,7 +25354,7 @@ export interface match_streams_inc_input {priority?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_streams" */
-export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -24807,15 +25413,19 @@ export interface match_streams_on_conflict {constraint: match_streams_constraint
 
 
 /** Ordering options when selecting data from "match_streams". */
-export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** primary key columns input for table: match_streams */
 export interface match_streams_pk_columns_input {id: Scalars['uuid']}
 
 
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface match_streams_prepend_input {status_history?: (Scalars['jsonb'] | null)}
+
+
 /** input type for updating data in table "match_streams" */
-export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -24863,7 +25473,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -24878,8 +25488,18 @@ export interface match_streams_sum_fieldsGenqlSelection{
 export interface match_streams_sum_order_by {priority?: (order_by | null)}
 
 export interface match_streams_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (match_streams_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (match_streams_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (match_streams_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (match_streams_delete_key_input | null),
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (match_streams_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (match_streams_prepend_input | null),
 /** sets the columns of the filtered rows to the given values */
 _set?: (match_streams_set_input | null),
 /** filter the rows which have to be updated */
@@ -26172,6 +26792,12 @@ export interface mutation_rootGenqlSelection{
     where: maps_bool_exp} })
     /** delete single row from the table: "maps" */
     delete_maps_by_pk?: (mapsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "match_demo_sessions" */
+    delete_match_demo_sessions?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: match_demo_sessions_bool_exp} })
+    /** delete single row from the table: "match_demo_sessions" */
+    delete_match_demo_sessions_by_pk?: (match_demo_sessionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "match_invites" */
     delete_match_invites?: (match_invites_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -26891,6 +27517,18 @@ export interface mutation_rootGenqlSelection{
     object: maps_insert_input, 
     /** upsert condition */
     on_conflict?: (maps_on_conflict | null)} })
+    /** insert data into the table: "match_demo_sessions" */
+    insert_match_demo_sessions?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: match_demo_sessions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (match_demo_sessions_on_conflict | null)} })
+    /** insert a single row into the table: "match_demo_sessions" */
+    insert_match_demo_sessions_one?: (match_demo_sessionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: match_demo_sessions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (match_demo_sessions_on_conflict | null)} })
     /** insert data into the table: "match_invites" */
     insert_match_invites?: (match_invites_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -27467,6 +28105,7 @@ export interface mutation_rootGenqlSelection{
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
     stopLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    stopWatchDemo?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     swapLineups?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     syncSteamFriends?: SuccessOutputGenqlSelection
@@ -28072,6 +28711,44 @@ export interface mutation_rootGenqlSelection{
     update_maps_many?: (maps_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: maps_updates[]} })
+    /** update data of the table: "match_demo_sessions" */
+    update_match_demo_sessions?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (match_demo_sessions_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (match_demo_sessions_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (match_demo_sessions_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (match_demo_sessions_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (match_demo_sessions_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (match_demo_sessions_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_demo_sessions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: match_demo_sessions_bool_exp} })
+    /** update single row of the table: "match_demo_sessions" */
+    update_match_demo_sessions_by_pk?: (match_demo_sessionsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (match_demo_sessions_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (match_demo_sessions_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (match_demo_sessions_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (match_demo_sessions_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (match_demo_sessions_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (match_demo_sessions_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_demo_sessions_set_input | null), pk_columns: match_demo_sessions_pk_columns_input} })
+    /** update multiples rows of table: "match_demo_sessions" */
+    update_match_demo_sessions_many?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: match_demo_sessions_updates[]} })
     /** update data of the table: "match_invites" */
     update_match_invites?: (match_invites_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -28128,16 +28805,36 @@ export interface mutation_rootGenqlSelection{
     updates: match_lineups_updates[]} })
     /** update data of the table: "match_map_demos" */
     update_match_map_demos?: (match_map_demos_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (match_map_demos_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (match_map_demos_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (match_map_demos_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (match_map_demos_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (match_map_demos_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (match_map_demos_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (match_map_demos_set_input | null), 
     /** filter the rows which have to be updated */
     where: match_map_demos_bool_exp} })
     /** update single row of the table: "match_map_demos" */
     update_match_map_demos_by_pk?: (match_map_demosGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (match_map_demos_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (match_map_demos_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (match_map_demos_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (match_map_demos_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (match_map_demos_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (match_map_demos_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (match_map_demos_set_input | null), pk_columns: match_map_demos_pk_columns_input} })
     /** update multiples rows of table: "match_map_demos" */
@@ -28228,16 +28925,36 @@ export interface mutation_rootGenqlSelection{
     updates: match_region_veto_picks_updates[]} })
     /** update data of the table: "match_streams" */
     update_match_streams?: (match_streams_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (match_streams_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (match_streams_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (match_streams_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (match_streams_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (match_streams_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (match_streams_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (match_streams_set_input | null), 
     /** filter the rows which have to be updated */
     where: match_streams_bool_exp} })
     /** update single row of the table: "match_streams" */
     update_match_streams_by_pk?: (match_streamsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (match_streams_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (match_streams_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (match_streams_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (match_streams_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (match_streams_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (match_streams_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (match_streams_set_input | null), pk_columns: match_streams_pk_columns_input} })
     /** update multiples rows of table: "match_streams" */
@@ -28888,6 +29605,8 @@ export interface mutation_rootGenqlSelection{
     update_v_pool_maps_many?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: v_pool_maps_updates[]} })
+    /** Spawn a per-user game-streamer pod to play back a finished match's demo */
+    watchDemo?: (WatchDemoOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** Write content to file on game server */
     writeServerFile?: (SuccessOutputGenqlSelection & { __args: {content: Scalars['String'], file_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     __typename?: boolean | number
@@ -34714,6 +35433,32 @@ export interface query_rootGenqlSelection{
     where?: (maps_bool_exp | null)} })
     /** fetch data from the table: "maps" using primary key columns */
     maps_by_pk?: (mapsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "match_demo_sessions" */
+    match_demo_sessions?: (match_demo_sessionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_demo_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_demo_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_demo_sessions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_demo_sessions" */
+    match_demo_sessions_aggregate?: (match_demo_sessions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_demo_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_demo_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_demo_sessions_bool_exp | null)} })
+    /** fetch data from the table: "match_demo_sessions" using primary key columns */
+    match_demo_sessions_by_pk?: (match_demo_sessionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "match_invites" */
     match_invites?: (match_invitesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -38147,6 +38892,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (maps_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (maps_bool_exp | null)} })
+    /** fetch data from the table: "match_demo_sessions" */
+    match_demo_sessions?: (match_demo_sessionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_demo_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_demo_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_demo_sessions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_demo_sessions" */
+    match_demo_sessions_aggregate?: (match_demo_sessions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_demo_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_demo_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_demo_sessions_bool_exp | null)} })
+    /** fetch data from the table: "match_demo_sessions" using primary key columns */
+    match_demo_sessions_by_pk?: (match_demo_sessionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "match_demo_sessions" */
+    match_demo_sessions_stream?: (match_demo_sessionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (match_demo_sessions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (match_demo_sessions_bool_exp | null)} })
     /** fetch data from the table: "match_invites" */
     match_invites?: (match_invitesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -46888,6 +47667,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const WatchDemoOutput_possibleTypes: string[] = ['WatchDemoOutput']
+    export const isWatchDemoOutput = (obj?: { __typename?: any } | null): obj is WatchDemoOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isWatchDemoOutput"')
+      return WatchDemoOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const _map_pool_possibleTypes: string[] = ['_map_pool']
     export const is_map_pool = (obj?: { __typename?: any } | null): obj is _map_pool => {
       if (!obj?.__typename) throw new Error('__typename is missing in "is_map_pool"')
@@ -49220,6 +50007,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ismaps_mutation_response = (obj?: { __typename?: any } | null): obj is maps_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismaps_mutation_response"')
       return maps_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_possibleTypes: string[] = ['match_demo_sessions']
+    export const ismatch_demo_sessions = (obj?: { __typename?: any } | null): obj is match_demo_sessions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions"')
+      return match_demo_sessions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_aggregate_possibleTypes: string[] = ['match_demo_sessions_aggregate']
+    export const ismatch_demo_sessions_aggregate = (obj?: { __typename?: any } | null): obj is match_demo_sessions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_aggregate"')
+      return match_demo_sessions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_aggregate_fields_possibleTypes: string[] = ['match_demo_sessions_aggregate_fields']
+    export const ismatch_demo_sessions_aggregate_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_aggregate_fields"')
+      return match_demo_sessions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_avg_fields_possibleTypes: string[] = ['match_demo_sessions_avg_fields']
+    export const ismatch_demo_sessions_avg_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_avg_fields"')
+      return match_demo_sessions_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_max_fields_possibleTypes: string[] = ['match_demo_sessions_max_fields']
+    export const ismatch_demo_sessions_max_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_max_fields"')
+      return match_demo_sessions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_min_fields_possibleTypes: string[] = ['match_demo_sessions_min_fields']
+    export const ismatch_demo_sessions_min_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_min_fields"')
+      return match_demo_sessions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_mutation_response_possibleTypes: string[] = ['match_demo_sessions_mutation_response']
+    export const ismatch_demo_sessions_mutation_response = (obj?: { __typename?: any } | null): obj is match_demo_sessions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_mutation_response"')
+      return match_demo_sessions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_stddev_fields_possibleTypes: string[] = ['match_demo_sessions_stddev_fields']
+    export const ismatch_demo_sessions_stddev_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_stddev_fields"')
+      return match_demo_sessions_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_stddev_pop_fields_possibleTypes: string[] = ['match_demo_sessions_stddev_pop_fields']
+    export const ismatch_demo_sessions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_stddev_pop_fields"')
+      return match_demo_sessions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_stddev_samp_fields_possibleTypes: string[] = ['match_demo_sessions_stddev_samp_fields']
+    export const ismatch_demo_sessions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_stddev_samp_fields"')
+      return match_demo_sessions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_sum_fields_possibleTypes: string[] = ['match_demo_sessions_sum_fields']
+    export const ismatch_demo_sessions_sum_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_sum_fields"')
+      return match_demo_sessions_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_var_pop_fields_possibleTypes: string[] = ['match_demo_sessions_var_pop_fields']
+    export const ismatch_demo_sessions_var_pop_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_var_pop_fields"')
+      return match_demo_sessions_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_var_samp_fields_possibleTypes: string[] = ['match_demo_sessions_var_samp_fields']
+    export const ismatch_demo_sessions_var_samp_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_var_samp_fields"')
+      return match_demo_sessions_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_demo_sessions_variance_fields_possibleTypes: string[] = ['match_demo_sessions_variance_fields']
+    export const ismatch_demo_sessions_variance_fields = (obj?: { __typename?: any } | null): obj is match_demo_sessions_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_demo_sessions_variance_fields"')
+      return match_demo_sessions_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -55818,6 +56717,43 @@ export const enumMapsUpdateColumn = {
    workshop_map_id: 'workshop_map_id' as const
 }
 
+export const enumMatchDemoSessionsConstraint = {
+   match_demo_sessions_per_user_per_map_uniq: 'match_demo_sessions_per_user_per_map_uniq' as const,
+   match_demo_sessions_pkey: 'match_demo_sessions_pkey' as const
+}
+
+export const enumMatchDemoSessionsSelectColumn = {
+   created_at: 'created_at' as const,
+   error_message: 'error_message' as const,
+   id: 'id' as const,
+   k8s_job_name: 'k8s_job_name' as const,
+   last_activity_at: 'last_activity_at' as const,
+   last_status_at: 'last_status_at' as const,
+   match_id: 'match_id' as const,
+   match_map_id: 'match_map_id' as const,
+   session_token: 'session_token' as const,
+   status: 'status' as const,
+   status_history: 'status_history' as const,
+   stream_url: 'stream_url' as const,
+   watcher_steam_id: 'watcher_steam_id' as const
+}
+
+export const enumMatchDemoSessionsUpdateColumn = {
+   created_at: 'created_at' as const,
+   error_message: 'error_message' as const,
+   id: 'id' as const,
+   k8s_job_name: 'k8s_job_name' as const,
+   last_activity_at: 'last_activity_at' as const,
+   last_status_at: 'last_status_at' as const,
+   match_id: 'match_id' as const,
+   match_map_id: 'match_map_id' as const,
+   session_token: 'session_token' as const,
+   status: 'status' as const,
+   status_history: 'status_history' as const,
+   stream_url: 'stream_url' as const,
+   watcher_steam_id: 'watcher_steam_id' as const
+}
+
 export const enumMatchInvitesConstraint = {
    match_invites_match_id_invited_by_player_steam_id_steam_id_key: 'match_invites_match_id_invited_by_player_steam_id_steam_id_key' as const,
    match_invites_pkey: 'match_invites_pkey' as const
@@ -55898,19 +56834,36 @@ export const enumMatchMapDemosConstraint = {
 }
 
 export const enumMatchMapDemosSelectColumn = {
+   bombs: 'bombs' as const,
+   duration_seconds: 'duration_seconds' as const,
    file: 'file' as const,
    id: 'id' as const,
+   kills: 'kills' as const,
+   map_name: 'map_name' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
-   size: 'size' as const
+   metadata_parsed_at: 'metadata_parsed_at' as const,
+   round_ticks: 'round_ticks' as const,
+   size: 'size' as const,
+   tick_rate: 'tick_rate' as const,
+   total_ticks: 'total_ticks' as const,
+   workshop_id: 'workshop_id' as const
 }
 
 export const enumMatchMapDemosUpdateColumn = {
+   bombs: 'bombs' as const,
    file: 'file' as const,
    id: 'id' as const,
+   kills: 'kills' as const,
+   map_name: 'map_name' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
-   size: 'size' as const
+   metadata_parsed_at: 'metadata_parsed_at' as const,
+   round_ticks: 'round_ticks' as const,
+   size: 'size' as const,
+   tick_rate: 'tick_rate' as const,
+   total_ticks: 'total_ticks' as const,
+   workshop_id: 'workshop_id' as const
 }
 
 export const enumMatchMapRoundsConstraint = {
@@ -56119,6 +57072,7 @@ export const enumMatchStreamsSelectColumn = {
    match_id: 'match_id' as const,
    priority: 'priority' as const,
    status: 'status' as const,
+   status_history: 'status_history' as const,
    stream_url: 'stream_url' as const,
    title: 'title' as const
 }
@@ -56146,6 +57100,7 @@ export const enumMatchStreamsUpdateColumn = {
    match_id: 'match_id' as const,
    priority: 'priority' as const,
    status: 'status' as const,
+   status_history: 'status_history' as const,
    stream_url: 'stream_url' as const,
    title: 'title' as const
 }

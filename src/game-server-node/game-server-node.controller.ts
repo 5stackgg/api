@@ -366,7 +366,13 @@ export class GameServerNodeController {
 
   @Get("/script/:gameServerNodeId")
   public async script(@Req() request: Request, @Res() response: Response) {
-    const gameServerNodeId = request.params.gameServerNodeId.replace(".sh", "");
+    // Express 5 types params as `string | string[]` (catch-all routes
+    // can yield arrays). This is a single :gameServerNodeId so it's
+    // always a string at runtime; cast to drop the union.
+    const gameServerNodeId = String(request.params.gameServerNodeId).replace(
+      ".sh",
+      "",
+    );
 
     const { game_server_nodes_by_pk, settings } = await this.hasura.query({
       game_server_nodes_by_pk: {

@@ -36,6 +36,7 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
+import { ReapIdleDemoSessions } from "./jobs/ReapIdleDemoSessions";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
 import { MatchEventsGateway } from "./match-events.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
@@ -51,6 +52,7 @@ import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middlew
 import { K8sModule } from "src/k8s/k8s.module";
 import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.module";
 import { GameStreamerModule } from "./game-streamer/game-streamer.module";
+import { DemosModule } from "../demos/demos.module";
 
 @Module({
   imports: [
@@ -65,6 +67,7 @@ import { GameStreamerModule } from "./game-streamer/game-streamer.module";
     NotificationsModule,
     K8sModule,
     GameStreamerModule,
+    DemosModule,
     forwardRef(() => DiscordBotModule),
     DiscordTournamentVoiceModule,
     MatchMaking,
@@ -115,6 +118,7 @@ import { GameStreamerModule } from "./game-streamer/game-streamer.module";
     StopOnDemandServer,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
+    ReapIdleDemoSessions,
     EloCalculation,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
@@ -195,6 +199,19 @@ export class MatchesModule implements NestModule {
 
     void matchServersQueue.add(
       CancelInvalidTournaments.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    // Sweep stale demo playback pods every minute. Cheap query (one
+    // indexed timestamp lookup) — actual teardown only fires for rows
+    // older than the idle threshold (60s default; 6 missed 10s pings).
+    void scheduleMatchQueue.add(
+      ReapIdleDemoSessions.name,
       {},
       {
         repeat: {

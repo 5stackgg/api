@@ -59,6 +59,7 @@ select_permissions:
         - error_message
         - last_status_at
         - autodirector
+        - status_history
       filter: {}
     comment: ""
 update_permissions:

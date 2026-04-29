@@ -1,0 +1,30 @@
+table:
+  name: match_demo_sessions
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: watcher
+    using:
+      foreign_key_constraint_on: watcher_steam_id
+select_permissions:
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - match_id
+        - match_map_id
+        - watcher_steam_id
+        - status
+        - stream_url
+        - error_message
+        - last_status_at
+        - last_activity_at
+        - status_history
+        - created_at
+      filter: {}
+      allow_aggregations: true

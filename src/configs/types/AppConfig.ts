@@ -9,4 +9,5 @@ export type AppConfig = {
   demosDomain: string;
   gameStreamHlsBase: string;
   authCookieDomain: string;
+  demoParserUrl: string;
 };

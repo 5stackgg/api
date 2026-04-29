@@ -13,6 +13,7 @@ import { S3Service } from "../s3/s3.service";
 import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
+import { DemoMetadataService } from "./demo-metadata.service";
 
 @Controller("/demos/:matchId")
 export class DemosController {
@@ -20,6 +21,7 @@ export class DemosController {
     protected readonly s3: S3Service,
     protected readonly hasura: HasuraService,
     protected readonly logger: Logger,
+    protected readonly demoMetadata: DemoMetadataService,
   ) {}
 
   @Get("map/:mapId")
@@ -182,7 +184,7 @@ export class DemosController {
       });
     }
 
-    await this.hasura.mutation({
+    const { insert_match_map_demos_one } = await this.hasura.mutation({
       insert_match_map_demos_one: {
         __args: {
           object: {
@@ -192,9 +194,14 @@ export class DemosController {
             size: request.body.size,
           },
         },
-        __typename: true,
+        id: true,
       },
     });
+
+    const matchMapDemoId = insert_match_map_demos_one?.id;
+    if (matchMapDemoId) {
+      void this.demoMetadata.ensureParsedById(matchMapDemoId);
+    }
 
     return response.status(200).send();
   }

@@ -13,6 +13,7 @@ import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { MatchmakingLobbyService } from "src/matchmaking/matchmaking-lobby.service";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
+import { DemoSessionWatcherService } from "src/matches/game-streamer/demo-session-watcher.service";
 
 @Injectable()
 export class SocketsService {
@@ -30,6 +31,7 @@ export class SocketsService {
     private readonly matchmakingLobbyService: MatchmakingLobbyService,
     @Inject("GAME_SERVER_NODE_CLIENT_SERVICE")
     private readonly gameServerNodeClient: ClientProxy,
+    private readonly demoSessionWatcher: DemoSessionWatcherService,
   ) {
     this.redis = this.redisManager.getConnection();
     this.appConfig = this.config.get<AppConfig>("app");
@@ -122,6 +124,12 @@ export class SocketsService {
 
         client.on("close", async () => {
           this.clients.delete(client.id);
+
+          // Tear down any demo playback sessions this client was
+          // watching. The popup window has its own WS connection;
+          // window close → WS close → here → session stops within
+          // milliseconds, no waiting on the 60s reaper.
+          void this.demoSessionWatcher.clientClosed(client.id);
 
           for (const nodeId of client.peerNodes) {
             this.gameServerNodeClient.emit(`peer-close.${nodeId}`, {
