@@ -412,6 +412,22 @@ export class GameServerNodeController {
     const scriptContent = `
         sudo -i
 
+        if [ -t 1 ]; then
+          C_RESET=$'\\033[0m'
+          C_STEP=$'\\033[1;36m'
+          C_OK=$'\\033[0;32m'
+          C_WARN=$'\\033[1;33m'
+          C_ERR=$'\\033[0;31m'
+          C_DIM=$'\\033[2m'
+        else
+          C_RESET=''; C_STEP=''; C_OK=''; C_WARN=''; C_ERR=''; C_DIM=''
+        fi
+        step() { echo; echo "\${C_STEP}==> $1\${C_RESET}"; }
+        ok()   { echo "\${C_OK}    $1\${C_RESET}"; }
+        warn() { echo "\${C_WARN}    $1\${C_RESET}"; }
+        err()  { echo "\${C_ERR}    $1\${C_RESET}" >&2; }
+
+        step "Checking disk space"
         if [ -d "/opt/5stack/serverfiles/game/csgo" ]; then
             REQUIRED_GB=${existingDiskGb}
         else
@@ -420,51 +436,79 @@ export class GameServerNodeController {
         if [ "$REQUIRED_GB" -gt 0 ]; then
             AVAILABLE_GB=$(df -BG / | awk 'NR==2 {print $4}' | tr -d 'G')
             if [ "$AVAILABLE_GB" -lt "$REQUIRED_GB" ]; then
-                echo "Error: Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
+                err "Insufficient disk space. Required: \${REQUIRED_GB}GB, Available: \${AVAILABLE_GB}GB"
                 exit 1
             fi
-            echo "Disk space check passed: \${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
+            ok "\${AVAILABLE_GB}GB available (minimum: \${REQUIRED_GB}GB)"
+        else
+            ok "skipped (no minimum configured)"
         fi
 
+        step "Creating 5stack directories"
         mkdir -p /opt/5stack/demos
         mkdir -p /opt/5stack/steamcmd
         mkdir -p /opt/5stack/serverfiles
         mkdir -p /opt/5stack/serverfiles-csgo
         mkdir -p /opt/5stack/custom-plugins
+        ok "ready"
 
-        echo "Connecting to secure network";
-      
+        step "Installing tailscale"
         curl -fsSL https://tailscale.com/install.sh | sh
 
+        step "Joining tailscale network"
+        tailscale up --authkey=${game_server_nodes_by_pk.token} --accept-routes --hostname=${gameServerNodeId}
+
+        step "Waiting for tailscale IP"
+        for i in {1..60}; do
+          TAILSCALE_IP=$(tailscale ip -4 2>/dev/null | head -n 1)
+          if [ -n "$TAILSCALE_IP" ]; then
+            break
+          fi
+          sleep 2
+        done
+
+        if [ -z "$TAILSCALE_IP" ]; then
+            if [ ! -t 0 ] && [ ! -e /dev/tty ]; then
+                err "Failed to get Tailscale IP after 2 minutes and no terminal available for manual entry."
+                err "Check tailscale status with: tailscale status"
+                exit 1
+            fi
+            warn "Failed to get Tailscale IP automatically."
+            warn "Please enter the IP manually (find it at https://login.tailscale.com/admin/machines):"
+            while true; do
+                read -p "Tailscale IP: " TAILSCALE_IP </dev/tty
+                if [ -n "$TAILSCALE_IP" ]; then
+                    break
+                fi
+                warn "Tailscale IP cannot be empty. Please enter a valid IP."
+            done
+        fi
+        ok "tailscale IP: \${TAILSCALE_IP}"
+
+        step "Configuring kernel IP forwarding"
         if [ -d "/etc/sysctl.d" ]; then
           if ! grep -q "^net.ipv4.ip_forward = 1" /etc/sysctl.d/99-tailscale.conf; then
-            echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+            echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf >/dev/null
           fi
           if ! grep -q "^net.ipv6.conf.all.forwarding = 1" /etc/sysctl.d/99-tailscale.conf; then
-            echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+            echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf >/dev/null
           fi
-          sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+          sudo sysctl -p /etc/sysctl.d/99-tailscale.conf >/dev/null
         else
           if ! grep -q "^net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
-            echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.conf
+            echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.conf >/dev/null
           fi
           if ! grep -q "^net.ipv6.conf.all.forwarding = 1" /etc/sysctl.conf; then
-            echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.conf
+            echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.conf >/dev/null
           fi
-          sudo sysctl -p /etc/sysctl.conf
+          sudo sysctl -p /etc/sysctl.conf >/dev/null
         fi
+        ok "ip forwarding enabled"
 
         rm -f /etc/rancher/k3s/config.yaml
         rm -f /var/lib/kubelet/cpu_manager_state
 
-        # Write helper scripts (but NOT the drop-ins/timer) before k3s
-        # install. The scripts must exist on disk before any drop-in
-        # references them, otherwise k3s-agent will crash-loop on
-        # ExecStartPre with status=203/EXEC if a re-run bails out
-        # before the scripts get rewritten.
-        # Drop-ins/timer are deferred until *after* k3s-agent is
-        # installed so we don't risk firing tailscaled-restart logic
-        # mid-join during the initial bring-up.
+        step "Writing systemd helper scripts"
 cat <<-'SCRIPT' >/usr/local/bin/5stack-cpu-state-check.sh
 	#!/bin/bash
 	STATE=/var/lib/kubelet/cpu_manager_state
@@ -513,47 +557,12 @@ cat <<-'SCRIPT' >/usr/local/bin/5stack-tailscale-state-check.sh
 	echo "[5stack] tailscale still unhealthy after restart"
 	exit 0
 SCRIPT
-        chmod +x /usr/local/bin/5stack-tailscale-state-check.sh
+        ok "helper scripts written"
 
-        # Clean up any stale drop-ins from a previous incomplete install
-        # so k3s-agent's first start during install isn't affected by
-        # them. We re-create them below once k3s-agent is in place.
-        rm -f /etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
-        rm -f /etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
-        rm -f /etc/systemd/system/k3s-agent.service.d/tailscale-state-check.conf
-
-        echo "Installing k3s";
+        step "Installing k3s"
         curl -sfL https://get.k3s.io | K3S_URL=https://${process.env.TAILSCALE_NODE_IP}:6443 K3S_TOKEN=${process.env.K3S_TOKEN} sh -s - --node-name ${gameServerNodeId} --vpn-auth="name=tailscale,joinKey=${game_server_nodes_by_pk.token}"
 
-        echo "Waiting for k3s agent and tailscale ip to be available...";
-
-        for i in {1..60}; do
-          TAILSCALE_IP=$(tailscale ip -4 2>/dev/null | head -n 1)
-          if [ -n "$TAILSCALE_IP" ]; then
-            break
-          fi
-          sleep 2
-        done
-
-        if [ -z "$TAILSCALE_IP" ]; then
-            if [ ! -t 0 ] && [ ! -e /dev/tty ]; then
-                echo "Error: Failed to get Tailscale IP after 2 minutes and no terminal available for manual entry."
-                echo "Check tailscale status with: tailscale status"
-                echo "Check k3s-agent status with: systemctl status k3s-agent"
-                exit 1
-            fi
-            echo "Failed to get Tailscale IP automatically. Please enter the IP manually (find it at https://login.tailscale.com/admin/machines):"
-            while true; do
-                read -p "Tailscale IP: " TAILSCALE_IP </dev/tty
-                if [ -n "$TAILSCALE_IP" ]; then
-                    break
-                fi
-                echo "Tailscale IP cannot be empty. Please enter a valid IP."
-            done
-        else
-            echo "Tailscale IP detected: $TAILSCALE_IP"
-        fi
-
+        step "Writing k3s config"
         mkdir -p /etc/rancher/k3s
 
         rm -f /etc/rancher/k3s/config.yaml
@@ -567,11 +576,15 @@ cat <<-EOF >/etc/rancher/k3s/config.yaml
 	  - "system-reserved=cpu=1"
 	  - "kube-reserved=cpu=1"
 EOF
+        ok "node-ip set to \${TAILSCALE_IP}"
 
-        # k3s-agent is now installed and tailscale is up — safe to
-        # install the drop-ins and the periodic tailscale state-check
-        # timer. Doing this earlier risks firing tailscaled-restart
-        # logic mid-join during the initial bring-up.
+        step "Installing systemd drop-ins and timer"
+        chmod +x /usr/local/bin/5stack-tailscale-state-check.sh
+
+        rm -f /etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
+        rm -f /etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
+        rm -f /etc/systemd/system/k3s-agent.service.d/tailscale-state-check.conf
+
         mkdir -p /etc/systemd/system/k3s-agent.service.d
 
 cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
@@ -579,7 +592,6 @@ cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/cpu-state-check.conf
 	ExecStartPre=/usr/local/bin/5stack-cpu-state-check.sh
 DROPIN
 
-        # Auto-reconcile Tailscale IP on every k3s-agent start/restart
 cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/update-tailscale-ip.conf
 	[Service]
 	ExecStartPre=/bin/bash -c 'TSIP=$(tailscale ip -4 2>/dev/null | head -n 1); if [ -n "$TSIP" ] && [ -f /etc/rancher/k3s/config.yaml ]; then sed -i "s/^node-ip:.*/node-ip: $TSIP/" /etc/rancher/k3s/config.yaml; echo "[5stack] Updated k3s node-ip to $TSIP"; fi'
@@ -613,17 +625,23 @@ cat <<-'UNIT' >/etc/systemd/system/5stack-tailscale-state-check.timer
 	[Install]
 	WantedBy=timers.target
 UNIT
-
-        # Remove one-time auth key from k3s-agent service to prevent
-        # re-auth failures with expired key on future reboots
-        sed -i '/--vpn-auth/d' /etc/systemd/system/k3s-agent.service
-
         systemctl daemon-reload
-        systemctl enable --now 5stack-tailscale-state-check.timer
+        systemctl enable --now 5stack-tailscale-state-check.timer >/dev/null 2>&1
+        ok "drop-ins installed, periodic tailscale check enabled"
 
+        step "Starting k3s-agent"
         rm -f /var/lib/kubelet/cpu_manager_state
 
         systemctl restart k3s-agent
+        ok "k3s-agent restarted"
+
+        echo
+        echo "\${C_OK}=================================\${C_RESET}"
+        echo "\${C_OK}  Game server node setup complete\${C_RESET}"
+        echo "\${C_OK}=================================\${C_RESET}"
+        echo "  Node ID:      ${gameServerNodeId}"
+        echo "  Tailscale IP: \${TAILSCALE_IP}"
+        echo
     `;
 
     response.setHeader("Content-Length", Buffer.byteLength(scriptContent));
