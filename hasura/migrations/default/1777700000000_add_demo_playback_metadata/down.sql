@@ -5,6 +5,6 @@ alter table "public"."match_map_demos"
   drop column if exists "tick_rate",
   drop column if exists "total_ticks",
   drop column if exists "workshop_id",
-  drop column if exists "map_name"
+  drop column if exists "map_name",
   drop column if exists "bombs",
   drop column if exists "kills";

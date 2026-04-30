@@ -10,6 +10,6 @@ alter table "public"."match_map_demos"
   add column if not exists "round_ticks" jsonb null,
   add column if not exists "metadata_parsed_at" timestamptz null,
   add column if not exists "map_name" text null,
-  add column if not exists "workshop_id" text null
+  add column if not exists "workshop_id" text null,
   add column if not exists "kills" jsonb null,
   add column if not exists "bombs" jsonb null;
