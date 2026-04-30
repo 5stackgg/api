@@ -104,7 +104,7 @@ export class DemoMetadataService {
         workshop_id: true,
         cs2_build: true,
         metadata_parsed_at: true,
-      } as any,
+      },
     });
     return (match_map_demos[0] as DemoRow) ?? null;
   }
@@ -123,7 +123,7 @@ export class DemoMetadataService {
         workshop_id: true,
         cs2_build: true,
         metadata_parsed_at: true,
-      } as any,
+      },
     });
     return (match_map_demos_by_pk as DemoRow) ?? null;
   }
@@ -148,7 +148,7 @@ export class DemoMetadataService {
             workshop_id: parsed.workshop_id ?? null,
             cs2_build: parsed.cs2_build ?? null,
             metadata_parsed_at: "now()",
-          } as any,
+          },
         },
         id: true,
       },

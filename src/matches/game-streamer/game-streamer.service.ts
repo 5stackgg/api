@@ -156,8 +156,7 @@ export class GameStreamerService {
             match_id: { _eq: matchId },
             is_game_streamer: { _eq: true },
           },
-          // Generated Hasura types lag this migration until codegen runs.
-          _set: { autodirector: enabled } as any,
+          _set: { autodirector: enabled },
         },
         affected_rows: true,
       },
@@ -236,7 +235,7 @@ export class GameStreamerService {
     const streamUrl = `${this.appConfig.gameStreamHlsBase}/${matchId}/`;
 
     const bootIso = new Date().toISOString();
-    const insertRes = await this.hasura.mutation({
+    const { insert_match_demo_sessions_one } = await this.hasura.mutation({
       insert_match_demo_sessions_one: {
         __args: {
           object: {
@@ -252,8 +251,8 @@ export class GameStreamerService {
         },
         id: true,
       },
-    } as any);
-    const sessionId = (insertRes as any)?.insert_match_demo_sessions_one?.id;
+    });
+    const sessionId = insert_match_demo_sessions_one?.id;
     if (!sessionId) {
       throw new Error("failed to insert demo session row");
     }
@@ -268,7 +267,7 @@ export class GameStreamerService {
         },
         id: true,
       },
-    } as any);
+    });
 
     const nodeId = await this.pickGpuNode(match.region);
 
@@ -359,7 +358,7 @@ export class GameStreamerService {
         __args: { id: sessionId },
         id: true,
       },
-    } as any);
+    });
   }
 
   public async demoControl(
@@ -423,7 +422,7 @@ export class GameStreamerService {
   }
 
   private async findDemoSession(matchMapId: string, userSteamId: string) {
-    const { match_demo_sessions } = (await this.hasura.query({
+    const { match_demo_sessions } = await this.hasura.query({
       match_demo_sessions: {
         __args: {
           where: {
@@ -437,15 +436,8 @@ export class GameStreamerService {
         session_token: true,
         status: true,
       },
-    } as any)) as any;
-    return match_demo_sessions?.[0] as
-      | {
-          id: string;
-          k8s_job_name: string;
-          session_token: string;
-          status: string;
-        }
-      | undefined;
+    });
+    return match_demo_sessions?.[0];
   }
 
   public async pingDemoSession(matchMapId: string, userSteamId: string) {
@@ -460,7 +452,7 @@ export class GameStreamerService {
         },
         affected_rows: true,
       },
-    } as any);
+    });
   }
 
   private async bumpDemoSessionActivity(sessionId: string) {
@@ -472,7 +464,7 @@ export class GameStreamerService {
         },
         id: true,
       },
-    } as any);
+    });
   }
 
   public async validateDemoSessionAuth(
@@ -493,7 +485,7 @@ export class GameStreamerService {
       return null;
     }
 
-    const { match_demo_sessions } = (await this.hasura.query({
+    const { match_demo_sessions } = await this.hasura.query({
       match_demo_sessions: {
         __args: {
           where: { id: { _eq: sessionId } },
@@ -504,7 +496,7 @@ export class GameStreamerService {
         match_map_id: true,
         session_token: true,
       },
-    } as any)) as any;
+    });
     const row = match_demo_sessions?.[0];
     if (!row?.session_token) return null;
 
@@ -523,12 +515,12 @@ export class GameStreamerService {
     sessionId: string,
     body: GameStreamerStatusDto,
   ) {
-    const { match_demo_sessions_by_pk: current } = (await this.hasura.query({
+    const { match_demo_sessions_by_pk: current } = await this.hasura.query({
       match_demo_sessions_by_pk: {
         __args: { id: sessionId },
         status_history: true,
       },
-    } as any)) as any;
+    });
 
     if (!current) {
       this.logger.warn(
@@ -558,7 +550,7 @@ export class GameStreamerService {
         },
         id: true,
       },
-    } as any);
+    });
 
     this.logger.log(
       `[demo ${sessionId}] status=${body.status}${body.error ? ` err=${body.error}` : ""}`,
@@ -626,7 +618,7 @@ export class GameStreamerService {
   public async reapIdleDemoSessions(idleSeconds = 60) {
     const threshold = new Date(Date.now() - idleSeconds * 1000).toISOString();
 
-    const { match_demo_sessions } = (await this.hasura.query({
+    const { match_demo_sessions } = await this.hasura.query({
       match_demo_sessions: {
         __args: {
           where: {
@@ -637,7 +629,7 @@ export class GameStreamerService {
         k8s_job_name: true,
         last_activity_at: true,
       },
-    } as any)) as any;
+    });
 
     for (const session of match_demo_sessions ?? []) {
       this.logger.log(
@@ -697,16 +689,16 @@ export class GameStreamerService {
     );
     if (allClusterIds.length === 0) return;
 
-    const { match_demo_sessions } = (await this.hasura.query({
+    const { match_demo_sessions } = await this.hasura.query({
       match_demo_sessions: {
         __args: {
           where: { id: { _in: allClusterIds } },
         },
         id: true,
       },
-    } as any)) as any;
+    });
     const liveIds = new Set<string>(
-      (match_demo_sessions ?? []).map((s: { id: string }) => s.id),
+      (match_demo_sessions ?? []).map((s) => s.id),
     );
 
     for (const sessionId of allClusterIds) {
@@ -1101,7 +1093,7 @@ export class GameStreamerService {
             status: "booting",
             status_history: [{ status: "booting", at: nowIso }],
             last_status_at: "now()",
-          } as any,
+          },
         },
         id: true,
       },
@@ -1145,7 +1137,7 @@ export class GameStreamerService {
   }
 
   public async reportStatus(matchId: string, body: GameStreamerStatusDto) {
-    const { match_streams } = (await this.hasura.query({
+    const { match_streams } = await this.hasura.query({
       match_streams: {
         __args: {
           where: {
@@ -1156,7 +1148,7 @@ export class GameStreamerService {
         },
         status_history: true,
       },
-    } as any)) as any;
+    });
     const previous = Array.isArray(match_streams?.[0]?.status_history)
       ? (match_streams[0].status_history as unknown[])
       : [];
@@ -1181,7 +1173,7 @@ export class GameStreamerService {
             match_id: { _eq: matchId },
             is_game_streamer: { _eq: true },
           },
-          _set: setClause as any,
+          _set: setClause,
         },
         affected_rows: true,
       },
@@ -1215,7 +1207,7 @@ export class GameStreamerService {
               priority: 0,
               is_game_streamer: true,
               ...setClause,
-            } as any,
+            },
           },
           id: true,
         },
