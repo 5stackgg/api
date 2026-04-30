@@ -366,9 +366,6 @@ export class GameServerNodeController {
 
   @Get("/script/:gameServerNodeId")
   public async script(@Req() request: Request, @Res() response: Response) {
-    // Express 5 types params as `string | string[]` (catch-all routes
-    // can yield arrays). This is a single :gameServerNodeId so it's
-    // always a string at runtime; cast to drop the union.
     const gameServerNodeId = String(request.params.gameServerNodeId).replace(
       ".sh",
       "",
