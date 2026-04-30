@@ -18,6 +18,6 @@ export default (): {
       process.env.AUTH_COOKIE_DOMAIN || `.${process.env.WEB_DOMAIN}`,
     demoParserUrl:
       process.env.DEMO_PARSER_URL ||
-      "http://demo-parser.5stack.svc.cluster.local:8080",
+      "http://demo-parser:8080",
   },
 });
