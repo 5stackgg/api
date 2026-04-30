@@ -44,8 +44,12 @@ describe("GameStreamerService.validateDemoSessionAuth", () => {
 
   it("rejects missing or non-string headers", async () => {
     const { service, hasura } = buildService(TOKEN);
-    expect(await service.validateDemoSessionAuth(SESSION_ID, undefined)).toBeNull();
-    expect(await service.validateDemoSessionAuth(SESSION_ID, 42 as any)).toBeNull();
+    expect(
+      await service.validateDemoSessionAuth(SESSION_ID, undefined),
+    ).toBeNull();
+    expect(
+      await service.validateDemoSessionAuth(SESSION_ID, 42 as any),
+    ).toBeNull();
     expect(await service.validateDemoSessionAuth(SESSION_ID, "")).toBeNull();
     expect(hasura.query).not.toHaveBeenCalled();
   });
@@ -70,7 +74,10 @@ describe("GameStreamerService.validateDemoSessionAuth", () => {
   it("rejects when row is missing", async () => {
     const { service } = buildService(null);
     expect(
-      await service.validateDemoSessionAuth(SESSION_ID, `${SESSION_ID}:${TOKEN}`),
+      await service.validateDemoSessionAuth(
+        SESSION_ID,
+        `${SESSION_ID}:${TOKEN}`,
+      ),
     ).toBeNull();
   });
 
@@ -94,7 +101,10 @@ describe("GameStreamerService.validateDemoSessionAuth", () => {
   it("returns the session when id + token match", async () => {
     const { service } = buildService(TOKEN);
     expect(
-      await service.validateDemoSessionAuth(SESSION_ID, `${SESSION_ID}:${TOKEN}`),
+      await service.validateDemoSessionAuth(
+        SESSION_ID,
+        `${SESSION_ID}:${TOKEN}`,
+      ),
     ).toEqual({
       id: SESSION_ID,
       match_id: "match-1",

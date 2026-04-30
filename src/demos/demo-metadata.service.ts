@@ -15,20 +15,8 @@ export type DemoRow = {
   metadata_parsed_at: string | null;
 };
 
-/**
- * Extracts demo metadata (header + round + kill + bomb events) and
- * writes it to `match_map_demos`. Used to be an out-of-cluster Go
- * microservice; now in-process via @laihoe/demoparser2 (Rust napi
- * binding) so there's one image to deploy.
- *
- * Idempotent: if `metadata_parsed_at` is already set on the row, we
- * skip the parse. Demos are immutable so the cache is permanent.
- */
 @Injectable()
 export class DemoMetadataService {
-  // In-flight parses, keyed by match_map_demo_id. Avoids two
-  // concurrent watchDemo calls from racing each other on the same
-  // demo — the second caller awaits the first's Promise.
   private readonly inFlight = new Map<string, Promise<DemoRow>>();
 
   constructor(
@@ -37,16 +25,6 @@ export class DemoMetadataService {
     private readonly demoParser: DemoParserService,
   ) {}
 
-  /**
-   * Resolve the metadata-bearing demo row for a match_map_id. Triggers
-   * a parse on first call; subsequent calls return the cached row.
-   *
-   * Best-effort by design: if the demo-parser microservice is down or
-   * misconfigured, we log the failure and return the un-parsed row so
-   * watchDemo can still spawn the playback session — the user just
-   * loses round-jump until the next attempt. Pause / seek / speed
-   * still work because they don't depend on round_ticks.
-   */
   public async ensureParsed(matchMapId: string): Promise<DemoRow> {
     const demo = await this.fetchDemoForMap(matchMapId);
     if (!demo) {
@@ -74,12 +52,6 @@ export class DemoMetadataService {
     return parsing;
   }
 
-  /**
-   * Read-only accessor that does NOT trigger parsing. Used by the
-   * watch-demo flow to inject `ROUND_TICKS` into the streamer pod env
-   * if the parser has already run; an empty result just means the spec
-   * server's /demo/round will 404 until a later refresh.
-   */
   public async getDemoForMap(matchMapId: string): Promise<DemoRow | null> {
     return this.fetchDemoForMap(matchMapId);
   }

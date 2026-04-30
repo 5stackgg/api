@@ -33,7 +33,9 @@ export class GameStreamerController {
         request.headers["x-origin-auth"],
       ))
     ) {
-      this.logger.warn(`[${matchId}] status POST rejected: invalid x-origin-auth`);
+      this.logger.warn(
+        `[${matchId}] status POST rejected: invalid x-origin-auth`,
+      );
       return response.status(401).end();
     }
 

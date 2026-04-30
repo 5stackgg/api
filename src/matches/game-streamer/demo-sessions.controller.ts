@@ -11,12 +11,6 @@ import { Request, Response } from "express";
 import { GameStreamerService } from "./game-streamer.service";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 
-// Status receiver for per-user demo playback pods. Mirrors
-// /game-streamer/:matchId/status but writes to match_demo_sessions
-// instead of match_streams, and authenticates with the per-session
-// token issued at job spawn (no shared match password to validate
-// against — demos run on finished matches whose passwords have
-// rotated or are otherwise unsuitable for streamer-pod auth).
 @Controller("demo-sessions/:sessionId")
 export class DemoSessionsController {
   constructor(

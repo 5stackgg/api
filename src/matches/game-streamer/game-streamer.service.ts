@@ -28,16 +28,18 @@ export type DemoControlAction =
   | "round"
   | "state";
 
-// Source of truth for which demo-control actions are allowed. Used by
-// both the WS gateway and the service layer so a future caller can't
-// bypass it by skipping the gateway.
-export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> = new Set<
-  DemoControlAction
->(["pause", "resume", "toggle", "seek", "skip", "speed", "round", "state"]);
+export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
+  new Set<DemoControlAction>([
+    "pause",
+    "resume",
+    "toggle",
+    "seek",
+    "skip",
+    "speed",
+    "round",
+    "state",
+  ]);
 
-// Cap status_history at this many entries. Demos churn through ~10
-// stages on a cold boot; 50 covers reasonable retries without letting
-// a stuck pod balloon the jsonb column.
 const STATUS_HISTORY_CAP = 50;
 
 const GAME_STREAMER_TITLE = "5Stack Game Streamer";
@@ -167,11 +169,6 @@ export class GameStreamerService {
     return `gs-clips-${matchId}`;
   }
 
-  // K8s names derive from the demo session id (DB-issued uuid). Using
-  // the row's uuid as the source of truth keeps cluster state and the
-  // session row in lockstep — to find the pod for a session, take its
-  // first 12 hex chars and prefix with `gs-demo-`. K8s names cap at 63
-  // chars; 12 chars of uuid keeps us well clear with room to extend.
   public static GetDemoJobIdForSession(sessionId: string) {
     return `gs-demo-${sessionId.replace(/-/g, "").slice(0, 12)}`;
   }
@@ -184,17 +181,6 @@ export class GameStreamerService {
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/${action}`;
   }
 
-  /**
-   * Spawn a per-user demo-playback pod. Inserts a `match_demo_sessions`
-   * row first so the web client can subscribe to it for status updates
-   * (no API polling). Returns the session row id + stream URL; the
-   * pod's status-reporter daemon will populate `status` / `is_live`
-   * / `error_message` over the lifetime of the session.
-   *
-   * Pre-signs the demo S3 URL at job-spawn time so the streamer pod
-   * doesn't need its own S3 credentials. The 60-min expiry covers
-   * typical demo viewing windows.
-   */
   public async startDemoPlayback(
     matchMapId: string,
     userSteamId: string,
@@ -204,10 +190,6 @@ export class GameStreamerService {
       roundTicks: unknown;
       totalTicks: number | null;
       tickRate: number | null;
-      // workshop_id from the demo header (parsed by demo-parser).
-      // When set, the streamer pod runs `steamcmd +workshop_download_item
-      // 730 <id>` before launching CS2 — without it CS2 stalls on a
-      // Subscribe? prompt the moment +playdemo touches the map.
       workshopId: string | null;
       cs2Build: string | null;
     },
@@ -241,10 +223,6 @@ export class GameStreamerService {
       throw new Error(`match ${matchId} not found`);
     }
 
-    // Tear down any existing session this user has for this map. Unique
-    // index (match_map_id, watcher_steam_id) would otherwise reject
-    // the insert below; on the cluster side we delete the prior pod so
-    // we don't leak GPU sessions across reconnects.
     const existing = await this.findDemoSession(matchMapId, userSteamId);
     if (existing) {
       this.logger.log(
@@ -253,20 +231,10 @@ export class GameStreamerService {
       await this.stopDemoSessionById(existing.id, existing.k8s_job_name);
     }
 
-    // Issue session credentials before the K8s spawn so the pod can
-    // report status from boot. Token is opaque to the client — it
-    // never leaves the pod env / status-reporter auth header.
     const sessionToken = randomBytes(24).toString("hex");
 
     const streamUrl = `${this.appConfig.gameStreamHlsBase}/${matchId}/`;
 
-    // Generated Zeus types lag the match_demo_sessions migration until
-    // codegen runs; cast the whole graph until the types catch up.
-    // Seed status_history with `booting` so the stepper marks
-    // "Allocating GPU pod" as ✓ from the moment the row appears.
-    // The streamer pod's first push is `preparing` — without this
-    // seed, `booting` would never enter history and the stepper
-    // would falsely render it as skipped.
     const bootIso = new Date().toISOString();
     const insertRes = await this.hasura.mutation({
       insert_match_demo_sessions_one: {
@@ -275,9 +243,6 @@ export class GameStreamerService {
             match_id: matchId,
             match_map_id: matchMapId,
             watcher_steam_id: userSteamId,
-            // k8s_job_name + session_token populated below once we know
-            // the row id (k8s name derives from it). Two-phase insert
-            // keeps the row id as the source of truth for naming.
             k8s_job_name: "pending",
             session_token: sessionToken,
             stream_url: streamUrl,
@@ -317,7 +282,10 @@ export class GameStreamerService {
       { name: "DEMO_SESSION_TOKEN", value: sessionToken },
     ];
     if (options.roundTicks != null) {
-      env.push({ name: "ROUND_TICKS", value: JSON.stringify(options.roundTicks) });
+      env.push({
+        name: "ROUND_TICKS",
+        value: JSON.stringify(options.roundTicks),
+      });
     }
     if (options.totalTicks != null) {
       env.push({ name: "DEMO_TOTAL_TICKS", value: String(options.totalTicks) });
@@ -356,12 +324,6 @@ export class GameStreamerService {
     };
   }
 
-  /**
-   * Stop the calling user's demo session for a match map. Looks up the
-   * row first so we know the k8s job name to tear down — the row is
-   * authoritative for cluster naming, in case GetDemoJobIdForSession
-   * ever changes.
-   */
   public async stopDemoPlayback(matchMapId: string, userSteamId: string) {
     const session = await this.findDemoSession(matchMapId, userSteamId);
     if (!session) {
@@ -373,13 +335,6 @@ export class GameStreamerService {
     await this.stopDemoSessionById(session.id, session.k8s_job_name);
   }
 
-  /**
-   * Tear down by session id. Used by stopDemoPlayback (user-initiated)
-   * AND by the idle reaper. Deletes the K8s job + service + DB row.
-   * Errors during k8s teardown are logged but the row is still removed
-   * — the row is what the web subscribes to, and a dangling pod will
-   * be cleaned up by the next reaper sweep.
-   */
   public async stopDemoSessionById(sessionId: string, k8sJobName: string) {
     this.logger.log(`[demo ${sessionId}] stopping (job=${k8sJobName})`);
 
@@ -413,10 +368,6 @@ export class GameStreamerService {
     action: DemoControlAction,
     body: Record<string, unknown> = {},
   ): Promise<unknown> {
-    // Defense in depth: the WS gateway also filters, but the service
-    // is publicly callable from any injected caller. Validate here so
-    // a future caller can't smuggle an arbitrary path component into
-    // getDemoSpecUrl via `action`.
     if (!DEMO_CONTROL_ACTIONS.has(action)) {
       throw new Error(`unsupported demo control action: ${action}`);
     }
@@ -428,9 +379,6 @@ export class GameStreamerService {
       );
     }
 
-    // Bump activity *before* the network call so the reaper doesn't
-    // race a slow spec-server response and prematurely kill the pod
-    // mid-control-acknowledgement.
     await this.bumpDemoSessionActivity(session.id);
 
     const url = this.getDemoSpecUrl(session.id, action);
@@ -474,11 +422,6 @@ export class GameStreamerService {
     return res.json().catch(() => ({ ok: true }));
   }
 
-  /**
-   * Look up the demo session row that owns a (match_map_id, user)
-   * pair. Returns null if there's no active session — the web should
-   * call watchDemo first.
-   */
   private async findDemoSession(matchMapId: string, userSteamId: string) {
     const { match_demo_sessions } = (await this.hasura.query({
       match_demo_sessions: {
@@ -496,21 +439,15 @@ export class GameStreamerService {
       },
     } as any)) as any;
     return match_demo_sessions?.[0] as
-      | { id: string; k8s_job_name: string; session_token: string; status: string }
+      | {
+          id: string;
+          k8s_job_name: string;
+          session_token: string;
+          status: string;
+        }
       | undefined;
   }
 
-  /**
-   * Public heartbeat — bumps last_activity_at without doing anything
-   * else. Returns silently if there's no active session for this user
-   * (e.g. the popup raced the reaper / a user-initiated stop). The
-   * web treats absence of an active session as the cue to close itself.
-   *
-   * Single-shot update: at 10s/heartbeat × N concurrent sessions a
-   * read-then-write would double the DB load. The (match_map_id,
-   * watcher_steam_id) unique index makes the where-clause update
-   * O(1).
-   */
   public async pingDemoSession(matchMapId: string, userSteamId: string) {
     await this.hasura.mutation({
       update_match_demo_sessions: {
@@ -538,13 +475,6 @@ export class GameStreamerService {
     } as any);
   }
 
-  /**
-   * Validate a status-reporter POST. The streamer pod is started with
-   * a per-session token; on every status POST it sends `x-origin-auth:
-   * <session_id>:<token>`. We compare the token against what we stored
-   * at session creation. Constant-time comparison via the existing
-   * helper.
-   */
   public async validateDemoSessionAuth(
     sessionId: string,
     originAuth: unknown,
@@ -589,27 +519,10 @@ export class GameStreamerService {
     };
   }
 
-  /**
-   * Receive a status update from a demo session pod. Mirrors
-   * reportStatus (live), but writes to match_demo_sessions instead
-   * of match_streams. The web subscription on the row picks it up
-   * automatically.
-   *
-   * Important: we do NOT update stream_url here. The streamer pod
-   * reports its SRT publish URL (cluster-internal, useless to a
-   * browser); the api set the proper HLS URL on the row at insert
-   * time and that's what the web consumes. body.stream_url is kept
-   * around for debug logging only.
-   */
   public async reportDemoStatus(
     sessionId: string,
     body: GameStreamerStatusDto,
   ) {
-    // Read-modify-write the history so we can cap its length. Hasura
-    // jsonb _append has no built-in trim, and a stuck pod cycling
-    // statuses would otherwise grow this column without bound. Single
-    // writer per session (the streamer pod) makes the lack of atomicity
-    // safe in practice.
     const { match_demo_sessions_by_pk: current } = (await this.hasura.query({
       match_demo_sessions_by_pk: {
         __args: { id: sessionId },
@@ -653,7 +566,8 @@ export class GameStreamerService {
   }
 
   private async createDemoService(sessionId: string) {
-    const serviceName = GameStreamerService.GetDemoServiceNameForSession(sessionId);
+    const serviceName =
+      GameStreamerService.GetDemoServiceNameForSession(sessionId);
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -692,7 +606,8 @@ export class GameStreamerService {
   }
 
   private async deleteDemoService(sessionId: string) {
-    const serviceName = GameStreamerService.GetDemoServiceNameForSession(sessionId);
+    const serviceName =
+      GameStreamerService.GetDemoServiceNameForSession(sessionId);
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -708,22 +623,7 @@ export class GameStreamerService {
     }
   }
 
-  /**
-   * Reap demo sessions whose `last_activity_at` is older than
-   * `idleSeconds` (default 60s — the popup pings every 10s, so 6
-   * missed pings means the window is gone). The DB is the source of
-   * truth — the spec-server doesn't need to be reachable for the
-   * reaper to work, which means we still clean up after a crashed
-   * pod.
-   *
-   * After the row-based sweep we also reap orphan k8s resources by
-   * label — Jobs / Services that no longer have a matching row. This
-   * catches the rare case where row deletion succeeded but k8s
-   * teardown failed in `stopDemoSessionById`.
-   */
   public async reapIdleDemoSessions(idleSeconds = 60) {
-    // ISO timestamp `idleSeconds` in the past — anything older is
-    // due for reaping. Postgres compares timestamptz values directly.
     const threshold = new Date(Date.now() - idleSeconds * 1000).toISOString();
 
     const { match_demo_sessions } = (await this.hasura.query({
@@ -755,13 +655,6 @@ export class GameStreamerService {
     await this.reapOrphanDemoK8sResources();
   }
 
-  /**
-   * Cluster-side orphan sweep. Lists demo-role Jobs and Services by
-   * label, looks up the `session-id` label, and tears down anything
-   * whose row no longer exists. Keeps `stopDemoSessionById` simple —
-   * even when the row deletion outpaces k8s teardown, this catches it
-   * within one reaper interval.
-   */
   private async reapOrphanDemoK8sResources() {
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -1194,12 +1087,6 @@ export class GameStreamerService {
 
   private async registerStreamRow(matchId: string) {
     await this.unregisterStreamRow(matchId);
-    // `booting` is the implicit api-side stage between "row inserted"
-    // and "K8s schedules + pulls + starts the pod". The streamer pod
-    // doesn't push that status itself (it only starts emitting once
-    // setup-steam.sh runs), so we seed status_history here. Without
-    // this seed, the stepper would render "Allocating GPU pod" as
-    // skipped — but it's the one stage that is always required.
     const nowIso = new Date().toISOString();
     await this.hasura.mutation({
       insert_match_streams_one: {
@@ -1258,10 +1145,6 @@ export class GameStreamerService {
   }
 
   public async reportStatus(matchId: string, body: GameStreamerStatusDto) {
-    // Read-modify-write so we can cap status_history length. Stuck
-    // pods that bounce statuses would otherwise grow the column
-    // unbounded. One writer per match (the streamer pod) — race-free
-    // in practice.
     const { match_streams } = (await this.hasura.query({
       match_streams: {
         __args: {
@@ -1331,9 +1214,6 @@ export class GameStreamerService {
               link: `${this.appConfig.gameStreamHlsBase}/${matchId}/`,
               priority: 0,
               is_game_streamer: true,
-              // setClause already includes status_history (capped) —
-              // it seeds the new row's stepper with this observed
-              // status so the UI doesn't render blank.
               ...setClause,
             } as any,
           },
@@ -1376,18 +1256,12 @@ export class GameStreamerService {
   ): V1Job {
     const containerName =
       mode === "create-clips" ? "clips" : mode === "demo" ? "demo" : "live";
-    // The streamer.sh top-level subcommand. demo flow re-uses
-    // setup-steam, then run-demo.sh. --debug publishes a public
-    // Steam/CS2 boot stream — gated on DEMO_DEBUG_STREAM env so
-    // it's off by default in production.
     const args =
       mode === "live"
         ? ["live"]
         : mode === "demo"
           ? ["demo"]
           : ["create-clips"];
-    // Both live and demo expose openhud + spec-server. create-clips
-    // doesn't, since no operator interacts with it.
     const exposesSpecPorts = mode === "live" || mode === "demo";
 
     const labels: Record<string, string> = {

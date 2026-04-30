@@ -795,7 +795,6 @@ export class MatchesController {
     const presignedDemoUrl = await this.s3.getPresignedUrl(
       demo.file,
       undefined,
-      // 60 minutes — covers a normal demo viewing window.
       60 * 60,
       "get",
     );
@@ -821,17 +820,12 @@ export class MatchesController {
     };
   }
 
-  // Explicit Cancel button path. The popup's WS-close handler
-  // (DemoSessionWatcherService.clientClosed) tears the session down
-  // automatically when the window is closed — this action is for when
-  // the user wants to stop without closing the popup.
   @HasuraAction()
   public async stopWatchDemo(data: { match_map_id: string; user: User }) {
     const { match_map_id, user } = data;
     await this.gameStreamer.stopDemoPlayback(match_map_id, user.steam_id);
     return { success: true };
   }
-
 
   @HasuraAction()
   public async createClips(data: { match_id: string; user: User }) {

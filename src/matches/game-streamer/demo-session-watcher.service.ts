@@ -6,18 +6,6 @@ type Watch = {
   userSteamId: string;
 };
 
-/**
- * In-memory map of websocket clientId → demo session watches. The web
- * popup window has its own WS connection (separate window = separate
- * JS context = separate WS); when the popup closes, that connection's
- * `close` handler fires and we tear down any demo sessions registered
- * to it.
- *
- * No Redis-backed state on purpose: the watch only matters for the
- * lifetime of the connection, and a process restart drops both the
- * connections and their sessions together. The reaper (DB-driven, by
- * `last_activity_at`) is the cross-process backstop.
- */
 @Injectable()
 export class DemoSessionWatcherService {
   private readonly watches = new Map<string, Set<Watch>>();
@@ -33,8 +21,6 @@ export class DemoSessionWatcherService {
       set = new Set();
       this.watches.set(clientId, set);
     }
-    // Dedup by (matchMapId, userSteamId) so repeat "watch" events from
-    // the same client just refresh the in-memory record.
     for (const existing of set) {
       if (
         existing.matchMapId === watch.matchMapId &&
@@ -61,11 +47,6 @@ export class DemoSessionWatcherService {
     if (set.size === 0) this.watches.delete(clientId);
   }
 
-  /**
-   * Fired by SocketsService when a websocket client disconnects.
-   * Tears down every demo session this client was watching — the user
-   * closed the popup window. Reaper picks up anything we miss.
-   */
   public async clientClosed(clientId: string): Promise<void> {
     const set = this.watches.get(clientId);
     if (!set || set.size === 0) return;

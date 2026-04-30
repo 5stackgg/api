@@ -207,9 +207,6 @@ export class MatchesModule implements NestModule {
       },
     );
 
-    // Sweep stale demo playback pods every minute. Cheap query (one
-    // indexed timestamp lookup) — actual teardown only fires for rows
-    // older than the idle threshold (60s default; 6 missed 10s pings).
     void scheduleMatchQueue.add(
       ReapIdleDemoSessions.name,
       {},

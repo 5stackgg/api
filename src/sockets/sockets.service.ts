@@ -125,10 +125,6 @@ export class SocketsService {
         client.on("close", async () => {
           this.clients.delete(client.id);
 
-          // Tear down any demo playback sessions this client was
-          // watching. The popup window has its own WS connection;
-          // window close → WS close → here → session stops within
-          // milliseconds, no waiting on the 60s reaper.
           void this.demoSessionWatcher.clientClosed(client.id);
 
           for (const nodeId of client.peerNodes) {

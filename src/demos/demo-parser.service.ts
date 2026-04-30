@@ -41,14 +41,6 @@ export type ParsedDemo = {
   bombs: ParsedBomb[];
 };
 
-/**
- * Demo parser client. Talks HTTP to the standalone demo-parser
- * deployment (5stack-panel/base/demo-parser/) — the parser is its
- * own image (ghcr.io/5stackgg/demo-parser) wrapping
- * markus-wa/demoinfocs-golang. The api never streams demo bytes
- * itself; the parser fetches from S3 via the presigned URL we
- * hand it.
- */
 @Injectable()
 export class DemoParserService {
   private readonly appConfig: AppConfig;
@@ -61,14 +53,6 @@ export class DemoParserService {
     this.appConfig = this.config.get<AppConfig>("app");
   }
 
-  /**
-   * Mint a presigned GET, hand it to demo-parser over HTTP, return
-   * the parsed result. Caller is responsible for persisting.
-   *
-   * @param matchMapDemoId  forwarded to the parser only for log
-   *                        correlation — the parser doesn't read
-   *                        or write anything by this id.
-   */
   public async parseFromS3Key(
     s3Key: string,
     matchMapDemoId?: string,
@@ -76,8 +60,6 @@ export class DemoParserService {
     const presignedUrl = await this.s3.getPresignedUrl(
       s3Key,
       undefined,
-      // 30 minutes — generous so the parser can retry transient s3
-      // hiccups without re-asking for a new URL.
       60 * 30,
       "get",
     );
@@ -96,9 +78,6 @@ export class DemoParserService {
           match_map_demo_id: matchMapDemoId ?? "",
           demo_url: presignedUrl,
         }),
-        // Pro CS2 demos parse in 5-15s. Cap at 5min so a stuck
-        // parser doesn't block forever; the parser pod's own
-        // livenessProbe will recycle it after that.
         signal: AbortSignal.timeout(5 * 60_000),
       });
     } catch (error) {
