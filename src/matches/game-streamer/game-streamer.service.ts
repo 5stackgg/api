@@ -585,8 +585,8 @@ export class GameStreamerService {
           "session-id": sessionId,
         },
         ports: [
-          { name: "openhud", port: 1349, targetPort: "openhud" as any },
-          { name: "spec", port: 1350, targetPort: "spec" as any },
+          { name: "openhud", port: 1349, targetPort: "openhud" },
+          { name: "spec", port: 1350, targetPort: "spec" },
         ],
       },
     };
@@ -992,8 +992,8 @@ export class GameStreamerService {
           "match-id": matchId,
         },
         ports: [
-          { name: "openhud", port: 1349, targetPort: "openhud" as any },
-          { name: "spec", port: 1350, targetPort: "spec" as any },
+          { name: "openhud", port: 1349, targetPort: "openhud" },
+          { name: "spec", port: 1350, targetPort: "spec" },
         ],
       },
     };
