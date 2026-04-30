@@ -1,3 +1,5 @@
+ARG DEMO_PARSER_IMAGE=ghcr.io/5stackgg/demo-parser:latest
+
 FROM node:22-alpine AS deps
 
 WORKDIR /build
@@ -14,7 +16,6 @@ COPY . .
 
 RUN yarn build
 
-ARG DEMO_PARSER_IMAGE=ghcr.io/5stackgg/demo-parser:latest
 FROM ${DEMO_PARSER_IMAGE} AS demo-parser
 
 FROM node:22-alpine
