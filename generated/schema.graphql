@@ -12075,6 +12075,7 @@ type match_map_demos {
     """JSON select path"""
     path: String
   ): jsonb
+  cs2_build: String
 
   """
   A computed field, executes function "demo_download_url"
@@ -12203,6 +12204,7 @@ input match_map_demos_bool_exp {
   _not: match_map_demos_bool_exp
   _or: [match_map_demos_bool_exp!]
   bombs: jsonb_comparison_exp
+  cs2_build: String_comparison_exp
   download_url: String_comparison_exp
   duration_seconds: Float_comparison_exp
   file: String_comparison_exp
@@ -12272,6 +12274,7 @@ input type for inserting data into table "match_map_demos"
 """
 input match_map_demos_insert_input {
   bombs: jsonb
+  cs2_build: String
   file: String
   id: uuid
   kills: jsonb
@@ -12290,6 +12293,8 @@ input match_map_demos_insert_input {
 
 """aggregate max on columns"""
 type match_map_demos_max_fields {
+  cs2_build: String
+
   """
   A computed field, executes function "demo_download_url"
   """
@@ -12311,6 +12316,7 @@ type match_map_demos_max_fields {
 order by max() on columns of table "match_map_demos"
 """
 input match_map_demos_max_order_by {
+  cs2_build: order_by
   duration_seconds: order_by
   file: order_by
   id: order_by
@@ -12326,6 +12332,8 @@ input match_map_demos_max_order_by {
 
 """aggregate min on columns"""
 type match_map_demos_min_fields {
+  cs2_build: String
+
   """
   A computed field, executes function "demo_download_url"
   """
@@ -12347,6 +12355,7 @@ type match_map_demos_min_fields {
 order by min() on columns of table "match_map_demos"
 """
 input match_map_demos_min_order_by {
+  cs2_build: order_by
   duration_seconds: order_by
   file: order_by
   id: order_by
@@ -12383,6 +12392,7 @@ input match_map_demos_on_conflict {
 """Ordering options when selecting data from "match_map_demos"."""
 input match_map_demos_order_by {
   bombs: order_by
+  cs2_build: order_by
   download_url: order_by
   duration_seconds: order_by
   file: order_by
@@ -12419,6 +12429,9 @@ select columns of table "match_map_demos"
 enum match_map_demos_select_column {
   """column name"""
   bombs
+
+  """column name"""
+  cs2_build
 
   """column name"""
   duration_seconds
@@ -12465,6 +12478,7 @@ input type for updating data in table "match_map_demos"
 """
 input match_map_demos_set_input {
   bombs: jsonb
+  cs2_build: String
   file: String
   id: uuid
   kills: jsonb
@@ -12547,6 +12561,7 @@ input match_map_demos_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input match_map_demos_stream_cursor_value_input {
   bombs: jsonb
+  cs2_build: String
   duration_seconds: Float
   file: String
   id: uuid
@@ -12586,6 +12601,9 @@ update columns of table "match_map_demos"
 enum match_map_demos_update_column {
   """column name"""
   bombs
+
+  """column name"""
+  cs2_build
 
   """column name"""
   file

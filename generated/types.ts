@@ -17152,6 +17152,9 @@ export default {
                     ]
                 }
             ],
+            "cs2_build": [
+                39
+            ],
             "download_url": [
                 39
             ],
@@ -17407,6 +17410,9 @@ export default {
             "bombs": [
                 821
             ],
+            "cs2_build": [
+                41
+            ],
             "download_url": [
                 41
             ],
@@ -17520,6 +17526,9 @@ export default {
             "bombs": [
                 819
             ],
+            "cs2_build": [
+                39
+            ],
             "file": [
                 39
             ],
@@ -17567,6 +17576,9 @@ export default {
             ]
         },
         "match_map_demos_max_fields": {
+            "cs2_build": [
+                39
+            ],
             "download_url": [
                 39
             ],
@@ -17608,6 +17620,9 @@ export default {
             ]
         },
         "match_map_demos_max_order_by": {
+            "cs2_build": [
+                1548
+            ],
             "duration_seconds": [
                 1548
             ],
@@ -17646,6 +17661,9 @@ export default {
             ]
         },
         "match_map_demos_min_fields": {
+            "cs2_build": [
+                39
+            ],
             "download_url": [
                 39
             ],
@@ -17687,6 +17705,9 @@ export default {
             ]
         },
         "match_map_demos_min_order_by": {
+            "cs2_build": [
+                1548
+            ],
             "duration_seconds": [
                 1548
             ],
@@ -17751,6 +17772,9 @@ export default {
         },
         "match_map_demos_order_by": {
             "bombs": [
+                1548
+            ],
+            "cs2_build": [
                 1548
             ],
             "download_url": [
@@ -17831,6 +17855,9 @@ export default {
         "match_map_demos_set_input": {
             "bombs": [
                 819
+            ],
+            "cs2_build": [
+                39
             ],
             "file": [
                 39
@@ -17988,6 +18015,9 @@ export default {
         "match_map_demos_stream_cursor_value_input": {
             "bombs": [
                 819
+            ],
+            "cs2_build": [
+                39
             ],
             "duration_seconds": [
                 16

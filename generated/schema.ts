@@ -4414,6 +4414,7 @@ export interface match_lineups_variance_fields {
 /** columns and relationships of "match_map_demos" */
 export interface match_map_demos {
     bombs: (Scalars['jsonb'] | null)
+    cs2_build: (Scalars['String'] | null)
     /** A computed field, executes function "demo_download_url" */
     download_url: (Scalars['String'] | null)
     duration_seconds: (Scalars['Float'] | null)
@@ -4478,6 +4479,7 @@ export type match_map_demos_constraint = 'match_demos_pkey'
 
 /** aggregate max on columns */
 export interface match_map_demos_max_fields {
+    cs2_build: (Scalars['String'] | null)
     /** A computed field, executes function "demo_download_url" */
     download_url: (Scalars['String'] | null)
     duration_seconds: (Scalars['Float'] | null)
@@ -4497,6 +4499,7 @@ export interface match_map_demos_max_fields {
 
 /** aggregate min on columns */
 export interface match_map_demos_min_fields {
+    cs2_build: (Scalars['String'] | null)
     /** A computed field, executes function "demo_download_url" */
     download_url: (Scalars['String'] | null)
     duration_seconds: (Scalars['Float'] | null)
@@ -4525,7 +4528,7 @@ export interface match_map_demos_mutation_response {
 
 
 /** select columns of table "match_map_demos" */
-export type match_map_demos_select_column = 'bombs' | 'duration_seconds' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+export type match_map_demos_select_column = 'bombs' | 'cs2_build' | 'duration_seconds' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate stddev on columns */
@@ -4569,7 +4572,7 @@ export interface match_map_demos_sum_fields {
 
 
 /** update columns of table "match_map_demos" */
-export type match_map_demos_update_column = 'bombs' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+export type match_map_demos_update_column = 'bombs' | 'cs2_build' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate var_pop on columns */
@@ -23405,6 +23408,7 @@ export interface match_map_demosGenqlSelection{
     bombs?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
+    cs2_build?: boolean | number
     /** A computed field, executes function "demo_download_url" */
     download_url?: boolean | number
     duration_seconds?: boolean | number
@@ -23494,7 +23498,7 @@ export interface match_map_demos_avg_order_by {duration_seconds?: (order_by | nu
 
 
 /** Boolean expression to filter rows from the table "match_map_demos". All fields are combined with a logical 'AND'. */
-export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
+export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),cs2_build?: (String_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -23514,11 +23518,12 @@ export interface match_map_demos_inc_input {size?: (Scalars['Int'] | null),tick_
 
 
 /** input type for inserting data into table "match_map_demos" */
-export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_map_demos_max_fieldsGenqlSelection{
+    cs2_build?: boolean | number
     /** A computed field, executes function "demo_download_url" */
     download_url?: boolean | number
     duration_seconds?: boolean | number
@@ -23538,11 +23543,12 @@ export interface match_map_demos_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_map_demos" */
-export interface match_map_demos_max_order_by {duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
+export interface match_map_demos_max_order_by {cs2_build?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface match_map_demos_min_fieldsGenqlSelection{
+    cs2_build?: boolean | number
     /** A computed field, executes function "demo_download_url" */
     download_url?: boolean | number
     duration_seconds?: boolean | number
@@ -23562,7 +23568,7 @@ export interface match_map_demos_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_map_demos" */
-export interface match_map_demos_min_order_by {duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
+export interface match_map_demos_min_order_by {cs2_build?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_map_demos" */
@@ -23581,7 +23587,7 @@ export interface match_map_demos_on_conflict {constraint: match_map_demos_constr
 
 
 /** Ordering options when selecting data from "match_map_demos". */
-export interface match_map_demos_order_by {bombs?: (order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
+export interface match_map_demos_order_by {bombs?: (order_by | null),cs2_build?: (order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_demos */
@@ -23593,7 +23599,7 @@ export interface match_map_demos_prepend_input {bombs?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "match_map_demos" */
-export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23650,7 +23656,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -56835,6 +56841,7 @@ export const enumMatchMapDemosConstraint = {
 
 export const enumMatchMapDemosSelectColumn = {
    bombs: 'bombs' as const,
+   cs2_build: 'cs2_build' as const,
    duration_seconds: 'duration_seconds' as const,
    file: 'file' as const,
    id: 'id' as const,
@@ -56852,6 +56859,7 @@ export const enumMatchMapDemosSelectColumn = {
 
 export const enumMatchMapDemosUpdateColumn = {
    bombs: 'bombs' as const,
+   cs2_build: 'cs2_build' as const,
    file: 'file' as const,
    id: 'id' as const,
    kills: 'kills' as const,
