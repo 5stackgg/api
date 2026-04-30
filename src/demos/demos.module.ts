@@ -10,6 +10,8 @@ import { CleanDemos } from "./jobs/CleanDemos";
 import { S3Module } from "src/s3/s3.module";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
+import { DemoMetadataService } from "./demo-metadata.service";
+import { DemoParserService } from "./demo-parser.service";
 
 @Module({
   imports: [
@@ -24,7 +26,14 @@ import { getQueuesProcessors } from "src/utilities/QueueProcessors";
     }),
   ],
   controllers: [DemosController],
-  providers: [CleanDemos, ...getQueuesProcessors("Demos"), loggerFactory()],
+  providers: [
+    CleanDemos,
+    DemoMetadataService,
+    DemoParserService,
+    ...getQueuesProcessors("Demos"),
+    loggerFactory(),
+  ],
+  exports: [DemoMetadataService],
 })
 export class DemosModule {
   constructor(@InjectQueue(DemoQueues.CleanDemos) cleanDemosQueue: Queue) {

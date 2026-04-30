@@ -151,6 +151,21 @@ type FileListResponse {
   items: [FileItem!]!
 }
 
+"""
+Boolean expression to compare columns of type "Float". All fields are combined with logical 'AND'.
+"""
+input Float_comparison_exp {
+  _eq: Float
+  _gt: Float
+  _gte: Float
+  _in: [Float!]
+  _is_null: Boolean
+  _lt: Float
+  _lte: Float
+  _neq: Float
+  _nin: [Float!]
+}
+
 type GetTestUploadResponse {
   error: String
   link: String
@@ -462,6 +477,12 @@ type TournamentMatchResetImpact {
   round: Int!
   stage_type: String!
   will_delete_match: Boolean!
+}
+
+type WatchDemoOutput {
+  session_id: String!
+  stream_url: String!
+  success: Boolean!
 }
 
 """
@@ -10220,6 +10241,446 @@ input maps_updates {
 }
 
 """
+columns and relationships of "match_demo_sessions"
+"""
+type match_demo_sessions {
+  created_at: timestamptz!
+  error_message: String
+  id: uuid!
+  k8s_job_name: String!
+  last_activity_at: timestamptz!
+  last_status_at: timestamptz!
+
+  """An object relationship"""
+  match: matches!
+  match_id: uuid!
+
+  """An object relationship"""
+  match_map: match_maps!
+  match_map_id: uuid!
+  session_token: String!
+  status: String!
+  status_history(
+    """JSON select path"""
+    path: String
+  ): jsonb!
+  stream_url: String
+
+  """An object relationship"""
+  watcher: players!
+  watcher_steam_id: bigint!
+}
+
+"""
+aggregated selection of "match_demo_sessions"
+"""
+type match_demo_sessions_aggregate {
+  aggregate: match_demo_sessions_aggregate_fields
+  nodes: [match_demo_sessions!]!
+}
+
+"""
+aggregate fields of "match_demo_sessions"
+"""
+type match_demo_sessions_aggregate_fields {
+  avg: match_demo_sessions_avg_fields
+  count(columns: [match_demo_sessions_select_column!], distinct: Boolean): Int!
+  max: match_demo_sessions_max_fields
+  min: match_demo_sessions_min_fields
+  stddev: match_demo_sessions_stddev_fields
+  stddev_pop: match_demo_sessions_stddev_pop_fields
+  stddev_samp: match_demo_sessions_stddev_samp_fields
+  sum: match_demo_sessions_sum_fields
+  var_pop: match_demo_sessions_var_pop_fields
+  var_samp: match_demo_sessions_var_samp_fields
+  variance: match_demo_sessions_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input match_demo_sessions_append_input {
+  status_history: jsonb
+}
+
+"""aggregate avg on columns"""
+type match_demo_sessions_avg_fields {
+  watcher_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "match_demo_sessions". All fields are combined with a logical 'AND'.
+"""
+input match_demo_sessions_bool_exp {
+  _and: [match_demo_sessions_bool_exp!]
+  _not: match_demo_sessions_bool_exp
+  _or: [match_demo_sessions_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  error_message: String_comparison_exp
+  id: uuid_comparison_exp
+  k8s_job_name: String_comparison_exp
+  last_activity_at: timestamptz_comparison_exp
+  last_status_at: timestamptz_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  session_token: String_comparison_exp
+  status: String_comparison_exp
+  status_history: jsonb_comparison_exp
+  stream_url: String_comparison_exp
+  watcher: players_bool_exp
+  watcher_steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "match_demo_sessions"
+"""
+enum match_demo_sessions_constraint {
+  """
+  unique or primary key constraint on columns "match_map_id", "watcher_steam_id"
+  """
+  match_demo_sessions_per_user_per_map_uniq
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  match_demo_sessions_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input match_demo_sessions_delete_at_path_input {
+  status_history: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input match_demo_sessions_delete_elem_input {
+  status_history: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input match_demo_sessions_delete_key_input {
+  status_history: String
+}
+
+"""
+input type for incrementing numeric columns in table "match_demo_sessions"
+"""
+input match_demo_sessions_inc_input {
+  watcher_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "match_demo_sessions"
+"""
+input match_demo_sessions_insert_input {
+  created_at: timestamptz
+  error_message: String
+  id: uuid
+  k8s_job_name: String
+  last_activity_at: timestamptz
+  last_status_at: timestamptz
+  match: matches_obj_rel_insert_input
+  match_id: uuid
+  match_map: match_maps_obj_rel_insert_input
+  match_map_id: uuid
+  session_token: String
+  status: String
+  status_history: jsonb
+  stream_url: String
+  watcher: players_obj_rel_insert_input
+  watcher_steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type match_demo_sessions_max_fields {
+  created_at: timestamptz
+  error_message: String
+  id: uuid
+  k8s_job_name: String
+  last_activity_at: timestamptz
+  last_status_at: timestamptz
+  match_id: uuid
+  match_map_id: uuid
+  session_token: String
+  status: String
+  stream_url: String
+  watcher_steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type match_demo_sessions_min_fields {
+  created_at: timestamptz
+  error_message: String
+  id: uuid
+  k8s_job_name: String
+  last_activity_at: timestamptz
+  last_status_at: timestamptz
+  match_id: uuid
+  match_map_id: uuid
+  session_token: String
+  status: String
+  stream_url: String
+  watcher_steam_id: bigint
+}
+
+"""
+response of any mutation on the table "match_demo_sessions"
+"""
+type match_demo_sessions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [match_demo_sessions!]!
+}
+
+"""
+on_conflict condition type for table "match_demo_sessions"
+"""
+input match_demo_sessions_on_conflict {
+  constraint: match_demo_sessions_constraint!
+  update_columns: [match_demo_sessions_update_column!]! = []
+  where: match_demo_sessions_bool_exp
+}
+
+"""Ordering options when selecting data from "match_demo_sessions"."""
+input match_demo_sessions_order_by {
+  created_at: order_by
+  error_message: order_by
+  id: order_by
+  k8s_job_name: order_by
+  last_activity_at: order_by
+  last_status_at: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  session_token: order_by
+  status: order_by
+  status_history: order_by
+  stream_url: order_by
+  watcher: players_order_by
+  watcher_steam_id: order_by
+}
+
+"""primary key columns input for table: match_demo_sessions"""
+input match_demo_sessions_pk_columns_input {
+  id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input match_demo_sessions_prepend_input {
+  status_history: jsonb
+}
+
+"""
+select columns of table "match_demo_sessions"
+"""
+enum match_demo_sessions_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  error_message
+
+  """column name"""
+  id
+
+  """column name"""
+  k8s_job_name
+
+  """column name"""
+  last_activity_at
+
+  """column name"""
+  last_status_at
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  session_token
+
+  """column name"""
+  status
+
+  """column name"""
+  status_history
+
+  """column name"""
+  stream_url
+
+  """column name"""
+  watcher_steam_id
+}
+
+"""
+input type for updating data in table "match_demo_sessions"
+"""
+input match_demo_sessions_set_input {
+  created_at: timestamptz
+  error_message: String
+  id: uuid
+  k8s_job_name: String
+  last_activity_at: timestamptz
+  last_status_at: timestamptz
+  match_id: uuid
+  match_map_id: uuid
+  session_token: String
+  status: String
+  status_history: jsonb
+  stream_url: String
+  watcher_steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type match_demo_sessions_stddev_fields {
+  watcher_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type match_demo_sessions_stddev_pop_fields {
+  watcher_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type match_demo_sessions_stddev_samp_fields {
+  watcher_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "match_demo_sessions"
+"""
+input match_demo_sessions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: match_demo_sessions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input match_demo_sessions_stream_cursor_value_input {
+  created_at: timestamptz
+  error_message: String
+  id: uuid
+  k8s_job_name: String
+  last_activity_at: timestamptz
+  last_status_at: timestamptz
+  match_id: uuid
+  match_map_id: uuid
+  session_token: String
+  status: String
+  status_history: jsonb
+  stream_url: String
+  watcher_steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type match_demo_sessions_sum_fields {
+  watcher_steam_id: bigint
+}
+
+"""
+update columns of table "match_demo_sessions"
+"""
+enum match_demo_sessions_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  error_message
+
+  """column name"""
+  id
+
+  """column name"""
+  k8s_job_name
+
+  """column name"""
+  last_activity_at
+
+  """column name"""
+  last_status_at
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  session_token
+
+  """column name"""
+  status
+
+  """column name"""
+  status_history
+
+  """column name"""
+  stream_url
+
+  """column name"""
+  watcher_steam_id
+}
+
+input match_demo_sessions_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: match_demo_sessions_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: match_demo_sessions_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: match_demo_sessions_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: match_demo_sessions_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: match_demo_sessions_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: match_demo_sessions_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: match_demo_sessions_set_input
+
+  """filter the rows which have to be updated"""
+  where: match_demo_sessions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type match_demo_sessions_var_pop_fields {
+  watcher_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type match_demo_sessions_var_samp_fields {
+  watcher_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type match_demo_sessions_variance_fields {
+  watcher_steam_id: Float
+}
+
+"""
 columns and relationships of "match_invites"
 """
 type match_invites {
@@ -11610,12 +12071,24 @@ input match_lineups_variance_order_by {
 columns and relationships of "match_map_demos"
 """
 type match_map_demos {
+  bombs(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  cs2_build: String
+
   """
   A computed field, executes function "demo_download_url"
   """
   download_url: String
+  duration_seconds: Float
   file: String!
   id: uuid!
+  kills(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  map_name: String
 
   """An object relationship"""
   match: matches!
@@ -11624,7 +12097,15 @@ type match_map_demos {
   """An object relationship"""
   match_map: match_maps!
   match_map_id: uuid!
+  metadata_parsed_at: timestamptz
+  round_ticks(
+    """JSON select path"""
+    path: String
+  ): jsonb
   size: Int!
+  tick_rate: Float
+  total_ticks: Int
+  workshop_id: String
 }
 
 """
@@ -11680,6 +12161,13 @@ input match_map_demos_aggregate_order_by {
   variance: match_map_demos_variance_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input match_map_demos_append_input {
+  bombs: jsonb
+  kills: jsonb
+  round_ticks: jsonb
+}
+
 """
 input type for inserting array relation for remote table "match_map_demos"
 """
@@ -11692,14 +12180,20 @@ input match_map_demos_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type match_map_demos_avg_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by avg() on columns of table "match_map_demos"
 """
 input match_map_demos_avg_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """
@@ -11709,14 +12203,24 @@ input match_map_demos_bool_exp {
   _and: [match_map_demos_bool_exp!]
   _not: match_map_demos_bool_exp
   _or: [match_map_demos_bool_exp!]
+  bombs: jsonb_comparison_exp
+  cs2_build: String_comparison_exp
   download_url: String_comparison_exp
+  duration_seconds: Float_comparison_exp
   file: String_comparison_exp
   id: uuid_comparison_exp
+  kills: jsonb_comparison_exp
+  map_name: String_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
+  metadata_parsed_at: timestamptz_comparison_exp
+  round_ticks: jsonb_comparison_exp
   size: Int_comparison_exp
+  tick_rate: Float_comparison_exp
+  total_ticks: Int_comparison_exp
+  workshop_id: String_comparison_exp
 }
 
 """
@@ -11730,71 +12234,139 @@ enum match_map_demos_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input match_map_demos_delete_at_path_input {
+  bombs: [String!]
+  kills: [String!]
+  round_ticks: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input match_map_demos_delete_elem_input {
+  bombs: Int
+  kills: Int
+  round_ticks: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input match_map_demos_delete_key_input {
+  bombs: String
+  kills: String
+  round_ticks: String
+}
+
+"""
 input type for incrementing numeric columns in table "match_map_demos"
 """
 input match_map_demos_inc_input {
   size: Int
+  tick_rate: Float
+  total_ticks: Int
 }
 
 """
 input type for inserting data into table "match_map_demos"
 """
 input match_map_demos_insert_input {
+  bombs: jsonb
+  cs2_build: String
   file: String
   id: uuid
+  kills: jsonb
+  map_name: String
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
+  metadata_parsed_at: timestamptz
+  round_ticks: jsonb
   size: Int
+  tick_rate: Float
+  total_ticks: Int
+  workshop_id: String
 }
 
 """aggregate max on columns"""
 type match_map_demos_max_fields {
+  cs2_build: String
+
   """
   A computed field, executes function "demo_download_url"
   """
   download_url: String
+  duration_seconds: Float
   file: String
   id: uuid
+  map_name: String
   match_id: uuid
   match_map_id: uuid
+  metadata_parsed_at: timestamptz
   size: Int
+  tick_rate: Float
+  total_ticks: Int
+  workshop_id: String
 }
 
 """
 order by max() on columns of table "match_map_demos"
 """
 input match_map_demos_max_order_by {
+  cs2_build: order_by
+  duration_seconds: order_by
   file: order_by
   id: order_by
+  map_name: order_by
   match_id: order_by
   match_map_id: order_by
+  metadata_parsed_at: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
+  workshop_id: order_by
 }
 
 """aggregate min on columns"""
 type match_map_demos_min_fields {
+  cs2_build: String
+
   """
   A computed field, executes function "demo_download_url"
   """
   download_url: String
+  duration_seconds: Float
   file: String
   id: uuid
+  map_name: String
   match_id: uuid
   match_map_id: uuid
+  metadata_parsed_at: timestamptz
   size: Int
+  tick_rate: Float
+  total_ticks: Int
+  workshop_id: String
 }
 
 """
 order by min() on columns of table "match_map_demos"
 """
 input match_map_demos_min_order_by {
+  cs2_build: order_by
+  duration_seconds: order_by
   file: order_by
   id: order_by
+  map_name: order_by
   match_id: order_by
   match_map_id: order_by
+  metadata_parsed_at: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
+  workshop_id: order_by
 }
 
 """
@@ -11819,14 +12391,24 @@ input match_map_demos_on_conflict {
 
 """Ordering options when selecting data from "match_map_demos"."""
 input match_map_demos_order_by {
+  bombs: order_by
+  cs2_build: order_by
   download_url: order_by
+  duration_seconds: order_by
   file: order_by
   id: order_by
+  kills: order_by
+  map_name: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
   match_map_id: order_by
+  metadata_parsed_at: order_by
+  round_ticks: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
+  workshop_id: order_by
 }
 
 """primary key columns input for table: match_map_demos"""
@@ -11834,15 +12416,37 @@ input match_map_demos_pk_columns_input {
   id: uuid!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input match_map_demos_prepend_input {
+  bombs: jsonb
+  kills: jsonb
+  round_ticks: jsonb
+}
+
 """
 select columns of table "match_map_demos"
 """
 enum match_map_demos_select_column {
   """column name"""
+  bombs
+
+  """column name"""
+  cs2_build
+
+  """column name"""
+  duration_seconds
+
+  """column name"""
   file
 
   """column name"""
   id
+
+  """column name"""
+  kills
+
+  """column name"""
+  map_name
 
   """column name"""
   match_id
@@ -11851,54 +12455,96 @@ enum match_map_demos_select_column {
   match_map_id
 
   """column name"""
+  metadata_parsed_at
+
+  """column name"""
+  round_ticks
+
+  """column name"""
   size
+
+  """column name"""
+  tick_rate
+
+  """column name"""
+  total_ticks
+
+  """column name"""
+  workshop_id
 }
 
 """
 input type for updating data in table "match_map_demos"
 """
 input match_map_demos_set_input {
+  bombs: jsonb
+  cs2_build: String
   file: String
   id: uuid
+  kills: jsonb
+  map_name: String
   match_id: uuid
   match_map_id: uuid
+  metadata_parsed_at: timestamptz
+  round_ticks: jsonb
   size: Int
+  tick_rate: Float
+  total_ticks: Int
+  workshop_id: String
 }
 
 """aggregate stddev on columns"""
 type match_map_demos_stddev_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by stddev() on columns of table "match_map_demos"
 """
 input match_map_demos_stddev_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type match_map_demos_stddev_pop_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by stddev_pop() on columns of table "match_map_demos"
 """
 input match_map_demos_stddev_pop_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type match_map_demos_stddev_samp_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by stddev_samp() on columns of table "match_map_demos"
 """
 input match_map_demos_stddev_samp_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """
@@ -11914,23 +12560,39 @@ input match_map_demos_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_map_demos_stream_cursor_value_input {
+  bombs: jsonb
+  cs2_build: String
+  duration_seconds: Float
   file: String
   id: uuid
+  kills: jsonb
+  map_name: String
   match_id: uuid
   match_map_id: uuid
+  metadata_parsed_at: timestamptz
+  round_ticks: jsonb
   size: Int
+  tick_rate: Float
+  total_ticks: Int
+  workshop_id: String
 }
 
 """aggregate sum on columns"""
 type match_map_demos_sum_fields {
+  duration_seconds: Float
   size: Int
+  tick_rate: Float
+  total_ticks: Int
 }
 
 """
 order by sum() on columns of table "match_map_demos"
 """
 input match_map_demos_sum_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """
@@ -11938,10 +12600,22 @@ update columns of table "match_map_demos"
 """
 enum match_map_demos_update_column {
   """column name"""
+  bombs
+
+  """column name"""
+  cs2_build
+
+  """column name"""
   file
 
   """column name"""
   id
+
+  """column name"""
+  kills
+
+  """column name"""
+  map_name
 
   """column name"""
   match_id
@@ -11950,12 +12624,48 @@ enum match_map_demos_update_column {
   match_map_id
 
   """column name"""
+  metadata_parsed_at
+
+  """column name"""
+  round_ticks
+
+  """column name"""
   size
+
+  """column name"""
+  tick_rate
+
+  """column name"""
+  total_ticks
+
+  """column name"""
+  workshop_id
 }
 
 input match_map_demos_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: match_map_demos_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: match_map_demos_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: match_map_demos_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: match_map_demos_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: match_map_demos_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: match_map_demos_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: match_map_demos_set_input
@@ -11966,38 +12676,56 @@ input match_map_demos_updates {
 
 """aggregate var_pop on columns"""
 type match_map_demos_var_pop_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by var_pop() on columns of table "match_map_demos"
 """
 input match_map_demos_var_pop_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """aggregate var_samp on columns"""
 type match_map_demos_var_samp_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by var_samp() on columns of table "match_map_demos"
 """
 input match_map_demos_var_samp_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """aggregate variance on columns"""
 type match_map_demos_variance_fields {
+  duration_seconds: Float
   size: Float
+  tick_rate: Float
+  total_ticks: Float
 }
 
 """
 order by variance() on columns of table "match_map_demos"
 """
 input match_map_demos_variance_order_by {
+  duration_seconds: order_by
   size: order_by
+  tick_rate: order_by
+  total_ticks: order_by
 }
 
 """
@@ -15068,6 +15796,10 @@ type match_streams {
   match_id: uuid!
   priority: Int!
   status: String
+  status_history(
+    """JSON select path"""
+    path: String
+  ): jsonb!
   stream_url: String
   title: String!
 }
@@ -15141,6 +15873,11 @@ input match_streams_aggregate_order_by {
   variance: match_streams_variance_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input match_streams_append_input {
+  status_history: jsonb
+}
+
 """
 input type for inserting array relation for remote table "match_streams"
 """
@@ -15181,6 +15918,7 @@ input match_streams_bool_exp {
   match_id: uuid_comparison_exp
   priority: Int_comparison_exp
   status: String_comparison_exp
+  status_history: jsonb_comparison_exp
   stream_url: String_comparison_exp
   title: String_comparison_exp
 }
@@ -15193,6 +15931,27 @@ enum match_streams_constraint {
   unique or primary key constraint on columns "id"
   """
   match_streams_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input match_streams_delete_at_path_input {
+  status_history: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input match_streams_delete_elem_input {
+  status_history: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input match_streams_delete_key_input {
+  status_history: String
 }
 
 """
@@ -15217,6 +15976,7 @@ input match_streams_insert_input {
   match_id: uuid
   priority: Int
   status: String
+  status_history: jsonb
   stream_url: String
   title: String
 }
@@ -15310,6 +16070,7 @@ input match_streams_order_by {
   match_id: order_by
   priority: order_by
   status: order_by
+  status_history: order_by
   stream_url: order_by
   title: order_by
 }
@@ -15317,6 +16078,11 @@ input match_streams_order_by {
 """primary key columns input for table: match_streams"""
 input match_streams_pk_columns_input {
   id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input match_streams_prepend_input {
+  status_history: jsonb
 }
 
 """
@@ -15352,6 +16118,9 @@ enum match_streams_select_column {
 
   """column name"""
   status
+
+  """column name"""
+  status_history
 
   """column name"""
   stream_url
@@ -15402,6 +16171,7 @@ input match_streams_set_input {
   match_id: uuid
   priority: Int
   status: String
+  status_history: jsonb
   stream_url: String
   title: String
 }
@@ -15465,6 +16235,7 @@ input match_streams_stream_cursor_value_input {
   match_id: uuid
   priority: Int
   status: String
+  status_history: jsonb
   stream_url: String
   title: String
 }
@@ -15516,6 +16287,9 @@ enum match_streams_update_column {
   status
 
   """column name"""
+  status_history
+
+  """column name"""
   stream_url
 
   """column name"""
@@ -15523,8 +16297,29 @@ enum match_streams_update_column {
 }
 
 input match_streams_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: match_streams_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: match_streams_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: match_streams_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: match_streams_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: match_streams_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: match_streams_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: match_streams_set_input
@@ -18032,6 +18827,19 @@ type mutation_root {
   delete_maps_by_pk(id: uuid!): maps
 
   """
+  delete data from the table: "match_demo_sessions"
+  """
+  delete_match_demo_sessions(
+    """filter the rows which have to be deleted"""
+    where: match_demo_sessions_bool_exp!
+  ): match_demo_sessions_mutation_response
+
+  """
+  delete single row from the table: "match_demo_sessions"
+  """
+  delete_match_demo_sessions_by_pk(id: uuid!): match_demo_sessions
+
+  """
   delete data from the table: "match_invites"
   """
   delete_match_invites(
@@ -19435,6 +20243,28 @@ type mutation_root {
   ): maps
 
   """
+  insert data into the table: "match_demo_sessions"
+  """
+  insert_match_demo_sessions(
+    """the rows to be inserted"""
+    objects: [match_demo_sessions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: match_demo_sessions_on_conflict
+  ): match_demo_sessions_mutation_response
+
+  """
+  insert a single row into the table: "match_demo_sessions"
+  """
+  insert_match_demo_sessions_one(
+    """the row to be inserted"""
+    object: match_demo_sessions_insert_input!
+
+    """upsert condition"""
+    on_conflict: match_demo_sessions_on_conflict
+  ): match_demo_sessions
+
+  """
   insert data into the table: "match_invites"
   """
   insert_match_invites(
@@ -20473,6 +21303,7 @@ type mutation_root {
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
   stopLive(match_id: uuid!): SuccessOutput
+  stopWatchDemo(match_map_id: uuid!): SuccessOutput
   swapLineups(match_id: uuid!): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
   syncSteamFriends: SuccessOutput
@@ -21666,6 +22497,82 @@ type mutation_root {
   ): [maps_mutation_response]
 
   """
+  update data of the table: "match_demo_sessions"
+  """
+  update_match_demo_sessions(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: match_demo_sessions_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: match_demo_sessions_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: match_demo_sessions_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: match_demo_sessions_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: match_demo_sessions_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: match_demo_sessions_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: match_demo_sessions_set_input
+
+    """filter the rows which have to be updated"""
+    where: match_demo_sessions_bool_exp!
+  ): match_demo_sessions_mutation_response
+
+  """
+  update single row of the table: "match_demo_sessions"
+  """
+  update_match_demo_sessions_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: match_demo_sessions_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: match_demo_sessions_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: match_demo_sessions_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: match_demo_sessions_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: match_demo_sessions_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: match_demo_sessions_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: match_demo_sessions_set_input
+    pk_columns: match_demo_sessions_pk_columns_input!
+  ): match_demo_sessions
+
+  """
+  update multiples rows of table: "match_demo_sessions"
+  """
+  update_match_demo_sessions_many(
+    """updates to execute, in order"""
+    updates: [match_demo_sessions_updates!]!
+  ): [match_demo_sessions_mutation_response]
+
+  """
   update data of the table: "match_invites"
   """
   update_match_invites(
@@ -21771,8 +22678,29 @@ type mutation_root {
   update data of the table: "match_map_demos"
   """
   update_match_map_demos(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: match_map_demos_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: match_map_demos_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: match_map_demos_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: match_map_demos_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: match_map_demos_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: match_map_demos_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: match_map_demos_set_input
@@ -21785,8 +22713,29 @@ type mutation_root {
   update single row of the table: "match_map_demos"
   """
   update_match_map_demos_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: match_map_demos_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: match_map_demos_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: match_map_demos_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: match_map_demos_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: match_map_demos_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: match_map_demos_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: match_map_demos_set_input
@@ -21963,8 +22912,29 @@ type mutation_root {
   update data of the table: "match_streams"
   """
   update_match_streams(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: match_streams_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: match_streams_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: match_streams_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: match_streams_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: match_streams_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: match_streams_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: match_streams_set_input
@@ -21977,8 +22947,29 @@ type mutation_root {
   update single row of the table: "match_streams"
   """
   update_match_streams_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: match_streams_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: match_streams_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: match_streams_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: match_streams_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: match_streams_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: match_streams_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: match_streams_set_input
@@ -23224,6 +24215,11 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_pool_maps_updates!]!
   ): [v_pool_maps_mutation_response]
+
+  """
+  Spawn a per-user game-streamer pod to play back a finished match's demo
+  """
+  watchDemo(match_map_id: uuid!): WatchDemoOutput
 
   """Write content to file on game server"""
   writeServerFile(content: String!, file_path: String!, node_id: String!, server_id: String): SuccessOutput
@@ -33539,6 +34535,51 @@ type query_root {
   maps_by_pk(id: uuid!): maps
 
   """
+  fetch data from the table: "match_demo_sessions"
+  """
+  match_demo_sessions(
+    """distinct select on columns"""
+    distinct_on: [match_demo_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_demo_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): [match_demo_sessions!]!
+
+  """
+  fetch aggregated fields from the table: "match_demo_sessions"
+  """
+  match_demo_sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_demo_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_demo_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): match_demo_sessions_aggregate!
+
+  """
+  fetch data from the table: "match_demo_sessions" using primary key columns
+  """
+  match_demo_sessions_by_pk(id: uuid!): match_demo_sessions
+
+  """
   fetch data from the table: "match_invites"
   """
   match_invites(
@@ -39455,6 +40496,65 @@ type subscription_root {
     """filter the rows returned"""
     where: maps_bool_exp
   ): [maps!]!
+
+  """
+  fetch data from the table: "match_demo_sessions"
+  """
+  match_demo_sessions(
+    """distinct select on columns"""
+    distinct_on: [match_demo_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_demo_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): [match_demo_sessions!]!
+
+  """
+  fetch aggregated fields from the table: "match_demo_sessions"
+  """
+  match_demo_sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_demo_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_demo_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): match_demo_sessions_aggregate!
+
+  """
+  fetch data from the table: "match_demo_sessions" using primary key columns
+  """
+  match_demo_sessions_by_pk(id: uuid!): match_demo_sessions
+
+  """
+  fetch data from the table in a streaming manner: "match_demo_sessions"
+  """
+  match_demo_sessions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [match_demo_sessions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): [match_demo_sessions!]!
 
   """
   fetch data from the table: "match_invites"

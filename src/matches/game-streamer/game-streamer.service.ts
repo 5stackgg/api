@@ -14,8 +14,33 @@ import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
+import { randomBytes } from "node:crypto";
 
-type StreamerMode = "live" | "create-clips";
+type StreamerMode = "live" | "create-clips" | "demo";
+
+export type DemoControlAction =
+  | "pause"
+  | "resume"
+  | "toggle"
+  | "seek"
+  | "skip"
+  | "speed"
+  | "round"
+  | "state";
+
+export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
+  new Set<DemoControlAction>([
+    "pause",
+    "resume",
+    "toggle",
+    "seek",
+    "skip",
+    "speed",
+    "round",
+    "state",
+  ]);
+
+const STATUS_HISTORY_CAP = 50;
 
 const GAME_STREAMER_TITLE = "5Stack Game Streamer";
 
@@ -131,8 +156,7 @@ export class GameStreamerService {
             match_id: { _eq: matchId },
             is_game_streamer: { _eq: true },
           },
-          // Generated Hasura types lag this migration until codegen runs.
-          _set: { autodirector: enabled } as any,
+          _set: { autodirector: enabled },
         },
         affected_rows: true,
       },
@@ -142,6 +166,562 @@ export class GameStreamerService {
 
   public static GetClipsJobId(matchId: string) {
     return `gs-clips-${matchId}`;
+  }
+
+  public static GetDemoJobIdForSession(sessionId: string) {
+    return `gs-demo-${sessionId.replace(/-/g, "").slice(0, 12)}`;
+  }
+  public static GetDemoServiceNameForSession(sessionId: string) {
+    return GameStreamerService.GetDemoJobIdForSession(sessionId);
+  }
+
+  private getDemoSpecUrl(sessionId: string, action: string) {
+    const svc = GameStreamerService.GetDemoServiceNameForSession(sessionId);
+    return `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/${action}`;
+  }
+
+  public async startDemoPlayback(
+    matchMapId: string,
+    userSteamId: string,
+    options: {
+      demoFile: string;
+      presignedDemoUrl: string;
+      roundTicks: unknown;
+      totalTicks: number | null;
+      tickRate: number | null;
+      workshopId: string | null;
+      cs2Build: string | null;
+    },
+  ): Promise<{
+    streamUrl: string;
+    sessionId: string;
+    matchId: string;
+  }> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: { match_map_id: { _eq: matchMapId } },
+          limit: 1,
+        },
+        match_id: true,
+      },
+    });
+    const matchId = match_map_demos[0]?.match_id;
+    if (!matchId) {
+      throw new Error(`no demo for match_map ${matchMapId}`);
+    }
+
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        id: true,
+        region: true,
+      },
+    });
+    if (!match) {
+      throw new Error(`match ${matchId} not found`);
+    }
+
+    const existing = await this.findDemoSession(matchMapId, userSteamId);
+    if (existing) {
+      this.logger.log(
+        `[demo] tearing down stale session ${existing.id} for ${userSteamId} on ${matchMapId} before new start`,
+      );
+      await this.stopDemoSessionById(existing.id, existing.k8s_job_name);
+    }
+
+    const sessionToken = randomBytes(24).toString("hex");
+
+    const streamUrl = `${this.appConfig.gameStreamHlsBase}/${matchId}/`;
+
+    const bootIso = new Date().toISOString();
+    const { insert_match_demo_sessions_one } = await this.hasura.mutation({
+      insert_match_demo_sessions_one: {
+        __args: {
+          object: {
+            match_id: matchId,
+            match_map_id: matchMapId,
+            watcher_steam_id: userSteamId,
+            k8s_job_name: "pending",
+            session_token: sessionToken,
+            stream_url: streamUrl,
+            status: "booting",
+            status_history: [{ status: "booting", at: bootIso }],
+          },
+        },
+        id: true,
+      },
+    });
+    const sessionId = insert_match_demo_sessions_one?.id;
+    if (!sessionId) {
+      throw new Error("failed to insert demo session row");
+    }
+
+    const jobName = GameStreamerService.GetDemoJobIdForSession(sessionId);
+
+    await this.hasura.mutation({
+      update_match_demo_sessions_by_pk: {
+        __args: {
+          pk_columns: { id: sessionId },
+          _set: { k8s_job_name: jobName },
+        },
+        id: true,
+      },
+    });
+
+    const nodeId = await this.pickGpuNode(match.region);
+
+    await this.deleteJob(jobName);
+
+    const env: V1EnvVar[] = [
+      { name: "MATCH_MAP_ID", value: matchMapId },
+      { name: "DEMO_URL", value: options.presignedDemoUrl },
+      { name: "DEMO_FILE_NAME", value: options.demoFile },
+      { name: "DEMO_SESSION_ID", value: sessionId },
+      { name: "DEMO_SESSION_TOKEN", value: sessionToken },
+    ];
+    if (options.roundTicks != null) {
+      env.push({
+        name: "ROUND_TICKS",
+        value: JSON.stringify(options.roundTicks),
+      });
+    }
+    if (options.totalTicks != null) {
+      env.push({ name: "DEMO_TOTAL_TICKS", value: String(options.totalTicks) });
+    }
+    if (options.tickRate != null) {
+      env.push({ name: "DEMO_TICK_RATE", value: String(options.tickRate) });
+    }
+    if (options.workshopId) {
+      env.push({ name: "WORKSHOP_ID", value: options.workshopId });
+    }
+    if (options.cs2Build) {
+      env.push({ name: "CS2_BUILD", value: options.cs2Build });
+    }
+
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    this.logger.log(
+      `[demo ${sessionId}] starting on node ${nodeId} (job=${jobName})`,
+    );
+
+    await batch.createNamespacedJob({
+      namespace: this.namespace,
+      body: this.buildJobSpec(jobName, matchId, "demo", nodeId, env, {
+        "session-id": sessionId,
+      }),
+    });
+
+    await this.createDemoService(sessionId);
+
+    return {
+      streamUrl,
+      sessionId,
+      matchId,
+    };
+  }
+
+  public async stopDemoPlayback(matchMapId: string, userSteamId: string) {
+    const session = await this.findDemoSession(matchMapId, userSteamId);
+    if (!session) {
+      this.logger.log(
+        `[demo] stop: no active session for ${userSteamId} on ${matchMapId}`,
+      );
+      return;
+    }
+    await this.stopDemoSessionById(session.id, session.k8s_job_name);
+  }
+
+  public async stopDemoSessionById(sessionId: string, k8sJobName: string) {
+    this.logger.log(`[demo ${sessionId}] stopping (job=${k8sJobName})`);
+
+    try {
+      await this.deleteJob(k8sJobName);
+    } catch (error) {
+      this.logger.error(
+        `[demo ${sessionId}] deleteJob failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    try {
+      await this.deleteDemoService(sessionId);
+    } catch (error) {
+      this.logger.error(
+        `[demo ${sessionId}] deleteService failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    await this.hasura.mutation({
+      delete_match_demo_sessions_by_pk: {
+        __args: { id: sessionId },
+        id: true,
+      },
+    });
+  }
+
+  public async demoControl(
+    matchMapId: string,
+    userSteamId: string,
+    action: DemoControlAction,
+    body: Record<string, unknown> = {},
+  ): Promise<unknown> {
+    if (!DEMO_CONTROL_ACTIONS.has(action)) {
+      throw new Error(`unsupported demo control action: ${action}`);
+    }
+
+    const session = await this.findDemoSession(matchMapId, userSteamId);
+    if (!session) {
+      throw new Error(
+        "no demo playback session is running — call watchDemo first",
+      );
+    }
+
+    await this.bumpDemoSessionActivity(session.id);
+
+    const url = this.getDemoSpecUrl(session.id, action);
+    const method = action === "state" ? "GET" : "POST";
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method,
+        headers:
+          method === "POST" ? { "Content-Type": "application/json" } : {},
+        body: method === "POST" ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(5_000),
+      });
+    } catch (error) {
+      const cause = (error as Error)?.cause as
+        | { code?: string; message?: string }
+        | undefined;
+      const code = cause?.code ?? (error as { code?: string })?.code;
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.error(
+        `[demo ${session.id}] ${action} transport: ${code ?? "<none>"} ${message}`,
+      );
+      if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+        throw new Error(
+          "demo session pod has not registered DNS yet — try again in a few seconds",
+        );
+      }
+      if (code === "ECONNREFUSED") {
+        throw new Error(
+          "demo session pod is booting — try again once status='live'",
+        );
+      }
+      throw new Error(`demo ${action} unreachable: ${message}`);
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`demo ${action} -> ${res.status}: ${text.slice(0, 200)}`);
+    }
+    return res.json().catch(() => ({ ok: true }));
+  }
+
+  private async findDemoSession(matchMapId: string, userSteamId: string) {
+    const { match_demo_sessions } = await this.hasura.query({
+      match_demo_sessions: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            watcher_steam_id: { _eq: userSteamId },
+          },
+          limit: 1,
+        },
+        id: true,
+        k8s_job_name: true,
+        session_token: true,
+        status: true,
+      },
+    });
+    return match_demo_sessions?.[0];
+  }
+
+  public async pingDemoSession(matchMapId: string, userSteamId: string) {
+    await this.hasura.mutation({
+      update_match_demo_sessions: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            watcher_steam_id: { _eq: userSteamId },
+          },
+          _set: { last_activity_at: "now()" },
+        },
+        affected_rows: true,
+      },
+    });
+  }
+
+  private async bumpDemoSessionActivity(sessionId: string) {
+    await this.hasura.mutation({
+      update_match_demo_sessions_by_pk: {
+        __args: {
+          pk_columns: { id: sessionId },
+          _set: { last_activity_at: "now()" },
+        },
+        id: true,
+      },
+    });
+  }
+
+  public async validateDemoSessionAuth(
+    sessionId: string,
+    originAuth: unknown,
+  ): Promise<{ id: string; match_id: string; match_map_id: string } | null> {
+    if (!originAuth || typeof originAuth !== "string") {
+      return null;
+    }
+    const colonIndex = originAuth.indexOf(":");
+    if (colonIndex === -1) {
+      return null;
+    }
+    const headerSessionId = originAuth.substring(0, colonIndex);
+    const presentedToken = originAuth.substring(colonIndex + 1);
+
+    if (!timingSafeStringEqual(headerSessionId, sessionId)) {
+      return null;
+    }
+
+    const { match_demo_sessions } = await this.hasura.query({
+      match_demo_sessions: {
+        __args: {
+          where: { id: { _eq: sessionId } },
+          limit: 1,
+        },
+        id: true,
+        match_id: true,
+        match_map_id: true,
+        session_token: true,
+      },
+    });
+    const row = match_demo_sessions?.[0];
+    if (!row?.session_token) return null;
+
+    if (!timingSafeStringEqual(row.session_token, presentedToken)) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      match_id: row.match_id,
+      match_map_id: row.match_map_id,
+    };
+  }
+
+  public async reportDemoStatus(
+    sessionId: string,
+    body: GameStreamerStatusDto,
+  ) {
+    const { match_demo_sessions_by_pk: current } = await this.hasura.query({
+      match_demo_sessions_by_pk: {
+        __args: { id: sessionId },
+        status_history: true,
+      },
+    });
+
+    if (!current) {
+      this.logger.warn(
+        `[demo ${sessionId}] reportDemoStatus: row missing — was the session torn down?`,
+      );
+      return;
+    }
+
+    const previous = Array.isArray(current.status_history)
+      ? (current.status_history as unknown[])
+      : [];
+    const nextHistory = [
+      ...previous,
+      { status: body.status, at: new Date().toISOString() },
+    ].slice(-STATUS_HISTORY_CAP);
+
+    await this.hasura.mutation({
+      update_match_demo_sessions_by_pk: {
+        __args: {
+          pk_columns: { id: sessionId },
+          _set: {
+            status: body.status,
+            error_message: body.error ?? null,
+            last_status_at: "now()",
+            status_history: nextHistory,
+          },
+        },
+        id: true,
+      },
+    });
+
+    this.logger.log(
+      `[demo ${sessionId}] status=${body.status}${body.error ? ` err=${body.error}` : ""}`,
+    );
+  }
+
+  private async createDemoService(sessionId: string) {
+    const serviceName =
+      GameStreamerService.GetDemoServiceNameForSession(sessionId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    await this.deleteDemoService(sessionId);
+
+    const body: V1Service = {
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: serviceName,
+        labels: {
+          app: "game-streamer",
+          role: "demo",
+          "session-id": sessionId,
+        },
+      },
+      spec: {
+        type: "ClusterIP",
+        selector: {
+          app: "game-streamer",
+          role: "demo",
+          "session-id": sessionId,
+        },
+        ports: [
+          { name: "openhud", port: 1349, targetPort: "openhud" },
+          { name: "spec", port: 1350, targetPort: "spec" },
+        ],
+      },
+    };
+
+    await core.createNamespacedService({
+      namespace: this.namespace,
+      body,
+    });
+  }
+
+  private async deleteDemoService(sessionId: string) {
+    const serviceName =
+      GameStreamerService.GetDemoServiceNameForSession(sessionId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+    try {
+      await core.deleteNamespacedService({
+        name: serviceName,
+        namespace: this.namespace,
+      });
+    } catch (error) {
+      if (error.code?.toString() !== "404") {
+        throw error;
+      }
+    }
+  }
+
+  public async reapIdleDemoSessions(idleSeconds = 60) {
+    const threshold = new Date(Date.now() - idleSeconds * 1000).toISOString();
+
+    const { match_demo_sessions } = await this.hasura.query({
+      match_demo_sessions: {
+        __args: {
+          where: {
+            last_activity_at: { _lt: threshold },
+          },
+        },
+        id: true,
+        k8s_job_name: true,
+        last_activity_at: true,
+      },
+    });
+
+    for (const session of match_demo_sessions ?? []) {
+      this.logger.log(
+        `[demo ${session.id}] idle since ${session.last_activity_at} — reaping`,
+      );
+      try {
+        await this.stopDemoSessionById(session.id, session.k8s_job_name);
+      } catch (error) {
+        this.logger.error(
+          `[demo ${session.id}] reaper teardown failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    await this.reapOrphanDemoK8sResources();
+  }
+
+  private async reapOrphanDemoK8sResources() {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const labelSelector = "app=game-streamer,role=demo";
+
+    let jobSessionIds: string[] = [];
+    let serviceSessionIds: string[] = [];
+    try {
+      const jobs = await batch.listNamespacedJob({
+        namespace: this.namespace,
+        labelSelector,
+      });
+      jobSessionIds = jobs.items
+        .map((j) => j.metadata?.labels?.["session-id"])
+        .filter((id): id is string => !!id);
+    } catch (error) {
+      this.logger.error(
+        `[demo-reaper] listJobs failed: ${(error as Error)?.message}`,
+      );
+    }
+    try {
+      const services = await core.listNamespacedService({
+        namespace: this.namespace,
+        labelSelector,
+      });
+      serviceSessionIds = services.items
+        .map((s) => s.metadata?.labels?.["session-id"])
+        .filter((id): id is string => !!id);
+    } catch (error) {
+      this.logger.error(
+        `[demo-reaper] listServices failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    const allClusterIds = Array.from(
+      new Set([...jobSessionIds, ...serviceSessionIds]),
+    );
+    if (allClusterIds.length === 0) return;
+
+    const { match_demo_sessions } = await this.hasura.query({
+      match_demo_sessions: {
+        __args: {
+          where: { id: { _in: allClusterIds } },
+        },
+        id: true,
+      },
+    });
+    const liveIds = new Set<string>(
+      (match_demo_sessions ?? []).map((s) => s.id),
+    );
+
+    for (const sessionId of allClusterIds) {
+      if (liveIds.has(sessionId)) continue;
+      const jobName = GameStreamerService.GetDemoJobIdForSession(sessionId);
+      this.logger.warn(
+        `[demo ${sessionId}] orphan k8s resources (no row) — tearing down job=${jobName}`,
+      );
+      try {
+        await this.deleteJob(jobName);
+      } catch (error) {
+        this.logger.error(
+          `[demo ${sessionId}] orphan deleteJob failed: ${(error as Error)?.message}`,
+        );
+      }
+      try {
+        await this.deleteDemoService(sessionId);
+      } catch (error) {
+        this.logger.error(
+          `[demo ${sessionId}] orphan deleteService failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
   }
 
   public async startLive(matchId: string) {
@@ -412,8 +992,8 @@ export class GameStreamerService {
           "match-id": matchId,
         },
         ports: [
-          { name: "openhud", port: 1349, targetPort: "openhud" as any },
-          { name: "spec", port: 1350, targetPort: "spec" as any },
+          { name: "openhud", port: 1349, targetPort: "openhud" },
+          { name: "spec", port: 1350, targetPort: "spec" },
         ],
       },
     };
@@ -499,6 +1079,7 @@ export class GameStreamerService {
 
   private async registerStreamRow(matchId: string) {
     await this.unregisterStreamRow(matchId);
+    const nowIso = new Date().toISOString();
     await this.hasura.mutation({
       insert_match_streams_one: {
         __args: {
@@ -509,7 +1090,8 @@ export class GameStreamerService {
             priority: 0,
             is_game_streamer: true,
             is_live: false,
-            status: "launching_steam",
+            status: "booting",
+            status_history: [{ status: "booting", at: nowIso }],
             last_status_at: "now()",
           },
         },
@@ -555,12 +1137,33 @@ export class GameStreamerService {
   }
 
   public async reportStatus(matchId: string, body: GameStreamerStatusDto) {
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            is_game_streamer: { _eq: true },
+          },
+          limit: 1,
+        },
+        status_history: true,
+      },
+    });
+    const previous = Array.isArray(match_streams?.[0]?.status_history)
+      ? (match_streams[0].status_history as unknown[])
+      : [];
+    const nextHistory = [
+      ...previous,
+      { status: body.status, at: new Date().toISOString() },
+    ].slice(-STATUS_HISTORY_CAP);
+
     const setClause = {
       status: body.status,
       stream_url: body.stream_url ?? null,
       error_message: body.error ?? null,
       last_status_at: "now()",
       is_live: body.status === "live",
+      status_history: nextHistory,
     };
 
     const result = await this.hasura.mutation({
@@ -641,30 +1244,38 @@ export class GameStreamerService {
     mode: StreamerMode,
     nodeId: string,
     extraEnv: V1EnvVar[],
+    extraLabels: Record<string, string> = {},
   ): V1Job {
-    const containerName = mode === "create-clips" ? "clips" : "live";
+    const containerName =
+      mode === "create-clips" ? "clips" : mode === "demo" ? "demo" : "live";
+    const args =
+      mode === "live"
+        ? ["live"]
+        : mode === "demo"
+          ? ["demo"]
+          : ["create-clips"];
+    const exposesSpecPorts = mode === "live" || mode === "demo";
+
+    const labels: Record<string, string> = {
+      app: "game-streamer",
+      role: mode,
+      "match-id": matchId,
+      ...extraLabels,
+    };
 
     return {
       apiVersion: "batch/v1",
       kind: "Job",
       metadata: {
         name: jobName,
-        labels: {
-          app: "game-streamer",
-          role: mode,
-          "match-id": matchId,
-        },
+        labels,
       },
       spec: {
         backoffLimit: 0,
         ttlSecondsAfterFinished: 60 * 60 * 24,
         template: {
           metadata: {
-            labels: {
-              app: "game-streamer",
-              role: mode,
-              "match-id": matchId,
-            },
+            labels,
           },
           spec: {
             restartPolicy: "Never",
@@ -707,14 +1318,13 @@ export class GameStreamerService {
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },
-                args: [mode === "live" ? "live" : "create-clips"],
-                ports:
-                  mode === "live"
-                    ? [
-                        { name: "openhud", containerPort: 1349 },
-                        { name: "spec", containerPort: 1350 },
-                      ]
-                    : undefined,
+                args,
+                ports: exposesSpecPorts
+                  ? [
+                      { name: "openhud", containerPort: 1349 },
+                      { name: "spec", containerPort: 1350 },
+                    ]
+                  : undefined,
                 env: [
                   { name: "MATCH_ID", value: matchId },
                   { name: "DISPLAY_SIZEW", value: "1920" },

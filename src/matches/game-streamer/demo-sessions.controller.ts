@@ -11,8 +11,8 @@ import { Request, Response } from "express";
 import { GameStreamerService } from "./game-streamer.service";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 
-@Controller("game-streamer/:matchId")
-export class GameStreamerController {
+@Controller("demo-sessions/:sessionId")
+export class DemoSessionsController {
   constructor(
     private readonly logger: Logger,
     private readonly gameStreamer: GameStreamerService,
@@ -20,35 +20,38 @@ export class GameStreamerController {
 
   @Post("status")
   public async reportStatus(
-    @Param("matchId") matchId: string,
+    @Param("sessionId") sessionId: string,
     @Body() body: GameStreamerStatusDto,
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.logger.log(`[${matchId}] status POST: ${JSON.stringify(body ?? {})}`);
+    this.logger.log(
+      `[demo ${sessionId}] status POST: ${JSON.stringify(body ?? {})}`,
+    );
 
-    if (
-      !(await this.gameStreamer.validateStatusOriginAuth(
-        matchId,
-        request.headers["x-origin-auth"],
-      ))
-    ) {
+    const session = await this.gameStreamer.validateDemoSessionAuth(
+      sessionId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
       this.logger.warn(
-        `[${matchId}] status POST rejected: invalid x-origin-auth`,
+        `[demo ${sessionId}] status POST rejected: invalid x-origin-auth`,
       );
       return response.status(401).end();
     }
 
     if (!body || typeof body.status !== "string" || body.status.length === 0) {
-      this.logger.warn(`[${matchId}] status POST rejected: missing status`);
+      this.logger.warn(
+        `[demo ${sessionId}] status POST rejected: missing status`,
+      );
       return response.status(400).json({ error: "status required" });
     }
 
     try {
-      await this.gameStreamer.reportStatus(matchId, body);
+      await this.gameStreamer.reportDemoStatus(sessionId, body);
     } catch (error) {
       this.logger.error(
-        `[${matchId}] reportStatus failed: ${(error as Error)?.message}`,
+        `[demo ${sessionId}] reportDemoStatus failed: ${(error as Error)?.message}`,
         (error as Error)?.stack,
       );
       return response.status(500).json({ error: "internal" });

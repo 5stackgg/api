@@ -22,6 +22,16 @@ select_permissions:
         - match_id
         - match_map_id
         - size
+        - total_ticks
+        - tick_rate
+        - duration_seconds
+        - round_ticks
+        - metadata_parsed_at
+        - map_name
+        - workshop_id
+        - cs2_build
+        - kills
+        - bombs
       computed_fields:
         - download_url
       filter: {}

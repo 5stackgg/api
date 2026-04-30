@@ -367,6 +367,12 @@ type Mutation {
 }
 
 type Mutation {
+  stopWatchDemo(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   swapLineups(
     match_id: uuid!
   ): SuccessOutput
@@ -403,6 +409,12 @@ type Mutation {
 
 type Mutation {
   updateServices: SuccessOutput
+}
+
+type Mutation {
+  watchDemo(
+    match_map_id: uuid!
+  ): WatchDemoOutput
 }
 
 type Mutation {
@@ -449,6 +461,12 @@ type MeResponse {
 
 type SuccessOutput {
   success: Boolean!
+}
+
+type WatchDemoOutput {
+  success: Boolean!
+  session_id: String!
+  stream_url: String!
 }
 
 type SetupGameServeOutput {
