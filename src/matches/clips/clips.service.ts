@@ -1,17 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
-import {
-  BatchV1Api,
-  KubeConfig,
-  V1EnvVar,
-} from "@kubernetes/client-node";
-import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { HasuraService } from "../../hasura/hasura.service";
 import { S3Service } from "../../s3/s3.service";
-import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
-import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { ClipSpec } from "./types/ClipSpec";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
@@ -24,26 +16,12 @@ const IN_FLIGHT_STATUSES = ["queued", "rendering", "uploading"] as const;
 
 @Injectable()
 export class ClipsService {
-  private readonly namespace: string;
-  private readonly gameServerConfig: GameServersConfig;
-
   constructor(
     private readonly logger: Logger,
-    private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
-    private readonly demoMetadata: DemoMetadataService,
-  ) {
-    this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
-    this.namespace = this.gameServerConfig.namespace;
-  }
-
-  public static GetClipRenderJobName(jobId: string) {
-    // K8s names are 63 chars max + need to start with [a-z0-9]; same
-    // truncation pattern as GetDemoJobIdForSession.
-    return `gs-clip-${jobId.replace(/-/g, "").slice(0, 12)}`;
-  }
+  ) {}
 
   // S3 key layout: clips/{user}/{job}.mp4. Same bucket as demos so the
   // backblaze-proxy worker (cloudflare-workers/backblaze-proxy) can
@@ -61,20 +39,17 @@ export class ClipsService {
   ): Promise<{ jobId: string }> {
     this.validateSpec(spec);
 
-    // Demo must exist + be parsed so tick math is meaningful.
-    const demo = await this.demoMetadata.getDemoForMap(spec.match_map_id);
-    if (!demo) {
-      throw new Error(`no uploaded demo for match_map ${spec.match_map_id}`);
-    }
-    if (!demo.metadata_parsed_at || !demo.total_ticks) {
-      throw new Error("demo metadata not ready — try again in a moment");
-    }
-    for (const seg of spec.segments) {
-      if (seg.start_tick < 0 || seg.end_tick > demo.total_ticks) {
-        throw new Error(
-          `segment ticks out of range (0..${demo.total_ticks}): ${seg.start_tick}..${seg.end_tick}`,
-        );
-      }
+    // The render runs INSIDE the user's existing match_demo_sessions
+    // pod — no new k8s job, no demo re-download, no second GPU. The
+    // user must be actively watching the demo for this to work.
+    const session = await this.findActiveDemoSession(
+      userSteamId,
+      spec.match_map_id,
+    );
+    if (!session) {
+      throw new Error(
+        "open the demo (click 'Watch demo') before creating a clip — the render runs in the same pod that's playing it back",
+      );
     }
 
     // Per-user concurrency: the unique partial index would catch this
@@ -88,8 +63,6 @@ export class ClipsService {
 
     const sessionToken = randomBytes(24).toString("hex");
 
-    // Insert with a placeholder k8s_job_name; we update it once the row
-    // gets its uuid back so the name can be derived from the id.
     const { insert_clip_render_jobs_one } = await this.hasura.mutation({
       insert_clip_render_jobs_one: {
         __args: {
@@ -97,7 +70,11 @@ export class ClipsService {
             user_steam_id: userSteamId,
             match_map_id: spec.match_map_id,
             session_token: sessionToken,
-            k8s_job_name: "pending",
+            // No k8s job of our own — the render piggybacks on the
+            // demo session's pod. Field stays in the schema for the
+            // future fallback path (no active session → spawn a new
+            // pod), but for v1 we always use the inline path.
+            k8s_job_name: session.k8s_job_name,
             spec,
             status: "queued",
             status_history: [
@@ -113,87 +90,41 @@ export class ClipsService {
       throw new Error("failed to insert clip_render_jobs row");
     }
 
-    const k8sJobName = ClipsService.GetClipRenderJobName(jobId);
-    await this.hasura.mutation({
-      update_clip_render_jobs_by_pk: {
-        __args: {
-          pk_columns: { id: jobId },
-          _set: { k8s_job_name: k8sJobName },
-        },
-        id: true,
-      },
-    });
-
-    // Demo file presigned URL — same flow as watchDemo. Long expiry
-    // (2h) so a queued render that waits behind another render still
-    // has a valid url when its turn comes.
-    const presignedDemoUrl = await this.s3.getPresignedUrl(
-      demo.file,
-      undefined,
-      60 * 60 * 2,
-      "get",
-    );
-
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: { id: demo.match_id },
-        id: true,
-        region: true,
-      },
-    });
-    if (!match) {
-      throw new Error(`match ${demo.match_id} not found`);
-    }
-
-    const nodeId = await this.gameStreamer.pickGpuNode(match.region);
-    await this.gameStreamer.deleteJob(k8sJobName);
-
-    const env: V1EnvVar[] = [
-      { name: "MATCH_MAP_ID", value: spec.match_map_id },
-      { name: "DEMO_URL", value: presignedDemoUrl },
-      { name: "DEMO_FILE_NAME", value: demo.file },
-      { name: "CLIP_RENDER_JOB_ID", value: jobId },
-      { name: "CLIP_RENDER_TOKEN", value: sessionToken },
-      { name: "CLIP_SPEC", value: JSON.stringify(spec) },
-    ];
-    if (demo.tick_rate != null) {
-      env.push({ name: "DEMO_TICK_RATE", value: String(demo.tick_rate) });
-    }
-    if (demo.total_ticks != null) {
-      env.push({ name: "DEMO_TOTAL_TICKS", value: String(demo.total_ticks) });
-    }
-    if (demo.workshop_id) {
-      env.push({ name: "WORKSHOP_ID", value: demo.workshop_id });
-    }
-    if (demo.cs2_build) {
-      env.push({ name: "CS2_BUILD", value: demo.cs2_build });
-    }
-    // Output framing — the pod consumes these to size the GStreamer
-    // pipeline. Pinned to the ones the editor exposes; defended by
-    // validateSpec.
+    const segment = spec.segments[0];
     const dims = spec.output.resolution === "720p" ? "1280x720" : "1920x1080";
-    env.push({ name: "CLIP_OUTPUT_DIMS", value: dims });
-    env.push({ name: "CLIP_OUTPUT_FPS", value: String(spec.output.fps) });
 
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-    const batch = kc.makeApiClient(BatchV1Api);
-
-    this.logger.log(
-      `[clip ${jobId}] starting on node ${nodeId} (job=${k8sJobName})`,
-    );
-
-    await batch.createNamespacedJob({
-      namespace: this.namespace,
-      body: this.gameStreamer.buildJobSpec(
-        k8sJobName,
-        demo.match_id,
-        "render-clip",
-        nodeId,
-        env,
-        { "clip-render-job-id": jobId },
-      ),
-    });
+    // Fire-and-forget POST to the spec-server. The pod runs the render
+    // asynchronously and reports back via /clip-renders/:id/status.
+    // Errors here are surfaced on the row so the editor can show them.
+    try {
+      await this.gameStreamer.dispatchClipRenderToPod(session.id, {
+        job_id: jobId,
+        token: sessionToken,
+        api_base: this.resolveInClusterApiBase(),
+        start_tick: segment.start_tick,
+        end_tick: segment.end_tick,
+        output_dims: dims,
+        output_fps: spec.output.fps,
+      });
+    } catch (error) {
+      this.logger.error(
+        `[clip ${jobId}] dispatch to pod failed: ${(error as Error)?.message}`,
+      );
+      await this.hasura.mutation({
+        update_clip_render_jobs_by_pk: {
+          __args: {
+            pk_columns: { id: jobId },
+            _set: {
+              status: "error",
+              error_message: `dispatch failed: ${(error as Error)?.message}`,
+              last_status_at: "now()",
+            },
+          },
+          id: true,
+        },
+      });
+      throw error;
+    }
 
     return { jobId };
   }
@@ -204,7 +135,6 @@ export class ClipsService {
         __args: { id: jobId },
         id: true,
         user_steam_id: true,
-        k8s_job_name: true,
         status: true,
       },
     });
@@ -219,14 +149,12 @@ export class ClipsService {
       return;
     }
 
-    try {
-      await this.gameStreamer.deleteJob(row.k8s_job_name);
-    } catch (error) {
-      this.logger.error(
-        `[clip ${jobId}] cancel deleteJob failed: ${(error as Error)?.message}`,
-      );
-    }
-
+    // Mark cancelled in the row first so the next pod status report
+    // sees the terminal state. The pod's render loop polls the row's
+    // status before each phase and exits early on `cancelled` —
+    // killing the in-pod gst pipeline too. (Worst case the in-flight
+    // capture finishes a few seconds later; the row stays cancelled
+    // and the upload is skipped.)
     await this.hasura.mutation({
       update_clip_render_jobs_by_pk: {
         __args: {
@@ -240,6 +168,42 @@ export class ClipsService {
         id: true,
       },
     });
+  }
+
+  // The api Service DNS name inside the cluster. The render pod posts
+  // status + uploads back to this base. Defaults to the conventional
+  // 5stack api Service; override with API_INTERNAL_BASE if your cluster
+  // names it differently.
+  private resolveInClusterApiBase(): string {
+    return process.env.API_INTERNAL_BASE ?? "http://api:5585";
+  }
+
+  private async findActiveDemoSession(
+    userSteamId: string,
+    matchMapId: string,
+  ): Promise<{ id: string; k8s_job_name: string } | null> {
+    const { match_demo_sessions } = await this.hasura.query({
+      match_demo_sessions: {
+        __args: {
+          where: {
+            watcher_steam_id: { _eq: userSteamId },
+            match_map_id: { _eq: matchMapId },
+          },
+          limit: 1,
+        },
+        id: true,
+        k8s_job_name: true,
+        status: true,
+      },
+    });
+    const row = match_demo_sessions?.[0];
+    if (!row) return null;
+    // `playing` is the only status where cs2 has actually loaded the
+    // demo and is rendering frames. Earlier statuses (booting,
+    // launching_steam, etc) the in-pod xdotool calls would fire into a
+    // window that doesn't exist yet.
+    if (row.status !== "playing") return null;
+    return { id: row.id, k8s_job_name: row.k8s_job_name };
   }
 
   public async deleteClip(userSteamId: string, clipId: string) {

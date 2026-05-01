@@ -16,7 +16,7 @@ import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { randomBytes } from "node:crypto";
 
-type StreamerMode = "live" | "create-clips" | "demo" | "render-clip";
+type StreamerMode = "live" | "create-clips" | "demo";
 
 export type DemoControlAction =
   | "pause"
@@ -437,6 +437,60 @@ export class GameStreamerService {
       throw new Error(`demo ${action} -> ${res.status}: ${text.slice(0, 200)}`);
     }
     return res.json().catch(() => ({ ok: true }));
+  }
+
+  // Dispatch a clip-render request to the spec-server in an existing
+  // demo session pod. The pod owns the orchestration (snapshot user
+  // playback → seek → file capture → upload → restore); the api just
+  // hands off the spec and walks away. Returns when the pod has
+  // accepted the request (200 from /demo/render-clip), NOT when the
+  // render finishes — progress comes back via /clip-renders/:id/status.
+  public async dispatchClipRenderToPod(
+    sessionId: string,
+    payload: {
+      job_id: string;
+      token: string;
+      api_base: string;
+      start_tick: number;
+      end_tick: number;
+      output_dims: string;
+      output_fps: number;
+    },
+  ) {
+    const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(5_000),
+      });
+    } catch (error) {
+      const cause = (error as Error)?.cause as { code?: string } | undefined;
+      const code = cause?.code ?? (error as { code?: string })?.code;
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.error(
+        `[clip dispatch] transport: ${code ?? "<none>"} ${message} url=${url}`,
+      );
+      if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+        throw new Error(
+          "demo session pod has not registered DNS yet — try again in a few seconds",
+        );
+      }
+      if (code === "ECONNREFUSED") {
+        throw new Error(
+          "demo session pod is up but spec-server is not listening yet",
+        );
+      }
+      throw new Error(`spec-server render-clip unreachable: ${message}`);
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `spec-server render-clip -> ${res.status}: ${text.slice(0, 200)}`,
+      );
+    }
   }
 
   private async findDemoSession(matchMapId: string, userSteamId: string) {
@@ -881,10 +935,7 @@ export class GameStreamerService {
     return settings_by_pk?.value === "true";
   }
 
-  // Public so the clips module can pick a node using the same load
-  // balancing rules (counts in-flight game-streamer pods on each GPU
-  // node, picks the least-loaded).
-  public async pickGpuNode(matchRegion: string | null): Promise<string> {
+  private async pickGpuNode(matchRegion: string | null): Promise<string> {
     const baseWhere = {
       status: {
         _eq: "Online" as e_game_server_node_statuses_enum,
@@ -1042,9 +1093,7 @@ export class GameStreamerService {
     }
   }
 
-  // Made public so the clips module can tear down its own render jobs
-  // without re-implementing the create/delete-name race protection.
-  public async deleteJob(jobName: string) {
+  private async deleteJob(jobName: string) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -1261,9 +1310,7 @@ export class GameStreamerService {
     });
   }
 
-  // Made public so the clips module can spawn render-clip pods without
-  // re-implementing the GPU pinning + cache + GPU resource limits boilerplate.
-  public buildJobSpec(
+  private buildJobSpec(
     jobName: string,
     matchId: string,
     mode: StreamerMode,
@@ -1272,24 +1319,13 @@ export class GameStreamerService {
     extraLabels: Record<string, string> = {},
   ): V1Job {
     const containerName =
-      mode === "create-clips"
-        ? "clips"
-        : mode === "demo"
-          ? "demo"
-          : mode === "render-clip"
-            ? "render-clip"
-            : "live";
+      mode === "create-clips" ? "clips" : mode === "demo" ? "demo" : "live";
     const args =
       mode === "live"
         ? ["live"]
         : mode === "demo"
           ? ["demo"]
-          : mode === "render-clip"
-            ? ["render-clip"]
-            : ["create-clips"];
-    // Render-clip pods are headless batch jobs — no inbound HTTP needed.
-    // Live + demo pods expose the spec-server + openhud ports for
-    // interactive control.
+          : ["create-clips"];
     const exposesSpecPorts = mode === "live" || mode === "demo";
 
     const labels: Record<string, string> = {
