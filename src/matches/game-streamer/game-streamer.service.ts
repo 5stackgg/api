@@ -30,7 +30,8 @@ export type DemoControlAction =
   | "slot"
   | "reload"
   | "xray"
-  | "hud";
+  | "hud"
+  | "demoui";
 
 export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
   new Set<DemoControlAction>([
@@ -46,6 +47,7 @@ export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
     "reload",
     "xray",
     "hud",
+    "demoui",
   ]);
 
 const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
