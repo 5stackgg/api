@@ -76,6 +76,12 @@ export interface CpuStat {
     __typename: 'CpuStat'
 }
 
+export interface CreateClipRenderOutput {
+    job_id: Scalars['uuid']
+    success: Scalars['Boolean']
+    __typename: 'CreateClipRenderOutput'
+}
+
 export interface DatabaseStats {
     blks_hit: Scalars['Int']
     blks_read: Scalars['Int']
@@ -744,6 +750,176 @@ export interface api_keys_var_samp_fields {
 export interface api_keys_variance_fields {
     steam_id: (Scalars['Float'] | null)
     __typename: 'api_keys_variance_fields'
+}
+
+
+/** columns and relationships of "clip_render_jobs" */
+export interface clip_render_jobs {
+    /** An object relationship */
+    clip: (match_clips | null)
+    clip_id: (Scalars['uuid'] | null)
+    created_at: Scalars['timestamptz']
+    error_message: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    k8s_job_name: Scalars['String']
+    last_status_at: Scalars['timestamptz']
+    /** An object relationship */
+    match_map: match_maps
+    match_map_id: Scalars['uuid']
+    progress: (Scalars['numeric'] | null)
+    session_token: Scalars['String']
+    spec: Scalars['jsonb']
+    status: Scalars['String']
+    status_history: Scalars['jsonb']
+    /** An object relationship */
+    user: players
+    user_steam_id: Scalars['bigint']
+    __typename: 'clip_render_jobs'
+}
+
+
+/** aggregated selection of "clip_render_jobs" */
+export interface clip_render_jobs_aggregate {
+    aggregate: (clip_render_jobs_aggregate_fields | null)
+    nodes: clip_render_jobs[]
+    __typename: 'clip_render_jobs_aggregate'
+}
+
+
+/** aggregate fields of "clip_render_jobs" */
+export interface clip_render_jobs_aggregate_fields {
+    avg: (clip_render_jobs_avg_fields | null)
+    count: Scalars['Int']
+    max: (clip_render_jobs_max_fields | null)
+    min: (clip_render_jobs_min_fields | null)
+    stddev: (clip_render_jobs_stddev_fields | null)
+    stddev_pop: (clip_render_jobs_stddev_pop_fields | null)
+    stddev_samp: (clip_render_jobs_stddev_samp_fields | null)
+    sum: (clip_render_jobs_sum_fields | null)
+    var_pop: (clip_render_jobs_var_pop_fields | null)
+    var_samp: (clip_render_jobs_var_samp_fields | null)
+    variance: (clip_render_jobs_variance_fields | null)
+    __typename: 'clip_render_jobs_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface clip_render_jobs_avg_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "clip_render_jobs" */
+export type clip_render_jobs_constraint = 'clip_render_jobs_one_in_flight_per_user' | 'clip_render_jobs_pkey'
+
+
+/** aggregate max on columns */
+export interface clip_render_jobs_max_fields {
+    clip_id: (Scalars['uuid'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    error_message: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    k8s_job_name: (Scalars['String'] | null)
+    last_status_at: (Scalars['timestamptz'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    progress: (Scalars['numeric'] | null)
+    session_token: (Scalars['String'] | null)
+    status: (Scalars['String'] | null)
+    user_steam_id: (Scalars['bigint'] | null)
+    __typename: 'clip_render_jobs_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface clip_render_jobs_min_fields {
+    clip_id: (Scalars['uuid'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    error_message: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    k8s_job_name: (Scalars['String'] | null)
+    last_status_at: (Scalars['timestamptz'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    progress: (Scalars['numeric'] | null)
+    session_token: (Scalars['String'] | null)
+    status: (Scalars['String'] | null)
+    user_steam_id: (Scalars['bigint'] | null)
+    __typename: 'clip_render_jobs_min_fields'
+}
+
+
+/** response of any mutation on the table "clip_render_jobs" */
+export interface clip_render_jobs_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: clip_render_jobs[]
+    __typename: 'clip_render_jobs_mutation_response'
+}
+
+
+/** select columns of table "clip_render_jobs" */
+export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_id' | 'progress' | 'session_token' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+
+
+/** aggregate stddev on columns */
+export interface clip_render_jobs_stddev_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface clip_render_jobs_stddev_pop_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface clip_render_jobs_stddev_samp_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface clip_render_jobs_sum_fields {
+    progress: (Scalars['numeric'] | null)
+    user_steam_id: (Scalars['bigint'] | null)
+    __typename: 'clip_render_jobs_sum_fields'
+}
+
+
+/** update columns of table "clip_render_jobs" */
+export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_id' | 'progress' | 'session_token' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface clip_render_jobs_var_pop_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface clip_render_jobs_var_samp_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface clip_render_jobs_variance_fields {
+    progress: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'clip_render_jobs_variance_fields'
 }
 
 
@@ -3778,6 +3954,170 @@ export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns
 export type maps_update_column = 'active_pool' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
+/** columns and relationships of "match_clips" */
+export interface match_clips {
+    created_at: Scalars['timestamptz']
+    duration_ms: (Scalars['Int'] | null)
+    id: Scalars['uuid']
+    /** An object relationship */
+    match_map: match_maps
+    match_map_id: Scalars['uuid']
+    /** An array relationship */
+    render_jobs: clip_render_jobs[]
+    /** An aggregate relationship */
+    render_jobs_aggregate: clip_render_jobs_aggregate
+    s3_url: (Scalars['String'] | null)
+    thumbnail_url: (Scalars['String'] | null)
+    title: (Scalars['String'] | null)
+    /** An object relationship */
+    user: players
+    user_steam_id: Scalars['bigint']
+    visibility: Scalars['String']
+    __typename: 'match_clips'
+}
+
+
+/** aggregated selection of "match_clips" */
+export interface match_clips_aggregate {
+    aggregate: (match_clips_aggregate_fields | null)
+    nodes: match_clips[]
+    __typename: 'match_clips_aggregate'
+}
+
+
+/** aggregate fields of "match_clips" */
+export interface match_clips_aggregate_fields {
+    avg: (match_clips_avg_fields | null)
+    count: Scalars['Int']
+    max: (match_clips_max_fields | null)
+    min: (match_clips_min_fields | null)
+    stddev: (match_clips_stddev_fields | null)
+    stddev_pop: (match_clips_stddev_pop_fields | null)
+    stddev_samp: (match_clips_stddev_samp_fields | null)
+    sum: (match_clips_sum_fields | null)
+    var_pop: (match_clips_var_pop_fields | null)
+    var_samp: (match_clips_var_samp_fields | null)
+    variance: (match_clips_variance_fields | null)
+    __typename: 'match_clips_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface match_clips_avg_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "match_clips" */
+export type match_clips_constraint = 'match_clips_pkey'
+
+
+/** aggregate max on columns */
+export interface match_clips_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    duration_ms: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    s3_url: (Scalars['String'] | null)
+    thumbnail_url: (Scalars['String'] | null)
+    title: (Scalars['String'] | null)
+    user_steam_id: (Scalars['bigint'] | null)
+    visibility: (Scalars['String'] | null)
+    __typename: 'match_clips_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface match_clips_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    duration_ms: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    s3_url: (Scalars['String'] | null)
+    thumbnail_url: (Scalars['String'] | null)
+    title: (Scalars['String'] | null)
+    user_steam_id: (Scalars['bigint'] | null)
+    visibility: (Scalars['String'] | null)
+    __typename: 'match_clips_min_fields'
+}
+
+
+/** response of any mutation on the table "match_clips" */
+export interface match_clips_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: match_clips[]
+    __typename: 'match_clips_mutation_response'
+}
+
+
+/** select columns of table "match_clips" */
+export type match_clips_select_column = 'created_at' | 'duration_ms' | 'id' | 'match_map_id' | 's3_url' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+
+
+/** aggregate stddev on columns */
+export interface match_clips_stddev_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface match_clips_stddev_pop_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface match_clips_stddev_samp_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface match_clips_sum_fields {
+    duration_ms: (Scalars['Int'] | null)
+    user_steam_id: (Scalars['bigint'] | null)
+    __typename: 'match_clips_sum_fields'
+}
+
+
+/** update columns of table "match_clips" */
+export type match_clips_update_column = 'created_at' | 'duration_ms' | 'id' | 'match_map_id' | 's3_url' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+
+
+/** aggregate var_pop on columns */
+export interface match_clips_var_pop_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface match_clips_var_samp_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface match_clips_variance_fields {
+    duration_ms: (Scalars['Float'] | null)
+    user_steam_id: (Scalars['Float'] | null)
+    __typename: 'match_clips_variance_fields'
+}
+
+
 /** columns and relationships of "match_demo_sessions" */
 export interface match_demo_sessions {
     created_at: Scalars['timestamptz']
@@ -6175,14 +6515,20 @@ export interface mutation_root {
     approveNameChange: (SuccessOutput | null)
     /** callForOrganizer */
     callForOrganizer: (SuccessOutput | null)
+    /** Cancel an in-flight clip render and tear down the K8s job */
+    cancelClipRender: (SuccessOutput | null)
     /** cancelMatch */
     cancelMatch: (SuccessOutput | null)
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
     createApiKey: (ApiKeyResponse | null)
+    /** Spawn a clip-render pod that produces an mp4 from a demo and uploads it */
+    createClipRender: (CreateClipRenderOutput | null)
     createClips: (SuccessOutput | null)
     /** Create directory on game server */
     createServerDirectory: (SuccessOutput | null)
+    /** Delete a saved clip and its underlying S3 object */
+    deleteClip: (SuccessOutput | null)
     deleteMatch: (SuccessOutput | null)
     /** Delete file or directory on game server */
     deleteServerItem: (SuccessOutput | null)
@@ -6200,6 +6546,10 @@ export interface mutation_root {
     delete_api_keys: (api_keys_mutation_response | null)
     /** delete single row from the table: "api_keys" */
     delete_api_keys_by_pk: (api_keys | null)
+    /** delete data from the table: "clip_render_jobs" */
+    delete_clip_render_jobs: (clip_render_jobs_mutation_response | null)
+    /** delete single row from the table: "clip_render_jobs" */
+    delete_clip_render_jobs_by_pk: (clip_render_jobs | null)
     /** delete data from the table: "db_backups" */
     delete_db_backups: (db_backups_mutation_response | null)
     /** delete single row from the table: "db_backups" */
@@ -6338,6 +6688,10 @@ export interface mutation_root {
     delete_maps: (maps_mutation_response | null)
     /** delete single row from the table: "maps" */
     delete_maps_by_pk: (maps | null)
+    /** delete data from the table: "match_clips" */
+    delete_match_clips: (match_clips_mutation_response | null)
+    /** delete single row from the table: "match_clips" */
+    delete_match_clips_by_pk: (match_clips | null)
     /** delete data from the table: "match_demo_sessions" */
     delete_match_demo_sessions: (match_demo_sessions_mutation_response | null)
     /** delete single row from the table: "match_demo_sessions" */
@@ -6531,6 +6885,10 @@ export interface mutation_root {
     insert_api_keys: (api_keys_mutation_response | null)
     /** insert a single row into the table: "api_keys" */
     insert_api_keys_one: (api_keys | null)
+    /** insert data into the table: "clip_render_jobs" */
+    insert_clip_render_jobs: (clip_render_jobs_mutation_response | null)
+    /** insert a single row into the table: "clip_render_jobs" */
+    insert_clip_render_jobs_one: (clip_render_jobs | null)
     /** insert data into the table: "db_backups" */
     insert_db_backups: (db_backups_mutation_response | null)
     /** insert a single row into the table: "db_backups" */
@@ -6671,6 +7029,10 @@ export interface mutation_root {
     insert_maps: (maps_mutation_response | null)
     /** insert a single row into the table: "maps" */
     insert_maps_one: (maps | null)
+    /** insert data into the table: "match_clips" */
+    insert_match_clips: (match_clips_mutation_response | null)
+    /** insert a single row into the table: "match_clips" */
+    insert_match_clips_one: (match_clips | null)
     /** insert data into the table: "match_demo_sessions" */
     insert_match_demo_sessions: (match_demo_sessions_mutation_response | null)
     /** insert a single row into the table: "match_demo_sessions" */
@@ -6874,6 +7236,8 @@ export interface mutation_root {
     removeFixtures: (SuccessOutput | null)
     /** Rename file or directory on game server */
     renameServerItem: (SuccessOutput | null)
+    /** Re-parse demo metadata for a match map (admin only) */
+    reparseDemo: (SuccessOutput | null)
     requestNameChange: (SuccessOutput | null)
     restartService: (SuccessOutput | null)
     /** scheduleMatch */
@@ -6917,6 +7281,12 @@ export interface mutation_root {
     update_api_keys_by_pk: (api_keys | null)
     /** update multiples rows of table: "api_keys" */
     update_api_keys_many: ((api_keys_mutation_response | null)[] | null)
+    /** update data of the table: "clip_render_jobs" */
+    update_clip_render_jobs: (clip_render_jobs_mutation_response | null)
+    /** update single row of the table: "clip_render_jobs" */
+    update_clip_render_jobs_by_pk: (clip_render_jobs | null)
+    /** update multiples rows of table: "clip_render_jobs" */
+    update_clip_render_jobs_many: ((clip_render_jobs_mutation_response | null)[] | null)
     /** update data of the table: "db_backups" */
     update_db_backups: (db_backups_mutation_response | null)
     /** update single row of the table: "db_backups" */
@@ -7125,6 +7495,12 @@ export interface mutation_root {
     update_maps_by_pk: (maps | null)
     /** update multiples rows of table: "maps" */
     update_maps_many: ((maps_mutation_response | null)[] | null)
+    /** update data of the table: "match_clips" */
+    update_match_clips: (match_clips_mutation_response | null)
+    /** update single row of the table: "match_clips" */
+    update_match_clips_by_pk: (match_clips | null)
+    /** update multiples rows of table: "match_clips" */
+    update_match_clips_many: ((match_clips_mutation_response | null)[] | null)
     /** update data of the table: "match_demo_sessions" */
     update_match_demo_sessions: (match_demo_sessions_mutation_response | null)
     /** update single row of the table: "match_demo_sessions" */
@@ -10192,6 +10568,12 @@ export interface query_root {
     api_keys_aggregate: api_keys_aggregate
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk: (api_keys | null)
+    /** fetch data from the table: "clip_render_jobs" */
+    clip_render_jobs: clip_render_jobs[]
+    /** fetch aggregated fields from the table: "clip_render_jobs" */
+    clip_render_jobs_aggregate: clip_render_jobs_aggregate
+    /** fetch data from the table: "clip_render_jobs" using primary key columns */
+    clip_render_jobs_by_pk: (clip_render_jobs | null)
     dbStats: ((DbStats | null)[] | null)
     /** fetch data from the table: "db_backups" */
     db_backups: db_backups[]
@@ -10438,6 +10820,12 @@ export interface query_root {
     maps_aggregate: maps_aggregate
     /** fetch data from the table: "maps" using primary key columns */
     maps_by_pk: (maps | null)
+    /** fetch data from the table: "match_clips" */
+    match_clips: match_clips[]
+    /** fetch aggregated fields from the table: "match_clips" */
+    match_clips_aggregate: match_clips_aggregate
+    /** fetch data from the table: "match_clips" using primary key columns */
+    match_clips_by_pk: (match_clips | null)
     /** fetch data from the table: "match_demo_sessions" */
     match_demo_sessions: match_demo_sessions[]
     /** fetch aggregated fields from the table: "match_demo_sessions" */
@@ -11248,6 +11636,14 @@ export interface subscription_root {
     api_keys_by_pk: (api_keys | null)
     /** fetch data from the table in a streaming manner: "api_keys" */
     api_keys_stream: api_keys[]
+    /** fetch data from the table: "clip_render_jobs" */
+    clip_render_jobs: clip_render_jobs[]
+    /** fetch aggregated fields from the table: "clip_render_jobs" */
+    clip_render_jobs_aggregate: clip_render_jobs_aggregate
+    /** fetch data from the table: "clip_render_jobs" using primary key columns */
+    clip_render_jobs_by_pk: (clip_render_jobs | null)
+    /** fetch data from the table in a streaming manner: "clip_render_jobs" */
+    clip_render_jobs_stream: clip_render_jobs[]
     /** fetch data from the table: "db_backups" */
     db_backups: db_backups[]
     /** fetch aggregated fields from the table: "db_backups" */
@@ -11530,6 +11926,14 @@ export interface subscription_root {
     maps_by_pk: (maps | null)
     /** fetch data from the table in a streaming manner: "maps" */
     maps_stream: maps[]
+    /** fetch data from the table: "match_clips" */
+    match_clips: match_clips[]
+    /** fetch aggregated fields from the table: "match_clips" */
+    match_clips_aggregate: match_clips_aggregate
+    /** fetch data from the table: "match_clips" using primary key columns */
+    match_clips_by_pk: (match_clips | null)
+    /** fetch data from the table in a streaming manner: "match_clips" */
+    match_clips_stream: match_clips[]
     /** fetch data from the table: "match_demo_sessions" */
     match_demo_sessions: match_demo_sessions[]
     /** fetch aggregated fields from the table: "match_demo_sessions" */
@@ -16264,6 +16668,16 @@ export interface ApiKeyResponseGenqlSelection{
 /** Boolean expression to compare columns of type "Boolean". All fields are combined with logical 'AND'. */
 export interface Boolean_comparison_exp {_eq?: (Scalars['Boolean'] | null),_gt?: (Scalars['Boolean'] | null),_gte?: (Scalars['Boolean'] | null),_in?: (Scalars['Boolean'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Boolean'] | null),_lte?: (Scalars['Boolean'] | null),_neq?: (Scalars['Boolean'] | null),_nin?: (Scalars['Boolean'][] | null)}
 
+export interface ClipAudioInput {duck_game_audio?: (Scalars['Boolean'] | null),fade_in_ms?: (Scalars['Int'] | null),fade_out_ms?: (Scalars['Int'] | null),track_url?: (Scalars['String'] | null),volume?: (Scalars['Float'] | null)}
+
+export interface ClipOutputInput {format: Scalars['String'],fps: Scalars['Int'],resolution: Scalars['String']}
+
+export interface ClipOverlayInput {end_ms: Scalars['Int'],payload?: (Scalars['jsonb'] | null),start_ms: Scalars['Int'],type: Scalars['String']}
+
+export interface ClipSegmentInput {end_tick: Scalars['Int'],pov_steam_id?: (Scalars['String'] | null),speed?: (Scalars['Float'] | null),start_tick: Scalars['Int']}
+
+export interface ClipSpecInput {audio?: (ClipAudioInput | null),destination: Scalars['String'],match_map_id: Scalars['uuid'],output: ClipOutputInput,overlays?: (ClipOverlayInput[] | null),segments: ClipSegmentInput[],title?: (Scalars['String'] | null)}
+
 export interface ConnectionByStateGenqlSelection{
     count?: boolean | number
     state?: boolean | number
@@ -16289,6 +16703,13 @@ export interface CpuStatGenqlSelection{
     total?: boolean | number
     used?: boolean | number
     window?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface CreateClipRenderOutputGenqlSelection{
+    job_id?: boolean | number
+    success?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -17237,6 +17658,314 @@ export interface bigint_comparison_exp {_eq?: (Scalars['bigint'] | null),_gt?: (
 
 /** Boolean expression to compare columns of type "bytea". All fields are combined with logical 'AND'. */
 export interface bytea_comparison_exp {_eq?: (Scalars['bytea'] | null),_gt?: (Scalars['bytea'] | null),_gte?: (Scalars['bytea'] | null),_in?: (Scalars['bytea'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['bytea'] | null),_lte?: (Scalars['bytea'] | null),_neq?: (Scalars['bytea'] | null),_nin?: (Scalars['bytea'][] | null)}
+
+
+/** columns and relationships of "clip_render_jobs" */
+export interface clip_render_jobsGenqlSelection{
+    /** An object relationship */
+    clip?: match_clipsGenqlSelection
+    clip_id?: boolean | number
+    created_at?: boolean | number
+    error_message?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    last_status_at?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
+    match_map_id?: boolean | number
+    progress?: boolean | number
+    session_token?: boolean | number
+    spec?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    status?: boolean | number
+    status_history?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    /** An object relationship */
+    user?: playersGenqlSelection
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "clip_render_jobs" */
+export interface clip_render_jobs_aggregateGenqlSelection{
+    aggregate?: clip_render_jobs_aggregate_fieldsGenqlSelection
+    nodes?: clip_render_jobsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface clip_render_jobs_aggregate_bool_exp {count?: (clip_render_jobs_aggregate_bool_exp_count | null)}
+
+export interface clip_render_jobs_aggregate_bool_exp_count {arguments?: (clip_render_jobs_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (clip_render_jobs_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "clip_render_jobs" */
+export interface clip_render_jobs_aggregate_fieldsGenqlSelection{
+    avg?: clip_render_jobs_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (clip_render_jobs_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: clip_render_jobs_max_fieldsGenqlSelection
+    min?: clip_render_jobs_min_fieldsGenqlSelection
+    stddev?: clip_render_jobs_stddev_fieldsGenqlSelection
+    stddev_pop?: clip_render_jobs_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: clip_render_jobs_stddev_samp_fieldsGenqlSelection
+    sum?: clip_render_jobs_sum_fieldsGenqlSelection
+    var_pop?: clip_render_jobs_var_pop_fieldsGenqlSelection
+    var_samp?: clip_render_jobs_var_samp_fieldsGenqlSelection
+    variance?: clip_render_jobs_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "clip_render_jobs" */
+export interface clip_render_jobs_aggregate_order_by {avg?: (clip_render_jobs_avg_order_by | null),count?: (order_by | null),max?: (clip_render_jobs_max_order_by | null),min?: (clip_render_jobs_min_order_by | null),stddev?: (clip_render_jobs_stddev_order_by | null),stddev_pop?: (clip_render_jobs_stddev_pop_order_by | null),stddev_samp?: (clip_render_jobs_stddev_samp_order_by | null),sum?: (clip_render_jobs_sum_order_by | null),var_pop?: (clip_render_jobs_var_pop_order_by | null),var_samp?: (clip_render_jobs_var_samp_order_by | null),variance?: (clip_render_jobs_variance_order_by | null)}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface clip_render_jobs_append_input {spec?: (Scalars['jsonb'] | null),status_history?: (Scalars['jsonb'] | null)}
+
+
+/** input type for inserting array relation for remote table "clip_render_jobs" */
+export interface clip_render_jobs_arr_rel_insert_input {data: clip_render_jobs_insert_input[],
+/** upsert condition */
+on_conflict?: (clip_render_jobs_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface clip_render_jobs_avg_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_avg_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "clip_render_jobs". All fields are combined with a logical 'AND'. */
+export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface clip_render_jobs_delete_at_path_input {spec?: (Scalars['String'][] | null),status_history?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface clip_render_jobs_delete_elem_input {spec?: (Scalars['Int'] | null),status_history?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface clip_render_jobs_delete_key_input {spec?: (Scalars['String'] | null),status_history?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "clip_render_jobs" */
+export interface clip_render_jobs_inc_input {progress?: (Scalars['numeric'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "clip_render_jobs" */
+export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface clip_render_jobs_max_fieldsGenqlSelection{
+    clip_id?: boolean | number
+    created_at?: boolean | number
+    error_message?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    last_status_at?: boolean | number
+    match_map_id?: boolean | number
+    progress?: boolean | number
+    session_token?: boolean | number
+    status?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_max_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface clip_render_jobs_min_fieldsGenqlSelection{
+    clip_id?: boolean | number
+    created_at?: boolean | number
+    error_message?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    last_status_at?: boolean | number
+    match_map_id?: boolean | number
+    progress?: boolean | number
+    session_token?: boolean | number
+    status?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_min_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "clip_render_jobs" */
+export interface clip_render_jobs_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: clip_render_jobsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "clip_render_jobs" */
+export interface clip_render_jobs_on_conflict {constraint: clip_render_jobs_constraint,update_columns?: clip_render_jobs_update_column[],where?: (clip_render_jobs_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "clip_render_jobs". */
+export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: clip_render_jobs */
+export interface clip_render_jobs_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface clip_render_jobs_prepend_input {spec?: (Scalars['jsonb'] | null),status_history?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "clip_render_jobs" */
+export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface clip_render_jobs_stddev_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_stddev_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface clip_render_jobs_stddev_pop_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_stddev_pop_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface clip_render_jobs_stddev_samp_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_stddev_samp_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "clip_render_jobs" */
+export interface clip_render_jobs_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: clip_render_jobs_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface clip_render_jobs_sum_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_sum_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+export interface clip_render_jobs_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (clip_render_jobs_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (clip_render_jobs_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (clip_render_jobs_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (clip_render_jobs_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (clip_render_jobs_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (clip_render_jobs_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (clip_render_jobs_set_input | null),
+/** filter the rows which have to be updated */
+where: clip_render_jobs_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface clip_render_jobs_var_pop_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_var_pop_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface clip_render_jobs_var_samp_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_var_samp_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface clip_render_jobs_variance_fieldsGenqlSelection{
+    progress?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "clip_render_jobs" */
+export interface clip_render_jobs_variance_order_by {progress?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "db_backups" */
@@ -22334,6 +23063,246 @@ _set?: (maps_set_input | null),
 where: maps_bool_exp}
 
 
+/** columns and relationships of "match_clips" */
+export interface match_clipsGenqlSelection{
+    created_at?: boolean | number
+    duration_ms?: boolean | number
+    id?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
+    match_map_id?: boolean | number
+    /** An array relationship */
+    render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (clip_render_jobs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
+    /** An aggregate relationship */
+    render_jobs_aggregate?: (clip_render_jobs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (clip_render_jobs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
+    s3_url?: boolean | number
+    thumbnail_url?: boolean | number
+    title?: boolean | number
+    /** An object relationship */
+    user?: playersGenqlSelection
+    user_steam_id?: boolean | number
+    visibility?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "match_clips" */
+export interface match_clips_aggregateGenqlSelection{
+    aggregate?: match_clips_aggregate_fieldsGenqlSelection
+    nodes?: match_clipsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "match_clips" */
+export interface match_clips_aggregate_fieldsGenqlSelection{
+    avg?: match_clips_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (match_clips_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: match_clips_max_fieldsGenqlSelection
+    min?: match_clips_min_fieldsGenqlSelection
+    stddev?: match_clips_stddev_fieldsGenqlSelection
+    stddev_pop?: match_clips_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: match_clips_stddev_samp_fieldsGenqlSelection
+    sum?: match_clips_sum_fieldsGenqlSelection
+    var_pop?: match_clips_var_pop_fieldsGenqlSelection
+    var_samp?: match_clips_var_samp_fieldsGenqlSelection
+    variance?: match_clips_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface match_clips_avg_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "match_clips". All fields are combined with a logical 'AND'. */
+export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),s3_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "match_clips" */
+export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "match_clips" */
+export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),s3_url?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface match_clips_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    duration_ms?: boolean | number
+    id?: boolean | number
+    match_map_id?: boolean | number
+    s3_url?: boolean | number
+    thumbnail_url?: boolean | number
+    title?: boolean | number
+    user_steam_id?: boolean | number
+    visibility?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface match_clips_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    duration_ms?: boolean | number
+    id?: boolean | number
+    match_map_id?: boolean | number
+    s3_url?: boolean | number
+    thumbnail_url?: boolean | number
+    title?: boolean | number
+    user_steam_id?: boolean | number
+    visibility?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "match_clips" */
+export interface match_clips_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: match_clipsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "match_clips" */
+export interface match_clips_obj_rel_insert_input {data: match_clips_insert_input,
+/** upsert condition */
+on_conflict?: (match_clips_on_conflict | null)}
+
+
+/** on_conflict condition type for table "match_clips" */
+export interface match_clips_on_conflict {constraint: match_clips_constraint,update_columns?: match_clips_update_column[],where?: (match_clips_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "match_clips". */
+export interface match_clips_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),s3_url?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+
+
+/** primary key columns input for table: match_clips */
+export interface match_clips_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "match_clips" */
+export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),s3_url?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface match_clips_stddev_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface match_clips_stddev_pop_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface match_clips_stddev_samp_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "match_clips" */
+export interface match_clips_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: match_clips_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),s3_url?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface match_clips_sum_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface match_clips_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (match_clips_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (match_clips_set_input | null),
+/** filter the rows which have to be updated */
+where: match_clips_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface match_clips_var_pop_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface match_clips_var_samp_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface match_clips_variance_fieldsGenqlSelection{
+    duration_ms?: boolean | number
+    user_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "match_demo_sessions" */
 export interface match_demo_sessionsGenqlSelection{
     created_at?: boolean | number
@@ -26559,14 +27528,20 @@ export interface mutation_rootGenqlSelection{
     approveNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
     /** callForOrganizer */
     callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    /** Cancel an in-flight clip render and tear down the K8s job */
+    cancelClipRender?: (SuccessOutputGenqlSelection & { __args: {job_id: Scalars['uuid']} })
     /** cancelMatch */
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
+    /** Spawn a clip-render pod that produces an mp4 from a demo and uploads it */
+    createClipRender?: (CreateClipRenderOutputGenqlSelection & { __args: {spec: ClipSpecInput} })
     createClips?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** Create directory on game server */
     createServerDirectory?: (SuccessOutputGenqlSelection & { __args: {dir_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** Delete a saved clip and its underlying S3 object */
+    deleteClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid']} })
     deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** Delete file or directory on game server */
     deleteServerItem?: (SuccessOutputGenqlSelection & { __args: {node_id: Scalars['String'], path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
@@ -26590,6 +27565,12 @@ export interface mutation_rootGenqlSelection{
     where: api_keys_bool_exp} })
     /** delete single row from the table: "api_keys" */
     delete_api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "clip_render_jobs" */
+    delete_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: clip_render_jobs_bool_exp} })
+    /** delete single row from the table: "clip_render_jobs" */
+    delete_clip_render_jobs_by_pk?: (clip_render_jobsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "db_backups" */
     delete_db_backups?: (db_backups_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -26798,6 +27779,12 @@ export interface mutation_rootGenqlSelection{
     where: maps_bool_exp} })
     /** delete single row from the table: "maps" */
     delete_maps_by_pk?: (mapsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "match_clips" */
+    delete_match_clips?: (match_clips_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: match_clips_bool_exp} })
+    /** delete single row from the table: "match_clips" */
+    delete_match_clips_by_pk?: (match_clipsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "match_demo_sessions" */
     delete_match_demo_sessions?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -27107,6 +28094,18 @@ export interface mutation_rootGenqlSelection{
     object: api_keys_insert_input, 
     /** upsert condition */
     on_conflict?: (api_keys_on_conflict | null)} })
+    /** insert data into the table: "clip_render_jobs" */
+    insert_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: clip_render_jobs_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (clip_render_jobs_on_conflict | null)} })
+    /** insert a single row into the table: "clip_render_jobs" */
+    insert_clip_render_jobs_one?: (clip_render_jobsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: clip_render_jobs_insert_input, 
+    /** upsert condition */
+    on_conflict?: (clip_render_jobs_on_conflict | null)} })
     /** insert data into the table: "db_backups" */
     insert_db_backups?: (db_backups_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -27523,6 +28522,18 @@ export interface mutation_rootGenqlSelection{
     object: maps_insert_input, 
     /** upsert condition */
     on_conflict?: (maps_on_conflict | null)} })
+    /** insert data into the table: "match_clips" */
+    insert_match_clips?: (match_clips_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: match_clips_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (match_clips_on_conflict | null)} })
+    /** insert a single row into the table: "match_clips" */
+    insert_match_clips_one?: (match_clipsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: match_clips_insert_input, 
+    /** upsert condition */
+    on_conflict?: (match_clips_on_conflict | null)} })
     /** insert data into the table: "match_demo_sessions" */
     insert_match_demo_sessions?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -28094,6 +29105,8 @@ export interface mutation_rootGenqlSelection{
     removeFixtures?: SuccessOutputGenqlSelection
     /** Rename file or directory on game server */
     renameServerItem?: (SuccessOutputGenqlSelection & { __args: {new_path: Scalars['String'], node_id: Scalars['String'], old_path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** Re-parse demo metadata for a match map (admin only) */
+    reparseDemo?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     requestNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
     restartService?: (SuccessOutputGenqlSelection & { __args: {service: Scalars['String']} })
     /** scheduleMatch */
@@ -28169,6 +29182,44 @@ export interface mutation_rootGenqlSelection{
     update_api_keys_many?: (api_keys_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: api_keys_updates[]} })
+    /** update data of the table: "clip_render_jobs" */
+    update_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (clip_render_jobs_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (clip_render_jobs_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (clip_render_jobs_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (clip_render_jobs_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (clip_render_jobs_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (clip_render_jobs_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (clip_render_jobs_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: clip_render_jobs_bool_exp} })
+    /** update single row of the table: "clip_render_jobs" */
+    update_clip_render_jobs_by_pk?: (clip_render_jobsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (clip_render_jobs_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (clip_render_jobs_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (clip_render_jobs_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (clip_render_jobs_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (clip_render_jobs_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (clip_render_jobs_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (clip_render_jobs_set_input | null), pk_columns: clip_render_jobs_pk_columns_input} })
+    /** update multiples rows of table: "clip_render_jobs" */
+    update_clip_render_jobs_many?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: clip_render_jobs_updates[]} })
     /** update data of the table: "db_backups" */
     update_db_backups?: (db_backups_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -28717,6 +29768,24 @@ export interface mutation_rootGenqlSelection{
     update_maps_many?: (maps_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: maps_updates[]} })
+    /** update data of the table: "match_clips" */
+    update_match_clips?: (match_clips_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (match_clips_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_clips_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: match_clips_bool_exp} })
+    /** update single row of the table: "match_clips" */
+    update_match_clips_by_pk?: (match_clipsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (match_clips_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_clips_set_input | null), pk_columns: match_clips_pk_columns_input} })
+    /** update multiples rows of table: "match_clips" */
+    update_match_clips_many?: (match_clips_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: match_clips_updates[]} })
     /** update data of the table: "match_demo_sessions" */
     update_match_demo_sessions?: (match_demo_sessions_mutation_responseGenqlSelection & { __args: {
     /** append existing jsonb value of filtered columns with new jsonb value */
@@ -34469,6 +35538,32 @@ export interface query_rootGenqlSelection{
     where?: (api_keys_bool_exp | null)} })
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "clip_render_jobs" */
+    clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (clip_render_jobs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "clip_render_jobs" */
+    clip_render_jobs_aggregate?: (clip_render_jobs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (clip_render_jobs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
+    /** fetch data from the table: "clip_render_jobs" using primary key columns */
+    clip_render_jobs_by_pk?: (clip_render_jobsGenqlSelection & { __args: {id: Scalars['uuid']} })
     dbStats?: DbStatsGenqlSelection
     /** fetch data from the table: "db_backups" */
     db_backups?: (db_backupsGenqlSelection & { __args?: {
@@ -35439,6 +36534,32 @@ export interface query_rootGenqlSelection{
     where?: (maps_bool_exp | null)} })
     /** fetch data from the table: "maps" using primary key columns */
     maps_by_pk?: (mapsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "match_clips" */
+    match_clips?: (match_clipsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_clips" */
+    match_clips_aggregate?: (match_clips_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    /** fetch data from the table: "match_clips" using primary key columns */
+    match_clips_by_pk?: (match_clipsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "match_demo_sessions" */
     match_demo_sessions?: (match_demo_sessionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -37682,6 +38803,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (api_keys_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (api_keys_bool_exp | null)} })
+    /** fetch data from the table: "clip_render_jobs" */
+    clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (clip_render_jobs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "clip_render_jobs" */
+    clip_render_jobs_aggregate?: (clip_render_jobs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (clip_render_jobs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
+    /** fetch data from the table: "clip_render_jobs" using primary key columns */
+    clip_render_jobs_by_pk?: (clip_render_jobsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "clip_render_jobs" */
+    clip_render_jobs_stream?: (clip_render_jobsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (clip_render_jobs_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (clip_render_jobs_bool_exp | null)} })
     /** fetch data from the table: "db_backups" */
     db_backups?: (db_backupsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -38898,6 +40053,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (maps_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (maps_bool_exp | null)} })
+    /** fetch data from the table: "match_clips" */
+    match_clips?: (match_clipsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_clips" */
+    match_clips_aggregate?: (match_clips_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    /** fetch data from the table: "match_clips" using primary key columns */
+    match_clips_by_pk?: (match_clipsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "match_clips" */
+    match_clips_stream?: (match_clipsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (match_clips_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
     /** fetch data from the table: "match_demo_sessions" */
     match_demo_sessions?: (match_demo_sessionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -47385,6 +48574,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const CreateClipRenderOutput_possibleTypes: string[] = ['CreateClipRenderOutput']
+    export const isCreateClipRenderOutput = (obj?: { __typename?: any } | null): obj is CreateClipRenderOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isCreateClipRenderOutput"')
+      return CreateClipRenderOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const DatabaseStats_possibleTypes: string[] = ['DatabaseStats']
     export const isDatabaseStats = (obj?: { __typename?: any } | null): obj is DatabaseStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isDatabaseStats"')
@@ -47949,6 +49146,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isapi_keys_variance_fields = (obj?: { __typename?: any } | null): obj is api_keys_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_variance_fields"')
       return api_keys_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_possibleTypes: string[] = ['clip_render_jobs']
+    export const isclip_render_jobs = (obj?: { __typename?: any } | null): obj is clip_render_jobs => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs"')
+      return clip_render_jobs_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_aggregate_possibleTypes: string[] = ['clip_render_jobs_aggregate']
+    export const isclip_render_jobs_aggregate = (obj?: { __typename?: any } | null): obj is clip_render_jobs_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_aggregate"')
+      return clip_render_jobs_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_aggregate_fields_possibleTypes: string[] = ['clip_render_jobs_aggregate_fields']
+    export const isclip_render_jobs_aggregate_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_aggregate_fields"')
+      return clip_render_jobs_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_avg_fields_possibleTypes: string[] = ['clip_render_jobs_avg_fields']
+    export const isclip_render_jobs_avg_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_avg_fields"')
+      return clip_render_jobs_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_max_fields_possibleTypes: string[] = ['clip_render_jobs_max_fields']
+    export const isclip_render_jobs_max_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_max_fields"')
+      return clip_render_jobs_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_min_fields_possibleTypes: string[] = ['clip_render_jobs_min_fields']
+    export const isclip_render_jobs_min_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_min_fields"')
+      return clip_render_jobs_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_mutation_response_possibleTypes: string[] = ['clip_render_jobs_mutation_response']
+    export const isclip_render_jobs_mutation_response = (obj?: { __typename?: any } | null): obj is clip_render_jobs_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_mutation_response"')
+      return clip_render_jobs_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_stddev_fields_possibleTypes: string[] = ['clip_render_jobs_stddev_fields']
+    export const isclip_render_jobs_stddev_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_stddev_fields"')
+      return clip_render_jobs_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_stddev_pop_fields_possibleTypes: string[] = ['clip_render_jobs_stddev_pop_fields']
+    export const isclip_render_jobs_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_stddev_pop_fields"')
+      return clip_render_jobs_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_stddev_samp_fields_possibleTypes: string[] = ['clip_render_jobs_stddev_samp_fields']
+    export const isclip_render_jobs_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_stddev_samp_fields"')
+      return clip_render_jobs_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_sum_fields_possibleTypes: string[] = ['clip_render_jobs_sum_fields']
+    export const isclip_render_jobs_sum_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_sum_fields"')
+      return clip_render_jobs_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_var_pop_fields_possibleTypes: string[] = ['clip_render_jobs_var_pop_fields']
+    export const isclip_render_jobs_var_pop_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_var_pop_fields"')
+      return clip_render_jobs_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_var_samp_fields_possibleTypes: string[] = ['clip_render_jobs_var_samp_fields']
+    export const isclip_render_jobs_var_samp_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_var_samp_fields"')
+      return clip_render_jobs_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const clip_render_jobs_variance_fields_possibleTypes: string[] = ['clip_render_jobs_variance_fields']
+    export const isclip_render_jobs_variance_fields = (obj?: { __typename?: any } | null): obj is clip_render_jobs_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs_variance_fields"')
+      return clip_render_jobs_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -50013,6 +51322,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ismaps_mutation_response = (obj?: { __typename?: any } | null): obj is maps_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismaps_mutation_response"')
       return maps_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_possibleTypes: string[] = ['match_clips']
+    export const ismatch_clips = (obj?: { __typename?: any } | null): obj is match_clips => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips"')
+      return match_clips_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_aggregate_possibleTypes: string[] = ['match_clips_aggregate']
+    export const ismatch_clips_aggregate = (obj?: { __typename?: any } | null): obj is match_clips_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_aggregate"')
+      return match_clips_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_aggregate_fields_possibleTypes: string[] = ['match_clips_aggregate_fields']
+    export const ismatch_clips_aggregate_fields = (obj?: { __typename?: any } | null): obj is match_clips_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_aggregate_fields"')
+      return match_clips_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_avg_fields_possibleTypes: string[] = ['match_clips_avg_fields']
+    export const ismatch_clips_avg_fields = (obj?: { __typename?: any } | null): obj is match_clips_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_avg_fields"')
+      return match_clips_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_max_fields_possibleTypes: string[] = ['match_clips_max_fields']
+    export const ismatch_clips_max_fields = (obj?: { __typename?: any } | null): obj is match_clips_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_max_fields"')
+      return match_clips_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_min_fields_possibleTypes: string[] = ['match_clips_min_fields']
+    export const ismatch_clips_min_fields = (obj?: { __typename?: any } | null): obj is match_clips_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_min_fields"')
+      return match_clips_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_mutation_response_possibleTypes: string[] = ['match_clips_mutation_response']
+    export const ismatch_clips_mutation_response = (obj?: { __typename?: any } | null): obj is match_clips_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_mutation_response"')
+      return match_clips_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_stddev_fields_possibleTypes: string[] = ['match_clips_stddev_fields']
+    export const ismatch_clips_stddev_fields = (obj?: { __typename?: any } | null): obj is match_clips_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_stddev_fields"')
+      return match_clips_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_stddev_pop_fields_possibleTypes: string[] = ['match_clips_stddev_pop_fields']
+    export const ismatch_clips_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is match_clips_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_stddev_pop_fields"')
+      return match_clips_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_stddev_samp_fields_possibleTypes: string[] = ['match_clips_stddev_samp_fields']
+    export const ismatch_clips_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is match_clips_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_stddev_samp_fields"')
+      return match_clips_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_sum_fields_possibleTypes: string[] = ['match_clips_sum_fields']
+    export const ismatch_clips_sum_fields = (obj?: { __typename?: any } | null): obj is match_clips_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_sum_fields"')
+      return match_clips_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_var_pop_fields_possibleTypes: string[] = ['match_clips_var_pop_fields']
+    export const ismatch_clips_var_pop_fields = (obj?: { __typename?: any } | null): obj is match_clips_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_var_pop_fields"')
+      return match_clips_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_var_samp_fields_possibleTypes: string[] = ['match_clips_var_samp_fields']
+    export const ismatch_clips_var_samp_fields = (obj?: { __typename?: any } | null): obj is match_clips_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_var_samp_fields"')
+      return match_clips_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_clips_variance_fields_possibleTypes: string[] = ['match_clips_variance_fields']
+    export const ismatch_clips_variance_fields = (obj?: { __typename?: any } | null): obj is match_clips_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips_variance_fields"')
+      return match_clips_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -55898,6 +57319,43 @@ export const enumApiKeysUpdateColumn = {
    steam_id: 'steam_id' as const
 }
 
+export const enumClipRenderJobsConstraint = {
+   clip_render_jobs_one_in_flight_per_user: 'clip_render_jobs_one_in_flight_per_user' as const,
+   clip_render_jobs_pkey: 'clip_render_jobs_pkey' as const
+}
+
+export const enumClipRenderJobsSelectColumn = {
+   clip_id: 'clip_id' as const,
+   created_at: 'created_at' as const,
+   error_message: 'error_message' as const,
+   id: 'id' as const,
+   k8s_job_name: 'k8s_job_name' as const,
+   last_status_at: 'last_status_at' as const,
+   match_map_id: 'match_map_id' as const,
+   progress: 'progress' as const,
+   session_token: 'session_token' as const,
+   spec: 'spec' as const,
+   status: 'status' as const,
+   status_history: 'status_history' as const,
+   user_steam_id: 'user_steam_id' as const
+}
+
+export const enumClipRenderJobsUpdateColumn = {
+   clip_id: 'clip_id' as const,
+   created_at: 'created_at' as const,
+   error_message: 'error_message' as const,
+   id: 'id' as const,
+   k8s_job_name: 'k8s_job_name' as const,
+   last_status_at: 'last_status_at' as const,
+   match_map_id: 'match_map_id' as const,
+   progress: 'progress' as const,
+   session_token: 'session_token' as const,
+   spec: 'spec' as const,
+   status: 'status' as const,
+   status_history: 'status_history' as const,
+   user_steam_id: 'user_steam_id' as const
+}
+
 export const enumCursorOrdering = {
    ASC: 'ASC' as const,
    DESC: 'DESC' as const
@@ -56721,6 +58179,34 @@ export const enumMapsUpdateColumn = {
    poster: 'poster' as const,
    type: 'type' as const,
    workshop_map_id: 'workshop_map_id' as const
+}
+
+export const enumMatchClipsConstraint = {
+   match_clips_pkey: 'match_clips_pkey' as const
+}
+
+export const enumMatchClipsSelectColumn = {
+   created_at: 'created_at' as const,
+   duration_ms: 'duration_ms' as const,
+   id: 'id' as const,
+   match_map_id: 'match_map_id' as const,
+   s3_url: 's3_url' as const,
+   thumbnail_url: 'thumbnail_url' as const,
+   title: 'title' as const,
+   user_steam_id: 'user_steam_id' as const,
+   visibility: 'visibility' as const
+}
+
+export const enumMatchClipsUpdateColumn = {
+   created_at: 'created_at' as const,
+   duration_ms: 'duration_ms' as const,
+   id: 'id' as const,
+   match_map_id: 'match_map_id' as const,
+   s3_url: 's3_url' as const,
+   thumbnail_url: 'thumbnail_url' as const,
+   title: 'title' as const,
+   user_steam_id: 'user_steam_id' as const,
+   visibility: 'visibility' as const
 }
 
 export const enumMatchDemoSessionsConstraint = {

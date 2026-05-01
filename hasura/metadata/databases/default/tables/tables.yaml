@@ -37,6 +37,8 @@
 - "!include public_lobby_players.yaml"
 - "!include public_map_pools.yaml"
 - "!include public_maps.yaml"
+- "!include public_clip_render_jobs.yaml"
+- "!include public_match_clips.yaml"
 - "!include public_match_demo_sessions.yaml"
 - "!include public_match_invites.yaml"
 - "!include public_match_lineup_players.yaml"

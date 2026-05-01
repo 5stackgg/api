@@ -34,6 +34,12 @@ type Mutation {
 }
 
 type Mutation {
+  cancelClipRender(
+    job_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   cancelMatch(
     match_id: uuid!
   ): SuccessOutput
@@ -52,6 +58,12 @@ type Mutation {
 }
 
 type Mutation {
+  createClipRender(
+    spec: ClipSpecInput!
+  ): CreateClipRenderOutput
+}
+
+type Mutation {
   createClips(
     match_id: uuid!
   ): SuccessOutput
@@ -67,6 +79,12 @@ type Mutation {
 
 type Query {
   dbStats: [DbStats]
+}
+
+type Mutation {
+  deleteClip(
+    clip_id: uuid!
+  ): SuccessOutput
 }
 
 type Mutation {
@@ -435,6 +453,53 @@ type Mutation {
 input SampleInput {
   username: String!
   password: String!
+}
+
+# Tick-based clip spec sent by the editor. The shape is intentionally
+# permissive on `overlays` and `audio` so phase-2 features can land
+# without an action signature change. See web `graphql/clipRenderJob.ts`
+# for the matching TS type.
+input ClipSegmentInput {
+  start_tick: Int!
+  end_tick: Int!
+  speed: Float
+  pov_steam_id: String
+}
+
+input ClipOverlayInput {
+  type: String!
+  start_ms: Int!
+  end_ms: Int!
+  payload: jsonb
+}
+
+input ClipAudioInput {
+  track_url: String
+  volume: Float
+  fade_in_ms: Int
+  fade_out_ms: Int
+  duck_game_audio: Boolean
+}
+
+input ClipOutputInput {
+  format: String!
+  resolution: String!
+  fps: Int!
+}
+
+input ClipSpecInput {
+  match_map_id: uuid!
+  segments: [ClipSegmentInput!]!
+  overlays: [ClipOverlayInput!]
+  audio: ClipAudioInput
+  output: ClipOutputInput!
+  destination: String!
+  title: String
+}
+
+type CreateClipRenderOutput {
+  success: Boolean!
+  job_id: uuid!
 }
 
 type TournamentMatchResetImpact {

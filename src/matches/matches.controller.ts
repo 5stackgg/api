@@ -37,6 +37,8 @@ import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament
 import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
+import { ClipsService } from "./clips/clips.service";
+import { ClipSpec } from "./clips/types/ClipSpec";
 
 @Controller("matches")
 export class MatchesController {
@@ -72,6 +74,7 @@ export class MatchesController {
     private readonly tournamentVoice: DiscordTournamentVoiceService,
     private readonly gameStreamer: GameStreamerService,
     private readonly demoMetadata: DemoMetadataService,
+    private readonly clips: ClipsService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -840,6 +843,38 @@ export class MatchesController {
     return {
       success: true,
     };
+  }
+
+  // User-facing clip render: spawns a one-shot game-streamer pod that
+  // plays the demo from start_tick → end_tick, captures the screen to
+  // an mp4, and uploads the result back to /clip-renders/:id/upload.
+  // Gated at `verified_user` (matches the web button-visibility rule).
+  @HasuraAction()
+  public async createClipRender(data: { spec: ClipSpec; user: User }) {
+    const { spec, user } = data;
+    if (!isRoleAbove(user.role, "verified_user")) {
+      throw Error("clip rendering requires a verified account");
+    }
+    if (!spec || spec.match_map_id !== spec?.match_map_id) {
+      throw Error("invalid clip spec");
+    }
+    const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
+    return {
+      success: true,
+      job_id: jobId,
+    };
+  }
+
+  @HasuraAction()
+  public async cancelClipRender(data: { job_id: string; user: User }) {
+    await this.clips.cancelClipRender(data.user.steam_id, data.job_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async deleteClip(data: { clip_id: string; user: User }) {
+    await this.clips.deleteClip(data.user.steam_id, data.clip_id);
+    return { success: true };
   }
 
   @HasuraEvent()

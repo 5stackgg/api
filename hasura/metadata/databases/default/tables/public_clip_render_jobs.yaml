@@ -1,0 +1,117 @@
+table:
+  name: clip_render_jobs
+  schema: public
+object_relationships:
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: user
+    using:
+      foreign_key_constraint_on: user_steam_id
+  - name: clip
+    using:
+      foreign_key_constraint_on: clip_id
+select_permissions:
+  # `session_token` is intentionally NEVER exposed — it's the pod auth
+  # secret. `spec` is exposed so the editor can re-hydrate the form for
+  # an in-progress render but does not contain user-uploaded content.
+  - role: user
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter: {}

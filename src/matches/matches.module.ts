@@ -53,6 +53,7 @@ import { K8sModule } from "src/k8s/k8s.module";
 import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.module";
 import { GameStreamerModule } from "./game-streamer/game-streamer.module";
 import { DemosModule } from "../demos/demos.module";
+import { ClipsModule } from "./clips/clips.module";
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { DemosModule } from "../demos/demos.module";
     K8sModule,
     GameStreamerModule,
     DemosModule,
+    ClipsModule,
     forwardRef(() => DiscordBotModule),
     DiscordTournamentVoiceModule,
     MatchMaking,

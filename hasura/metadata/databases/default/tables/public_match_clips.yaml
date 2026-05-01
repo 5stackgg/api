@@ -1,0 +1,118 @@
+table:
+  name: match_clips
+  schema: public
+object_relationships:
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: user
+    using:
+      foreign_key_constraint_on: user_steam_id
+array_relationships:
+  - name: render_jobs
+    using:
+      foreign_key_constraint_on:
+        column: clip_id
+        table:
+          name: clip_render_jobs
+          schema: public
+select_permissions:
+  # Users see only their own clips. Sharing flows (visibility=match /
+  # unlisted) are phase-2; gate them by adding role-specific permissions
+  # then. The `private`-only filter here matches what the v1 editor
+  # writes, so widening visibility later won't accidentally expose old
+  # rows.
+  - role: user
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - s3_url
+        - thumbnail_url
+        - visibility
+        - created_at
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: false
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - s3_url
+        - thumbnail_url
+        - visibility
+        - created_at
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: false
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - s3_url
+        - thumbnail_url
+        - visibility
+        - created_at
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: false
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - s3_url
+        - thumbnail_url
+        - visibility
+        - created_at
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: false
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - s3_url
+        - thumbnail_url
+        - visibility
+        - created_at
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: false
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - s3_url
+        - thumbnail_url
+        - visibility
+        - created_at
+      filter: {}
+      allow_aggregations: true

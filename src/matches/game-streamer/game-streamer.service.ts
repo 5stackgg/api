@@ -16,7 +16,7 @@ import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { randomBytes } from "node:crypto";
 
-type StreamerMode = "live" | "create-clips" | "demo";
+type StreamerMode = "live" | "create-clips" | "demo" | "render-clip";
 
 export type DemoControlAction =
   | "pause"
@@ -881,7 +881,10 @@ export class GameStreamerService {
     return settings_by_pk?.value === "true";
   }
 
-  private async pickGpuNode(matchRegion: string | null): Promise<string> {
+  // Public so the clips module can pick a node using the same load
+  // balancing rules (counts in-flight game-streamer pods on each GPU
+  // node, picks the least-loaded).
+  public async pickGpuNode(matchRegion: string | null): Promise<string> {
     const baseWhere = {
       status: {
         _eq: "Online" as e_game_server_node_statuses_enum,
@@ -1039,7 +1042,9 @@ export class GameStreamerService {
     }
   }
 
-  private async deleteJob(jobName: string) {
+  // Made public so the clips module can tear down its own render jobs
+  // without re-implementing the create/delete-name race protection.
+  public async deleteJob(jobName: string) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -1256,7 +1261,9 @@ export class GameStreamerService {
     });
   }
 
-  private buildJobSpec(
+  // Made public so the clips module can spawn render-clip pods without
+  // re-implementing the GPU pinning + cache + GPU resource limits boilerplate.
+  public buildJobSpec(
     jobName: string,
     matchId: string,
     mode: StreamerMode,
@@ -1265,13 +1272,24 @@ export class GameStreamerService {
     extraLabels: Record<string, string> = {},
   ): V1Job {
     const containerName =
-      mode === "create-clips" ? "clips" : mode === "demo" ? "demo" : "live";
+      mode === "create-clips"
+        ? "clips"
+        : mode === "demo"
+          ? "demo"
+          : mode === "render-clip"
+            ? "render-clip"
+            : "live";
     const args =
       mode === "live"
         ? ["live"]
         : mode === "demo"
           ? ["demo"]
-          : ["create-clips"];
+          : mode === "render-clip"
+            ? ["render-clip"]
+            : ["create-clips"];
+    // Render-clip pods are headless batch jobs — no inbound HTTP needed.
+    // Live + demo pods expose the spec-server + openhud ports for
+    // interactive control.
     const exposesSpecPorts = mode === "live" || mode === "demo";
 
     const labels: Record<string, string> = {
