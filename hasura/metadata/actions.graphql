@@ -276,6 +276,12 @@ type Mutation {
 }
 
 type Mutation {
+  reparseDemo(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!

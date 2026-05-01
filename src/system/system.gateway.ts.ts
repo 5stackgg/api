@@ -12,6 +12,16 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
 import { LoggingService } from "src/k8s/logging/logging.service";
 
+interface ActiveLogStream {
+  stream: PassThrough;
+  onClientClose: () => void;
+}
+
+const activeLogStreams = new WeakMap<
+  FiveStackWebSocketClient,
+  ActiveLogStream
+>();
+
 @WebSocketGateway({
   path: "/ws/web",
 })
@@ -48,6 +58,15 @@ export class SystemGateway {
         )
       : service;
 
+    const previousActive = activeLogStreams.get(client);
+    if (previousActive) {
+      client.removeListener("close", previousActive.onClientClose);
+      if (!previousActive.stream.destroyed) {
+        previousActive.stream.destroy();
+      }
+      activeLogStreams.delete(client);
+    }
+
     const stream = new PassThrough();
 
     stream.on("data", (chunk) => {
@@ -59,9 +78,23 @@ export class SystemGateway {
       );
     });
 
-    client.on("close", () => {
-      stream.end();
-    });
+    const onClientClose = () => {
+      if (!stream.destroyed) {
+        stream.destroy();
+      }
+    };
+    client.on("close", onClientClose);
+
+    const cleanup = () => {
+      client.removeListener("close", onClientClose);
+      if (activeLogStreams.get(client)?.stream === stream) {
+        activeLogStreams.delete(client);
+      }
+    };
+
+    stream.on("close", cleanup);
+
+    activeLogStreams.set(client, { stream, onClientClose });
 
     stream.on("end", async () => {
       let jobFinshed = false;
@@ -103,7 +136,9 @@ export class SystemGateway {
         "unable to get logs:",
         error?.body?.message || error.message,
       );
-      stream.end();
+      if (!stream.destroyed) {
+        stream.end();
+      }
     }
   }
 }

@@ -363,6 +363,14 @@ actions:
     permissions:
       - role: administrator
     comment: Rename file or directory on game server
+  - name: reparseDemo
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Re-parse demo metadata for a match map (admin only)
   - name: requestNameChange
     definition:
       kind: synchronous
