@@ -15515,8 +15515,14 @@ export default {
             "created_at": [
                 2341
             ],
+            "download_url": [
+                45
+            ],
             "duration_ms": [
                 30
+            ],
+            "file": [
+                45
             ],
             "id": [
                 2738
@@ -15570,9 +15576,6 @@ export default {
                         158
                     ]
                 }
-            ],
-            "s3_url": [
-                45
             ],
             "thumbnail_url": [
                 45
@@ -15675,8 +15678,14 @@ export default {
             "created_at": [
                 2342
             ],
+            "download_url": [
+                47
+            ],
             "duration_ms": [
                 31
+            ],
+            "file": [
+                47
             ],
             "id": [
                 2739
@@ -15692,9 +15701,6 @@ export default {
             ],
             "render_jobs_aggregate": [
                 150
-            ],
-            "s3_url": [
-                47
             ],
             "thumbnail_url": [
                 47
@@ -15734,6 +15740,9 @@ export default {
             "duration_ms": [
                 30
             ],
+            "file": [
+                45
+            ],
             "id": [
                 2738
             ],
@@ -15745,9 +15754,6 @@ export default {
             ],
             "render_jobs": [
                 155
-            ],
-            "s3_url": [
-                45
             ],
             "thumbnail_url": [
                 45
@@ -15772,17 +15778,20 @@ export default {
             "created_at": [
                 2341
             ],
+            "download_url": [
+                45
+            ],
             "duration_ms": [
                 30
+            ],
+            "file": [
+                45
             ],
             "id": [
                 2738
             ],
             "match_map_id": [
                 2738
-            ],
-            "s3_url": [
-                45
             ],
             "thumbnail_url": [
                 45
@@ -15804,17 +15813,20 @@ export default {
             "created_at": [
                 2341
             ],
+            "download_url": [
+                45
+            ],
             "duration_ms": [
                 30
+            ],
+            "file": [
+                45
             ],
             "id": [
                 2738
             ],
             "match_map_id": [
                 2738
-            ],
-            "s3_url": [
-                45
             ],
             "thumbnail_url": [
                 45
@@ -15872,7 +15884,13 @@ export default {
             "created_at": [
                 1628
             ],
+            "download_url": [
+                1628
+            ],
             "duration_ms": [
+                1628
+            ],
+            "file": [
                 1628
             ],
             "id": [
@@ -15886,9 +15904,6 @@ export default {
             ],
             "render_jobs_aggregate": [
                 153
-            ],
-            "s3_url": [
-                1628
             ],
             "thumbnail_url": [
                 1628
@@ -15925,14 +15940,14 @@ export default {
             "duration_ms": [
                 30
             ],
+            "file": [
+                45
+            ],
             "id": [
                 2738
             ],
             "match_map_id": [
                 2738
-            ],
-            "s3_url": [
-                45
             ],
             "thumbnail_url": [
                 45
@@ -16001,14 +16016,14 @@ export default {
             "duration_ms": [
                 30
             ],
+            "file": [
+                45
+            ],
             "id": [
                 2738
             ],
             "match_map_id": [
                 2738
-            ],
-            "s3_url": [
-                45
             ],
             "thumbnail_url": [
                 45

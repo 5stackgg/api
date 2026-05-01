@@ -585,6 +585,7 @@ custom_types:
     - name: ClipOutputInput
     - name: ClipSpecInput
   objects:
+    - name: CreateClipRenderOutput
     - name: TournamentMatchResetImpact
     - name: PreviewTournamentMatchResetOutput
     - name: MeResponse
@@ -599,7 +600,6 @@ custom_types:
           type: object
     - name: SuccessOutput
     - name: WatchDemoOutput
-    - name: CreateClipRenderOutput
     - name: SetupGameServeOutput
     - name: SampleOutput
     - name: CpuStat

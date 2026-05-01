@@ -3957,7 +3957,10 @@ export type maps_update_column = 'active_pool' | 'enabled' | 'id' | 'label' | 'n
 /** columns and relationships of "match_clips" */
 export interface match_clips {
     created_at: Scalars['timestamptz']
+    /** A computed field, executes function "clip_download_url" */
+    download_url: (Scalars['String'] | null)
     duration_ms: (Scalars['Int'] | null)
+    file: (Scalars['String'] | null)
     id: Scalars['uuid']
     /** An object relationship */
     match_map: match_maps
@@ -3966,7 +3969,6 @@ export interface match_clips {
     render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
     render_jobs_aggregate: clip_render_jobs_aggregate
-    s3_url: (Scalars['String'] | null)
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     /** An object relationship */
@@ -4017,10 +4019,12 @@ export type match_clips_constraint = 'match_clips_pkey'
 /** aggregate max on columns */
 export interface match_clips_max_fields {
     created_at: (Scalars['timestamptz'] | null)
+    /** A computed field, executes function "clip_download_url" */
+    download_url: (Scalars['String'] | null)
     duration_ms: (Scalars['Int'] | null)
+    file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
-    s3_url: (Scalars['String'] | null)
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
@@ -4032,10 +4036,12 @@ export interface match_clips_max_fields {
 /** aggregate min on columns */
 export interface match_clips_min_fields {
     created_at: (Scalars['timestamptz'] | null)
+    /** A computed field, executes function "clip_download_url" */
+    download_url: (Scalars['String'] | null)
     duration_ms: (Scalars['Int'] | null)
+    file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
-    s3_url: (Scalars['String'] | null)
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
@@ -4055,7 +4061,7 @@ export interface match_clips_mutation_response {
 
 
 /** select columns of table "match_clips" */
-export type match_clips_select_column = 'created_at' | 'duration_ms' | 'id' | 'match_map_id' | 's3_url' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'match_map_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
 
 
 /** aggregate stddev on columns */
@@ -4091,7 +4097,7 @@ export interface match_clips_sum_fields {
 
 
 /** update columns of table "match_clips" */
-export type match_clips_update_column = 'created_at' | 'duration_ms' | 'id' | 'match_map_id' | 's3_url' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'match_map_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
 
 
 /** aggregate var_pop on columns */
@@ -23066,7 +23072,10 @@ where: maps_bool_exp}
 /** columns and relationships of "match_clips" */
 export interface match_clipsGenqlSelection{
     created_at?: boolean | number
+    /** A computed field, executes function "clip_download_url" */
+    download_url?: boolean | number
     duration_ms?: boolean | number
+    file?: boolean | number
     id?: boolean | number
     /** An object relationship */
     match_map?: match_mapsGenqlSelection
@@ -23095,7 +23104,6 @@ export interface match_clipsGenqlSelection{
     order_by?: (clip_render_jobs_order_by[] | null), 
     /** filter the rows returned */
     where?: (clip_render_jobs_bool_exp | null)} })
-    s3_url?: boolean | number
     thumbnail_url?: boolean | number
     title?: boolean | number
     /** An object relationship */
@@ -23144,7 +23152,7 @@ export interface match_clips_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_clips". All fields are combined with a logical 'AND'. */
-export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),s3_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
+export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_clips" */
@@ -23152,16 +23160,18 @@ export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),us
 
 
 /** input type for inserting data into table "match_clips" */
-export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),s3_url?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_clips_max_fieldsGenqlSelection{
     created_at?: boolean | number
+    /** A computed field, executes function "clip_download_url" */
+    download_url?: boolean | number
     duration_ms?: boolean | number
+    file?: boolean | number
     id?: boolean | number
     match_map_id?: boolean | number
-    s3_url?: boolean | number
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
@@ -23174,10 +23184,12 @@ export interface match_clips_max_fieldsGenqlSelection{
 /** aggregate min on columns */
 export interface match_clips_min_fieldsGenqlSelection{
     created_at?: boolean | number
+    /** A computed field, executes function "clip_download_url" */
+    download_url?: boolean | number
     duration_ms?: boolean | number
+    file?: boolean | number
     id?: boolean | number
     match_map_id?: boolean | number
-    s3_url?: boolean | number
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
@@ -23209,7 +23221,7 @@ export interface match_clips_on_conflict {constraint: match_clips_constraint,upd
 
 
 /** Ordering options when selecting data from "match_clips". */
-export interface match_clips_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),s3_url?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
 
 
 /** primary key columns input for table: match_clips */
@@ -23217,7 +23229,7 @@ export interface match_clips_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_clips" */
-export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),s3_url?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23256,7 +23268,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),s3_url?: (Scalars['String'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -58188,9 +58200,9 @@ export const enumMatchClipsConstraint = {
 export const enumMatchClipsSelectColumn = {
    created_at: 'created_at' as const,
    duration_ms: 'duration_ms' as const,
+   file: 'file' as const,
    id: 'id' as const,
    match_map_id: 'match_map_id' as const,
-   s3_url: 's3_url' as const,
    thumbnail_url: 'thumbnail_url' as const,
    title: 'title' as const,
    user_steam_id: 'user_steam_id' as const,
@@ -58200,9 +58212,9 @@ export const enumMatchClipsSelectColumn = {
 export const enumMatchClipsUpdateColumn = {
    created_at: 'created_at' as const,
    duration_ms: 'duration_ms' as const,
+   file: 'file' as const,
    id: 'id' as const,
    match_map_id: 'match_map_id' as const,
-   s3_url: 's3_url' as const,
    thumbnail_url: 'thumbnail_url' as const,
    title: 'title' as const,
    user_steam_id: 'user_steam_id' as const,

@@ -212,7 +212,7 @@ export class ClipsService {
         __args: { id: clipId },
         id: true,
         user_steam_id: true,
-        s3_url: true,
+        file: true,
       },
     });
     if (!row) {
@@ -224,10 +224,13 @@ export class ClipsService {
 
     // Best-effort S3 cleanup — if the bucket's gone we still want to
     // clear the row so the user's library stops showing a dead clip.
+    // Use the `file` column as the source of truth for the storage key
+    // (matches the new download_url computed-field pattern); fall back
+    // to the conventional layout for legacy rows that pre-date the
+    // file column being populated.
+    const fileKey = row.file ?? ClipsService.GetClipS3Key(userSteamId, clipId);
     try {
-      await this.s3.remove(
-        ClipsService.GetClipS3Key(userSteamId, clipId),
-      );
+      await this.s3.remove(fileKey);
       await this.s3.remove(
         ClipsService.GetClipThumbnailS3Key(userSteamId, clipId),
       );
@@ -332,7 +335,7 @@ export class ClipsService {
     jobId: string,
     fileStream: Readable,
     durationMs: number | null,
-  ): Promise<{ clipId: string; s3Url: string }> {
+  ): Promise<{ clipId: string; file: string }> {
     const { clip_render_jobs_by_pk: row } = await this.hasura.query({
       clip_render_jobs_by_pk: {
         __args: { id: jobId },
@@ -358,13 +361,19 @@ export class ClipsService {
     // is safe.
     const spec = row.spec as unknown as ClipSpec;
     const title = spec?.title ?? null;
-    const s3Url = `https://${process.env.DEMOS_DOMAIN}/${key}`;
 
     // Only create a library row when the spec asked for it. Download-
     // only renders still get the file in S3 (the pod uploads the same
     // way) but we reap the object on the Cloudflare worker after a
     // short ttl — phase 2 wires that. For v1, both destinations create
     // a row; the web hides download-only entries from the library.
+    //
+    // We store the storage key in `file`. The download URL is built at
+    // read time by the `clip_download_url(match_clips)` SQL function
+    // exposed as the `download_url` computed field — same pattern as
+    // match_map_demos.download_url. That way the URL transparently
+    // follows whatever settings.cloudflare_worker_url points at and we
+    // don't have to re-render or backfill rows when the worker moves.
     const { insert_match_clips_one } = await this.hasura.mutation({
       insert_match_clips_one: {
         __args: {
@@ -373,7 +382,7 @@ export class ClipsService {
             match_map_id: row.match_map_id,
             title,
             duration_ms: durationMs,
-            s3_url: s3Url,
+            file: key,
             visibility: "private",
           },
         },
@@ -398,7 +407,10 @@ export class ClipsService {
       },
     });
 
-    return { clipId, s3Url };
+    // The pod doesn't need a URL back — it already knows the upload
+    // succeeded. We surface the storage key + the new clip id so the
+    // controller's response is useful for debugging.
+    return { clipId, file: key };
   }
 
   private async findInFlightForUser(userSteamId: string) {

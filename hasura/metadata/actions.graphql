@@ -455,10 +455,6 @@ input SampleInput {
   password: String!
 }
 
-# Tick-based clip spec sent by the editor. The shape is intentionally
-# permissive on `overlays` and `audio` so phase-2 features can land
-# without an action signature change. See web `graphql/clipRenderJob.ts`
-# for the matching TS type.
 input ClipSegmentInput {
   start_tick: Int!
   end_tick: Int!
