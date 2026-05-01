@@ -23,10 +23,6 @@ export class SystemService {
 
   private featuresDetected = false;
 
-  // Pods whose `app` label differs from the ghcr.io image name they
-  // run. The nvidia connector is a separate DaemonSet but ships the
-  // same `game-server-node-connector` image, so we point it at the
-  // same registry digest for the latest-version check.
   private static SERVICE_TO_REGISTRY: Record<string, string> = {
     "game-server-node-connector-nvidia": "game-server-node-connector",
   };
