@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { HasuraService } from "../hasura/hasura.service";
+import { HasuraAction } from "../hasura/hasura.controller";
 import { S3Service } from "../s3/s3.service";
 import archiver from "archiver";
 import zlib from "zlib";
@@ -204,6 +205,16 @@ export class DemosController {
     }
 
     return response.status(200).send();
+  }
+
+  @HasuraAction()
+  public async reparseDemo(data: { match_map_id: string }) {
+    const demo = await this.demoMetadata.getDemoForMap(data.match_map_id);
+    if (!demo) {
+      throw Error("no demo for this match map");
+    }
+    await this.demoMetadata.reparseById(demo.id);
+    return { success: true };
   }
 
   private async getDemo(demo: { id: string; file: string }) {

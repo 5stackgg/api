@@ -87,6 +87,24 @@ export class DemoMetadataService {
     await parsing;
   }
 
+  public async reparseById(matchMapDemoId: string): Promise<DemoRow> {
+    const demo = await this.fetchDemoById(matchMapDemoId);
+    if (!demo) {
+      throw new Error(`no match_map_demo row for ${matchMapDemoId}`);
+    }
+
+    const existing = this.inFlight.get(demo.id);
+    if (existing) {
+      return existing;
+    }
+
+    const parsing = this.parseAndPersist(demo).finally(() =>
+      this.inFlight.delete(demo.id),
+    );
+    this.inFlight.set(demo.id, parsing);
+    return parsing;
+  }
+
   private async fetchDemoForMap(matchMapId: string): Promise<DemoRow | null> {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {

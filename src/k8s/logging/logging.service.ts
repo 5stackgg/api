@@ -18,6 +18,13 @@ import {
   type MatchServerSyntheticLogEntry,
 } from "./bootDiagnostics";
 
+interface LogStreamSession {
+  aborted: boolean;
+  registerController(controller: AbortController): void;
+  registerStream(stream: PassThrough): void;
+  teardown(): void;
+}
+
 @Injectable()
 export class LoggingService {
   private coreApi: CoreV1Api;
@@ -34,6 +41,65 @@ export class LoggingService {
     this.batchApi = this.kubeConfig.makeApiClient(BatchV1Api);
   }
 
+  private createSession(stream: Writable): LogStreamSession {
+    const controllers = new Set<AbortController>();
+    const streams = new Set<PassThrough>();
+    const logger = this.logger;
+    const session: LogStreamSession = {
+      aborted: false,
+      registerController(controller: AbortController) {
+        if (session.aborted) {
+          try {
+            controller.abort();
+          } catch {}
+          return;
+        }
+        controllers.add(controller);
+      },
+      registerStream(passThrough: PassThrough) {
+        if (session.aborted) {
+          if (!passThrough.destroyed) {
+            passThrough.destroy();
+          }
+          return;
+        }
+        streams.add(passThrough);
+      },
+      teardown() {
+        if (session.aborted) {
+          return;
+        }
+        session.aborted = true;
+        for (const controller of controllers) {
+          try {
+            controller.abort();
+          } catch (error) {
+            logger.error("Error aborting log controller", error);
+          }
+        }
+        controllers.clear();
+        for (const passThrough of streams) {
+          try {
+            if (!passThrough.destroyed) {
+              passThrough.destroy();
+            }
+          } catch (error) {
+            logger.error("Error destroying log stream", error);
+          }
+        }
+        streams.clear();
+      },
+    };
+
+    const teardownOnce = () => session.teardown();
+    stream.once("close", teardownOnce);
+    stream.once("error", teardownOnce);
+    stream.once("finish", teardownOnce);
+    stream.once("end", teardownOnce);
+
+    return session;
+  }
+
   public async getServiceLogs(
     service: string,
     stream: Writable,
@@ -46,6 +112,7 @@ export class LoggingService {
       until: string;
     },
   ): Promise<void> {
+    const session = this.createSession(stream);
     let archive: archiver.Archiver;
 
     if (download) {
@@ -175,6 +242,7 @@ export class LoggingService {
           download ? undefined : tailLines,
           since,
           finalizeArchive,
+          session,
         ),
       );
     }
@@ -243,13 +311,38 @@ export class LoggingService {
     pod: V1Pod,
     containerName: string,
     previous: boolean,
+    session?: LogStreamSession,
   ) {
+    if (session?.aborted) {
+      return null;
+    }
+
     const logStream = new PassThrough();
-    await logApi.log(namespace, pod.metadata.name, containerName, logStream, {
-      previous,
-      timestamps: true,
-      limitBytes: 8 * 1024,
-    });
+    session?.registerStream(logStream);
+
+    const controller = await logApi.log(
+      namespace,
+      pod.metadata.name,
+      containerName,
+      logStream,
+      {
+        previous,
+        timestamps: true,
+        limitBytes: 8 * 1024,
+      },
+    );
+
+    if (session?.aborted) {
+      try {
+        controller.abort();
+      } catch {}
+      if (!logStream.destroyed) {
+        logStream.destroy();
+      }
+      return null;
+    }
+
+    session?.registerController(controller);
 
     return await new Promise((resolve) => {
       logStream.on("data", (chunk) => {
@@ -268,6 +361,14 @@ export class LoggingService {
       logStream.on("end", () => {
         resolve(null);
       });
+
+      logStream.on("close", () => {
+        resolve(null);
+      });
+
+      logStream.on("error", () => {
+        resolve(null);
+      });
     });
   }
 
@@ -282,26 +383,17 @@ export class LoggingService {
     download: boolean,
     tailLines: number = 250,
     since?: string,
+    session?: LogStreamSession,
   ): Promise<void> {
     try {
-      let podLogs: Awaited<ReturnType<typeof logApi.log>>;
-
-      stream.on("end", () => {
-        podLogs?.abort();
-      });
-
-      stream.on("close", () => {
-        podLogs?.abort();
-      });
-
-      stream.on("error", () => {
-        podLogs?.abort();
-        if (!download) {
-          stream.end();
+      if (session?.aborted) {
+        if (!logStream.destroyed) {
+          logStream.destroy();
         }
-      });
+        return;
+      }
 
-      podLogs = await logApi.log(
+      const podLogs = await logApi.log(
         namespace,
         pod.metadata.name,
         containerName,
@@ -320,6 +412,18 @@ export class LoggingService {
               }),
         },
       );
+
+      if (session?.aborted) {
+        try {
+          podLogs.abort();
+        } catch {}
+        if (!logStream.destroyed) {
+          logStream.destroy();
+        }
+        return;
+      }
+
+      session?.registerController(podLogs);
     } catch (error) {
       if (!(await this.isNodeOnline(pod.spec.nodeName))) {
         this.logger.warn(
@@ -351,7 +455,12 @@ export class LoggingService {
       until: string;
     },
     onContainerComplete?: () => void,
+    session?: LogStreamSession,
   ) {
+    session = session ?? this.createSession(stream);
+    if (session.aborted) {
+      return;
+    }
     let totalAdded = 0;
     let streamEnded = false;
 
@@ -378,53 +487,72 @@ export class LoggingService {
       }
     };
 
+    const containerCount = pod.spec.containers.length;
     let totalLines = 0;
-    for (const container of pod.spec.containers) {
+
+    const logApi = new Log(this.kubeConfig);
+
+    const markContainerDone = () => {
+      ++totalAdded;
+      if (!archive && totalAdded === containerCount) {
+        endStream();
+      }
+      onContainerComplete?.();
+    };
+
+    const fetchContainerWindow = async (
+      containerName: string,
+      windowSince: { start: string; until: string } | undefined,
+      windowTailLines: number | undefined,
+      isInitialFetch: boolean,
+    ): Promise<void> => {
+      if (session?.aborted) {
+        if (isInitialFetch) {
+          markContainerDone();
+        }
+        return;
+      }
+
       const logStream = new PassThrough();
+      session?.registerStream(logStream);
+
+      const windowUntil = windowSince ? new Date(windowSince.until) : undefined;
 
       logStream.on("end", async () => {
-        ++totalAdded;
-
-        if (since && totalLines < 250) {
+        if (windowSince && totalLines < 250 && !session?.aborted) {
           const firstLogTimestamp = await this.getFirstLogTimestamp(
             logApi,
             this.namespace,
             pod,
-            container.name,
+            containerName,
             previous,
+            session,
           );
 
-          const until = new Date(oldestTimestamp.toISOString());
+          const nextUntil = new Date(oldestTimestamp.toISOString());
           oldestTimestamp.setMinutes(oldestTimestamp.getMinutes() - 60);
 
           if (!firstLogTimestamp || oldestTimestamp < firstLogTimestamp) {
-            if (!archive) {
-              endStream();
+            if (isInitialFetch) {
+              markContainerDone();
             }
-            onContainerComplete?.();
             return;
           }
 
-          await this.getLogsForPod(
-            pod,
-            stream,
-            download,
-            previous,
-            archive,
-            250 - totalLines,
+          await fetchContainerWindow(
+            containerName,
             {
               start: oldestTimestamp.toISOString(),
-              until: until.toISOString(),
+              until: nextUntil.toISOString(),
             },
-            onContainerComplete,
+            250 - totalLines,
+            isInitialFetch,
           );
           return;
         }
 
-        onContainerComplete?.();
-
-        if (!archive && totalAdded === pod.spec.containers.length) {
-          endStream();
+        if (isInitialFetch) {
+          markContainerDone();
         }
       });
 
@@ -457,7 +585,7 @@ export class LoggingService {
               oldestTimestamp = latestTimestamp;
             }
 
-            if (since && latestTimestamp && latestTimestamp >= until) {
+            if (windowUntil && latestTimestamp >= windowUntil) {
               continue;
             }
           }
@@ -468,7 +596,7 @@ export class LoggingService {
             JSON.stringify({
               pod: pod.metadata.name,
               node: pod.spec.nodeName,
-              container: container.name,
+              container: containerName,
               timestamp,
               log,
             }),
@@ -491,30 +619,32 @@ export class LoggingService {
         }
       });
 
-      if (archive) {
+      if (archive && isInitialFetch) {
         archive.append(logStream, {
-          name: `${container.name}.txt`,
+          name: `${containerName}.txt`,
         });
-      }
-
-      const logApi = new Log(this.kubeConfig);
-
-      if (since) {
-        tailLines = undefined;
       }
 
       await this.tryGetPodLogs(
         logApi,
         this.namespace,
         pod,
-        container.name,
+        containerName,
         logStream,
         stream,
         previous,
         download,
-        tailLines,
-        since?.start,
+        windowSince ? undefined : windowTailLines,
+        windowSince?.start,
+        session,
       );
+    };
+
+    for (const container of pod.spec.containers) {
+      if (session?.aborted) {
+        return;
+      }
+      await fetchContainerWindow(container.name, since, tailLines, true);
     }
   }
 
