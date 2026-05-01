@@ -23,6 +23,23 @@ export class SystemService {
 
   private featuresDetected = false;
 
+  private static SERVICE_TO_REGISTRY: Record<string, string> = {
+    "game-server-node-connector-nvidia": "game-server-node-connector",
+  };
+
+  private static TRACKED_APPS = [
+    "api",
+    "web",
+    "game-server-node-connector",
+    "game-server-node-connector-nvidia",
+    "demo-parser",
+    "hasura",
+  ];
+
+  private serviceRegistry(service: string) {
+    return SystemService.SERVICE_TO_REGISTRY[service] ?? service;
+  }
+
   constructor(
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
@@ -153,7 +170,7 @@ export class SystemService {
     const latestVersions = await this.getLatestVersions();
 
     for (const { pod, service, version } of Object.values(services)) {
-      if (version === latestVersions[service]) {
+      if (version === latestVersions[this.serviceRegistry(service)]) {
         continue;
       }
 
@@ -176,7 +193,9 @@ export class SystemService {
         await this.restartPod(pod);
       }
     } finally {
-      await this.cache.forget(this.getServiceCacheKey(service));
+      await this.cache.forget(
+        this.getServiceCacheKey(this.serviceRegistry(service)),
+      );
     }
   }
 
@@ -198,7 +217,7 @@ export class SystemService {
     const latestVersions = await this.getLatestVersions();
 
     for (const { service, version, pod } of Object.values(services)) {
-      const latestVersion = latestVersions[service];
+      const latestVersion = latestVersions[this.serviceRegistry(service)];
       if (version !== latestVersion) {
         hasUpdates.push({
           service,
@@ -227,7 +246,12 @@ export class SystemService {
   }
 
   public async getLatestVersions(): Promise<Record<string, string>> {
-    const registries = ["api", "web", "game-server-node-connector"];
+    const registries = [
+      "api",
+      "web",
+      "game-server-node-connector",
+      "demo-parser",
+    ];
     const latestVersions: Record<string, string> = {};
 
     for (const registry of registries) {
@@ -328,9 +352,7 @@ export class SystemService {
         return false;
       }
 
-      return ["api", "web", "game-server-node-connector", "hasura"].includes(
-        pod.metadata.labels.app,
-      );
+      return SystemService.TRACKED_APPS.includes(pod.metadata.labels.app);
     });
 
     const services: Array<{ pod: string; service: string; version: string }> =
