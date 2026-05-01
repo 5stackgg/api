@@ -26,7 +26,12 @@ export type DemoControlAction =
   | "skip"
   | "speed"
   | "round"
-  | "state";
+  | "state"
+  | "slot"
+  | "reload"
+  | "xray"
+  | "hud"
+  | "demoui";
 
 export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
   new Set<DemoControlAction>([
@@ -38,7 +43,15 @@ export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
     "speed",
     "round",
     "state",
+    "slot",
+    "reload",
+    "xray",
+    "hud",
+    "demoui",
   ]);
+
+const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
+  new Set<DemoControlAction>(["slot", "hud"]);
 
 const STATUS_HISTORY_CAP = 50;
 
@@ -175,9 +188,13 @@ export class GameStreamerService {
     return GameStreamerService.GetDemoJobIdForSession(sessionId);
   }
 
-  private getDemoSpecUrl(sessionId: string, action: string) {
+  private getDemoSpecUrl(
+    sessionId: string,
+    action: string,
+    prefix: "demo" | "spec" = "demo",
+  ) {
     const svc = GameStreamerService.GetDemoServiceNameForSession(sessionId);
-    return `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/${action}`;
+    return `http://${svc}.${this.namespace}.svc.cluster.local:1350/${prefix}/${action}`;
   }
 
   public async startDemoPlayback(
@@ -380,7 +397,8 @@ export class GameStreamerService {
 
     await this.bumpDemoSessionActivity(session.id);
 
-    const url = this.getDemoSpecUrl(session.id, action);
+    const prefix = SPEC_PROXIED_DEMO_ACTIONS.has(action) ? "spec" : "demo";
+    const url = this.getDemoSpecUrl(session.id, action, prefix);
     const method = action === "state" ? "GET" : "POST";
 
     let res: Response;
