@@ -75,6 +75,12 @@ type Mutation {
 }
 
 type Mutation {
+  getLiveStreamSpecState(
+    match_id: uuid!
+  ): LiveStreamSpecState
+}
+
+type Mutation {
   createClips(
     match_id: uuid!
   ): SuccessOutput
@@ -507,6 +513,32 @@ input ClipSpecInput {
 type CreateClipRenderOutput {
   success: Boolean!
   job_id: uuid!
+}
+
+type LiveSpecSlot {
+  slot: Int!
+  steam_id: String!
+  name: String
+  team: String
+  alive: Boolean!
+  health: Int!
+}
+
+type LiveSpecGsi {
+  map_name: String
+  map_phase: String
+  round_phase: String
+  round_number: Int
+  spectated_steam_id: String
+  spec_slots: [LiveSpecSlot!]!
+  team_ct_name: String
+  team_t_name: String
+  team_ct_score: Int
+  team_t_score: Int
+}
+
+type LiveStreamSpecState {
+  gsi: LiveSpecGsi
 }
 
 type TournamentMatchResetImpact {

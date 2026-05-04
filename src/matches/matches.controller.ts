@@ -876,6 +876,20 @@ export class MatchesController {
   // the same render path createClipRender uses. Returns the same
   // {success, job_id} shape so the web client can subscribe to
   // progress without a special case.
+  // Returns the live pod's GSI snapshot so the stream-deck can label
+  // slot buttons with current player names + side (CT/T) and reflect
+  // halftime / overtime side swaps without operator intervention.
+  // Cheap call: spec-server returns its in-memory state, no game I/O.
+  @HasuraAction()
+  public async getLiveStreamSpecState(data: {
+    match_id: string;
+    user: User;
+  }) {
+    const { match_id } = data;
+    const state = await this.gameStreamer.getLiveSpecState(match_id);
+    return state;
+  }
+
   @HasuraAction()
   public async createClipFromPreset(data: {
     match_map_id: string;

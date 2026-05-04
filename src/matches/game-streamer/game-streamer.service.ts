@@ -160,6 +160,54 @@ export class GameStreamerService {
     return this.callSpec(matchId, "slot", { slot });
   }
 
+  // GET the live pod's spec-server /demo/state. Same payload shape as
+  // the demo route — spec-server.mjs is one binary, so live/demo
+  // pods both expose `gsi.spec_slots` once GSI fires. We strip the
+  // demo-only fields (tick, paused, etc.) so callers don't think the
+  // live route exposes things it doesn't.
+  public async getLiveSpecState(matchId: string): Promise<{
+    gsi: {
+      map_name: string | null;
+      map_phase: string | null;
+      round_phase: string | null;
+      round_number: number | null;
+      spectated_steam_id: string | null;
+      spec_slots: Array<{
+        slot: number;
+        steam_id: string;
+        name: string | null;
+        team: "T" | "CT" | null;
+        alive: boolean;
+        health: number;
+      }>;
+      team_ct_name: string | null;
+      team_t_name: string | null;
+      team_ct_score: number;
+      team_t_score: number;
+    } | null;
+  }> {
+    const svc = GameStreamerService.GetLiveServiceName(matchId);
+    const url = `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/state`;
+    let res: Response;
+    try {
+      res = await fetch(url, { signal: AbortSignal.timeout(3_000) });
+    } catch (error) {
+      const cause = (error as Error)?.cause as { code?: string } | undefined;
+      const code = cause?.code ?? (error as { code?: string })?.code;
+      if (code === "ENOTFOUND" || code === "EAI_AGAIN" || code === "ECONNREFUSED") {
+        // Live pod not up yet — return empty so the UI can show the
+        // existing offline state without a noisy error.
+        return { gsi: null };
+      }
+      throw new Error(`spec state unreachable: ${(error as Error)?.message}`);
+    }
+    if (!res.ok) {
+      return { gsi: null };
+    }
+    const body = (await res.json().catch(() => ({}))) as { gsi?: any };
+    return { gsi: body?.gsi ?? null };
+  }
+
   public async specAutodirector(matchId: string, enabled: boolean) {
     const result = await this.callSpec(matchId, "autodirector", { enabled });
     await this.hasura.mutation({
