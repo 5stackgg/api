@@ -898,6 +898,7 @@ export class MatchesController {
     resolution?: "720p" | "1080p";
     fps?: 30 | 60;
     title?: string;
+    target_name?: string;
     user: User;
   }) {
     const { user } = data;
@@ -913,6 +914,7 @@ export class MatchesController {
         fps: data.fps ?? 60,
       },
       data.title,
+      data.target_name,
     );
     const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
     return { success: true, job_id: jobId };

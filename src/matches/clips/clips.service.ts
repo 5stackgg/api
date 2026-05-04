@@ -416,6 +416,7 @@ export class ClipsService {
       fps: 60,
     },
     title?: string,
+    targetName?: string,
   ): Promise<ClipSpec> {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
@@ -497,6 +498,17 @@ export class ClipsService {
     };
 
     let segments: Array<{ start_tick: number; end_tick: number }> = [];
+    // Stats we accumulate while building so we can name the clip
+    // honestly afterwards (e.g. "Multi-Kills — 2× 3K, 1× 4K" instead
+    // of a generic "multikills"). Also lets us tell the user we fell
+    // back to a single kill when the preset matched nothing.
+    const stats = {
+      knifeKills: 0,
+      multiKillBuckets: { 2: 0, 3: 0, 4: 0, 5: 0 } as Record<number, number>,
+      bestRoundKills: 0,
+      recapKills: 0,
+      usedFallback: false,
+    };
 
     if (preset === "knife") {
       // Knife kills are punchy on their own — skip clustering, give
@@ -505,20 +517,25 @@ export class ClipsService {
       const knife = myKills.filter((k) =>
         (k.weapon ?? "").toLowerCase().includes("knife"),
       );
+      stats.knifeKills = knife.length;
       segments = knife.map((k) => ({
         start_tick: clamp(k.tick - lead),
         end_tick: clamp(k.tick + tail),
       }));
     } else if (preset === "multikills") {
-      // Rounds where the player got ≥2 kills. Within each qualifying
-      // round, cluster the kills so a 4k with a 25s gap between
-      // kills 2 and 3 produces TWO sub-segments instead of one big
-      // one full of dead time.
+      // Frag-montage style: one segment per kill cluster, never the
+      // whole round. A 4k with kills evenly spaced becomes 4 short
+      // clips fading into each other; a 4k with 3 back-to-back kills
+      // + a delayed cleanup becomes 2 clips. The "running around for
+      // 30s between kills" never makes it into the output.
       for (const r of rounds) {
         const inRound = myKills.filter(
           (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
         );
         if (inRound.length < 2) continue;
+        const bucket = Math.min(5, inRound.length);
+        stats.multiKillBuckets[bucket] =
+          (stats.multiKillBuckets[bucket] ?? 0) + 1;
         segments.push(...clusterKills(inRound));
       }
     } else if (preset === "best_round") {
@@ -538,31 +555,30 @@ export class ClipsService {
         }
       }
       if (best && best.count > 0) {
-        // Cluster within the best round too — a 1v5 ace with a long
-        // hide-and-seek pause in the middle should still skip the
-        // pause, even though it's all one round.
-        const inRound = myKills.filter(
-          (k) => k.tick >= best!.start && k.tick <= best!.end,
-        );
+        stats.bestRoundKills = best.count;
+        // Frag-montage style — one segment per kill cluster within
+        // the best round. A 2K with 15s between kills becomes 2
+        // short clips, NOT one 20s segment with running-around in
+        // the middle.
+        const inRound = myKills
+          .filter((k) => k.tick >= best!.start && k.tick <= best!.end)
+          .sort((a, b) => a.tick - b.tick);
         segments = clusterKills(inRound);
-        // Fallback: if for some reason no kills were timestamped
-        // inside the round window, ship the full round so the user
-        // gets *something*.
-        if (segments.length === 0) {
-          segments = [
-            { start_tick: clamp(best.start), end_tick: clamp(best.end) },
-          ];
-        }
       }
     } else if (preset === "recap") {
       // Every kill the player got, clustered globally. This naturally
       // skips between rounds (long gap = new segment), within rounds
       // (long approach = new segment), and across map halves.
       segments = clusterKills(myKills);
+      stats.recapKills = myKills.length;
     }
 
     // Fallback: if the chosen preset produced nothing, drop down to
-    // "single best kill" (HS preferred) so the user still gets a clip.
+    // "single best kill" (HS preferred) so the user still gets a
+    // clip — but flag the fallback so the title makes it obvious
+    // ("…no multi-kills found" rather than presenting a 1k as a
+    // multi-kill, which is what was confusing about the previous
+    // behavior).
     if (segments.length === 0 && myKills.length > 0) {
       const fallback =
         myKills.find((k) => k.headshot) ?? myKills[0];
@@ -572,6 +588,7 @@ export class ClipsService {
           end_tick: clamp(fallback.tick + tail),
         },
       ];
+      stats.usedFallback = true;
     }
 
     if (segments.length === 0) {
@@ -604,14 +621,50 @@ export class ClipsService {
       merged.length = MAX_SEGMENTS;
     }
 
+    // Build a human-readable title from what actually got rendered.
+    // Naming the clip after the *result* (not just the preset) makes
+    // it obvious in the library why a "Multi-Kills" clip only has
+    // one kill — because there were no multi-kills to render.
+    const playerLabel =
+      targetName?.trim() || `Player ${targetSteamId.slice(-4)}`;
+    const autoTitle = (() => {
+      if (stats.usedFallback) {
+        const presetLabel =
+          preset === "best_round" ? "Best Round" :
+          preset === "multikills" ? "Multi-Kills" :
+          preset === "recap" ? "Match Recap" :
+          "Knife Kills";
+        return `${playerLabel} — Best Single Kill (no ${presetLabel.toLowerCase()} found)`;
+      }
+      if (preset === "knife") {
+        const n = stats.knifeKills;
+        return `${playerLabel} — ${n} Knife ${n === 1 ? "Kill" : "Kills"}`;
+      }
+      if (preset === "multikills") {
+        const parts: string[] = [];
+        for (const k of [5, 4, 3, 2]) {
+          const n = stats.multiKillBuckets[k] ?? 0;
+          if (n > 0) parts.push(`${n}× ${k}K`);
+        }
+        const summary = parts.length ? parts.join(", ") : "Multi-Kills";
+        return `${playerLabel} — Multi-Kills (${summary})`;
+      }
+      if (preset === "best_round") {
+        return `${playerLabel} — Best Round (${stats.bestRoundKills}K)`;
+      }
+      if (preset === "recap") {
+        const segCount = merged.length;
+        return `${playerLabel} — Match Recap (${stats.recapKills} kills · ${segCount} clip${segCount === 1 ? "" : "s"})`;
+      }
+      return `${playerLabel} — Highlights`;
+    })();
+
     return {
       match_map_id: matchMapId,
       segments: merged,
       output: { format: "mp4", resolution: output.resolution, fps: output.fps },
       destination: "library",
-      title:
-        title ??
-        `${preset.replace("_", " ")} — ${targetSteamId.slice(-4)}`,
+      title: title ?? autoTitle,
     };
   }
 

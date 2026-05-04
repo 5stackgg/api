@@ -71,6 +71,7 @@ type Mutation {
     resolution: String
     fps: Int
     title: String
+    target_name: String
   ): CreateClipRenderOutput
 }
 
