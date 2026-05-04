@@ -439,12 +439,8 @@ export class GameStreamerService {
     return res.json().catch(() => ({ ok: true }));
   }
 
-  // Dispatch a clip-render request to the spec-server in an existing
-  // demo session pod. The pod owns the orchestration (snapshot user
-  // playback → seek → file capture → upload → restore); the api just
-  // hands off the spec and walks away. Returns when the pod has
-  // accepted the request (200 from /demo/render-clip), NOT when the
-  // render finishes — progress comes back via /clip-renders/:id/status.
+  // Returns when the pod accepts the request, not when render finishes
+  // — progress comes back via /clip-renders/:id/status.
   public async dispatchClipRenderToPod(
     sessionId: string,
     payload: {
@@ -455,6 +451,7 @@ export class GameStreamerService {
       end_tick: number;
       output_dims: string;
       output_fps: number;
+      render_speed?: number;
     },
   ) {
     const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
