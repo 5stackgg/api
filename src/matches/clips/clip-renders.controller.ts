@@ -50,6 +50,42 @@ export class ClipRendersController {
     return response.status(200).json({ status: row.status });
   }
 
+  // Pod-side title patch. The api builds clip titles at enqueue time
+  // from the steam_id (no name available — the parser only emits
+  // ids), so titles read "Player 6843 — Best Round (4K)". Once the
+  // pod loads the demo and GSI fires, it knows every player's
+  // actual name and POSTs the resolved title here. We persist by
+  // shallow-merging into spec.title so the existing finalizeClipUpload
+  // path picks it up unchanged when it writes match_clips.title.
+  @Post("title")
+  public async updateTitle(
+    @Param("jobId") jobId: string,
+    @Body() body: { title?: string },
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.clips.validateClipRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      return response.status(401).end();
+    }
+    const title = (body?.title ?? "").trim();
+    if (title.length === 0 || title.length > 200) {
+      return response.status(400).json({ error: "title required (≤200)" });
+    }
+    try {
+      await this.clips.patchClipRenderTitle(jobId, title);
+    } catch (error) {
+      this.logger.error(
+        `[clip ${jobId}] patchClipRenderTitle failed: ${(error as Error)?.message}`,
+      );
+      return response.status(500).json({ error: "internal" });
+    }
+    response.status(204).end();
+  }
+
   @Post("status")
   public async reportStatus(
     @Param("jobId") jobId: string,

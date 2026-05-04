@@ -450,6 +450,33 @@ export class ClipsService {
     };
   }
 
+  // Patch the title on a queued render's spec. The pod calls this
+  // after GSI resolves the player's actual name (the api builds the
+  // title at enqueue time with only steam_id available, so it ends
+  // up "Player NNNN — Best Round (NK)" until the pod overrides).
+  // We read the existing spec, swap in the new title, and write back —
+  // finalizeClipUpload's later read of spec.title picks up the new
+  // value unchanged.
+  public async patchClipRenderTitle(jobId: string, title: string) {
+    const { clip_render_jobs_by_pk: row } = await this.hasura.query({
+      clip_render_jobs_by_pk: {
+        __args: { id: jobId },
+        spec: true,
+      },
+    });
+    if (!row) return;
+    const nextSpec = { ...(row.spec as any), title };
+    await this.hasura.mutation({
+      update_clip_render_jobs_by_pk: {
+        __args: {
+          pk_columns: { id: jobId },
+          _set: { spec: nextSpec },
+        },
+        id: true,
+      },
+    });
+  }
+
   // Cheap status read for the pod's pre-render cancellation check.
   // Returns just the status string so we don't ship the full row's
   // jsonb spec back to a hot poll loop.
