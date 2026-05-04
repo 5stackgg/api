@@ -1163,6 +1163,9 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: this.resolveInClusterApiBase() },
+      // Tells setup-steam.sh to skip OpenHud so rendered mp4s don't
+      // bake in the spectator scoreboard/killfeed overlay.
+      { name: "CLIP_BATCH_MODE", value: "1" },
       // CLIP_BATCH_JOBS is consumed by run-batch-highlights.sh — one
       // entry per clip_render_jobs row, with the spec fully resolved
       // so the pod doesn't need to re-query the api between renders.

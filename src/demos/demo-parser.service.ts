@@ -30,6 +30,14 @@ export type ParsedBomb = {
   site?: "A" | "B";
 };
 
+// Steam-id → in-game name pairs observed in the demo. Used by the
+// auto-clip pipeline so the queue UI shows real names ("CabessaaR")
+// instead of "Player 6843" before cs2 actually launches.
+export type ParsedPlayer = {
+  steam_id: string;
+  name: string;
+};
+
 export type ParsedDemo = {
   total_ticks: number;
   tick_rate: number;
@@ -39,6 +47,7 @@ export type ParsedDemo = {
   round_ticks: ParsedRound[];
   kills: ParsedKill[];
   bombs: ParsedBomb[];
+  players?: ParsedPlayer[];
 };
 
 @Injectable()

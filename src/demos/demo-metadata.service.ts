@@ -162,6 +162,7 @@ export class DemoMetadataService {
             round_ticks: parsed.round_ticks ?? [],
             kills: parsed.kills ?? [],
             bombs: parsed.bombs ?? [],
+            players: parsed.players ?? [],
             map_name: parsed.map_name ?? null,
             workshop_id: parsed.workshop_id ?? null,
             cs2_build: parsed.cs2_build ?? null,

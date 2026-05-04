@@ -692,6 +692,7 @@ export class ClipsService {
           demos: {
             id: true,
             kills: true,
+            players: true,
             tick_rate: true,
             total_ticks: true,
             round_ticks: true,
@@ -720,26 +721,47 @@ export class ClipsService {
       Array<{ job_id: string; session_token: string; spec: any }>
     >();
 
-    // Prefetch player names for ALL killers across all maps in one
-    // shot — without this, every clip's auto-title was reading
-    // "Player NNNN" (the steamid suffix fallback baked into
-    // buildPresetSpec when targetName is unset), which is useless
-    // in /manage-clips/queue. Players who never logged into 5stack
-    // simply aren't in `players`; for them we keep the suffix.
+    // Resolve player names for every killer across all maps so the
+    // queued clip titles read "CabessaaR — Best Round (4K)" instead
+    // of "Player 6843 — Best Round (4K)" the moment the rows hit the
+    // /manage-highlights/queue subscription. Two sources, in order:
+    //
+    //   1. `match_map_demos.players` — name-by-steamid map the demo
+    //      parser extracts from kill events. Always present for any
+    //      player who got involved in a kill, regardless of whether
+    //      they ever logged into 5stack.
+    //   2. `players` table fallback — covers the (rare) case where
+    //      the demo's parsed players slice is empty but the killer
+    //      is a registered 5stack user.
+    //
+    // The existing pod-side GSI title patch still fires per-render as
+    // a third backstop. With (1) shipping, it's mostly redundant —
+    // but harmless and useful if a name changed between demo parse
+    // and render time.
+    const nameByStId = new Map<string, string>();
     const allKillers = new Set<string>();
     for (const mapRow of match.match_maps ?? []) {
       const demo = mapRow.demos?.[0];
       const kills =
         (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
       for (const k of kills) if (k.killer) allKillers.add(k.killer);
+      const demoPlayers =
+        (demo?.players as
+          | Array<{ steam_id?: string; name?: string }>
+          | undefined) ?? [];
+      for (const p of demoPlayers) {
+        if (p?.steam_id && p?.name) {
+          nameByStId.set(String(p.steam_id), String(p.name));
+        }
+      }
     }
-    const nameByStId = new Map<string, string>();
-    if (allKillers.size > 0) {
+    const unresolved = Array.from(allKillers).filter(
+      (sid) => !nameByStId.has(sid),
+    );
+    if (unresolved.length > 0) {
       const { players } = await this.hasura.query({
         players: {
-          __args: {
-            where: { steam_id: { _in: Array.from(allKillers) } },
-          },
+          __args: { where: { steam_id: { _in: unresolved } } },
           steam_id: true,
           name: true,
         },
