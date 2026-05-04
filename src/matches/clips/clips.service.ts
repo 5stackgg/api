@@ -99,6 +99,7 @@ export class ClipsService {
         segments: spec.segments.map((s) => ({
           start_tick: s.start_tick,
           end_tick: s.end_tick,
+          pov_steam_id: s.pov_steam_id,
         })),
         output_dims: dims,
         output_fps: spec.output.fps,
@@ -602,13 +603,21 @@ export class ClipsService {
     // freeze on the boundary (cs2 has to reseek + re-pause).
     segments.sort((a, b) => a.start_tick - b.start_tick);
     const joinGap = Math.round(tickRate * 2);
-    const merged: Array<{ start_tick: number; end_tick: number }> = [];
+    const merged: Array<{
+      start_tick: number;
+      end_tick: number;
+      pov_steam_id?: string;
+    }> = [];
     for (const s of segments) {
       const last = merged[merged.length - 1];
       if (last && s.start_tick <= last.end_tick + joinGap) {
         last.end_tick = Math.max(last.end_tick, s.end_tick);
       } else {
-        merged.push({ ...s });
+        // Tag every segment with the target so the render pod can
+        // `spec_player_by_accountid <id>` before play — guarantees
+        // we capture the player's POV even though cs2 may have
+        // auto-switched to someone else when we last left the demo.
+        merged.push({ ...s, pov_steam_id: targetSteamId });
       }
     }
 
