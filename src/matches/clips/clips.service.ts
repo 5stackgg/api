@@ -453,11 +453,55 @@ export class ClipsService {
     const myKills = kills.filter((k) => k.killer === targetSteamId);
     const lead = Math.round(tickRate * 5);
     const tail = Math.round(tickRate * 3);
+    // Two consecutive kills with ≤ this much "dead time" between them
+    // get joined into one continuous segment. Above the threshold we
+    // cut and start a new segment for the next kill cluster — that
+    // skips the running-around-doing-nothing in between. 10s is a
+    // sweet spot: it preserves trade kills + back-to-back engagements
+    // without leaving long gaps where the player's just rotating.
+    const CLUSTER_GAP_SECS = 10;
+    const clusterGapTicks = Math.round(tickRate * CLUSTER_GAP_SECS);
     const clamp = (t: number) => Math.max(0, Math.min(t, totalTicks || t));
+
+    // Cluster a sorted-by-tick kill list into segments. Each output
+    // segment spans [first_kill - lead, last_kill + tail] within the
+    // cluster. If lead/tail of an adjacent segment overlap they get
+    // merged downstream — but the gap-based splitting prevents the
+    // common "wait 30s for next kill" dead air.
+    const clusterKills = (
+      ks: Array<{ tick: number }>,
+    ): Array<{ start_tick: number; end_tick: number }> => {
+      if (ks.length === 0) return [];
+      const sorted = [...ks].sort((a, b) => a.tick - b.tick);
+      const out: Array<{ start_tick: number; end_tick: number }> = [];
+      let clusterStart = sorted[0].tick;
+      let clusterEnd = sorted[0].tick;
+      for (let i = 1; i < sorted.length; i++) {
+        const gap = sorted[i].tick - clusterEnd;
+        if (gap <= clusterGapTicks) {
+          clusterEnd = sorted[i].tick;
+          continue;
+        }
+        out.push({
+          start_tick: clamp(clusterStart - lead),
+          end_tick: clamp(clusterEnd + tail),
+        });
+        clusterStart = sorted[i].tick;
+        clusterEnd = sorted[i].tick;
+      }
+      out.push({
+        start_tick: clamp(clusterStart - lead),
+        end_tick: clamp(clusterEnd + tail),
+      });
+      return out;
+    };
 
     let segments: Array<{ start_tick: number; end_tick: number }> = [];
 
     if (preset === "knife") {
+      // Knife kills are punchy on their own — skip clustering, give
+      // each one a tight personal window (the 5s lead is enough to
+      // see the approach, 3s tail catches the celebration / death).
       const knife = myKills.filter((k) =>
         (k.weapon ?? "").toLowerCase().includes("knife"),
       );
@@ -466,19 +510,16 @@ export class ClipsService {
         end_tick: clamp(k.tick + tail),
       }));
     } else if (preset === "multikills") {
-      // Group kills by round, keep rounds with ≥2 kills, span first..last
-      // kill within the round (with the same lead/tail buffer).
+      // Rounds where the player got ≥2 kills. Within each qualifying
+      // round, cluster the kills so a 4k with a 25s gap between
+      // kills 2 and 3 produces TWO sub-segments instead of one big
+      // one full of dead time.
       for (const r of rounds) {
         const inRound = myKills.filter(
           (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
         );
         if (inRound.length < 2) continue;
-        const first = inRound[0].tick;
-        const last = inRound[inRound.length - 1].tick;
-        segments.push({
-          start_tick: clamp(first - lead),
-          end_tick: clamp(last + tail),
-        });
+        segments.push(...clusterKills(inRound));
       }
     } else if (preset === "best_round") {
       let best: { round: number; count: number; start: number; end: number } | null =
@@ -497,22 +538,27 @@ export class ClipsService {
         }
       }
       if (best && best.count > 0) {
-        segments = [{ start_tick: clamp(best.start), end_tick: clamp(best.end) }];
-      }
-    } else if (preset === "recap") {
-      // Every round the player got ≥1 kill, full round window. Cheap
-      // dedup of overlapping rounds (shouldn't happen but defensive).
-      for (const r of rounds) {
-        const got = myKills.some(
-          (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
+        // Cluster within the best round too — a 1v5 ace with a long
+        // hide-and-seek pause in the middle should still skip the
+        // pause, even though it's all one round.
+        const inRound = myKills.filter(
+          (k) => k.tick >= best!.start && k.tick <= best!.end,
         );
-        if (got) {
-          segments.push({
-            start_tick: clamp(r.start_tick),
-            end_tick: clamp(r.end_tick),
-          });
+        segments = clusterKills(inRound);
+        // Fallback: if for some reason no kills were timestamped
+        // inside the round window, ship the full round so the user
+        // gets *something*.
+        if (segments.length === 0) {
+          segments = [
+            { start_tick: clamp(best.start), end_tick: clamp(best.end) },
+          ];
         }
       }
+    } else if (preset === "recap") {
+      // Every kill the player got, clustered globally. This naturally
+      // skips between rounds (long gap = new segment), within rounds
+      // (long approach = new segment), and across map halves.
+      segments = clusterKills(myKills);
     }
 
     // Fallback: if the chosen preset produced nothing, drop down to
