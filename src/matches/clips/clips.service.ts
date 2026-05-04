@@ -208,6 +208,80 @@ export class ClipsService {
     return { id: row.id, k8s_job_name: row.k8s_job_name };
   }
 
+  // Mutate clip metadata after the render is done. Owner-only;
+  // raises if the clip belongs to someone else. Each field is
+  // optional — undefined means "don't touch this column" so the
+  // caller can rename a clip without flipping its visibility, etc.
+  public async updateClip(
+    userSteamId: string,
+    clipId: string,
+    patch: {
+      title?: string | null;
+      visibility?: "private" | "unlisted" | "match" | "public";
+      target_steam_id?: string | null;
+    },
+  ): Promise<void> {
+    const { match_clips_by_pk: row } = await this.hasura.query({
+      match_clips_by_pk: {
+        __args: { id: clipId },
+        id: true,
+        user_steam_id: true,
+      },
+    });
+    if (!row) {
+      throw new Error(`clip ${clipId} not found`);
+    }
+    if (String(row.user_steam_id) !== String(userSteamId)) {
+      throw new Error("you can only edit your own clips");
+    }
+
+    const set: Record<string, unknown> = {};
+    if (patch.title !== undefined) {
+      // Empty string -> null so the UI can fall back to "Untitled".
+      const trimmed = patch.title?.trim() ?? null;
+      set.title = trimmed && trimmed.length > 0 ? trimmed : null;
+    }
+    if (patch.visibility !== undefined) {
+      const allowed = ["private", "unlisted", "match", "public"];
+      if (!allowed.includes(patch.visibility)) {
+        throw new Error(
+          `invalid visibility "${patch.visibility}" — must be one of ${allowed.join(", ")}`,
+        );
+      }
+      set.visibility = patch.visibility;
+    }
+    if (patch.target_steam_id !== undefined) {
+      // Allow explicit null to clear the field. For a non-null value
+      // we have to verify a players row exists — the FK rejects any
+      // steamid that's never logged into 5stack, and the demo's
+      // parser can produce steamids of bot/world/non-registered
+      // players. Silent null vs. throw: silent matches the "best
+      // effort attribution" model — clip still saves with no link.
+      if (patch.target_steam_id === null) {
+        set.target_steam_id = null;
+      } else {
+        const { players } = await this.hasura.query({
+          players: {
+            __args: {
+              where: { steam_id: { _eq: patch.target_steam_id } },
+              limit: 1,
+            },
+            steam_id: true,
+          },
+        });
+        set.target_steam_id = players?.[0]?.steam_id ?? null;
+      }
+    }
+    if (Object.keys(set).length === 0) return;
+
+    await this.hasura.mutation({
+      update_match_clips_by_pk: {
+        __args: { pk_columns: { id: clipId }, _set: set },
+        id: true,
+      },
+    });
+  }
+
   public async deleteClip(userSteamId: string, clipId: string) {
     const { match_clips_by_pk: row } = await this.hasura.query({
       match_clips_by_pk: {
@@ -349,12 +423,45 @@ export class ClipsService {
 
     const spec = row.spec as unknown as ClipSpec;
     const title = spec?.title ?? null;
+    // Preset renders stamp pov_steam_id on every segment with the
+    // target player's steamid64. Manual-trim renders leave it
+    // undefined. Use the first segment's pov as the clip's "about"
+    // player — by-design all preset segments share the same target,
+    // and manual trims don't have one.
+    //
+    // The pov can be a steamid that's NEVER logged into 5stack — it
+    // came straight out of the demo's parsed kill events. The
+    // target_steam_id FK references players(steam_id), so we have to
+    // verify a row exists before stamping it on the clip — otherwise
+    // the insert blows up with a foreign-key violation. Fallback to
+    // null (clip just doesn't have a clickable player attribution).
+    const rawTarget = spec?.segments?.[0]?.pov_steam_id ?? null;
+    let targetSteamId: string | null = null;
+    if (rawTarget) {
+      const { players } = await this.hasura.query({
+        players: {
+          __args: {
+            where: { steam_id: { _eq: rawTarget } },
+            limit: 1,
+          },
+          steam_id: true,
+        },
+      });
+      if (players?.[0]?.steam_id) {
+        targetSteamId = String(players[0].steam_id);
+      } else {
+        this.logger.log(
+          `[clip ${jobId}] target steam_id ${rawTarget} not in players table — leaving target_steam_id null`,
+        );
+      }
+    }
 
     const { insert_match_clips_one } = await this.hasura.mutation({
       insert_match_clips_one: {
         __args: {
           object: {
             user_steam_id: userSteamId,
+            target_steam_id: targetSteamId,
             match_map_id: row.match_map_id,
             title,
             duration_ms: durationMs,

@@ -8,6 +8,9 @@ object_relationships:
   - name: user
     using:
       foreign_key_constraint_on: user_steam_id
+  - name: target
+    using:
+      foreign_key_constraint_on: target_steam_id
 array_relationships:
   - name: render_jobs
     using:
@@ -28,6 +31,7 @@ select_permissions:
       columns:
         - id
         - user_steam_id
+        - target_steam_id
         - match_map_id
         - title
         - duration_ms
@@ -43,6 +47,7 @@ select_permissions:
     permission:
       columns:
         - user_steam_id
+        - target_steam_id
         - duration_ms
         - file
         - thumbnail_url
@@ -55,3 +60,27 @@ select_permissions:
         - download_url
       filter: {}
     comment: ""
+  # Guests + verified users see public clips through the same row,
+  # gated by the `visibility = 'public'` filter. Private clips are
+  # invisible at the row level, so the public highlights feed +
+  # clip detail page can use one query path for both anonymous and
+  # authenticated viewers.
+  - role: guest
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - target_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - file
+        - thumbnail_url
+        - visibility
+        - created_at
+      computed_fields:
+        - download_url
+      filter:
+        visibility:
+          _eq: public
+      allow_aggregations: true

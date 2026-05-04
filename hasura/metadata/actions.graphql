@@ -82,6 +82,15 @@ type Mutation {
 }
 
 type Mutation {
+  updateClip(
+    clip_id: uuid!
+    title: String
+    visibility: String
+    target_steam_id: String
+  ): SuccessOutput
+}
+
+type Mutation {
   createClips(
     match_id: uuid!
   ): SuccessOutput

@@ -926,6 +926,22 @@ export class MatchesController {
     return { success: true };
   }
 
+  @HasuraAction()
+  public async updateClip(data: {
+    clip_id: string;
+    title?: string | null;
+    visibility?: "private" | "unlisted" | "match" | "public";
+    target_steam_id?: string | null;
+    user: User;
+  }) {
+    await this.clips.updateClip(data.user.steam_id, data.clip_id, {
+      title: data.title,
+      visibility: data.visibility,
+      target_steam_id: data.target_steam_id,
+    });
+    return { success: true };
+  }
+
   @HasuraEvent()
   public async match_veto_pick(
     data: HasuraEventData<match_map_veto_picks_set_input>,
