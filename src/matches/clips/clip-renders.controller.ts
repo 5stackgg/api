@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Logger,
   Param,
   Post,
@@ -23,6 +24,31 @@ export class ClipRendersController {
     private readonly logger: Logger,
     private readonly clips: ClipsService,
   ) {}
+
+  // Lightweight GET so the render pod can verify a job hasn't been
+  // cancelled before it spends 60s+ rendering it. Same auth as the
+  // POST status route. Returns the row's current status; pod treats
+  // `cancelled` as "skip without error" and any other value as
+  // "proceed".
+  @Get("status")
+  public async getStatus(
+    @Param("jobId") jobId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.clips.validateClipRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      return response.status(401).end();
+    }
+    const row = await this.clips.getClipRenderStatus(jobId);
+    if (!row) {
+      return response.status(404).json({ error: "not found" });
+    }
+    return response.status(200).json({ status: row.status });
+  }
 
   @Post("status")
   public async reportStatus(

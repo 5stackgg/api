@@ -25,7 +25,24 @@ type Modules =
   | "Telemetry"
   | "DedicatedServers";
 
-export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
+export type UseQueueOptions = {
+  // Maximum number of jobs the worker will run in parallel. BullMQ
+  // defaults to 1; pass a different number explicitly when a job is
+  // safe to parallelise. Note: this is per-process; multi-replica
+  // deployments multiply.
+  concurrency?: number;
+  // Rate limiter — caps how many jobs the worker pulls per duration.
+  // Useful for renders that hit a shared resource (GPU pool, demo
+  // S3 egress) and we want to throttle even if concurrency would
+  // otherwise let more through.
+  limiter?: { max: number; duration: number };
+};
+
+export const UseQueue = (
+  module: Modules,
+  queue: string,
+  options: UseQueueOptions = {},
+): ClassDecorator => {
   return (target) => {
     if (!Reflect.hasMetadata("jobs", QueueProcessors)) {
       Reflect.defineMetadata("jobs", [], QueueProcessors);
@@ -53,7 +70,31 @@ export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
     Reflect.defineMetadata("jobs", jobs, QueueProcessors);
 
     if (!processors[module][queue]) {
-      @Processor(queue)
+      // @Processor's options are forwarded into the bull-mq Worker
+      // constructor, so concurrency / limiter set here apply to the
+      // whole worker — even though only this one job's `@UseQueue`
+      // call passed them. That's fine because each (module, queue)
+      // pair gets exactly one Processor; subsequent UseQueue calls
+      // for the same queue (different job classes) are no-ops here.
+      //
+      // We OMIT undefined keys instead of passing `concurrency:
+      // undefined` because BullMQ's Worker constructor explicitly
+      // rejects "concurrency must be a finite number greater than 0"
+      // — `undefined` doesn't take the default-1 path, it crashes
+      // module init. Same defensiveness for `limiter`.
+      const processorOptions: { concurrency?: number; limiter?: { max: number; duration: number } } = {};
+      if (typeof options.concurrency === "number") {
+        processorOptions.concurrency = options.concurrency;
+      }
+      if (options.limiter) {
+        processorOptions.limiter = options.limiter;
+      }
+      const processorDecorator =
+        Object.keys(processorOptions).length > 0
+          ? Processor(queue, processorOptions)
+          : Processor(queue);
+
+      @processorDecorator
       class QueueProcessor extends WorkerHost<any> {
         constructor(
           protected readonly logger: Logger,

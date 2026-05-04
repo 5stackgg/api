@@ -27,6 +27,11 @@ select_permissions:
         - created_at
         - spec
       filter: {}
+  # Operator-tier roles see EVERY clip_render_jobs row, not just
+  # their own — they're the people running Manage Highlights and
+  # need to see auto-gen jobs spawned under other operators' matches
+  # too. Plain `user` / `verified_user` still see only their own
+  # personal Library renders below.
   - role: match_organizer
     permission:
       columns:
@@ -41,9 +46,7 @@ select_permissions:
         - last_status_at
         - created_at
         - spec
-      filter:
-        user_steam_id:
-          _eq: X-Hasura-User-Id
+      filter: {}
   - role: streamer
     permission:
       columns:
@@ -58,9 +61,7 @@ select_permissions:
         - last_status_at
         - created_at
         - spec
-      filter:
-        user_steam_id:
-          _eq: X-Hasura-User-Id
+      filter: {}
   - role: tournament_organizer
     permission:
       columns:
@@ -75,9 +76,7 @@ select_permissions:
         - last_status_at
         - created_at
         - spec
-      filter:
-        user_steam_id:
-          _eq: X-Hasura-User-Id
+      filter: {}
   - role: user
     permission:
       columns:

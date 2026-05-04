@@ -4,6 +4,17 @@ import { Readable } from "node:stream";
 import { HasuraService } from "../../hasura/hasura.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { MatchQueues } from "../enums/MatchQueues";
+
+// Job-name string the BullMQ producer uses, matching the worker
+// class name. We deliberately use a string literal instead of
+// importing BatchHighlightsRenderJob.name because the worker
+// imports THIS service, and re-importing the worker here would
+// create a load-time cycle that breaks NestJS's class-token
+// metadata for the constructor params.
+const BATCH_HIGHLIGHTS_JOB_NAME = "BatchHighlightsRenderJob";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { ClipSpec } from "./types/ClipSpec";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
@@ -19,6 +30,8 @@ export class ClipsService {
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
+    @InjectQueue(MatchQueues.ClipRenderBatch)
+    private readonly batchQueue: Queue,
   ) {}
 
   public static GetClipS3Key(userSteamId: string, jobId: string) {
@@ -126,6 +139,78 @@ export class ClipsService {
     }
 
     return { jobId };
+  }
+
+  // Cancel an entire batch (one match_map's render queue) in a
+  // single operator action. Distinct from cancelClipRender, which
+  // targets one row.
+  //
+  // Order of operations matters:
+  //   1. Mark all in-flight rows cancelled FIRST. The pod's
+  //      inline-clip-render.sh checks status before each clip and
+  //      bails on `cancelled`, so any clips not yet started are
+  //      skipped naturally as the pod walks its CLIP_BATCH_JOBS env.
+  //   2. Remove the BullMQ batch job. The watcher would otherwise
+  //      keep redispatching the pod when it sees the k8s Job in
+  //      "failed" state, even though the operator just told us to
+  //      stop.
+  //   3. Tear down the running pod. THIS is an authorised kill —
+  //      the operator explicitly cancelled. We still kill via the
+  //      same path the failed-pod cleanup uses, just with intent
+  //      rather than reactivity.
+  //
+  // The pod COULD finish its current clip before we tell it to stop.
+  // The status flip on remaining rows means subsequent clips skip;
+  // the kill in (3) ensures the in-flight render also dies cleanly
+  // rather than uploading a clip the user just told us to forget.
+  public async cancelClipRenderBatch(matchMapId: string): Promise<number> {
+    // 1. Cancel rows.
+    const { update_clip_render_jobs } = await this.hasura.mutation({
+      update_clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: ["queued", "rendering", "uploading"] },
+          },
+          _set: {
+            status: "cancelled",
+            error_message: "cancelled by operator (batch)",
+            last_status_at: "now()",
+          },
+        },
+        affected_rows: true,
+      },
+    });
+    const cancelled = (update_clip_render_jobs?.affected_rows as number) ?? 0;
+
+    // 2. Drop the BullMQ batch job. removeJobs returns {removed,
+    //    failed_to_remove}; we only need to know it ran.
+    try {
+      const job = await this.batchQueue.getJob(matchMapId);
+      if (job) {
+        await job.remove();
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[cancel-batch ${matchMapId}] BullMQ remove failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    // 3. Operator-authorised pod kill. Distinct from the watcher's
+    //    "never preempt running pods" rule — that's about avoiding
+    //    accidental kills, not refusing them when the user asked.
+    try {
+      await this.gameStreamer.killBatchHighlightsPod(matchMapId);
+    } catch (error) {
+      this.logger.warn(
+        `[cancel-batch ${matchMapId}] pod kill failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    this.logger.log(
+      `[cancel-batch ${matchMapId}] cancelled ${cancelled} row(s) and torn down pod`,
+    );
+    return cancelled;
   }
 
   public async cancelClipRender(userSteamId: string, jobId: string) {
@@ -282,7 +367,11 @@ export class ClipsService {
     });
   }
 
-  public async deleteClip(userSteamId: string, clipId: string) {
+  public async deleteClip(
+    userSteamId: string,
+    clipId: string,
+    actorIsOperator = false,
+  ) {
     const { match_clips_by_pk: row } = await this.hasura.query({
       match_clips_by_pk: {
         __args: { id: clipId },
@@ -294,7 +383,16 @@ export class ClipsService {
     if (!row) {
       throw new Error(`clip ${clipId} not found`);
     }
-    if (String(row.user_steam_id) !== String(userSteamId)) {
+    // Owners can delete their own clips. Operators (streamer-rank+,
+    // checked at the controller layer and forwarded as
+    // actorIsOperator=true) can delete ANY clip — they manage the
+    // platform's library from /manage-clips, where most rows are
+    // owned by the match organizer of the originating match, not by
+    // the operator viewing the page.
+    if (
+      !actorIsOperator &&
+      String(row.user_steam_id) !== String(userSteamId)
+    ) {
       throw new Error("you can only delete your own clips");
     }
 
@@ -350,6 +448,22 @@ export class ClipsService {
       user_steam_id: String(row.user_steam_id),
       match_map_id: row.match_map_id,
     };
+  }
+
+  // Cheap status read for the pod's pre-render cancellation check.
+  // Returns just the status string so we don't ship the full row's
+  // jsonb spec back to a hot poll loop.
+  public async getClipRenderStatus(
+    jobId: string,
+  ): Promise<{ status: string } | null> {
+    const { clip_render_jobs_by_pk } = await this.hasura.query({
+      clip_render_jobs_by_pk: {
+        __args: { id: jobId },
+        status: true,
+      },
+    });
+    if (!clip_render_jobs_by_pk) return null;
+    return { status: String(clip_render_jobs_by_pk.status) };
   }
 
   public async reportClipRenderStatus(
@@ -508,6 +622,254 @@ export class ClipsService {
       },
     });
     return clip_render_jobs?.[0] ?? null;
+  }
+
+  // Generate match-recap clips for every player who got kills in a
+  // match. Two callers:
+  //   - match_events on status -> Finished, gated by the
+  //     `auto_generate_match_clips` setting (background auto-gen).
+  //   - The "Create Player Highlights" admin button on a match,
+  //     which passes { force: true } to bypass the setting and
+  //     produce highlights on demand.
+  //
+  // Each (match_map, killer) pair becomes ONE queued clip_render_jobs
+  // row. Pod orchestration that drains the queue is out of scope —
+  // this method just persists the spec rows so the same render
+  // pipeline can pick them up later.
+  //
+  // Returns the number of jobs created so the caller can log it.
+  public async autoGenerateForMatch(
+    matchId: string,
+    options: { force?: boolean } = {},
+  ): Promise<number> {
+    if (!options.force) {
+      const enabled = await this.readBoolSetting(
+        "auto_generate_match_clips",
+        false,
+      );
+      if (!enabled) return 0;
+    }
+
+    const defaultVisibility = await this.readSetting(
+      "auto_clip_default_visibility",
+      "private",
+    );
+
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        id: true,
+        organizer_steam_id: true,
+        match_maps: {
+          id: true,
+          demos: {
+            id: true,
+            kills: true,
+            tick_rate: true,
+            total_ticks: true,
+            round_ticks: true,
+          },
+        },
+      },
+    });
+    if (!match) {
+      this.logger.warn(`[auto-clips] match ${matchId} not found`);
+      return 0;
+    }
+    if (!match.organizer_steam_id) {
+      this.logger.warn(
+        `[auto-clips] match ${matchId} has no organizer_steam_id — skipping (need a clip owner)`,
+      );
+      return 0;
+    }
+
+    let queued = 0;
+    // Track jobs queued PER match_map so we can dispatch one batch
+    // pod per map afterwards. Multi-map matches → multiple pods (one
+    // per .dem file), each pod loads cs2 + that demo once and renders
+    // every player's recap against the running cs2 instance.
+    const perMap = new Map<
+      string,
+      Array<{ job_id: string; session_token: string; spec: any }>
+    >();
+
+    // Prefetch player names for ALL killers across all maps in one
+    // shot — without this, every clip's auto-title was reading
+    // "Player NNNN" (the steamid suffix fallback baked into
+    // buildPresetSpec when targetName is unset), which is useless
+    // in /manage-clips/queue. Players who never logged into 5stack
+    // simply aren't in `players`; for them we keep the suffix.
+    const allKillers = new Set<string>();
+    for (const mapRow of match.match_maps ?? []) {
+      const demo = mapRow.demos?.[0];
+      const kills =
+        (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+      for (const k of kills) if (k.killer) allKillers.add(k.killer);
+    }
+    const nameByStId = new Map<string, string>();
+    if (allKillers.size > 0) {
+      const { players } = await this.hasura.query({
+        players: {
+          __args: {
+            where: { steam_id: { _in: Array.from(allKillers) } },
+          },
+          steam_id: true,
+          name: true,
+        },
+      });
+      for (const p of players ?? []) {
+        if (p?.steam_id && p?.name) {
+          nameByStId.set(String(p.steam_id), String(p.name));
+        }
+      }
+    }
+
+    for (const mapRow of match.match_maps ?? []) {
+      const demo = mapRow.demos?.[0];
+      const kills = (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+      if (!demo || kills.length === 0) continue;
+
+      // Unique killers in this map. For each, build the recap spec
+      // and queue one job. Skipping the buildPresetSpec error path
+      // (no kills) is fine since we already filtered to killers
+      // who appear in this map's kills array.
+      const killers = new Set<string>();
+      for (const k of kills) if (k.killer) killers.add(k.killer);
+
+      for (const targetSteamId of killers) {
+        try {
+          // best_round = the single round the player did the most
+          // damage in, rendered as ONE clip (clusterKills inside
+          // that round produces a single tight segment when the
+          // kills are close together, which is the typical case).
+          // Auto-gen on match completion is "give me each player's
+          // single best round" — NOT every round they got kills in.
+          const spec = await this.buildPresetSpec(
+            mapRow.id,
+            targetSteamId,
+            "best_round",
+            { resolution: "1080p", fps: 60 },
+            undefined,
+            // Real name when we have one; falls through to
+            // "Player <suffix>" inside buildPresetSpec when not.
+            nameByStId.get(targetSteamId),
+          );
+          // Force visibility based on operator setting.
+          (spec as any).destination = "library";
+          // Queue the job. Naming the match's organizer as the owner
+          // so the clips appear under their library — they had
+          // implicit consent to render on their match.
+          const sessionToken = randomBytes(24).toString("hex");
+          const jobName = GameStreamerService.GetBatchHighlightsJobName(
+            mapRow.id,
+          );
+          const { insert_clip_render_jobs_one } = await this.hasura.mutation({
+            insert_clip_render_jobs_one: {
+              __args: {
+                object: {
+                  user_steam_id: String(match.organizer_steam_id),
+                  match_map_id: mapRow.id,
+                  session_token: sessionToken,
+                  // Pre-stamp the batch pod's k8s_job_name so the
+                  // row's audit trail points at the pod that'll
+                  // process it. The dispatch step right after queueing
+                  // creates that pod under this exact name.
+                  k8s_job_name: jobName,
+                  spec,
+                  status: "queued",
+                  status_history: [
+                    {
+                      status: "queued",
+                      at: new Date().toISOString(),
+                      source: "auto_generate_match_clips",
+                      target_steam_id: targetSteamId,
+                      default_visibility: defaultVisibility,
+                    },
+                  ],
+                },
+              },
+              id: true,
+            },
+          });
+          const insertedId = insert_clip_render_jobs_one?.id as
+            | string
+            | undefined;
+          if (insertedId) {
+            const list = perMap.get(mapRow.id) ?? [];
+            list.push({
+              job_id: insertedId,
+              session_token: sessionToken,
+              spec,
+            });
+            perMap.set(mapRow.id, list);
+          }
+          queued++;
+        } catch (error) {
+          // Per-target failures shouldn't tank the whole batch —
+          // logs let an admin see who got skipped + why.
+          this.logger.warn(
+            `[auto-clips] match ${matchId} map ${mapRow.id} target ${targetSteamId} skipped: ${(error as Error)?.message}`,
+          );
+        }
+      }
+    }
+
+    this.logger.log(
+      `[auto-clips] match ${matchId} queued ${queued} recap job(s) (default visibility=${defaultVisibility})`,
+    );
+
+    // Enqueue one BullMQ batch job per match_map. The worker
+    // (BatchHighlightsRenderJob) owns pod lifecycle, polling, retry,
+    // and stuck-job cleanup — this method just produces work.
+    //
+    // jobId = matchMapId so re-running auto-gen for the same match
+    // (e.g. from the "Create Player Highlights" admin button while
+    // the previous batch is still in-flight) is a no-op rather than
+    // racing two pods for the same demo. BullMQ's add() returns the
+    // existing job when the id collides instead of creating a new
+    // one. Once the original job finishes, a future re-run gets a
+    // fresh attempt because BullMQ removes completed jobs (see
+    // ClipRenderBatch.defaultJobOptions.removeOnComplete).
+    for (const matchMapId of perMap.keys()) {
+      try {
+        // BullMQ job NAME must match the worker class name —
+        // utilities/QueueProcessors's QueueProcessor dispatches via
+        // `_jobs[job.name]` which is keyed by `target.name` from the
+        // @UseQueue decorator. Adding under any other name throws
+        // "Nest could not find given element" at consume time.
+        await this.batchQueue.add(
+          BATCH_HIGHLIGHTS_JOB_NAME,
+          { matchMapId },
+          { jobId: matchMapId },
+        );
+        this.logger.log(
+          `[auto-clips] match ${matchId} map ${matchMapId} → enqueued ClipRenderBatch`,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `[auto-clips] match ${matchId} map ${matchMapId} enqueue failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+    return queued;
+  }
+
+  private async readSetting(name: string, fallback: string): Promise<string> {
+    const { settings_by_pk } = await this.hasura.query({
+      settings_by_pk: {
+        __args: { name },
+        value: true,
+      },
+    });
+    return settings_by_pk?.value ?? fallback;
+  }
+
+  private async readBoolSetting(
+    name: string,
+    fallback: boolean,
+  ): Promise<boolean> {
+    const raw = await this.readSetting(name, fallback ? "true" : "false");
+    return raw === "true" || raw === "1";
   }
 
   // Highlight presets — turn a player + intent ("their knife kills",

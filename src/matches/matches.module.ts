@@ -22,6 +22,10 @@ import {
   CheckOnDemandServerJob,
   CheckOnDemandServerJobEvents,
 } from "./jobs/CheckOnDemandServerJob";
+import {
+  BatchHighlightsRenderJob,
+  BatchHighlightsRenderJobEvents,
+} from "./clips/jobs/BatchHighlightsRenderJob";
 import { MatchEvents } from "./events";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
@@ -88,6 +92,18 @@ import { ClipsModule } from "./clips/clips.module";
           backoff: { type: "exponential", delay: 5000 },
         },
       },
+      {
+        name: MatchQueues.ClipRenderBatch,
+        // No `attempts` retry loop here — the worker manages its own
+        // re-dispatch policy across pod failures (see
+        // BatchHighlightsRenderJob.MAX_REDISPATCHES). A BullMQ retry
+        // would just race the worker's lifecycle bookkeeping.
+        defaultJobOptions: {
+          attempts: 1,
+          removeOnComplete: 50,
+          removeOnFail: 100,
+        },
+      },
     ),
     BullBoardModule.forFeature(
       {
@@ -100,6 +116,10 @@ import { ClipsModule } from "./clips/clips.module";
       },
       {
         name: MatchQueues.EloCalculation,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: MatchQueues.ClipRenderBatch,
         adapter: BullMQAdapter,
       },
     ),
@@ -122,6 +142,8 @@ import { ClipsModule } from "./clips/clips.module";
     CleanAbandonedMatches,
     ReapIdleDemoSessions,
     EloCalculation,
+    BatchHighlightsRenderJob,
+    BatchHighlightsRenderJobEvents,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),

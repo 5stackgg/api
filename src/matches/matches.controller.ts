@@ -13,6 +13,7 @@ import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice
 import {
   e_match_status_enum,
   match_map_veto_picks_set_input,
+  match_map_demos_set_input,
   matches_set_input,
   servers_set_input,
   game_server_nodes_set_input,
@@ -370,6 +371,45 @@ export class MatchesController {
     response.status(200).json(data);
   }
 
+  // Auto-clip generation trigger. We can't queue clip jobs from the
+  // match Finished event because the demo upload + parse run async
+  // afterwards — at match end the kills/round_ticks needed to build
+  // a ClipSpec aren't there yet. Instead we listen for the
+  // match_map_demos row's metadata_parsed_at flipping from null to
+  // a timestamp; that's the first point we have parser data, so it's
+  // the right place to fire auto-gen. Per match_map (not per match)
+  // because each map's parse is independent.
+  @HasuraEvent()
+  public async match_map_demo_events(
+    data: HasuraEventData<match_map_demos_set_input>,
+  ) {
+    const newRow = data.new ?? {};
+    const oldRow = data.old ?? {};
+    const matchId = (newRow.match_id ?? oldRow.match_id) as string | undefined;
+    if (!matchId) return;
+
+    // Only fire when metadata_parsed_at TRANSITIONS from null/empty
+    // to set. INSERT with parsed_at already populated also counts
+    // (covers re-imports / manual fixtures). Subsequent updates
+    // that touch unrelated columns shouldn't re-trigger.
+    const becameParsed =
+      !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
+    if (!becameParsed) return;
+
+    try {
+      const queued = await this.clips.autoGenerateForMatch(matchId);
+      if (queued > 0) {
+        this.logger.log(
+          `[match ${matchId}] metadata parsed — auto-clips queued ${queued} job(s)`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[match ${matchId}] auto-clips queue failed on metadata_parsed: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
   @HasuraEvent()
   public async match_events(data: HasuraEventData<matches_set_input>) {
     const matchId = (data.new.id || data.old.id) as string;
@@ -425,6 +465,13 @@ export class MatchesController {
       await this.eloCalculationQueue.add(EloCalculation.name, {
         matchId,
       });
+
+      // Auto-clip generation is NOT fired here even on Finished —
+      // demo upload + parse happen asynchronously after match end,
+      // and we need parsed kills/round_ticks to build clip specs.
+      // The trigger lives in DemoMetadataService.parseAndPersist
+      // (after metadata_parsed_at is written), which is the first
+      // moment we can produce a real spec.
 
       const serverId = data.new.server_id;
 
@@ -830,6 +877,15 @@ export class MatchesController {
     return { success: true };
   }
 
+  // "Create Player Highlights" — manually triggers the same auto-gen
+  // pipeline that runs automatically on match Finished when the
+  // `auto_generate_match_clips` setting is on. Queues a "match recap"
+  // clip_render_jobs row per (match_map, killer) pair. The previous
+  // implementation tried to spawn a pod with `args=['create-clips']`,
+  // which game-streamer.sh doesn't support — that path failed
+  // immediately and produced no output, so the button was effectively
+  // broken. Reusing the auto-gen builder gives the button a real
+  // result regardless of whether the cron-style toggle is enabled.
   @HasuraAction()
   public async createClips(data: { match_id: string; user: User }) {
     const { match_id, user } = data;
@@ -838,10 +894,13 @@ export class MatchesController {
       throw Error("you are not a match organizer");
     }
 
-    await this.gameStreamer.createClips(match_id);
+    const queued = await this.clips.autoGenerateForMatch(match_id, {
+      force: true,
+    });
 
     return {
       success: true,
+      queued,
     };
   }
 
@@ -869,6 +928,23 @@ export class MatchesController {
   public async cancelClipRender(data: { job_id: string; user: User }) {
     await this.clips.cancelClipRender(data.user.steam_id, data.job_id);
     return { success: true };
+  }
+
+  // Operator-only batch cancel. Streamer-rank+ can cancel any
+  // match_map's render queue (they manage the platform queue from
+  // /manage-clips/queue). Plain users only have per-clip cancel via
+  // cancelClipRender above — they don't have a queue surface to act
+  // on a "batch" anyway.
+  @HasuraAction()
+  public async cancelClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "streamer")) {
+      throw Error("only operators can cancel a render batch");
+    }
+    const cancelled = await this.clips.cancelClipRenderBatch(data.match_map_id);
+    return { success: true, cancelled };
   }
 
   // Build a multi-segment ClipSpec for a player + preset (knife
@@ -922,7 +998,16 @@ export class MatchesController {
 
   @HasuraAction()
   public async deleteClip(data: { clip_id: string; user: User }) {
-    await this.clips.deleteClip(data.user.steam_id, data.clip_id);
+    // Streamer-rank+ can delete any clip from Manage Highlights;
+    // regular users only their own. Forward the role check through
+    // so the service can decide who's allowed to bypass the
+    // ownership check.
+    const isOperator = isRoleAbove(data.user.role, "streamer");
+    await this.clips.deleteClip(
+      data.user.steam_id,
+      data.clip_id,
+      isOperator,
+    );
     return { success: true };
   }
 

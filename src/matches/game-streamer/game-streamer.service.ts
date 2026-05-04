@@ -9,6 +9,7 @@ import {
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../../hasura/hasura.service";
+import { S3Service } from "../../s3/s3.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
@@ -16,7 +17,7 @@ import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { randomBytes } from "node:crypto";
 
-type StreamerMode = "live" | "create-clips" | "demo";
+type StreamerMode = "live" | "create-clips" | "demo" | "batch-highlights";
 
 export type DemoControlAction =
   | "pause"
@@ -67,6 +68,7 @@ export class GameStreamerService {
     private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    private readonly s3: S3Service,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -941,6 +943,282 @@ export class GameStreamerService {
     }
   }
 
+  public static GetBatchHighlightsJobName(matchMapId: string) {
+    // 12 chars from the hex of the match_map uuid keeps the k8s name
+    // short + valid (kubernetes job names cap at 63). Stripping
+    // dashes keeps the prefix simple to grep for in `kubectl get jobs`.
+    return `gs-batch-${matchMapId.replace(/-/g, "").slice(0, 12)}`;
+  }
+
+  // Health probe for the BullMQ batch worker. Returns:
+  //   - "running" if the k8s Job exists and has at least one active pod
+  //   - "succeeded" if the Job completed cleanly
+  //   - "failed" if the Job hit its backoff limit / image-pull error /
+  //     etc. — i.e. there's a Job row but no live pod and it didn't
+  //     reach completion
+  //   - "absent" if no Job row exists (never dispatched, or already
+  //     reaped via ttlSecondsAfterFinished)
+  public async getBatchHighlightsPodState(
+    matchMapId: string,
+  ): Promise<"running" | "succeeded" | "failed" | "absent"> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+    let job;
+    try {
+      job = await batch.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+    } catch (error) {
+      if ((error as { code?: number | string }).code?.toString() === "404") {
+        return "absent";
+      }
+      throw error;
+    }
+    const status = job.status ?? {};
+    if ((status.active ?? 0) > 0) return "running";
+    if ((status.succeeded ?? 0) > 0) return "succeeded";
+    if ((status.failed ?? 0) > 0) return "failed";
+    // No active/succeeded/failed counter populated yet — still
+    // initialising. Treat as running so the worker waits one more
+    // tick before redispatching.
+    return "running";
+  }
+
+  // Best-effort "why did the pod die" probe. Reads the most recent
+  // pod for the batch Job and returns a short, operator-friendly
+  // string built from container terminated reason + last log line.
+  // Used by the BullMQ worker to record a useful error_message on
+  // failed clip_render_jobs rows instead of "render pod failed"
+  // with no further detail. Returns null when nothing meaningful
+  // is available (no pod, no terminated container, no logs).
+  public async getBatchPodFailureReason(
+    matchMapId: string,
+  ): Promise<string | null> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+    let pods;
+    try {
+      pods = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[batch-highlights ${matchMapId}] failure-reason listPods: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+    // Newest first — when k8s recreated the pod after a backoff,
+    // the most recent attempt is the most informative.
+    const sorted = [...(pods.items ?? [])].sort((a, b) => {
+      const ta = new Date(a.metadata?.creationTimestamp ?? 0).getTime();
+      const tb = new Date(b.metadata?.creationTimestamp ?? 0).getTime();
+      return tb - ta;
+    });
+    const pod = sorted[0];
+    if (!pod?.metadata?.name) return null;
+
+    const term = pod.status?.containerStatuses?.[0]?.lastState?.terminated
+      ?? pod.status?.containerStatuses?.[0]?.state?.terminated;
+    const reason = term?.reason ?? null;
+    const exitCode = term?.exitCode ?? null;
+
+    // Tail a few lines of stdout/stderr — usually enough to surface
+    // the obvious "demo download 403" / "ENOTFOUND" / etc. without
+    // dumping a multi-hundred-line setup log into the row.
+    let logTail: string | null = null;
+    try {
+      const logs = await core.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+        tailLines: 5,
+      });
+      const lines = String(logs ?? "")
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+      if (lines.length > 0) logTail = lines.join(" | ");
+    } catch {
+      // logs may not be available (pod evicted before logs were
+      // collected). Fall through; reason+exit are usually enough.
+    }
+
+    const parts: string[] = [];
+    if (reason) parts.push(reason);
+    if (exitCode != null) parts.push(`exit=${exitCode}`);
+    if (logTail) parts.push(logTail);
+    if (parts.length === 0) return null;
+    return parts.join(" — ").slice(0, 500);
+  }
+
+  // Force-kill a batch pod (and its k8s Job). Used ONLY by the
+  // explicit operator-triggered cancelClipRenderBatch flow now —
+  // the watchdog no longer auto-kills failed Jobs, and there's no
+  // "preemption on slow render" path. Idempotent — `absent` jobs
+  // return cleanly.
+  public async killBatchHighlightsPod(matchMapId: string): Promise<void> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    try {
+      await this.deleteJob(jobName);
+      this.logger.warn(
+        `[batch-highlights ${matchMapId}] force-killed pod ${jobName}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `[batch-highlights ${matchMapId}] kill failed: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  // Spawn ONE k8s Job that processes a batch of clip_render_jobs for
+  // a single match_map. Pod loads cs2 + the demo once, then iterates
+  // through every queued job in order, capturing each one against the
+  // already-running cs2 instance. Significantly faster than per-job
+  // pods because we skip the steam login + cs2 launch (~60-90s each)
+  // for every clip after the first. Idempotent: if a batch is already
+  // running for this match_map, this is a no-op.
+  public async dispatchBatchHighlights(
+    matchMapId: string,
+    jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
+  ): Promise<void> {
+    if (jobs.length === 0) return;
+
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: { match_map_id: { _eq: matchMapId } },
+          limit: 1,
+        },
+        match_id: true,
+        file: true,
+        total_ticks: true,
+        tick_rate: true,
+        round_ticks: true,
+        workshop_id: true,
+        cs2_build: true,
+      },
+    });
+    const demo = match_map_demos?.[0];
+    if (!demo?.file) {
+      throw new Error(
+        `cannot dispatch batch highlights: no demo file for match_map ${matchMapId}`,
+      );
+    }
+    const matchId = String(demo.match_id);
+
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        region: true,
+      },
+    });
+
+    // 4-arg form mirrors watchDemo's call site
+    // (matches.controller.ts → s3.getPresignedUrl(file, undefined,
+    // 60*60, "get")). The default-arg form was wrong on two axes:
+    // expiry defaults to ~5 minutes (the X-Amz-Expires=300 we saw
+    // was getting close to elapsing by the time the pod's curl
+    // ran), and method defaults to "put" (which Backblaze rejects
+    // with 403 when the pod uses it for GET — sign-method must
+    // match request-method).
+    const presignedDemoUrl = await this.s3.getPresignedUrl(
+      demo.file as string,
+      undefined,
+      60 * 60,
+      "get",
+    );
+    const nodeId = await this.pickGpuNode(match?.region ?? null);
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+
+    // Idempotency: bail if a batch pod is already running for this
+    // match_map. Re-dispatch on the same key would either fail to
+    // create (k8s rejects duplicate names) or trample the in-flight
+    // pod's render. Cheaper to detect upstream.
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+    try {
+      await batch.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+      this.logger.log(
+        `[batch-highlights ${matchMapId}] job ${jobName} already running — not re-dispatching`,
+      );
+      return;
+    } catch (error) {
+      if ((error as { code?: number | string }).code?.toString() !== "404") {
+        throw error;
+      }
+    }
+
+    const env: V1EnvVar[] = [
+      { name: "MATCH_ID", value: matchId },
+      { name: "MATCH_MAP_ID", value: matchMapId },
+      { name: "DEMO_URL", value: presignedDemoUrl },
+      { name: "DEMO_FILE_NAME", value: demo.file as string },
+      { name: "STATUS_API_BASE", value: this.resolveInClusterApiBase() },
+      // CLIP_BATCH_JOBS is consumed by run-batch-highlights.sh — one
+      // entry per clip_render_jobs row, with the spec fully resolved
+      // so the pod doesn't need to re-query the api between renders.
+      // Keeping the array compact (just the fields the script needs).
+      {
+        name: "CLIP_BATCH_JOBS",
+        value: JSON.stringify(
+          jobs.map((j) => ({
+            job_id: j.job_id,
+            token: j.session_token,
+            spec: j.spec,
+          })),
+        ),
+      },
+    ];
+    if (demo.tick_rate != null) {
+      env.push({
+        name: "DEMO_TICK_RATE",
+        value: String(demo.tick_rate),
+      });
+    }
+    if (demo.total_ticks != null) {
+      env.push({
+        name: "DEMO_TOTAL_TICKS",
+        value: String(demo.total_ticks),
+      });
+    }
+    if (demo.round_ticks != null) {
+      env.push({
+        name: "ROUND_TICKS",
+        value: JSON.stringify(demo.round_ticks),
+      });
+    }
+    if (demo.workshop_id) {
+      env.push({ name: "WORKSHOP_ID", value: String(demo.workshop_id) });
+    }
+    if (demo.cs2_build) {
+      env.push({ name: "CS2_BUILD", value: String(demo.cs2_build) });
+    }
+
+    this.logger.log(
+      `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
+    );
+
+    await batch.createNamespacedJob({
+      namespace: this.namespace,
+      body: this.buildJobSpec(jobName, matchId, "batch-highlights", nodeId, env, {
+        "match-map-id": matchMapId,
+      }),
+    });
+  }
+
+  private resolveInClusterApiBase(): string {
+    return process.env.API_INTERNAL_BASE ?? "http://api:5585";
+  }
+
   public async createClips(matchId: string) {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
@@ -1367,14 +1645,23 @@ export class GameStreamerService {
     extraLabels: Record<string, string> = {},
   ): V1Job {
     const containerName =
-      mode === "create-clips" ? "clips" : mode === "demo" ? "demo" : "live";
+      mode === "create-clips"
+        ? "clips"
+        : mode === "demo"
+          ? "demo"
+          : mode === "batch-highlights"
+            ? "batch"
+            : "live";
     const args =
       mode === "live"
         ? ["live"]
         : mode === "demo"
           ? ["demo"]
-          : ["create-clips"];
-    const exposesSpecPorts = mode === "live" || mode === "demo";
+          : mode === "batch-highlights"
+            ? ["batch-highlights"]
+            : ["create-clips"];
+    const exposesSpecPorts =
+      mode === "live" || mode === "demo" || mode === "batch-highlights";
 
     const labels: Record<string, string> = {
       app: "game-streamer",

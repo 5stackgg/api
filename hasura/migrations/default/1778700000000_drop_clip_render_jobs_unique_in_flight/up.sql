@@ -1,0 +1,18 @@
+-- Drop the per-user "one in-flight job" unique index on
+-- clip_render_jobs. Was the right policy when the only path for
+-- creating a job was a user manually submitting one render at a
+-- time, but the auto-gen flow legitimately queues N rows in a
+-- single batch (all owned by the match's organizer), so the
+-- constraint trips every row past the first.
+--
+-- Concurrency control moves to BullMQ:
+--   - The new MatchQueues.ClipRenderBatch worker has concurrency=1
+--     (configurable via env), so only one batch pod runs at a time
+--     across the api regardless of how many match_maps are queued.
+--   - User-submitted single-clip renders still serialize because they
+--     hit the same demo session pod (one in-flight per pod by virtue
+--     of the spec-server being single-threaded for /demo/render-clip).
+--
+-- Migration is idempotent — no down-side to running on a DB that
+-- already lost the index for any reason.
+drop index if exists "public"."clip_render_jobs_one_in_flight_per_user";
