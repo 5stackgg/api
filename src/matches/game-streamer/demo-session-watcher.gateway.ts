@@ -59,12 +59,24 @@ export class DemoSessionWatcherGateway {
     if (!client.user || !body?.match_map_id || !body.action) return;
     if (!DEMO_CONTROL_ACTIONS.has(body.action as DemoControlAction)) return;
     try {
-      await this.gameStreamer.demoControl(
+      const result = await this.gameStreamer.demoControl(
         body.match_map_id,
         client.user.steam_id,
         body.action as DemoControlAction,
         body.payload ?? {},
       );
+      // The client polls action="state" once per second to keep the
+      // slot/player snapshot fresh (cs2 GSI lives on the pod, not in
+      // Hasura). Push the response back via a dedicated event so the
+      // store can update without a Hasura round-trip.
+      if (body.action === "state") {
+        client.send(
+          JSON.stringify({
+            event: "demo-session:state",
+            data: { match_map_id: body.match_map_id, state: result },
+          }),
+        );
+      }
     } catch (error) {
       this.logger.warn(
         `[demo-watcher] control ${body.action} failed for ${body.match_map_id}/${client.user.steam_id}: ${(error as Error)?.message}`,

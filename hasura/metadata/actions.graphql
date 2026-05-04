@@ -64,6 +64,17 @@ type Mutation {
 }
 
 type Mutation {
+  createClipFromPreset(
+    match_map_id: uuid!
+    target_steam_id: String!
+    preset: String!
+    resolution: String
+    fps: Int
+    title: String
+  ): CreateClipRenderOutput
+}
+
+type Mutation {
   createClips(
     match_id: uuid!
   ): SuccessOutput

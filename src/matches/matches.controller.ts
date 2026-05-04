@@ -871,6 +871,39 @@ export class MatchesController {
     return { success: true };
   }
 
+  // Build a multi-segment ClipSpec for a player + preset (knife
+  // kills / multikills / best round / recap), then submit it through
+  // the same render path createClipRender uses. Returns the same
+  // {success, job_id} shape so the web client can subscribe to
+  // progress without a special case.
+  @HasuraAction()
+  public async createClipFromPreset(data: {
+    match_map_id: string;
+    target_steam_id: string;
+    preset: "knife" | "multikills" | "best_round" | "recap";
+    resolution?: "720p" | "1080p";
+    fps?: 30 | 60;
+    title?: string;
+    user: User;
+  }) {
+    const { user } = data;
+    if (!isRoleAbove(user.role, "verified_user")) {
+      throw Error("clip rendering requires a verified account");
+    }
+    const spec = await this.clips.buildPresetSpec(
+      data.match_map_id,
+      data.target_steam_id,
+      data.preset,
+      {
+        resolution: data.resolution ?? "1080p",
+        fps: data.fps ?? 60,
+      },
+      data.title,
+    );
+    const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
+    return { success: true, job_id: jobId };
+  }
+
   @HasuraAction()
   public async deleteClip(data: { clip_id: string; user: User }) {
     await this.clips.deleteClip(data.user.steam_id, data.clip_id);

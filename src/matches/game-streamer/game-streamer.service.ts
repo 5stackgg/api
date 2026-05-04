@@ -447,8 +447,7 @@ export class GameStreamerService {
       job_id: string;
       token: string;
       api_base: string;
-      start_tick: number;
-      end_tick: number;
+      segments: Array<{ start_tick: number; end_tick: number }>;
       output_dims: string;
       output_fps: number;
       render_speed?: number;

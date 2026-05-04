@@ -76,14 +76,17 @@ export class ClipsService {
       throw new Error("failed to insert clip_render_jobs row");
     }
 
-    const segment = spec.segments[0];
     const dims = spec.output.resolution === "720p" ? "1280x720" : "1920x1080";
     const renderSpeed = this.resolveRenderSpeed();
+    const totalTicks = spec.segments.reduce(
+      (acc, s) => acc + (s.end_tick - s.start_tick),
+      0,
+    );
 
     this.logger.log(
       `[clip ${jobId}] dispatching to pod=${session.id} ` +
         `speed=${renderSpeed}x ` +
-        `ticks=${segment.start_tick}..${segment.end_tick} ` +
+        `segments=${spec.segments.length} total_ticks=${totalTicks} ` +
         `output=${dims}@${spec.output.fps}fps ` +
         `dest=${spec.destination}`,
     );
@@ -93,8 +96,10 @@ export class ClipsService {
         job_id: jobId,
         token: sessionToken,
         api_base: this.resolveInClusterApiBase(),
-        start_tick: segment.start_tick,
-        end_tick: segment.end_tick,
+        segments: spec.segments.map((s) => ({
+          start_tick: s.start_tick,
+          end_tick: s.end_tick,
+        })),
         output_dims: dims,
         output_fps: spec.output.fps,
         render_speed: renderSpeed,
@@ -395,6 +400,173 @@ export class ClipsService {
       },
     });
     return clip_render_jobs?.[0] ?? null;
+  }
+
+  // Highlight presets — turn a player + intent ("their knife kills",
+  // "their multikills", etc.) into a multi-segment ClipSpec the
+  // existing render path consumes. The heavy lifting is segment-merge:
+  // adjacent kills inside the same round get coalesced so we don't
+  // render four 8-second clips for a 1v4 (would look like a stutter).
+  public async buildPresetSpec(
+    matchMapId: string,
+    targetSteamId: string,
+    preset: "knife" | "multikills" | "best_round" | "recap",
+    output: { resolution: "720p" | "1080p"; fps: 30 | 60 } = {
+      resolution: "1080p",
+      fps: 60,
+    },
+    title?: string,
+  ): Promise<ClipSpec> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: { where: { match_map_id: { _eq: matchMapId } }, limit: 1 },
+        id: true,
+        tick_rate: true,
+        total_ticks: true,
+        kills: true,
+        round_ticks: true,
+      },
+    });
+    const demo = match_map_demos?.[0];
+    if (!demo) {
+      throw new Error(
+        `no parsed demo for match_map ${matchMapId} — try opening the demo first to trigger parse`,
+      );
+    }
+    const tickRate = (demo.tick_rate as number) || 64;
+    const totalTicks = (demo.total_ticks as number) || 0;
+    const kills =
+      (demo.kills as Array<{
+        tick: number;
+        killer?: string;
+        victim?: string;
+        weapon?: string;
+        headshot?: boolean;
+      }>) ?? [];
+    const rounds =
+      (demo.round_ticks as Array<{
+        round: number;
+        start_tick: number;
+        end_tick: number;
+      }>) ?? [];
+
+    const myKills = kills.filter((k) => k.killer === targetSteamId);
+    const lead = Math.round(tickRate * 5);
+    const tail = Math.round(tickRate * 3);
+    const clamp = (t: number) => Math.max(0, Math.min(t, totalTicks || t));
+
+    let segments: Array<{ start_tick: number; end_tick: number }> = [];
+
+    if (preset === "knife") {
+      const knife = myKills.filter((k) =>
+        (k.weapon ?? "").toLowerCase().includes("knife"),
+      );
+      segments = knife.map((k) => ({
+        start_tick: clamp(k.tick - lead),
+        end_tick: clamp(k.tick + tail),
+      }));
+    } else if (preset === "multikills") {
+      // Group kills by round, keep rounds with ≥2 kills, span first..last
+      // kill within the round (with the same lead/tail buffer).
+      for (const r of rounds) {
+        const inRound = myKills.filter(
+          (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
+        );
+        if (inRound.length < 2) continue;
+        const first = inRound[0].tick;
+        const last = inRound[inRound.length - 1].tick;
+        segments.push({
+          start_tick: clamp(first - lead),
+          end_tick: clamp(last + tail),
+        });
+      }
+    } else if (preset === "best_round") {
+      let best: { round: number; count: number; start: number; end: number } | null =
+        null;
+      for (const r of rounds) {
+        const count = myKills.filter(
+          (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
+        ).length;
+        if (!best || count > best.count) {
+          best = {
+            round: r.round,
+            count,
+            start: r.start_tick,
+            end: r.end_tick,
+          };
+        }
+      }
+      if (best && best.count > 0) {
+        segments = [{ start_tick: clamp(best.start), end_tick: clamp(best.end) }];
+      }
+    } else if (preset === "recap") {
+      // Every round the player got ≥1 kill, full round window. Cheap
+      // dedup of overlapping rounds (shouldn't happen but defensive).
+      for (const r of rounds) {
+        const got = myKills.some(
+          (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
+        );
+        if (got) {
+          segments.push({
+            start_tick: clamp(r.start_tick),
+            end_tick: clamp(r.end_tick),
+          });
+        }
+      }
+    }
+
+    // Fallback: if the chosen preset produced nothing, drop down to
+    // "single best kill" (HS preferred) so the user still gets a clip.
+    if (segments.length === 0 && myKills.length > 0) {
+      const fallback =
+        myKills.find((k) => k.headshot) ?? myKills[0];
+      segments = [
+        {
+          start_tick: clamp(fallback.tick - lead),
+          end_tick: clamp(fallback.tick + tail),
+        },
+      ];
+    }
+
+    if (segments.length === 0) {
+      throw new Error(
+        `no clip-worthy moments for ${targetSteamId} in this match — preset "${preset}" produced zero segments and the player has no kills to fall back on`,
+      );
+    }
+
+    // Merge overlapping / adjacent segments. Two segments that touch
+    // within ~2s get joined — otherwise the concat produces a visible
+    // freeze on the boundary (cs2 has to reseek + re-pause).
+    segments.sort((a, b) => a.start_tick - b.start_tick);
+    const joinGap = Math.round(tickRate * 2);
+    const merged: Array<{ start_tick: number; end_tick: number }> = [];
+    for (const s of segments) {
+      const last = merged[merged.length - 1];
+      if (last && s.start_tick <= last.end_tick + joinGap) {
+        last.end_tick = Math.max(last.end_tick, s.end_tick);
+      } else {
+        merged.push({ ...s });
+      }
+    }
+
+    // Hard cap (validateSpec rejects >20 segments / >15min). Trim from
+    // the lowest-impact end first — for recap/multikills that's the
+    // earliest rounds; for knife it's the earliest kills. We just
+    // truncate from the end to keep the recency bias.
+    const MAX_SEGMENTS = 20;
+    if (merged.length > MAX_SEGMENTS) {
+      merged.length = MAX_SEGMENTS;
+    }
+
+    return {
+      match_map_id: matchMapId,
+      segments: merged,
+      output: { format: "mp4", resolution: output.resolution, fps: output.fps },
+      destination: "library",
+      title:
+        title ??
+        `${preset.replace("_", " ")} — ${targetSteamId.slice(-4)}`,
+    };
   }
 
   private validateSpec(spec: ClipSpec) {
