@@ -98,10 +98,17 @@ import { ClipsModule } from "./clips/clips.module";
         // re-dispatch policy across pod failures (see
         // BatchHighlightsRenderJob.MAX_REDISPATCHES). A BullMQ retry
         // would just race the worker's lifecycle bookkeeping.
+        //
+        // Age-based retention so completed/failed batch jobs (and
+        // their per-job logs) are visible in Bull Board for ~24h —
+        // matches the k8s Job's ttlSecondsAfterFinished, so the
+        // BullMQ log and the pod log expire together when an
+        // operator goes back to investigate a stuck "Create Player
+        // Highlights" run.
         defaultJobOptions: {
           attempts: 1,
-          removeOnComplete: 50,
-          removeOnFail: 100,
+          removeOnComplete: { age: 24 * 3600 },
+          removeOnFail: { age: 24 * 3600 },
         },
       },
     ),

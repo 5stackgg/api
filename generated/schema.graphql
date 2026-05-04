@@ -269,6 +269,32 @@ input Int_comparison_exp {
   _nin: [Int!]
 }
 
+type LiveSpecGsi {
+  map_name: String
+  map_phase: String
+  round_number: Int
+  round_phase: String
+  spec_slots: [LiveSpecSlot!]!
+  spectated_steam_id: String
+  team_ct_name: String
+  team_ct_score: Int
+  team_t_name: String
+  team_t_score: Int
+}
+
+type LiveSpecSlot {
+  alive: Boolean!
+  health: Int!
+  name: String
+  slot: Int!
+  steam_id: String!
+  team: String
+}
+
+type LiveStreamSpecState {
+  gsi: LiveSpecGsi
+}
+
 type LockInfo {
   granted: Boolean!
   locktype: String!
@@ -1448,11 +1474,6 @@ input clip_render_jobs_bool_exp {
 unique or primary key constraints on table "clip_render_jobs"
 """
 enum clip_render_jobs_constraint {
-  """
-  unique or primary key constraint on columns "user_steam_id"
-  """
-  clip_render_jobs_one_in_flight_per_user
-
   """
   unique or primary key constraint on columns "id"
   """
@@ -10926,6 +10947,10 @@ type match_clips {
     """filter the rows returned"""
     where: clip_render_jobs_bool_exp
   ): clip_render_jobs_aggregate!
+
+  """An object relationship"""
+  target: players
+  target_steam_id: bigint
   thumbnail_url: String
   title: String
 
@@ -10963,6 +10988,7 @@ type match_clips_aggregate_fields {
 """aggregate avg on columns"""
 type match_clips_avg_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
@@ -10982,6 +11008,8 @@ input match_clips_bool_exp {
   match_map_id: uuid_comparison_exp
   render_jobs: clip_render_jobs_bool_exp
   render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
+  target: players_bool_exp
+  target_steam_id: bigint_comparison_exp
   thumbnail_url: String_comparison_exp
   title: String_comparison_exp
   user: players_bool_exp
@@ -11004,6 +11032,7 @@ input type for incrementing numeric columns in table "match_clips"
 """
 input match_clips_inc_input {
   duration_ms: Int
+  target_steam_id: bigint
   user_steam_id: bigint
 }
 
@@ -11018,6 +11047,8 @@ input match_clips_insert_input {
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
   render_jobs: clip_render_jobs_arr_rel_insert_input
+  target: players_obj_rel_insert_input
+  target_steam_id: bigint
   thumbnail_url: String
   title: String
   user: players_obj_rel_insert_input
@@ -11037,6 +11068,7 @@ type match_clips_max_fields {
   file: String
   id: uuid
   match_map_id: uuid
+  target_steam_id: bigint
   thumbnail_url: String
   title: String
   user_steam_id: bigint
@@ -11055,6 +11087,7 @@ type match_clips_min_fields {
   file: String
   id: uuid
   match_map_id: uuid
+  target_steam_id: bigint
   thumbnail_url: String
   title: String
   user_steam_id: bigint
@@ -11101,6 +11134,8 @@ input match_clips_order_by {
   match_map: match_maps_order_by
   match_map_id: order_by
   render_jobs_aggregate: clip_render_jobs_aggregate_order_by
+  target: players_order_by
+  target_steam_id: order_by
   thumbnail_url: order_by
   title: order_by
   user: players_order_by
@@ -11133,6 +11168,9 @@ enum match_clips_select_column {
   match_map_id
 
   """column name"""
+  target_steam_id
+
+  """column name"""
   thumbnail_url
 
   """column name"""
@@ -11154,6 +11192,7 @@ input match_clips_set_input {
   file: String
   id: uuid
   match_map_id: uuid
+  target_steam_id: bigint
   thumbnail_url: String
   title: String
   user_steam_id: bigint
@@ -11163,18 +11202,21 @@ input match_clips_set_input {
 """aggregate stddev on columns"""
 type match_clips_stddev_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
 """aggregate stddev_pop on columns"""
 type match_clips_stddev_pop_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
 """aggregate stddev_samp on columns"""
 type match_clips_stddev_samp_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
@@ -11196,6 +11238,7 @@ input match_clips_stream_cursor_value_input {
   file: String
   id: uuid
   match_map_id: uuid
+  target_steam_id: bigint
   thumbnail_url: String
   title: String
   user_steam_id: bigint
@@ -11205,6 +11248,7 @@ input match_clips_stream_cursor_value_input {
 """aggregate sum on columns"""
 type match_clips_sum_fields {
   duration_ms: Int
+  target_steam_id: bigint
   user_steam_id: bigint
 }
 
@@ -11226,6 +11270,9 @@ enum match_clips_update_column {
 
   """column name"""
   match_map_id
+
+  """column name"""
+  target_steam_id
 
   """column name"""
   thumbnail_url
@@ -11254,18 +11301,21 @@ input match_clips_updates {
 """aggregate var_pop on columns"""
 type match_clips_var_pop_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
 """aggregate var_samp on columns"""
 type match_clips_var_samp_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
 """aggregate variance on columns"""
 type match_clips_variance_fields {
   duration_ms: Float
+  target_steam_id: Float
   user_steam_id: Float
 }
 
@@ -13127,6 +13177,10 @@ type match_map_demos {
   match_map: match_maps!
   match_map_id: uuid!
   metadata_parsed_at: timestamptz
+  players(
+    """JSON select path"""
+    path: String
+  ): jsonb
   round_ticks(
     """JSON select path"""
     path: String
@@ -13194,6 +13248,7 @@ input match_map_demos_aggregate_order_by {
 input match_map_demos_append_input {
   bombs: jsonb
   kills: jsonb
+  players: jsonb
   round_ticks: jsonb
 }
 
@@ -13245,6 +13300,7 @@ input match_map_demos_bool_exp {
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
   metadata_parsed_at: timestamptz_comparison_exp
+  players: jsonb_comparison_exp
   round_ticks: jsonb_comparison_exp
   size: Int_comparison_exp
   tick_rate: Float_comparison_exp
@@ -13268,6 +13324,7 @@ delete the field or element with specified path (for JSON arrays, negative integ
 input match_map_demos_delete_at_path_input {
   bombs: [String!]
   kills: [String!]
+  players: [String!]
   round_ticks: [String!]
 }
 
@@ -13277,6 +13334,7 @@ delete the array element with specified index (negative integers count from the 
 input match_map_demos_delete_elem_input {
   bombs: Int
   kills: Int
+  players: Int
   round_ticks: Int
 }
 
@@ -13286,6 +13344,7 @@ delete key/value pair or string element. key/value pairs are matched based on th
 input match_map_demos_delete_key_input {
   bombs: String
   kills: String
+  players: String
   round_ticks: String
 }
 
@@ -13313,6 +13372,7 @@ input match_map_demos_insert_input {
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  players: jsonb
   round_ticks: jsonb
   size: Int
   tick_rate: Float
@@ -13433,6 +13493,7 @@ input match_map_demos_order_by {
   match_map: match_maps_order_by
   match_map_id: order_by
   metadata_parsed_at: order_by
+  players: order_by
   round_ticks: order_by
   size: order_by
   tick_rate: order_by
@@ -13449,6 +13510,7 @@ input match_map_demos_pk_columns_input {
 input match_map_demos_prepend_input {
   bombs: jsonb
   kills: jsonb
+  players: jsonb
   round_ticks: jsonb
 }
 
@@ -13487,6 +13549,9 @@ enum match_map_demos_select_column {
   metadata_parsed_at
 
   """column name"""
+  players
+
+  """column name"""
   round_ticks
 
   """column name"""
@@ -13515,6 +13580,7 @@ input match_map_demos_set_input {
   match_id: uuid
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  players: jsonb
   round_ticks: jsonb
   size: Int
   tick_rate: Float
@@ -13599,6 +13665,7 @@ input match_map_demos_stream_cursor_value_input {
   match_id: uuid
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  players: jsonb
   round_ticks: jsonb
   size: Int
   tick_rate: Float
@@ -13654,6 +13721,9 @@ enum match_map_demos_update_column {
 
   """column name"""
   metadata_parsed_at
+
+  """column name"""
+  players
 
   """column name"""
   round_ticks
@@ -19351,12 +19421,20 @@ type mutation_root {
   """Cancel an in-flight clip render and tear down the K8s job"""
   cancelClipRender(job_id: uuid!): SuccessOutput
 
+  """Cancel an entire match_map's render queue + tear down the pod."""
+  cancelClipRenderBatch(match_map_id: uuid!): SuccessOutput
+
   """cancelMatch"""
   cancelMatch(match_id: uuid!): SuccessOutput
 
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
   createApiKey(label: String!): ApiKeyResponse
+
+  """
+  Build a multi-segment ClipSpec from a player+preset and dispatch render
+  """
+  createClipFromPreset(fps: Int, match_map_id: uuid!, preset: String!, resolution: String, target_name: String, target_steam_id: String!, title: String): CreateClipRenderOutput
 
   """
   Spawn a clip-render pod that produces an mp4 from a demo and uploads it
@@ -20476,6 +20554,11 @@ type mutation_root {
   ): v_pool_maps_mutation_response
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
+
+  """
+  Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck.
+  """
+  getLiveStreamSpecState(match_id: uuid!): LiveStreamSpecState
   getTestUploadLink: GetTestUploadResponse!
 
   """
@@ -22422,6 +22505,9 @@ type mutation_root {
   syncSteamFriends: SuccessOutput
   testUpload: TestUploadResponse
   unlinkDiscord: SuccessOutput
+
+  """Owner-only patch for clip title / visibility / target_steam_id."""
+  updateClip(clip_id: uuid!, target_steam_id: String, title: String, visibility: String): SuccessOutput
   updateCs(game: String, game_server_node_id: uuid): SuccessOutput
   updateServices: SuccessOutput
 

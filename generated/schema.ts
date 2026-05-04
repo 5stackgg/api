@@ -214,6 +214,35 @@ export interface IndexStat {
     __typename: 'IndexStat'
 }
 
+export interface LiveSpecGsi {
+    map_name: (Scalars['String'] | null)
+    map_phase: (Scalars['String'] | null)
+    round_number: (Scalars['Int'] | null)
+    round_phase: (Scalars['String'] | null)
+    spec_slots: LiveSpecSlot[]
+    spectated_steam_id: (Scalars['String'] | null)
+    team_ct_name: (Scalars['String'] | null)
+    team_ct_score: (Scalars['Int'] | null)
+    team_t_name: (Scalars['String'] | null)
+    team_t_score: (Scalars['Int'] | null)
+    __typename: 'LiveSpecGsi'
+}
+
+export interface LiveSpecSlot {
+    alive: Scalars['Boolean']
+    health: Scalars['Int']
+    name: (Scalars['String'] | null)
+    slot: Scalars['Int']
+    steam_id: Scalars['String']
+    team: (Scalars['String'] | null)
+    __typename: 'LiveSpecSlot'
+}
+
+export interface LiveStreamSpecState {
+    gsi: (LiveSpecGsi | null)
+    __typename: 'LiveStreamSpecState'
+}
+
 export interface LockInfo {
     granted: Scalars['Boolean']
     locktype: Scalars['String']
@@ -812,7 +841,7 @@ export interface clip_render_jobs_avg_fields {
 
 
 /** unique or primary key constraints on table "clip_render_jobs" */
-export type clip_render_jobs_constraint = 'clip_render_jobs_one_in_flight_per_user' | 'clip_render_jobs_pkey'
+export type clip_render_jobs_constraint = 'clip_render_jobs_pkey'
 
 
 /** aggregate max on columns */
@@ -3969,6 +3998,9 @@ export interface match_clips {
     render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
     render_jobs_aggregate: clip_render_jobs_aggregate
+    /** An object relationship */
+    target: (players | null)
+    target_steam_id: (Scalars['bigint'] | null)
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     /** An object relationship */
@@ -4007,6 +4039,7 @@ export interface match_clips_aggregate_fields {
 /** aggregate avg on columns */
 export interface match_clips_avg_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_avg_fields'
 }
@@ -4025,6 +4058,7 @@ export interface match_clips_max_fields {
     file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
+    target_steam_id: (Scalars['bigint'] | null)
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
@@ -4042,6 +4076,7 @@ export interface match_clips_min_fields {
     file: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
+    target_steam_id: (Scalars['bigint'] | null)
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
@@ -4061,12 +4096,13 @@ export interface match_clips_mutation_response {
 
 
 /** select columns of table "match_clips" */
-export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'match_map_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'match_map_id' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
 
 
 /** aggregate stddev on columns */
 export interface match_clips_stddev_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_stddev_fields'
 }
@@ -4075,6 +4111,7 @@ export interface match_clips_stddev_fields {
 /** aggregate stddev_pop on columns */
 export interface match_clips_stddev_pop_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_stddev_pop_fields'
 }
@@ -4083,6 +4120,7 @@ export interface match_clips_stddev_pop_fields {
 /** aggregate stddev_samp on columns */
 export interface match_clips_stddev_samp_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_stddev_samp_fields'
 }
@@ -4091,18 +4129,20 @@ export interface match_clips_stddev_samp_fields {
 /** aggregate sum on columns */
 export interface match_clips_sum_fields {
     duration_ms: (Scalars['Int'] | null)
+    target_steam_id: (Scalars['bigint'] | null)
     user_steam_id: (Scalars['bigint'] | null)
     __typename: 'match_clips_sum_fields'
 }
 
 
 /** update columns of table "match_clips" */
-export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'match_map_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'match_map_id' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
 
 
 /** aggregate var_pop on columns */
 export interface match_clips_var_pop_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_var_pop_fields'
 }
@@ -4111,6 +4151,7 @@ export interface match_clips_var_pop_fields {
 /** aggregate var_samp on columns */
 export interface match_clips_var_samp_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_var_samp_fields'
 }
@@ -4119,6 +4160,7 @@ export interface match_clips_var_samp_fields {
 /** aggregate variance on columns */
 export interface match_clips_variance_fields {
     duration_ms: (Scalars['Float'] | null)
+    target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
     __typename: 'match_clips_variance_fields'
 }
@@ -4775,6 +4817,7 @@ export interface match_map_demos {
     match_map: match_maps
     match_map_id: Scalars['uuid']
     metadata_parsed_at: (Scalars['timestamptz'] | null)
+    players: (Scalars['jsonb'] | null)
     round_ticks: (Scalars['jsonb'] | null)
     size: Scalars['Int']
     tick_rate: (Scalars['Float'] | null)
@@ -4874,7 +4917,7 @@ export interface match_map_demos_mutation_response {
 
 
 /** select columns of table "match_map_demos" */
-export type match_map_demos_select_column = 'bombs' | 'cs2_build' | 'duration_seconds' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+export type match_map_demos_select_column = 'bombs' | 'cs2_build' | 'duration_seconds' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'players' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate stddev on columns */
@@ -4918,7 +4961,7 @@ export interface match_map_demos_sum_fields {
 
 
 /** update columns of table "match_map_demos" */
-export type match_map_demos_update_column = 'bombs' | 'cs2_build' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+export type match_map_demos_update_column = 'bombs' | 'cs2_build' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'players' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate var_pop on columns */
@@ -6523,11 +6566,15 @@ export interface mutation_root {
     callForOrganizer: (SuccessOutput | null)
     /** Cancel an in-flight clip render and tear down the K8s job */
     cancelClipRender: (SuccessOutput | null)
+    /** Cancel an entire match_map's render queue + tear down the pod. */
+    cancelClipRenderBatch: (SuccessOutput | null)
     /** cancelMatch */
     cancelMatch: (SuccessOutput | null)
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
     createApiKey: (ApiKeyResponse | null)
+    /** Build a multi-segment ClipSpec from a player+preset and dispatch render */
+    createClipFromPreset: (CreateClipRenderOutput | null)
     /** Spawn a clip-render pod that produces an mp4 from a demo and uploads it */
     createClipRender: (CreateClipRenderOutput | null)
     createClips: (SuccessOutput | null)
@@ -6878,6 +6925,8 @@ export interface mutation_root {
     delete_v_pool_maps: (v_pool_maps_mutation_response | null)
     denyInvite: (SuccessOutput | null)
     forfeitMatch: (SuccessOutput | null)
+    /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
+    getLiveStreamSpecState: (LiveStreamSpecState | null)
     getTestUploadLink: GetTestUploadResponse
     /** insert data into the table: "_map_pool" */
     insert__map_pool: (_map_pool_mutation_response | null)
@@ -7267,6 +7316,8 @@ export interface mutation_root {
     syncSteamFriends: (SuccessOutput | null)
     testUpload: (TestUploadResponse | null)
     unlinkDiscord: (SuccessOutput | null)
+    /** Owner-only patch for clip title / visibility / target_steam_id. */
+    updateClip: (SuccessOutput | null)
     updateCs: (SuccessOutput | null)
     updateServices: (SuccessOutput | null)
     /** update data of the table: "_map_pool" */
@@ -16874,6 +16925,38 @@ export interface IndexStatGenqlSelection{
 /** Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'. */
 export interface Int_comparison_exp {_eq?: (Scalars['Int'] | null),_gt?: (Scalars['Int'] | null),_gte?: (Scalars['Int'] | null),_in?: (Scalars['Int'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Int'] | null),_lte?: (Scalars['Int'] | null),_neq?: (Scalars['Int'] | null),_nin?: (Scalars['Int'][] | null)}
 
+export interface LiveSpecGsiGenqlSelection{
+    map_name?: boolean | number
+    map_phase?: boolean | number
+    round_number?: boolean | number
+    round_phase?: boolean | number
+    spec_slots?: LiveSpecSlotGenqlSelection
+    spectated_steam_id?: boolean | number
+    team_ct_name?: boolean | number
+    team_ct_score?: boolean | number
+    team_t_name?: boolean | number
+    team_t_score?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface LiveSpecSlotGenqlSelection{
+    alive?: boolean | number
+    health?: boolean | number
+    name?: boolean | number
+    slot?: boolean | number
+    steam_id?: boolean | number
+    team?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface LiveStreamSpecStateGenqlSelection{
+    gsi?: LiveSpecGsiGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface LockInfoGenqlSelection{
     granted?: boolean | number
     locktype?: boolean | number
@@ -23104,6 +23187,9 @@ export interface match_clipsGenqlSelection{
     order_by?: (clip_render_jobs_order_by[] | null), 
     /** filter the rows returned */
     where?: (clip_render_jobs_bool_exp | null)} })
+    /** An object relationship */
+    target?: playersGenqlSelection
+    target_steam_id?: boolean | number
     thumbnail_url?: boolean | number
     title?: boolean | number
     /** An object relationship */
@@ -23145,6 +23231,7 @@ export interface match_clips_aggregate_fieldsGenqlSelection{
 /** aggregate avg on columns */
 export interface match_clips_avg_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23152,15 +23239,15 @@ export interface match_clips_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_clips". All fields are combined with a logical 'AND'. */
-export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
+export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_clips" */
-export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),target_steam_id?: (Scalars['bigint'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "match_clips" */
-export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -23172,6 +23259,7 @@ export interface match_clips_max_fieldsGenqlSelection{
     file?: boolean | number
     id?: boolean | number
     match_map_id?: boolean | number
+    target_steam_id?: boolean | number
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
@@ -23190,6 +23278,7 @@ export interface match_clips_min_fieldsGenqlSelection{
     file?: boolean | number
     id?: boolean | number
     match_map_id?: boolean | number
+    target_steam_id?: boolean | number
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
@@ -23221,7 +23310,7 @@ export interface match_clips_on_conflict {constraint: match_clips_constraint,upd
 
 
 /** Ordering options when selecting data from "match_clips". */
-export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),target?: (players_order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
 
 
 /** primary key columns input for table: match_clips */
@@ -23229,12 +23318,13 @@ export interface match_clips_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_clips" */
-export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface match_clips_stddev_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23244,6 +23334,7 @@ export interface match_clips_stddev_fieldsGenqlSelection{
 /** aggregate stddev_pop on columns */
 export interface match_clips_stddev_pop_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23253,6 +23344,7 @@ export interface match_clips_stddev_pop_fieldsGenqlSelection{
 /** aggregate stddev_samp on columns */
 export interface match_clips_stddev_samp_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23268,12 +23360,13 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
 export interface match_clips_sum_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23291,6 +23384,7 @@ where: match_clips_bool_exp}
 /** aggregate var_pop on columns */
 export interface match_clips_var_pop_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23300,6 +23394,7 @@ export interface match_clips_var_pop_fieldsGenqlSelection{
 /** aggregate var_samp on columns */
 export interface match_clips_var_samp_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -23309,6 +23404,7 @@ export interface match_clips_var_samp_fieldsGenqlSelection{
 /** aggregate variance on columns */
 export interface match_clips_variance_fieldsGenqlSelection{
     duration_ms?: boolean | number
+    target_steam_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -24406,6 +24502,9 @@ export interface match_map_demosGenqlSelection{
     match_map?: match_mapsGenqlSelection
     match_map_id?: boolean | number
     metadata_parsed_at?: boolean | number
+    players?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     round_ticks?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
@@ -24454,7 +24553,7 @@ export interface match_map_demos_aggregate_order_by {avg?: (match_map_demos_avg_
 
 
 /** append existing jsonb value of filtered columns with new jsonb value */
-export interface match_map_demos_append_input {bombs?: (Scalars['jsonb'] | null),kills?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null)}
+export interface match_map_demos_append_input {bombs?: (Scalars['jsonb'] | null),kills?: (Scalars['jsonb'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null)}
 
 
 /** input type for inserting array relation for remote table "match_map_demos" */
@@ -24479,19 +24578,19 @@ export interface match_map_demos_avg_order_by {duration_seconds?: (order_by | nu
 
 
 /** Boolean expression to filter rows from the table "match_map_demos". All fields are combined with a logical 'AND'. */
-export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),cs2_build?: (String_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
+export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),cs2_build?: (String_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),players?: (jsonb_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-export interface match_map_demos_delete_at_path_input {bombs?: (Scalars['String'][] | null),kills?: (Scalars['String'][] | null),round_ticks?: (Scalars['String'][] | null)}
+export interface match_map_demos_delete_at_path_input {bombs?: (Scalars['String'][] | null),kills?: (Scalars['String'][] | null),players?: (Scalars['String'][] | null),round_ticks?: (Scalars['String'][] | null)}
 
 
 /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-export interface match_map_demos_delete_elem_input {bombs?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),round_ticks?: (Scalars['Int'] | null)}
+export interface match_map_demos_delete_elem_input {bombs?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),players?: (Scalars['Int'] | null),round_ticks?: (Scalars['Int'] | null)}
 
 
 /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-export interface match_map_demos_delete_key_input {bombs?: (Scalars['String'] | null),kills?: (Scalars['String'] | null),round_ticks?: (Scalars['String'] | null)}
+export interface match_map_demos_delete_key_input {bombs?: (Scalars['String'] | null),kills?: (Scalars['String'] | null),players?: (Scalars['String'] | null),round_ticks?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "match_map_demos" */
@@ -24499,7 +24598,7 @@ export interface match_map_demos_inc_input {size?: (Scalars['Int'] | null),tick_
 
 
 /** input type for inserting data into table "match_map_demos" */
-export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -24568,7 +24667,7 @@ export interface match_map_demos_on_conflict {constraint: match_map_demos_constr
 
 
 /** Ordering options when selecting data from "match_map_demos". */
-export interface match_map_demos_order_by {bombs?: (order_by | null),cs2_build?: (order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
+export interface match_map_demos_order_by {bombs?: (order_by | null),cs2_build?: (order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),players?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_demos */
@@ -24576,11 +24675,11 @@ export interface match_map_demos_pk_columns_input {id: Scalars['uuid']}
 
 
 /** prepend existing jsonb value of filtered columns with new jsonb value */
-export interface match_map_demos_prepend_input {bombs?: (Scalars['jsonb'] | null),kills?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null)}
+export interface match_map_demos_prepend_input {bombs?: (Scalars['jsonb'] | null),kills?: (Scalars['jsonb'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null)}
 
 
 /** input type for updating data in table "match_map_demos" */
-export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -24637,7 +24736,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),cs2_build?: (Scalars['String'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -27542,11 +27641,15 @@ export interface mutation_rootGenqlSelection{
     callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** Cancel an in-flight clip render and tear down the K8s job */
     cancelClipRender?: (SuccessOutputGenqlSelection & { __args: {job_id: Scalars['uuid']} })
+    /** Cancel an entire match_map's render queue + tear down the pod. */
+    cancelClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** cancelMatch */
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
+    /** Build a multi-segment ClipSpec from a player+preset and dispatch render */
+    createClipFromPreset?: (CreateClipRenderOutputGenqlSelection & { __args: {fps?: (Scalars['Int'] | null), match_map_id: Scalars['uuid'], preset: Scalars['String'], resolution?: (Scalars['String'] | null), target_name?: (Scalars['String'] | null), target_steam_id: Scalars['String'], title?: (Scalars['String'] | null)} })
     /** Spawn a clip-render pod that produces an mp4 from a demo and uploads it */
     createClipRender?: (CreateClipRenderOutputGenqlSelection & { __args: {spec: ClipSpecInput} })
     createClips?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
@@ -28069,6 +28172,8 @@ export interface mutation_rootGenqlSelection{
     where: v_pool_maps_bool_exp} })
     denyInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     forfeitMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
+    /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
+    getLiveStreamSpecState?: (LiveStreamSpecStateGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     getTestUploadLink?: GetTestUploadResponseGenqlSelection
     /** insert data into the table: "_map_pool" */
     insert__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
@@ -29142,6 +29247,8 @@ export interface mutation_rootGenqlSelection{
     syncSteamFriends?: SuccessOutputGenqlSelection
     testUpload?: TestUploadResponseGenqlSelection
     unlinkDiscord?: SuccessOutputGenqlSelection
+    /** Owner-only patch for clip title / visibility / target_steam_id. */
+    updateClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid'], target_steam_id?: (Scalars['String'] | null), title?: (Scalars['String'] | null), visibility?: (Scalars['String'] | null)} })
     updateCs?: (SuccessOutputGenqlSelection & { __args?: {game?: (Scalars['String'] | null), game_server_node_id?: (Scalars['uuid'] | null)} })
     updateServices?: SuccessOutputGenqlSelection
     /** update data of the table: "_map_pool" */
@@ -48706,6 +48813,30 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const LiveSpecGsi_possibleTypes: string[] = ['LiveSpecGsi']
+    export const isLiveSpecGsi = (obj?: { __typename?: any } | null): obj is LiveSpecGsi => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isLiveSpecGsi"')
+      return LiveSpecGsi_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const LiveSpecSlot_possibleTypes: string[] = ['LiveSpecSlot']
+    export const isLiveSpecSlot = (obj?: { __typename?: any } | null): obj is LiveSpecSlot => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isLiveSpecSlot"')
+      return LiveSpecSlot_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const LiveStreamSpecState_possibleTypes: string[] = ['LiveStreamSpecState']
+    export const isLiveStreamSpecState = (obj?: { __typename?: any } | null): obj is LiveStreamSpecState => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isLiveStreamSpecState"')
+      return LiveStreamSpecState_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const LockInfo_possibleTypes: string[] = ['LockInfo']
     export const isLockInfo = (obj?: { __typename?: any } | null): obj is LockInfo => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isLockInfo"')
@@ -57332,7 +57463,6 @@ export const enumApiKeysUpdateColumn = {
 }
 
 export const enumClipRenderJobsConstraint = {
-   clip_render_jobs_one_in_flight_per_user: 'clip_render_jobs_one_in_flight_per_user' as const,
    clip_render_jobs_pkey: 'clip_render_jobs_pkey' as const
 }
 
@@ -58203,6 +58333,7 @@ export const enumMatchClipsSelectColumn = {
    file: 'file' as const,
    id: 'id' as const,
    match_map_id: 'match_map_id' as const,
+   target_steam_id: 'target_steam_id' as const,
    thumbnail_url: 'thumbnail_url' as const,
    title: 'title' as const,
    user_steam_id: 'user_steam_id' as const,
@@ -58215,6 +58346,7 @@ export const enumMatchClipsUpdateColumn = {
    file: 'file' as const,
    id: 'id' as const,
    match_map_id: 'match_map_id' as const,
+   target_steam_id: 'target_steam_id' as const,
    thumbnail_url: 'thumbnail_url' as const,
    title: 'title' as const,
    user_steam_id: 'user_steam_id' as const,
@@ -58348,6 +58480,7 @@ export const enumMatchMapDemosSelectColumn = {
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
    metadata_parsed_at: 'metadata_parsed_at' as const,
+   players: 'players' as const,
    round_ticks: 'round_ticks' as const,
    size: 'size' as const,
    tick_rate: 'tick_rate' as const,
@@ -58365,6 +58498,7 @@ export const enumMatchMapDemosUpdateColumn = {
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
    metadata_parsed_at: 'metadata_parsed_at' as const,
+   players: 'players' as const,
    round_ticks: 'round_ticks' as const,
    size: 'size' as const,
    tick_rate: 'tick_rate' as const,

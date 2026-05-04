@@ -106,17 +106,20 @@ export class BatchHighlightsRenderJob extends WorkerHost {
     }
 
     if (podState === "succeeded") {
-      // Pod exited cleanly but rows are still in-flight — that means
-      // the pod failed to upload one or more clips before termination.
-      // Mark them error so the user / admin can see what happened
-      // instead of leaving them stuck at "rendering" forever.
+      // Pod exited 0 but rows are still in-flight — most often this
+      // means the inline render script bailed out early (missing env,
+      // demo never loaded, spec-server unreachable) before it ever
+      // POSTed status=error back to the api. Pull the pod's last
+      // log lines so the operator sees the real reason on the row
+      // (and in this warning) instead of a generic "exited before
+      // upload" string with no context.
+      const reason =
+        (await this.gameStreamer.getBatchPodFailureReason(matchMapId)) ??
+        "render pod exited before upload";
       this.logger.warn(
-        `${tag} pod exited cleanly but ${inFlight.length} job(s) never reached terminal state — marking error`,
+        `${tag} pod exited cleanly but ${inFlight.length} job(s) never reached terminal state — ${reason}`,
       );
-      await this.failInFlightJobs(
-        inFlight.map((j) => j.id),
-        "render pod exited before upload",
-      );
+      await this.failInFlightJobs(inFlight.map((j) => j.id), reason);
       return;
     }
 
