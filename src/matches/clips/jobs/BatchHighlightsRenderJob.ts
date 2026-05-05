@@ -13,12 +13,9 @@ import { GameStreamerService } from "../../game-streamer/game-streamer.service";
 import { HasuraService } from "../../../hasura/hasura.service";
 import { IN_FLIGHT_STATUSES } from "../clips.constants";
 
-// Watchdog over the render pod for one match_map: dispatches once,
-// then polls k8s state until in-flight rows clear or the pod dies.
 const CHECK_DELAY_MS = 10_000;
 
 @UseQueue("Matches", MatchQueues.ClipRenderBatch, {
-  // One batch at a time — each takes a GPU.
   concurrency: 1,
 })
 export class BatchHighlightsRenderJob extends WorkerHost {
@@ -46,14 +43,9 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       return;
     }
 
-    // First poll: always clear any prior pod (24h ttl on k8s Jobs)
-    // before dispatching, otherwise the state probe reads stale data.
     if (!dispatched) {
-      this.logger.log(
-        `${tag} dispatching ${inFlight.length} job(s) — clearing any prior pod first`,
-      );
+      this.logger.log(`${tag} dispatching ${inFlight.length} job(s)`);
       try {
-        await this.gameStreamer.killBatchHighlightsPod(matchMapId);
         await this.gameStreamer.dispatchBatchHighlights(matchMapId, inFlight);
       } catch (error) {
         const msg = (error as Error)?.message ?? "dispatch failed";
@@ -65,7 +57,6 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         return;
       }
       await job.updateData({ ...job.data, dispatched: true });
-      // Longer first wait so the pod has time to come up.
       return this.delayUntilNext(job, CHECK_DELAY_MS * 2);
     }
 

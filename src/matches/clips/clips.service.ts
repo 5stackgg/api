@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { e_player_roles_enum } from "generated/schema";
@@ -25,7 +24,6 @@ const STATUS_HISTORY_CAP = 50;
 export class ClipsService {
   constructor(
     private readonly logger: Logger,
-    private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
@@ -33,48 +31,6 @@ export class ClipsService {
     @InjectQueue(MatchQueues.ClipRenderBatch)
     private readonly batchQueue: Queue,
   ) {}
-
-  private async resolveSteamPersonas(
-    steamIds: string[],
-  ): Promise<Map<string, string>> {
-    const out = new Map<string, string>();
-    if (steamIds.length === 0) return out;
-    const apiKey = this.config.get<string>("steam.steamApiKey");
-    if (!apiKey) {
-      this.logger.warn(
-        "[auto-clips] STEAM_WEB_API_KEY not set — cannot resolve persona names from Steam",
-      );
-      return out;
-    }
-    for (let i = 0; i < steamIds.length; i += 100) {
-      const batch = steamIds.slice(i, i + 100).join(",");
-      try {
-        const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${apiKey}&steamids=${batch}`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          this.logger.warn(
-            `[auto-clips] Steam GetPlayerSummaries returned ${response.status} — skipping persona resolve`,
-          );
-          continue;
-        }
-        const json = (await response.json()) as {
-          response?: {
-            players?: Array<{ steamid?: string; personaname?: string }>;
-          };
-        };
-        for (const p of json.response?.players ?? []) {
-          if (p?.steamid && p?.personaname) {
-            out.set(String(p.steamid), String(p.personaname));
-          }
-        }
-      } catch (error) {
-        this.logger.warn(
-          `[auto-clips] Steam persona resolve failed: ${(error as Error)?.message}`,
-        );
-      }
-    }
-    return out;
-  }
 
   public static GetClipS3Key(userSteamId: string, jobId: string) {
     return `clips/${userSteamId}/${jobId}.mp4`;
@@ -183,9 +139,6 @@ export class ClipsService {
     return { jobId };
   }
 
-  // Order matters: flip rows to cancelled first (pod's
-  // inline-clip-render.sh skips on `cancelled`), drop the BullMQ
-  // job so the watcher won't redispatch, then kill the pod.
   public async cancelClipRenderBatch(matchMapId: string): Promise<number> {
     const { update_clip_render_jobs } = await this.hasura.mutation({
       update_clip_render_jobs: {
@@ -269,14 +222,6 @@ export class ClipsService {
       },
     });
 
-    // For batch (auto-clip) renders, the pod is dedicated to a
-    // match_map and shared across all of that map's queued renders.
-    // If this was the last in-flight row for the map, drop the BullMQ
-    // watchdog job and kill the pod so we stop burning a GPU on a
-    // batch with nothing left to render. Single-user renders run
-    // inside the user's own demo session pod (a different
-    // k8s_job_name), so we leave that pod alone — the pod's render
-    // script polls /status and bails on `cancelled`.
     const matchMapId = String(row.match_map_id);
     const expectedBatchPodName =
       GameStreamerService.GetBatchHighlightsJobName(matchMapId);
@@ -406,10 +351,7 @@ export class ClipsService {
       if (patch.target_steam_id === null) {
         set.target_steam_id = null;
       } else {
-        // Only allow attribution to a player who actually appears in
-        // the demo for this clip's match_map. Without this gate any
-        // user could mark their clip's "target" as a famous player to
-        // boost it in player-keyed searches/feeds.
+        // Gate against impersonation in player-keyed feeds/search.
         const appearsInDemo = await this.targetAppearsInDemo(
           String(row.match_map_id),
           patch.target_steam_id,
@@ -450,9 +392,7 @@ export class ClipsService {
     if (players.some((p) => String(p?.steam_id ?? "") === targetSteamId)) {
       return true;
     }
-    // Fallback: parsed demos from older rows may not have the players
-    // column populated yet. Accept anyone who appears as a killer or
-    // victim in the kill log — they were definitely on the server.
+    // Older demos may lack the players column; fall back to the kill log.
     const kills =
       (demo.kills as Array<{ killer?: string; victim?: string }> | undefined) ??
       [];
@@ -483,10 +423,7 @@ export class ClipsService {
       throw new Error("you can only delete your own clips");
     }
 
-    // DB row first, then S3. If S3 fails we end up with an orphaned
-    // .mp4 (cheap, easy to GC offline) — better than the reverse,
-    // where a row would point at a missing file and break download
-    // links + computed_url for any cached client.
+    // DB row first, then S3 — an orphaned .mp4 is GC-able; a row pointing at a missing file isn't.
     const fileKey = row.file ?? ClipsService.GetClipS3Key(userSteamId, clipId);
     await this.hasura.mutation({
       delete_match_clips_by_pk: {
@@ -643,11 +580,7 @@ export class ClipsService {
       },
     });
     if (!row) throw new Error(`clip render ${jobId} not found`);
-    // Pod may try to upload after we've already flipped the row to a
-    // terminal state (cancelled by the user, or errored by the
-    // batch-watchdog when the pod missed its deadline). Reject the
-    // upload so a late-arriving stream can't resurrect the job to
-    // "done" and silently overwrite an existing match_clips row.
+    // Reject late uploads from a pod whose row has already gone terminal — otherwise it could resurrect a cancelled job and overwrite an existing match_clips row.
     if (
       row.status === "cancelled" ||
       row.status === "error" ||
@@ -750,11 +683,7 @@ export class ClipsService {
   }
 
   private async findInFlightForUser(userSteamId: string) {
-    // Batch (auto-clip) rows also pin user_steam_id to the organizer
-    // — exclude them by k8s_job_name prefix so an organizer's own
-    // running auto-clip batch doesn't block them from kicking off a
-    // manual single-clip render. Matches the partial unique index in
-    // the clip_render_pipeline migration.
+    // Exclude auto-clip batch rows so an organizer's running batch doesn't block their manual renders.
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
@@ -772,8 +701,6 @@ export class ClipsService {
     return clip_render_jobs?.[0] ?? null;
   }
 
-  // One clip_render_jobs row per (match_map, killer). Returns the
-  // number of jobs queued. force=true bypasses the setting toggle.
   public async autoGenerateForMatch(
     matchId: string,
     options: { force?: boolean } = {},
@@ -820,7 +747,6 @@ export class ClipsService {
       return 0;
     }
 
-    // Re-runs replace prior render bookkeeping; rendered match_clips stay.
     const matchMapIds = (match.match_maps ?? []).map((m: any) => String(m.id));
     if (matchMapIds.length > 0) {
       const { delete_clip_render_jobs } = await this.hasura.mutation({
@@ -839,7 +765,6 @@ export class ClipsService {
     }
 
     let queued = 0;
-    // One batch pod per match_map (per .dem file).
     const perMap = new Map<
       string,
       Array<{ job_id: string; session_token: string; spec: ClipSpec }>
@@ -926,24 +851,8 @@ export class ClipsService {
       unresolved = Array.from(allKillers).filter((sid) => !nameByStId.has(sid));
       if (unresolved.length > 0) {
         this.logger.warn(
-          `[auto-clips] match ${matchId} demo missing ${unresolved.length} killer name(s) after re-parse — falling back to Steam personas: ${unresolved.join(", ")}`,
+          `[auto-clips] match ${matchId} STILL missing ${unresolved.length} killer name(s) after re-parse: ${unresolved.join(", ")} — clips for these will queue as "Player NNNN"`,
         );
-        const personas = await this.resolveSteamPersonas(unresolved);
-        for (const [sid, name] of personas) {
-          nameByStId.set(sid, name);
-        }
-        unresolved = Array.from(allKillers).filter(
-          (sid) => !nameByStId.has(sid),
-        );
-        if (unresolved.length > 0) {
-          this.logger.warn(
-            `[auto-clips] match ${matchId} STILL missing ${unresolved.length} killer name(s) after Steam lookup: ${unresolved.join(", ")} — clips for these will queue as "Player NNNN" until the streamer pod's GSI patch fires`,
-          );
-        } else {
-          this.logger.log(
-            `[auto-clips] match ${matchId} resolved all missing killer names via Steam personas`,
-          );
-        }
       } else {
         this.logger.log(
           `[auto-clips] match ${matchId} re-parse resolved all missing killer names`,
@@ -951,8 +860,6 @@ export class ClipsService {
       }
     }
 
-    // Upsert players rows so match_clips.target_steam_id FK lands.
-    // update_columns:[] preserves existing players' profile data.
     const upsertObjects: Array<{
       steam_id: string;
       name: string;
@@ -988,9 +895,6 @@ export class ClipsService {
       }
     }
 
-    // Build every spec up-front (pure CPU work, no DB) then insert
-    // the whole batch in one mutation. A 5v5 match across 3 maps
-    // would otherwise round-trip Hasura ~30 times here.
     const pendingObjects: Array<{
       mapRowId: string;
       targetSteamId: string;
@@ -1060,8 +964,6 @@ export class ClipsService {
             returning: { id: true, match_map_id: true },
           },
         });
-        // returning preserves input order, so zip back against
-        // pendingObjects to recover spec/session_token per row.
         const returning =
           (insert_clip_render_jobs?.returning as
             | Array<{ id: string; match_map_id: string }>
@@ -1090,8 +992,7 @@ export class ClipsService {
       `[auto-clips] match ${matchId} queued ${queued} recap job(s) (default visibility=${defaultVisibility})`,
     );
 
-    // jobId is unique per call so re-runs never dedupe against a
-    // prior completed job. Queue concurrency is 1.
+    // Unique jobId so re-runs don't dedupe against a prior completed BullMQ job.
     for (const matchMapId of perMap.keys()) {
       try {
         await this.batchQueue.add(
@@ -1176,7 +1077,6 @@ export class ClipsService {
     const myKills = kills.filter((k) => k.killer === targetSteamId);
     const lead = Math.round(tickRate * 5);
     const tail = Math.round(tickRate * 3);
-    // Two kills within this gap join into one segment, otherwise cut.
     const CLUSTER_GAP_SECS = 10;
     const clusterGapTicks = Math.round(tickRate * CLUSTER_GAP_SECS);
     const clamp = (t: number) => Math.max(0, Math.min(t, totalTicks || t));
@@ -1270,8 +1170,6 @@ export class ClipsService {
       stats.recapKills = myKills.length;
     }
 
-    // Fall back to a single best kill so the user still gets a clip,
-    // and flag it so the title reflects that nothing matched the preset.
     if (segments.length === 0 && myKills.length > 0) {
       const fallback = myKills.find((k) => k.headshot) ?? myKills[0];
       segments = [
@@ -1289,8 +1187,7 @@ export class ClipsService {
       );
     }
 
-    // Join segments within ~2s — otherwise cs2's re-seek leaves a
-    // visible freeze on the concat boundary.
+    // Join segments within ~2s — cs2's re-seek otherwise leaves a freeze on the concat boundary.
     segments.sort((a, b) => a.start_tick - b.start_tick);
     const joinGap = Math.round(tickRate * 2);
     const merged: Array<{

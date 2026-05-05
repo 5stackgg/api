@@ -1,7 +1,3 @@
-// Shared between ClipsService (producer) and BatchHighlightsRenderJob
-// (consumer). Kept in its own file because importing the worker class
-// from clips.service triggers a load-time cycle (matches → clips →
-// matches via the worker's ClipsService dep).
 export const BATCH_HIGHLIGHTS_JOB_NAME = "BatchHighlightsRenderJob";
 
 export const IN_FLIGHT_STATUSES = ["queued", "rendering", "uploading"] as const;

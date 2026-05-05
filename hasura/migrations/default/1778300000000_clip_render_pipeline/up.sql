@@ -66,19 +66,6 @@ create index if not exists "clip_render_jobs_user_steam_id_idx"
 create index if not exists "clip_render_jobs_match_map_id_idx"
   on "public"."clip_render_jobs" ("match_map_id");
 
--- A user can only have one in-flight *manual* clip render at a time.
--- The application layer (ClipsService.findInFlightForUser) already
--- checks this, but a partial unique index closes the TOCTOU window
--- between two near-simultaneous createClipRender calls. Auto-clip
--- (batch) rows are excluded — those are owned by the match organizer
--- and one organizer routinely has many in-flight rows for a single
--- match_map. They're discriminated by a `gs-batch-` prefix on
--- k8s_job_name, set by GameStreamerService.GetBatchHighlightsJobName.
-create unique index if not exists "clip_render_jobs_one_inflight_per_user"
-  on "public"."clip_render_jobs" ("user_steam_id")
-  where status in ('queued', 'rendering', 'uploading')
-    and k8s_job_name not like 'gs-batch-%';
-
 CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_clips)
     RETURNS text
     LANGUAGE plpgsql STABLE

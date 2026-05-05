@@ -371,8 +371,7 @@ export class MatchesController {
     response.status(200).json(data);
   }
 
-  // Fires auto-clip generation off metadata_parsed_at. Match Finished
-  // is too early — demo parse runs async afterwards.
+  // Match Finished fires before demo parse, so trigger off metadata_parsed_at instead.
   @HasuraEvent()
   public async match_map_demo_events(
     data: HasuraEventData<match_map_demos_set_input>,
@@ -427,7 +426,6 @@ export class MatchesController {
       await this.tournamentVoice.movePlayersToMatchChannels(matchId);
     }
 
-    // Also create voice channels on Veto or Live (fallback for skipped check-in)
     if (
       data.op === "UPDATE" &&
       (data.new.status === "Veto" || data.new.status === "Live") &&

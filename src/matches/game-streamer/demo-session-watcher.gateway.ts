@@ -65,10 +65,6 @@ export class DemoSessionWatcherGateway {
         body.action as DemoControlAction,
         body.payload ?? {},
       );
-      // The client polls action="state" once per second to keep the
-      // slot/player snapshot fresh (cs2 GSI lives on the pod, not in
-      // Hasura). Push the response back via a dedicated event so the
-      // store can update without a Hasura round-trip.
       if (body.action === "state") {
         client.send(
           JSON.stringify({

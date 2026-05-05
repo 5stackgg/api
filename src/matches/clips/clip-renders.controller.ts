@@ -13,14 +13,8 @@ import { PassThrough } from "node:stream";
 import { ClipsService } from "./clips.service";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
 
-// Caps the per-render upload at 500 MiB. A 1080p60 cs2 mp4 weighs
-// 8–12 MB per minute and validateSpec already caps a clip at ~15
-// minutes, so the legitimate ceiling is well under 200 MB. The 500
-// MiB headroom catches unexpectedly fat encodes without giving an
-// attacker who learned a `<jobId>:<token>` pair an unbounded write.
 const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
-// Pod-callback endpoints, authed via `x-origin-auth: <jobId>:<token>`.
 @Controller("clip-renders/:jobId")
 export class ClipRendersController {
   constructor(
@@ -115,7 +109,6 @@ export class ClipRendersController {
     response.status(204).end();
   }
 
-  // Raw streaming upload — pipes octet-stream body straight to S3.
   @Post("upload")
   public async upload(
     @Param("jobId") jobId: string,
@@ -141,10 +134,6 @@ export class ClipRendersController {
       return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
     })();
 
-    // Reject upfront when the pod's content-length already busts the
-    // cap — saves spinning up a multipart upload to S3 just to trash
-    // it. Pods that omit content-length still get the streaming
-    // ceiling below.
     const contentLength = Number(request.headers["content-length"] ?? 0);
     if (Number.isFinite(contentLength) && contentLength > MAX_UPLOAD_BYTES) {
       this.logger.warn(
@@ -155,10 +144,6 @@ export class ClipRendersController {
         .json({ error: `upload too large (max ${MAX_UPLOAD_BYTES} bytes)` });
     }
 
-    // Splice a counting passthrough between the request stream and
-    // S3. When we cross MAX_UPLOAD_BYTES we destroy the passthrough
-    // with an error, which causes the S3 multipart upload to abort
-    // and finalizeClipUpload to throw.
     let received = 0;
     const counter = new PassThrough();
     request.on("data", (chunk: Buffer) => {
