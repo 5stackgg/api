@@ -15593,6 +15593,9 @@ export default {
             "id": [
                 2741
             ],
+            "kills_count": [
+                30
+            ],
             "match_map": [
                 1311
             ],
@@ -15648,6 +15651,9 @@ export default {
             ],
             "target_steam_id": [
                 147
+            ],
+            "thumbnail_download_url": [
+                48
             ],
             "thumbnail_url": [
                 48
@@ -15730,6 +15736,9 @@ export default {
             "duration_ms": [
                 22
             ],
+            "kills_count": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -15765,6 +15774,9 @@ export default {
             "id": [
                 2742
             ],
+            "kills_count": [
+                31
+            ],
             "match_map": [
                 1320
             ],
@@ -15782,6 +15794,9 @@ export default {
             ],
             "target_steam_id": [
                 148
+            ],
+            "thumbnail_download_url": [
+                50
             ],
             "thumbnail_url": [
                 50
@@ -15807,6 +15822,9 @@ export default {
             "duration_ms": [
                 30
             ],
+            "kills_count": [
+                30
+            ],
             "target_steam_id": [
                 147
             ],
@@ -15829,6 +15847,9 @@ export default {
             ],
             "id": [
                 2741
+            ],
+            "kills_count": [
+                30
             ],
             "match_map": [
                 1329
@@ -15880,11 +15901,17 @@ export default {
             "id": [
                 2741
             ],
+            "kills_count": [
+                30
+            ],
             "match_map_id": [
                 2741
             ],
             "target_steam_id": [
                 147
+            ],
+            "thumbnail_download_url": [
+                48
             ],
             "thumbnail_url": [
                 48
@@ -15918,11 +15945,17 @@ export default {
             "id": [
                 2741
             ],
+            "kills_count": [
+                30
+            ],
             "match_map_id": [
                 2741
             ],
             "target_steam_id": [
                 147
+            ],
+            "thumbnail_download_url": [
+                48
             ],
             "thumbnail_url": [
                 48
@@ -15992,6 +16025,9 @@ export default {
             "id": [
                 1631
             ],
+            "kills_count": [
+                1631
+            ],
             "match_map": [
                 1331
             ],
@@ -16005,6 +16041,9 @@ export default {
                 2081
             ],
             "target_steam_id": [
+                1631
+            ],
+            "thumbnail_download_url": [
                 1631
             ],
             "thumbnail_url": [
@@ -16048,6 +16087,9 @@ export default {
             "id": [
                 2741
             ],
+            "kills_count": [
+                30
+            ],
             "match_map_id": [
                 2741
             ],
@@ -16074,6 +16116,9 @@ export default {
             "duration_ms": [
                 22
             ],
+            "kills_count": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16088,6 +16133,9 @@ export default {
             "duration_ms": [
                 22
             ],
+            "kills_count": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16100,6 +16148,9 @@ export default {
         },
         "match_clips_stddev_samp_fields": {
             "duration_ms": [
+                22
+            ],
+            "kills_count": [
                 22
             ],
             "target_steam_id": [
@@ -16136,6 +16187,9 @@ export default {
             "id": [
                 2741
             ],
+            "kills_count": [
+                30
+            ],
             "match_map_id": [
                 2741
             ],
@@ -16160,6 +16214,9 @@ export default {
         },
         "match_clips_sum_fields": {
             "duration_ms": [
+                30
+            ],
+            "kills_count": [
                 30
             ],
             "target_steam_id": [
@@ -16191,6 +16248,9 @@ export default {
             "duration_ms": [
                 22
             ],
+            "kills_count": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16205,6 +16265,9 @@ export default {
             "duration_ms": [
                 22
             ],
+            "kills_count": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16217,6 +16280,9 @@ export default {
         },
         "match_clips_variance_fields": {
             "duration_ms": [
+                22
+            ],
+            "kills_count": [
                 22
             ],
             "target_steam_id": [

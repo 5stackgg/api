@@ -25,6 +25,11 @@ computed_fields:
       function:
         name: clip_download_url
         schema: public
+  - name: thumbnail_download_url
+    definition:
+      function:
+        name: clip_thumbnail_download_url
+        schema: public
 select_permissions:
   - role: administrator
     permission:
@@ -39,8 +44,10 @@ select_permissions:
         - thumbnail_url
         - visibility
         - created_at
+        - kills_count
       computed_fields:
         - download_url
+        - thumbnail_download_url
       filter: {}
       allow_aggregations: true
   - role: guest
@@ -56,8 +63,10 @@ select_permissions:
         - thumbnail_url
         - visibility
         - created_at
+        - kills_count
       computed_fields:
         - download_url
+        - thumbnail_download_url
       filter:
         visibility:
           _eq: public
@@ -75,8 +84,10 @@ select_permissions:
         - created_at
         - id
         - match_map_id
+        - kills_count
       computed_fields:
         - download_url
+        - thumbnail_download_url
       filter:
         _or:
           - user_steam_id:

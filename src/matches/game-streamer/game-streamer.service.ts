@@ -1134,6 +1134,33 @@ export class GameStreamerService {
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
     );
 
+    // The Job name is deterministic from matchMapId, so a leftover Job
+    // from a previous run (succeeded/failed but not garbage-collected)
+    // would 409 the create. Reap the stale one first; refuse to clobber
+    // a still-running one.
+    const existing = await this.getBatchHighlightsPodState(matchMapId);
+    if (existing === "running") {
+      throw new Error(
+        `batch-highlights pod ${jobName} is already running for match_map ${matchMapId} — wait for it to finish or kill it before re-dispatching`,
+      );
+    }
+    if (existing !== "absent") {
+      this.logger.warn(
+        `[batch-highlights ${matchMapId}] reaping stale ${existing} Job ${jobName} before re-dispatch`,
+      );
+      await this.killBatchHighlightsPod(matchMapId);
+      // killBatchHighlightsPod issues delete; wait for the resource to
+      // actually be gone (foreground propagation can take a beat) so the
+      // subsequent create doesn't race the still-terminating object.
+      const deadline = Date.now() + 15_000;
+      while (Date.now() < deadline) {
+        if ((await this.getBatchHighlightsPodState(matchMapId)) === "absent") {
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+
     await batch.createNamespacedJob({
       namespace: this.namespace,
       body: this.buildJobSpec(
