@@ -680,6 +680,17 @@ export class ClipsService {
       }
     }
 
+    // Spec carries the operator-configured visibility for auto-clip
+    // batches (auto_clip_default_visibility). Manual one-off renders
+    // leave it undefined; default to "private" to match prior behavior.
+    const visibility =
+      (spec?.visibility as
+        | "private"
+        | "unlisted"
+        | "public"
+        | "match"
+        | undefined) ?? "private";
+
     const { insert_match_clips_one } = await this.hasura.mutation({
       insert_match_clips_one: {
         __args: {
@@ -690,7 +701,7 @@ export class ClipsService {
             title,
             duration_ms: durationMs,
             file: key,
-            visibility: "private",
+            visibility,
           },
         },
         id: true,
@@ -760,9 +771,15 @@ export class ClipsService {
       if (!enabled) return 0;
     }
 
+    // Auto-clip default landed as "public" — match recaps that the
+    // operator (or the platform) auto-generates are meant to be the
+    // community reel feed; private is the wrong default because no
+    // one but the organizer would see them. Operators who explicitly
+    // want them private/unlisted can flip the setting on the
+    // /settings/application/highlights page.
     const defaultVisibility = await this.readSetting(
       "auto_clip_default_visibility",
-      "private",
+      "public",
     );
 
     const { matches_by_pk: match } = await this.hasura.query({
@@ -1045,8 +1062,14 @@ export class ClipsService {
             // "Player <suffix>" inside buildPresetSpec when not.
             nameByStId.get(targetSteamId),
           );
-          // Force visibility based on operator setting.
           (spec as any).destination = "library";
+          // Carry the operator-configured default visibility through
+          // the spec so finalizeClipUpload lands the match_clips row
+          // with the right value. Without this, every clip ended up
+          // private regardless of the auto_clip_default_visibility
+          // setting (the previous code only logged the setting on the
+          // status_history audit trail).
+          (spec as any).visibility = defaultVisibility;
           // Queue the job. Naming the match's organizer as the owner
           // so the clips appear under their library — they had
           // implicit consent to render on their match.

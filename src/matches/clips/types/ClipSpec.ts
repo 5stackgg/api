@@ -36,4 +36,10 @@ export interface ClipSpec {
   // enqueue time; the streamer pod's GSI title patch can refine it
   // mid-render if the demo had a stale name.
   target_name?: string;
+  // Visibility the resulting match_clips row should land with. The
+  // auto-clip flow stamps this from the `auto_clip_default_visibility`
+  // setting at queue time so finalizeClipUpload doesn't have to look
+  // the setting up again on every render. Manual renders can leave
+  // this unset; finalizeClipUpload defaults to "private".
+  visibility?: "private" | "unlisted" | "public" | "match";
 }
