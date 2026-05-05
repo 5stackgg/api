@@ -398,6 +398,7 @@ type Mutation {
 type Mutation {
   startLive(
     match_id: uuid!
+    mode: String!
   ): SuccessOutput
 }
 

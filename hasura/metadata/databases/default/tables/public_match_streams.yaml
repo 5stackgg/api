@@ -54,6 +54,7 @@ select_permissions:
         - match_id
         - is_game_streamer
         - is_live
+        - mode
         - status
         - stream_url
         - error_message

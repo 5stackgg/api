@@ -703,14 +703,22 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async startLive(data: { match_id: string; user: User }) {
-    const { match_id, user } = data;
+  public async startLive(data: {
+    match_id: string;
+    mode: "live" | "tv";
+    user: User;
+  }) {
+    const { match_id, mode, user } = data;
 
     if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
       throw Error("you are not a match organizer");
     }
 
-    await this.gameStreamer.startLive(match_id);
+    if (mode !== "live" && mode !== "tv") {
+      throw Error("invalid mode");
+    }
+
+    await this.gameStreamer.startLive(match_id, mode);
 
     return {
       success: true,

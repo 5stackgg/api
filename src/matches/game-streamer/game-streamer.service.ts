@@ -15,6 +15,7 @@ import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
+import { SteamConfig } from "../../configs/types/SteamConfig";
 import { randomBytes } from "node:crypto";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
 
@@ -64,6 +65,7 @@ export class GameStreamerService {
   private readonly namespace: string;
   private readonly gameServerConfig: GameServersConfig;
   private readonly appConfig: AppConfig;
+  private readonly steamConfig: SteamConfig;
 
   constructor(
     private readonly logger: Logger,
@@ -73,6 +75,7 @@ export class GameStreamerService {
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
+    this.steamConfig = this.config.get<SteamConfig>("steam");
     this.namespace = this.gameServerConfig.namespace;
   }
 
@@ -842,7 +845,7 @@ export class GameStreamerService {
     }
   }
 
-  public async startLive(matchId: string) {
+  public async startLive(matchId: string, mode: "live" | "tv") {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: { id: matchId },
@@ -874,6 +877,7 @@ export class GameStreamerService {
       match.server,
       match.password,
       usePlaycast,
+      mode,
     );
 
     const reporterEnv: V1EnvVar[] = [
@@ -888,7 +892,7 @@ export class GameStreamerService {
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
 
-    this.logger.log(`[${matchId}] starting live stream on node ${nodeId}`);
+    this.logger.log(`[${matchId}] starting ${mode} stream on node ${nodeId}`);
 
     await batch.createNamespacedJob({
       namespace: this.namespace,
@@ -900,7 +904,7 @@ export class GameStreamerService {
 
     await this.createLiveService(matchId);
 
-    await this.registerStreamRow(matchId);
+    await this.registerStreamRow(matchId, mode);
   }
 
   public async stopLive(matchId: string) {
@@ -1296,15 +1300,25 @@ export class GameStreamerService {
     },
     matchPassword: string,
     usePlaycast: boolean,
+    mode: "live" | "tv",
   ): Promise<V1EnvVar[]> {
-    if (usePlaycast) {
-      return [
-        { name: "PLAYCAST_URL", value: `https://tv.5stack.gg/${matchId}` },
-        { name: "PLAYCAST_PASSWORD", value: "" },
-      ];
-    }
+    // tv mode: respect the GOTV/Playcast path so the broadcast carries the
+    // configured tv_delay. Playcast (when enabled) wins over the server's
+    // tv_port — same precedence as get_match_tv_connection_string().
+    if (mode === "tv") {
+      if (usePlaycast) {
+        return [
+          { name: "PLAYCAST_URL", value: `https://tv.5stack.gg/${matchId}` },
+          { name: "PLAYCAST_PASSWORD", value: "" },
+        ];
+      }
 
-    if (server.tv_port) {
+      if (!server.tv_port) {
+        throw new Error(
+          "tv mode requires a server with tv_port or Playcast enabled",
+        );
+      }
+
       return [
         {
           name: "CONNECT_TV_ADDR",
@@ -1314,9 +1328,19 @@ export class GameStreamerService {
       ];
     }
 
+    // live mode: direct game-port connection. No GOTV delay, available the
+    // moment the match goes Live. Playcast does not apply.
+    //
+    // The dedicated server is started with `+sv_password ${match.password}`
+    // (see match-assistant.service.ts), so the streamer pod authenticates
+    // with the raw match password — same value, just the game port instead
+    // of the TV port. The 5stack CS2 plugin auto-allocates non-roster Steam
+    // IDs into a spectator slot (the server is started with extra slots:
+    // `max_players_per_lineup * 2 + 3`), so the streamer ends up observing
+    // rather than occupying a roster slot.
     return [
       { name: "CONNECT_ADDR", value: `${server.host}:${server.port}` },
-      { name: "CONNECT_PASSWORD", value: `tv:user:${matchPassword}` },
+      { name: "CONNECT_PASSWORD", value: matchPassword },
     ];
   }
 
@@ -1432,7 +1456,7 @@ export class GameStreamerService {
     }
   }
 
-  private async registerStreamRow(matchId: string) {
+  private async registerStreamRow(matchId: string, mode: "live" | "tv") {
     await this.unregisterStreamRow(matchId);
     const nowIso = new Date().toISOString();
     await this.hasura.mutation({
@@ -1445,6 +1469,7 @@ export class GameStreamerService {
             priority: 0,
             is_game_streamer: true,
             is_live: false,
+            mode,
             status: "booting",
             status_history: [{ status: "booting", at: nowIso }],
             last_status_at: "now()",
@@ -1694,9 +1719,29 @@ export class GameStreamerService {
                   { name: "DISPLAY_SIZEW", value: "1920" },
                   { name: "DISPLAY_SIZEH", value: "1080" },
                   { name: "OPENHUD_AUTO_OVERLAY", value: "1" },
+                  // Steam credentials inlined from the API's own config
+                  // rather than mounting a `steam-secrets` K8s Secret —
+                  // matches game-server-node.service.ts (line ~519). The
+                  // pod requires both vars; setup-steam.sh aborts without
+                  // them via `require_env STEAM_USER STEAM_PASSWORD`.
+                  ...(this.steamConfig.steamUser
+                    ? [
+                        {
+                          name: "STEAM_USER",
+                          value: this.steamConfig.steamUser,
+                        },
+                      ]
+                    : []),
+                  ...(this.steamConfig.steamPassword
+                    ? [
+                        {
+                          name: "STEAM_PASSWORD",
+                          value: this.steamConfig.steamPassword,
+                        },
+                      ]
+                    : []),
                   ...extraEnv,
                 ],
-                envFrom: [{ secretRef: { name: "steam-secrets" } }],
                 resources: {
                   limits: {
                     memory: "16Gi",

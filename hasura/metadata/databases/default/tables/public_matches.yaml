@@ -183,6 +183,18 @@ computed_fields:
         name: can_start_match
         schema: public
       session_argument: hasura_session
+  - name: can_stream_live
+    definition:
+      function:
+        name: can_stream_live
+        schema: public
+      session_argument: hasura_session
+  - name: can_stream_tv
+    definition:
+      function:
+        name: can_stream_tv
+        schema: public
+      session_argument: hasura_session
   - name: connection_link
     definition:
       function:
@@ -511,6 +523,8 @@ select_permissions:
         - can_reassign_winner
         - can_schedule
         - can_start
+        - can_stream_live
+        - can_stream_tv
         - connection_link
         - connection_string
         - current_match_map_id
@@ -566,6 +580,8 @@ select_permissions:
         - can_reassign_winner
         - can_schedule
         - can_start
+        - can_stream_live
+        - can_stream_tv
         - connection_link
         - connection_string
         - current_match_map_id
