@@ -1,9 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
+import { e_player_roles_enum } from "generated/schema";
 import { HasuraService } from "../../hasura/hasura.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
+import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -27,12 +30,65 @@ const IN_FLIGHT_STATUSES = ["queued", "rendering", "uploading"] as const;
 export class ClipsService {
   constructor(
     private readonly logger: Logger,
+    private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
+    private readonly demoMetadata: DemoMetadataService,
     @InjectQueue(MatchQueues.ClipRenderBatch)
     private readonly batchQueue: Queue,
   ) {}
+
+  // Resolve Steam persona names for a list of steamid64s via the
+  // public ISteamUser/GetPlayerSummaries endpoint. Used as the
+  // last-resort name source when the demo's userinfo string-table
+  // doesn't carry a (steam_id, name) pair (rare — usually means a
+  // truncated demo or an old parser binary). Steam persona ≠ in-game
+  // name verbatim — players often play under a different handle —
+  // but it's the right "who is this real human" answer for clip
+  // titles when nothing else has it. Endpoint accepts up to 100 ids
+  // per call; we batch.
+  private async resolveSteamPersonas(
+    steamIds: string[],
+  ): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    if (steamIds.length === 0) return out;
+    const apiKey = this.config.get<string>("steam.steamApiKey");
+    if (!apiKey) {
+      this.logger.warn(
+        "[auto-clips] STEAM_WEB_API_KEY not set — cannot resolve persona names from Steam",
+      );
+      return out;
+    }
+    for (let i = 0; i < steamIds.length; i += 100) {
+      const batch = steamIds.slice(i, i + 100).join(",");
+      try {
+        const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${apiKey}&steamids=${batch}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          this.logger.warn(
+            `[auto-clips] Steam GetPlayerSummaries returned ${response.status} — skipping persona resolve`,
+          );
+          continue;
+        }
+        const json = (await response.json()) as {
+          response?: {
+            players?: Array<{ steamid?: string; personaname?: string }>;
+          };
+        };
+        for (const p of json.response?.players ?? []) {
+          if (p?.steamid && p?.personaname) {
+            out.set(String(p.steamid), String(p.personaname));
+          }
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[auto-clips] Steam persona resolve failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+    return out;
+  }
 
   public static GetClipS3Key(userSteamId: string, jobId: string) {
     return `clips/${userSteamId}/${jobId}.mp4`;
@@ -570,12 +626,13 @@ export class ClipsService {
     // player — by-design all preset segments share the same target,
     // and manual trims don't have one.
     //
-    // The pov can be a steamid that's NEVER logged into 5stack — it
-    // came straight out of the demo's parsed kill events. The
-    // target_steam_id FK references players(steam_id), so we have to
-    // verify a row exists before stamping it on the clip — otherwise
-    // the insert blows up with a foreign-key violation. Fallback to
-    // null (clip just doesn't have a clickable player attribution).
+    // target_steam_id FK references players(steam_id). For auto-clip
+    // batches we already upsert a `players` row at queue time (with
+    // the demo / Steam-persona resolved name) so the FK is satisfied
+    // here. Manual / one-off renders may still reference a pov that
+    // was never imported — try an upsert with the spec's target_name
+    // so the FK lands either way; if even that fails (no name to use),
+    // fall back to null so the clip insert doesn't blow up.
     const rawTarget = spec?.segments?.[0]?.pov_steam_id ?? null;
     let targetSteamId: string | null = null;
     if (rawTarget) {
@@ -590,9 +647,35 @@ export class ClipsService {
       });
       if (players?.[0]?.steam_id) {
         targetSteamId = String(players[0].steam_id);
+      } else if (spec?.target_name) {
+        try {
+          await this.hasura.mutation({
+            insert_players: {
+              __args: {
+                objects: [
+                  {
+                    steam_id: rawTarget,
+                    name: spec.target_name,
+                    role: "user" as e_player_roles_enum,
+                  },
+                ],
+                on_conflict: {
+                  constraint: "players_pkey",
+                  update_columns: [],
+                },
+              },
+              affected_rows: true,
+            },
+          });
+          targetSteamId = String(rawTarget);
+        } catch (error) {
+          this.logger.warn(
+            `[clip ${jobId}] target steam_id ${rawTarget} upsert failed (${(error as Error)?.message}) — leaving target_steam_id null`,
+          );
+        }
       } else {
         this.logger.log(
-          `[clip ${jobId}] target steam_id ${rawTarget} not in players table — leaving target_steam_id null`,
+          `[clip ${jobId}] target steam_id ${rawTarget} not in players table and spec has no target_name — leaving target_steam_id null`,
         );
       }
     }
@@ -711,6 +794,34 @@ export class ClipsService {
       return 0;
     }
 
+    // Clear out the prior batch's clip_render_jobs rows for these
+    // match_maps before queueing fresh ones. Pressing "Create Player
+    // Highlights" again means "redo this batch from scratch" — the
+    // operator does not want last attempt's failed rows polluting the
+    // queue panel, and they don't want the new batch's progress
+    // commingled with the previous attempt under the same match_map_id
+    // group. The actual match_clips artifacts (the rendered videos
+    // from successful prior runs) live in a separate table and stay
+    // intact; we're only removing the per-render bookkeeping rows.
+    const matchMapIds = (match.match_maps ?? []).map((m: any) =>
+      String(m.id),
+    );
+    if (matchMapIds.length > 0) {
+      const { delete_clip_render_jobs } = await this.hasura.mutation({
+        delete_clip_render_jobs: {
+          __args: { where: { match_map_id: { _in: matchMapIds } } },
+          affected_rows: true,
+        },
+      });
+      const removed =
+        (delete_clip_render_jobs?.affected_rows as number | undefined) ?? 0;
+      if (removed > 0) {
+        this.logger.log(
+          `[auto-clips] match ${matchId} cleared ${removed} prior clip_render_jobs row(s) before re-queue`,
+        );
+      }
+    }
+
     let queued = 0;
     // Track jobs queued PER match_map so we can dispatch one batch
     // pod per map afterwards. Multi-map matches → multiple pods (one
@@ -724,52 +835,183 @@ export class ClipsService {
     // Resolve player names for every killer across all maps so the
     // queued clip titles read "CabessaaR — Best Round (4K)" instead
     // of "Player 6843 — Best Round (4K)" the moment the rows hit the
-    // /manage-highlights/queue subscription. Two sources, in order:
+    // /manage-highlights/queue subscription.
     //
-    //   1. `match_map_demos.players` — name-by-steamid map the demo
-    //      parser extracts from kill events. Always present for any
-    //      player who got involved in a kill, regardless of whether
-    //      they ever logged into 5stack.
-    //   2. `players` table fallback — covers the (rare) case where
-    //      the demo's parsed players slice is empty but the killer
-    //      is a registered 5stack user.
-    //
-    // The existing pod-side GSI title patch still fires per-render as
-    // a third backstop. With (1) shipping, it's mostly redundant —
-    // but harmless and useful if a name changed between demo parse
-    // and render time.
-    const nameByStId = new Map<string, string>();
+    // The demo file IS the source of truth — it's the same data the
+    // streamer pod's CS2 GSI replay reports the moment a render
+    // starts. If a steam_id is missing from `match_map_demos.players`
+    // it means the demo was parsed by an older parser binary that
+    // didn't capture every userinfo string-table entry. We force a
+    // re-parse for any map_demo missing a killer's name, then re-
+    // resolve. We do NOT fall back to a 3rd table — the demo always
+    // has it.
     const allKillers = new Set<string>();
     for (const mapRow of match.match_maps ?? []) {
       const demo = mapRow.demos?.[0];
       const kills =
         (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
       for (const k of kills) if (k.killer) allKillers.add(k.killer);
-      const demoPlayers =
-        (demo?.players as
-          | Array<{ steam_id?: string; name?: string }>
-          | undefined) ?? [];
-      for (const p of demoPlayers) {
-        if (p?.steam_id && p?.name) {
-          nameByStId.set(String(p.steam_id), String(p.name));
+    }
+
+    const buildNameMapFromMatch = (m: any) => {
+      const out = new Map<string, string>();
+      for (const mapRow of m.match_maps ?? []) {
+        const demo = mapRow.demos?.[0];
+        const demoPlayers =
+          (demo?.players as
+            | Array<{ steam_id?: string; name?: string }>
+            | undefined) ?? [];
+        for (const p of demoPlayers) {
+          if (p?.steam_id && p?.name) {
+            out.set(String(p.steam_id), String(p.name));
+          }
         }
       }
-    }
-    const unresolved = Array.from(allKillers).filter(
+      return out;
+    };
+
+    let nameByStId = buildNameMapFromMatch(match);
+    let unresolved = Array.from(allKillers).filter(
       (sid) => !nameByStId.has(sid),
     );
+
+    // Anyone we couldn't resolve from the demo is almost always a sign
+    // the demo's `players` jsonb was stale — re-parse the affected
+    // map_demo and try again. ensureParsedById short-circuits on
+    // already-parsed rows so we use reparseById to FORCE a fresh run
+    // through the (now fixed) Go parser.
     if (unresolved.length > 0) {
-      const { players } = await this.hasura.query({
-        players: {
-          __args: { where: { steam_id: { _in: unresolved } } },
-          steam_id: true,
-          name: true,
+      const mapsNeedingReparse = (match.match_maps ?? []).filter(
+        (m: any) => {
+          const demo = m.demos?.[0];
+          if (!demo?.id) return false;
+          const kills =
+            (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
+          const killersHere = new Set<string>();
+          for (const k of kills) if (k.killer) killersHere.add(k.killer);
+          for (const sid of unresolved) {
+            if (killersHere.has(sid)) return true;
+          }
+          return false;
+        },
+      );
+      const allMissing = unresolved.length === allKillers.size;
+      this.logger.warn(
+        `[auto-clips] match ${matchId} has ${unresolved.length} killer steam_id(s) missing from demo.players (${unresolved.join(", ")})${allMissing ? " — ALL killers missing usually means the running demo-parser image is older than the parser-side userinfo handler fix; rebuild + redeploy demo-parser to recapture names from the demo file" : ""} — re-parsing ${mapsNeedingReparse.length} map_demo(s) to refresh names`,
+      );
+      for (const m of mapsNeedingReparse) {
+        const demoId = String(m.demos?.[0]?.id ?? "");
+        if (!demoId) continue;
+        try {
+          await this.demoMetadata.reparseById(demoId);
+        } catch (error) {
+          this.logger.warn(
+            `[auto-clips] match ${matchId} reparse failed for demo ${demoId}: ${(error as Error)?.message}`,
+          );
+        }
+      }
+      // Re-fetch the match with refreshed demo.players + kills.
+      const { matches_by_pk: refreshed } = await this.hasura.query({
+        matches_by_pk: {
+          __args: { id: matchId },
+          id: true,
+          match_maps: {
+            id: true,
+            demos: {
+              id: true,
+              kills: true,
+              players: true,
+              tick_rate: true,
+              total_ticks: true,
+              round_ticks: true,
+            },
+          },
         },
       });
-      for (const p of players ?? []) {
-        if (p?.steam_id && p?.name) {
-          nameByStId.set(String(p.steam_id), String(p.name));
+      if (refreshed) {
+        nameByStId = buildNameMapFromMatch(refreshed);
+        // Also refresh kills/round_ticks so buildPresetSpec sees the
+        // fresh rows when it queries by match_map_id below.
+        match.match_maps = refreshed.match_maps;
+      }
+      unresolved = Array.from(allKillers).filter(
+        (sid) => !nameByStId.has(sid),
+      );
+      if (unresolved.length > 0) {
+        // Still missing after re-parse — most often this means the
+        // running demo-parser image is older than the parser-side
+        // PlayerInfo handler fix, or the demo file genuinely doesn't
+        // carry the names. Either way, fall back to Steam's public
+        // persona endpoint: we have the steamid64 right here and the
+        // user's question on this exact failure mode was "do we have
+        // steam ids? we could look them up via Steam instead?".
+        this.logger.warn(
+          `[auto-clips] match ${matchId} demo missing ${unresolved.length} killer name(s) after re-parse — falling back to Steam personas: ${unresolved.join(", ")}`,
+        );
+        const personas = await this.resolveSteamPersonas(unresolved);
+        for (const [sid, name] of personas) {
+          nameByStId.set(sid, name);
         }
+        unresolved = Array.from(allKillers).filter(
+          (sid) => !nameByStId.has(sid),
+        );
+        if (unresolved.length > 0) {
+          this.logger.warn(
+            `[auto-clips] match ${matchId} STILL missing ${unresolved.length} killer name(s) after Steam lookup: ${unresolved.join(", ")} — clips for these will queue as "Player NNNN" until the streamer pod's GSI patch fires`,
+          );
+        } else {
+          this.logger.log(
+            `[auto-clips] match ${matchId} resolved all missing killer names via Steam personas`,
+          );
+        }
+      } else {
+        this.logger.log(
+          `[auto-clips] match ${matchId} re-parse resolved all missing killer names`,
+        );
+      }
+    }
+
+    // Make sure every killer has a `players` row before we queue the
+    // clip_render_jobs. The match_clips.target_steam_id column has a
+    // FK to players(steam_id) — without a row here, finalizeClipUpload
+    // has to drop target_steam_id to avoid blowing up the insert,
+    // which is exactly why guest players (steam_ids that never logged
+    // into 5stack) ended up with no clickable attribution on their
+    // clips. Upserting with update_columns:[] is a no-op for
+    // already-existing players, so we don't trample real users'
+    // profile data.
+    const upsertObjects: Array<{
+      steam_id: string;
+      name: string;
+      role: e_player_roles_enum;
+    }> = [];
+    for (const sid of allKillers) {
+      const name = nameByStId.get(sid);
+      if (!name) continue;
+      upsertObjects.push({
+        steam_id: sid,
+        name,
+        role: "user" as e_player_roles_enum,
+      });
+    }
+    if (upsertObjects.length > 0) {
+      try {
+        await this.hasura.mutation({
+          insert_players: {
+            __args: {
+              objects: upsertObjects,
+              on_conflict: {
+                constraint: "players_pkey",
+                update_columns: [],
+              },
+            },
+            affected_rows: true,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `[auto-clips] match ${matchId} player upsert failed: ${(error as Error)?.message}`,
+        );
       }
     }
 
@@ -868,17 +1110,17 @@ export class ClipsService {
     );
 
     // Enqueue one BullMQ batch job per match_map. The worker
-    // (BatchHighlightsRenderJob) owns pod lifecycle, polling, retry,
-    // and stuck-job cleanup — this method just produces work.
+    // (BatchHighlightsRenderJob) owns pod lifecycle, polling, and
+    // pod-state observation — this method just produces work.
     //
-    // jobId = matchMapId so re-running auto-gen for the same match
-    // (e.g. from the "Create Player Highlights" admin button while
-    // the previous batch is still in-flight) is a no-op rather than
-    // racing two pods for the same demo. BullMQ's add() returns the
-    // existing job when the id collides instead of creating a new
-    // one. Once the original job finishes, a future re-run gets a
-    // fresh attempt because BullMQ removes completed jobs (see
-    // ClipRenderBatch.defaultJobOptions.removeOnComplete).
+    // jobId is unique per call (matchMapId + ms timestamp) so every
+    // press of "Create Player Highlights" produces a fresh BullMQ
+    // job that re-renders. We previously used matchMapId so re-runs
+    // would dedupe to the existing job, but combined with the 24h
+    // age-based retention that left re-runs silently shadowed by
+    // the prior completed job. Queue concurrency is 1, so two
+    // simultaneous requests still serialise — they don't race for
+    // the same GPU.
     for (const matchMapId of perMap.keys()) {
       try {
         // BullMQ job NAME must match the worker class name —
@@ -889,7 +1131,7 @@ export class ClipsService {
         await this.batchQueue.add(
           BATCH_HIGHLIGHTS_JOB_NAME,
           { matchMapId },
-          { jobId: matchMapId },
+          { jobId: `${matchMapId}-${Date.now()}` },
         );
         this.logger.log(
           `[auto-clips] match ${matchId} map ${matchMapId} → enqueued ClipRenderBatch`,
@@ -1192,7 +1434,12 @@ export class ClipsService {
       output: { format: "mp4", resolution: output.resolution, fps: output.fps },
       destination: "library",
       title: title ?? autoTitle,
-    };
+      // target_name is exposed separately so the queue UI can show the
+      // player attribution even when the title is overridden by the
+      // operator. Falls back to the same "Player NNNN" placeholder the
+      // title path uses, which the streamer pod still patches via GSI.
+      target_name: playerLabel,
+    } as ClipSpec;
   }
 
   private validateSpec(spec: ClipSpec) {

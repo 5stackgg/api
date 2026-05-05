@@ -5,6 +5,7 @@ import { ClipRendersController } from "./clip-renders.controller";
 import { HasuraModule } from "../../hasura/hasura.module";
 import { S3Module } from "../../s3/s3.module";
 import { GameStreamerModule } from "../game-streamer/game-streamer.module";
+import { DemosModule } from "../../demos/demos.module";
 import { MatchQueues } from "../enums/MatchQueues";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 
@@ -19,6 +20,7 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
     HasuraModule,
     S3Module,
     GameStreamerModule,
+    DemosModule,
     BullModule.registerQueue({ name: MatchQueues.ClipRenderBatch }),
   ],
   controllers: [ClipRendersController],

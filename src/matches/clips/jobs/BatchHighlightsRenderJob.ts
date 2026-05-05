@@ -16,39 +16,34 @@ import { HasuraService } from "../../../hasura/hasura.service";
 // is the actual processor — it loads cs2 once, runs through the
 // entries in CLIP_BATCH_JOBS sequentially, and exits when done.
 // This BullMQ job is a watchdog: dispatches the pod, polls its
-// state + the clip_render_jobs rows, and surfaces failures.
+// state, and surfaces failures.
 //
-// One BullMQ job per match_map_id (deduped via jobId). Worker
-// concurrency on the queue is 1 so the GPU pod budget across the
-// platform is bounded regardless of how many match_maps are
-// queued.
+// Each BullMQ job means "render this batch". We always treat it as
+// a fresh re-render: any pre-existing k8s Job for this match_map
+// (from a prior run still inside ttlSecondsAfterFinished, or a
+// stuck pod, or whatever) is killed before we dispatch. This is
+// what the operator pressing "Create Player Highlights" expects —
+// the previous run's state should not silently shadow this one.
 //
 // Lifecycle, polled every CHECK_DELAY_MS via moveToDelayed:
 //
-//   1. Look at clip_render_jobs for this match_map.
-//      - If 0 in-flight (queued / rendering / uploading) → DONE.
-//   2. Look at the pod's k8s Job.
-//      - "absent"   → no pod yet → dispatch.
-//      - "running"  → pod alive → wait one more tick. We never
-//                     preempt. If the operator genuinely wants to
-//                     stop a runaway pod they can use the
-//                     "Cancel batch" button on the queue page,
-//                     which kills the pod through an explicit
-//                     authorised path (cancelClipRenderBatch).
-//      - "succeeded"→ pod exited cleanly. If clip rows still
-//                     in-flight, the pod failed to upload them
-//                     before exiting; mark them error and DONE.
-//      - "failed"   → k8s reports the Job hit backoffLimit (the
-//                     container died). We DO NOT auto-redispatch
-//                     — most permanent failures (bad presigned
-//                     URL, missing demo, image pull error, etc.)
-//                     would just trip again immediately and the
-//                     repeated "force-killed pod" log noise reads
-//                     like we're being aggressive when we're
-//                     actually just observing a pod that already
-//                     died. Mark rows error with the pod's exit
-//                     reason and exit. Operator retries via
-//                     "Create Player Highlights".
+//   First poll (data.dispatched is undefined):
+//     1. Kill any existing k8s Job for this match_map.
+//     2. Dispatch a fresh pod with the current in-flight rows.
+//     3. Set data.dispatched=true and re-queue with a delay.
+//
+//   Subsequent polls (data.dispatched is true):
+//     1. If 0 in-flight (queued/rendering/uploading) → DONE.
+//     2. Read the pod's k8s Job state:
+//        - running    → wait one more tick.
+//        - succeeded  → pod exited cleanly. If rows are still
+//                       in-flight, render script never POSTed
+//                       terminal status — mark them error.
+//        - failed     → container died. Pull the exit reason +
+//                       log tail and mark rows error.
+//        - absent     → Job got deleted out from under us
+//                       (operator cancel, k8s reaped). Mark rows
+//                       error.
 
 const CHECK_DELAY_MS = 10_000;
 
@@ -72,79 +67,67 @@ export class BatchHighlightsRenderJob extends WorkerHost {
   async process(
     job: Job<{
       matchMapId: string;
+      dispatched?: boolean;
     }>,
   ): Promise<void> {
-    const { matchMapId } = job.data;
+    const { matchMapId, dispatched } = job.data;
     const tag = `[batch-highlights ${matchMapId}]`;
 
-    // 1. What's left to do for this match_map?
     const inFlight = await this.fetchInFlightJobs(matchMapId);
     if (inFlight.length === 0) {
       this.logger.log(`${tag} no in-flight clip_render_jobs — done`);
       return;
     }
 
-    // 2. Pod state.
-    const podState =
-      await this.gameStreamer.getBatchHighlightsPodState(matchMapId);
-
-    if (podState === "absent") {
+    // First poll for this BullMQ attempt: always re-render. The k8s
+    // Job name is keyed by match_map_id and we keep terminal Jobs
+    // around for 24h, so any prior pod must be cleared out first —
+    // otherwise the "what's the pod doing" probe below reads the
+    // wrong run's state. The dispatched flag survives across the
+    // delayed re-executions of this same BullMQ job.
+    if (!dispatched) {
       this.logger.log(
-        `${tag} no pod — dispatching ${inFlight.length} in-flight job(s)`,
+        `${tag} dispatching ${inFlight.length} job(s) — clearing any prior pod first`,
       );
-      await this.gameStreamer.dispatchBatchHighlights(matchMapId, inFlight);
-      // First poll waits a bit longer to give the pod time to come up.
+      try {
+        await this.gameStreamer.killBatchHighlightsPod(matchMapId);
+        await this.gameStreamer.dispatchBatchHighlights(matchMapId, inFlight);
+      } catch (error) {
+        const msg = (error as Error)?.message ?? "dispatch failed";
+        this.logger.error(`${tag} dispatch failed: ${msg}`);
+        await this.failInFlightJobs(
+          inFlight.map((j) => j.id),
+          `dispatch failed: ${msg}`,
+        );
+        return;
+      }
+      await job.updateData({ ...job.data, dispatched: true });
+      // First wait is longer — the pod needs a moment to come up.
       return this.delayUntilNext(job, CHECK_DELAY_MS * 2);
     }
 
+    const podState =
+      await this.gameStreamer.getBatchHighlightsPodState(matchMapId);
+
     if (podState === "running") {
-      // Pod is processing the batch. Wait — never preempt. The pod
-      // owns its own lifecycle; killing it here would lose the rest
-      // of the batch it's about to render against the same already-
-      // loaded cs2 instance.
       return this.delayUntilNext(job, CHECK_DELAY_MS);
     }
 
-    if (podState === "succeeded") {
-      // Pod exited 0 but rows are still in-flight — most often this
-      // means the inline render script bailed out early (missing env,
-      // demo never loaded, spec-server unreachable) before it ever
-      // POSTed status=error back to the api. Pull the pod's last
-      // log lines so the operator sees the real reason on the row
-      // (and in this warning) instead of a generic "exited before
-      // upload" string with no context.
-      const reason =
-        (await this.gameStreamer.getBatchPodFailureReason(matchMapId)) ??
-        "render pod exited before upload";
-      this.logger.warn(
-        `${tag} pod exited cleanly but ${inFlight.length} job(s) never reached terminal state — ${reason}`,
-      );
-      await this.failInFlightJobs(inFlight.map((j) => j.id), reason);
-      return;
-    }
-
-    // podState === "failed". k8s declared the container dead.
-    // We DO NOT auto-redispatch — pull the most recent pod's exit
-    // reason / log tail so the operator can see WHY (bad presigned
-    // URL, missing demo, image pull, etc.) and let them decide
-    // whether to manually retry via "Create Player Highlights".
-    // Repeated automatic redispatches with identical inputs almost
-    // never recover, and the resulting "force-killed pod" log
-    // stream looks like we're killing healthy pods even though
-    // we're observing already-dead ones.
-    const failureReason =
+    // succeeded / failed / absent → pod is done observing. Anything
+    // still in-flight is stuck — pull the pod's exit reason if
+    // there's one available and fail the rows so the operator sees
+    // why instead of a row stuck rendering forever.
+    const reason =
       (await this.gameStreamer.getBatchPodFailureReason(matchMapId)) ??
-      "render pod failed (k8s reported the Job in failed state)";
+      (podState === "succeeded"
+        ? "render pod exited before reporting terminal status"
+        : podState === "failed"
+          ? "render pod failed (k8s reported Job in failed state)"
+          : "render pod no longer present (Job deleted)");
     this.logger.warn(
-      `${tag} pod failed: ${failureReason} — marking ${inFlight.length} in-flight row(s) error (NO redispatch)`,
+      `${tag} pod ${podState} with ${inFlight.length} job(s) still in-flight — ${reason}`,
     );
-    await this.failInFlightJobs(
-      inFlight.map((j) => j.id),
-      failureReason,
-    );
-    // Leave the failed k8s Job resource around for ~ttl so the
-    // operator can `kubectl logs` against it. The k8s Job's
-    // ttlSecondsAfterFinished (24h) reaps it automatically.
+    await this.failInFlightJobs(inFlight.map((j) => j.id), reason);
   }
 
   private async delayUntilNext(job: Job, ms: number): Promise<void> {

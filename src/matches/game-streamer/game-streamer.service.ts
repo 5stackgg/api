@@ -1135,27 +1135,15 @@ export class GameStreamerService {
     const nodeId = await this.pickGpuNode(match?.region ?? null);
     const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
 
-    // Idempotency: bail if a batch pod is already running for this
-    // match_map. Re-dispatch on the same key would either fail to
-    // create (k8s rejects duplicate names) or trample the in-flight
-    // pod's render. Cheaper to detect upstream.
+    // Caller (BatchHighlightsRenderJob) guarantees no prior Job
+    // exists by killBatchHighlightsPod-ing first. We don't second-
+    // guess that here — the operator pressing "Create Player
+    // Highlights" expects a fresh re-render every time, and silently
+    // bailing on a leftover terminal Job (24h ttlSecondsAfterFinished)
+    // is exactly what was leaving rows stuck in queued.
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
-    try {
-      await batch.readNamespacedJob({
-        name: jobName,
-        namespace: this.namespace,
-      });
-      this.logger.log(
-        `[batch-highlights ${matchMapId}] job ${jobName} already running — not re-dispatching`,
-      );
-      return;
-    } catch (error) {
-      if ((error as { code?: number | string }).code?.toString() !== "404") {
-        throw error;
-      }
-    }
 
     const env: V1EnvVar[] = [
       { name: "MATCH_ID", value: matchId },

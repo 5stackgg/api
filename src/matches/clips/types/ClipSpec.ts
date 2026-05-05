@@ -30,4 +30,10 @@ export interface ClipSpec {
   };
   destination: "library" | "download";
   title?: string;
+  // Player this clip is "about" — set by buildPresetSpec so the queue
+  // UI can show the player attribution as a separate meta line. Pre-
+  // resolved from the demo's parsed players or the players table at
+  // enqueue time; the streamer pod's GSI title patch can refine it
+  // mid-render if the demo had a stale name.
+  target_name?: string;
 }
