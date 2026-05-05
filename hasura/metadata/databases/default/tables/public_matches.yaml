@@ -672,18 +672,6 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
-  - role: match_organizer
-    permission:
-      filter:
-        is_organizer:
-          _eq: true
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      filter:
-        is_organizer:
-          _eq: true
-    comment: ""
   - role: user
     permission:
       filter:

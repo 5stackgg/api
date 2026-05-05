@@ -73,13 +73,6 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
-  - role: match_organizer
-    permission:
-      filter:
-        match:
-          is_organizer:
-            _eq: true
-    comment: ""
   - role: user
     permission:
       filter:

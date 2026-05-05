@@ -25,7 +25,16 @@ type Modules =
   | "Telemetry"
   | "DedicatedServers";
 
-export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
+export type UseQueueOptions = {
+  concurrency?: number;
+  limiter?: { max: number; duration: number };
+};
+
+export const UseQueue = (
+  module: Modules,
+  queue: string,
+  options: UseQueueOptions = {},
+): ClassDecorator => {
   return (target) => {
     if (!Reflect.hasMetadata("jobs", QueueProcessors)) {
       Reflect.defineMetadata("jobs", [], QueueProcessors);
@@ -53,7 +62,22 @@ export const UseQueue = (module: Modules, queue: string): ClassDecorator => {
     Reflect.defineMetadata("jobs", jobs, QueueProcessors);
 
     if (!processors[module][queue]) {
-      @Processor(queue)
+      const processorOptions: {
+        concurrency?: number;
+        limiter?: { max: number; duration: number };
+      } = {};
+      if (typeof options.concurrency === "number") {
+        processorOptions.concurrency = options.concurrency;
+      }
+      if (options.limiter) {
+        processorOptions.limiter = options.limiter;
+      }
+      const processorDecorator =
+        Object.keys(processorOptions).length > 0
+          ? Processor(queue, processorOptions)
+          : Processor(queue);
+
+      @processorDecorator
       class QueueProcessor extends WorkerHost<any> {
         constructor(
           protected readonly logger: Logger,

@@ -34,6 +34,18 @@ type Mutation {
 }
 
 type Mutation {
+  cancelClipRender(
+    job_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  cancelClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   cancelMatch(
     match_id: uuid!
   ): SuccessOutput
@@ -52,6 +64,24 @@ type Mutation {
 }
 
 type Mutation {
+  createClipFromPreset(
+    match_map_id: uuid!
+    target_steam_id: String!
+    preset: String!
+    resolution: String
+    fps: Int
+    title: String
+    target_name: String
+  ): CreateClipRenderOutput
+}
+
+type Mutation {
+  createClipRender(
+    spec: ClipSpecInput!
+  ): CreateClipRenderOutput
+}
+
+type Mutation {
   createClips(
     match_id: uuid!
   ): SuccessOutput
@@ -67,6 +97,12 @@ type Mutation {
 
 type Query {
   dbStats: [DbStats]
+}
+
+type Mutation {
+  deleteClip(
+    clip_id: uuid!
+  ): SuccessOutput
 }
 
 type Mutation {
@@ -137,6 +173,12 @@ type Query {
   getIndexStats(
     schemas: [String!]
   ): [IndexStat]!
+}
+
+type Mutation {
+  getLiveStreamSpecState(
+    match_id: uuid!
+  ): LiveStreamSpecState
 }
 
 type Query {
@@ -407,6 +449,15 @@ type Mutation {
 }
 
 type Mutation {
+  updateClip(
+    clip_id: uuid!
+    title: String
+    visibility: String
+    target_steam_id: String
+  ): SuccessOutput
+}
+
+type Mutation {
   updateCs(
     game_server_node_id: uuid
     game: String
@@ -435,6 +486,75 @@ type Mutation {
 input SampleInput {
   username: String!
   password: String!
+}
+
+input ClipSegmentInput {
+  start_tick: Int!
+  end_tick: Int!
+  speed: Float
+  pov_steam_id: String
+}
+
+input ClipOverlayInput {
+  type: String!
+  start_ms: Int!
+  end_ms: Int!
+  payload: jsonb
+}
+
+input ClipAudioInput {
+  track_url: String
+  volume: Float
+  fade_in_ms: Int
+  fade_out_ms: Int
+  duck_game_audio: Boolean
+}
+
+input ClipOutputInput {
+  format: String!
+  resolution: String!
+  fps: Int!
+}
+
+input ClipSpecInput {
+  match_map_id: uuid!
+  segments: [ClipSegmentInput!]!
+  overlays: [ClipOverlayInput!]
+  audio: ClipAudioInput
+  output: ClipOutputInput!
+  destination: String!
+  title: String
+}
+
+type CreateClipRenderOutput {
+  success: Boolean!
+  job_id: uuid!
+}
+
+type LiveSpecSlot {
+  slot: Int!
+  steam_id: String!
+  name: String
+  team: String
+  alive: Boolean!
+  health: Int!
+}
+
+type LiveSpecGsi {
+  map_name: String
+  map_phase: String
+  round_phase: String
+  round_number: Int
+  spectated_steam_id: String
+  spec_slots: [LiveSpecSlot!]!
+  team_ct_name: String
+  team_t_name: String
+  team_ct_score: Int
+  team_t_score: Int
+}
+
+type LiveStreamSpecState {
+  gsi: LiveSpecGsi
 }
 
 type TournamentMatchResetImpact {

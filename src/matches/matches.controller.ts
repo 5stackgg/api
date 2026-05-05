@@ -13,6 +13,7 @@ import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice
 import {
   e_match_status_enum,
   match_map_veto_picks_set_input,
+  match_map_demos_set_input,
   matches_set_input,
   servers_set_input,
   game_server_nodes_set_input,
@@ -37,6 +38,8 @@ import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament
 import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
+import { ClipsService } from "./clips/clips.service";
+import { ClipSpec } from "./clips/types/ClipSpec";
 
 @Controller("matches")
 export class MatchesController {
@@ -72,6 +75,7 @@ export class MatchesController {
     private readonly tournamentVoice: DiscordTournamentVoiceService,
     private readonly gameStreamer: GameStreamerService,
     private readonly demoMetadata: DemoMetadataService,
+    private readonly clips: ClipsService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -368,6 +372,33 @@ export class MatchesController {
   }
 
   @HasuraEvent()
+  public async match_map_demo_events(
+    data: HasuraEventData<match_map_demos_set_input>,
+  ) {
+    const newRow = data.new ?? {};
+    const oldRow = data.old ?? {};
+    const matchId = (newRow.match_id ?? oldRow.match_id) as string | undefined;
+    if (!matchId) return;
+
+    const becameParsed =
+      !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
+    if (!becameParsed) return;
+
+    try {
+      const queued = await this.clips.autoGenerateForMatch(matchId);
+      if (queued > 0) {
+        this.logger.log(
+          `[match ${matchId}] metadata parsed — auto-clips queued ${queued} job(s)`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[match ${matchId}] auto-clips queue failed on metadata_parsed: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  @HasuraEvent()
   public async match_events(data: HasuraEventData<matches_set_input>) {
     const matchId = (data.new.id || data.old.id) as string;
 
@@ -394,7 +425,6 @@ export class MatchesController {
       await this.tournamentVoice.movePlayersToMatchChannels(matchId);
     }
 
-    // Also create voice channels on Veto or Live (fallback for skipped check-in)
     if (
       data.op === "UPDATE" &&
       (data.new.status === "Veto" || data.new.status === "Live") &&
@@ -835,11 +865,108 @@ export class MatchesController {
       throw Error("you are not a match organizer");
     }
 
-    await this.gameStreamer.createClips(match_id);
+    const queued = await this.clips.autoGenerateForMatch(match_id, {
+      force: true,
+    });
 
     return {
       success: true,
+      queued,
     };
+  }
+
+  @HasuraAction()
+  public async createClipRender(data: { spec: ClipSpec; user: User }) {
+    const { spec, user } = data;
+    if (!isRoleAbove(user.role, "verified_user")) {
+      throw Error("clip rendering requires a verified account");
+    }
+    if (!spec || !spec.match_map_id) {
+      throw Error("invalid clip spec");
+    }
+    const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
+    return {
+      success: true,
+      job_id: jobId,
+    };
+  }
+
+  @HasuraAction()
+  public async cancelClipRender(data: { job_id: string; user: User }) {
+    await this.clips.cancelClipRender(data.user.steam_id, data.job_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async cancelClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "streamer")) {
+      throw Error("only operators can cancel a render batch");
+    }
+    const cancelled = await this.clips.cancelClipRenderBatch(data.match_map_id);
+    return { success: true, cancelled };
+  }
+
+  @HasuraAction()
+  public async getLiveStreamSpecState(data: { match_id: string; user: User }) {
+    const { match_id } = data;
+    const state = await this.gameStreamer.getLiveSpecState(match_id);
+    return state;
+  }
+
+  @HasuraAction()
+  public async createClipFromPreset(data: {
+    match_map_id: string;
+    target_steam_id: string;
+    preset: "knife" | "multikills" | "best_round" | "recap";
+    resolution?: "720p" | "1080p";
+    fps?: 30 | 60;
+    title?: string;
+    target_name?: string;
+    user: User;
+  }) {
+    const { user } = data;
+    if (!isRoleAbove(user.role, "verified_user")) {
+      throw Error("clip rendering requires a verified account");
+    }
+    const spec = await this.clips.buildPresetSpec(
+      data.match_map_id,
+      data.target_steam_id,
+      data.preset,
+      {
+        resolution: data.resolution ?? "1080p",
+        fps: data.fps ?? 60,
+      },
+      data.title,
+      data.target_name,
+    );
+    const { jobId } = await this.clips.createClipRender(user.steam_id, spec);
+    return { success: true, job_id: jobId };
+  }
+
+  @HasuraAction()
+  public async deleteClip(data: { clip_id: string; user: User }) {
+    const isOperator = isRoleAbove(data.user.role, "streamer");
+    await this.clips.deleteClip(data.user.steam_id, data.clip_id, isOperator);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async updateClip(data: {
+    clip_id: string;
+    title?: string | null;
+    visibility?: "private" | "unlisted" | "match" | "public";
+    target_steam_id?: string | null;
+    user: User;
+  }) {
+    await this.clips.updateClip(data.user.steam_id, data.clip_id, {
+      title: data.title,
+      visibility: data.visibility,
+      target_steam_id: data.target_steam_id,
+    });
+    return { success: true };
   }
 
   @HasuraEvent()

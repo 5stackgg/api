@@ -32,8 +32,24 @@ select_permissions:
         - cs2_build
         - kills
         - bombs
+        - players
       computed_fields:
         - download_url
       filter: {}
       allow_aggregations: true
     comment: ""
+event_triggers:
+  - name: match_map_demo_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - metadata_parsed_at
+          - file
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

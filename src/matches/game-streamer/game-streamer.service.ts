@@ -9,14 +9,16 @@ import {
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../../hasura/hasura.service";
+import { S3Service } from "../../s3/s3.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { randomBytes } from "node:crypto";
+import { resolveInClusterApiBase } from "../clips/clips.constants";
 
-type StreamerMode = "live" | "create-clips" | "demo";
+type StreamerMode = "live" | "create-clips" | "demo" | "batch-highlights";
 
 export type DemoControlAction =
   | "pause"
@@ -67,6 +69,7 @@ export class GameStreamerService {
     private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    private readonly s3: S3Service,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -158,6 +161,51 @@ export class GameStreamerService {
 
   public async specSlot(matchId: string, slot: number) {
     return this.callSpec(matchId, "slot", { slot });
+  }
+
+  public async getLiveSpecState(matchId: string): Promise<{
+    gsi: {
+      map_name: string | null;
+      map_phase: string | null;
+      round_phase: string | null;
+      round_number: number | null;
+      spectated_steam_id: string | null;
+      spec_slots: Array<{
+        slot: number;
+        steam_id: string;
+        name: string | null;
+        team: "T" | "CT" | null;
+        alive: boolean;
+        health: number;
+      }>;
+      team_ct_name: string | null;
+      team_t_name: string | null;
+      team_ct_score: number;
+      team_t_score: number;
+    } | null;
+  }> {
+    const svc = GameStreamerService.GetLiveServiceName(matchId);
+    const url = `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/state`;
+    let res: Response;
+    try {
+      res = await fetch(url, { signal: AbortSignal.timeout(3_000) });
+    } catch (error) {
+      const cause = (error as Error)?.cause as { code?: string } | undefined;
+      const code = cause?.code ?? (error as { code?: string })?.code;
+      if (
+        code === "ENOTFOUND" ||
+        code === "EAI_AGAIN" ||
+        code === "ECONNREFUSED"
+      ) {
+        return { gsi: null };
+      }
+      throw new Error(`spec state unreachable: ${(error as Error)?.message}`);
+    }
+    if (!res.ok) {
+      return { gsi: null };
+    }
+    const body = (await res.json().catch(() => ({}))) as { gsi?: any };
+    return { gsi: body?.gsi ?? null };
   }
 
   public async specAutodirector(matchId: string, enabled: boolean) {
@@ -437,6 +485,58 @@ export class GameStreamerService {
       throw new Error(`demo ${action} -> ${res.status}: ${text.slice(0, 200)}`);
     }
     return res.json().catch(() => ({ ok: true }));
+  }
+
+  public async dispatchClipRenderToPod(
+    sessionId: string,
+    payload: {
+      job_id: string;
+      token: string;
+      api_base: string;
+      segments: Array<{
+        start_tick: number;
+        end_tick: number;
+        pov_steam_id?: string;
+      }>;
+      output_dims: string;
+      output_fps: number;
+      render_speed?: number;
+    },
+  ) {
+    const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(5_000),
+      });
+    } catch (error) {
+      const cause = (error as Error)?.cause as { code?: string } | undefined;
+      const code = cause?.code ?? (error as { code?: string })?.code;
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.error(
+        `[clip dispatch] transport: ${code ?? "<none>"} ${message} url=${url}`,
+      );
+      if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
+        throw new Error(
+          "demo session pod has not registered DNS yet — try again in a few seconds",
+        );
+      }
+      if (code === "ECONNREFUSED") {
+        throw new Error(
+          "demo session pod is up but spec-server is not listening yet",
+        );
+      }
+      throw new Error(`spec-server render-clip unreachable: ${message}`);
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `spec-server render-clip -> ${res.status}: ${text.slice(0, 200)}`,
+      );
+    }
   }
 
   private async findDemoSession(matchMapId: string, userSteamId: string) {
@@ -837,6 +937,216 @@ export class GameStreamerService {
     if (kubeError) {
       throw kubeError;
     }
+  }
+
+  public static GetBatchHighlightsJobName(matchMapId: string) {
+    return `gs-batch-${matchMapId.replace(/-/g, "").slice(0, 12)}`;
+  }
+
+  public async getBatchHighlightsPodState(
+    matchMapId: string,
+  ): Promise<"running" | "succeeded" | "failed" | "absent"> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+    let job;
+    try {
+      job = await batch.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+    } catch (error) {
+      if ((error as { code?: number | string }).code?.toString() === "404") {
+        return "absent";
+      }
+      throw error;
+    }
+    const status = job.status ?? {};
+    if ((status.active ?? 0) > 0) return "running";
+    if ((status.succeeded ?? 0) > 0) return "succeeded";
+    if ((status.failed ?? 0) > 0) return "failed";
+    return "running";
+  }
+
+  public async getBatchPodFailureReason(
+    matchMapId: string,
+  ): Promise<string | null> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+    let pods;
+    try {
+      pods = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[batch-highlights ${matchMapId}] failure-reason listPods: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+    const sorted = [...(pods.items ?? [])].sort((a, b) => {
+      const ta = new Date(a.metadata?.creationTimestamp ?? 0).getTime();
+      const tb = new Date(b.metadata?.creationTimestamp ?? 0).getTime();
+      return tb - ta;
+    });
+    const pod = sorted[0];
+    if (!pod?.metadata?.name) return null;
+
+    const term =
+      pod.status?.containerStatuses?.[0]?.lastState?.terminated ??
+      pod.status?.containerStatuses?.[0]?.state?.terminated;
+    const reason = term?.reason ?? null;
+    const exitCode = term?.exitCode ?? null;
+
+    let logTail: string | null = null;
+    try {
+      const logs = await core.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+        tailLines: 5,
+      });
+      const lines = String(logs ?? "")
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+      if (lines.length > 0) logTail = lines.join(" | ");
+    } catch {}
+
+    const parts: string[] = [];
+    if (reason) parts.push(reason);
+    if (exitCode != null) parts.push(`exit=${exitCode}`);
+    if (logTail) parts.push(logTail);
+    if (parts.length === 0) return null;
+    return parts.join(" — ").slice(0, 500);
+  }
+
+  public async killBatchHighlightsPod(matchMapId: string): Promise<void> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    try {
+      await this.deleteJob(jobName);
+      this.logger.warn(
+        `[batch-highlights ${matchMapId}] force-killed pod ${jobName}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `[batch-highlights ${matchMapId}] kill failed: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  public async dispatchBatchHighlights(
+    matchMapId: string,
+    jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
+  ): Promise<void> {
+    if (jobs.length === 0) return;
+
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: { match_map_id: { _eq: matchMapId } },
+          limit: 1,
+        },
+        match_id: true,
+        file: true,
+        total_ticks: true,
+        tick_rate: true,
+        round_ticks: true,
+        workshop_id: true,
+        cs2_build: true,
+      },
+    });
+    const demo = match_map_demos?.[0];
+    if (!demo?.file) {
+      throw new Error(
+        `cannot dispatch batch highlights: no demo file for match_map ${matchMapId}`,
+      );
+    }
+    const matchId = String(demo.match_id);
+
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        region: true,
+      },
+    });
+
+    const presignedDemoUrl = await this.s3.getPresignedUrl(
+      demo.file as string,
+      undefined,
+      60 * 60,
+      "get",
+    );
+    const nodeId = await this.pickGpuNode(match?.region ?? null);
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    const env: V1EnvVar[] = [
+      { name: "MATCH_ID", value: matchId },
+      { name: "MATCH_MAP_ID", value: matchMapId },
+      { name: "DEMO_URL", value: presignedDemoUrl },
+      { name: "DEMO_FILE_NAME", value: demo.file as string },
+      { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
+      { name: "CLIP_BATCH_MODE", value: "1" },
+      {
+        name: "CLIP_BATCH_JOBS",
+        value: JSON.stringify(
+          jobs.map((j) => ({
+            job_id: j.job_id,
+            token: j.session_token,
+            spec: j.spec,
+          })),
+        ),
+      },
+    ];
+    if (demo.tick_rate != null) {
+      env.push({
+        name: "DEMO_TICK_RATE",
+        value: String(demo.tick_rate),
+      });
+    }
+    if (demo.total_ticks != null) {
+      env.push({
+        name: "DEMO_TOTAL_TICKS",
+        value: String(demo.total_ticks),
+      });
+    }
+    if (demo.round_ticks != null) {
+      env.push({
+        name: "ROUND_TICKS",
+        value: JSON.stringify(demo.round_ticks),
+      });
+    }
+    if (demo.workshop_id) {
+      env.push({ name: "WORKSHOP_ID", value: String(demo.workshop_id) });
+    }
+    if (demo.cs2_build) {
+      env.push({ name: "CS2_BUILD", value: String(demo.cs2_build) });
+    }
+
+    this.logger.log(
+      `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
+    );
+
+    await batch.createNamespacedJob({
+      namespace: this.namespace,
+      body: this.buildJobSpec(
+        jobName,
+        matchId,
+        "batch-highlights",
+        nodeId,
+        env,
+        {
+          "match-map-id": matchMapId,
+        },
+      ),
+    });
   }
 
   public async createClips(matchId: string) {
@@ -1265,14 +1575,23 @@ export class GameStreamerService {
     extraLabels: Record<string, string> = {},
   ): V1Job {
     const containerName =
-      mode === "create-clips" ? "clips" : mode === "demo" ? "demo" : "live";
+      mode === "create-clips"
+        ? "clips"
+        : mode === "demo"
+          ? "demo"
+          : mode === "batch-highlights"
+            ? "batch"
+            : "live";
     const args =
       mode === "live"
         ? ["live"]
         : mode === "demo"
           ? ["demo"]
-          : ["create-clips"];
-    const exposesSpecPorts = mode === "live" || mode === "demo";
+          : mode === "batch-highlights"
+            ? ["batch-highlights"]
+            : ["create-clips"];
+    const exposesSpecPorts =
+      mode === "live" || mode === "demo" || mode === "batch-highlights";
 
     const labels: Record<string, string> = {
       app: "game-streamer",

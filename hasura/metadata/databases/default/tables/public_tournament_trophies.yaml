@@ -25,20 +25,6 @@ object_relationships:
           name: tournament_trophy_configs
           schema: public
 insert_permissions:
-  - role: tournament_organizer
-    permission:
-      check:
-        tournament:
-          is_organizer:
-            _eq: true
-      set:
-        manual: "true"
-      columns:
-        - tournament_id
-        - tournament_team_id
-        - player_steam_id
-        - placement
-    comment: ""
   - role: user
     permission:
       check:
@@ -69,59 +55,7 @@ select_permissions:
       filter: {}
       allow_aggregations: true
     comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - id
-        - tournament_id
-        - tournament_team_id
-        - team_id
-        - player_steam_id
-        - placement
-        - placement_tier
-        - manual
-        - created_at
-      filter: {}
-      allow_aggregations: true
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - id
-        - tournament_id
-        - tournament_team_id
-        - team_id
-        - player_steam_id
-        - placement
-        - placement_tier
-        - manual
-        - created_at
-      filter: {}
-      allow_aggregations: true
-    comment: ""
-  - role: user
-    permission:
-      columns:
-        - id
-        - tournament_id
-        - tournament_team_id
-        - team_id
-        - player_steam_id
-        - placement
-        - placement_tier
-        - manual
-        - created_at
-      filter: {}
-      allow_aggregations: true
-    comment: ""
 delete_permissions:
-  - role: tournament_organizer
-    permission:
-      filter:
-        tournament:
-          is_organizer:
-            _eq: true
-    comment: ""
   - role: user
     permission:
       filter:

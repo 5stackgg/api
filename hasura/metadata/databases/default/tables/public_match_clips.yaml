@@ -1,0 +1,104 @@
+table:
+  name: match_clips
+  schema: public
+object_relationships:
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: target
+    using:
+      foreign_key_constraint_on: target_steam_id
+  - name: user
+    using:
+      foreign_key_constraint_on: user_steam_id
+array_relationships:
+  - name: render_jobs
+    using:
+      foreign_key_constraint_on:
+        column: clip_id
+        table:
+          name: clip_render_jobs
+          schema: public
+computed_fields:
+  - name: download_url
+    definition:
+      function:
+        name: clip_download_url
+        schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - target_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - file
+        - thumbnail_url
+        - visibility
+        - created_at
+      computed_fields:
+        - download_url
+      filter: {}
+      allow_aggregations: true
+  - role: guest
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - target_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - file
+        - thumbnail_url
+        - visibility
+        - created_at
+      computed_fields:
+        - download_url
+      filter:
+        visibility:
+          _eq: public
+      allow_aggregations: true
+  - role: user
+    permission:
+      columns:
+        - user_steam_id
+        - target_steam_id
+        - duration_ms
+        - file
+        - thumbnail_url
+        - title
+        - visibility
+        - created_at
+        - id
+        - match_map_id
+      computed_fields:
+        - download_url
+      filter:
+        _or:
+          - user_steam_id:
+              _eq: X-Hasura-User-Id
+          - visibility:
+              _eq: public
+          - visibility:
+              _eq: unlisted
+          - _and:
+              - visibility:
+                  _eq: match
+              - match_map:
+                  match:
+                    _or:
+                      - organizer_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - lineup_1:
+                          lineup_players:
+                            steam_id:
+                              _eq: X-Hasura-User-Id
+                      - lineup_2:
+                          lineup_players:
+                            steam_id:
+                              _eq: X-Hasura-User-Id
+    comment: ""

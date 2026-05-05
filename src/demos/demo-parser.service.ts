@@ -30,6 +30,11 @@ export type ParsedBomb = {
   site?: "A" | "B";
 };
 
+export type ParsedPlayer = {
+  steam_id: string;
+  name: string;
+};
+
 export type ParsedDemo = {
   total_ticks: number;
   tick_rate: number;
@@ -39,6 +44,7 @@ export type ParsedDemo = {
   round_ticks: ParsedRound[];
   kills: ParsedKill[];
   bombs: ParsedBomb[];
+  players?: ParsedPlayer[];
 };
 
 @Injectable()

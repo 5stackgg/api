@@ -22,6 +22,10 @@ import {
   CheckOnDemandServerJob,
   CheckOnDemandServerJobEvents,
 } from "./jobs/CheckOnDemandServerJob";
+import {
+  BatchHighlightsRenderJob,
+  BatchHighlightsRenderJobEvents,
+} from "./clips/jobs/BatchHighlightsRenderJob";
 import { MatchEvents } from "./events";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
@@ -53,6 +57,7 @@ import { K8sModule } from "src/k8s/k8s.module";
 import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.module";
 import { GameStreamerModule } from "./game-streamer/game-streamer.module";
 import { DemosModule } from "../demos/demos.module";
+import { ClipsModule } from "./clips/clips.module";
 
 @Module({
   imports: [
@@ -68,6 +73,7 @@ import { DemosModule } from "../demos/demos.module";
     K8sModule,
     GameStreamerModule,
     DemosModule,
+    ClipsModule,
     forwardRef(() => DiscordBotModule),
     DiscordTournamentVoiceModule,
     MatchMaking,
@@ -86,6 +92,14 @@ import { DemosModule } from "../demos/demos.module";
           backoff: { type: "exponential", delay: 5000 },
         },
       },
+      {
+        name: MatchQueues.ClipRenderBatch,
+        defaultJobOptions: {
+          attempts: 1,
+          removeOnComplete: { age: 24 * 3600 },
+          removeOnFail: { age: 24 * 3600 },
+        },
+      },
     ),
     BullBoardModule.forFeature(
       {
@@ -98,6 +112,10 @@ import { DemosModule } from "../demos/demos.module";
       },
       {
         name: MatchQueues.EloCalculation,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: MatchQueues.ClipRenderBatch,
         adapter: BullMQAdapter,
       },
     ),
@@ -120,6 +138,8 @@ import { DemosModule } from "../demos/demos.module";
     CleanAbandonedMatches,
     ReapIdleDemoSessions,
     EloCalculation,
+    BatchHighlightsRenderJob,
+    BatchHighlightsRenderJobEvents,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),

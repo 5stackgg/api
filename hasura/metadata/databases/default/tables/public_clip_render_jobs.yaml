@@ -1,0 +1,61 @@
+table:
+  name: clip_render_jobs
+  schema: public
+object_relationships:
+  - name: clip
+    using:
+      foreign_key_constraint_on: clip_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  - name: user
+    using:
+      foreign_key_constraint_on: user_steam_id
+select_permissions:
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter: {}
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter: {}
+  - role: user
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - spec
+      filter:
+        user_steam_id:
+          _eq: X-Hasura-User-Id
