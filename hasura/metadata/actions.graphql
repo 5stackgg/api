@@ -40,6 +40,12 @@ type Mutation {
 }
 
 type Mutation {
+  cancelClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   cancelMatch(
     match_id: uuid!
   ): SuccessOutput
@@ -58,12 +64,6 @@ type Mutation {
 }
 
 type Mutation {
-  createClipRender(
-    spec: ClipSpecInput!
-  ): CreateClipRenderOutput
-}
-
-type Mutation {
   createClipFromPreset(
     match_map_id: uuid!
     target_steam_id: String!
@@ -76,24 +76,9 @@ type Mutation {
 }
 
 type Mutation {
-  getLiveStreamSpecState(
-    match_id: uuid!
-  ): LiveStreamSpecState
-}
-
-type Mutation {
-  updateClip(
-    clip_id: uuid!
-    title: String
-    visibility: String
-    target_steam_id: String
-  ): SuccessOutput
-}
-
-type Mutation {
-  cancelClipRenderBatch(
-    match_map_id: uuid!
-  ): SuccessOutput
+  createClipRender(
+    spec: ClipSpecInput!
+  ): CreateClipRenderOutput
 }
 
 type Mutation {
@@ -188,6 +173,12 @@ type Query {
   getIndexStats(
     schemas: [String!]
   ): [IndexStat]!
+}
+
+type Mutation {
+  getLiveStreamSpecState(
+    match_id: uuid!
+  ): LiveStreamSpecState
 }
 
 type Query {
@@ -455,6 +446,15 @@ type Mutation {
 
 type Mutation {
   unlinkDiscord: SuccessOutput
+}
+
+type Mutation {
+  updateClip(
+    clip_id: uuid!
+    title: String
+    visibility: String
+    target_steam_id: String
+  ): SuccessOutput
 }
 
 type Mutation {

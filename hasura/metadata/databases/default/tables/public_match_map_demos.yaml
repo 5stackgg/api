@@ -39,13 +39,6 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 event_triggers:
-  # Fires the match_map_demo_events handler in matches.controller.
-  # Used to kick off auto-clip generation the moment metadata parse
-  # completes — that's the first point a ClipSpec can be built (we
-  # need parsed kills + round_ticks). Triggered on the metadata_*
-  # column change rather than every row update so we don't run the
-  # handler when unrelated columns (size, file checksum, etc.)
-  # change.
   - name: match_map_demo_events
     definition:
       enable_manual: false

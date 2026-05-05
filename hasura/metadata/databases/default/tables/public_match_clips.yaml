@@ -5,12 +5,12 @@ object_relationships:
   - name: match_map
     using:
       foreign_key_constraint_on: match_map_id
-  - name: user
-    using:
-      foreign_key_constraint_on: user_steam_id
   - name: target
     using:
       foreign_key_constraint_on: target_steam_id
+  - name: user
+    using:
+      foreign_key_constraint_on: user_steam_id
 array_relationships:
   - name: render_jobs
     using:
@@ -43,6 +43,25 @@ select_permissions:
         - download_url
       filter: {}
       allow_aggregations: true
+  - role: guest
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - target_steam_id
+        - match_map_id
+        - title
+        - duration_ms
+        - file
+        - thumbnail_url
+        - visibility
+        - created_at
+      computed_fields:
+        - download_url
+      filter:
+        visibility:
+          _eq: public
+      allow_aggregations: true
   - role: user
     permission:
       columns:
@@ -58,13 +77,6 @@ select_permissions:
         - match_map_id
       computed_fields:
         - download_url
-      # Users see: their own clips (any visibility), other users'
-      # public + unlisted clips, plus 'match' clips when the viewer
-      # was actually in the match (either lineup or organizer).
-      # Private clips of OTHER users are invisible at the row level —
-      # important so a "guess the uuid" attack can't surface a
-      # private clip via /clips/<id>. Admin role below has filter: {}
-      # for full curation access.
       filter:
         _or:
           - user_steam_id:
@@ -90,27 +102,3 @@ select_permissions:
                             steam_id:
                               _eq: X-Hasura-User-Id
     comment: ""
-  # Guests + verified users see public clips through the same row,
-  # gated by the `visibility = 'public'` filter. Private clips are
-  # invisible at the row level, so the public highlights feed +
-  # clip detail page can use one query path for both anonymous and
-  # authenticated viewers.
-  - role: guest
-    permission:
-      columns:
-        - id
-        - user_steam_id
-        - target_steam_id
-        - match_map_id
-        - title
-        - duration_ms
-        - file
-        - thumbnail_url
-        - visibility
-        - created_at
-      computed_fields:
-        - download_url
-      filter:
-        visibility:
-          _eq: public
-      allow_aggregations: true
