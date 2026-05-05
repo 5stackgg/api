@@ -191,7 +191,11 @@ export class GameStreamerService {
     } catch (error) {
       const cause = (error as Error)?.cause as { code?: string } | undefined;
       const code = cause?.code ?? (error as { code?: string })?.code;
-      if (code === "ENOTFOUND" || code === "EAI_AGAIN" || code === "ECONNREFUSED") {
+      if (
+        code === "ENOTFOUND" ||
+        code === "EAI_AGAIN" ||
+        code === "ECONNREFUSED"
+      ) {
         return { gsi: null };
       }
       throw new Error(`spec state unreachable: ${(error as Error)?.message}`);
@@ -992,8 +996,9 @@ export class GameStreamerService {
     const pod = sorted[0];
     if (!pod?.metadata?.name) return null;
 
-    const term = pod.status?.containerStatuses?.[0]?.lastState?.terminated
-      ?? pod.status?.containerStatuses?.[0]?.state?.terminated;
+    const term =
+      pod.status?.containerStatuses?.[0]?.lastState?.terminated ??
+      pod.status?.containerStatuses?.[0]?.state?.terminated;
     const reason = term?.reason ?? null;
     const exitCode = term?.exitCode ?? null;
 
@@ -1135,9 +1140,16 @@ export class GameStreamerService {
 
     await batch.createNamespacedJob({
       namespace: this.namespace,
-      body: this.buildJobSpec(jobName, matchId, "batch-highlights", nodeId, env, {
-        "match-map-id": matchMapId,
-      }),
+      body: this.buildJobSpec(
+        jobName,
+        matchId,
+        "batch-highlights",
+        nodeId,
+        env,
+        {
+          "match-map-id": matchMapId,
+        },
+      ),
     });
   }
 

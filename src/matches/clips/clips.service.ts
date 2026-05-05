@@ -245,7 +245,11 @@ export class ClipsService {
     if (String(row.user_steam_id) !== String(userSteamId)) {
       throw new Error("you can only cancel your own clip renders");
     }
-    if (row.status === "done" || row.status === "error" || row.status === "cancelled") {
+    if (
+      row.status === "done" ||
+      row.status === "error" ||
+      row.status === "cancelled"
+    ) {
       return;
     }
 
@@ -386,10 +390,7 @@ export class ClipsService {
     if (!row) {
       throw new Error(`clip ${clipId} not found`);
     }
-    if (
-      !actorIsOperator &&
-      String(row.user_steam_id) !== String(userSteamId)
-    ) {
+    if (!actorIsOperator && String(row.user_steam_id) !== String(userSteamId)) {
       throw new Error("you can only delete your own clips");
     }
 
@@ -416,7 +417,11 @@ export class ClipsService {
   public async validateClipRenderAuth(
     jobId: string,
     originAuth: unknown,
-  ): Promise<{ id: string; user_steam_id: string; match_map_id: string } | null> {
+  ): Promise<{
+    id: string;
+    user_steam_id: string;
+    match_map_id: string;
+  } | null> {
     if (!originAuth || typeof originAuth !== "string") return null;
     const colonIndex = originAuth.indexOf(":");
     if (colonIndex === -1) return null;
@@ -510,7 +515,11 @@ export class ClipsService {
       status_history: nextHistory,
       last_status_at: "now()",
     };
-    if (typeof body.progress === "number" && body.progress >= 0 && body.progress <= 1) {
+    if (
+      typeof body.progress === "number" &&
+      body.progress >= 0 &&
+      body.progress <= 1
+    ) {
       set.progress = body.progress;
     }
     if (body.error) {
@@ -709,9 +718,7 @@ export class ClipsService {
     }
 
     // Re-runs replace prior render bookkeeping; rendered match_clips stay.
-    const matchMapIds = (match.match_maps ?? []).map((m: any) =>
-      String(m.id),
-    );
+    const matchMapIds = (match.match_maps ?? []).map((m: any) => String(m.id));
     if (matchMapIds.length > 0) {
       const { delete_clip_render_jobs } = await this.hasura.mutation({
         delete_clip_render_jobs: {
@@ -766,20 +773,18 @@ export class ClipsService {
     );
 
     if (unresolved.length > 0) {
-      const mapsNeedingReparse = (match.match_maps ?? []).filter(
-        (m: any) => {
-          const demo = m.demos?.[0];
-          if (!demo?.id) return false;
-          const kills =
-            (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
-          const killersHere = new Set<string>();
-          for (const k of kills) if (k.killer) killersHere.add(k.killer);
-          for (const sid of unresolved) {
-            if (killersHere.has(sid)) return true;
-          }
-          return false;
-        },
-      );
+      const mapsNeedingReparse = (match.match_maps ?? []).filter((m: any) => {
+        const demo = m.demos?.[0];
+        if (!demo?.id) return false;
+        const kills =
+          (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
+        const killersHere = new Set<string>();
+        for (const k of kills) if (k.killer) killersHere.add(k.killer);
+        for (const sid of unresolved) {
+          if (killersHere.has(sid)) return true;
+        }
+        return false;
+      });
       this.logger.warn(
         `[auto-clips] match ${matchId} has ${unresolved.length} killer steam_id(s) missing from demo.players (${unresolved.join(", ")}) — re-parsing ${mapsNeedingReparse.length} map_demo(s)`,
       );
@@ -815,9 +820,7 @@ export class ClipsService {
         nameByStId = buildNameMapFromMatch(refreshed);
         match.match_maps = refreshed.match_maps;
       }
-      unresolved = Array.from(allKillers).filter(
-        (sid) => !nameByStId.has(sid),
-      );
+      unresolved = Array.from(allKillers).filter((sid) => !nameByStId.has(sid));
       if (unresolved.length > 0) {
         this.logger.warn(
           `[auto-clips] match ${matchId} demo missing ${unresolved.length} killer name(s) after re-parse — falling back to Steam personas: ${unresolved.join(", ")}`,
@@ -884,7 +887,8 @@ export class ClipsService {
 
     for (const mapRow of match.match_maps ?? []) {
       const demo = mapRow.demos?.[0];
-      const kills = (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+      const kills =
+        (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
       if (!demo || kills.length === 0) continue;
 
       const killers = new Set<string>();
@@ -1104,8 +1108,12 @@ export class ClipsService {
         segments.push(...clusterKills(inRound));
       }
     } else if (preset === "best_round") {
-      let best: { round: number; count: number; start: number; end: number } | null =
-        null;
+      let best: {
+        round: number;
+        count: number;
+        start: number;
+        end: number;
+      } | null = null;
       for (const r of rounds) {
         const count = myKills.filter(
           (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
@@ -1134,8 +1142,7 @@ export class ClipsService {
     // Fall back to a single best kill so the user still gets a clip,
     // and flag it so the title reflects that nothing matched the preset.
     if (segments.length === 0 && myKills.length > 0) {
-      const fallback =
-        myKills.find((k) => k.headshot) ?? myKills[0];
+      const fallback = myKills.find((k) => k.headshot) ?? myKills[0];
       segments = [
         {
           start_tick: clamp(fallback.tick - lead),
@@ -1179,10 +1186,13 @@ export class ClipsService {
     const autoTitle = (() => {
       if (stats.usedFallback) {
         const presetLabel =
-          preset === "best_round" ? "Best Round" :
-          preset === "multikills" ? "Multi-Kills" :
-          preset === "recap" ? "Match Recap" :
-          "Knife Kills";
+          preset === "best_round"
+            ? "Best Round"
+            : preset === "multikills"
+              ? "Multi-Kills"
+              : preset === "recap"
+                ? "Match Recap"
+                : "Knife Kills";
         return `${playerLabel} — Best Single Kill (no ${presetLabel.toLowerCase()} found)`;
       }
       if (preset === "knife") {
@@ -1245,7 +1255,10 @@ export class ClipsService {
     if (spec.output.format !== "mp4") {
       throw new Error("only mp4 output is supported in v1");
     }
-    if (spec.output.resolution !== "720p" && spec.output.resolution !== "1080p") {
+    if (
+      spec.output.resolution !== "720p" &&
+      spec.output.resolution !== "1080p"
+    ) {
       throw new Error("output.resolution must be 720p or 1080p");
     }
     if (spec.output.fps !== 30 && spec.output.fps !== 60) {

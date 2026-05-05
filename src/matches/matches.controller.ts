@@ -913,10 +913,7 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async getLiveStreamSpecState(data: {
-    match_id: string;
-    user: User;
-  }) {
+  public async getLiveStreamSpecState(data: { match_id: string; user: User }) {
     const { match_id } = data;
     const state = await this.gameStreamer.getLiveSpecState(match_id);
     return state;
@@ -955,11 +952,7 @@ export class MatchesController {
   @HasuraAction()
   public async deleteClip(data: { clip_id: string; user: User }) {
     const isOperator = isRoleAbove(data.user.role, "streamer");
-    await this.clips.deleteClip(
-      data.user.steam_id,
-      data.clip_id,
-      isOperator,
-    );
+    await this.clips.deleteClip(data.user.steam_id, data.clip_id, isOperator);
     return { success: true };
   }
 

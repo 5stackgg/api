@@ -85,7 +85,10 @@ export class BatchHighlightsRenderJob extends WorkerHost {
     this.logger.warn(
       `${tag} pod ${podState} with ${inFlight.length} job(s) still in-flight — ${reason}`,
     );
-    await this.failInFlightJobs(inFlight.map((j) => j.id), reason);
+    await this.failInFlightJobs(
+      inFlight.map((j) => j.id),
+      reason,
+    );
   }
 
   private async delayUntilNext(job: Job, ms: number): Promise<void> {

@@ -82,7 +82,10 @@ export const UseQueue = (
       // rejects "concurrency must be a finite number greater than 0"
       // — `undefined` doesn't take the default-1 path, it crashes
       // module init. Same defensiveness for `limiter`.
-      const processorOptions: { concurrency?: number; limiter?: { max: number; duration: number } } = {};
+      const processorOptions: {
+        concurrency?: number;
+        limiter?: { max: number; duration: number };
+      } = {};
       if (typeof options.concurrency === "number") {
         processorOptions.concurrency = options.concurrency;
       }
