@@ -371,14 +371,8 @@ export class MatchesController {
     response.status(200).json(data);
   }
 
-  // Auto-clip generation trigger. We can't queue clip jobs from the
-  // match Finished event because the demo upload + parse run async
-  // afterwards — at match end the kills/round_ticks needed to build
-  // a ClipSpec aren't there yet. Instead we listen for the
-  // match_map_demos row's metadata_parsed_at flipping from null to
-  // a timestamp; that's the first point we have parser data, so it's
-  // the right place to fire auto-gen. Per match_map (not per match)
-  // because each map's parse is independent.
+  // Fires auto-clip generation off metadata_parsed_at. Match Finished
+  // is too early — demo parse runs async afterwards.
   @HasuraEvent()
   public async match_map_demo_events(
     data: HasuraEventData<match_map_demos_set_input>,
@@ -388,10 +382,6 @@ export class MatchesController {
     const matchId = (newRow.match_id ?? oldRow.match_id) as string | undefined;
     if (!matchId) return;
 
-    // Only fire when metadata_parsed_at TRANSITIONS from null/empty
-    // to set. INSERT with parsed_at already populated also counts
-    // (covers re-imports / manual fixtures). Subsequent updates
-    // that touch unrelated columns shouldn't re-trigger.
     const becameParsed =
       !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
     if (!becameParsed) return;
@@ -465,13 +455,6 @@ export class MatchesController {
       await this.eloCalculationQueue.add(EloCalculation.name, {
         matchId,
       });
-
-      // Auto-clip generation is NOT fired here even on Finished —
-      // demo upload + parse happen asynchronously after match end,
-      // and we need parsed kills/round_ticks to build clip specs.
-      // The trigger lives in DemoMetadataService.parseAndPersist
-      // (after metadata_parsed_at is written), which is the first
-      // moment we can produce a real spec.
 
       const serverId = data.new.server_id;
 
@@ -877,15 +860,6 @@ export class MatchesController {
     return { success: true };
   }
 
-  // "Create Player Highlights" — manually triggers the same auto-gen
-  // pipeline that runs automatically on match Finished when the
-  // `auto_generate_match_clips` setting is on. Queues a "match recap"
-  // clip_render_jobs row per (match_map, killer) pair. The previous
-  // implementation tried to spawn a pod with `args=['create-clips']`,
-  // which game-streamer.sh doesn't support — that path failed
-  // immediately and produced no output, so the button was effectively
-  // broken. Reusing the auto-gen builder gives the button a real
-  // result regardless of whether the cron-style toggle is enabled.
   @HasuraAction()
   public async createClips(data: { match_id: string; user: User }) {
     const { match_id, user } = data;
@@ -904,10 +878,6 @@ export class MatchesController {
     };
   }
 
-  // User-facing clip render: spawns a one-shot game-streamer pod that
-  // plays the demo from start_tick → end_tick, captures the screen to
-  // an mp4, and uploads the result back to /clip-renders/:id/upload.
-  // Gated at `verified_user` (matches the web button-visibility rule).
   @HasuraAction()
   public async createClipRender(data: { spec: ClipSpec; user: User }) {
     const { spec, user } = data;
@@ -930,11 +900,6 @@ export class MatchesController {
     return { success: true };
   }
 
-  // Operator-only batch cancel. Streamer-rank+ can cancel any
-  // match_map's render queue (they manage the platform queue from
-  // /manage-clips/queue). Plain users only have per-clip cancel via
-  // cancelClipRender above — they don't have a queue surface to act
-  // on a "batch" anyway.
   @HasuraAction()
   public async cancelClipRenderBatch(data: {
     match_map_id: string;
@@ -947,15 +912,6 @@ export class MatchesController {
     return { success: true, cancelled };
   }
 
-  // Build a multi-segment ClipSpec for a player + preset (knife
-  // kills / multikills / best round / recap), then submit it through
-  // the same render path createClipRender uses. Returns the same
-  // {success, job_id} shape so the web client can subscribe to
-  // progress without a special case.
-  // Returns the live pod's GSI snapshot so the stream-deck can label
-  // slot buttons with current player names + side (CT/T) and reflect
-  // halftime / overtime side swaps without operator intervention.
-  // Cheap call: spec-server returns its in-memory state, no game I/O.
   @HasuraAction()
   public async getLiveStreamSpecState(data: {
     match_id: string;
@@ -998,10 +954,6 @@ export class MatchesController {
 
   @HasuraAction()
   public async deleteClip(data: { clip_id: string; user: User }) {
-    // Streamer-rank+ can delete any clip from Manage Highlights;
-    // regular users only their own. Forward the role check through
-    // so the service can decide who's allowed to bypass the
-    // ownership check.
     const isOperator = isRoleAbove(data.user.role, "streamer");
     await this.clips.deleteClip(
       data.user.steam_id,

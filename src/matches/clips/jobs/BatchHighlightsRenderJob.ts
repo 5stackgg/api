@@ -12,46 +12,12 @@ import { ClipsService } from "../clips.service";
 import { GameStreamerService } from "../../game-streamer/game-streamer.service";
 import { HasuraService } from "../../../hasura/hasura.service";
 
-// Observer of the render-pod lifecycle for one match_map. The pod
-// is the actual processor — it loads cs2 once, runs through the
-// entries in CLIP_BATCH_JOBS sequentially, and exits when done.
-// This BullMQ job is a watchdog: dispatches the pod, polls its
-// state, and surfaces failures.
-//
-// Each BullMQ job means "render this batch". We always treat it as
-// a fresh re-render: any pre-existing k8s Job for this match_map
-// (from a prior run still inside ttlSecondsAfterFinished, or a
-// stuck pod, or whatever) is killed before we dispatch. This is
-// what the operator pressing "Create Player Highlights" expects —
-// the previous run's state should not silently shadow this one.
-//
-// Lifecycle, polled every CHECK_DELAY_MS via moveToDelayed:
-//
-//   First poll (data.dispatched is undefined):
-//     1. Kill any existing k8s Job for this match_map.
-//     2. Dispatch a fresh pod with the current in-flight rows.
-//     3. Set data.dispatched=true and re-queue with a delay.
-//
-//   Subsequent polls (data.dispatched is true):
-//     1. If 0 in-flight (queued/rendering/uploading) → DONE.
-//     2. Read the pod's k8s Job state:
-//        - running    → wait one more tick.
-//        - succeeded  → pod exited cleanly. If rows are still
-//                       in-flight, render script never POSTed
-//                       terminal status — mark them error.
-//        - failed     → container died. Pull the exit reason +
-//                       log tail and mark rows error.
-//        - absent     → Job got deleted out from under us
-//                       (operator cancel, k8s reaped). Mark rows
-//                       error.
-
+// Watchdog over the render pod for one match_map: dispatches once,
+// then polls k8s state until in-flight rows clear or the pod dies.
 const CHECK_DELAY_MS = 10_000;
 
 @UseQueue("Matches", MatchQueues.ClipRenderBatch, {
-  // Cap to one batch at a time across the whole api. Each batch
-  // pod takes a GPU and several minutes — running two in parallel
-  // doubles GPU pressure for the same total throughput. Bumping
-  // this requires explicit operator intent.
+  // One batch at a time — each takes a GPU.
   concurrency: 1,
 })
 export class BatchHighlightsRenderJob extends WorkerHost {
@@ -79,12 +45,8 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       return;
     }
 
-    // First poll for this BullMQ attempt: always re-render. The k8s
-    // Job name is keyed by match_map_id and we keep terminal Jobs
-    // around for 24h, so any prior pod must be cleared out first —
-    // otherwise the "what's the pod doing" probe below reads the
-    // wrong run's state. The dispatched flag survives across the
-    // delayed re-executions of this same BullMQ job.
+    // First poll: always clear any prior pod (24h ttl on k8s Jobs)
+    // before dispatching, otherwise the state probe reads stale data.
     if (!dispatched) {
       this.logger.log(
         `${tag} dispatching ${inFlight.length} job(s) — clearing any prior pod first`,
@@ -102,7 +64,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         return;
       }
       await job.updateData({ ...job.data, dispatched: true });
-      // First wait is longer — the pod needs a moment to come up.
+      // Longer first wait so the pod has time to come up.
       return this.delayUntilNext(job, CHECK_DELAY_MS * 2);
     }
 
@@ -113,10 +75,6 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       return this.delayUntilNext(job, CHECK_DELAY_MS);
     }
 
-    // succeeded / failed / absent → pod is done observing. Anything
-    // still in-flight is stuck — pull the pod's exit reason if
-    // there's one available and fail the rows so the operator sees
-    // why instead of a row stuck rendering forever.
     const reason =
       (await this.gameStreamer.getBatchPodFailureReason(matchMapId)) ??
       (podState === "succeeded"
@@ -154,10 +112,6 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         spec: true,
       },
     });
-    // We expose both `id` (used internally for fail-by-id) AND `job_id`
-    // (the alias dispatchBatchHighlights expects in its env payload),
-    // referring to the same uuid. Cheaper than mapping twice in the
-    // caller.
     return (clip_render_jobs ?? []).map((row: any) => ({
       id: String(row.id),
       job_id: String(row.id),

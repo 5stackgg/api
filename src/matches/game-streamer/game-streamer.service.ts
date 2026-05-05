@@ -162,11 +162,6 @@ export class GameStreamerService {
     return this.callSpec(matchId, "slot", { slot });
   }
 
-  // GET the live pod's spec-server /demo/state. Same payload shape as
-  // the demo route — spec-server.mjs is one binary, so live/demo
-  // pods both expose `gsi.spec_slots` once GSI fires. We strip the
-  // demo-only fields (tick, paused, etc.) so callers don't think the
-  // live route exposes things it doesn't.
   public async getLiveSpecState(matchId: string): Promise<{
     gsi: {
       map_name: string | null;
@@ -197,8 +192,6 @@ export class GameStreamerService {
       const cause = (error as Error)?.cause as { code?: string } | undefined;
       const code = cause?.code ?? (error as { code?: string })?.code;
       if (code === "ENOTFOUND" || code === "EAI_AGAIN" || code === "ECONNREFUSED") {
-        // Live pod not up yet — return empty so the UI can show the
-        // existing offline state without a noisy error.
         return { gsi: null };
       }
       throw new Error(`spec state unreachable: ${(error as Error)?.message}`);
@@ -489,8 +482,6 @@ export class GameStreamerService {
     return res.json().catch(() => ({ ok: true }));
   }
 
-  // Returns when the pod accepts the request, not when render finishes
-  // — progress comes back via /clip-renders/:id/status.
   public async dispatchClipRenderToPod(
     sessionId: string,
     payload: {
@@ -944,20 +935,9 @@ export class GameStreamerService {
   }
 
   public static GetBatchHighlightsJobName(matchMapId: string) {
-    // 12 chars from the hex of the match_map uuid keeps the k8s name
-    // short + valid (kubernetes job names cap at 63). Stripping
-    // dashes keeps the prefix simple to grep for in `kubectl get jobs`.
     return `gs-batch-${matchMapId.replace(/-/g, "").slice(0, 12)}`;
   }
 
-  // Health probe for the BullMQ batch worker. Returns:
-  //   - "running" if the k8s Job exists and has at least one active pod
-  //   - "succeeded" if the Job completed cleanly
-  //   - "failed" if the Job hit its backoff limit / image-pull error /
-  //     etc. — i.e. there's a Job row but no live pod and it didn't
-  //     reach completion
-  //   - "absent" if no Job row exists (never dispatched, or already
-  //     reaped via ttlSecondsAfterFinished)
   public async getBatchHighlightsPodState(
     matchMapId: string,
   ): Promise<"running" | "succeeded" | "failed" | "absent"> {
@@ -981,19 +961,10 @@ export class GameStreamerService {
     if ((status.active ?? 0) > 0) return "running";
     if ((status.succeeded ?? 0) > 0) return "succeeded";
     if ((status.failed ?? 0) > 0) return "failed";
-    // No active/succeeded/failed counter populated yet — still
-    // initialising. Treat as running so the worker waits one more
-    // tick before redispatching.
+    // Counters not populated yet — still initialising.
     return "running";
   }
 
-  // Best-effort "why did the pod die" probe. Reads the most recent
-  // pod for the batch Job and returns a short, operator-friendly
-  // string built from container terminated reason + last log line.
-  // Used by the BullMQ worker to record a useful error_message on
-  // failed clip_render_jobs rows instead of "render pod failed"
-  // with no further detail. Returns null when nothing meaningful
-  // is available (no pod, no terminated container, no logs).
   public async getBatchPodFailureReason(
     matchMapId: string,
   ): Promise<string | null> {
@@ -1013,8 +984,6 @@ export class GameStreamerService {
       );
       return null;
     }
-    // Newest first — when k8s recreated the pod after a backoff,
-    // the most recent attempt is the most informative.
     const sorted = [...(pods.items ?? [])].sort((a, b) => {
       const ta = new Date(a.metadata?.creationTimestamp ?? 0).getTime();
       const tb = new Date(b.metadata?.creationTimestamp ?? 0).getTime();
@@ -1028,9 +997,6 @@ export class GameStreamerService {
     const reason = term?.reason ?? null;
     const exitCode = term?.exitCode ?? null;
 
-    // Tail a few lines of stdout/stderr — usually enough to surface
-    // the obvious "demo download 403" / "ENOTFOUND" / etc. without
-    // dumping a multi-hundred-line setup log into the row.
     let logTail: string | null = null;
     try {
       const logs = await core.readNamespacedPodLog({
@@ -1044,8 +1010,7 @@ export class GameStreamerService {
         .filter((l) => l.length > 0);
       if (lines.length > 0) logTail = lines.join(" | ");
     } catch {
-      // logs may not be available (pod evicted before logs were
-      // collected). Fall through; reason+exit are usually enough.
+      // pod may have been evicted before logs were collected
     }
 
     const parts: string[] = [];
@@ -1056,11 +1021,6 @@ export class GameStreamerService {
     return parts.join(" — ").slice(0, 500);
   }
 
-  // Force-kill a batch pod (and its k8s Job). Used ONLY by the
-  // explicit operator-triggered cancelClipRenderBatch flow now —
-  // the watchdog no longer auto-kills failed Jobs, and there's no
-  // "preemption on slow render" path. Idempotent — `absent` jobs
-  // return cleanly.
   public async killBatchHighlightsPod(matchMapId: string): Promise<void> {
     const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
     try {
@@ -1075,13 +1035,6 @@ export class GameStreamerService {
     }
   }
 
-  // Spawn ONE k8s Job that processes a batch of clip_render_jobs for
-  // a single match_map. Pod loads cs2 + the demo once, then iterates
-  // through every queued job in order, capturing each one against the
-  // already-running cs2 instance. Significantly faster than per-job
-  // pods because we skip the steam login + cs2 launch (~60-90s each)
-  // for every clip after the first. Idempotent: if a batch is already
-  // running for this match_map, this is a no-op.
   public async dispatchBatchHighlights(
     matchMapId: string,
     jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
@@ -1118,14 +1071,7 @@ export class GameStreamerService {
       },
     });
 
-    // 4-arg form mirrors watchDemo's call site
-    // (matches.controller.ts → s3.getPresignedUrl(file, undefined,
-    // 60*60, "get")). The default-arg form was wrong on two axes:
-    // expiry defaults to ~5 minutes (the X-Amz-Expires=300 we saw
-    // was getting close to elapsing by the time the pod's curl
-    // ran), and method defaults to "put" (which Backblaze rejects
-    // with 403 when the pod uses it for GET — sign-method must
-    // match request-method).
+    // 1h "get" presign — defaults are 5min/"put", which 403s on Backblaze.
     const presignedDemoUrl = await this.s3.getPresignedUrl(
       demo.file as string,
       undefined,
@@ -1135,12 +1081,6 @@ export class GameStreamerService {
     const nodeId = await this.pickGpuNode(match?.region ?? null);
     const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
 
-    // Caller (BatchHighlightsRenderJob) guarantees no prior Job
-    // exists by killBatchHighlightsPod-ing first. We don't second-
-    // guess that here — the operator pressing "Create Player
-    // Highlights" expects a fresh re-render every time, and silently
-    // bailing on a leftover terminal Job (24h ttlSecondsAfterFinished)
-    // is exactly what was leaving rows stuck in queued.
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
@@ -1151,13 +1091,8 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: this.resolveInClusterApiBase() },
-      // Tells setup-steam.sh to skip OpenHud so rendered mp4s don't
-      // bake in the spectator scoreboard/killfeed overlay.
+      // Skips OpenHud so rendered mp4s don't bake in the overlay.
       { name: "CLIP_BATCH_MODE", value: "1" },
-      // CLIP_BATCH_JOBS is consumed by run-batch-highlights.sh — one
-      // entry per clip_render_jobs row, with the spec fully resolved
-      // so the pod doesn't need to re-query the api between renders.
-      // Keeping the array compact (just the fields the script needs).
       {
         name: "CLIP_BATCH_JOBS",
         value: JSON.stringify(

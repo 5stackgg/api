@@ -12,12 +12,7 @@ import { Request, Response } from "express";
 import { ClipsService } from "./clips.service";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
 
-// Pod-callback endpoints, mirroring DemoSessionsController. The render
-// pod posts here with `x-origin-auth: <jobId>:<sessionToken>` to drive
-// the clip_render_jobs row through queued → rendering → uploading →
-// done. The upload endpoint accepts the rendered mp4 as the request
-// body so the pod can stream a multi-hundred-MB file straight through
-// the api into S3 without buffering in memory.
+// Pod-callback endpoints, authed via `x-origin-auth: <jobId>:<token>`.
 @Controller("clip-renders/:jobId")
 export class ClipRendersController {
   constructor(
@@ -25,11 +20,6 @@ export class ClipRendersController {
     private readonly clips: ClipsService,
   ) {}
 
-  // Lightweight GET so the render pod can verify a job hasn't been
-  // cancelled before it spends 60s+ rendering it. Same auth as the
-  // POST status route. Returns the row's current status; pod treats
-  // `cancelled` as "skip without error" and any other value as
-  // "proceed".
   @Get("status")
   public async getStatus(
     @Param("jobId") jobId: string,
@@ -50,13 +40,6 @@ export class ClipRendersController {
     return response.status(200).json({ status: row.status });
   }
 
-  // Pod-side title patch. The api builds clip titles at enqueue time
-  // from the steam_id (no name available — the parser only emits
-  // ids), so titles read "Player 6843 — Best Round (4K)". Once the
-  // pod loads the demo and GSI fires, it knows every player's
-  // actual name and POSTs the resolved title here. We persist by
-  // shallow-merging into spec.title so the existing finalizeClipUpload
-  // path picks it up unchanged when it writes match_clips.title.
   @Post("title")
   public async updateTitle(
     @Param("jobId") jobId: string,
@@ -124,11 +107,7 @@ export class ClipRendersController {
     response.status(204).end();
   }
 
-  // Raw streaming upload — the pod sends the mp4 as `application/octet-
-  // stream` request body. We pipe it directly into S3 via the existing
-  // s3.put() helper, which uses minio's chunked PutObject under the
-  // hood. NestJS doesn't intercept the body for octet-stream by
-  // default, so `request` arrives as the raw IncomingMessage stream.
+  // Raw streaming upload — pipes octet-stream body straight to S3.
   @Post("upload")
   public async upload(
     @Param("jobId") jobId: string,

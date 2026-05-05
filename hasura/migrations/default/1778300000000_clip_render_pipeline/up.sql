@@ -1,31 +1,23 @@
--- match_clips: the durable record of a rendered clip.
--- One row per successful render that the user chose to save to library.
--- `download`-destination renders write a short-lived row only while the
--- download URL is live and are reaped on the same window the file is.
 create table if not exists "public"."match_clips" (
   "id" uuid not null default gen_random_uuid(),
   "user_steam_id" bigint not null,
   "match_map_id" uuid not null,
   "title" text,
-  -- Wallclock duration of the rendered mp4. Filled by the pod after
-  -- ffprobe; null while the upload is still in flight.
   "duration_ms" integer,
-  -- Final S3 location served via the same backblaze-proxy worker the
-  -- demo files use. Null while the pod is still writing.
-  "s3_url" text,
+  "file" text,
   "thumbnail_url" text,
-  -- private | unlisted | match — only `private` is exposed by the v1
-  -- editor; the column exists so phase-2 sharing flows don't need a
-  -- migration. Default `private` so existing rows stay locked down.
   "visibility" text not null default 'private',
+  "target_steam_id" bigint,
   "created_at" timestamptz not null default now(),
   primary key ("id"),
   foreign key ("user_steam_id") references "public"."players" ("steam_id")
     on update cascade on delete cascade,
   foreign key ("match_map_id") references "public"."match_maps" ("id")
     on update cascade on delete cascade,
+  foreign key ("target_steam_id") references "public"."players" ("steam_id")
+    on update cascade on delete set null,
   constraint match_clips_visibility_chk
-    check (visibility in ('private', 'unlisted', 'match'))
+    check (visibility in ('private', 'unlisted', 'match', 'public'))
 );
 
 create index if not exists "match_clips_user_steam_id_idx"
@@ -34,30 +26,23 @@ create index if not exists "match_clips_user_steam_id_idx"
 create index if not exists "match_clips_match_map_id_idx"
   on "public"."match_clips" ("match_map_id");
 
--- clip_render_jobs: ephemeral per-render record. The web subscribes to
--- this row to drive the progress UI; the row is reaped once the clip
--- is uploaded + match_clips row written (clip_id then points at it).
+create index if not exists "match_clips_target_steam_id_idx"
+  on "public"."match_clips" ("target_steam_id");
+
+create index if not exists "match_clips_public_created_at_idx"
+  on "public"."match_clips" ("created_at" desc)
+  where visibility = 'public';
+
 create table if not exists "public"."clip_render_jobs" (
   "id" uuid not null default gen_random_uuid(),
   "user_steam_id" bigint not null,
   "match_map_id" uuid not null,
-  -- Pod auth: the render pod posts back to /clip-renders/:id/status +
-  -- /clip-renders/:id/upload with `x-origin-auth: <id>:<token>`. Same
-  -- pattern as match_demo_sessions.session_token.
   "session_token" text not null,
   "k8s_job_name" text not null,
-  -- The full ClipSpec sent by the editor (segments + overlays + audio
-  -- + output). Stored as-is so a re-render later (or a debugging
-  -- inspection) reproduces what was originally requested.
   "spec" jsonb not null,
-  -- queued | rendering | uploading | done | error | cancelled
   "status" text not null default 'queued',
-  -- 0..1 wallclock progress reported by the pod. Null while queued.
   "progress" numeric(4, 3),
   "error_message" text,
-  -- Once the upload completes the pod creates a match_clips row and
-  -- writes the id back here. The web subscription joins on this to
-  -- show the final clip card.
   "clip_id" uuid,
   "status_history" jsonb not null default '[]'::jsonb,
   "last_status_at" timestamptz not null default now(),
@@ -75,15 +60,52 @@ create table if not exists "public"."clip_render_jobs" (
     check (progress is null or (progress >= 0 and progress <= 1))
 );
 
--- One in-flight job per user. Done/error/cancelled rows are excluded
--- so the user can submit a new render once the previous finishes —
--- this is the per-user concurrency cap referenced in the plan.
-create unique index if not exists "clip_render_jobs_one_in_flight_per_user"
-  on "public"."clip_render_jobs" ("user_steam_id")
-  where status in ('queued', 'rendering', 'uploading');
-
 create index if not exists "clip_render_jobs_user_steam_id_idx"
   on "public"."clip_render_jobs" ("user_steam_id");
 
 create index if not exists "clip_render_jobs_match_map_id_idx"
   on "public"."clip_render_jobs" ("match_map_id");
+
+CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_clips)
+    RETURNS text
+    LANGUAGE plpgsql STABLE
+    AS $$
+    DECLARE
+        worker_url text;
+        slug text;
+        basename text;
+        download_name text;
+    BEGIN
+        SELECT value INTO worker_url
+        FROM settings
+        WHERE name = 'cloudflare_worker_url';
+
+        IF worker_url IS NULL OR match_clips.file IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        slug := NULL;
+        IF match_clips.title IS NOT NULL AND length(trim(match_clips.title)) > 0 THEN
+            slug := regexp_replace(trim(match_clips.title), '[^a-zA-Z0-9_-]+', '-', 'g');
+            slug := regexp_replace(slug, '^-+|-+$', '', 'g');
+            IF length(slug) > 80 THEN
+                slug := substring(slug from 1 for 80);
+            END IF;
+            IF length(slug) = 0 THEN
+                slug := NULL;
+            END IF;
+        END IF;
+
+        basename := regexp_replace(match_clips.file, '^.*/', '');
+        IF slug IS NOT NULL THEN
+            download_name := slug || '.mp4';
+        ELSE
+            download_name := basename;
+        END IF;
+
+        RETURN CONCAT(worker_url, '/', match_clips.file, '?name=', download_name);
+    END;
+$$;
+
+alter table "public"."match_map_demos"
+  add column if not exists "players" jsonb null;
