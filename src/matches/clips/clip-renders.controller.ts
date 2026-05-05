@@ -9,11 +9,8 @@ import {
   Body,
 } from "@nestjs/common";
 import { Request, Response } from "express";
-import { PassThrough } from "node:stream";
 import { ClipsService } from "./clips.service";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
-
-const MAX_UPLOAD_BYTES = 500 * 1024 * 1024;
 
 @Controller("clip-renders/:jobId")
 export class ClipRendersController {
@@ -134,35 +131,10 @@ export class ClipRendersController {
       return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
     })();
 
-    const contentLength = Number(request.headers["content-length"] ?? 0);
-    if (Number.isFinite(contentLength) && contentLength > MAX_UPLOAD_BYTES) {
-      this.logger.warn(
-        `[clip ${jobId}] upload rejected: content-length ${contentLength} > ${MAX_UPLOAD_BYTES}`,
-      );
-      return response
-        .status(413)
-        .json({ error: `upload too large (max ${MAX_UPLOAD_BYTES} bytes)` });
-    }
-
-    let received = 0;
-    const counter = new PassThrough();
-    request.on("data", (chunk: Buffer) => {
-      received += chunk.length;
-      if (received > MAX_UPLOAD_BYTES) {
-        counter.destroy(
-          new Error(
-            `upload exceeded ${MAX_UPLOAD_BYTES} bytes (received ${received})`,
-          ),
-        );
-        request.destroy();
-      }
-    });
-    request.pipe(counter);
-
     try {
       const result = await this.clips.finalizeClipUpload(
         jobId,
-        counter,
+        request,
         durationMs,
       );
       response.status(201).json(result);
@@ -171,8 +143,7 @@ export class ClipRendersController {
         `[clip ${jobId}] upload failed: ${(error as Error)?.message}`,
         (error as Error)?.stack,
       );
-      const status = received > MAX_UPLOAD_BYTES ? 413 : 500;
-      response.status(status).json({ error: (error as Error)?.message });
+      response.status(500).json({ error: (error as Error)?.message });
     }
   }
 }
