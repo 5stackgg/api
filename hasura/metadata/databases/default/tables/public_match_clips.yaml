@@ -58,11 +58,13 @@ select_permissions:
         - match_map_id
       computed_fields:
         - download_url
-      # Users see: their own clips (any visibility), plus other
-      # users' public + unlisted clips. Private clips of OTHER users
-      # are invisible at the row level — important so a "guess the
-      # uuid" attack can't surface a private clip via /clips/<id>.
-      # Admin role below has filter: {} for full curation access.
+      # Users see: their own clips (any visibility), other users'
+      # public + unlisted clips, plus 'match' clips when the viewer
+      # was actually in the match (either lineup or organizer).
+      # Private clips of OTHER users are invisible at the row level —
+      # important so a "guess the uuid" attack can't surface a
+      # private clip via /clips/<id>. Admin role below has filter: {}
+      # for full curation access.
       filter:
         _or:
           - user_steam_id:
@@ -71,6 +73,22 @@ select_permissions:
               _eq: public
           - visibility:
               _eq: unlisted
+          - _and:
+              - visibility:
+                  _eq: match
+              - match_map:
+                  match:
+                    _or:
+                      - organizer_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - lineup_1:
+                          lineup_players:
+                            steam_id:
+                              _eq: X-Hasura-User-Id
+                      - lineup_2:
+                          lineup_players:
+                            steam_id:
+                              _eq: X-Hasura-User-Id
     comment: ""
   # Guests + verified users see public clips through the same row,
   # gated by the `visibility = 'public'` filter. Private clips are

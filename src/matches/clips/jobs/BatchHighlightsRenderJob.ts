@@ -11,6 +11,7 @@ import { UseQueue } from "../../../utilities/QueueProcessors";
 import { ClipsService } from "../clips.service";
 import { GameStreamerService } from "../../game-streamer/game-streamer.service";
 import { HasuraService } from "../../../hasura/hasura.service";
+import { IN_FLIGHT_STATUSES } from "../clips.constants";
 
 // Watchdog over the render pod for one match_map: dispatches once,
 // then polls k8s state until in-flight rows clear or the pod dies.
@@ -106,7 +107,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         __args: {
           where: {
             match_map_id: { _eq: matchMapId },
-            status: { _in: ["queued", "rendering", "uploading"] },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
           },
           order_by: [{ created_at: "asc" }],
         },
@@ -130,7 +131,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         __args: {
           where: {
             id: { _in: jobIds },
-            status: { _in: ["queued", "rendering", "uploading"] },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
           },
           _set: {
             status: "error",

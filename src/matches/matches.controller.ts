@@ -884,7 +884,7 @@ export class MatchesController {
     if (!isRoleAbove(user.role, "verified_user")) {
       throw Error("clip rendering requires a verified account");
     }
-    if (!spec || spec.match_map_id !== spec?.match_map_id) {
+    if (!spec || !spec.match_map_id) {
       throw Error("invalid clip spec");
     }
     const { jobId } = await this.clips.createClipRender(user.steam_id, spec);

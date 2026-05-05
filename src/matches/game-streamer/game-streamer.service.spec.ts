@@ -37,6 +37,7 @@ describe("GameStreamerService.validateDemoSessionAuth", () => {
         { error: jest.fn(), warn: jest.fn(), log: jest.fn() } as any,
         config as any,
         hasura as any,
+        {} as any,
       ),
       hasura,
     };

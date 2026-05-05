@@ -10,16 +10,16 @@ import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
-
-// String literal to avoid a load-time cycle with the worker.
-const BATCH_HIGHLIGHTS_JOB_NAME = "BatchHighlightsRenderJob";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { ClipSpec } from "./types/ClipSpec";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
+import {
+  BATCH_HIGHLIGHTS_JOB_NAME,
+  IN_FLIGHT_STATUSES,
+  resolveInClusterApiBase,
+} from "./clips.constants";
 
 const STATUS_HISTORY_CAP = 50;
-
-const IN_FLIGHT_STATUSES = ["queued", "rendering", "uploading"] as const;
 
 @Injectable()
 export class ClipsService {
@@ -150,7 +150,7 @@ export class ClipsService {
       await this.gameStreamer.dispatchClipRenderToPod(session.id, {
         job_id: jobId,
         token: sessionToken,
-        api_base: this.resolveInClusterApiBase(),
+        api_base: resolveInClusterApiBase(),
         segments: spec.segments.map((s) => ({
           start_tick: s.start_tick,
           end_tick: s.end_tick,
@@ -192,7 +192,7 @@ export class ClipsService {
         __args: {
           where: {
             match_map_id: { _eq: matchMapId },
-            status: { _in: ["queued", "rendering", "uploading"] },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
           },
           _set: {
             status: "cancelled",
@@ -236,6 +236,8 @@ export class ClipsService {
         __args: { id: jobId },
         id: true,
         user_steam_id: true,
+        match_map_id: true,
+        k8s_job_name: true,
         status: true,
       },
     });
@@ -266,10 +268,62 @@ export class ClipsService {
         id: true,
       },
     });
-  }
 
-  private resolveInClusterApiBase(): string {
-    return process.env.API_INTERNAL_BASE ?? "http://api:5585";
+    // For batch (auto-clip) renders, the pod is dedicated to a
+    // match_map and shared across all of that map's queued renders.
+    // If this was the last in-flight row for the map, drop the BullMQ
+    // watchdog job and kill the pod so we stop burning a GPU on a
+    // batch with nothing left to render. Single-user renders run
+    // inside the user's own demo session pod (a different
+    // k8s_job_name), so we leave that pod alone — the pod's render
+    // script polls /status and bails on `cancelled`.
+    const matchMapId = String(row.match_map_id);
+    const expectedBatchPodName =
+      GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    if (String(row.k8s_job_name) !== expectedBatchPodName) {
+      return;
+    }
+
+    const { clip_render_jobs_aggregate } = await this.hasura.query({
+      clip_render_jobs_aggregate: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+          },
+        },
+        aggregate: { count: true },
+      },
+    });
+    const stillInFlight =
+      (clip_render_jobs_aggregate?.aggregate?.count as number | undefined) ?? 0;
+    if (stillInFlight > 0) return;
+
+    try {
+      const jobs = await this.batchQueue.getJobs([
+        "delayed",
+        "waiting",
+        "active",
+        "paused",
+      ]);
+      for (const queuedJob of jobs) {
+        if (queuedJob.data?.matchMapId === matchMapId) {
+          await queuedJob.remove();
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[cancel ${jobId}] BullMQ remove failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    try {
+      await this.gameStreamer.killBatchHighlightsPod(matchMapId);
+    } catch (error) {
+      this.logger.warn(
+        `[cancel ${jobId}] pod kill failed: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   private resolveRenderSpeed(): number {
@@ -324,6 +378,7 @@ export class ClipsService {
         __args: { id: clipId },
         id: true,
         user_steam_id: true,
+        match_map_id: true,
       },
     });
     if (!row) {
@@ -348,20 +403,23 @@ export class ClipsService {
       set.visibility = patch.visibility;
     }
     if (patch.target_steam_id !== undefined) {
-      // FK requires a players row; fall back to null silently if missing.
       if (patch.target_steam_id === null) {
         set.target_steam_id = null;
       } else {
-        const { players } = await this.hasura.query({
-          players: {
-            __args: {
-              where: { steam_id: { _eq: patch.target_steam_id } },
-              limit: 1,
-            },
-            steam_id: true,
-          },
-        });
-        set.target_steam_id = players?.[0]?.steam_id ?? null;
+        // Only allow attribution to a player who actually appears in
+        // the demo for this clip's match_map. Without this gate any
+        // user could mark their clip's "target" as a famous player to
+        // boost it in player-keyed searches/feeds.
+        const appearsInDemo = await this.targetAppearsInDemo(
+          String(row.match_map_id),
+          patch.target_steam_id,
+        );
+        if (!appearsInDemo) {
+          throw new Error(
+            "target_steam_id must be a player who appears in this match's demo",
+          );
+        }
+        set.target_steam_id = patch.target_steam_id;
       }
     }
     if (Object.keys(set).length === 0) return;
@@ -372,6 +430,38 @@ export class ClipsService {
         id: true,
       },
     });
+  }
+
+  private async targetAppearsInDemo(
+    matchMapId: string,
+    targetSteamId: string,
+  ): Promise<boolean> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: { where: { match_map_id: { _eq: matchMapId } }, limit: 1 },
+        players: true,
+        kills: true,
+      },
+    });
+    const demo = match_map_demos?.[0];
+    if (!demo) return false;
+    const players =
+      (demo.players as Array<{ steam_id?: string }> | undefined) ?? [];
+    if (players.some((p) => String(p?.steam_id ?? "") === targetSteamId)) {
+      return true;
+    }
+    // Fallback: parsed demos from older rows may not have the players
+    // column populated yet. Accept anyone who appears as a killer or
+    // victim in the kill log — they were definitely on the server.
+    const kills =
+      (demo.kills as
+        | Array<{ killer?: string; victim?: string }>
+        | undefined) ?? [];
+    return kills.some(
+      (k) =>
+        String(k?.killer ?? "") === targetSteamId ||
+        String(k?.victim ?? "") === targetSteamId,
+    );
   }
 
   public async deleteClip(
@@ -394,7 +484,18 @@ export class ClipsService {
       throw new Error("you can only delete your own clips");
     }
 
+    // DB row first, then S3. If S3 fails we end up with an orphaned
+    // .mp4 (cheap, easy to GC offline) — better than the reverse,
+    // where a row would point at a missing file and break download
+    // links + computed_url for any cached client.
     const fileKey = row.file ?? ClipsService.GetClipS3Key(userSteamId, clipId);
+    await this.hasura.mutation({
+      delete_match_clips_by_pk: {
+        __args: { id: clipId },
+        id: true,
+      },
+    });
+
     try {
       await this.s3.remove(fileKey);
       await this.s3.remove(
@@ -402,16 +503,9 @@ export class ClipsService {
       );
     } catch (error) {
       this.logger.warn(
-        `[clip ${clipId}] s3 remove failed: ${(error as Error)?.message}`,
+        `[clip ${clipId}] s3 remove failed (row already deleted, leaving orphaned object ${fileKey}): ${(error as Error)?.message}`,
       );
     }
-
-    await this.hasura.mutation({
-      delete_match_clips_by_pk: {
-        __args: { id: clipId },
-        id: true,
-      },
-    });
   }
 
   public async validateClipRenderAuth(
@@ -460,7 +554,8 @@ export class ClipsService {
       },
     });
     if (!row) return;
-    const nextSpec = { ...(row.spec as any), title };
+    const prevSpec = (row.spec ?? {}) as Partial<ClipSpec>;
+    const nextSpec: Partial<ClipSpec> = { ...prevSpec, title };
     await this.hasura.mutation({
       update_clip_render_jobs_by_pk: {
         __args: {
@@ -549,8 +644,17 @@ export class ClipsService {
       },
     });
     if (!row) throw new Error(`clip render ${jobId} not found`);
-    if (row.status === "cancelled") {
-      throw new Error("render was cancelled");
+    // Pod may try to upload after we've already flipped the row to a
+    // terminal state (cancelled by the user, or errored by the
+    // batch-watchdog when the pod missed its deadline). Reject the
+    // upload so a late-arriving stream can't resurrect the job to
+    // "done" and silently overwrite an existing match_clips row.
+    if (
+      row.status === "cancelled" ||
+      row.status === "error" ||
+      row.status === "done"
+    ) {
+      throw new Error(`render is ${row.status}`);
     }
 
     const userSteamId = String(row.user_steam_id);
@@ -607,13 +711,7 @@ export class ClipsService {
       }
     }
 
-    const visibility =
-      (spec?.visibility as
-        | "private"
-        | "unlisted"
-        | "public"
-        | "match"
-        | undefined) ?? "private";
+    const visibility = spec?.visibility ?? "private";
 
     const { insert_match_clips_one } = await this.hasura.mutation({
       insert_match_clips_one: {
@@ -653,12 +751,18 @@ export class ClipsService {
   }
 
   private async findInFlightForUser(userSteamId: string) {
+    // Batch (auto-clip) rows also pin user_steam_id to the organizer
+    // — exclude them by k8s_job_name prefix so an organizer's own
+    // running auto-clip batch doesn't block them from kicking off a
+    // manual single-clip render. Matches the partial unique index in
+    // the clip_render_pipeline migration.
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
           where: {
             user_steam_id: { _eq: userSteamId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
+            _not: { k8s_job_name: { _like: "gs-batch-%" } },
           },
           limit: 1,
         },
@@ -739,7 +843,7 @@ export class ClipsService {
     // One batch pod per match_map (per .dem file).
     const perMap = new Map<
       string,
-      Array<{ job_id: string; session_token: string; spec: any }>
+      Array<{ job_id: string; session_token: string; spec: ClipSpec }>
     >();
 
     const allKillers = new Set<string>();
@@ -885,6 +989,15 @@ export class ClipsService {
       }
     }
 
+    // Build every spec up-front (pure CPU work, no DB) then insert
+    // the whole batch in one mutation. A 5v5 match across 3 maps
+    // would otherwise round-trip Hasura ~30 times here.
+    const pendingObjects: Array<{
+      mapRowId: string;
+      targetSteamId: string;
+      sessionToken: string;
+      spec: ClipSpec;
+    }> = [];
     for (const mapRow of match.match_maps ?? []) {
       const demo = mapRow.demos?.[0];
       const kills =
@@ -896,7 +1009,7 @@ export class ClipsService {
 
       for (const targetSteamId of killers) {
         try {
-          const spec = await this.buildPresetSpec(
+          const baseSpec = await this.buildPresetSpec(
             mapRow.id,
             targetSteamId,
             "best_round",
@@ -904,54 +1017,74 @@ export class ClipsService {
             undefined,
             nameByStId.get(targetSteamId),
           );
-          (spec as any).destination = "library";
-          (spec as any).visibility = defaultVisibility;
-          const sessionToken = randomBytes(24).toString("hex");
-          const jobName = GameStreamerService.GetBatchHighlightsJobName(
-            mapRow.id,
-          );
-          const { insert_clip_render_jobs_one } = await this.hasura.mutation({
-            insert_clip_render_jobs_one: {
-              __args: {
-                object: {
-                  user_steam_id: String(match.organizer_steam_id),
-                  match_map_id: mapRow.id,
-                  session_token: sessionToken,
-                  k8s_job_name: jobName,
-                  spec,
-                  status: "queued",
-                  status_history: [
-                    {
-                      status: "queued",
-                      at: new Date().toISOString(),
-                      source: "auto_generate_match_clips",
-                      target_steam_id: targetSteamId,
-                      default_visibility: defaultVisibility,
-                    },
-                  ],
-                },
-              },
-              id: true,
-            },
+          const spec: ClipSpec = {
+            ...baseSpec,
+            destination: "library",
+            visibility:
+              defaultVisibility as ClipSpec["visibility"],
+          };
+          pendingObjects.push({
+            mapRowId: mapRow.id,
+            targetSteamId,
+            sessionToken: randomBytes(24).toString("hex"),
+            spec,
           });
-          const insertedId = insert_clip_render_jobs_one?.id as
-            | string
-            | undefined;
-          if (insertedId) {
-            const list = perMap.get(mapRow.id) ?? [];
-            list.push({
-              job_id: insertedId,
-              session_token: sessionToken,
-              spec,
-            });
-            perMap.set(mapRow.id, list);
-          }
-          queued++;
         } catch (error) {
           this.logger.warn(
             `[auto-clips] match ${matchId} map ${mapRow.id} target ${targetSteamId} skipped: ${(error as Error)?.message}`,
           );
         }
+      }
+    }
+
+    if (pendingObjects.length > 0) {
+      const insertObjects = pendingObjects.map((p) => ({
+        user_steam_id: String(match.organizer_steam_id),
+        match_map_id: p.mapRowId,
+        session_token: p.sessionToken,
+        k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(p.mapRowId),
+        spec: p.spec,
+        status: "queued",
+        status_history: [
+          {
+            status: "queued",
+            at: new Date().toISOString(),
+            source: "auto_generate_match_clips",
+            target_steam_id: p.targetSteamId,
+            default_visibility: defaultVisibility,
+          },
+        ],
+      }));
+      try {
+        const { insert_clip_render_jobs } = await this.hasura.mutation({
+          insert_clip_render_jobs: {
+            __args: { objects: insertObjects },
+            returning: { id: true, match_map_id: true },
+          },
+        });
+        // returning preserves input order, so zip back against
+        // pendingObjects to recover spec/session_token per row.
+        const returning =
+          (insert_clip_render_jobs?.returning as
+            | Array<{ id: string; match_map_id: string }>
+            | undefined) ?? [];
+        for (let i = 0; i < returning.length; i++) {
+          const inserted = returning[i];
+          const pending = pendingObjects[i];
+          if (!inserted?.id || !pending) continue;
+          const list = perMap.get(String(inserted.match_map_id)) ?? [];
+          list.push({
+            job_id: String(inserted.id),
+            session_token: pending.sessionToken,
+            spec: pending.spec,
+          });
+          perMap.set(String(inserted.match_map_id), list);
+          queued++;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[auto-clips] match ${matchId} batch insert failed: ${(error as Error)?.message}`,
+        );
       }
     }
 
@@ -1218,14 +1351,15 @@ export class ClipsService {
       return `${playerLabel} — Highlights`;
     })();
 
-    return {
+    const result: ClipSpec = {
       match_map_id: matchMapId,
       segments: merged,
       output: { format: "mp4", resolution: output.resolution, fps: output.fps },
       destination: "library",
       title: title ?? autoTitle,
       target_name: playerLabel,
-    } as ClipSpec;
+    };
+    return result;
   }
 
   private validateSpec(spec: ClipSpec) {

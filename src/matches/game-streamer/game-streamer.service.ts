@@ -16,6 +16,7 @@ import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { randomBytes } from "node:crypto";
+import { resolveInClusterApiBase } from "../clips/clips.constants";
 
 type StreamerMode = "live" | "create-clips" | "demo" | "batch-highlights";
 
@@ -1095,7 +1096,7 @@ export class GameStreamerService {
       { name: "MATCH_MAP_ID", value: matchMapId },
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
-      { name: "STATUS_API_BASE", value: this.resolveInClusterApiBase() },
+      { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
       // Skips OpenHud so rendered mp4s don't bake in the overlay.
       { name: "CLIP_BATCH_MODE", value: "1" },
       {
@@ -1151,10 +1152,6 @@ export class GameStreamerService {
         },
       ),
     });
-  }
-
-  private resolveInClusterApiBase(): string {
-    return process.env.API_INTERNAL_BASE ?? "http://api:5585";
   }
 
   public async createClips(matchId: string) {
