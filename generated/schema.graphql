@@ -10907,6 +10907,7 @@ type match_clips {
   duration_ms: Int
   file: String
   id: uuid!
+  kills_count: Int
 
   """An object relationship"""
   match_map: match_maps!
@@ -10951,6 +10952,11 @@ type match_clips {
   """An object relationship"""
   target: players
   target_steam_id: bigint
+
+  """
+  A computed field, executes function "clip_thumbnail_download_url"
+  """
+  thumbnail_download_url: String
   thumbnail_url: String
   title: String
 
@@ -10988,6 +10994,7 @@ type match_clips_aggregate_fields {
 """aggregate avg on columns"""
 type match_clips_avg_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }
@@ -11004,12 +11011,14 @@ input match_clips_bool_exp {
   duration_ms: Int_comparison_exp
   file: String_comparison_exp
   id: uuid_comparison_exp
+  kills_count: Int_comparison_exp
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
   render_jobs: clip_render_jobs_bool_exp
   render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
   target: players_bool_exp
   target_steam_id: bigint_comparison_exp
+  thumbnail_download_url: String_comparison_exp
   thumbnail_url: String_comparison_exp
   title: String_comparison_exp
   user: players_bool_exp
@@ -11032,6 +11041,7 @@ input type for incrementing numeric columns in table "match_clips"
 """
 input match_clips_inc_input {
   duration_ms: Int
+  kills_count: Int
   target_steam_id: bigint
   user_steam_id: bigint
 }
@@ -11044,6 +11054,7 @@ input match_clips_insert_input {
   duration_ms: Int
   file: String
   id: uuid
+  kills_count: Int
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
   render_jobs: clip_render_jobs_arr_rel_insert_input
@@ -11067,8 +11078,14 @@ type match_clips_max_fields {
   duration_ms: Int
   file: String
   id: uuid
+  kills_count: Int
   match_map_id: uuid
   target_steam_id: bigint
+
+  """
+  A computed field, executes function "clip_thumbnail_download_url"
+  """
+  thumbnail_download_url: String
   thumbnail_url: String
   title: String
   user_steam_id: bigint
@@ -11086,8 +11103,14 @@ type match_clips_min_fields {
   duration_ms: Int
   file: String
   id: uuid
+  kills_count: Int
   match_map_id: uuid
   target_steam_id: bigint
+
+  """
+  A computed field, executes function "clip_thumbnail_download_url"
+  """
+  thumbnail_download_url: String
   thumbnail_url: String
   title: String
   user_steam_id: bigint
@@ -11131,11 +11154,13 @@ input match_clips_order_by {
   duration_ms: order_by
   file: order_by
   id: order_by
+  kills_count: order_by
   match_map: match_maps_order_by
   match_map_id: order_by
   render_jobs_aggregate: clip_render_jobs_aggregate_order_by
   target: players_order_by
   target_steam_id: order_by
+  thumbnail_download_url: order_by
   thumbnail_url: order_by
   title: order_by
   user: players_order_by
@@ -11165,6 +11190,9 @@ enum match_clips_select_column {
   id
 
   """column name"""
+  kills_count
+
+  """column name"""
   match_map_id
 
   """column name"""
@@ -11191,6 +11219,7 @@ input match_clips_set_input {
   duration_ms: Int
   file: String
   id: uuid
+  kills_count: Int
   match_map_id: uuid
   target_steam_id: bigint
   thumbnail_url: String
@@ -11202,6 +11231,7 @@ input match_clips_set_input {
 """aggregate stddev on columns"""
 type match_clips_stddev_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }
@@ -11209,6 +11239,7 @@ type match_clips_stddev_fields {
 """aggregate stddev_pop on columns"""
 type match_clips_stddev_pop_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }
@@ -11216,6 +11247,7 @@ type match_clips_stddev_pop_fields {
 """aggregate stddev_samp on columns"""
 type match_clips_stddev_samp_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }
@@ -11237,6 +11269,7 @@ input match_clips_stream_cursor_value_input {
   duration_ms: Int
   file: String
   id: uuid
+  kills_count: Int
   match_map_id: uuid
   target_steam_id: bigint
   thumbnail_url: String
@@ -11248,6 +11281,7 @@ input match_clips_stream_cursor_value_input {
 """aggregate sum on columns"""
 type match_clips_sum_fields {
   duration_ms: Int
+  kills_count: Int
   target_steam_id: bigint
   user_steam_id: bigint
 }
@@ -11267,6 +11301,9 @@ enum match_clips_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  kills_count
 
   """column name"""
   match_map_id
@@ -11301,6 +11338,7 @@ input match_clips_updates {
 """aggregate var_pop on columns"""
 type match_clips_var_pop_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }
@@ -11308,6 +11346,7 @@ type match_clips_var_pop_fields {
 """aggregate var_samp on columns"""
 type match_clips_var_samp_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }
@@ -11315,6 +11354,7 @@ type match_clips_var_samp_fields {
 """aggregate variance on columns"""
 type match_clips_variance_fields {
   duration_ms: Float
+  kills_count: Float
   target_steam_id: Float
   user_steam_id: Float
 }

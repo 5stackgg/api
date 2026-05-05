@@ -561,6 +561,77 @@ export class ClipsService {
     });
   }
 
+  private async countKillsForSpec(
+    matchMapId: string,
+    spec: ClipSpec | null,
+    targetSteamId: string | null,
+  ): Promise<number | null> {
+    const segments = spec?.segments ?? [];
+    if (segments.length === 0) return null;
+
+    try {
+      const { match_map_demos } = await this.hasura.query({
+        match_map_demos: {
+          __args: { where: { match_map_id: { _eq: matchMapId } }, limit: 1 },
+          kills: true,
+        },
+      });
+      const demo = match_map_demos?.[0];
+      const kills =
+        (demo?.kills as Array<{
+          tick: number;
+          killer?: string;
+          victim?: string;
+        }>) ?? [];
+      if (kills.length === 0) return 0;
+
+      let count = 0;
+      for (const k of kills) {
+        if (typeof k.tick !== "number") continue;
+        if (targetSteamId && String(k.killer) !== targetSteamId) continue;
+        const inSegment = segments.some(
+          (s) => k.tick >= s.start_tick && k.tick <= s.end_tick,
+        );
+        if (inSegment) count++;
+      }
+      return count;
+    } catch (error) {
+      this.logger.warn(
+        `[clip] kills count failed for match_map ${matchMapId}: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
+  public async uploadClipThumbnail(
+    jobId: string,
+    fileStream: Readable,
+  ): Promise<{ key: string }> {
+    const { clip_render_jobs_by_pk: row } = await this.hasura.query({
+      clip_render_jobs_by_pk: {
+        __args: { id: jobId },
+        id: true,
+        user_steam_id: true,
+        status: true,
+      },
+    });
+    if (!row) throw new Error(`clip render ${jobId} not found`);
+    if (
+      row.status === "cancelled" ||
+      row.status === "error" ||
+      row.status === "done"
+    ) {
+      throw new Error(`render is ${row.status}`);
+    }
+
+    const userSteamId = String(row.user_steam_id);
+    const key = ClipsService.GetClipThumbnailS3Key(userSteamId, jobId);
+
+    await this.s3.put(key, fileStream);
+
+    return { key };
+  }
+
   public async finalizeClipUpload(
     jobId: string,
     fileStream: Readable,
@@ -589,6 +660,18 @@ export class ClipsService {
     const key = ClipsService.GetClipS3Key(userSteamId, jobId);
 
     await this.s3.put(key, fileStream);
+
+    const thumbnailKey = ClipsService.GetClipThumbnailS3Key(userSteamId, jobId);
+    let thumbnailUrl: string | null = null;
+    try {
+      if (await this.s3.has(thumbnailKey)) {
+        thumbnailUrl = thumbnailKey;
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[clip ${jobId}] thumbnail existence check failed: ${(error as Error)?.message}`,
+      );
+    }
 
     const spec = row.spec as unknown as ClipSpec;
     const title = spec?.title ?? null;
@@ -641,6 +724,12 @@ export class ClipsService {
 
     const visibility = spec?.visibility ?? "private";
 
+    const killsCount = await this.countKillsForSpec(
+      row.match_map_id,
+      spec,
+      targetSteamId,
+    );
+
     const { insert_match_clips_one } = await this.hasura.mutation({
       insert_match_clips_one: {
         __args: {
@@ -651,6 +740,8 @@ export class ClipsService {
             title,
             duration_ms: durationMs,
             file: key,
+            thumbnail_url: thumbnailUrl,
+            kills_count: killsCount,
             visibility,
           },
         },

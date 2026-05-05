@@ -146,4 +146,33 @@ export class ClipRendersController {
       response.status(500).json({ error: (error as Error)?.message });
     }
   }
+
+  @Post("thumbnail")
+  public async thumbnail(
+    @Param("jobId") jobId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.clips.validateClipRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      this.logger.warn(
+        `[clip ${jobId}] thumbnail rejected: invalid x-origin-auth`,
+      );
+      return response.status(401).end();
+    }
+
+    try {
+      const result = await this.clips.uploadClipThumbnail(jobId, request);
+      response.status(201).json(result);
+    } catch (error) {
+      this.logger.error(
+        `[clip ${jobId}] thumbnail upload failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+      response.status(500).json({ error: (error as Error)?.message });
+    }
+  }
 }
