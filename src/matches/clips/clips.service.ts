@@ -454,9 +454,8 @@ export class ClipsService {
     // column populated yet. Accept anyone who appears as a killer or
     // victim in the kill log — they were definitely on the server.
     const kills =
-      (demo.kills as
-        | Array<{ killer?: string; victim?: string }>
-        | undefined) ?? [];
+      (demo.kills as Array<{ killer?: string; victim?: string }> | undefined) ??
+      [];
     return kills.some(
       (k) =>
         String(k?.killer ?? "") === targetSteamId ||
@@ -1020,8 +1019,7 @@ export class ClipsService {
           const spec: ClipSpec = {
             ...baseSpec,
             destination: "library",
-            visibility:
-              defaultVisibility as ClipSpec["visibility"],
+            visibility: defaultVisibility as ClipSpec["visibility"],
           };
           pendingObjects.push({
             mapRowId: mapRow.id,

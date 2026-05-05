@@ -620,12 +620,6 @@ update_permissions:
       filter: {}
       check: {}
     comment: ""
-  # tournament_organizer has its own direct permission because it
-  # excludes `region` from the editable column list. match_organizer
-  # would otherwise inherit user's permission, which DOES include
-  # region — so it has to be explicit too. Without it, an org that
-  # wants to lock down region edits to admins-only would see
-  # match_organizer override that via inheritance from user.
   - role: match_organizer
     permission:
       columns:
@@ -678,8 +672,6 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
-  # match_organizer / tournament_organizer / streamer all reach the
-  # same is_organizer filter via inheritance from `user`.
   - role: user
     permission:
       filter:

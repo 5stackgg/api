@@ -25,10 +25,6 @@ object_relationships:
           name: tournament_trophy_configs
           schema: public
 insert_permissions:
-  # Every authed role inherits from `user`, so this single permission
-  # also lets verified_user / streamer / match_organizer /
-  # tournament_organizer / administrator manually award trophies for
-  # tournaments they organize.
   - role: user
     permission:
       check:
@@ -44,7 +40,6 @@ insert_permissions:
         - placement
     comment: ""
 select_permissions:
-  # filter:{} is fine for guest; all higher roles inherit from guest.
   - role: guest
     permission:
       columns:

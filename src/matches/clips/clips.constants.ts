@@ -4,11 +4,7 @@
 // matches via the worker's ClipsService dep).
 export const BATCH_HIGHLIGHTS_JOB_NAME = "BatchHighlightsRenderJob";
 
-export const IN_FLIGHT_STATUSES = [
-  "queued",
-  "rendering",
-  "uploading",
-] as const;
+export const IN_FLIGHT_STATUSES = ["queued", "rendering", "uploading"] as const;
 
 export type ClipRenderStatus =
   | (typeof IN_FLIGHT_STATUSES)[number]

@@ -73,8 +73,6 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
-  # match_organizer / streamer / tournament_organizer reach this same
-  # filter via inheritance from `user`.
   - role: user
     permission:
       filter:
