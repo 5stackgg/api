@@ -371,7 +371,6 @@ export class MatchesController {
     response.status(200).json(data);
   }
 
-  // Match Finished fires before demo parse, so trigger off metadata_parsed_at instead.
   @HasuraEvent()
   public async match_map_demo_events(
     data: HasuraEventData<match_map_demos_set_input>,

@@ -62,7 +62,6 @@ export const UseQueue = (
     Reflect.defineMetadata("jobs", jobs, QueueProcessors);
 
     if (!processors[module][queue]) {
-      // BullMQ rejects `concurrency: undefined` instead of defaulting to 1, so omit unset keys.
       const processorOptions: {
         concurrency?: number;
         limiter?: { max: number; duration: number };

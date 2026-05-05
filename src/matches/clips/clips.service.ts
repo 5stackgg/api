@@ -351,7 +351,6 @@ export class ClipsService {
       if (patch.target_steam_id === null) {
         set.target_steam_id = null;
       } else {
-        // Gate against impersonation in player-keyed feeds/search.
         const appearsInDemo = await this.targetAppearsInDemo(
           String(row.match_map_id),
           patch.target_steam_id,
@@ -392,7 +391,6 @@ export class ClipsService {
     if (players.some((p) => String(p?.steam_id ?? "") === targetSteamId)) {
       return true;
     }
-    // Older demos may lack the players column; fall back to the kill log.
     const kills =
       (demo.kills as Array<{ killer?: string; victim?: string }> | undefined) ??
       [];
@@ -423,7 +421,6 @@ export class ClipsService {
       throw new Error("you can only delete your own clips");
     }
 
-    // DB row first, then S3 — an orphaned .mp4 is GC-able; a row pointing at a missing file isn't.
     const fileKey = row.file ?? ClipsService.GetClipS3Key(userSteamId, clipId);
     await this.hasura.mutation({
       delete_match_clips_by_pk: {
@@ -580,7 +577,6 @@ export class ClipsService {
       },
     });
     if (!row) throw new Error(`clip render ${jobId} not found`);
-    // Reject late uploads from a pod whose row has already gone terminal — otherwise it could resurrect a cancelled job and overwrite an existing match_clips row.
     if (
       row.status === "cancelled" ||
       row.status === "error" ||
@@ -683,7 +679,6 @@ export class ClipsService {
   }
 
   private async findInFlightForUser(userSteamId: string) {
-    // Exclude auto-clip batch rows so an organizer's running batch doesn't block their manual renders.
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
@@ -992,7 +987,6 @@ export class ClipsService {
       `[auto-clips] match ${matchId} queued ${queued} recap job(s) (default visibility=${defaultVisibility})`,
     );
 
-    // Unique jobId so re-runs don't dedupe against a prior completed BullMQ job.
     for (const matchMapId of perMap.keys()) {
       try {
         await this.batchQueue.add(
@@ -1187,7 +1181,6 @@ export class ClipsService {
       );
     }
 
-    // Join segments within ~2s — cs2's re-seek otherwise leaves a freeze on the concat boundary.
     segments.sort((a, b) => a.start_tick - b.start_tick);
     const joinGap = Math.round(tickRate * 2);
     const merged: Array<{

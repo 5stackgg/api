@@ -966,7 +966,6 @@ export class GameStreamerService {
     if ((status.active ?? 0) > 0) return "running";
     if ((status.succeeded ?? 0) > 0) return "succeeded";
     if ((status.failed ?? 0) > 0) return "failed";
-    // Counters not populated yet — still initialising.
     return "running";
   }
 
@@ -1015,9 +1014,7 @@ export class GameStreamerService {
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
       if (lines.length > 0) logTail = lines.join(" | ");
-    } catch {
-      // pod may have been evicted before logs were collected
-    }
+    } catch {}
 
     const parts: string[] = [];
     if (reason) parts.push(reason);
@@ -1077,7 +1074,6 @@ export class GameStreamerService {
       },
     });
 
-    // 1h "get" presign — defaults are 5min/"put", which 403s on Backblaze.
     const presignedDemoUrl = await this.s3.getPresignedUrl(
       demo.file as string,
       undefined,
@@ -1097,7 +1093,6 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
-      // Skips OpenHud so rendered mp4s don't bake in the overlay.
       { name: "CLIP_BATCH_MODE", value: "1" },
       {
         name: "CLIP_BATCH_JOBS",
