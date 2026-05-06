@@ -9,11 +9,15 @@ import {
 import { MatchQueues } from "../../enums/MatchQueues";
 import { UseQueue } from "../../../utilities/QueueProcessors";
 import { ClipsService } from "../clips.service";
-import { GameStreamerService } from "../../game-streamer/game-streamer.service";
+import {
+  GameStreamerService,
+  NoGpuAvailableError,
+} from "../../game-streamer/game-streamer.service";
 import { HasuraService } from "../../../hasura/hasura.service";
 import { IN_FLIGHT_STATUSES } from "../clips.constants";
 
 const CHECK_DELAY_MS = 10_000;
+const GPU_BUSY_RETRY_MS = 30_000;
 
 @UseQueue("Matches", MatchQueues.ClipRenderBatch, {
   concurrency: 1,
@@ -48,6 +52,12 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       try {
         await this.gameStreamer.dispatchBatchHighlights(matchMapId, inFlight);
       } catch (error) {
+        if (error instanceof NoGpuAvailableError) {
+          this.logger.log(
+            `${tag} no GPU free, retrying in ${GPU_BUSY_RETRY_MS / 1000}s`,
+          );
+          return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
+        }
         const msg = (error as Error)?.message ?? "dispatch failed";
         this.logger.error(`${tag} dispatch failed: ${msg}`);
         await this.failInFlightJobs(

@@ -9,11 +9,11 @@ import {
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../../hasura/hasura.service";
+import { PostgresService } from "../../postgres/postgres.service";
 import { S3Service } from "../../s3/s3.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
-import { e_game_server_node_statuses_enum } from "../../../generated";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { randomBytes } from "node:crypto";
@@ -60,6 +60,13 @@ const STATUS_HISTORY_CAP = 50;
 
 const GAME_STREAMER_TITLE = "5Stack Game Streamer";
 
+export class NoGpuAvailableError extends Error {
+  constructor(message = "no GPU available") {
+    super(message);
+    this.name = "NoGpuAvailableError";
+  }
+}
+
 @Injectable()
 export class GameStreamerService {
   private readonly namespace: string;
@@ -71,6 +78,7 @@ export class GameStreamerService {
     private readonly logger: Logger,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly s3: S3Service,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
@@ -283,7 +291,6 @@ export class GameStreamerService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
-        region: true,
       },
     });
     if (!match) {
@@ -337,7 +344,13 @@ export class GameStreamerService {
       },
     });
 
-    const nodeId = await this.pickGpuNode(match.region);
+    let nodeId: string;
+    try {
+      nodeId = await this.claimGpuForDemoSession(sessionId);
+    } catch (error) {
+      await this.stopDemoSessionById(sessionId, jobName);
+      throw error;
+    }
 
     await this.deleteJob(jobName);
 
@@ -850,7 +863,6 @@ export class GameStreamerService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
-        region: true,
         password: true,
         server: {
           host: true,
@@ -870,7 +882,7 @@ export class GameStreamerService {
 
     const usePlaycast = await this.readUsePlaycast();
 
-    const nodeId = await this.pickGpuNode(match.region);
+    const nodeId = await this.claimGpuForLive(matchId, mode);
 
     const connectEnv = await this.buildConnectEnv(
       matchId,
@@ -894,17 +906,20 @@ export class GameStreamerService {
 
     this.logger.log(`[${matchId}] starting ${mode} stream on node ${nodeId}`);
 
-    await batch.createNamespacedJob({
-      namespace: this.namespace,
-      body: this.buildJobSpec(jobName, matchId, "live", nodeId, [
-        ...connectEnv,
-        ...reporterEnv,
-      ]),
-    });
+    try {
+      await batch.createNamespacedJob({
+        namespace: this.namespace,
+        body: this.buildJobSpec(jobName, matchId, "live", nodeId, [
+          ...connectEnv,
+          ...reporterEnv,
+        ]),
+      });
+    } catch (error) {
+      await this.unregisterStreamRow(matchId);
+      throw error;
+    }
 
     await this.createLiveService(matchId);
-
-    await this.registerStreamRow(matchId, mode);
   }
 
   public async stopLive(matchId: string) {
@@ -1071,20 +1086,14 @@ export class GameStreamerService {
     }
     const matchId = String(demo.match_id);
 
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: { id: matchId },
-        region: true,
-      },
-    });
-
     const presignedDemoUrl = await this.s3.getPresignedUrl(
       demo.file as string,
       undefined,
       60 * 60,
       "get",
     );
-    const nodeId = await this.pickGpuNode(match?.region ?? null);
+
+    const nodeId = await this.claimGpuForBatchHighlights(matchMapId);
     const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
 
     const kc = new KubeConfig();
@@ -1165,50 +1174,30 @@ export class GameStreamerService {
       }
     }
 
-    await batch.createNamespacedJob({
-      namespace: this.namespace,
-      body: this.buildJobSpec(
-        jobName,
-        matchId,
-        "batch-highlights",
-        nodeId,
-        env,
-        {
-          "match-map-id": matchMapId,
-        },
-      ),
-    });
-  }
-
-  public async createClips(matchId: string) {
-    const { matches_by_pk: match } = await this.hasura.query({
-      matches_by_pk: {
-        __args: { id: matchId },
-        id: true,
-        region: true,
-      },
-    });
-
-    if (!match) {
-      throw new Error(`match ${matchId} not found`);
+    try {
+      await batch.createNamespacedJob({
+        namespace: this.namespace,
+        body: this.buildJobSpec(
+          jobName,
+          matchId,
+          "batch-highlights",
+          nodeId,
+          env,
+          {
+            "match-map-id": matchMapId,
+          },
+        ),
+      });
+    } catch (error) {
+      await this.postgres.query(
+        `UPDATE clip_render_jobs
+            SET game_server_node_id = NULL
+          WHERE match_map_id = $1
+            AND status IN ('queued','rendering','uploading')`,
+        [matchMapId],
+      );
+      throw error;
     }
-
-    const nodeId = await this.pickGpuNode(match.region);
-
-    const jobName = GameStreamerService.GetClipsJobId(matchId);
-
-    await this.deleteJob(jobName);
-
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-    const batch = kc.makeApiClient(BatchV1Api);
-
-    this.logger.log(`[${matchId}] creating clips on node ${nodeId}`);
-
-    await batch.createNamespacedJob({
-      namespace: this.namespace,
-      body: this.buildJobSpec(jobName, matchId, "create-clips", nodeId, []),
-    });
   }
 
   private async readUsePlaycast(): Promise<boolean> {
@@ -1222,73 +1211,86 @@ export class GameStreamerService {
     return settings_by_pk?.value === "true";
   }
 
-  private async pickGpuNode(matchRegion: string | null): Promise<string> {
-    const baseWhere = {
-      status: {
-        _eq: "Online" as e_game_server_node_statuses_enum,
-      },
-      enabled: { _eq: true },
-      gpu: { _eq: true },
-    };
+  private async claimGpuForLive(
+    matchId: string,
+    mode: "live" | "tv",
+  ): Promise<string> {
+    const link = `${this.appConfig.gameStreamHlsBase}/${matchId}/`;
+    const nowIso = new Date().toISOString();
+    const statusHistory = JSON.stringify([{ status: "booting", at: nowIso }]);
 
-    let { game_server_nodes: nodes } = await this.hasura.query({
-      game_server_nodes: {
-        __args: {
-          where: matchRegion
-            ? { ...baseWhere, region: { _eq: matchRegion } }
-            : baseWhere,
-        },
-        id: true,
-      },
-    });
+    return this.postgres.transaction(async (client) => {
+      await client.query(
+        `DELETE FROM match_streams
+          WHERE match_id = $1 AND is_game_streamer = true`,
+        [matchId],
+      );
 
-    if (nodes.length === 0 && matchRegion) {
-      ({ game_server_nodes: nodes } = await this.hasura.query({
-        game_server_nodes: {
-          __args: { where: baseWhere },
-          id: true,
-        },
-      }));
-    }
+      const result = await client.query(
+        `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
+         INSERT INTO match_streams
+           (match_id, title, link, priority, is_game_streamer, is_live,
+            mode, status, status_history, last_status_at, game_server_node_id)
+         SELECT $1, $2, $3, 0, true, false, $4, 'booting', $5::jsonb, now(), chosen.id
+           FROM chosen
+          WHERE chosen.id IS NOT NULL
+         RETURNING game_server_node_id`,
+        [matchId, GAME_STREAMER_TITLE, link, mode, statusHistory],
+      );
 
-    if (nodes.length === 0) {
-      throw new Error("no GPU-capable game node available");
-    }
-
-    const kc = new KubeConfig();
-    kc.loadFromDefault();
-    const batch = kc.makeApiClient(BatchV1Api);
-
-    const jobs = await batch.listNamespacedJob({
-      namespace: this.namespace,
-      labelSelector: "app=game-streamer",
-    });
-
-    const usagePerNode = new Map<string, number>();
-    for (const node of nodes) {
-      usagePerNode.set(node.id, 0);
-    }
-    for (const job of jobs.items) {
-      const pinnedNode =
-        job.spec?.template?.spec?.affinity?.nodeAffinity
-          ?.requiredDuringSchedulingIgnoredDuringExecution
-          ?.nodeSelectorTerms?.[0]?.matchExpressions?.[0]?.values?.[0];
-      if (pinnedNode && usagePerNode.has(pinnedNode)) {
-        usagePerNode.set(pinnedNode, (usagePerNode.get(pinnedNode) ?? 0) + 1);
+      const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
+      if (!nodeId) {
+        throw new NoGpuAvailableError();
       }
-    }
+      return nodeId;
+    });
+  }
 
-    let chosen = nodes[0].id;
-    let chosenLoad = usagePerNode.get(chosen) ?? 0;
-    for (const node of nodes) {
-      const load = usagePerNode.get(node.id) ?? 0;
-      if (load < chosenLoad) {
-        chosen = node.id;
-        chosenLoad = load;
+  private async claimGpuForDemoSession(sessionId: string): Promise<string> {
+    return this.postgres.transaction(async (client) => {
+      const result = await client.query(
+        `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
+         UPDATE match_demo_sessions
+            SET game_server_node_id = chosen.id
+           FROM chosen
+          WHERE match_demo_sessions.id = $1
+            AND match_demo_sessions.game_server_node_id IS NULL
+            AND chosen.id IS NOT NULL
+         RETURNING match_demo_sessions.game_server_node_id`,
+        [sessionId],
+      );
+
+      const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
+      if (!nodeId) {
+        throw new NoGpuAvailableError();
       }
-    }
+      return nodeId;
+    });
+  }
 
-    return chosen;
+  private async claimGpuForBatchHighlights(
+    matchMapId: string,
+  ): Promise<string> {
+    return this.postgres.transaction(async (client) => {
+      const result = await client.query(
+        `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
+         UPDATE clip_render_jobs
+            SET game_server_node_id = chosen.id
+           FROM chosen
+          WHERE clip_render_jobs.match_map_id = $1
+            AND clip_render_jobs.status IN ('queued','rendering','uploading')
+            AND clip_render_jobs.game_server_node_id IS NULL
+            AND chosen.id IS NOT NULL
+         RETURNING clip_render_jobs.game_server_node_id`,
+        [matchMapId],
+      );
+
+      const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
+      if (!nodeId) {
+        throw new NoGpuAvailableError();
+      }
+      return nodeId;
+    });
   }
 
   private async buildConnectEnv(
@@ -1454,30 +1456,6 @@ export class GameStreamerService {
       }
       await new Promise((r) => setTimeout(r, 200));
     }
-  }
-
-  private async registerStreamRow(matchId: string, mode: "live" | "tv") {
-    await this.unregisterStreamRow(matchId);
-    const nowIso = new Date().toISOString();
-    await this.hasura.mutation({
-      insert_match_streams_one: {
-        __args: {
-          object: {
-            match_id: matchId,
-            title: GAME_STREAMER_TITLE,
-            link: `${this.appConfig.gameStreamHlsBase}/${matchId}/`,
-            priority: 0,
-            is_game_streamer: true,
-            is_live: false,
-            mode,
-            status: "booting",
-            status_history: [{ status: "booting", at: nowIso }],
-            last_status_at: "now()",
-          },
-        },
-        id: true,
-      },
-    });
   }
 
   public async validateStatusOriginAuth(

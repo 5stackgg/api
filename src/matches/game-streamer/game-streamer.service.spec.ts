@@ -38,6 +38,7 @@ describe("GameStreamerService.validateDemoSessionAuth", () => {
         config as any,
         hasura as any,
         {} as any,
+        {} as any,
       ),
       hasura,
     };

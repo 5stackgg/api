@@ -2,6 +2,9 @@ table:
   name: match_streams
   schema: public
 object_relationships:
+  - name: game_server_node
+    using:
+      foreign_key_constraint_on: game_server_node_id
   - name: match
     using:
       foreign_key_constraint_on: match_id
@@ -61,6 +64,7 @@ select_permissions:
         - last_status_at
         - autodirector
         - status_history
+        - game_server_node_id
       filter: {}
     comment: ""
 update_permissions:

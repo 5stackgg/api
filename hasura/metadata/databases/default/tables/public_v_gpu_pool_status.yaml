@@ -1,0 +1,26 @@
+table:
+  name: v_gpu_pool_status
+  schema: public
+select_permissions:
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - total_gpu_nodes
+        - free_gpu_nodes
+        - live_in_progress
+        - demo_in_progress
+        - highlights_in_progress
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - total_gpu_nodes
+        - free_gpu_nodes
+        - live_in_progress
+        - demo_in_progress
+        - highlights_in_progress
+      filter: {}
+    comment: ""

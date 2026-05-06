@@ -6,11 +6,12 @@ import { DemoSessionWatcherService } from "./demo-session-watcher.service";
 import { DemoSessionWatcherGateway } from "./demo-session-watcher.gateway";
 import { HasuraModule } from "../../hasura/hasura.module";
 import { EncryptionModule } from "../../encryption/encryption.module";
+import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 
 @Module({
-  imports: [HasuraModule, EncryptionModule, S3Module],
+  imports: [HasuraModule, EncryptionModule, PostgresModule, S3Module],
   controllers: [GameStreamerController, DemoSessionsController],
   providers: [
     GameStreamerService,

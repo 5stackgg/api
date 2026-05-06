@@ -789,6 +789,9 @@ export interface clip_render_jobs {
     clip_id: (Scalars['uuid'] | null)
     created_at: Scalars['timestamptz']
     error_message: (Scalars['String'] | null)
+    /** An object relationship */
+    game_server_node: (game_server_nodes | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: Scalars['uuid']
     k8s_job_name: Scalars['String']
     last_status_at: Scalars['timestamptz']
@@ -849,6 +852,7 @@ export interface clip_render_jobs_max_fields {
     clip_id: (Scalars['uuid'] | null)
     created_at: (Scalars['timestamptz'] | null)
     error_message: (Scalars['String'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     k8s_job_name: (Scalars['String'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
@@ -866,6 +870,7 @@ export interface clip_render_jobs_min_fields {
     clip_id: (Scalars['uuid'] | null)
     created_at: (Scalars['timestamptz'] | null)
     error_message: (Scalars['String'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     k8s_job_name: (Scalars['String'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
@@ -889,7 +894,7 @@ export interface clip_render_jobs_mutation_response {
 
 
 /** select columns of table "clip_render_jobs" */
-export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_id' | 'progress' | 'session_token' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_id' | 'progress' | 'session_token' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
 
 
 /** aggregate stddev on columns */
@@ -925,7 +930,7 @@ export interface clip_render_jobs_sum_fields {
 
 
 /** update columns of table "clip_render_jobs" */
-export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_id' | 'progress' | 'session_token' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_id' | 'progress' | 'session_token' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
 
 
 /** aggregate var_pop on columns */
@@ -4187,6 +4192,9 @@ export interface match_clips_variance_fields {
 export interface match_demo_sessions {
     created_at: Scalars['timestamptz']
     error_message: (Scalars['String'] | null)
+    /** An object relationship */
+    game_server_node: (game_server_nodes | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: Scalars['uuid']
     k8s_job_name: Scalars['String']
     last_activity_at: Scalars['timestamptz']
@@ -4248,6 +4256,7 @@ export type match_demo_sessions_constraint = 'match_demo_sessions_per_user_per_m
 export interface match_demo_sessions_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     error_message: (Scalars['String'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     k8s_job_name: (Scalars['String'] | null)
     last_activity_at: (Scalars['timestamptz'] | null)
@@ -4266,6 +4275,7 @@ export interface match_demo_sessions_max_fields {
 export interface match_demo_sessions_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     error_message: (Scalars['String'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     k8s_job_name: (Scalars['String'] | null)
     last_activity_at: (Scalars['timestamptz'] | null)
@@ -4291,7 +4301,7 @@ export interface match_demo_sessions_mutation_response {
 
 
 /** select columns of table "match_demo_sessions" */
-export type match_demo_sessions_select_column = 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_id' | 'session_token' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
+export type match_demo_sessions_select_column = 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_id' | 'session_token' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
 
 
 /** aggregate stddev on columns */
@@ -4323,7 +4333,7 @@ export interface match_demo_sessions_sum_fields {
 
 
 /** update columns of table "match_demo_sessions" */
-export type match_demo_sessions_update_column = 'created_at' | 'error_message' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_id' | 'session_token' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
+export type match_demo_sessions_update_column = 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_id' | 'session_token' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
 
 
 /** aggregate var_pop on columns */
@@ -5906,6 +5916,9 @@ export type match_region_veto_picks_update_column = 'created_at' | 'id' | 'match
 export interface match_streams {
     autodirector: Scalars['Boolean']
     error_message: (Scalars['String'] | null)
+    /** An object relationship */
+    game_server_node: (game_server_nodes | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: Scalars['uuid']
     is_game_streamer: Scalars['Boolean']
     is_live: Scalars['Boolean']
@@ -5914,6 +5927,7 @@ export interface match_streams {
     /** An object relationship */
     match: matches
     match_id: Scalars['uuid']
+    mode: Scalars['String']
     priority: Scalars['Int']
     status: (Scalars['String'] | null)
     status_history: Scalars['jsonb']
@@ -5962,10 +5976,12 @@ export type match_streams_constraint = 'match_streams_pkey'
 /** aggregate max on columns */
 export interface match_streams_max_fields {
     error_message: (Scalars['String'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
     link: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
+    mode: (Scalars['String'] | null)
     priority: (Scalars['Int'] | null)
     status: (Scalars['String'] | null)
     stream_url: (Scalars['String'] | null)
@@ -5977,10 +5993,12 @@ export interface match_streams_max_fields {
 /** aggregate min on columns */
 export interface match_streams_min_fields {
     error_message: (Scalars['String'] | null)
+    game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
     link: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
+    mode: (Scalars['String'] | null)
     priority: (Scalars['Int'] | null)
     status: (Scalars['String'] | null)
     stream_url: (Scalars['String'] | null)
@@ -6000,7 +6018,7 @@ export interface match_streams_mutation_response {
 
 
 /** select columns of table "match_streams" */
-export type match_streams_select_column = 'autodirector' | 'error_message' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
+export type match_streams_select_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** select "match_streams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_streams" */
@@ -6040,7 +6058,7 @@ export interface match_streams_sum_fields {
 
 
 /** update columns of table "match_streams" */
-export type match_streams_update_column = 'autodirector' | 'error_message' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
+export type match_streams_update_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** aggregate var_pop on columns */
@@ -6139,6 +6157,10 @@ export interface matches {
     can_schedule: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_start_match" */
     can_start: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_stream_live" */
+    can_stream_live: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_stream_tv" */
+    can_stream_tv: (Scalars['Boolean'] | null)
     cancels_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_match_connection_link" */
     connection_link: (Scalars['String'] | null)
@@ -11167,6 +11189,10 @@ export interface query_root {
     tournaments_aggregate: tournaments_aggregate
     /** fetch data from the table: "tournaments" using primary key columns */
     tournaments_by_pk: (tournaments | null)
+    /** fetch data from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status: v_gpu_pool_status[]
+    /** fetch aggregated fields from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status_aggregate: v_gpu_pool_status_aggregate
     /** fetch data from the table: "v_match_captains" */
     v_match_captains: v_match_captains[]
     /** fetch aggregated fields from the table: "v_match_captains" */
@@ -12358,6 +12384,12 @@ export interface subscription_root {
     tournaments_by_pk: (tournaments | null)
     /** fetch data from the table in a streaming manner: "tournaments" */
     tournaments_stream: tournaments[]
+    /** fetch data from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status: v_gpu_pool_status[]
+    /** fetch aggregated fields from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status_aggregate: v_gpu_pool_status_aggregate
+    /** fetch data from the table in a streaming manner: "v_gpu_pool_status" */
+    v_gpu_pool_status_stream: v_gpu_pool_status[]
     /** fetch data from the table: "v_match_captains" */
     v_match_captains: v_match_captains[]
     /** fetch aggregated fields from the table: "v_match_captains" */
@@ -14561,6 +14593,137 @@ export interface tournaments_variance_fields {
     min_players_per_lineup: (Scalars['Int'] | null)
     organizer_steam_id: (Scalars['Float'] | null)
     __typename: 'tournaments_variance_fields'
+}
+
+
+/** columns and relationships of "v_gpu_pool_status" */
+export interface v_gpu_pool_status {
+    demo_in_progress: (Scalars['Boolean'] | null)
+    free_gpu_nodes: (Scalars['Int'] | null)
+    highlights_in_progress: (Scalars['Boolean'] | null)
+    id: (Scalars['Int'] | null)
+    live_in_progress: (Scalars['Boolean'] | null)
+    total_gpu_nodes: (Scalars['Int'] | null)
+    __typename: 'v_gpu_pool_status'
+}
+
+
+/** aggregated selection of "v_gpu_pool_status" */
+export interface v_gpu_pool_status_aggregate {
+    aggregate: (v_gpu_pool_status_aggregate_fields | null)
+    nodes: v_gpu_pool_status[]
+    __typename: 'v_gpu_pool_status_aggregate'
+}
+
+
+/** aggregate fields of "v_gpu_pool_status" */
+export interface v_gpu_pool_status_aggregate_fields {
+    avg: (v_gpu_pool_status_avg_fields | null)
+    count: Scalars['Int']
+    max: (v_gpu_pool_status_max_fields | null)
+    min: (v_gpu_pool_status_min_fields | null)
+    stddev: (v_gpu_pool_status_stddev_fields | null)
+    stddev_pop: (v_gpu_pool_status_stddev_pop_fields | null)
+    stddev_samp: (v_gpu_pool_status_stddev_samp_fields | null)
+    sum: (v_gpu_pool_status_sum_fields | null)
+    var_pop: (v_gpu_pool_status_var_pop_fields | null)
+    var_samp: (v_gpu_pool_status_var_samp_fields | null)
+    variance: (v_gpu_pool_status_variance_fields | null)
+    __typename: 'v_gpu_pool_status_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface v_gpu_pool_status_avg_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface v_gpu_pool_status_max_fields {
+    free_gpu_nodes: (Scalars['Int'] | null)
+    id: (Scalars['Int'] | null)
+    total_gpu_nodes: (Scalars['Int'] | null)
+    __typename: 'v_gpu_pool_status_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface v_gpu_pool_status_min_fields {
+    free_gpu_nodes: (Scalars['Int'] | null)
+    id: (Scalars['Int'] | null)
+    total_gpu_nodes: (Scalars['Int'] | null)
+    __typename: 'v_gpu_pool_status_min_fields'
+}
+
+
+/** select columns of table "v_gpu_pool_status" */
+export type v_gpu_pool_status_select_column = 'demo_in_progress' | 'free_gpu_nodes' | 'highlights_in_progress' | 'id' | 'live_in_progress' | 'total_gpu_nodes'
+
+
+/** aggregate stddev on columns */
+export interface v_gpu_pool_status_stddev_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface v_gpu_pool_status_stddev_pop_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface v_gpu_pool_status_stddev_samp_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface v_gpu_pool_status_sum_fields {
+    free_gpu_nodes: (Scalars['Int'] | null)
+    id: (Scalars['Int'] | null)
+    total_gpu_nodes: (Scalars['Int'] | null)
+    __typename: 'v_gpu_pool_status_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface v_gpu_pool_status_var_pop_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface v_gpu_pool_status_var_samp_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface v_gpu_pool_status_variance_fields {
+    free_gpu_nodes: (Scalars['Float'] | null)
+    id: (Scalars['Float'] | null)
+    total_gpu_nodes: (Scalars['Float'] | null)
+    __typename: 'v_gpu_pool_status_variance_fields'
 }
 
 
@@ -17773,6 +17936,9 @@ export interface clip_render_jobsGenqlSelection{
     clip_id?: boolean | number
     created_at?: boolean | number
     error_message?: boolean | number
+    /** An object relationship */
+    game_server_node?: game_server_nodesGenqlSelection
+    game_server_node_id?: boolean | number
     id?: boolean | number
     k8s_job_name?: boolean | number
     last_status_at?: boolean | number
@@ -17855,7 +18021,7 @@ export interface clip_render_jobs_avg_order_by {progress?: (order_by | null),use
 
 
 /** Boolean expression to filter rows from the table "clip_render_jobs". All fields are combined with a logical 'AND'. */
-export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
+export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -17875,7 +18041,7 @@ export interface clip_render_jobs_inc_input {progress?: (Scalars['numeric'] | nu
 
 
 /** input type for inserting data into table "clip_render_jobs" */
-export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -17883,6 +18049,7 @@ export interface clip_render_jobs_max_fieldsGenqlSelection{
     clip_id?: boolean | number
     created_at?: boolean | number
     error_message?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
     k8s_job_name?: boolean | number
     last_status_at?: boolean | number
@@ -17897,7 +18064,7 @@ export interface clip_render_jobs_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "clip_render_jobs" */
-export interface clip_render_jobs_max_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_max_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -17905,6 +18072,7 @@ export interface clip_render_jobs_min_fieldsGenqlSelection{
     clip_id?: boolean | number
     created_at?: boolean | number
     error_message?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
     k8s_job_name?: boolean | number
     last_status_at?: boolean | number
@@ -17919,7 +18087,7 @@ export interface clip_render_jobs_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "clip_render_jobs" */
-export interface clip_render_jobs_min_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_min_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "clip_render_jobs" */
@@ -17938,7 +18106,7 @@ export interface clip_render_jobs_on_conflict {constraint: clip_render_jobs_cons
 
 
 /** Ordering options when selecting data from "clip_render_jobs". */
-export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: clip_render_jobs */
@@ -17950,7 +18118,7 @@ export interface clip_render_jobs_prepend_input {spec?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "clip_render_jobs" */
-export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -18001,7 +18169,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -23449,6 +23617,9 @@ export interface match_clips_variance_fieldsGenqlSelection{
 export interface match_demo_sessionsGenqlSelection{
     created_at?: boolean | number
     error_message?: boolean | number
+    /** An object relationship */
+    game_server_node?: game_server_nodesGenqlSelection
+    game_server_node_id?: boolean | number
     id?: boolean | number
     k8s_job_name?: boolean | number
     last_activity_at?: boolean | number
@@ -23513,7 +23684,7 @@ export interface match_demo_sessions_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_demo_sessions". All fields are combined with a logical 'AND'. */
-export interface match_demo_sessions_bool_exp {_and?: (match_demo_sessions_bool_exp[] | null),_not?: (match_demo_sessions_bool_exp | null),_or?: (match_demo_sessions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_activity_at?: (timestamptz_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),session_token?: (String_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),watcher?: (players_bool_exp | null),watcher_steam_id?: (bigint_comparison_exp | null)}
+export interface match_demo_sessions_bool_exp {_and?: (match_demo_sessions_bool_exp[] | null),_not?: (match_demo_sessions_bool_exp | null),_or?: (match_demo_sessions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_activity_at?: (timestamptz_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),session_token?: (String_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),watcher?: (players_bool_exp | null),watcher_steam_id?: (bigint_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -23533,13 +23704,14 @@ export interface match_demo_sessions_inc_input {watcher_steam_id?: (Scalars['big
 
 
 /** input type for inserting data into table "match_demo_sessions" */
-export interface match_demo_sessions_insert_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher?: (players_obj_rel_insert_input | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+export interface match_demo_sessions_insert_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher?: (players_obj_rel_insert_input | null),watcher_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_demo_sessions_max_fieldsGenqlSelection{
     created_at?: boolean | number
     error_message?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
     k8s_job_name?: boolean | number
     last_activity_at?: boolean | number
@@ -23559,6 +23731,7 @@ export interface match_demo_sessions_max_fieldsGenqlSelection{
 export interface match_demo_sessions_min_fieldsGenqlSelection{
     created_at?: boolean | number
     error_message?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
     k8s_job_name?: boolean | number
     last_activity_at?: boolean | number
@@ -23590,7 +23763,7 @@ export interface match_demo_sessions_on_conflict {constraint: match_demo_session
 
 
 /** Ordering options when selecting data from "match_demo_sessions". */
-export interface match_demo_sessions_order_by {created_at?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),watcher?: (players_order_by | null),watcher_steam_id?: (order_by | null)}
+export interface match_demo_sessions_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),session_token?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),watcher?: (players_order_by | null),watcher_steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_demo_sessions */
@@ -23602,7 +23775,7 @@ export interface match_demo_sessions_prepend_input {status_history?: (Scalars['j
 
 
 /** input type for updating data in table "match_demo_sessions" */
-export interface match_demo_sessions_set_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+export interface match_demo_sessions_set_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -23638,7 +23811,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_demo_sessions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+export interface match_demo_sessions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),session_token?: (Scalars['String'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -26372,6 +26545,9 @@ where: match_region_veto_picks_bool_exp}
 export interface match_streamsGenqlSelection{
     autodirector?: boolean | number
     error_message?: boolean | number
+    /** An object relationship */
+    game_server_node?: game_server_nodesGenqlSelection
+    game_server_node_id?: boolean | number
     id?: boolean | number
     is_game_streamer?: boolean | number
     is_live?: boolean | number
@@ -26380,6 +26556,7 @@ export interface match_streamsGenqlSelection{
     /** An object relationship */
     match?: matchesGenqlSelection
     match_id?: boolean | number
+    mode?: boolean | number
     priority?: boolean | number
     status?: boolean | number
     status_history?: { __args: {
@@ -26454,7 +26631,7 @@ export interface match_streams_avg_order_by {priority?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_streams". All fields are combined with a logical 'AND'. */
-export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
+export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),mode?: (String_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -26474,16 +26651,18 @@ export interface match_streams_inc_input {priority?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_streams" */
-export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_streams_max_fieldsGenqlSelection{
     error_message?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
     last_status_at?: boolean | number
     link?: boolean | number
     match_id?: boolean | number
+    mode?: boolean | number
     priority?: boolean | number
     status?: boolean | number
     stream_url?: boolean | number
@@ -26494,16 +26673,18 @@ export interface match_streams_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_streams" */
-export interface match_streams_max_order_by {error_message?: (order_by | null),id?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_max_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface match_streams_min_fieldsGenqlSelection{
     error_message?: boolean | number
+    game_server_node_id?: boolean | number
     id?: boolean | number
     last_status_at?: boolean | number
     link?: boolean | number
     match_id?: boolean | number
+    mode?: boolean | number
     priority?: boolean | number
     status?: boolean | number
     stream_url?: boolean | number
@@ -26514,7 +26695,7 @@ export interface match_streams_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_streams" */
-export interface match_streams_min_order_by {error_message?: (order_by | null),id?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_min_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_streams" */
@@ -26533,7 +26714,7 @@ export interface match_streams_on_conflict {constraint: match_streams_constraint
 
 
 /** Ordering options when selecting data from "match_streams". */
-export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** primary key columns input for table: match_streams */
@@ -26545,7 +26726,7 @@ export interface match_streams_prepend_input {status_history?: (Scalars['jsonb']
 
 
 /** input type for updating data in table "match_streams" */
-export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -26593,7 +26774,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -26773,6 +26954,10 @@ export interface matchesGenqlSelection{
     can_schedule?: boolean | number
     /** A computed field, executes function "can_start_match" */
     can_start?: boolean | number
+    /** A computed field, executes function "can_stream_live" */
+    can_stream_live?: boolean | number
+    /** A computed field, executes function "can_stream_tv" */
+    can_stream_tv?: boolean | number
     cancels_at?: boolean | number
     /** A computed field, executes function "get_match_connection_link" */
     connection_link?: boolean | number
@@ -27287,7 +27472,7 @@ export interface matches_avg_order_by {organizer_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "matches". All fields are combined with a logical 'AND'. */
-export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_reassign_winner?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (server_regions_bool_exp | null),elo_changes?: (v_player_elo_bool_exp | null),elo_changes_aggregate?: (v_player_elo_aggregate_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (match_invites_bool_exp | null),invites_aggregate?: (match_invites_aggregate_bool_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_friend_in_match_lineup?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),lineup_counts?: (json_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (String_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_error?: (String_comparison_exp | null),server_id?: (uuid_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),streams?: (match_streams_bool_exp | null),streams_aggregate?: (match_streams_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_string?: (String_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
+export interface matches_bool_exp {_and?: (matches_bool_exp[] | null),_not?: (matches_bool_exp | null),_or?: (matches_bool_exp[] | null),can_assign_server?: (Boolean_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_check_in?: (Boolean_comparison_exp | null),can_reassign_winner?: (Boolean_comparison_exp | null),can_schedule?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),can_stream_live?: (Boolean_comparison_exp | null),can_stream_tv?: (Boolean_comparison_exp | null),cancels_at?: (timestamptz_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_match_map_id?: (uuid_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),e_match_status?: (e_match_status_bool_exp | null),e_region?: (server_regions_bool_exp | null),elo_changes?: (v_player_elo_bool_exp | null),elo_changes_aggregate?: (v_player_elo_aggregate_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (match_invites_bool_exp | null),invites_aggregate?: (match_invites_aggregate_bool_exp | null),is_captain?: (Boolean_comparison_exp | null),is_coach?: (Boolean_comparison_exp | null),is_friend_in_match_lineup?: (Boolean_comparison_exp | null),is_in_lineup?: (Boolean_comparison_exp | null),is_match_server_available?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),is_server_online?: (Boolean_comparison_exp | null),is_tournament_match?: (Boolean_comparison_exp | null),label?: (String_comparison_exp | null),lineup_1?: (match_lineups_bool_exp | null),lineup_1_id?: (uuid_comparison_exp | null),lineup_2?: (match_lineups_bool_exp | null),lineup_2_id?: (uuid_comparison_exp | null),lineup_counts?: (json_comparison_exp | null),map_veto_picking_lineup_id?: (uuid_comparison_exp | null),map_veto_picks?: (match_map_veto_picks_bool_exp | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),map_veto_type?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),options?: (match_options_bool_exp | null),organizer?: (players_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),password?: (String_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_flashes?: (player_flashes_bool_exp | null),player_flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_objectives?: (player_objectives_bool_exp | null),player_objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),player_utility?: (player_utility_bool_exp | null),player_utility_aggregate?: (player_utility_aggregate_bool_exp | null),region?: (String_comparison_exp | null),region_veto_picking_lineup_id?: (uuid_comparison_exp | null),region_veto_picks?: (match_region_veto_picks_bool_exp | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_bool_exp | null),requested_organizer?: (Boolean_comparison_exp | null),scheduled_at?: (timestamptz_comparison_exp | null),server?: (servers_bool_exp | null),server_error?: (String_comparison_exp | null),server_id?: (uuid_comparison_exp | null),server_region?: (String_comparison_exp | null),server_type?: (String_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_status_enum_comparison_exp | null),streams?: (match_streams_bool_exp | null),streams_aggregate?: (match_streams_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),tournament_brackets?: (tournament_brackets_bool_exp | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_bool_exp | null),tv_connection_string?: (String_comparison_exp | null),winner?: (match_lineups_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "matches" */
@@ -27422,7 +27607,7 @@ export interface matches_on_conflict {constraint: matches_constraint,update_colu
 
 
 /** Ordering options when selecting data from "matches". */
-export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_reassign_winner?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),cancels_at?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (server_regions_order_by | null),elo_changes_aggregate?: (v_player_elo_aggregate_order_by | null),ended_at?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (match_invites_aggregate_order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_friend_in_match_lineup?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),lineup_counts?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_error?: (order_by | null),server_id?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),streams_aggregate?: (match_streams_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_string?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
+export interface matches_order_by {can_assign_server?: (order_by | null),can_cancel?: (order_by | null),can_check_in?: (order_by | null),can_reassign_winner?: (order_by | null),can_schedule?: (order_by | null),can_start?: (order_by | null),can_stream_live?: (order_by | null),can_stream_tv?: (order_by | null),cancels_at?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),current_match_map_id?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),e_match_status?: (e_match_status_order_by | null),e_region?: (server_regions_order_by | null),elo_changes_aggregate?: (v_player_elo_aggregate_order_by | null),ended_at?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (match_invites_aggregate_order_by | null),is_captain?: (order_by | null),is_coach?: (order_by | null),is_friend_in_match_lineup?: (order_by | null),is_in_lineup?: (order_by | null),is_match_server_available?: (order_by | null),is_organizer?: (order_by | null),is_server_online?: (order_by | null),is_tournament_match?: (order_by | null),label?: (order_by | null),lineup_1?: (match_lineups_order_by | null),lineup_1_id?: (order_by | null),lineup_2?: (match_lineups_order_by | null),lineup_2_id?: (order_by | null),lineup_counts?: (order_by | null),map_veto_picking_lineup_id?: (order_by | null),map_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),map_veto_type?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),options?: (match_options_order_by | null),organizer?: (players_order_by | null),organizer_steam_id?: (order_by | null),password?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_flashes_aggregate?: (player_flashes_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_objectives_aggregate?: (player_objectives_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),player_utility_aggregate?: (player_utility_aggregate_order_by | null),region?: (order_by | null),region_veto_picking_lineup_id?: (order_by | null),region_veto_picks_aggregate?: (match_region_veto_picks_aggregate_order_by | null),requested_organizer?: (order_by | null),scheduled_at?: (order_by | null),server?: (servers_order_by | null),server_error?: (order_by | null),server_id?: (order_by | null),server_region?: (order_by | null),server_type?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),streams_aggregate?: (match_streams_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),tournament_brackets_aggregate?: (tournament_brackets_aggregate_order_by | null),tv_connection_string?: (order_by | null),winner?: (match_lineups_order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** primary key columns input for table: matches */
@@ -29271,7 +29456,7 @@ export interface mutation_rootGenqlSelection{
     specJump?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     specPlayer?: (SuccessOutputGenqlSelection & { __args: {accountid: Scalars['Int'], match_id: Scalars['uuid']} })
     specSlot?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], slot: Scalars['Int']} })
-    startLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    startLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], mode: Scalars['String']} })
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
     stopLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
@@ -37860,6 +38045,30 @@ export interface query_rootGenqlSelection{
     where?: (tournaments_bool_exp | null)} })
     /** fetch data from the table: "tournaments" using primary key columns */
     tournaments_by_pk?: (tournamentsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status?: (v_gpu_pool_statusGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_gpu_pool_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_gpu_pool_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_gpu_pool_status_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status_aggregate?: (v_gpu_pool_status_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_gpu_pool_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_gpu_pool_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_gpu_pool_status_bool_exp | null)} })
     /** fetch data from the table: "v_match_captains" */
     v_match_captains?: (v_match_captainsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -41734,6 +41943,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (tournaments_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (tournaments_bool_exp | null)} })
+    /** fetch data from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status?: (v_gpu_pool_statusGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_gpu_pool_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_gpu_pool_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_gpu_pool_status_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_gpu_pool_status" */
+    v_gpu_pool_status_aggregate?: (v_gpu_pool_status_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (v_gpu_pool_status_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (v_gpu_pool_status_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (v_gpu_pool_status_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "v_gpu_pool_status" */
+    v_gpu_pool_status_stream?: (v_gpu_pool_statusGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (v_gpu_pool_status_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (v_gpu_pool_status_bool_exp | null)} })
     /** fetch data from the table: "v_match_captains" */
     v_match_captains?: (v_match_captainsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -45895,6 +46136,166 @@ export interface tournaments_variance_order_by {organizer_steam_id?: (order_by |
 
 /** Boolean expression to compare columns of type "uuid". All fields are combined with logical 'AND'. */
 export interface uuid_comparison_exp {_eq?: (Scalars['uuid'] | null),_gt?: (Scalars['uuid'] | null),_gte?: (Scalars['uuid'] | null),_in?: (Scalars['uuid'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['uuid'] | null),_lte?: (Scalars['uuid'] | null),_neq?: (Scalars['uuid'] | null),_nin?: (Scalars['uuid'][] | null)}
+
+
+/** columns and relationships of "v_gpu_pool_status" */
+export interface v_gpu_pool_statusGenqlSelection{
+    demo_in_progress?: boolean | number
+    free_gpu_nodes?: boolean | number
+    highlights_in_progress?: boolean | number
+    id?: boolean | number
+    live_in_progress?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "v_gpu_pool_status" */
+export interface v_gpu_pool_status_aggregateGenqlSelection{
+    aggregate?: v_gpu_pool_status_aggregate_fieldsGenqlSelection
+    nodes?: v_gpu_pool_statusGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "v_gpu_pool_status" */
+export interface v_gpu_pool_status_aggregate_fieldsGenqlSelection{
+    avg?: v_gpu_pool_status_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (v_gpu_pool_status_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: v_gpu_pool_status_max_fieldsGenqlSelection
+    min?: v_gpu_pool_status_min_fieldsGenqlSelection
+    stddev?: v_gpu_pool_status_stddev_fieldsGenqlSelection
+    stddev_pop?: v_gpu_pool_status_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: v_gpu_pool_status_stddev_samp_fieldsGenqlSelection
+    sum?: v_gpu_pool_status_sum_fieldsGenqlSelection
+    var_pop?: v_gpu_pool_status_var_pop_fieldsGenqlSelection
+    var_samp?: v_gpu_pool_status_var_samp_fieldsGenqlSelection
+    variance?: v_gpu_pool_status_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface v_gpu_pool_status_avg_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "v_gpu_pool_status". All fields are combined with a logical 'AND'. */
+export interface v_gpu_pool_status_bool_exp {_and?: (v_gpu_pool_status_bool_exp[] | null),_not?: (v_gpu_pool_status_bool_exp | null),_or?: (v_gpu_pool_status_bool_exp[] | null),demo_in_progress?: (Boolean_comparison_exp | null),free_gpu_nodes?: (Int_comparison_exp | null),highlights_in_progress?: (Boolean_comparison_exp | null),id?: (Int_comparison_exp | null),live_in_progress?: (Boolean_comparison_exp | null),total_gpu_nodes?: (Int_comparison_exp | null)}
+
+
+/** aggregate max on columns */
+export interface v_gpu_pool_status_max_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface v_gpu_pool_status_min_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "v_gpu_pool_status". */
+export interface v_gpu_pool_status_order_by {demo_in_progress?: (order_by | null),free_gpu_nodes?: (order_by | null),highlights_in_progress?: (order_by | null),id?: (order_by | null),live_in_progress?: (order_by | null),total_gpu_nodes?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface v_gpu_pool_status_stddev_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface v_gpu_pool_status_stddev_pop_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface v_gpu_pool_status_stddev_samp_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "v_gpu_pool_status" */
+export interface v_gpu_pool_status_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: v_gpu_pool_status_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface v_gpu_pool_status_stream_cursor_value_input {demo_in_progress?: (Scalars['Boolean'] | null),free_gpu_nodes?: (Scalars['Int'] | null),highlights_in_progress?: (Scalars['Boolean'] | null),id?: (Scalars['Int'] | null),live_in_progress?: (Scalars['Boolean'] | null),total_gpu_nodes?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface v_gpu_pool_status_sum_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_pop on columns */
+export interface v_gpu_pool_status_var_pop_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface v_gpu_pool_status_var_samp_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface v_gpu_pool_status_variance_fieldsGenqlSelection{
+    free_gpu_nodes?: boolean | number
+    id?: boolean | number
+    total_gpu_nodes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "v_match_captains" */
@@ -56247,6 +56648,110 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const v_gpu_pool_status_possibleTypes: string[] = ['v_gpu_pool_status']
+    export const isv_gpu_pool_status = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status"')
+      return v_gpu_pool_status_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_aggregate_possibleTypes: string[] = ['v_gpu_pool_status_aggregate']
+    export const isv_gpu_pool_status_aggregate = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_aggregate"')
+      return v_gpu_pool_status_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_aggregate_fields_possibleTypes: string[] = ['v_gpu_pool_status_aggregate_fields']
+    export const isv_gpu_pool_status_aggregate_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_aggregate_fields"')
+      return v_gpu_pool_status_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_avg_fields_possibleTypes: string[] = ['v_gpu_pool_status_avg_fields']
+    export const isv_gpu_pool_status_avg_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_avg_fields"')
+      return v_gpu_pool_status_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_max_fields_possibleTypes: string[] = ['v_gpu_pool_status_max_fields']
+    export const isv_gpu_pool_status_max_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_max_fields"')
+      return v_gpu_pool_status_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_min_fields_possibleTypes: string[] = ['v_gpu_pool_status_min_fields']
+    export const isv_gpu_pool_status_min_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_min_fields"')
+      return v_gpu_pool_status_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_stddev_fields_possibleTypes: string[] = ['v_gpu_pool_status_stddev_fields']
+    export const isv_gpu_pool_status_stddev_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_stddev_fields"')
+      return v_gpu_pool_status_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_stddev_pop_fields_possibleTypes: string[] = ['v_gpu_pool_status_stddev_pop_fields']
+    export const isv_gpu_pool_status_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_stddev_pop_fields"')
+      return v_gpu_pool_status_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_stddev_samp_fields_possibleTypes: string[] = ['v_gpu_pool_status_stddev_samp_fields']
+    export const isv_gpu_pool_status_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_stddev_samp_fields"')
+      return v_gpu_pool_status_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_sum_fields_possibleTypes: string[] = ['v_gpu_pool_status_sum_fields']
+    export const isv_gpu_pool_status_sum_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_sum_fields"')
+      return v_gpu_pool_status_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_var_pop_fields_possibleTypes: string[] = ['v_gpu_pool_status_var_pop_fields']
+    export const isv_gpu_pool_status_var_pop_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_var_pop_fields"')
+      return v_gpu_pool_status_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_var_samp_fields_possibleTypes: string[] = ['v_gpu_pool_status_var_samp_fields']
+    export const isv_gpu_pool_status_var_samp_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_var_samp_fields"')
+      return v_gpu_pool_status_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const v_gpu_pool_status_variance_fields_possibleTypes: string[] = ['v_gpu_pool_status_variance_fields']
+    export const isv_gpu_pool_status_variance_fields = (obj?: { __typename?: any } | null): obj is v_gpu_pool_status_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isv_gpu_pool_status_variance_fields"')
+      return v_gpu_pool_status_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const v_match_captains_possibleTypes: string[] = ['v_match_captains']
     export const isv_match_captains = (obj?: { __typename?: any } | null): obj is v_match_captains => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_captains"')
@@ -57504,6 +58009,7 @@ export const enumClipRenderJobsSelectColumn = {
    clip_id: 'clip_id' as const,
    created_at: 'created_at' as const,
    error_message: 'error_message' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
    k8s_job_name: 'k8s_job_name' as const,
    last_status_at: 'last_status_at' as const,
@@ -57520,6 +58026,7 @@ export const enumClipRenderJobsUpdateColumn = {
    clip_id: 'clip_id' as const,
    created_at: 'created_at' as const,
    error_message: 'error_message' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
    k8s_job_name: 'k8s_job_name' as const,
    last_status_at: 'last_status_at' as const,
@@ -58397,6 +58904,7 @@ export const enumMatchDemoSessionsConstraint = {
 export const enumMatchDemoSessionsSelectColumn = {
    created_at: 'created_at' as const,
    error_message: 'error_message' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
    k8s_job_name: 'k8s_job_name' as const,
    last_activity_at: 'last_activity_at' as const,
@@ -58413,6 +58921,7 @@ export const enumMatchDemoSessionsSelectColumn = {
 export const enumMatchDemoSessionsUpdateColumn = {
    created_at: 'created_at' as const,
    error_message: 'error_message' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
    k8s_job_name: 'k8s_job_name' as const,
    last_activity_at: 'last_activity_at' as const,
@@ -58740,12 +59249,14 @@ export const enumMatchStreamsConstraint = {
 export const enumMatchStreamsSelectColumn = {
    autodirector: 'autodirector' as const,
    error_message: 'error_message' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
    is_game_streamer: 'is_game_streamer' as const,
    is_live: 'is_live' as const,
    last_status_at: 'last_status_at' as const,
    link: 'link' as const,
    match_id: 'match_id' as const,
+   mode: 'mode' as const,
    priority: 'priority' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
@@ -58768,12 +59279,14 @@ export const enumMatchStreamsSelectColumnMatchStreamsAggregateBoolExpBoolOrArgum
 export const enumMatchStreamsUpdateColumn = {
    autodirector: 'autodirector' as const,
    error_message: 'error_message' as const,
+   game_server_node_id: 'game_server_node_id' as const,
    id: 'id' as const,
    is_game_streamer: 'is_game_streamer' as const,
    is_live: 'is_live' as const,
    last_status_at: 'last_status_at' as const,
    link: 'link' as const,
    match_id: 'match_id' as const,
+   mode: 'mode' as const,
    priority: 'priority' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
@@ -59877,6 +60390,15 @@ export const enumTournamentsUpdateColumn = {
    start: 'start' as const,
    status: 'status' as const,
    trophies_enabled: 'trophies_enabled' as const
+}
+
+export const enumVGpuPoolStatusSelectColumn = {
+   demo_in_progress: 'demo_in_progress' as const,
+   free_gpu_nodes: 'free_gpu_nodes' as const,
+   highlights_in_progress: 'highlights_in_progress' as const,
+   id: 'id' as const,
+   live_in_progress: 'live_in_progress' as const,
+   total_gpu_nodes: 'total_gpu_nodes' as const
 }
 
 export const enumVMatchCaptainsSelectColumn = {

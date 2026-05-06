@@ -385,7 +385,9 @@ export class MatchesController {
     if (!becameParsed) return;
 
     try {
-      const queued = await this.clips.autoGenerateForMatch(matchId);
+      const queued = await this.clips.autoGenerateForMatch(matchId, {
+        isSystemInitiated: true,
+      });
       if (queued > 0) {
         this.logger.log(
           `[match ${matchId}] metadata parsed — auto-clips queued ${queued} job(s)`,
