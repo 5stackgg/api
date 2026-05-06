@@ -824,12 +824,6 @@ export class ClipsService {
       this.logger.warn(`[auto-clips] match ${matchId} not found`);
       return 0;
     }
-    if (!match.organizer_steam_id) {
-      this.logger.warn(
-        `[auto-clips] match ${matchId} has no organizer_steam_id — skipping (need a clip owner)`,
-      );
-      return 0;
-    }
 
     const matchMapIds = (match.match_maps ?? []).map((m: any) => String(m.id));
     if (matchMapIds.length > 0) {
@@ -971,9 +965,10 @@ export class ClipsService {
 
     if (pendingObjects.length > 0) {
       const insertObjects = pendingObjects.map((p) => ({
-        user_steam_id: options.isSystemInitiated
-          ? null
-          : String(match.organizer_steam_id),
+        user_steam_id:
+          options.isSystemInitiated || !match.organizer_steam_id
+            ? null
+            : String(match.organizer_steam_id),
         match_map_id: p.mapRowId,
         session_token: p.sessionToken,
         k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(p.mapRowId),
