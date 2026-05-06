@@ -94,6 +94,8 @@ export class TypeSenseService {
         type: "string",
         symbols_to_index: ["~"],
         optional: true,
+        sort: true,
+        index: true,
       },
     ];
 
@@ -112,18 +114,37 @@ export class TypeSenseService {
 
     const collection = await this.client.collections("players").retrieve();
 
-    const missingFields = fields.filter((field) => {
-      return !collection.fields.find((_existingField) => {
-        return _existingField.name === field.name;
-      });
-    });
+    const fieldUpdates: Array<Record<string, unknown>> = [];
+    let needsRefresh = false;
 
-    if (missingFields.length > 0) {
+    for (const field of fields) {
+      const existing = collection.fields.find((f) => f.name === field.name);
+
+      if (!existing) {
+        fieldUpdates.push(field);
+        needsRefresh = true;
+        continue;
+      }
+
+      const sortChanged = Boolean(existing.sort) !== Boolean(field.sort);
+      const indexChanged = Boolean(existing.index) !== Boolean(field.index);
+      const typeChanged = existing.type !== field.type;
+
+      if (sortChanged || indexChanged || typeChanged) {
+        fieldUpdates.push({ name: field.name, drop: true });
+        fieldUpdates.push(field);
+        needsRefresh = true;
+      }
+    }
+
+    if (fieldUpdates.length > 0) {
       await this.client.collections("players").update({
-        fields: missingFields,
+        fields: fieldUpdates as CollectionFieldSchema[],
       });
 
-      await this.queue.add(RefreshAllPlayersJob.name, {});
+      if (needsRefresh) {
+        await this.queue.add(RefreshAllPlayersJob.name, {});
+      }
     }
   }
 

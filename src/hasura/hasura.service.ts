@@ -41,7 +41,7 @@ export class HasuraService {
   }
 
   public static PLAYER_LAST_SIGN_IN_CACHE_KEY(steamId: bigint | string) {
-    return `user:last_sign_in_at:${steamId.toString()}`;
+    return `user:last_sign_in_at:v2:${steamId.toString()}`;
   }
 
   public checkSecret(secret: string) {

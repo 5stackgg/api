@@ -73,7 +73,7 @@ export class AuthController {
           __typename: true,
         },
       });
-      await this.cache.put(lastSignInKey, true, 60 * 60 * 1000);
+      await this.cache.put(lastSignInKey, true, 60 * 60);
       user.last_sign_in_at = now;
     }
 
