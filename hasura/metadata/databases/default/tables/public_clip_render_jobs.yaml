@@ -5,6 +5,9 @@ object_relationships:
   - name: clip
     using:
       foreign_key_constraint_on: clip_id
+  - name: game_server_node
+    using:
+      foreign_key_constraint_on: game_server_node_id
   - name: match_map
     using:
       foreign_key_constraint_on: match_map_id
@@ -26,6 +29,7 @@ select_permissions:
         - last_status_at
         - created_at
         - spec
+        - game_server_node_id
       filter: {}
   - role: streamer
     permission:
@@ -41,6 +45,7 @@ select_permissions:
         - last_status_at
         - created_at
         - spec
+        - game_server_node_id
       filter: {}
   - role: user
     permission:

@@ -5,7 +5,6 @@ import { e_player_roles_enum } from "generated/schema";
 import { HasuraService } from "../../hasura/hasura.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
-import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -27,7 +26,6 @@ export class ClipsService {
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
-    private readonly demoMetadata: DemoMetadataService,
     @InjectQueue(MatchQueues.ClipRenderBatch)
     private readonly batchQueue: Queue,
   ) {}
@@ -789,7 +787,7 @@ export class ClipsService {
 
   public async autoGenerateForMatch(
     matchId: string,
-    options: { force?: boolean } = {},
+    options: { force?: boolean; isSystemInitiated?: boolean } = {},
   ): Promise<number> {
     if (!options.force) {
       const enabled = await this.readBoolSetting(
@@ -881,69 +879,15 @@ export class ClipsService {
       return out;
     };
 
-    let nameByStId = buildNameMapFromMatch(match);
-    let unresolved = Array.from(allKillers).filter(
+    const nameByStId = buildNameMapFromMatch(match);
+    const unresolved = Array.from(allKillers).filter(
       (sid) => !nameByStId.has(sid),
     );
 
     if (unresolved.length > 0) {
-      const mapsNeedingReparse = (match.match_maps ?? []).filter((m: any) => {
-        const demo = m.demos?.[0];
-        if (!demo?.id) return false;
-        const kills =
-          (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
-        const killersHere = new Set<string>();
-        for (const k of kills) if (k.killer) killersHere.add(k.killer);
-        for (const sid of unresolved) {
-          if (killersHere.has(sid)) return true;
-        }
-        return false;
-      });
       this.logger.warn(
-        `[auto-clips] match ${matchId} has ${unresolved.length} killer steam_id(s) missing from demo.players (${unresolved.join(", ")}) — re-parsing ${mapsNeedingReparse.length} map_demo(s)`,
+        `[auto-clips] match ${matchId} missing ${unresolved.length} killer name(s) from already-parsed demo.players (${unresolved.join(", ")}) — clips for these will queue as "Player NNNN" (skipping re-parse)`,
       );
-      for (const m of mapsNeedingReparse) {
-        const demoId = String(m.demos?.[0]?.id ?? "");
-        if (!demoId) continue;
-        try {
-          await this.demoMetadata.reparseById(demoId);
-        } catch (error) {
-          this.logger.warn(
-            `[auto-clips] match ${matchId} reparse failed for demo ${demoId}: ${(error as Error)?.message}`,
-          );
-        }
-      }
-      const { matches_by_pk: refreshed } = await this.hasura.query({
-        matches_by_pk: {
-          __args: { id: matchId },
-          id: true,
-          match_maps: {
-            id: true,
-            demos: {
-              id: true,
-              kills: true,
-              players: true,
-              tick_rate: true,
-              total_ticks: true,
-              round_ticks: true,
-            },
-          },
-        },
-      });
-      if (refreshed) {
-        nameByStId = buildNameMapFromMatch(refreshed);
-        match.match_maps = refreshed.match_maps;
-      }
-      unresolved = Array.from(allKillers).filter((sid) => !nameByStId.has(sid));
-      if (unresolved.length > 0) {
-        this.logger.warn(
-          `[auto-clips] match ${matchId} STILL missing ${unresolved.length} killer name(s) after re-parse: ${unresolved.join(", ")} — clips for these will queue as "Player NNNN"`,
-        );
-      } else {
-        this.logger.log(
-          `[auto-clips] match ${matchId} re-parse resolved all missing killer names`,
-        );
-      }
     }
 
     const upsertObjects: Array<{
@@ -1027,7 +971,9 @@ export class ClipsService {
 
     if (pendingObjects.length > 0) {
       const insertObjects = pendingObjects.map((p) => ({
-        user_steam_id: String(match.organizer_steam_id),
+        user_steam_id: options.isSystemInitiated
+          ? null
+          : String(match.organizer_steam_id),
         match_map_id: p.mapRowId,
         session_token: p.sessionToken,
         k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(p.mapRowId),
@@ -1237,8 +1183,7 @@ export class ClipsService {
           .sort((a, b) => a.tick - b.tick);
         const count = inRound.length;
         if (count === 0) continue;
-        const span =
-          count >= 2 ? inRound[count - 1].tick - inRound[0].tick : 0;
+        const span = count >= 2 ? inRound[count - 1].tick - inRound[0].tick : 0;
         if (
           !best ||
           count > best.count ||

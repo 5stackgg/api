@@ -1338,6 +1338,10 @@ type clip_render_jobs {
   clip_id: uuid
   created_at: timestamptz!
   error_message: String
+
+  """An object relationship"""
+  game_server_node: game_server_nodes
+  game_server_node_id: String
   id: uuid!
   k8s_job_name: String!
   last_status_at: timestamptz!
@@ -1456,6 +1460,8 @@ input clip_render_jobs_bool_exp {
   clip_id: uuid_comparison_exp
   created_at: timestamptz_comparison_exp
   error_message: String_comparison_exp
+  game_server_node: game_server_nodes_bool_exp
+  game_server_node_id: String_comparison_exp
   id: uuid_comparison_exp
   k8s_job_name: String_comparison_exp
   last_status_at: timestamptz_comparison_exp
@@ -1520,6 +1526,8 @@ input clip_render_jobs_insert_input {
   clip_id: uuid
   created_at: timestamptz
   error_message: String
+  game_server_node: game_server_nodes_obj_rel_insert_input
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
@@ -1539,6 +1547,7 @@ type clip_render_jobs_max_fields {
   clip_id: uuid
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
@@ -1556,6 +1565,7 @@ input clip_render_jobs_max_order_by {
   clip_id: order_by
   created_at: order_by
   error_message: order_by
+  game_server_node_id: order_by
   id: order_by
   k8s_job_name: order_by
   last_status_at: order_by
@@ -1571,6 +1581,7 @@ type clip_render_jobs_min_fields {
   clip_id: uuid
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
@@ -1588,6 +1599,7 @@ input clip_render_jobs_min_order_by {
   clip_id: order_by
   created_at: order_by
   error_message: order_by
+  game_server_node_id: order_by
   id: order_by
   k8s_job_name: order_by
   last_status_at: order_by
@@ -1624,6 +1636,8 @@ input clip_render_jobs_order_by {
   clip_id: order_by
   created_at: order_by
   error_message: order_by
+  game_server_node: game_server_nodes_order_by
+  game_server_node_id: order_by
   id: order_by
   k8s_job_name: order_by
   last_status_at: order_by
@@ -1663,6 +1677,9 @@ enum clip_render_jobs_select_column {
   error_message
 
   """column name"""
+  game_server_node_id
+
+  """column name"""
   id
 
   """column name"""
@@ -1700,6 +1717,7 @@ input clip_render_jobs_set_input {
   clip_id: uuid
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
@@ -1770,6 +1788,7 @@ input clip_render_jobs_stream_cursor_value_input {
   clip_id: uuid
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
@@ -1808,6 +1827,9 @@ enum clip_render_jobs_update_column {
 
   """column name"""
   error_message
+
+  """column name"""
+  game_server_node_id
 
   """column name"""
   id
@@ -11365,6 +11387,10 @@ columns and relationships of "match_demo_sessions"
 type match_demo_sessions {
   created_at: timestamptz!
   error_message: String
+
+  """An object relationship"""
+  game_server_node: game_server_nodes
+  game_server_node_id: String
   id: uuid!
   k8s_job_name: String!
   last_activity_at: timestamptz!
@@ -11434,6 +11460,8 @@ input match_demo_sessions_bool_exp {
   _or: [match_demo_sessions_bool_exp!]
   created_at: timestamptz_comparison_exp
   error_message: String_comparison_exp
+  game_server_node: game_server_nodes_bool_exp
+  game_server_node_id: String_comparison_exp
   id: uuid_comparison_exp
   k8s_job_name: String_comparison_exp
   last_activity_at: timestamptz_comparison_exp
@@ -11499,6 +11527,8 @@ input type for inserting data into table "match_demo_sessions"
 input match_demo_sessions_insert_input {
   created_at: timestamptz
   error_message: String
+  game_server_node: game_server_nodes_obj_rel_insert_input
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_activity_at: timestamptz
@@ -11519,6 +11549,7 @@ input match_demo_sessions_insert_input {
 type match_demo_sessions_max_fields {
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_activity_at: timestamptz
@@ -11535,6 +11566,7 @@ type match_demo_sessions_max_fields {
 type match_demo_sessions_min_fields {
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_activity_at: timestamptz
@@ -11571,6 +11603,8 @@ input match_demo_sessions_on_conflict {
 input match_demo_sessions_order_by {
   created_at: order_by
   error_message: order_by
+  game_server_node: game_server_nodes_order_by
+  game_server_node_id: order_by
   id: order_by
   k8s_job_name: order_by
   last_activity_at: order_by
@@ -11606,6 +11640,9 @@ enum match_demo_sessions_select_column {
 
   """column name"""
   error_message
+
+  """column name"""
+  game_server_node_id
 
   """column name"""
   id
@@ -11647,6 +11684,7 @@ input type for updating data in table "match_demo_sessions"
 input match_demo_sessions_set_input {
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_activity_at: timestamptz
@@ -11690,6 +11728,7 @@ input match_demo_sessions_stream_cursor_input {
 input match_demo_sessions_stream_cursor_value_input {
   created_at: timestamptz
   error_message: String
+  game_server_node_id: String
   id: uuid
   k8s_job_name: String
   last_activity_at: timestamptz
@@ -11717,6 +11756,9 @@ enum match_demo_sessions_update_column {
 
   """column name"""
   error_message
+
+  """column name"""
+  game_server_node_id
 
   """column name"""
   id
@@ -16924,6 +16966,10 @@ columns and relationships of "match_streams"
 type match_streams {
   autodirector: Boolean!
   error_message: String
+
+  """An object relationship"""
+  game_server_node: game_server_nodes
+  game_server_node_id: String
   id: uuid!
   is_game_streamer: Boolean!
   is_live: Boolean!
@@ -16933,6 +16979,7 @@ type match_streams {
   """An object relationship"""
   match: matches!
   match_id: uuid!
+  mode: String!
   priority: Int!
   status: String
   status_history(
@@ -17048,6 +17095,8 @@ input match_streams_bool_exp {
   _or: [match_streams_bool_exp!]
   autodirector: Boolean_comparison_exp
   error_message: String_comparison_exp
+  game_server_node: game_server_nodes_bool_exp
+  game_server_node_id: String_comparison_exp
   id: uuid_comparison_exp
   is_game_streamer: Boolean_comparison_exp
   is_live: Boolean_comparison_exp
@@ -17055,6 +17104,7 @@ input match_streams_bool_exp {
   link: String_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
+  mode: String_comparison_exp
   priority: Int_comparison_exp
   status: String_comparison_exp
   status_history: jsonb_comparison_exp
@@ -17106,6 +17156,8 @@ input type for inserting data into table "match_streams"
 input match_streams_insert_input {
   autodirector: Boolean
   error_message: String
+  game_server_node: game_server_nodes_obj_rel_insert_input
+  game_server_node_id: String
   id: uuid
   is_game_streamer: Boolean
   is_live: Boolean
@@ -17113,6 +17165,7 @@ input match_streams_insert_input {
   link: String
   match: matches_obj_rel_insert_input
   match_id: uuid
+  mode: String
   priority: Int
   status: String
   status_history: jsonb
@@ -17123,10 +17176,12 @@ input match_streams_insert_input {
 """aggregate max on columns"""
 type match_streams_max_fields {
   error_message: String
+  game_server_node_id: String
   id: uuid
   last_status_at: timestamptz
   link: String
   match_id: uuid
+  mode: String
   priority: Int
   status: String
   stream_url: String
@@ -17138,10 +17193,12 @@ order by max() on columns of table "match_streams"
 """
 input match_streams_max_order_by {
   error_message: order_by
+  game_server_node_id: order_by
   id: order_by
   last_status_at: order_by
   link: order_by
   match_id: order_by
+  mode: order_by
   priority: order_by
   status: order_by
   stream_url: order_by
@@ -17151,10 +17208,12 @@ input match_streams_max_order_by {
 """aggregate min on columns"""
 type match_streams_min_fields {
   error_message: String
+  game_server_node_id: String
   id: uuid
   last_status_at: timestamptz
   link: String
   match_id: uuid
+  mode: String
   priority: Int
   status: String
   stream_url: String
@@ -17166,10 +17225,12 @@ order by min() on columns of table "match_streams"
 """
 input match_streams_min_order_by {
   error_message: order_by
+  game_server_node_id: order_by
   id: order_by
   last_status_at: order_by
   link: order_by
   match_id: order_by
+  mode: order_by
   priority: order_by
   status: order_by
   stream_url: order_by
@@ -17200,6 +17261,8 @@ input match_streams_on_conflict {
 input match_streams_order_by {
   autodirector: order_by
   error_message: order_by
+  game_server_node: game_server_nodes_order_by
+  game_server_node_id: order_by
   id: order_by
   is_game_streamer: order_by
   is_live: order_by
@@ -17207,6 +17270,7 @@ input match_streams_order_by {
   link: order_by
   match: matches_order_by
   match_id: order_by
+  mode: order_by
   priority: order_by
   status: order_by
   status_history: order_by
@@ -17235,6 +17299,9 @@ enum match_streams_select_column {
   error_message
 
   """column name"""
+  game_server_node_id
+
+  """column name"""
   id
 
   """column name"""
@@ -17251,6 +17318,9 @@ enum match_streams_select_column {
 
   """column name"""
   match_id
+
+  """column name"""
+  mode
 
   """column name"""
   priority
@@ -17302,12 +17372,14 @@ input type for updating data in table "match_streams"
 input match_streams_set_input {
   autodirector: Boolean
   error_message: String
+  game_server_node_id: String
   id: uuid
   is_game_streamer: Boolean
   is_live: Boolean
   last_status_at: timestamptz
   link: String
   match_id: uuid
+  mode: String
   priority: Int
   status: String
   status_history: jsonb
@@ -17366,12 +17438,14 @@ input match_streams_stream_cursor_input {
 input match_streams_stream_cursor_value_input {
   autodirector: Boolean
   error_message: String
+  game_server_node_id: String
   id: uuid
   is_game_streamer: Boolean
   is_live: Boolean
   last_status_at: timestamptz
   link: String
   match_id: uuid
+  mode: String
   priority: Int
   status: String
   status_history: jsonb
@@ -17402,6 +17476,9 @@ enum match_streams_update_column {
   error_message
 
   """column name"""
+  game_server_node_id
+
+  """column name"""
   id
 
   """column name"""
@@ -17418,6 +17495,9 @@ enum match_streams_update_column {
 
   """column name"""
   match_id
+
+  """column name"""
+  mode
 
   """column name"""
   priority
@@ -17686,6 +17766,16 @@ type matches {
   A computed field, executes function "can_start_match"
   """
   can_start: Boolean
+
+  """
+  A computed field, executes function "can_stream_live"
+  """
+  can_stream_live: Boolean
+
+  """
+  A computed field, executes function "can_stream_tv"
+  """
+  can_stream_tv: Boolean
   cancels_at: timestamptz
 
   """
@@ -18499,6 +18589,8 @@ input matches_bool_exp {
   can_reassign_winner: Boolean_comparison_exp
   can_schedule: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
+  can_stream_live: Boolean_comparison_exp
+  can_stream_tv: Boolean_comparison_exp
   cancels_at: timestamptz_comparison_exp
   connection_link: String_comparison_exp
   connection_string: String_comparison_exp
@@ -18899,6 +18991,8 @@ input matches_order_by {
   can_reassign_winner: order_by
   can_schedule: order_by
   can_start: order_by
+  can_stream_live: order_by
+  can_stream_tv: order_by
   cancels_at: order_by
   connection_link: order_by
   connection_string: order_by
@@ -22534,7 +22628,7 @@ type mutation_root {
   specJump(match_id: uuid!): SuccessOutput
   specPlayer(accountid: Int!, match_id: uuid!): SuccessOutput
   specSlot(match_id: uuid!, slot: Int!): SuccessOutput
-  startLive(match_id: uuid!): SuccessOutput
+  startLive(match_id: uuid!, mode: String!): SuccessOutput
 
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
@@ -37832,6 +37926,46 @@ type query_root {
   tournaments_by_pk(id: uuid!): tournaments
 
   """
+  fetch data from the table: "v_gpu_pool_status"
+  """
+  v_gpu_pool_status(
+    """distinct select on columns"""
+    distinct_on: [v_gpu_pool_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_gpu_pool_status_order_by!]
+
+    """filter the rows returned"""
+    where: v_gpu_pool_status_bool_exp
+  ): [v_gpu_pool_status!]!
+
+  """
+  fetch aggregated fields from the table: "v_gpu_pool_status"
+  """
+  v_gpu_pool_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_gpu_pool_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_gpu_pool_status_order_by!]
+
+    """filter the rows returned"""
+    where: v_gpu_pool_status_bool_exp
+  ): v_gpu_pool_status_aggregate!
+
+  """
   fetch data from the table: "v_match_captains"
   """
   v_match_captains(
@@ -44518,6 +44652,60 @@ type subscription_root {
     """filter the rows returned"""
     where: tournaments_bool_exp
   ): [tournaments!]!
+
+  """
+  fetch data from the table: "v_gpu_pool_status"
+  """
+  v_gpu_pool_status(
+    """distinct select on columns"""
+    distinct_on: [v_gpu_pool_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_gpu_pool_status_order_by!]
+
+    """filter the rows returned"""
+    where: v_gpu_pool_status_bool_exp
+  ): [v_gpu_pool_status!]!
+
+  """
+  fetch aggregated fields from the table: "v_gpu_pool_status"
+  """
+  v_gpu_pool_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_gpu_pool_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_gpu_pool_status_order_by!]
+
+    """filter the rows returned"""
+    where: v_gpu_pool_status_bool_exp
+  ): v_gpu_pool_status_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_gpu_pool_status"
+  """
+  v_gpu_pool_status_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_gpu_pool_status_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_gpu_pool_status_bool_exp
+  ): [v_gpu_pool_status!]!
 
   """
   fetch data from the table: "v_match_captains"
@@ -52200,6 +52388,182 @@ input uuid_comparison_exp {
   _lte: uuid
   _neq: uuid
   _nin: [uuid!]
+}
+
+"""
+columns and relationships of "v_gpu_pool_status"
+"""
+type v_gpu_pool_status {
+  demo_in_progress: Boolean
+  free_gpu_nodes: Int
+  highlights_in_progress: Boolean
+  id: Int
+  live_in_progress: Boolean
+  total_gpu_nodes: Int
+}
+
+"""
+aggregated selection of "v_gpu_pool_status"
+"""
+type v_gpu_pool_status_aggregate {
+  aggregate: v_gpu_pool_status_aggregate_fields
+  nodes: [v_gpu_pool_status!]!
+}
+
+"""
+aggregate fields of "v_gpu_pool_status"
+"""
+type v_gpu_pool_status_aggregate_fields {
+  avg: v_gpu_pool_status_avg_fields
+  count(columns: [v_gpu_pool_status_select_column!], distinct: Boolean): Int!
+  max: v_gpu_pool_status_max_fields
+  min: v_gpu_pool_status_min_fields
+  stddev: v_gpu_pool_status_stddev_fields
+  stddev_pop: v_gpu_pool_status_stddev_pop_fields
+  stddev_samp: v_gpu_pool_status_stddev_samp_fields
+  sum: v_gpu_pool_status_sum_fields
+  var_pop: v_gpu_pool_status_var_pop_fields
+  var_samp: v_gpu_pool_status_var_samp_fields
+  variance: v_gpu_pool_status_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_gpu_pool_status_avg_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_gpu_pool_status". All fields are combined with a logical 'AND'.
+"""
+input v_gpu_pool_status_bool_exp {
+  _and: [v_gpu_pool_status_bool_exp!]
+  _not: v_gpu_pool_status_bool_exp
+  _or: [v_gpu_pool_status_bool_exp!]
+  demo_in_progress: Boolean_comparison_exp
+  free_gpu_nodes: Int_comparison_exp
+  highlights_in_progress: Boolean_comparison_exp
+  id: Int_comparison_exp
+  live_in_progress: Boolean_comparison_exp
+  total_gpu_nodes: Int_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_gpu_pool_status_max_fields {
+  free_gpu_nodes: Int
+  id: Int
+  total_gpu_nodes: Int
+}
+
+"""aggregate min on columns"""
+type v_gpu_pool_status_min_fields {
+  free_gpu_nodes: Int
+  id: Int
+  total_gpu_nodes: Int
+}
+
+"""Ordering options when selecting data from "v_gpu_pool_status"."""
+input v_gpu_pool_status_order_by {
+  demo_in_progress: order_by
+  free_gpu_nodes: order_by
+  highlights_in_progress: order_by
+  id: order_by
+  live_in_progress: order_by
+  total_gpu_nodes: order_by
+}
+
+"""
+select columns of table "v_gpu_pool_status"
+"""
+enum v_gpu_pool_status_select_column {
+  """column name"""
+  demo_in_progress
+
+  """column name"""
+  free_gpu_nodes
+
+  """column name"""
+  highlights_in_progress
+
+  """column name"""
+  id
+
+  """column name"""
+  live_in_progress
+
+  """column name"""
+  total_gpu_nodes
+}
+
+"""aggregate stddev on columns"""
+type v_gpu_pool_status_stddev_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_gpu_pool_status_stddev_pop_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_gpu_pool_status_stddev_samp_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
+}
+
+"""
+Streaming cursor of the table "v_gpu_pool_status"
+"""
+input v_gpu_pool_status_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_gpu_pool_status_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_gpu_pool_status_stream_cursor_value_input {
+  demo_in_progress: Boolean
+  free_gpu_nodes: Int
+  highlights_in_progress: Boolean
+  id: Int
+  live_in_progress: Boolean
+  total_gpu_nodes: Int
+}
+
+"""aggregate sum on columns"""
+type v_gpu_pool_status_sum_fields {
+  free_gpu_nodes: Int
+  id: Int
+  total_gpu_nodes: Int
+}
+
+"""aggregate var_pop on columns"""
+type v_gpu_pool_status_var_pop_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_gpu_pool_status_var_samp_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
+}
+
+"""aggregate variance on columns"""
+type v_gpu_pool_status_variance_fields {
+  free_gpu_nodes: Float
+  id: Float
+  total_gpu_nodes: Float
 }
 
 """

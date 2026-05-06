@@ -2,6 +2,9 @@ table:
   name: match_demo_sessions
   schema: public
 object_relationships:
+  - name: game_server_node
+    using:
+      foreign_key_constraint_on: game_server_node_id
   - name: match
     using:
       foreign_key_constraint_on: match_id
@@ -26,6 +29,7 @@ select_permissions:
         - last_activity_at
         - status_history
         - created_at
+        - game_server_node_id
       filter: {}
       allow_aggregations: true
   - role: streamer
@@ -42,5 +46,6 @@ select_permissions:
         - last_activity_at
         - status_history
         - created_at
+        - game_server_node_id
       filter: {}
       allow_aggregations: true
