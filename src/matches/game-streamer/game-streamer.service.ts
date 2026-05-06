@@ -307,7 +307,7 @@ export class GameStreamerService {
 
     const sessionToken = randomBytes(24).toString("hex");
 
-    const streamUrl = `${this.appConfig.gameStreamHlsBase}/${matchId}/`;
+    const streamUrl = `${this.appConfig.gameStreamDomain}/${matchId}/`;
 
     const bootIso = new Date().toISOString();
     const { insert_match_demo_sessions_one } = await this.hasura.mutation({
@@ -1215,7 +1215,7 @@ export class GameStreamerService {
     matchId: string,
     mode: "live" | "tv",
   ): Promise<string> {
-    const link = `${this.appConfig.gameStreamHlsBase}/${matchId}/`;
+    const link = `${this.appConfig.gameStreamDomain}/${matchId}/`;
     const nowIso = new Date().toISOString();
     const statusHistory = JSON.stringify([{ status: "booting", at: nowIso }]);
 
@@ -1561,7 +1561,7 @@ export class GameStreamerService {
             object: {
               match_id: matchId,
               title: GAME_STREAMER_TITLE,
-              link: `${this.appConfig.gameStreamHlsBase}/${matchId}/`,
+              link: `${this.appConfig.gameStreamDomain}/${matchId}/`,
               priority: 0,
               is_game_streamer: true,
               ...setClause,
@@ -1697,6 +1697,17 @@ export class GameStreamerService {
                   { name: "DISPLAY_SIZEW", value: "1920" },
                   { name: "DISPLAY_SIZEH", value: "1080" },
                   { name: "OPENHUD_AUTO_OVERLAY", value: "1" },
+                  // Forward the configured public HLS host so the streamer
+                  // can log/print correct watch URLs (otherwise the scripts
+                  // fall back to a hardcoded hls.5stack.gg).
+                  ...(process.env.GAME_STREAM_DOMAIN
+                    ? [
+                        {
+                          name: "GAME_STREAM_DOMAIN",
+                          value: process.env.GAME_STREAM_DOMAIN,
+                        },
+                      ]
+                    : []),
                   // Steam credentials inlined from the API's own config
                   // rather than mounting a `steam-secrets` K8s Secret —
                   // matches game-server-node.service.ts (line ~519). The

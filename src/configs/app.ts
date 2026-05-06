@@ -12,8 +12,7 @@ export default (): {
     apiDomain: `https://${process.env.API_DOMAIN}`,
     relayDomain: `https://${process.env.RELAY_DOMAIN}`,
     demosDomain: `https://${process.env.DEMOS_DOMAIN}`,
-    gameStreamHlsBase:
-      process.env.GAME_STREAM_HLS_BASE || "https://hls.5stack.gg",
+    gameStreamDomain: `https://${process.env.GAME_STREAM_DOMAIN}`,
     authCookieDomain:
       process.env.AUTH_COOKIE_DOMAIN || `.${process.env.WEB_DOMAIN}`,
     demoParserUrl: process.env.DEMO_PARSER_URL || "http://demo-parser:8080",
