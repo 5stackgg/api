@@ -787,7 +787,11 @@ export class ClipsService {
 
   public async autoGenerateForMatch(
     matchId: string,
-    options: { force?: boolean; isSystemInitiated?: boolean } = {},
+    options: {
+      force?: boolean;
+      isSystemInitiated?: boolean;
+      actingUserSteamId?: string;
+    } = {},
   ): Promise<number> {
     if (!options.force) {
       const enabled = await this.readBoolSetting(
@@ -806,7 +810,6 @@ export class ClipsService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
-        organizer_steam_id: true,
         match_maps: {
           id: true,
           demos: {
@@ -965,10 +968,11 @@ export class ClipsService {
 
     if (pendingObjects.length > 0) {
       const insertObjects = pendingObjects.map((p) => ({
-        user_steam_id:
-          options.isSystemInitiated || !match.organizer_steam_id
-            ? null
-            : String(match.organizer_steam_id),
+        user_steam_id: options.isSystemInitiated
+          ? null
+          : options.actingUserSteamId
+            ? String(options.actingUserSteamId)
+            : null,
         match_map_id: p.mapRowId,
         session_token: p.sessionToken,
         k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(p.mapRowId),
