@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { ClipsService } from "./clips.service";
 import { ClipRendersController } from "./clip-renders.controller";
+import { ClipDownloadController } from "./clip-download.controller";
 import { HasuraModule } from "../../hasura/hasura.module";
 import { S3Module } from "../../s3/s3.module";
 import { GameStreamerModule } from "../game-streamer/game-streamer.module";
@@ -15,7 +16,7 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
     GameStreamerModule,
     BullModule.registerQueue({ name: MatchQueues.ClipRenderBatch }),
   ],
-  controllers: [ClipRendersController],
+  controllers: [ClipRendersController, ClipDownloadController],
   providers: [ClipsService, loggerFactory()],
   exports: [ClipsService],
 })
