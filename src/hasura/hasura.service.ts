@@ -233,7 +233,7 @@ export class HasuraService {
     const filePathStats = fs.statSync(filePath);
 
     if (filePathStats.isDirectory()) {
-      const files = fs.readdirSync(filePath);
+      const files = fs.readdirSync(filePath).sort();
       for (const file of files) {
         await this.apply(path.join(filePath, file));
       }
