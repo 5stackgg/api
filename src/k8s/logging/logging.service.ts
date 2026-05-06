@@ -773,11 +773,7 @@ export class LoggingService {
     // is finished and its server resources are gone. Don't fabricate a
     // "Waiting for Kubernetes…" fallback line; just return no synthetic logs
     // so the client renders the empty state.
-    if (
-      !diagnostics.job &&
-      !syntheticPod &&
-      diagnostics.events.length === 0
-    ) {
+    if (!diagnostics.job && !syntheticPod && diagnostics.events.length === 0) {
       return [];
     }
 
