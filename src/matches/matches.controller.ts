@@ -877,6 +877,7 @@ export class MatchesController {
 
     const queued = await this.clips.autoGenerateForMatch(match_id, {
       force: true,
+      actingUserSteamId: user.steam_id,
     });
 
     return {

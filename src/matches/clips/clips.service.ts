@@ -787,7 +787,11 @@ export class ClipsService {
 
   public async autoGenerateForMatch(
     matchId: string,
-    options: { force?: boolean; isSystemInitiated?: boolean } = {},
+    options: {
+      force?: boolean;
+      isSystemInitiated?: boolean;
+      actingUserSteamId?: string;
+    } = {},
   ): Promise<number> {
     if (!options.force) {
       const enabled = await this.readBoolSetting(
@@ -806,7 +810,6 @@ export class ClipsService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
-        organizer_steam_id: true,
         match_maps: {
           id: true,
           demos: {
@@ -822,12 +825,6 @@ export class ClipsService {
     });
     if (!match) {
       this.logger.warn(`[auto-clips] match ${matchId} not found`);
-      return 0;
-    }
-    if (!match.organizer_steam_id) {
-      this.logger.warn(
-        `[auto-clips] match ${matchId} has no organizer_steam_id — skipping (need a clip owner)`,
-      );
       return 0;
     }
 
@@ -973,7 +970,9 @@ export class ClipsService {
       const insertObjects = pendingObjects.map((p) => ({
         user_steam_id: options.isSystemInitiated
           ? null
-          : String(match.organizer_steam_id),
+          : options.actingUserSteamId
+            ? String(options.actingUserSteamId)
+            : null,
         match_map_id: p.mapRowId,
         session_token: p.sessionToken,
         k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(p.mapRowId),
