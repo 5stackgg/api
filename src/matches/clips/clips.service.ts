@@ -26,7 +26,7 @@ export class ClipsService {
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
-    @InjectQueue(MatchQueues.ClipRenderBatch)
+    @InjectQueue(MatchQueues.Clips)
     private readonly batchQueue: Queue,
   ) {}
 
@@ -659,11 +659,28 @@ export class ClipsService {
 
     await this.s3.put(key, fileStream);
 
+    let videoSize = 0;
+    try {
+      videoSize = (await this.s3.stat(key))?.size ?? 0;
+    } catch (error) {
+      this.logger.warn(
+        `[clip ${jobId}] video stat failed: ${(error as Error)?.message}`,
+      );
+    }
+
     const thumbnailKey = ClipsService.GetClipThumbnailS3Key(userSteamId, jobId);
     let thumbnailUrl: string | null = null;
+    let thumbnailSize = 0;
     try {
       if (await this.s3.has(thumbnailKey)) {
         thumbnailUrl = thumbnailKey;
+        try {
+          thumbnailSize = (await this.s3.stat(thumbnailKey))?.size ?? 0;
+        } catch (error) {
+          this.logger.warn(
+            `[clip ${jobId}] thumbnail stat failed: ${(error as Error)?.message}`,
+          );
+        }
       }
     } catch (error) {
       this.logger.warn(
@@ -741,6 +758,7 @@ export class ClipsService {
             thumbnail_url: thumbnailUrl,
             kills_count: killsCount,
             visibility,
+            size: videoSize + thumbnailSize,
           },
         },
         id: true,
@@ -1031,7 +1049,7 @@ export class ClipsService {
           { jobId: `${matchMapId}-${Date.now()}` },
         );
         this.logger.log(
-          `[auto-clips] match ${matchId} map ${matchMapId} → enqueued ClipRenderBatch`,
+          `[auto-clips] match ${matchId} map ${matchMapId} → enqueued batch highlights`,
         );
       } catch (error) {
         this.logger.warn(

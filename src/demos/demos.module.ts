@@ -18,10 +18,10 @@ import { DemoParserService } from "./demo-parser.service";
     S3Module,
     HasuraModule,
     BullModule.registerQueue({
-      name: DemoQueues.CleanDemos,
+      name: DemoQueues.Demos,
     }),
     BullBoardModule.forFeature({
-      name: DemoQueues.CleanDemos,
+      name: DemoQueues.Demos,
       adapter: BullMQAdapter,
     }),
   ],
@@ -36,7 +36,7 @@ import { DemoParserService } from "./demo-parser.service";
   exports: [DemoMetadataService],
 })
 export class DemosModule {
-  constructor(@InjectQueue(DemoQueues.CleanDemos) cleanDemosQueue: Queue) {
+  constructor(@InjectQueue(DemoQueues.Demos) cleanDemosQueue: Queue) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }

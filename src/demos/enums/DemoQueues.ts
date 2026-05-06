@@ -1,3 +1,3 @@
 export enum DemoQueues {
-  CleanDemos = "clean-demos",
+  Demos = "demos",
 }

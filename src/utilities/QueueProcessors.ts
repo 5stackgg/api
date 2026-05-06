@@ -15,6 +15,7 @@ const BULLMQ_CONTROL_FLOW_ERRORS = [
 type Modules =
   | "Matches"
   | "Demos"
+  | "Clips"
   | "Hasura"
   | "GameServerNode"
   | "DiscordBot"

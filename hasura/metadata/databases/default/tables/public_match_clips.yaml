@@ -45,6 +45,7 @@ select_permissions:
         - visibility
         - created_at
         - kills_count
+        - size
       computed_fields:
         - download_url
         - thumbnail_download_url
