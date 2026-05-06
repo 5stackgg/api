@@ -1227,17 +1227,27 @@ export class ClipsService {
       let best: {
         round: number;
         count: number;
+        span: number;
         start: number;
         end: number;
       } | null = null;
       for (const r of rounds) {
-        const count = myKills.filter(
-          (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
-        ).length;
-        if (!best || count > best.count) {
+        const inRound = myKills
+          .filter((k) => k.tick >= r.start_tick && k.tick <= r.end_tick)
+          .sort((a, b) => a.tick - b.tick);
+        const count = inRound.length;
+        if (count === 0) continue;
+        const span =
+          count >= 2 ? inRound[count - 1].tick - inRound[0].tick : 0;
+        if (
+          !best ||
+          count > best.count ||
+          (count === best.count && span < best.span)
+        ) {
           best = {
             round: r.round,
             count,
+            span,
             start: r.start_tick,
             end: r.end_tick,
           };
