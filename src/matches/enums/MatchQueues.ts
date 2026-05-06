@@ -3,4 +3,5 @@ export enum MatchQueues {
   ScheduledMatches = "scheduled-matches",
   EloCalculation = "elo-calculation",
   ClipRenderBatch = "clip-render-batch",
+  CleanClips = "clean-clips",
 }

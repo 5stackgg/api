@@ -15689,6 +15689,9 @@ export default {
                     ]
                 }
             ],
+            "size": [
+                147
+            ],
             "target": [
                 2068
             ],
@@ -15782,6 +15785,9 @@ export default {
             "kills_count": [
                 22
             ],
+            "size": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -15832,6 +15838,9 @@ export default {
             "render_jobs_aggregate": [
                 153
             ],
+            "size": [
+                148
+            ],
             "target": [
                 2072
             ],
@@ -15868,6 +15877,9 @@ export default {
             "kills_count": [
                 30
             ],
+            "size": [
+                147
+            ],
             "target_steam_id": [
                 147
             ],
@@ -15902,6 +15914,9 @@ export default {
             ],
             "render_jobs": [
                 158
+            ],
+            "size": [
+                147
             ],
             "target": [
                 2079
@@ -15950,6 +15965,9 @@ export default {
             "match_map_id": [
                 2741
             ],
+            "size": [
+                147
+            ],
             "target_steam_id": [
                 147
             ],
@@ -15993,6 +16011,9 @@ export default {
             ],
             "match_map_id": [
                 2741
+            ],
+            "size": [
+                147
             ],
             "target_steam_id": [
                 147
@@ -16080,6 +16101,9 @@ export default {
             "render_jobs_aggregate": [
                 156
             ],
+            "size": [
+                1631
+            ],
             "target": [
                 2081
             ],
@@ -16136,6 +16160,9 @@ export default {
             "match_map_id": [
                 2741
             ],
+            "size": [
+                147
+            ],
             "target_steam_id": [
                 147
             ],
@@ -16162,6 +16189,9 @@ export default {
             "kills_count": [
                 22
             ],
+            "size": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16179,6 +16209,9 @@ export default {
             "kills_count": [
                 22
             ],
+            "size": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16194,6 +16227,9 @@ export default {
                 22
             ],
             "kills_count": [
+                22
+            ],
+            "size": [
                 22
             ],
             "target_steam_id": [
@@ -16236,6 +16272,9 @@ export default {
             "match_map_id": [
                 2741
             ],
+            "size": [
+                147
+            ],
             "target_steam_id": [
                 147
             ],
@@ -16261,6 +16300,9 @@ export default {
             ],
             "kills_count": [
                 30
+            ],
+            "size": [
+                147
             ],
             "target_steam_id": [
                 147
@@ -16294,6 +16336,9 @@ export default {
             "kills_count": [
                 22
             ],
+            "size": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16311,6 +16356,9 @@ export default {
             "kills_count": [
                 22
             ],
+            "size": [
+                22
+            ],
             "target_steam_id": [
                 22
             ],
@@ -16326,6 +16374,9 @@ export default {
                 22
             ],
             "kills_count": [
+                22
+            ],
+            "size": [
                 22
             ],
             "target_steam_id": [

@@ -659,11 +659,28 @@ export class ClipsService {
 
     await this.s3.put(key, fileStream);
 
+    let videoSize = 0;
+    try {
+      videoSize = (await this.s3.stat(key))?.size ?? 0;
+    } catch (error) {
+      this.logger.warn(
+        `[clip ${jobId}] video stat failed: ${(error as Error)?.message}`,
+      );
+    }
+
     const thumbnailKey = ClipsService.GetClipThumbnailS3Key(userSteamId, jobId);
     let thumbnailUrl: string | null = null;
+    let thumbnailSize = 0;
     try {
       if (await this.s3.has(thumbnailKey)) {
         thumbnailUrl = thumbnailKey;
+        try {
+          thumbnailSize = (await this.s3.stat(thumbnailKey))?.size ?? 0;
+        } catch (error) {
+          this.logger.warn(
+            `[clip ${jobId}] thumbnail stat failed: ${(error as Error)?.message}`,
+          );
+        }
       }
     } catch (error) {
       this.logger.warn(
@@ -741,6 +758,7 @@ export class ClipsService {
             thumbnail_url: thumbnailUrl,
             kills_count: killsCount,
             visibility,
+            size: videoSize + thumbnailSize,
           },
         },
         id: true,

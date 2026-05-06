@@ -1,5 +1,8 @@
 import { Module } from "@nestjs/common";
-import { BullModule } from "@nestjs/bullmq";
+import { BullModule, InjectQueue } from "@nestjs/bullmq";
+import { BullBoardModule } from "@bull-board/nestjs";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { Queue } from "bullmq";
 import { ClipsService } from "./clips.service";
 import { ClipRendersController } from "./clip-renders.controller";
 import { ClipDownloadController } from "./clip-download.controller";
@@ -8,6 +11,8 @@ import { S3Module } from "../../s3/s3.module";
 import { GameStreamerModule } from "../game-streamer/game-streamer.module";
 import { MatchQueues } from "../enums/MatchQueues";
 import { loggerFactory } from "../../utilities/LoggerFactory";
+import { getQueuesProcessors } from "../../utilities/QueueProcessors";
+import { CleanClips } from "./jobs/CleanClips";
 
 @Module({
   imports: [
@@ -15,9 +20,35 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
     S3Module,
     GameStreamerModule,
     BullModule.registerQueue({ name: MatchQueues.ClipRenderBatch }),
+    BullModule.registerQueue({ name: MatchQueues.CleanClips }),
+    BullBoardModule.forFeature({
+      name: MatchQueues.CleanClips,
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [ClipRendersController, ClipDownloadController],
-  providers: [ClipsService, loggerFactory()],
+  providers: [
+    ClipsService,
+    CleanClips,
+    ...getQueuesProcessors("Clips"),
+    loggerFactory(),
+  ],
   exports: [ClipsService],
 })
-export class ClipsModule {}
+export class ClipsModule {
+  constructor(@InjectQueue(MatchQueues.CleanClips) cleanClipsQueue: Queue) {
+    if (process.env.RUN_MIGRATIONS) {
+      return;
+    }
+
+    void cleanClipsQueue.add(
+      CleanClips.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 * * * *",
+        },
+      },
+    );
+  }
+}
