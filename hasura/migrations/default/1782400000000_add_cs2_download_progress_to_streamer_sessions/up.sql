@@ -1,13 +1,5 @@
--- Adds CS2 download progress fields populated by the game-streamer pod
--- while steamcmd runs. Both columns are nullable; null means "not
--- currently downloading" so the API can null them out when the next
--- status (e.g. launching_cs2) arrives without progress fields and the
--- UI's progress bar disappears in the same subscription tick that flips
--- the badge.
---
--- Scale is 0..100 to match steamcmd's own format and game_server_nodes
--- update_status — note clip_render_jobs.progress is 0..1; intentional
--- divergence (no shared UI components).
+-- CS2 download progress fed by the game-streamer pod parsing steamcmd
+-- output. Null means "not currently downloading". Scale is 0..100.
 
 alter table "public"."match_streams"
   add column "progress" numeric(5, 2),

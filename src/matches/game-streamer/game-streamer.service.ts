@@ -100,10 +100,8 @@ export class GameStreamerService {
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
   }
 
-  // Coerce the wire `progress` field (sent as a string by the bash
-  // report_status helper) to a numeric(5,2)-safe number in 0..100, or
-  // null when absent / garbage. Round to 2dp so we don't trip the CHECK
-  // constraint on float math like 12.345.
+  // Wire `progress` arrives as a string from the bash reporter; coerce
+  // and clamp to numeric(5,2) in 0..100, null otherwise.
   private parseProgress(raw: unknown): number | null {
     if (raw === undefined || raw === null || raw === "") return null;
     const n = typeof raw === "number" ? raw : Number(raw);
@@ -686,7 +684,6 @@ export class GameStreamerService {
     const previous = Array.isArray(current.status_history)
       ? (current.status_history as unknown[])
       : [];
-    // See reportStatus: skip history append on progress-only ticks.
     const statusChanged = current.status !== body.status;
     const nextHistory = statusChanged
       ? [
@@ -707,7 +704,6 @@ export class GameStreamerService {
             error_message: body.error ?? null,
             last_status_at: "now()",
             status_history: nextHistory,
-            // Always overwrite — null clears the bar when status advances.
             progress,
             progress_stage,
           },
@@ -1546,9 +1542,7 @@ export class GameStreamerService {
     const previous = Array.isArray(row?.status_history)
       ? (row!.status_history as unknown[])
       : [];
-    // Progress-only ticks (same status, just a higher %) must not grow
-    // the cap-50 history — a 57GB CS2 download emits hundreds of them
-    // and would push every prior transition out of the window.
+    // Don't append on progress-only ticks — would blow the cap-50.
     const statusChanged = row?.status !== body.status;
     const nextHistory = statusChanged
       ? [
@@ -1567,10 +1561,8 @@ export class GameStreamerService {
       last_status_at: "now()",
       is_live: body.status === "live",
       status_history: nextHistory,
-      // Always overwrite — when the streamer advances past
-      // downloading_cs2 the next report has no progress fields and we
-      // want both columns to null so the UI bar disappears in the same
-      // subscription tick that flips `status`.
+      // Always overwrite so they null when the streamer advances past
+      // downloading_cs2 — UI bar disappears in the same tick as status.
       progress,
       progress_stage,
     };
