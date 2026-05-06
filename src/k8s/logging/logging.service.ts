@@ -183,7 +183,17 @@ export class LoggingService {
       return;
     }
 
-    if (isJob && pods.every((pod) => pod.status?.phase !== "Running")) {
+    // Skip pod log fetching only when we have nothing useful to read from —
+    // pods that never started (Pending) or are in an Unknown phase. Succeeded
+    // and Failed pods still have container logs retained by K8s until
+    // garbage collection, so we want those for finished match jobs.
+    if (
+      isJob &&
+      pods.every((pod) => {
+        const phase = pod.status?.phase;
+        return phase === "Pending" || phase === "Unknown" || !phase;
+      })
+    ) {
       if (download && archive) {
         void archive.finalize();
         return;
@@ -758,6 +768,14 @@ export class LoggingService {
   private async getSyntheticJobLogs(jobName: string, pod?: V1Pod | null) {
     const diagnostics = await this.getJobBootDiagnostics(jobName);
     const syntheticPod = pod || diagnostics.pod;
+
+    // Job and pod have been cleaned up and no K8s events remain — the match
+    // is finished and its server resources are gone. Don't fabricate a
+    // "Waiting for Kubernetes…" fallback line; just return no synthetic logs
+    // so the client renders the empty state.
+    if (!diagnostics.job && !syntheticPod && diagnostics.events.length === 0) {
+      return [];
+    }
 
     return buildSyntheticMatchServerLogEntries({
       diagnostic: diagnostics,
