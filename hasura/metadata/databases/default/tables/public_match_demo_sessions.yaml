@@ -28,6 +28,8 @@ select_permissions:
         - last_status_at
         - last_activity_at
         - status_history
+        - progress
+        - progress_stage
         - created_at
         - game_server_node_id
       filter: {}
@@ -45,6 +47,8 @@ select_permissions:
         - last_status_at
         - last_activity_at
         - status_history
+        - progress
+        - progress_stage
         - created_at
         - game_server_node_id
       filter: {}

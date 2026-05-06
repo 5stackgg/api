@@ -64,6 +64,8 @@ select_permissions:
         - last_status_at
         - autodirector
         - status_history
+        - progress
+        - progress_stage
         - game_server_node_id
       filter: {}
     comment: ""

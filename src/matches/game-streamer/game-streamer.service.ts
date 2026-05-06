@@ -100,6 +100,25 @@ export class GameStreamerService {
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
   }
 
+  // Coerce the wire `progress` field (sent as a string by the bash
+  // report_status helper) to a numeric(5,2)-safe number in 0..100, or
+  // null when absent / garbage. Round to 2dp so we don't trip the CHECK
+  // constraint on float math like 12.345.
+  private parseProgress(raw: unknown): number | null {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const n = typeof raw === "number" ? raw : Number(raw);
+    if (!Number.isFinite(n)) return null;
+    const clamped = Math.max(0, Math.min(100, n));
+    return Math.round(clamped * 100) / 100;
+  }
+
+  private parseProgressStage(raw: unknown): string | null {
+    if (typeof raw !== "string") return null;
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    return trimmed.slice(0, 64);
+  }
+
   private async callSpec(
     matchId: string,
     action: "click" | "jump" | "player" | "slot" | "autodirector",
@@ -652,6 +671,7 @@ export class GameStreamerService {
     const { match_demo_sessions_by_pk: current } = await this.hasura.query({
       match_demo_sessions_by_pk: {
         __args: { id: sessionId },
+        status: true,
         status_history: true,
       },
     });
@@ -666,10 +686,17 @@ export class GameStreamerService {
     const previous = Array.isArray(current.status_history)
       ? (current.status_history as unknown[])
       : [];
-    const nextHistory = [
-      ...previous,
-      { status: body.status, at: new Date().toISOString() },
-    ].slice(-STATUS_HISTORY_CAP);
+    // See reportStatus: skip history append on progress-only ticks.
+    const statusChanged = current.status !== body.status;
+    const nextHistory = statusChanged
+      ? [
+          ...previous,
+          { status: body.status, at: new Date().toISOString() },
+        ].slice(-STATUS_HISTORY_CAP)
+      : previous;
+
+    const progress = this.parseProgress(body.progress);
+    const progress_stage = this.parseProgressStage(body.progress_stage);
 
     await this.hasura.mutation({
       update_match_demo_sessions_by_pk: {
@@ -680,14 +707,21 @@ export class GameStreamerService {
             error_message: body.error ?? null,
             last_status_at: "now()",
             status_history: nextHistory,
+            // Always overwrite — null clears the bar when status advances.
+            progress,
+            progress_stage,
           },
         },
         id: true,
       },
     });
 
+    const progressNote =
+      progress !== null
+        ? ` progress=${progress}${progress_stage ? ` stage=${progress_stage}` : ""}`
+        : "";
     this.logger.log(
-      `[demo ${sessionId}] status=${body.status}${body.error ? ` err=${body.error}` : ""}`,
+      `[demo ${sessionId}] status=${body.status}${progressNote}${body.error ? ` err=${body.error}` : ""}`,
     );
   }
 
@@ -1504,16 +1538,27 @@ export class GameStreamerService {
           },
           limit: 1,
         },
+        status: true,
         status_history: true,
       },
     });
-    const previous = Array.isArray(match_streams?.[0]?.status_history)
-      ? (match_streams[0].status_history as unknown[])
+    const row = match_streams?.[0];
+    const previous = Array.isArray(row?.status_history)
+      ? (row!.status_history as unknown[])
       : [];
-    const nextHistory = [
-      ...previous,
-      { status: body.status, at: new Date().toISOString() },
-    ].slice(-STATUS_HISTORY_CAP);
+    // Progress-only ticks (same status, just a higher %) must not grow
+    // the cap-50 history — a 57GB CS2 download emits hundreds of them
+    // and would push every prior transition out of the window.
+    const statusChanged = row?.status !== body.status;
+    const nextHistory = statusChanged
+      ? [
+          ...previous,
+          { status: body.status, at: new Date().toISOString() },
+        ].slice(-STATUS_HISTORY_CAP)
+      : previous;
+
+    const progress = this.parseProgress(body.progress);
+    const progress_stage = this.parseProgressStage(body.progress_stage);
 
     const setClause = {
       status: body.status,
@@ -1522,6 +1567,12 @@ export class GameStreamerService {
       last_status_at: "now()",
       is_live: body.status === "live",
       status_history: nextHistory,
+      // Always overwrite — when the streamer advances past
+      // downloading_cs2 the next report has no progress fields and we
+      // want both columns to null so the UI bar disappears in the same
+      // subscription tick that flips `status`.
+      progress,
+      progress_stage,
     };
 
     const result = await this.hasura.mutation({
@@ -1538,8 +1589,12 @@ export class GameStreamerService {
     });
 
     const updated = result.update_match_streams.affected_rows;
+    const progressNote =
+      progress !== null
+        ? ` progress=${progress}${progress_stage ? ` stage=${progress_stage}` : ""}`
+        : "";
     this.logger.log(
-      `[${matchId}] reportStatus status=${body.status} updated=${updated}`,
+      `[${matchId}] reportStatus status=${body.status}${progressNote} updated=${updated}`,
     );
 
     if (updated === 0) {
