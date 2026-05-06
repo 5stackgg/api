@@ -10,7 +10,7 @@ import {
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
 
-@Controller("/clip-files")
+@Controller("/clip")
 export class ClipDownloadController {
   constructor(
     private readonly s3: S3Service,

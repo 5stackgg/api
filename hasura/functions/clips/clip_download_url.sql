@@ -48,6 +48,6 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(demos_domain, '/clip-files/', match_clips.id, '?name=', download_name);
+        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '?name=', download_name);
     END;
 $$;
