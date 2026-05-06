@@ -5,7 +5,7 @@ import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
 import { S3Service } from "../../s3/s3.service";
 
-@UseQueue("Demos", DemoQueues.CleanDemos)
+@UseQueue("Demos", DemoQueues.Demos)
 export class CleanDemos extends WorkerHost {
   private maxStorageInBytes: number;
   private minRetentionInDays: number;

@@ -73,9 +73,7 @@ export class ClipDownloadController {
 
     const safeName = (downloadName ?? "").replace(/[^a-zA-Z0-9._-]/g, "");
     const disposition =
-      safeName.length > 0
-        ? `attachment; filename="${safeName}"`
-        : "inline";
+      safeName.length > 0 ? `attachment; filename="${safeName}"` : "inline";
 
     try {
       const stream = await this.s3.get(key);

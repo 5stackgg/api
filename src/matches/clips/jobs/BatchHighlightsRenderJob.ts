@@ -19,7 +19,7 @@ import { IN_FLIGHT_STATUSES } from "../clips.constants";
 const CHECK_DELAY_MS = 10_000;
 const GPU_BUSY_RETRY_MS = 30_000;
 
-@UseQueue("Matches", MatchQueues.ClipRenderBatch, {
+@UseQueue("Clips", MatchQueues.Clips, {
   concurrency: 1,
 })
 export class BatchHighlightsRenderJob extends WorkerHost {
@@ -146,7 +146,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
   }
 }
 
-@QueueEventsListener(MatchQueues.ClipRenderBatch)
+@QueueEventsListener(MatchQueues.Clips)
 export class BatchHighlightsRenderJobEvents extends QueueEventsHost {
   constructor(private readonly logger: Logger) {
     super();

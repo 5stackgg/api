@@ -8,7 +8,7 @@ import { S3Service } from "../../../s3/s3.service";
 const UNSIZED_BACKFILL_LIMIT = 25;
 const DELETE_BATCH_SIZE = 10;
 
-@UseQueue("Clips", MatchQueues.CleanClips)
+@UseQueue("Clips", MatchQueues.Clips)
 export class CleanClips extends WorkerHost {
   private maxStorageInBytes: number;
   private minRetentionInDays: number;

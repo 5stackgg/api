@@ -26,7 +26,7 @@ export class ClipsService {
     private readonly hasura: HasuraService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
-    @InjectQueue(MatchQueues.ClipRenderBatch)
+    @InjectQueue(MatchQueues.Clips)
     private readonly batchQueue: Queue,
   ) {}
 
@@ -1049,7 +1049,7 @@ export class ClipsService {
           { jobId: `${matchMapId}-${Date.now()}` },
         );
         this.logger.log(
-          `[auto-clips] match ${matchId} map ${matchMapId} → enqueued ClipRenderBatch`,
+          `[auto-clips] match ${matchId} map ${matchMapId} → enqueued batch highlights`,
         );
       } catch (error) {
         this.logger.warn(

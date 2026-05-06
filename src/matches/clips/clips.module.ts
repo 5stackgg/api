@@ -13,22 +13,34 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../../utilities/QueueProcessors";
 import { CleanClips } from "./jobs/CleanClips";
+import {
+  BatchHighlightsRenderJob,
+  BatchHighlightsRenderJobEvents,
+} from "./jobs/BatchHighlightsRenderJob";
 
 @Module({
   imports: [
     HasuraModule,
     S3Module,
     GameStreamerModule,
-    BullModule.registerQueue({ name: MatchQueues.ClipRenderBatch }),
-    BullModule.registerQueue({ name: MatchQueues.CleanClips }),
+    BullModule.registerQueue({
+      name: MatchQueues.Clips,
+      defaultJobOptions: {
+        attempts: 1,
+        removeOnComplete: { age: 24 * 3600 },
+        removeOnFail: { age: 24 * 3600 },
+      },
+    }),
     BullBoardModule.forFeature({
-      name: MatchQueues.CleanClips,
+      name: MatchQueues.Clips,
       adapter: BullMQAdapter,
     }),
   ],
   controllers: [ClipRendersController, ClipDownloadController],
   providers: [
     ClipsService,
+    BatchHighlightsRenderJob,
+    BatchHighlightsRenderJobEvents,
     CleanClips,
     ...getQueuesProcessors("Clips"),
     loggerFactory(),
@@ -36,12 +48,12 @@ import { CleanClips } from "./jobs/CleanClips";
   exports: [ClipsService],
 })
 export class ClipsModule {
-  constructor(@InjectQueue(MatchQueues.CleanClips) cleanClipsQueue: Queue) {
+  constructor(@InjectQueue(MatchQueues.Clips) clipsQueue: Queue) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
 
-    void cleanClipsQueue.add(
+    void clipsQueue.add(
       CleanClips.name,
       {},
       {

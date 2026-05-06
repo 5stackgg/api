@@ -22,10 +22,6 @@ import {
   CheckOnDemandServerJob,
   CheckOnDemandServerJobEvents,
 } from "./jobs/CheckOnDemandServerJob";
-import {
-  BatchHighlightsRenderJob,
-  BatchHighlightsRenderJobEvents,
-} from "./clips/jobs/BatchHighlightsRenderJob";
 import { MatchEvents } from "./events";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match-server-middleware.middleware";
@@ -92,14 +88,6 @@ import { ClipsModule } from "./clips/clips.module";
           backoff: { type: "exponential", delay: 5000 },
         },
       },
-      {
-        name: MatchQueues.ClipRenderBatch,
-        defaultJobOptions: {
-          attempts: 1,
-          removeOnComplete: { age: 24 * 3600 },
-          removeOnFail: { age: 24 * 3600 },
-        },
-      },
     ),
     BullBoardModule.forFeature(
       {
@@ -112,10 +100,6 @@ import { ClipsModule } from "./clips/clips.module";
       },
       {
         name: MatchQueues.EloCalculation,
-        adapter: BullMQAdapter,
-      },
-      {
-        name: MatchQueues.ClipRenderBatch,
         adapter: BullMQAdapter,
       },
     ),
@@ -138,8 +122,6 @@ import { ClipsModule } from "./clips/clips.module";
     CleanAbandonedMatches,
     ReapIdleDemoSessions,
     EloCalculation,
-    BatchHighlightsRenderJob,
-    BatchHighlightsRenderJobEvents,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),
