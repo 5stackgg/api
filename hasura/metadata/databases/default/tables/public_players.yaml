@@ -263,6 +263,21 @@ computed_fields:
       function:
         name: get_total_player_losses
         schema: public
+  - name: losses_competitive
+    definition:
+      function:
+        name: get_total_player_losses_competitive
+        schema: public
+  - name: losses_duel
+    definition:
+      function:
+        name: get_total_player_losses_duel
+        schema: public
+  - name: losses_wingman
+    definition:
+      function:
+        name: get_total_player_losses_wingman
+        schema: public
   - name: matches
     definition:
       function:
@@ -274,6 +289,11 @@ computed_fields:
         name: get_player_matchmaking_cooldown
         schema: public
       session_argument: hasura_session
+  - name: peak_elo
+    definition:
+      function:
+        name: get_player_peak_elo
+        schema: public
   - name: teams
     definition:
       function:
@@ -288,6 +308,21 @@ computed_fields:
     definition:
       function:
         name: get_total_player_wins
+        schema: public
+  - name: wins_competitive
+    definition:
+      function:
+        name: get_total_player_wins_competitive
+        schema: public
+  - name: wins_duel
+    definition:
+      function:
+        name: get_total_player_wins_duel
+        schema: public
+  - name: wins_wingman
+    definition:
+      function:
+        name: get_total_player_wins_wingman
         schema: public
 select_permissions:
   - role: guest
@@ -310,9 +345,16 @@ select_permissions:
         - is_gagged
         - is_muted
         - losses
+        - losses_competitive
+        - losses_duel
+        - losses_wingman
         - matchmaking_cooldown
+        - peak_elo
         - total_matches
         - wins
+        - wins_competitive
+        - wins_duel
+        - wins_wingman
       filter: {}
     comment: ""
   - role: match_organizer
@@ -338,9 +380,16 @@ select_permissions:
         - is_in_lobby
         - is_muted
         - losses
+        - losses_competitive
+        - losses_duel
+        - losses_wingman
         - matchmaking_cooldown
+        - peak_elo
         - total_matches
         - wins
+        - wins_competitive
+        - wins_duel
+        - wins_wingman
       filter: {}
     comment: ""
   - role: user
@@ -365,9 +414,16 @@ select_permissions:
         - is_in_lobby
         - is_muted
         - losses
+        - losses_competitive
+        - losses_duel
+        - losses_wingman
         - matchmaking_cooldown
+        - peak_elo
         - total_matches
         - wins
+        - wins_competitive
+        - wins_duel
+        - wins_wingman
       filter: {}
       allow_aggregations: true
     comment: ""
