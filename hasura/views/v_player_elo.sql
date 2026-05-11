@@ -1,46 +1,46 @@
 DROP VIEW IF EXISTS v_player_elo;
 
+-- v_player_elo projects the persisted per-match elo metrics stored on
+-- player_elo. Earlier revisions joined match_lineup_players, match_lineups,
+-- matches, match_options, and recomputed everything via
+-- get_elo_for_match() on every read. That made elo history lookups walk
+-- idx_matches_created_at and call the function per candidate row.
+--
+-- All per-match metrics are now written by generate_player_elo_for_match(),
+-- so the view is just a column rename + win/loss derivation. Lookups by
+-- (steam_id, type) ORDER BY created_at DESC ride
+-- idx_player_elo_steam_id_type_created_at.
 CREATE OR REPLACE VIEW v_player_elo AS
-SELECT 
-    m.id AS match_id,
-    mo."type" AS "type",
+SELECT
+    pe.match_id,
+    pe."type",
     m.created_at AS match_created_at,
-    p.steam_id AS player_steam_id,
+    pe.steam_id AS player_steam_id,
     p.name AS player_name,
-    CASE 
-        WHEN m.winning_lineup_id = mlp.match_lineup_id THEN 'win'
-        ELSE 'loss'
-    END AS match_result,
-    -- Extract ELO data using LATERAL join for better performance
-    (elo_data->>'current_elo')::INTEGER + (elo_data->>'elo_change')::INTEGER AS updated_elo,
-    (elo_data->>'current_elo')::INTEGER AS current_elo,
-    (elo_data->>'elo_change')::INTEGER AS elo_change,
-    (elo_data->>'player_team_elo_avg')::FLOAT AS player_team_elo_avg,
-    (elo_data->>'opponent_team_elo_avg')::FLOAT AS opponent_team_elo_avg,
-    (elo_data->>'expected_score')::FLOAT AS expected_score,
-    (elo_data->>'actual_score')::FLOAT AS actual_score,
-    (elo_data->>'k_factor')::INTEGER AS k_factor,
-    (elo_data->>'kills')::INTEGER AS kills,
-    (elo_data->>'deaths')::INTEGER AS deaths,
-    (elo_data->>'assists')::INTEGER AS assists,
-    (elo_data->>'damage')::INTEGER AS damage,
-    (elo_data->>'kda')::FLOAT AS kda,
-    (elo_data->>'team_avg_kda')::FLOAT AS team_avg_kda,
-    (elo_data->>'damage_percent')::FLOAT AS damage_percent,
-    (elo_data->>'impact')::FLOAT AS impact,
-    (elo_data->>'performance_multiplier')::FLOAT AS performance_multiplier,
-    (elo_data->>'map_wins')::INTEGER AS map_wins,
-    (elo_data->>'map_losses')::INTEGER AS map_losses,
-    (elo_data->>'series_multiplier')::INTEGER AS series_multiplier
+    CASE WHEN pe.actual_score = 1.0 THEN 'win' ELSE 'loss' END AS match_result,
+    pe.current::INTEGER AS updated_elo,
+    (pe.current - pe.change)::INTEGER AS current_elo,
+    pe.change::INTEGER AS elo_change,
+    pe.player_team_elo_avg,
+    pe.opponent_team_elo_avg,
+    pe.expected_score,
+    pe.actual_score,
+    pe.k_factor,
+    pe.kills,
+    pe.deaths,
+    pe.assists,
+    pe.damage,
+    pe.kda,
+    pe.team_avg_kda,
+    pe.damage_percent,
+    pe.impact::FLOAT AS impact,
+    pe.performance_multiplier,
+    pe.map_wins,
+    pe.map_losses,
+    pe.series_multiplier
 FROM
-    match_lineup_players mlp
+    player_elo pe
 JOIN
-    match_lineups ml ON ml.id = mlp.match_lineup_id
+    matches m ON m.id = pe.match_id
 JOIN
-    matches m ON m.id = ml.match_id
-JOIN
-    players p ON p.steam_id = mlp.steam_id
-JOIN
-    match_options mo ON mo.id = m.match_options_id
-CROSS JOIN LATERAL
-    get_elo_for_match(m.id, p.steam_id) AS elo_data;
+    players p ON p.steam_id = pe.steam_id;

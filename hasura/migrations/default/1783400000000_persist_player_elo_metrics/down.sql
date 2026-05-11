@@ -1,0 +1,17 @@
+ALTER TABLE public.player_elo
+  DROP COLUMN IF EXISTS actual_score,
+  DROP COLUMN IF EXISTS expected_score,
+  DROP COLUMN IF EXISTS k_factor,
+  DROP COLUMN IF EXISTS player_team_elo_avg,
+  DROP COLUMN IF EXISTS opponent_team_elo_avg,
+  DROP COLUMN IF EXISTS kills,
+  DROP COLUMN IF EXISTS deaths,
+  DROP COLUMN IF EXISTS assists,
+  DROP COLUMN IF EXISTS damage,
+  DROP COLUMN IF EXISTS kda,
+  DROP COLUMN IF EXISTS team_avg_kda,
+  DROP COLUMN IF EXISTS damage_percent,
+  DROP COLUMN IF EXISTS performance_multiplier,
+  DROP COLUMN IF EXISTS map_wins,
+  DROP COLUMN IF EXISTS map_losses,
+  DROP COLUMN IF EXISTS series_multiplier;
