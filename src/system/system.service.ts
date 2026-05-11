@@ -410,7 +410,7 @@ export class SystemService {
   }
 
   private getServiceCacheKey(service: string) {
-    return `version:${service}`;
+    return `version:v2:${service}`;
   }
 
   private async getPanelVersion() {
