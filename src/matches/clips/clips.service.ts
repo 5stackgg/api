@@ -1124,6 +1124,7 @@ export class ClipsService {
             tick_rate: true,
             total_ticks: true,
             round_ticks: true,
+            metadata_parsed_at: true,
           },
         },
       },
