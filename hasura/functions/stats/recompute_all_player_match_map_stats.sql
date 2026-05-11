@@ -1,6 +1,3 @@
--- Rebuild player_match_map_stats for every map with at least one finalized
--- round. Returns the number of maps recomputed.
-
 CREATE OR REPLACE FUNCTION public.recompute_all_player_match_map_stats(
   notice_every integer DEFAULT 100
 )
