@@ -18,7 +18,7 @@ BEGIN
     WITH randomized_players AS (
         SELECT id, ROW_NUMBER() OVER (ORDER BY RANDOM()) AS rn
         FROM match_lineup_players
-        WHERE match_lineup_id = match_lineup_1_id OR match_lineup_id = match_lineup_2_id
+        WHERE match_lineup_id IN (match_lineup_1_id, match_lineup_2_id)
     ),
     team_assignments AS (
         SELECT 

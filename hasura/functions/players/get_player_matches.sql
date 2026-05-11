@@ -4,14 +4,8 @@ LANGUAGE SQL STABLE
 AS $$
     SELECT DISTINCT m.*
     FROM match_lineup_players mlp
-    JOIN matches m ON m.lineup_1_id = mlp.match_lineup_id
-    WHERE mlp.steam_id = player.steam_id
-
-    UNION
-
-    SELECT DISTINCT m.*
-    FROM match_lineup_players mlp
-    JOIN matches m ON m.lineup_2_id = mlp.match_lineup_id
+    JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+    JOIN matches m ON m.id = ml.match_id
     WHERE mlp.steam_id = player.steam_id;
 $$;
 
@@ -20,22 +14,11 @@ RETURNS integer
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT COUNT(DISTINCT id)
-    FROM (
-        SELECT m.id
-        FROM match_lineup_players mlp
-        JOIN matches m
-          ON m.lineup_1_id = mlp.match_lineup_id
-        WHERE mlp.steam_id = player.steam_id
-
-        UNION ALL
-
-        SELECT m.id
-        FROM match_lineup_players mlp
-        JOIN matches m
-          ON m.lineup_2_id = mlp.match_lineup_id
-        WHERE mlp.steam_id = player.steam_id
-    ) s;
+    SELECT COUNT(DISTINCT ml.match_id)::int
+    FROM match_lineup_players mlp
+    JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+    WHERE mlp.steam_id = player.steam_id
+      AND ml.match_id IS NOT NULL;
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_total_player_wins(player public.players) RETURNS INT
@@ -47,9 +30,10 @@ BEGIN
     SELECT COUNT(DISTINCT m.id)
     INTO total_matches
     FROM match_lineup_players mlp
-    INNER JOIN matches m ON (m.lineup_1_id = mlp.match_lineup_id OR m.lineup_2_id = mlp.match_lineup_id)
+    INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+    INNER JOIN matches m ON m.id = ml.match_id
     WHERE mlp.steam_id = player.steam_id
-    and m.winning_lineup_id = mlp.match_lineup_id;
+      AND m.winning_lineup_id = mlp.match_lineup_id;
 
     RETURN total_matches;
 END;
@@ -64,9 +48,10 @@ BEGIN
     SELECT COUNT(DISTINCT m.id)
     INTO total_matches
     FROM match_lineup_players mlp
-    INNER JOIN matches m ON (m.lineup_1_id = mlp.match_lineup_id OR m.lineup_2_id = mlp.match_lineup_id)
+    INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+    INNER JOIN matches m ON m.id = ml.match_id
     WHERE mlp.steam_id = player.steam_id
-    and m.winning_lineup_id != mlp.match_lineup_id;
+      AND m.winning_lineup_id != mlp.match_lineup_id;
 
     RETURN total_matches;
 END;

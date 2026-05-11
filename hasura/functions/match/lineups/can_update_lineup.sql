@@ -6,7 +6,7 @@ DECLARE
 BEGIN
      SELECT m.* INTO match
         FROM matches m
-        INNER JOIN v_match_lineups ml ON ml.match_id = m.id
+        INNER JOIN match_lineups ml ON ml.match_id = m.id
         WHERE ml.id = match_lineup.id;
 
      IF match_lineup.coach_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint THEN

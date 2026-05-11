@@ -1318,8 +1318,8 @@ export class MatchesController {
               },
               {
                 lineup: {
-                  v_match_lineup: {
-                    match_id: {
+                  match: {
+                    id: {
                       _eq: data.match_id,
                     },
                   },
@@ -1549,8 +1549,8 @@ export class MatchesController {
               _eq: data.user.steam_id,
             },
             lineup: {
-              v_match_lineup: {
-                match_id: {
+              match: {
+                id: {
                   _eq: data.match_id,
                 },
               },

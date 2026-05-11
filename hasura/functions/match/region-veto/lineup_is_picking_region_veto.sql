@@ -8,8 +8,7 @@ DECLARE
 BEGIN
     SELECT * INTO _match
     FROM matches
-    WHERE lineup_1_id = match_lineup.id
-       OR lineup_2_id = match_lineup.id
+    WHERE id = match_lineup.match_id
     LIMIT 1;
 
     RETURN get_region_veto_picking_lineup_id(_match) = match_lineup.id;

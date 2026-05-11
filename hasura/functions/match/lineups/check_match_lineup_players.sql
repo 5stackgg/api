@@ -9,13 +9,13 @@ BEGIN
     END IF;
 
     SELECT ml.match_id INTO _match_id
-    FROM v_match_lineups ml
+    FROM match_lineups ml
     WHERE ml.id = match_lineup_player.match_lineup_id;
 
 	IF EXISTS (
         SELECT 1
         FROM match_lineup_players mlp
-        INNER JOIN v_match_lineups ml ON ml.id = mlp.match_lineup_id
+        INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
         WHERE mlp.steam_id = match_lineup_player.steam_id and ml.match_id = _match_id
     ) THEN
         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Player is already added to match';

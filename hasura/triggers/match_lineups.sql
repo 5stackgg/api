@@ -6,7 +6,7 @@ DECLARE
     _match_status text;
 BEGIN
     IF TG_OP = 'UPDATE' AND NEW.team_name != OLD.team_name THEN
-        select status from matches where lineup_1_id = NEW.id or lineup_2_id = NEW.id into _match_status;
+        select status from matches where id = NEW.match_id into _match_status;
         IF _match_status NOT IN ('PickingPlayers', 'Scheduled', 'WaitingForCheckIn', 'Veto', 'WaitingForServer') THEN
             RAISE EXCEPTION 'Cannot change the name of a lineup when the match is Live or Finished' USING ERRCODE = '22000';
         END IF;
@@ -40,7 +40,7 @@ BEGIN
     SELECT *
     INTO _match
     FROM matches m
-    WHERE m.lineup_1_id = NEW.id OR m.lineup_2_id = NEW.id
+    WHERE m.id = NEW.match_id
     LIMIT 1;
 
     IF _match.id IS NULL OR _match.status != 'PickingPlayers' THEN

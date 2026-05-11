@@ -22,10 +22,9 @@ insert_permissions:
       check:
         _and:
           - lineup:
-              v_match_lineup:
-                match:
-                  is_organizer:
-                    _eq: true
+              match:
+                is_organizer:
+                  _eq: true
           - _or:
               - _not:
                   _exists:
@@ -59,10 +58,9 @@ insert_permissions:
       check:
         _and:
           - lineup:
-              v_match_lineup:
-                match:
-                  is_organizer:
-                    _eq: true
+              match:
+                is_organizer:
+                  _eq: true
           - _or:
               - _not:
                   _exists:
@@ -95,10 +93,9 @@ insert_permissions:
       check:
         _and:
           - lineup:
-              v_match_lineup:
-                match:
-                  is_organizer:
-                    _eq: true
+              match:
+                is_organizer:
+                  _eq: true
           - _or:
               - _not:
                   _exists:
@@ -155,16 +152,14 @@ update_permissions:
         - match_lineup_id
       filter:
         lineup:
-          v_match_lineup:
-            match:
-              is_organizer:
-                _eq: true
+          match:
+            is_organizer:
+              _eq: true
       check:
         lineup:
-          v_match_lineup:
-            match:
-              is_organizer:
-                _eq: true
+          match:
+            is_organizer:
+              _eq: true
     comment: ""
 delete_permissions:
   - role: administrator
@@ -176,10 +171,9 @@ delete_permissions:
       filter:
         _or:
           - lineup:
-              v_match_lineup:
-                match:
-                  is_organizer:
-                    _eq: true
+              match:
+                is_organizer:
+                  _eq: true
           - steam_id:
               _eq: X-Hasura-User-Id
     comment: ""

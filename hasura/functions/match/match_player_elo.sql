@@ -76,7 +76,7 @@ BEGIN
     SELECT mlp.match_lineup_id INTO _player_lineup_id
     FROM match_lineup_players mlp
     WHERE mlp.steam_id = player_record.steam_id
-    AND (mlp.match_lineup_id = match_record.lineup_1_id OR mlp.match_lineup_id = match_record.lineup_2_id)
+    AND mlp.match_lineup_id IN (match_record.lineup_1_id, match_record.lineup_2_id)
     LIMIT 1;
 
     IF _player_lineup_id = match_record.lineup_1_id THEN
@@ -326,8 +326,7 @@ BEGIN
         SELECT DISTINCT p.* 
         FROM players p
         JOIN match_lineup_players mlp ON p.steam_id = mlp.steam_id
-        WHERE mlp.match_lineup_id = match_record.lineup_1_id 
-           OR mlp.match_lineup_id = match_record.lineup_2_id
+        WHERE mlp.match_lineup_id IN (match_record.lineup_1_id, match_record.lineup_2_id)
     LOOP
         -- Calculate ELO change for this player in this match
         elo_data := get_player_elo_for_match(match_record, player_record);
