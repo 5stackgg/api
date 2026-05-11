@@ -1,5 +1,3 @@
--- All-maps rollup of player_match_map_stats. One row per (steam_id, match_id).
-
 CREATE OR REPLACE VIEW public.player_match_stats_v AS
 SELECT
   s.steam_id,
