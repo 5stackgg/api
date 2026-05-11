@@ -30,10 +30,12 @@ export class CacheService {
 
   public async put(key: string, value: CachedValue, seconds?: number) {
     try {
-      await this.connection.set(key, JSON.stringify(value));
+      const serialized = JSON.stringify(value);
 
       if (seconds) {
-        await this.expireIn(key, seconds);
+        await this.connection.set(key, serialized, "EX", seconds);
+      } else {
+        await this.connection.set(key, serialized);
       }
 
       return true;
@@ -106,10 +108,6 @@ export class CacheService {
     throw new Error(
       `Failed to acquire lock for ${key} after ${maxAttempts} attempts`,
     );
-  }
-
-  private async expireIn(key: string, seconds: number) {
-    return this.connection.expire(key, seconds);
   }
 
   public tags(tags: Array<string>) {
