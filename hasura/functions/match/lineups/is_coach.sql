@@ -9,7 +9,7 @@ BEGIN
         SELECT 1
         FROM match_lineups ml
         WHERE
-            (ml.id = match.lineup_1_id OR ml.id = match.lineup_2_id)
+            ml.match_id = match.id
             AND ml.coach_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
     );
 END;

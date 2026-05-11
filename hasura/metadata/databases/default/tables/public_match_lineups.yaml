@@ -20,6 +20,9 @@ object_relationships:
         remote_table:
           name: players
           schema: public
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
   - name: team
     using:
       foreign_key_constraint_on: team_id
@@ -105,6 +108,7 @@ select_permissions:
       columns:
         - coach_steam_id
         - id
+        - match_id
         - team_id
         - team_name
       computed_fields:

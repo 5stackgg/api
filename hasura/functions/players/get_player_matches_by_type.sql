@@ -7,7 +7,8 @@ BEGIN
     SELECT COUNT(DISTINCT m.id)
     INTO total_matches
     FROM match_lineup_players mlp
-    INNER JOIN matches m ON (m.lineup_1_id = mlp.match_lineup_id OR m.lineup_2_id = mlp.match_lineup_id)
+    INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+    INNER JOIN matches m ON m.id = ml.match_id
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE mlp.steam_id = player.steam_id
     AND m.winning_lineup_id = mlp.match_lineup_id
@@ -26,7 +27,8 @@ BEGIN
     SELECT COUNT(DISTINCT m.id)
     INTO total_matches
     FROM match_lineup_players mlp
-    INNER JOIN matches m ON (m.lineup_1_id = mlp.match_lineup_id OR m.lineup_2_id = mlp.match_lineup_id)
+    INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+    INNER JOIN matches m ON m.id = ml.match_id
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE mlp.steam_id = player.steam_id
     AND m.winning_lineup_id != mlp.match_lineup_id

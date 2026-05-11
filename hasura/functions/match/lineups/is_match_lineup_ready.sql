@@ -11,7 +11,7 @@ BEGIN
     INTO match_type, _check_in_setting
     FROM matches m
     INNER JOIN match_options mo ON mo.id = m.match_options_id
-    WHERE m.lineup_1_id = match_lineup.id OR m.lineup_2_id = match_lineup.id
+    WHERE m.id = match_lineup.match_id
     LIMIT 1;
 
     IF _check_in_setting = 'Captains' THEN

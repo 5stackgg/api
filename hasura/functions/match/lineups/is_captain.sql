@@ -8,7 +8,7 @@ BEGIN
         FROM match_lineups ml
             INNER JOIN match_lineup_players mlp on mlp.match_lineup_id = ml.id
                 WHERE
-                    (ml.id = match.lineup_1_id OR ml.id = match.lineup_2_id)
+                    ml.match_id = match.id
                     AND mlp.steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
                     AND captain = true
     );

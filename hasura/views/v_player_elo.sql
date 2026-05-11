@@ -32,13 +32,15 @@ SELECT
     (elo_data->>'map_wins')::INTEGER AS map_wins,
     (elo_data->>'map_losses')::INTEGER AS map_losses,
     (elo_data->>'series_multiplier')::INTEGER AS series_multiplier
-FROM 
-    matches m
-JOIN 
-    match_lineup_players mlp ON (mlp.match_lineup_id = m.lineup_1_id OR mlp.match_lineup_id = m.lineup_2_id)
-JOIN 
+FROM
+    match_lineup_players mlp
+JOIN
+    match_lineups ml ON ml.id = mlp.match_lineup_id
+JOIN
+    matches m ON m.id = ml.match_id
+JOIN
     players p ON p.steam_id = mlp.steam_id
-JOIN 
+JOIN
     match_options mo ON mo.id = m.match_options_id
-CROSS JOIN LATERAL 
+CROSS JOIN LATERAL
     get_elo_for_match(m.id, p.steam_id) AS elo_data;

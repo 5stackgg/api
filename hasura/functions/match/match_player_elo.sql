@@ -76,7 +76,7 @@ BEGIN
     SELECT mlp.match_lineup_id INTO _player_lineup_id
     FROM match_lineup_players mlp
     WHERE mlp.steam_id = player_record.steam_id
-    AND (mlp.match_lineup_id = match_record.lineup_1_id OR mlp.match_lineup_id = match_record.lineup_2_id)
+    AND mlp.match_lineup_id IN (match_record.lineup_1_id, match_record.lineup_2_id)
     LIMIT 1;
 
     IF _player_lineup_id = match_record.lineup_1_id THEN

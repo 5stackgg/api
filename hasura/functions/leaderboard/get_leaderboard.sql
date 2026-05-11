@@ -92,7 +92,7 @@ BEGIN
           ROW_NUMBER() OVER (PARTITION BY mlp.steam_id ORDER BY m.ended_at DESC) as rn
         FROM match_lineup_players mlp
         JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
-        JOIN matches m ON (m.lineup_1_id = ml.id OR m.lineup_2_id = ml.id)
+        JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
           AND mlp.steam_id IS NOT NULL
@@ -160,7 +160,7 @@ BEGIN
           ROW_NUMBER() OVER (PARTITION BY mlp.steam_id ORDER BY m.ended_at DESC) as rn
         FROM match_lineup_players mlp
         JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
-        JOIN matches m ON (m.lineup_1_id = ml.id OR m.lineup_2_id = ml.id)
+        JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
           AND mlp.steam_id IS NOT NULL
@@ -272,7 +272,7 @@ BEGIN
       CASE WHEN m.winning_lineup_id = mlp.match_lineup_id THEN 1 ELSE 0 END as won
     FROM match_lineup_players mlp
     JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
-    JOIN matches m ON (m.lineup_1_id = ml.id OR m.lineup_2_id = ml.id)
+    JOIN matches m ON m.id = ml.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.status = 'Finished'
       AND mlp.steam_id IS NOT NULL
