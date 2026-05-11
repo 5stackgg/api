@@ -16,7 +16,7 @@ BEGIN
 
    RETURN get_player_elo_for_match(match_record, player_record);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION get_player_elo_for_match(
     match_record public.matches,
@@ -261,7 +261,7 @@ BEGIN
         'series_multiplier', _series_multiplier
     );
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION public.get_elo_for_match(
@@ -291,7 +291,7 @@ BEGIN
     -- Call the existing function to calculate elo change
     RETURN get_player_elo_for_match(match_record, player_record);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION generate_player_elo_for_match(_match_id UUID) RETURNS INTEGER AS $$
 DECLARE
@@ -356,7 +356,23 @@ BEGIN
             current,
             change,
             impact,
-            created_at
+            created_at,
+            actual_score,
+            expected_score,
+            k_factor,
+            player_team_elo_avg,
+            opponent_team_elo_avg,
+            kills,
+            deaths,
+            assists,
+            damage,
+            kda,
+            team_avg_kda,
+            damage_percent,
+            performance_multiplier,
+            map_wins,
+            map_losses,
+            series_multiplier
         ) VALUES (
             match_type,
             match_record.id,
@@ -364,7 +380,23 @@ BEGIN
             new_elo,
             elo_change,
             COALESCE((elo_data->>'impact')::NUMERIC, 1.0),
-            match_record.ended_at
+            match_record.ended_at,
+            (elo_data->>'actual_score')::double precision,
+            (elo_data->>'expected_score')::double precision,
+            (elo_data->>'k_factor')::integer,
+            (elo_data->>'player_team_elo_avg')::double precision,
+            (elo_data->>'opponent_team_elo_avg')::double precision,
+            (elo_data->>'kills')::integer,
+            (elo_data->>'deaths')::integer,
+            (elo_data->>'assists')::integer,
+            (elo_data->>'damage')::integer,
+            (elo_data->>'kda')::double precision,
+            (elo_data->>'team_avg_kda')::double precision,
+            (elo_data->>'damage_percent')::double precision,
+            (elo_data->>'performance_multiplier')::double precision,
+            (elo_data->>'map_wins')::integer,
+            (elo_data->>'map_losses')::integer,
+            (elo_data->>'series_multiplier')::integer
         );
         
         ratings_created := ratings_created + 1;
