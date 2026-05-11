@@ -83,7 +83,6 @@
 - "!include public_tournaments.yaml"
 - "!include public_v_gpu_pool_status.yaml"
 - "!include public_v_match_captains.yaml"
-- "!include public_v_match_lineups.yaml"
 - "!include public_v_my_friends.yaml"
 - "!include public_v_player_arch_nemesis.yaml"
 - "!include public_v_player_damage.yaml"

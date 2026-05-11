@@ -19,7 +19,7 @@ BEGIN
         _lineup_2_id,
         _team_name
     FROM matches m
-    JOIN v_match_lineups ml ON ml.match_id = m.id
+    JOIN match_lineups ml ON ml.match_id = m.id
     LEFT JOIN teams t ON t.id = ml.team_id
     WHERE ml.id = match_lineup.id;
 

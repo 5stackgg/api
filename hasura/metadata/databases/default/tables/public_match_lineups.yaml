@@ -26,15 +26,6 @@ object_relationships:
   - name: team
     using:
       foreign_key_constraint_on: team_id
-  - name: v_match_lineup
-    using:
-      manual_configuration:
-        column_mapping:
-          id: id
-        insertion_order: null
-        remote_table:
-          name: v_match_lineups
-          schema: public
 array_relationships:
   - name: lineup_players
     using:

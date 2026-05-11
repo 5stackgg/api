@@ -11,7 +11,7 @@ DECLARE
 BEGIN
     SELECT m.* INTO match
         FROM matches m
-        inner join v_match_lineups ml on ml.match_id = m.id
+        inner join match_lineups ml on ml.match_id = m.id
         WHERE ml.id = match_lineup_player.match_lineup_id;
 
   	max_players := match_max_players_per_lineup(match);
