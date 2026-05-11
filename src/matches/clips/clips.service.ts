@@ -287,8 +287,7 @@ export class ClipsService {
       for (const queuedJob of jobs) {
         if (
           queuedJob.data?.matchMapId === matchMapId &&
-          (!matchMapDemoId ||
-            queuedJob.data?.matchMapDemoId === matchMapDemoId)
+          (!matchMapDemoId || queuedJob.data?.matchMapDemoId === matchMapDemoId)
         ) {
           await queuedJob.remove();
         }
@@ -941,8 +940,7 @@ export class ClipsService {
       );
     }
 
-    const kills =
-      (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
+    const kills = (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
     if (kills.length === 0) return 0;
 
     const killers = new Set<string>();
@@ -1064,9 +1062,9 @@ export class ClipsService {
           returning: { id: true },
         },
       });
-      queued =
-        ((insert_clip_render_jobs?.returning as Array<{ id: string }>) ?? [])
-          .length;
+      queued = (
+        (insert_clip_render_jobs?.returning as Array<{ id: string }>) ?? []
+      ).length;
     } catch (error) {
       this.logger.warn(
         `[auto-clips] demo ${matchMapDemoId} batch insert failed: ${(error as Error)?.message}`,

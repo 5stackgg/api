@@ -145,10 +145,7 @@ export class DemoMetadataService {
       match_map_demos: {
         __args: {
           where: { match_map_id: { _eq: matchMapId } },
-          order_by: [
-            { metadata_parsed_at: "desc_nulls_last" },
-            { id: "desc" },
-          ],
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
           limit: 1,
         },
         id: true,
@@ -171,10 +168,7 @@ export class DemoMetadataService {
       match_map_demos: {
         __args: {
           where: { match_map_id: { _eq: matchMapId } },
-          order_by: [
-            { metadata_parsed_at: "desc_nulls_last" },
-            { id: "desc" },
-          ],
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
         },
         id: true,
         match_id: true,

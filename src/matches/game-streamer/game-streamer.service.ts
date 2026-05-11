@@ -127,7 +127,9 @@ export class GameStreamerService {
     progress: number | null,
     progress_stage: string | null,
   ): unknown[] {
-    const previous = Array.isArray(rawPrevious) ? (rawPrevious as unknown[]) : [];
+    const previous = Array.isArray(rawPrevious)
+      ? (rawPrevious as unknown[])
+      : [];
     const entry: Record<string, unknown> = {
       status: newStatus,
       at: new Date().toISOString(),
