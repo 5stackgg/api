@@ -173,16 +173,6 @@ export class NotificationsService {
           matches_by_pk: {
             __args: { id: matchId },
             organizer_steam_id: true,
-            lineup_1: {
-              lineup_players: {
-                steam_id: true,
-              },
-            },
-            lineup_2: {
-              lineup_players: {
-                steam_id: true,
-              },
-            },
           },
         });
 
@@ -190,39 +180,22 @@ export class NotificationsService {
           return;
         }
 
-        const playerSteamIds = new Set<string>();
-
         if (matches_by_pk.organizer_steam_id) {
-          playerSteamIds.add(String(matches_by_pk.organizer_steam_id));
-        }
-
-        for (const player of matches_by_pk.lineup_1?.lineup_players || []) {
-          if (player.steam_id) {
-            playerSteamIds.add(String(player.steam_id));
-          }
-        }
-        for (const player of matches_by_pk.lineup_2?.lineup_players || []) {
-          if (player.steam_id) {
-            playerSteamIds.add(String(player.steam_id));
-          }
-        }
-
-        for (const steamId of playerSteamIds) {
           await this.insertNotification({
-            type: "MatchStatusChange" as e_notification_types_enum,
+            type: "MatchStatusChange",
             title,
             message,
-            steam_id: steamId,
+            steam_id: matches_by_pk.organizer_steam_id,
             role: "user",
             entity_id: matchId,
           });
         }
 
         await this.insertNotification({
-          type: "MatchStatusChange" as e_notification_types_enum,
+          type: "MatchStatusChange",
           title,
           message,
-          role: "administrator",
+          role: "match_organizer",
           entity_id: matchId,
         });
 
@@ -255,7 +228,7 @@ export class NotificationsService {
 
       for (const steamId of organizerSteamIds) {
         await this.insertNotification({
-          type: "MatchStatusChange" as e_notification_types_enum,
+          type: "MatchStatusChange",
           title,
           message,
           steam_id: steamId,
@@ -265,7 +238,7 @@ export class NotificationsService {
       }
 
       await this.insertNotification({
-        type: "MatchStatusChange" as e_notification_types_enum,
+        type: "MatchStatusChange",
         title,
         message,
         role: "administrator",
@@ -332,11 +305,33 @@ export class NotificationsService {
       if (!tournament) {
         const message = `A map has been paused in match <a href="${matchUrl}">View Match</a>`;
 
+        const { matches_by_pk } = await this.hasura.query({
+          matches_by_pk: {
+            __args: { id: matchId },
+            organizer_steam_id: true,
+          },
+        });
+
+        if (!matches_by_pk) {
+          return;
+        }
+
+        if (matches_by_pk.organizer_steam_id) {
+          await this.insertNotification({
+            type: "MatchStatusChange",
+            title,
+            message,
+            steam_id: matches_by_pk.organizer_steam_id,
+            role: "user",
+            entity_id: matchId,
+          });
+        }
+
         await this.insertNotification({
-          type: "MatchStatusChange" as e_notification_types_enum,
+          type: "MatchStatusChange",
           title,
           message,
-          role: "administrator",
+          role: "match_organizer",
           entity_id: matchId,
         });
 
@@ -368,7 +363,7 @@ export class NotificationsService {
 
       for (const steamId of organizerSteamIds) {
         await this.insertNotification({
-          type: "MatchStatusChange" as e_notification_types_enum,
+          type: "MatchStatusChange",
           title,
           message,
           steam_id: steamId,
@@ -378,7 +373,7 @@ export class NotificationsService {
       }
 
       await this.insertNotification({
-        type: "MatchStatusChange" as e_notification_types_enum,
+        type: "MatchStatusChange",
         title,
         message,
         role: "administrator",
