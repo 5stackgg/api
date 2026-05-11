@@ -472,6 +472,7 @@ type Mutation {
 type Mutation {
   watchDemo(
     match_map_id: uuid!
+    match_map_demo_id: uuid
   ): WatchDemoOutput
 }
 

@@ -5,6 +5,9 @@ object_relationships:
   - name: match_map
     using:
       foreign_key_constraint_on: match_map_id
+  - name: match_map_demo
+    using:
+      foreign_key_constraint_on: match_map_demo_id
   - name: target
     using:
       foreign_key_constraint_on: target_steam_id
@@ -38,6 +41,7 @@ select_permissions:
         - user_steam_id
         - target_steam_id
         - match_map_id
+        - match_map_demo_id
         - title
         - duration_ms
         - file
@@ -58,6 +62,7 @@ select_permissions:
         - user_steam_id
         - target_steam_id
         - match_map_id
+        - match_map_demo_id
         - title
         - duration_ms
         - file
@@ -85,6 +90,7 @@ select_permissions:
         - created_at
         - id
         - match_map_id
+        - match_map_demo_id
         - kills_count
       computed_fields:
         - download_url

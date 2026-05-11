@@ -1348,6 +1348,10 @@ type clip_render_jobs {
 
   """An object relationship"""
   match_map: match_maps!
+
+  """An object relationship"""
+  match_map_demo: match_map_demos
+  match_map_demo_id: uuid
   match_map_id: uuid!
   progress: numeric
   session_token: String!
@@ -1466,6 +1470,8 @@ input clip_render_jobs_bool_exp {
   k8s_job_name: String_comparison_exp
   last_status_at: timestamptz_comparison_exp
   match_map: match_maps_bool_exp
+  match_map_demo: match_map_demos_bool_exp
+  match_map_demo_id: uuid_comparison_exp
   match_map_id: uuid_comparison_exp
   progress: numeric_comparison_exp
   session_token: String_comparison_exp
@@ -1532,6 +1538,8 @@ input clip_render_jobs_insert_input {
   k8s_job_name: String
   last_status_at: timestamptz
   match_map: match_maps_obj_rel_insert_input
+  match_map_demo: match_map_demos_obj_rel_insert_input
+  match_map_demo_id: uuid
   match_map_id: uuid
   progress: numeric
   session_token: String
@@ -1551,6 +1559,7 @@ type clip_render_jobs_max_fields {
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
+  match_map_demo_id: uuid
   match_map_id: uuid
   progress: numeric
   session_token: String
@@ -1569,6 +1578,7 @@ input clip_render_jobs_max_order_by {
   id: order_by
   k8s_job_name: order_by
   last_status_at: order_by
+  match_map_demo_id: order_by
   match_map_id: order_by
   progress: order_by
   session_token: order_by
@@ -1585,6 +1595,7 @@ type clip_render_jobs_min_fields {
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
+  match_map_demo_id: uuid
   match_map_id: uuid
   progress: numeric
   session_token: String
@@ -1603,6 +1614,7 @@ input clip_render_jobs_min_order_by {
   id: order_by
   k8s_job_name: order_by
   last_status_at: order_by
+  match_map_demo_id: order_by
   match_map_id: order_by
   progress: order_by
   session_token: order_by
@@ -1642,6 +1654,8 @@ input clip_render_jobs_order_by {
   k8s_job_name: order_by
   last_status_at: order_by
   match_map: match_maps_order_by
+  match_map_demo: match_map_demos_order_by
+  match_map_demo_id: order_by
   match_map_id: order_by
   progress: order_by
   session_token: order_by
@@ -1689,6 +1703,9 @@ enum clip_render_jobs_select_column {
   last_status_at
 
   """column name"""
+  match_map_demo_id
+
+  """column name"""
   match_map_id
 
   """column name"""
@@ -1721,6 +1738,7 @@ input clip_render_jobs_set_input {
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
+  match_map_demo_id: uuid
   match_map_id: uuid
   progress: numeric
   session_token: String
@@ -1792,6 +1810,7 @@ input clip_render_jobs_stream_cursor_value_input {
   id: uuid
   k8s_job_name: String
   last_status_at: timestamptz
+  match_map_demo_id: uuid
   match_map_id: uuid
   progress: numeric
   session_token: String
@@ -1839,6 +1858,9 @@ enum clip_render_jobs_update_column {
 
   """column name"""
   last_status_at
+
+  """column name"""
+  match_map_demo_id
 
   """column name"""
   match_map_id
@@ -10933,6 +10955,10 @@ type match_clips {
 
   """An object relationship"""
   match_map: match_maps!
+
+  """An object relationship"""
+  match_map_demo: match_map_demos
+  match_map_demo_id: uuid
   match_map_id: uuid!
 
   """An array relationship"""
@@ -10997,6 +11023,17 @@ type match_clips_aggregate {
   nodes: [match_clips!]!
 }
 
+input match_clips_aggregate_bool_exp {
+  count: match_clips_aggregate_bool_exp_count
+}
+
+input match_clips_aggregate_bool_exp_count {
+  arguments: [match_clips_select_column!]
+  distinct: Boolean
+  filter: match_clips_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "match_clips"
 """
@@ -11014,6 +11051,33 @@ type match_clips_aggregate_fields {
   variance: match_clips_variance_fields
 }
 
+"""
+order by aggregate values of table "match_clips"
+"""
+input match_clips_aggregate_order_by {
+  avg: match_clips_avg_order_by
+  count: order_by
+  max: match_clips_max_order_by
+  min: match_clips_min_order_by
+  stddev: match_clips_stddev_order_by
+  stddev_pop: match_clips_stddev_pop_order_by
+  stddev_samp: match_clips_stddev_samp_order_by
+  sum: match_clips_sum_order_by
+  var_pop: match_clips_var_pop_order_by
+  var_samp: match_clips_var_samp_order_by
+  variance: match_clips_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "match_clips"
+"""
+input match_clips_arr_rel_insert_input {
+  data: [match_clips_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_clips_on_conflict
+}
+
 """aggregate avg on columns"""
 type match_clips_avg_fields {
   duration_ms: Float
@@ -11021,6 +11085,17 @@ type match_clips_avg_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "match_clips"
+"""
+input match_clips_avg_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
 }
 
 """
@@ -11037,6 +11112,8 @@ input match_clips_bool_exp {
   id: uuid_comparison_exp
   kills_count: Int_comparison_exp
   match_map: match_maps_bool_exp
+  match_map_demo: match_map_demos_bool_exp
+  match_map_demo_id: uuid_comparison_exp
   match_map_id: uuid_comparison_exp
   render_jobs: clip_render_jobs_bool_exp
   render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
@@ -11082,6 +11159,8 @@ input match_clips_insert_input {
   id: uuid
   kills_count: Int
   match_map: match_maps_obj_rel_insert_input
+  match_map_demo: match_map_demos_obj_rel_insert_input
+  match_map_demo_id: uuid
   match_map_id: uuid
   render_jobs: clip_render_jobs_arr_rel_insert_input
   size: bigint
@@ -11106,6 +11185,7 @@ type match_clips_max_fields {
   file: String
   id: uuid
   kills_count: Int
+  match_map_demo_id: uuid
   match_map_id: uuid
   size: bigint
   target_steam_id: bigint
@@ -11120,6 +11200,25 @@ type match_clips_max_fields {
   visibility: String
 }
 
+"""
+order by max() on columns of table "match_clips"
+"""
+input match_clips_max_order_by {
+  created_at: order_by
+  duration_ms: order_by
+  file: order_by
+  id: order_by
+  kills_count: order_by
+  match_map_demo_id: order_by
+  match_map_id: order_by
+  size: order_by
+  target_steam_id: order_by
+  thumbnail_url: order_by
+  title: order_by
+  user_steam_id: order_by
+  visibility: order_by
+}
+
 """aggregate min on columns"""
 type match_clips_min_fields {
   created_at: timestamptz
@@ -11132,6 +11231,7 @@ type match_clips_min_fields {
   file: String
   id: uuid
   kills_count: Int
+  match_map_demo_id: uuid
   match_map_id: uuid
   size: bigint
   target_steam_id: bigint
@@ -11144,6 +11244,25 @@ type match_clips_min_fields {
   title: String
   user_steam_id: bigint
   visibility: String
+}
+
+"""
+order by min() on columns of table "match_clips"
+"""
+input match_clips_min_order_by {
+  created_at: order_by
+  duration_ms: order_by
+  file: order_by
+  id: order_by
+  kills_count: order_by
+  match_map_demo_id: order_by
+  match_map_id: order_by
+  size: order_by
+  target_steam_id: order_by
+  thumbnail_url: order_by
+  title: order_by
+  user_steam_id: order_by
+  visibility: order_by
 }
 
 """
@@ -11185,6 +11304,8 @@ input match_clips_order_by {
   id: order_by
   kills_count: order_by
   match_map: match_maps_order_by
+  match_map_demo: match_map_demos_order_by
+  match_map_demo_id: order_by
   match_map_id: order_by
   render_jobs_aggregate: clip_render_jobs_aggregate_order_by
   size: order_by
@@ -11223,6 +11344,9 @@ enum match_clips_select_column {
   kills_count
 
   """column name"""
+  match_map_demo_id
+
+  """column name"""
   match_map_id
 
   """column name"""
@@ -11253,6 +11377,7 @@ input match_clips_set_input {
   file: String
   id: uuid
   kills_count: Int
+  match_map_demo_id: uuid
   match_map_id: uuid
   size: bigint
   target_steam_id: bigint
@@ -11271,6 +11396,17 @@ type match_clips_stddev_fields {
   user_steam_id: Float
 }
 
+"""
+order by stddev() on columns of table "match_clips"
+"""
+input match_clips_stddev_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type match_clips_stddev_pop_fields {
   duration_ms: Float
@@ -11280,6 +11416,17 @@ type match_clips_stddev_pop_fields {
   user_steam_id: Float
 }
 
+"""
+order by stddev_pop() on columns of table "match_clips"
+"""
+input match_clips_stddev_pop_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type match_clips_stddev_samp_fields {
   duration_ms: Float
@@ -11287,6 +11434,17 @@ type match_clips_stddev_samp_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "match_clips"
+"""
+input match_clips_stddev_samp_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
 }
 
 """
@@ -11307,6 +11465,7 @@ input match_clips_stream_cursor_value_input {
   file: String
   id: uuid
   kills_count: Int
+  match_map_demo_id: uuid
   match_map_id: uuid
   size: bigint
   target_steam_id: bigint
@@ -11323,6 +11482,17 @@ type match_clips_sum_fields {
   size: bigint
   target_steam_id: bigint
   user_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "match_clips"
+"""
+input match_clips_sum_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
 }
 
 """
@@ -11343,6 +11513,9 @@ enum match_clips_update_column {
 
   """column name"""
   kills_count
+
+  """column name"""
+  match_map_demo_id
 
   """column name"""
   match_map_id
@@ -11386,6 +11559,17 @@ type match_clips_var_pop_fields {
   user_steam_id: Float
 }
 
+"""
+order by var_pop() on columns of table "match_clips"
+"""
+input match_clips_var_pop_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
+}
+
 """aggregate var_samp on columns"""
 type match_clips_var_samp_fields {
   duration_ms: Float
@@ -11395,6 +11579,17 @@ type match_clips_var_samp_fields {
   user_steam_id: Float
 }
 
+"""
+order by var_samp() on columns of table "match_clips"
+"""
+input match_clips_var_samp_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
+}
+
 """aggregate variance on columns"""
 type match_clips_variance_fields {
   duration_ms: Float
@@ -11402,6 +11597,17 @@ type match_clips_variance_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "match_clips"
+"""
+input match_clips_variance_order_by {
+  duration_ms: order_by
+  kills_count: order_by
+  size: order_by
+  target_steam_id: order_by
+  user_steam_id: order_by
 }
 
 """
@@ -11425,6 +11631,10 @@ type match_demo_sessions {
 
   """An object relationship"""
   match_map: match_maps!
+
+  """An object relationship"""
+  match_map_demo: match_map_demos
+  match_map_demo_id: uuid
   match_map_id: uuid!
   session_token: String!
   status: String!
@@ -11447,6 +11657,17 @@ type match_demo_sessions_aggregate {
   nodes: [match_demo_sessions!]!
 }
 
+input match_demo_sessions_aggregate_bool_exp {
+  count: match_demo_sessions_aggregate_bool_exp_count
+}
+
+input match_demo_sessions_aggregate_bool_exp_count {
+  arguments: [match_demo_sessions_select_column!]
+  distinct: Boolean
+  filter: match_demo_sessions_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "match_demo_sessions"
 """
@@ -11464,14 +11685,48 @@ type match_demo_sessions_aggregate_fields {
   variance: match_demo_sessions_variance_fields
 }
 
+"""
+order by aggregate values of table "match_demo_sessions"
+"""
+input match_demo_sessions_aggregate_order_by {
+  avg: match_demo_sessions_avg_order_by
+  count: order_by
+  max: match_demo_sessions_max_order_by
+  min: match_demo_sessions_min_order_by
+  stddev: match_demo_sessions_stddev_order_by
+  stddev_pop: match_demo_sessions_stddev_pop_order_by
+  stddev_samp: match_demo_sessions_stddev_samp_order_by
+  sum: match_demo_sessions_sum_order_by
+  var_pop: match_demo_sessions_var_pop_order_by
+  var_samp: match_demo_sessions_var_samp_order_by
+  variance: match_demo_sessions_variance_order_by
+}
+
 """append existing jsonb value of filtered columns with new jsonb value"""
 input match_demo_sessions_append_input {
   status_history: jsonb
 }
 
+"""
+input type for inserting array relation for remote table "match_demo_sessions"
+"""
+input match_demo_sessions_arr_rel_insert_input {
+  data: [match_demo_sessions_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_demo_sessions_on_conflict
+}
+
 """aggregate avg on columns"""
 type match_demo_sessions_avg_fields {
   watcher_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_avg_order_by {
+  watcher_steam_id: order_by
 }
 
 """
@@ -11492,6 +11747,8 @@ input match_demo_sessions_bool_exp {
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
+  match_map_demo: match_map_demos_bool_exp
+  match_map_demo_id: uuid_comparison_exp
   match_map_id: uuid_comparison_exp
   session_token: String_comparison_exp
   status: String_comparison_exp
@@ -11559,6 +11816,8 @@ input match_demo_sessions_insert_input {
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
+  match_map_demo: match_map_demos_obj_rel_insert_input
+  match_map_demo_id: uuid
   match_map_id: uuid
   session_token: String
   status: String
@@ -11578,11 +11837,32 @@ type match_demo_sessions_max_fields {
   last_activity_at: timestamptz
   last_status_at: timestamptz
   match_id: uuid
+  match_map_demo_id: uuid
   match_map_id: uuid
   session_token: String
   status: String
   stream_url: String
   watcher_steam_id: bigint
+}
+
+"""
+order by max() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_max_order_by {
+  created_at: order_by
+  error_message: order_by
+  game_server_node_id: order_by
+  id: order_by
+  k8s_job_name: order_by
+  last_activity_at: order_by
+  last_status_at: order_by
+  match_id: order_by
+  match_map_demo_id: order_by
+  match_map_id: order_by
+  session_token: order_by
+  status: order_by
+  stream_url: order_by
+  watcher_steam_id: order_by
 }
 
 """aggregate min on columns"""
@@ -11595,11 +11875,32 @@ type match_demo_sessions_min_fields {
   last_activity_at: timestamptz
   last_status_at: timestamptz
   match_id: uuid
+  match_map_demo_id: uuid
   match_map_id: uuid
   session_token: String
   status: String
   stream_url: String
   watcher_steam_id: bigint
+}
+
+"""
+order by min() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_min_order_by {
+  created_at: order_by
+  error_message: order_by
+  game_server_node_id: order_by
+  id: order_by
+  k8s_job_name: order_by
+  last_activity_at: order_by
+  last_status_at: order_by
+  match_id: order_by
+  match_map_demo_id: order_by
+  match_map_id: order_by
+  session_token: order_by
+  status: order_by
+  stream_url: order_by
+  watcher_steam_id: order_by
 }
 
 """
@@ -11635,6 +11936,8 @@ input match_demo_sessions_order_by {
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
+  match_map_demo: match_map_demos_order_by
+  match_map_demo_id: order_by
   match_map_id: order_by
   session_token: order_by
   status: order_by
@@ -11683,6 +11986,9 @@ enum match_demo_sessions_select_column {
   match_id
 
   """column name"""
+  match_map_demo_id
+
+  """column name"""
   match_map_id
 
   """column name"""
@@ -11713,6 +12019,7 @@ input match_demo_sessions_set_input {
   last_activity_at: timestamptz
   last_status_at: timestamptz
   match_id: uuid
+  match_map_demo_id: uuid
   match_map_id: uuid
   session_token: String
   status: String
@@ -11726,14 +12033,35 @@ type match_demo_sessions_stddev_fields {
   watcher_steam_id: Float
 }
 
+"""
+order by stddev() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_stddev_order_by {
+  watcher_steam_id: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type match_demo_sessions_stddev_pop_fields {
   watcher_steam_id: Float
 }
 
+"""
+order by stddev_pop() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_stddev_pop_order_by {
+  watcher_steam_id: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type match_demo_sessions_stddev_samp_fields {
   watcher_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_stddev_samp_order_by {
+  watcher_steam_id: order_by
 }
 
 """
@@ -11757,6 +12085,7 @@ input match_demo_sessions_stream_cursor_value_input {
   last_activity_at: timestamptz
   last_status_at: timestamptz
   match_id: uuid
+  match_map_demo_id: uuid
   match_map_id: uuid
   session_token: String
   status: String
@@ -11768,6 +12097,13 @@ input match_demo_sessions_stream_cursor_value_input {
 """aggregate sum on columns"""
 type match_demo_sessions_sum_fields {
   watcher_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_sum_order_by {
+  watcher_steam_id: order_by
 }
 
 """
@@ -11797,6 +12133,9 @@ enum match_demo_sessions_update_column {
 
   """column name"""
   match_id
+
+  """column name"""
+  match_map_demo_id
 
   """column name"""
   match_map_id
@@ -11854,14 +12193,35 @@ type match_demo_sessions_var_pop_fields {
   watcher_steam_id: Float
 }
 
+"""
+order by var_pop() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_var_pop_order_by {
+  watcher_steam_id: order_by
+}
+
 """aggregate var_samp on columns"""
 type match_demo_sessions_var_samp_fields {
   watcher_steam_id: Float
 }
 
+"""
+order by var_samp() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_var_samp_order_by {
+  watcher_steam_id: order_by
+}
+
 """aggregate variance on columns"""
 type match_demo_sessions_variance_fields {
   watcher_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "match_demo_sessions"
+"""
+input match_demo_sessions_variance_order_by {
+  watcher_steam_id: order_by
 }
 
 """
@@ -13259,7 +13619,80 @@ type match_map_demos {
     """JSON select path"""
     path: String
   ): jsonb
+
+  """An array relationship"""
+  clip_render_jobs(
+    """distinct select on columns"""
+    distinct_on: [clip_render_jobs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [clip_render_jobs_order_by!]
+
+    """filter the rows returned"""
+    where: clip_render_jobs_bool_exp
+  ): [clip_render_jobs!]!
+
+  """An aggregate relationship"""
+  clip_render_jobs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [clip_render_jobs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [clip_render_jobs_order_by!]
+
+    """filter the rows returned"""
+    where: clip_render_jobs_bool_exp
+  ): clip_render_jobs_aggregate!
+  created_at: timestamptz!
   cs2_build: String
+
+  """An array relationship"""
+  demo_sessions(
+    """distinct select on columns"""
+    distinct_on: [match_demo_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_demo_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): [match_demo_sessions!]!
+
+  """An aggregate relationship"""
+  demo_sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_demo_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_demo_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: match_demo_sessions_bool_exp
+  ): match_demo_sessions_aggregate!
 
   """
   A computed field, executes function "demo_download_url"
@@ -13276,6 +13709,42 @@ type match_map_demos {
 
   """An object relationship"""
   match: matches!
+
+  """An array relationship"""
+  match_clips(
+    """distinct select on columns"""
+    distinct_on: [match_clips_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_clips_order_by!]
+
+    """filter the rows returned"""
+    where: match_clips_bool_exp
+  ): [match_clips!]!
+
+  """An aggregate relationship"""
+  match_clips_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_clips_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_clips_order_by!]
+
+    """filter the rows returned"""
+    where: match_clips_bool_exp
+  ): match_clips_aggregate!
   match_id: uuid!
 
   """An object relationship"""
@@ -13393,7 +13862,12 @@ input match_map_demos_bool_exp {
   _not: match_map_demos_bool_exp
   _or: [match_map_demos_bool_exp!]
   bombs: jsonb_comparison_exp
+  clip_render_jobs: clip_render_jobs_bool_exp
+  clip_render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
+  created_at: timestamptz_comparison_exp
   cs2_build: String_comparison_exp
+  demo_sessions: match_demo_sessions_bool_exp
+  demo_sessions_aggregate: match_demo_sessions_aggregate_bool_exp
   download_url: String_comparison_exp
   duration_seconds: Float_comparison_exp
   file: String_comparison_exp
@@ -13401,6 +13875,8 @@ input match_map_demos_bool_exp {
   kills: jsonb_comparison_exp
   map_name: String_comparison_exp
   match: matches_bool_exp
+  match_clips: match_clips_bool_exp
+  match_clips_aggregate: match_clips_aggregate_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
@@ -13467,12 +13943,16 @@ input type for inserting data into table "match_map_demos"
 """
 input match_map_demos_insert_input {
   bombs: jsonb
+  clip_render_jobs: clip_render_jobs_arr_rel_insert_input
+  created_at: timestamptz
   cs2_build: String
+  demo_sessions: match_demo_sessions_arr_rel_insert_input
   file: String
   id: uuid
   kills: jsonb
   map_name: String
   match: matches_obj_rel_insert_input
+  match_clips: match_clips_arr_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
@@ -13487,6 +13967,7 @@ input match_map_demos_insert_input {
 
 """aggregate max on columns"""
 type match_map_demos_max_fields {
+  created_at: timestamptz
   cs2_build: String
 
   """
@@ -13510,6 +13991,7 @@ type match_map_demos_max_fields {
 order by max() on columns of table "match_map_demos"
 """
 input match_map_demos_max_order_by {
+  created_at: order_by
   cs2_build: order_by
   duration_seconds: order_by
   file: order_by
@@ -13526,6 +14008,7 @@ input match_map_demos_max_order_by {
 
 """aggregate min on columns"""
 type match_map_demos_min_fields {
+  created_at: timestamptz
   cs2_build: String
 
   """
@@ -13549,6 +14032,7 @@ type match_map_demos_min_fields {
 order by min() on columns of table "match_map_demos"
 """
 input match_map_demos_min_order_by {
+  created_at: order_by
   cs2_build: order_by
   duration_seconds: order_by
   file: order_by
@@ -13575,6 +14059,16 @@ type match_map_demos_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "match_map_demos"
+"""
+input match_map_demos_obj_rel_insert_input {
+  data: match_map_demos_insert_input!
+
+  """upsert condition"""
+  on_conflict: match_map_demos_on_conflict
+}
+
+"""
 on_conflict condition type for table "match_map_demos"
 """
 input match_map_demos_on_conflict {
@@ -13586,7 +14080,10 @@ input match_map_demos_on_conflict {
 """Ordering options when selecting data from "match_map_demos"."""
 input match_map_demos_order_by {
   bombs: order_by
+  clip_render_jobs_aggregate: clip_render_jobs_aggregate_order_by
+  created_at: order_by
   cs2_build: order_by
+  demo_sessions_aggregate: match_demo_sessions_aggregate_order_by
   download_url: order_by
   duration_seconds: order_by
   file: order_by
@@ -13594,6 +14091,7 @@ input match_map_demos_order_by {
   kills: order_by
   map_name: order_by
   match: matches_order_by
+  match_clips_aggregate: match_clips_aggregate_order_by
   match_id: order_by
   match_map: match_maps_order_by
   match_map_id: order_by
@@ -13625,6 +14123,9 @@ select columns of table "match_map_demos"
 enum match_map_demos_select_column {
   """column name"""
   bombs
+
+  """column name"""
+  created_at
 
   """column name"""
   cs2_build
@@ -13677,6 +14178,7 @@ input type for updating data in table "match_map_demos"
 """
 input match_map_demos_set_input {
   bombs: jsonb
+  created_at: timestamptz
   cs2_build: String
   file: String
   id: uuid
@@ -13761,6 +14263,7 @@ input match_map_demos_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input match_map_demos_stream_cursor_value_input {
   bombs: jsonb
+  created_at: timestamptz
   cs2_build: String
   duration_seconds: Float
   file: String
@@ -13802,6 +14305,9 @@ update columns of table "match_map_demos"
 enum match_map_demos_update_column {
   """column name"""
   bombs
+
+  """column name"""
+  created_at
 
   """column name"""
   cs2_build
@@ -25685,7 +26191,7 @@ type mutation_root {
   """
   Spawn a per-user game-streamer pod to play back a finished match's demo
   """
-  watchDemo(match_map_id: uuid!): WatchDemoOutput
+  watchDemo(match_map_demo_id: uuid, match_map_id: uuid!): WatchDemoOutput
 
   """Write content to file on game server"""
   writeServerFile(content: String!, file_path: String!, node_id: String!, server_id: String): SuccessOutput
@@ -32789,6 +33295,21 @@ type players {
   losses: Int
 
   """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
+
+  """
   A computed field, executes function "get_player_matches"
   """
   matches(
@@ -32958,6 +33479,14 @@ type players {
     """filter the rows returned"""
     where: teams_bool_exp
   ): teams_aggregate!
+
+  """
+  A computed field, executes function "get_player_peak_elo"
+  """
+  peak_elo(
+    """JSON select path"""
+    path: String
+  ): jsonb
 
   """An array relationship"""
   player_lineup(
@@ -33355,6 +33884,21 @@ type players {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """
@@ -33388,6 +33932,21 @@ type players_avg_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -33399,6 +33958,21 @@ type players_avg_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """
@@ -33453,6 +34027,9 @@ input players_bool_exp {
   lobby_players: lobby_players_bool_exp
   lobby_players_aggregate: lobby_players_aggregate_bool_exp
   losses: Int_comparison_exp
+  losses_competitive: Int_comparison_exp
+  losses_duel: Int_comparison_exp
+  losses_wingman: Int_comparison_exp
   matches: matches_bool_exp
   matchmaking_cooldown: timestamptz_comparison_exp
   multi_kills: v_player_multi_kills_bool_exp
@@ -33465,6 +34042,7 @@ input players_bool_exp {
   objectives_aggregate: player_objectives_aggregate_bool_exp
   owned_teams: teams_bool_exp
   owned_teams_aggregate: teams_aggregate_bool_exp
+  peak_elo: jsonb_comparison_exp
   player_lineup: match_lineup_players_bool_exp
   player_lineup_aggregate: match_lineup_players_aggregate_bool_exp
   player_unused_utilities: player_unused_utility_bool_exp
@@ -33493,6 +34071,9 @@ input players_bool_exp {
   utility_thrown: player_utility_bool_exp
   utility_thrown_aggregate: player_utility_aggregate_bool_exp
   wins: Int_comparison_exp
+  wins_competitive: Int_comparison_exp
+  wins_duel: Int_comparison_exp
+  wins_wingman: Int_comparison_exp
 }
 
 """
@@ -33592,6 +34173,21 @@ type players_max_fields {
   losses: Int
 
   """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
+
+  """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
   matchmaking_cooldown: timestamptz
@@ -33609,6 +34205,21 @@ type players_max_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """aggregate min on columns"""
@@ -33632,6 +34243,21 @@ type players_min_fields {
   losses: Int
 
   """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
+
+  """
   A computed field, executes function "get_player_matchmaking_cooldown"
   """
   matchmaking_cooldown: timestamptz
@@ -33649,6 +34275,21 @@ type players_min_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """
@@ -33713,6 +34354,9 @@ input players_order_by {
   last_sign_in_at: order_by
   lobby_players_aggregate: lobby_players_aggregate_order_by
   losses: order_by
+  losses_competitive: order_by
+  losses_duel: order_by
+  losses_wingman: order_by
   matches_aggregate: matches_aggregate_order_by
   matchmaking_cooldown: order_by
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
@@ -33721,6 +34365,7 @@ input players_order_by {
   notifications_aggregate: notifications_aggregate_order_by
   objectives_aggregate: player_objectives_aggregate_order_by
   owned_teams_aggregate: teams_aggregate_order_by
+  peak_elo: order_by
   player_lineup_aggregate: match_lineup_players_aggregate_order_by
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
   profile_url: order_by
@@ -33739,6 +34384,9 @@ input players_order_by {
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
   wins: order_by
+  wins_competitive: order_by
+  wins_duel: order_by
+  wins_wingman: order_by
 }
 
 """primary key columns input for table: players"""
@@ -33815,6 +34463,21 @@ type players_stddev_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -33826,6 +34489,21 @@ type players_stddev_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """aggregate stddev_pop on columns"""
@@ -33834,6 +34512,21 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -33845,6 +34538,21 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """aggregate stddev_samp on columns"""
@@ -33853,6 +34561,21 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -33864,6 +34587,21 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """
@@ -33900,6 +34638,21 @@ type players_sum_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: bigint
 
   """
@@ -33911,6 +34664,21 @@ type players_sum_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """
@@ -33974,6 +34742,21 @@ type players_var_pop_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -33985,6 +34768,21 @@ type players_var_pop_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """aggregate var_samp on columns"""
@@ -33993,6 +34791,21 @@ type players_var_samp_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -34004,6 +34817,21 @@ type players_var_samp_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """aggregate variance on columns"""
@@ -34012,6 +34840,21 @@ type players_variance_fields {
   A computed field, executes function "get_total_player_losses"
   """
   losses: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_competitive"
+  """
+  losses_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_duel"
+  """
+  losses_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_losses_wingman"
+  """
+  losses_wingman: Int
   steam_id: Float
 
   """
@@ -34023,6 +34866,21 @@ type players_variance_fields {
   A computed field, executes function "get_total_player_wins"
   """
   wins: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_competitive"
+  """
+  wins_competitive: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_duel"
+  """
+  wins_duel: Int
+
+  """
+  A computed field, executes function "get_total_player_wins_wingman"
+  """
+  wins_wingman: Int
 }
 
 """
@@ -34377,9 +35235,7 @@ type query_root {
   """fetch data from the table: "api_keys" using primary key columns"""
   api_keys_by_pk(id: uuid!): api_keys
 
-  """
-  fetch data from the table: "clip_render_jobs"
-  """
+  """An array relationship"""
   clip_render_jobs(
     """distinct select on columns"""
     distinct_on: [clip_render_jobs_select_column!]
@@ -34397,9 +35253,7 @@ type query_root {
     where: clip_render_jobs_bool_exp
   ): [clip_render_jobs!]!
 
-  """
-  fetch aggregated fields from the table: "clip_render_jobs"
-  """
+  """An aggregate relationship"""
   clip_render_jobs_aggregate(
     """distinct select on columns"""
     distinct_on: [clip_render_jobs_select_column!]
@@ -36045,9 +36899,7 @@ type query_root {
   """fetch data from the table: "maps" using primary key columns"""
   maps_by_pk(id: uuid!): maps
 
-  """
-  fetch data from the table: "match_clips"
-  """
+  """An array relationship"""
   match_clips(
     """distinct select on columns"""
     distinct_on: [match_clips_select_column!]
@@ -36065,9 +36917,7 @@ type query_root {
     where: match_clips_bool_exp
   ): [match_clips!]!
 
-  """
-  fetch aggregated fields from the table: "match_clips"
-  """
+  """An aggregate relationship"""
   match_clips_aggregate(
     """distinct select on columns"""
     distinct_on: [match_clips_select_column!]
@@ -40027,9 +40877,7 @@ type subscription_root {
     where: api_keys_bool_exp
   ): [api_keys!]!
 
-  """
-  fetch data from the table: "clip_render_jobs"
-  """
+  """An array relationship"""
   clip_render_jobs(
     """distinct select on columns"""
     distinct_on: [clip_render_jobs_select_column!]
@@ -40047,9 +40895,7 @@ type subscription_root {
     where: clip_render_jobs_bool_exp
   ): [clip_render_jobs!]!
 
-  """
-  fetch aggregated fields from the table: "clip_render_jobs"
-  """
+  """An aggregate relationship"""
   clip_render_jobs_aggregate(
     """distinct select on columns"""
     distinct_on: [clip_render_jobs_select_column!]
@@ -42150,9 +42996,7 @@ type subscription_root {
     where: maps_bool_exp
   ): [maps!]!
 
-  """
-  fetch data from the table: "match_clips"
-  """
+  """An array relationship"""
   match_clips(
     """distinct select on columns"""
     distinct_on: [match_clips_select_column!]
@@ -42170,9 +43014,7 @@ type subscription_root {
     where: match_clips_bool_exp
   ): [match_clips!]!
 
-  """
-  fetch aggregated fields from the table: "match_clips"
-  """
+  """An aggregate relationship"""
   match_clips_aggregate(
     """distinct select on columns"""
     distinct_on: [match_clips_select_column!]

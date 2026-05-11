@@ -56,6 +56,43 @@ export class DemoMetadataService {
     return this.fetchDemoForMap(matchMapId);
   }
 
+  public async getDemoById(matchMapDemoId: string): Promise<DemoRow | null> {
+    return this.fetchDemoById(matchMapDemoId);
+  }
+
+  public async getAllDemosForMap(matchMapId: string): Promise<DemoRow[]> {
+    return this.fetchAllDemosForMap(matchMapId);
+  }
+
+  public async ensureAllParsedForMap(matchMapId: string): Promise<DemoRow[]> {
+    const demos = await this.fetchAllDemosForMap(matchMapId);
+    if (demos.length === 0) return [];
+
+    const results: DemoRow[] = [];
+    for (const demo of demos) {
+      if (demo.metadata_parsed_at && demo.total_ticks) {
+        results.push(demo);
+        continue;
+      }
+      const existing = this.inFlight.get(demo.id);
+      if (existing) {
+        results.push(await existing);
+        continue;
+      }
+      const parsing = this.parseAndPersist(demo)
+        .catch((error) => {
+          this.logger.warn(
+            `[demo-parser] parse failed for ${demo.id} during ensureAllParsedForMap: ${(error as Error)?.message}`,
+          );
+          return demo;
+        })
+        .finally(() => this.inFlight.delete(demo.id));
+      this.inFlight.set(demo.id, parsing);
+      results.push(await parsing);
+    }
+    return results;
+  }
+
   public async ensureParsedById(matchMapDemoId: string): Promise<void> {
     const demo = await this.fetchDemoById(matchMapDemoId);
     if (!demo) {
@@ -110,6 +147,7 @@ export class DemoMetadataService {
       match_map_demos: {
         __args: {
           where: { match_map_id: { _eq: matchMapId } },
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
           limit: 1,
         },
         id: true,
@@ -125,6 +163,28 @@ export class DemoMetadataService {
       },
     });
     return (match_map_demos[0] as DemoRow) ?? null;
+  }
+
+  private async fetchAllDemosForMap(matchMapId: string): Promise<DemoRow[]> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: { match_map_id: { _eq: matchMapId } },
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+        },
+        id: true,
+        match_id: true,
+        match_map_id: true,
+        file: true,
+        total_ticks: true,
+        tick_rate: true,
+        round_ticks: true,
+        workshop_id: true,
+        cs2_build: true,
+        metadata_parsed_at: true,
+      },
+    });
+    return (match_map_demos as DemoRow[]) ?? [];
   }
 
   private async fetchDemoById(matchMapDemoId: string): Promise<DemoRow | null> {

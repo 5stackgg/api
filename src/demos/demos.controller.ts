@@ -209,11 +209,19 @@ export class DemosController {
 
   @HasuraAction()
   public async reparseDemo(data: { match_map_id: string }) {
-    const demo = await this.demoMetadata.getDemoForMap(data.match_map_id);
-    if (!demo) {
+    const demos = await this.demoMetadata.getAllDemosForMap(data.match_map_id);
+    if (demos.length === 0) {
       throw Error("no demo for this match map");
     }
-    await this.demoMetadata.reparseById(demo.id);
+    for (const demo of demos) {
+      try {
+        await this.demoMetadata.reparseById(demo.id);
+      } catch (error) {
+        this.logger.warn(
+          `[reparseDemo] match_map ${data.match_map_id} demo ${demo.id} failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
     return { success: true };
   }
 

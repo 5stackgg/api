@@ -127,7 +127,9 @@ export class GameStreamerService {
     progress: number | null,
     progress_stage: string | null,
   ): unknown[] {
-    const previous = Array.isArray(rawPrevious) ? (rawPrevious as unknown[]) : [];
+    const previous = Array.isArray(rawPrevious)
+      ? (rawPrevious as unknown[])
+      : [];
     const entry: Record<string, unknown> = {
       status: newStatus,
       at: new Date().toISOString(),
@@ -301,6 +303,7 @@ export class GameStreamerService {
     matchMapId: string,
     userSteamId: string,
     options: {
+      demoId: string;
       demoFile: string;
       presignedDemoUrl: string;
       roundTicks: unknown;
@@ -317,7 +320,7 @@ export class GameStreamerService {
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          where: { match_map_id: { _eq: matchMapId } },
+          where: { id: { _eq: options.demoId } },
           limit: 1,
         },
         match_id: true,
@@ -357,6 +360,7 @@ export class GameStreamerService {
           object: {
             match_id: matchId,
             match_map_id: matchMapId,
+            match_map_demo_id: options.demoId,
             watcher_steam_id: userSteamId,
             k8s_job_name: "pending",
             session_token: sessionToken,
@@ -1006,14 +1010,23 @@ export class GameStreamerService {
     }
   }
 
-  public static GetBatchHighlightsJobName(matchMapId: string) {
-    return `gs-batch-${matchMapId.replace(/-/g, "").slice(0, 12)}`;
+  public static GetBatchHighlightsJobName(
+    matchMapId: string,
+    matchMapDemoId: string,
+  ) {
+    const mapPart = matchMapId.replace(/-/g, "").slice(0, 8);
+    const demoPart = matchMapDemoId.replace(/-/g, "").slice(0, 8);
+    return `gs-batch-${mapPart}-${demoPart}`;
   }
 
   public async getBatchHighlightsPodState(
     matchMapId: string,
+    matchMapDemoId: string,
   ): Promise<"running" | "succeeded" | "failed" | "absent"> {
-    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(
+      matchMapId,
+      matchMapDemoId,
+    );
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
@@ -1038,8 +1051,12 @@ export class GameStreamerService {
 
   public async getBatchPodFailureReason(
     matchMapId: string,
+    matchMapDemoId: string,
   ): Promise<string | null> {
-    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(
+      matchMapId,
+      matchMapDemoId,
+    );
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -1091,8 +1108,14 @@ export class GameStreamerService {
     return parts.join(" — ").slice(0, 500);
   }
 
-  public async killBatchHighlightsPod(matchMapId: string): Promise<void> {
-    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+  public async killBatchHighlightsPod(
+    matchMapId: string,
+    matchMapDemoId: string,
+  ): Promise<void> {
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(
+      matchMapId,
+      matchMapDemoId,
+    );
     try {
       await this.deleteJob(jobName);
       this.logger.warn(
@@ -1108,16 +1131,19 @@ export class GameStreamerService {
   public async dispatchBatchHighlights(
     matchMapId: string,
     jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
+    matchMapDemoId: string,
   ): Promise<void> {
     if (jobs.length === 0) return;
 
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          where: { match_map_id: { _eq: matchMapId } },
+          where: { id: { _eq: matchMapDemoId } },
           limit: 1,
         },
+        id: true,
         match_id: true,
+        match_map_id: true,
         file: true,
         total_ticks: true,
         tick_rate: true,
@@ -1129,10 +1155,16 @@ export class GameStreamerService {
     const demo = match_map_demos?.[0];
     if (!demo?.file) {
       throw new Error(
-        `cannot dispatch batch highlights: no demo file for match_map ${matchMapId}`,
+        `cannot dispatch batch highlights: no demo file for demo ${matchMapDemoId}`,
+      );
+    }
+    if (String(demo.match_map_id) !== matchMapId) {
+      throw new Error(
+        `demo ${matchMapDemoId} does not belong to match_map ${matchMapId} (got ${demo.match_map_id})`,
       );
     }
     const matchId = String(demo.match_id);
+    const resolvedDemoId = String(demo.id);
 
     const presignedDemoUrl = await this.s3.getPresignedUrl(
       demo.file as string,
@@ -1141,8 +1173,14 @@ export class GameStreamerService {
       "get",
     );
 
-    const nodeId = await this.claimGpuForBatchHighlights(matchMapId);
-    const jobName = GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const nodeId = await this.claimGpuForBatchHighlights(
+      matchMapId,
+      resolvedDemoId,
+    );
+    const jobName = GameStreamerService.GetBatchHighlightsJobName(
+      matchMapId,
+      resolvedDemoId,
+    );
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -1151,6 +1189,7 @@ export class GameStreamerService {
     const env: V1EnvVar[] = [
       { name: "MATCH_ID", value: matchId },
       { name: "MATCH_MAP_ID", value: matchMapId },
+      { name: "MATCH_MAP_DEMO_ID", value: resolvedDemoId },
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
@@ -1195,27 +1234,28 @@ export class GameStreamerService {
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
     );
 
-    // The Job name is deterministic from matchMapId, so a leftover Job
-    // from a previous run (succeeded/failed but not garbage-collected)
-    // would 409 the create. Reap the stale one first; refuse to clobber
-    // a still-running one.
-    const existing = await this.getBatchHighlightsPodState(matchMapId);
+    const existing = await this.getBatchHighlightsPodState(
+      matchMapId,
+      resolvedDemoId,
+    );
     if (existing === "running") {
       throw new Error(
-        `batch-highlights pod ${jobName} is already running for match_map ${matchMapId} — wait for it to finish or kill it before re-dispatching`,
+        `batch-highlights pod ${jobName} is already running for match_map ${matchMapId} demo ${resolvedDemoId} — wait for it to finish or kill it before re-dispatching`,
       );
     }
     if (existing !== "absent") {
       this.logger.warn(
-        `[batch-highlights ${matchMapId}] reaping stale ${existing} Job ${jobName} before re-dispatch`,
+        `[batch-highlights ${matchMapId} demo ${resolvedDemoId}] reaping stale ${existing} Job ${jobName} before re-dispatch`,
       );
-      await this.killBatchHighlightsPod(matchMapId);
-      // killBatchHighlightsPod issues delete; wait for the resource to
-      // actually be gone (foreground propagation can take a beat) so the
-      // subsequent create doesn't race the still-terminating object.
+      await this.killBatchHighlightsPod(matchMapId, resolvedDemoId);
       const deadline = Date.now() + 15_000;
       while (Date.now() < deadline) {
-        if ((await this.getBatchHighlightsPodState(matchMapId)) === "absent") {
+        if (
+          (await this.getBatchHighlightsPodState(
+            matchMapId,
+            resolvedDemoId,
+          )) === "absent"
+        ) {
           break;
         }
         await new Promise((r) => setTimeout(r, 500));
@@ -1233,6 +1273,7 @@ export class GameStreamerService {
           env,
           {
             "match-map-id": matchMapId,
+            "match-map-demo-id": resolvedDemoId,
           },
         ),
       });
@@ -1241,8 +1282,9 @@ export class GameStreamerService {
         `UPDATE clip_render_jobs
             SET game_server_node_id = NULL
           WHERE match_map_id = $1
+            AND match_map_demo_id = $2
             AND status IN ('queued','rendering','uploading')`,
-        [matchMapId],
+        [matchMapId, resolvedDemoId],
       );
       throw error;
     }
@@ -1318,6 +1360,7 @@ export class GameStreamerService {
 
   private async claimGpuForBatchHighlights(
     matchMapId: string,
+    matchMapDemoId: string,
   ): Promise<string> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
@@ -1326,11 +1369,12 @@ export class GameStreamerService {
             SET game_server_node_id = chosen.id
            FROM chosen
           WHERE clip_render_jobs.match_map_id = $1
+            AND clip_render_jobs.match_map_demo_id = $2
             AND clip_render_jobs.status IN ('queued','rendering','uploading')
             AND clip_render_jobs.game_server_node_id IS NULL
             AND chosen.id IS NOT NULL
          RETURNING clip_render_jobs.game_server_node_id`,
-        [matchMapId],
+        [matchMapId, matchMapDemoId],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
