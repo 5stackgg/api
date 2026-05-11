@@ -11,6 +11,9 @@ object_relationships:
   - name: match_map
     using:
       foreign_key_constraint_on: match_map_id
+  - name: match_map_demo
+    using:
+      foreign_key_constraint_on: match_map_demo_id
   - name: watcher
     using:
       foreign_key_constraint_on: watcher_steam_id
@@ -21,6 +24,7 @@ select_permissions:
         - id
         - match_id
         - match_map_id
+        - match_map_demo_id
         - watcher_steam_id
         - status
         - stream_url
@@ -38,6 +42,7 @@ select_permissions:
         - id
         - match_id
         - match_map_id
+        - match_map_demo_id
         - watcher_steam_id
         - status
         - stream_url

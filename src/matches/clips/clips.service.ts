@@ -68,6 +68,7 @@ export class ClipsService {
           object: {
             user_steam_id: userSteamId,
             match_map_id: spec.match_map_id,
+            match_map_demo_id: session.match_map_demo_id,
             session_token: sessionToken,
             k8s_job_name: session.k8s_job_name,
             spec,
@@ -138,6 +139,22 @@ export class ClipsService {
   }
 
   public async cancelClipRenderBatch(matchMapId: string): Promise<number> {
+    const { clip_render_jobs: inFlightRows } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+          },
+          distinct_on: ["match_map_demo_id" as any],
+        },
+        match_map_demo_id: true as any,
+      },
+    } as any);
+    const demoIds = ((inFlightRows ?? []) as Array<any>)
+      .map((r) => (r?.match_map_demo_id ? String(r.match_map_demo_id) : null))
+      .filter((id: string | null): id is string => !!id);
+
     const { update_clip_render_jobs } = await this.hasura.mutation({
       update_clip_render_jobs: {
         __args: {
@@ -157,9 +174,16 @@ export class ClipsService {
     const cancelled = (update_clip_render_jobs?.affected_rows as number) ?? 0;
 
     try {
-      const job = await this.batchQueue.getJob(matchMapId);
-      if (job) {
-        await job.remove();
+      const queued = await this.batchQueue.getJobs([
+        "delayed",
+        "waiting",
+        "active",
+        "paused",
+      ]);
+      for (const q of queued) {
+        if (q.data?.matchMapId === matchMapId) {
+          await q.remove();
+        }
       }
     } catch (error) {
       this.logger.warn(
@@ -167,16 +191,18 @@ export class ClipsService {
       );
     }
 
-    try {
-      await this.gameStreamer.killBatchHighlightsPod(matchMapId);
-    } catch (error) {
-      this.logger.warn(
-        `[cancel-batch ${matchMapId}] pod kill failed: ${(error as Error)?.message}`,
-      );
+    for (const demoId of demoIds) {
+      try {
+        await this.gameStreamer.killBatchHighlightsPod(matchMapId, demoId);
+      } catch (error) {
+        this.logger.warn(
+          `[cancel-batch ${matchMapId} demo ${demoId}] pod kill failed: ${(error as Error)?.message}`,
+        );
+      }
     }
 
     this.logger.log(
-      `[cancel-batch ${matchMapId}] cancelled ${cancelled} row(s) and torn down pod`,
+      `[cancel-batch ${matchMapId}] cancelled ${cancelled} row(s) across ${demoIds.length} demo(s) and torn down pods`,
     );
     return cancelled;
   }
@@ -188,6 +214,7 @@ export class ClipsService {
         id: true,
         user_steam_id: true,
         match_map_id: true,
+        match_map_demo_id: true,
         k8s_job_name: true,
         status: true,
       },
@@ -221,8 +248,13 @@ export class ClipsService {
     });
 
     const matchMapId = String(row.match_map_id);
-    const expectedBatchPodName =
-      GameStreamerService.GetBatchHighlightsJobName(matchMapId);
+    const matchMapDemoId = row.match_map_demo_id
+      ? String(row.match_map_demo_id)
+      : undefined;
+    const expectedBatchPodName = GameStreamerService.GetBatchHighlightsJobName(
+      matchMapId,
+      matchMapDemoId,
+    );
     if (String(row.k8s_job_name) !== expectedBatchPodName) {
       return;
     }
@@ -232,6 +264,9 @@ export class ClipsService {
         __args: {
           where: {
             match_map_id: { _eq: matchMapId },
+            ...(matchMapDemoId
+              ? { match_map_demo_id: { _eq: matchMapDemoId } }
+              : {}),
             status: { _in: [...IN_FLIGHT_STATUSES] },
           },
         },
@@ -250,7 +285,11 @@ export class ClipsService {
         "paused",
       ]);
       for (const queuedJob of jobs) {
-        if (queuedJob.data?.matchMapId === matchMapId) {
+        if (
+          queuedJob.data?.matchMapId === matchMapId &&
+          (!matchMapDemoId ||
+            queuedJob.data?.matchMapDemoId === matchMapDemoId)
+        ) {
           await queuedJob.remove();
         }
       }
@@ -261,7 +300,10 @@ export class ClipsService {
     }
 
     try {
-      await this.gameStreamer.killBatchHighlightsPod(matchMapId);
+      await this.gameStreamer.killBatchHighlightsPod(
+        matchMapId,
+        matchMapDemoId,
+      );
     } catch (error) {
       this.logger.warn(
         `[cancel ${jobId}] pod kill failed: ${(error as Error)?.message}`,
@@ -286,7 +328,11 @@ export class ClipsService {
   private async findActiveDemoSession(
     userSteamId: string,
     matchMapId: string,
-  ): Promise<{ id: string; k8s_job_name: string } | null> {
+  ): Promise<{
+    id: string;
+    k8s_job_name: string;
+    match_map_demo_id: string | null;
+  } | null> {
     const { match_demo_sessions } = await this.hasura.query({
       match_demo_sessions: {
         __args: {
@@ -299,12 +345,20 @@ export class ClipsService {
         id: true,
         k8s_job_name: true,
         status: true,
+        match_map_demo_id: true as any,
       },
-    });
-    const row = match_demo_sessions?.[0];
+    } as any);
+    const rows = (match_demo_sessions ?? []) as any[];
+    const row = rows[0];
     if (!row) return null;
     if (row.status !== "playing") return null;
-    return { id: row.id, k8s_job_name: row.k8s_job_name };
+    return {
+      id: String(row.id),
+      k8s_job_name: String(row.k8s_job_name),
+      match_map_demo_id: row.match_map_demo_id
+        ? String(row.match_map_demo_id)
+        : null,
+    };
   }
 
   public async updateClip(
@@ -374,10 +428,20 @@ export class ClipsService {
   private async targetAppearsInDemo(
     matchMapId: string,
     targetSteamId: string,
+    matchMapDemoId?: string,
   ): Promise<boolean> {
+    const where = matchMapDemoId
+      ? { id: { _eq: matchMapDemoId } }
+      : { match_map_id: { _eq: matchMapId } };
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
-        __args: { where: { match_map_id: { _eq: matchMapId } }, limit: 1 },
+        __args: {
+          where,
+          order_by: matchMapDemoId
+            ? undefined
+            : [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          limit: 1,
+        },
         players: true,
         kills: true,
       },
@@ -641,6 +705,7 @@ export class ClipsService {
         id: true,
         user_steam_id: true,
         match_map_id: true,
+        match_map_demo_id: true,
         spec: true,
         status: true,
       },
@@ -752,6 +817,7 @@ export class ClipsService {
             user_steam_id: userSteamId,
             target_steam_id: targetSteamId,
             match_map_id: row.match_map_id,
+            match_map_demo_id: row.match_map_demo_id ?? null,
             title,
             duration_ms: durationMs,
             file: key,
@@ -801,6 +867,229 @@ export class ClipsService {
       },
     });
     return clip_render_jobs?.[0] ?? null;
+  }
+
+  public async autoGenerateForDemo(
+    matchId: string,
+    matchMapId: string,
+    matchMapDemoId: string,
+    options: {
+      force?: boolean;
+      isSystemInitiated?: boolean;
+      actingUserSteamId?: string;
+    } = {},
+  ): Promise<number> {
+    if (!options.force) {
+      const enabled = await this.readBoolSetting(
+        "auto_generate_match_clips",
+        false,
+      );
+      if (!enabled) return 0;
+    }
+
+    const defaultVisibility = await this.readSetting(
+      "auto_clip_default_visibility",
+      "public",
+    );
+
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: { where: { id: { _eq: matchMapDemoId } }, limit: 1 },
+        id: true,
+        match_map_id: true,
+        kills: true,
+        players: true,
+        tick_rate: true,
+        total_ticks: true,
+        round_ticks: true,
+        metadata_parsed_at: true,
+      },
+    });
+    const demo = match_map_demos?.[0];
+    if (!demo) {
+      this.logger.warn(
+        `[auto-clips] demo ${matchMapDemoId} not found for match ${matchId}`,
+      );
+      return 0;
+    }
+    if (String(demo.match_map_id) !== matchMapId) {
+      this.logger.warn(
+        `[auto-clips] demo ${matchMapDemoId} match_map mismatch (got ${demo.match_map_id}, expected ${matchMapId})`,
+      );
+      return 0;
+    }
+    if (!demo.metadata_parsed_at || !demo.total_ticks) {
+      return 0;
+    }
+
+    const { delete_clip_render_jobs } = await this.hasura.mutation({
+      delete_clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            match_map_demo_id: { _eq: matchMapDemoId },
+          },
+        },
+        affected_rows: true,
+      },
+    });
+    const removed =
+      (delete_clip_render_jobs?.affected_rows as number | undefined) ?? 0;
+    if (removed > 0) {
+      this.logger.log(
+        `[auto-clips] demo ${matchMapDemoId} cleared ${removed} prior clip_render_jobs row(s) before re-queue`,
+      );
+    }
+
+    const kills =
+      (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
+    if (kills.length === 0) return 0;
+
+    const killers = new Set<string>();
+    for (const k of kills) if (k.killer) killers.add(k.killer);
+
+    const players =
+      (demo.players as
+        | Array<{ steam_id?: string; name?: string }>
+        | undefined) ?? [];
+    const nameByStId = new Map<string, string>();
+    for (const p of players) {
+      if (p?.steam_id && p?.name) {
+        nameByStId.set(String(p.steam_id), String(p.name));
+      }
+    }
+
+    const upsertObjects: Array<{
+      steam_id: string;
+      name: string;
+      role: e_player_roles_enum;
+    }> = [];
+    for (const sid of killers) {
+      const name = nameByStId.get(sid);
+      if (!name) continue;
+      upsertObjects.push({
+        steam_id: sid,
+        name,
+        role: "user" as e_player_roles_enum,
+      });
+    }
+    if (upsertObjects.length > 0) {
+      try {
+        await this.hasura.mutation({
+          insert_players: {
+            __args: {
+              objects: upsertObjects,
+              on_conflict: {
+                constraint: "players_pkey",
+                update_columns: [],
+              },
+            },
+            affected_rows: true,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `[auto-clips] demo ${matchMapDemoId} player upsert failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    const pendingObjects: Array<{
+      targetSteamId: string;
+      sessionToken: string;
+      spec: ClipSpec;
+    }> = [];
+    for (const targetSteamId of killers) {
+      try {
+        const baseSpec = await this.buildPresetSpec(
+          matchMapId,
+          targetSteamId,
+          "best_round",
+          { resolution: "1080p", fps: 60 },
+          undefined,
+          nameByStId.get(targetSteamId),
+          matchMapDemoId,
+        );
+        const spec: ClipSpec = {
+          ...baseSpec,
+          destination: "library",
+          visibility: defaultVisibility as ClipSpec["visibility"],
+        };
+        pendingObjects.push({
+          targetSteamId,
+          sessionToken: randomBytes(24).toString("hex"),
+          spec,
+        });
+      } catch (error) {
+        this.logger.warn(
+          `[auto-clips] demo ${matchMapDemoId} target ${targetSteamId} skipped: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    if (pendingObjects.length === 0) return 0;
+
+    const insertObjects = pendingObjects.map((p) => ({
+      user_steam_id: options.isSystemInitiated
+        ? null
+        : options.actingUserSteamId
+          ? String(options.actingUserSteamId)
+          : null,
+      match_map_id: matchMapId,
+      match_map_demo_id: matchMapDemoId,
+      session_token: p.sessionToken,
+      k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(
+        matchMapId,
+        matchMapDemoId,
+      ),
+      spec: p.spec,
+      status: "queued",
+      status_history: [
+        {
+          status: "queued",
+          at: new Date().toISOString(),
+          source: "auto_generate_match_clips",
+          target_steam_id: p.targetSteamId,
+          match_map_demo_id: matchMapDemoId,
+          default_visibility: defaultVisibility,
+        },
+      ],
+    }));
+
+    let queued = 0;
+    try {
+      const { insert_clip_render_jobs } = await this.hasura.mutation({
+        insert_clip_render_jobs: {
+          __args: { objects: insertObjects },
+          returning: { id: true },
+        },
+      });
+      queued =
+        ((insert_clip_render_jobs?.returning as Array<{ id: string }>) ?? [])
+          .length;
+    } catch (error) {
+      this.logger.warn(
+        `[auto-clips] demo ${matchMapDemoId} batch insert failed: ${(error as Error)?.message}`,
+      );
+      return 0;
+    }
+
+    try {
+      await this.batchQueue.add(
+        BATCH_HIGHLIGHTS_JOB_NAME,
+        { matchMapId, matchMapDemoId },
+        { jobId: `${matchMapId}-${matchMapDemoId}-${Date.now()}` },
+      );
+      this.logger.log(
+        `[auto-clips] demo ${matchMapDemoId} → enqueued batch highlights (${queued} job(s), default visibility=${defaultVisibility})`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[auto-clips] demo ${matchMapDemoId} enqueue failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    return queued;
   }
 
   public async autoGenerateForMatch(
@@ -864,30 +1153,44 @@ export class ClipsService {
     }
 
     let queued = 0;
-    const perMap = new Map<
+    const perDemo = new Map<
       string,
-      Array<{ job_id: string; session_token: string; spec: ClipSpec }>
+      {
+        matchMapId: string;
+        matchMapDemoId: string;
+        jobs: Array<{ job_id: string; session_token: string; spec: ClipSpec }>;
+      }
     >();
 
-    const allKillers = new Set<string>();
+    const parsedDemosByMap = new Map<string, any[]>();
     for (const mapRow of match.match_maps ?? []) {
-      const demo = mapRow.demos?.[0];
-      const kills =
-        (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
-      for (const k of kills) if (k.killer) allKillers.add(k.killer);
+      const parsed = (mapRow.demos ?? []).filter(
+        (d: any) => d?.metadata_parsed_at && d?.total_ticks,
+      );
+      if (parsed.length > 0) parsedDemosByMap.set(String(mapRow.id), parsed);
+    }
+
+    const allKillers = new Set<string>();
+    for (const demos of parsedDemosByMap.values()) {
+      for (const demo of demos) {
+        const kills =
+          (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+        for (const k of kills) if (k.killer) allKillers.add(k.killer);
+      }
     }
 
     const buildNameMapFromMatch = (m: any) => {
       const out = new Map<string, string>();
       for (const mapRow of m.match_maps ?? []) {
-        const demo = mapRow.demos?.[0];
-        const demoPlayers =
-          (demo?.players as
-            | Array<{ steam_id?: string; name?: string }>
-            | undefined) ?? [];
-        for (const p of demoPlayers) {
-          if (p?.steam_id && p?.name) {
-            out.set(String(p.steam_id), String(p.name));
+        for (const demo of mapRow.demos ?? []) {
+          const demoPlayers =
+            (demo?.players as
+              | Array<{ steam_id?: string; name?: string }>
+              | undefined) ?? [];
+          for (const p of demoPlayers) {
+            if (p?.steam_id && p?.name) {
+              out.set(String(p.steam_id), String(p.name));
+            }
           }
         }
       }
@@ -942,44 +1245,48 @@ export class ClipsService {
 
     const pendingObjects: Array<{
       mapRowId: string;
+      matchMapDemoId: string;
       targetSteamId: string;
       sessionToken: string;
       spec: ClipSpec;
     }> = [];
-    for (const mapRow of match.match_maps ?? []) {
-      const demo = mapRow.demos?.[0];
-      const kills =
-        (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
-      if (!demo || kills.length === 0) continue;
+    for (const [mapRowId, demos] of parsedDemosByMap) {
+      for (const demo of demos) {
+        const kills =
+          (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+        if (kills.length === 0) continue;
 
-      const killers = new Set<string>();
-      for (const k of kills) if (k.killer) killers.add(k.killer);
+        const killers = new Set<string>();
+        for (const k of kills) if (k.killer) killers.add(k.killer);
 
-      for (const targetSteamId of killers) {
-        try {
-          const baseSpec = await this.buildPresetSpec(
-            mapRow.id,
-            targetSteamId,
-            "best_round",
-            { resolution: "1080p", fps: 60 },
-            undefined,
-            nameByStId.get(targetSteamId),
-          );
-          const spec: ClipSpec = {
-            ...baseSpec,
-            destination: "library",
-            visibility: defaultVisibility as ClipSpec["visibility"],
-          };
-          pendingObjects.push({
-            mapRowId: mapRow.id,
-            targetSteamId,
-            sessionToken: randomBytes(24).toString("hex"),
-            spec,
-          });
-        } catch (error) {
-          this.logger.warn(
-            `[auto-clips] match ${matchId} map ${mapRow.id} target ${targetSteamId} skipped: ${(error as Error)?.message}`,
-          );
+        for (const targetSteamId of killers) {
+          try {
+            const baseSpec = await this.buildPresetSpec(
+              mapRowId,
+              targetSteamId,
+              "best_round",
+              { resolution: "1080p", fps: 60 },
+              undefined,
+              nameByStId.get(targetSteamId),
+              String(demo.id),
+            );
+            const spec: ClipSpec = {
+              ...baseSpec,
+              destination: "library",
+              visibility: defaultVisibility as ClipSpec["visibility"],
+            };
+            pendingObjects.push({
+              mapRowId,
+              matchMapDemoId: String(demo.id),
+              targetSteamId,
+              sessionToken: randomBytes(24).toString("hex"),
+              spec,
+            });
+          } catch (error) {
+            this.logger.warn(
+              `[auto-clips] match ${matchId} map ${mapRowId} demo ${demo.id} target ${targetSteamId} skipped: ${(error as Error)?.message}`,
+            );
+          }
         }
       }
     }
@@ -992,8 +1299,12 @@ export class ClipsService {
             ? String(options.actingUserSteamId)
             : null,
         match_map_id: p.mapRowId,
+        match_map_demo_id: p.matchMapDemoId,
         session_token: p.sessionToken,
-        k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(p.mapRowId),
+        k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(
+          p.mapRowId,
+          p.matchMapDemoId,
+        ),
         spec: p.spec,
         status: "queued",
         status_history: [
@@ -1002,6 +1313,7 @@ export class ClipsService {
             at: new Date().toISOString(),
             source: "auto_generate_match_clips",
             target_steam_id: p.targetSteamId,
+            match_map_demo_id: p.matchMapDemoId,
             default_visibility: defaultVisibility,
           },
         ],
@@ -1010,24 +1322,37 @@ export class ClipsService {
         const { insert_clip_render_jobs } = await this.hasura.mutation({
           insert_clip_render_jobs: {
             __args: { objects: insertObjects },
-            returning: { id: true, match_map_id: true },
+            returning: {
+              id: true,
+              match_map_id: true,
+              match_map_demo_id: true,
+            },
           },
         });
         const returning =
           (insert_clip_render_jobs?.returning as
-            | Array<{ id: string; match_map_id: string }>
+            | Array<{
+                id: string;
+                match_map_id: string;
+                match_map_demo_id: string;
+              }>
             | undefined) ?? [];
         for (let i = 0; i < returning.length; i++) {
           const inserted = returning[i];
           const pending = pendingObjects[i];
           if (!inserted?.id || !pending) continue;
-          const list = perMap.get(String(inserted.match_map_id)) ?? [];
-          list.push({
+          const key = `${inserted.match_map_id}:${inserted.match_map_demo_id}`;
+          const entry = perDemo.get(key) ?? {
+            matchMapId: String(inserted.match_map_id),
+            matchMapDemoId: String(inserted.match_map_demo_id),
+            jobs: [],
+          };
+          entry.jobs.push({
             job_id: String(inserted.id),
             session_token: pending.sessionToken,
             spec: pending.spec,
           });
-          perMap.set(String(inserted.match_map_id), list);
+          perDemo.set(key, entry);
           queued++;
         }
       } catch (error) {
@@ -1038,22 +1363,22 @@ export class ClipsService {
     }
 
     this.logger.log(
-      `[auto-clips] match ${matchId} queued ${queued} recap job(s) (default visibility=${defaultVisibility})`,
+      `[auto-clips] match ${matchId} queued ${queued} recap job(s) across ${perDemo.size} demo(s) (default visibility=${defaultVisibility})`,
     );
 
-    for (const matchMapId of perMap.keys()) {
+    for (const { matchMapId, matchMapDemoId } of perDemo.values()) {
       try {
         await this.batchQueue.add(
           BATCH_HIGHLIGHTS_JOB_NAME,
-          { matchMapId },
-          { jobId: `${matchMapId}-${Date.now()}` },
+          { matchMapId, matchMapDemoId },
+          { jobId: `${matchMapId}-${matchMapDemoId}-${Date.now()}` },
         );
         this.logger.log(
-          `[auto-clips] match ${matchId} map ${matchMapId} → enqueued batch highlights`,
+          `[auto-clips] match ${matchId} map ${matchMapId} demo ${matchMapDemoId} → enqueued batch highlights`,
         );
       } catch (error) {
         this.logger.warn(
-          `[auto-clips] match ${matchId} map ${matchMapId} enqueue failed: ${(error as Error)?.message}`,
+          `[auto-clips] match ${matchId} map ${matchMapId} demo ${matchMapDemoId} enqueue failed: ${(error as Error)?.message}`,
         );
       }
     }
@@ -1088,10 +1413,20 @@ export class ClipsService {
     },
     title?: string,
     targetName?: string,
+    matchMapDemoId?: string,
   ): Promise<ClipSpec> {
+    const where = matchMapDemoId
+      ? { id: { _eq: matchMapDemoId } }
+      : { match_map_id: { _eq: matchMapId } };
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
-        __args: { where: { match_map_id: { _eq: matchMapId } }, limit: 1 },
+        __args: {
+          where,
+          order_by: matchMapDemoId
+            ? undefined
+            : [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          limit: 1,
+        },
         id: true,
         tick_rate: true,
         total_ticks: true,

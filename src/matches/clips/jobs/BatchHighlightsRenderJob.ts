@@ -35,13 +35,16 @@ export class BatchHighlightsRenderJob extends WorkerHost {
   async process(
     job: Job<{
       matchMapId: string;
+      matchMapDemoId?: string;
       dispatched?: boolean;
     }>,
   ): Promise<void> {
-    const { matchMapId, dispatched } = job.data;
-    const tag = `[batch-highlights ${matchMapId}]`;
+    const { matchMapId, matchMapDemoId, dispatched } = job.data;
+    const tag = matchMapDemoId
+      ? `[batch-highlights ${matchMapId} demo ${matchMapDemoId}]`
+      : `[batch-highlights ${matchMapId}]`;
 
-    const inFlight = await this.fetchInFlightJobs(matchMapId);
+    const inFlight = await this.fetchInFlightJobs(matchMapId, matchMapDemoId);
     if (inFlight.length === 0) {
       this.logger.log(`${tag} no in-flight clip_render_jobs — done`);
       return;
@@ -50,7 +53,11 @@ export class BatchHighlightsRenderJob extends WorkerHost {
     if (!dispatched) {
       this.logger.log(`${tag} dispatching ${inFlight.length} job(s)`);
       try {
-        await this.gameStreamer.dispatchBatchHighlights(matchMapId, inFlight);
+        await this.gameStreamer.dispatchBatchHighlights(
+          matchMapId,
+          inFlight,
+          matchMapDemoId,
+        );
       } catch (error) {
         if (error instanceof NoGpuAvailableError) {
           this.logger.log(
@@ -70,15 +77,20 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       return this.delayUntilNext(job, CHECK_DELAY_MS * 2);
     }
 
-    const podState =
-      await this.gameStreamer.getBatchHighlightsPodState(matchMapId);
+    const podState = await this.gameStreamer.getBatchHighlightsPodState(
+      matchMapId,
+      matchMapDemoId,
+    );
 
     if (podState === "running") {
       return this.delayUntilNext(job, CHECK_DELAY_MS);
     }
 
     const reason =
-      (await this.gameStreamer.getBatchPodFailureReason(matchMapId)) ??
+      (await this.gameStreamer.getBatchPodFailureReason(
+        matchMapId,
+        matchMapDemoId,
+      )) ??
       (podState === "succeeded"
         ? "render pod exited before reporting terminal status"
         : podState === "failed"
@@ -100,16 +112,21 @@ export class BatchHighlightsRenderJob extends WorkerHost {
 
   private async fetchInFlightJobs(
     matchMapId: string,
+    matchMapDemoId?: string,
   ): Promise<
     Array<{ id: string; job_id: string; session_token: string; spec: unknown }>
   > {
+    const where: any = {
+      match_map_id: { _eq: matchMapId },
+      status: { _in: [...IN_FLIGHT_STATUSES] },
+    };
+    if (matchMapDemoId) {
+      where.match_map_demo_id = { _eq: matchMapDemoId };
+    }
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
-          where: {
-            match_map_id: { _eq: matchMapId },
-            status: { _in: [...IN_FLIGHT_STATUSES] },
-          },
+          where,
           order_by: [{ created_at: "asc" }],
         },
         id: true,

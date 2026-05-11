@@ -19098,6 +19098,9 @@ export default {
                     ]
                 }
             ],
+            "created_at": [
+                2344
+            ],
             "cs2_build": [
                 48
             ],
@@ -19367,6 +19370,9 @@ export default {
             "bombs": [
                 876
             ],
+            "created_at": [
+                2345
+            ],
             "cs2_build": [
                 50
             ],
@@ -19495,6 +19501,9 @@ export default {
             "bombs": [
                 874
             ],
+            "created_at": [
+                2344
+            ],
             "cs2_build": [
                 48
             ],
@@ -19548,6 +19557,9 @@ export default {
             ]
         },
         "match_map_demos_max_fields": {
+            "created_at": [
+                2344
+            ],
             "cs2_build": [
                 48
             ],
@@ -19592,6 +19604,9 @@ export default {
             ]
         },
         "match_map_demos_max_order_by": {
+            "created_at": [
+                1631
+            ],
             "cs2_build": [
                 1631
             ],
@@ -19633,6 +19648,9 @@ export default {
             ]
         },
         "match_map_demos_min_fields": {
+            "created_at": [
+                2344
+            ],
             "cs2_build": [
                 48
             ],
@@ -19677,6 +19695,9 @@ export default {
             ]
         },
         "match_map_demos_min_order_by": {
+            "created_at": [
+                1631
+            ],
             "cs2_build": [
                 1631
             ],
@@ -19744,6 +19765,9 @@ export default {
         },
         "match_map_demos_order_by": {
             "bombs": [
+                1631
+            ],
+            "created_at": [
                 1631
             ],
             "cs2_build": [
@@ -19833,6 +19857,9 @@ export default {
         "match_map_demos_set_input": {
             "bombs": [
                 874
+            ],
+            "created_at": [
+                2344
             ],
             "cs2_build": [
                 48
@@ -19996,6 +20023,9 @@ export default {
         "match_map_demos_stream_cursor_value_input": {
             "bombs": [
                 874
+            ],
+            "created_at": [
+                2344
             ],
             "cs2_build": [
                 48
@@ -39676,6 +39706,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "matches": [
                 1473,
                 {
@@ -39880,6 +39919,14 @@ export default {
                     ],
                     "where": [
                         2310
+                    ]
+                }
+            ],
+            "peak_elo": [
+                874,
+                {
+                    "path": [
+                        48
                     ]
                 }
             ],
@@ -40366,6 +40413,15 @@ export default {
             "wins": [
                 30
             ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
+                30
+            ],
             "__typename": [
                 48
             ]
@@ -40432,6 +40488,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -40439,6 +40504,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -40590,6 +40664,15 @@ export default {
             "losses": [
                 31
             ],
+            "losses_competitive": [
+                31
+            ],
+            "losses_duel": [
+                31
+            ],
+            "losses_wingman": [
+                31
+            ],
             "matches": [
                 1482
             ],
@@ -40625,6 +40708,9 @@ export default {
             ],
             "owned_teams_aggregate": [
                 2303
+            ],
+            "peak_elo": [
+                876
             ],
             "player_lineup": [
                 1124
@@ -40708,6 +40794,15 @@ export default {
                 2029
             ],
             "wins": [
+                31
+            ],
+            "wins_competitive": [
+                31
+            ],
+            "wins_duel": [
+                31
+            ],
+            "wins_wingman": [
                 31
             ],
             "__typename": [
@@ -40885,6 +40980,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "matchmaking_cooldown": [
                 2344
             ],
@@ -40904,6 +41008,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -40938,6 +41051,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "matchmaking_cooldown": [
                 2344
             ],
@@ -40957,6 +41079,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41090,6 +41221,15 @@ export default {
             "losses": [
                 1631
             ],
+            "losses_competitive": [
+                1631
+            ],
+            "losses_duel": [
+                1631
+            ],
+            "losses_wingman": [
+                1631
+            ],
             "matches_aggregate": [
                 1478
             ],
@@ -41113,6 +41253,9 @@ export default {
             ],
             "owned_teams_aggregate": [
                 2306
+            ],
+            "peak_elo": [
+                1631
             ],
             "player_lineup_aggregate": [
                 1120
@@ -41166,6 +41309,15 @@ export default {
                 2032
             ],
             "wins": [
+                1631
+            ],
+            "wins_competitive": [
+                1631
+            ],
+            "wins_duel": [
+                1631
+            ],
+            "wins_wingman": [
                 1631
             ],
             "__typename": [
@@ -41229,6 +41381,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -41236,6 +41397,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41246,6 +41416,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -41253,6 +41432,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41263,6 +41451,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -41270,6 +41467,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41335,6 +41541,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 147
             ],
@@ -41342,6 +41557,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41367,6 +41591,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -41374,6 +41607,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41384,6 +41626,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -41391,6 +41642,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -41401,6 +41661,15 @@ export default {
             "losses": [
                 30
             ],
+            "losses_competitive": [
+                30
+            ],
+            "losses_duel": [
+                30
+            ],
+            "losses_wingman": [
+                30
+            ],
             "steam_id": [
                 22
             ],
@@ -41408,6 +41677,15 @@ export default {
                 30
             ],
             "wins": [
+                30
+            ],
+            "wins_competitive": [
+                30
+            ],
+            "wins_duel": [
+                30
+            ],
+            "wins_wingman": [
                 30
             ],
             "__typename": [
@@ -76691,6 +76969,9 @@ export default {
             "watchDemo": [
                 60,
                 {
+                    "match_map_demo_id": [
+                        2741
+                    ],
                     "match_map_id": [
                         2741,
                         "uuid!"

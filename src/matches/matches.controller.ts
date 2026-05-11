@@ -378,24 +378,31 @@ export class MatchesController {
     const newRow = data.new ?? {};
     const oldRow = data.old ?? {};
     const matchId = (newRow.match_id ?? oldRow.match_id) as string | undefined;
-    if (!matchId) return;
+    const matchMapId = (newRow.match_map_id ?? oldRow.match_map_id) as
+      | string
+      | undefined;
+    const demoId = (newRow.id ?? oldRow.id) as string | undefined;
+    if (!matchId || !matchMapId || !demoId) return;
 
     const becameParsed =
       !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
     if (!becameParsed) return;
 
     try {
-      const queued = await this.clips.autoGenerateForMatch(matchId, {
-        isSystemInitiated: true,
-      });
+      const queued = await this.clips.autoGenerateForDemo(
+        matchId,
+        matchMapId,
+        demoId,
+        { isSystemInitiated: true },
+      );
       if (queued > 0) {
         this.logger.log(
-          `[match ${matchId}] metadata parsed — auto-clips queued ${queued} job(s)`,
+          `[match ${matchId} demo ${demoId}] metadata parsed — auto-clips queued ${queued} job(s)`,
         );
       }
     } catch (error) {
       this.logger.warn(
-        `[match ${matchId}] auto-clips queue failed on metadata_parsed: ${(error as Error)?.message}`,
+        `[match ${matchId} demo ${demoId}] auto-clips queue failed on metadata_parsed: ${(error as Error)?.message}`,
       );
     }
   }
@@ -808,15 +815,24 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async watchDemo(data: { match_map_id: string; user: User }) {
-    const { match_map_id, user } = data;
+  public async watchDemo(data: {
+    match_map_id: string;
+    match_map_demo_id?: string | null;
+    user: User;
+  }) {
+    const { match_map_id, match_map_demo_id, user } = data;
     this.logger.log(
-      `watchDemo invoked: match_map_id=${match_map_id} user=${user?.steam_id}`,
+      `watchDemo invoked: match_map_id=${match_map_id} match_map_demo_id=${match_map_demo_id ?? "<auto>"} user=${user?.steam_id}`,
     );
 
-    const demo = await this.demoMetadata.getDemoForMap(match_map_id);
+    const demo = match_map_demo_id
+      ? await this.demoMetadata.getDemoById(match_map_demo_id)
+      : await this.demoMetadata.getDemoForMap(match_map_id);
     if (!demo) {
       throw Error(`no uploaded demo for match_map ${match_map_id}`);
+    }
+    if (match_map_demo_id && demo.match_map_id !== match_map_id) {
+      throw Error("demo does not belong to the requested match map");
     }
     const isOrganizer = await this.matchAssistant.isOrganizer(
       demo.match_id,
@@ -843,6 +859,7 @@ export class MatchesController {
       match_map_id,
       user.steam_id,
       {
+        demoId: demo.id,
         demoFile: demo.file,
         presignedDemoUrl,
         roundTicks: demo.round_ticks ?? null,
