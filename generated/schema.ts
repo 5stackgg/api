@@ -4722,8 +4722,6 @@ export interface match_lineups {
     team: (teams | null)
     team_id: (Scalars['uuid'] | null)
     team_name: (Scalars['String'] | null)
-    /** An object relationship */
-    v_match_lineup: (v_match_lineups | null)
     __typename: 'match_lineups'
 }
 
@@ -11377,10 +11375,6 @@ export interface query_root {
     v_match_captains: v_match_captains[]
     /** fetch aggregated fields from the table: "v_match_captains" */
     v_match_captains_aggregate: v_match_captains_aggregate
-    /** fetch data from the table: "v_match_lineups" */
-    v_match_lineups: v_match_lineups[]
-    /** fetch aggregated fields from the table: "v_match_lineups" */
-    v_match_lineups_aggregate: v_match_lineups_aggregate
     /** fetch data from the table: "v_player_arch_nemesis" */
     v_player_arch_nemesis: v_player_arch_nemesis[]
     /** fetch aggregated fields from the table: "v_player_arch_nemesis" */
@@ -12576,12 +12570,6 @@ export interface subscription_root {
     v_match_captains_aggregate: v_match_captains_aggregate
     /** fetch data from the table in a streaming manner: "v_match_captains" */
     v_match_captains_stream: v_match_captains[]
-    /** fetch data from the table: "v_match_lineups" */
-    v_match_lineups: v_match_lineups[]
-    /** fetch aggregated fields from the table: "v_match_lineups" */
-    v_match_lineups_aggregate: v_match_lineups_aggregate
-    /** fetch data from the table in a streaming manner: "v_match_lineups" */
-    v_match_lineups_stream: v_match_lineups[]
     /** fetch data from the table: "v_player_arch_nemesis" */
     v_player_arch_nemesis: v_player_arch_nemesis[]
     /** fetch aggregated fields from the table: "v_player_arch_nemesis" */
@@ -15037,128 +15025,6 @@ export interface v_match_captains_var_samp_fields {
 export interface v_match_captains_variance_fields {
     steam_id: (Scalars['Float'] | null)
     __typename: 'v_match_captains_variance_fields'
-}
-
-
-/** columns and relationships of "v_match_lineups" */
-export interface v_match_lineups {
-    coach_steam_id: (Scalars['bigint'] | null)
-    id: (Scalars['uuid'] | null)
-    /** An object relationship */
-    lineup: (match_lineups | null)
-    /** An object relationship */
-    match: (matches | null)
-    match_id: (Scalars['uuid'] | null)
-    team_id: (Scalars['uuid'] | null)
-    team_name: (Scalars['String'] | null)
-    __typename: 'v_match_lineups'
-}
-
-
-/** aggregated selection of "v_match_lineups" */
-export interface v_match_lineups_aggregate {
-    aggregate: (v_match_lineups_aggregate_fields | null)
-    nodes: v_match_lineups[]
-    __typename: 'v_match_lineups_aggregate'
-}
-
-
-/** aggregate fields of "v_match_lineups" */
-export interface v_match_lineups_aggregate_fields {
-    avg: (v_match_lineups_avg_fields | null)
-    count: Scalars['Int']
-    max: (v_match_lineups_max_fields | null)
-    min: (v_match_lineups_min_fields | null)
-    stddev: (v_match_lineups_stddev_fields | null)
-    stddev_pop: (v_match_lineups_stddev_pop_fields | null)
-    stddev_samp: (v_match_lineups_stddev_samp_fields | null)
-    sum: (v_match_lineups_sum_fields | null)
-    var_pop: (v_match_lineups_var_pop_fields | null)
-    var_samp: (v_match_lineups_var_samp_fields | null)
-    variance: (v_match_lineups_variance_fields | null)
-    __typename: 'v_match_lineups_aggregate_fields'
-}
-
-
-/** aggregate avg on columns */
-export interface v_match_lineups_avg_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_avg_fields'
-}
-
-
-/** aggregate max on columns */
-export interface v_match_lineups_max_fields {
-    coach_steam_id: (Scalars['bigint'] | null)
-    id: (Scalars['uuid'] | null)
-    match_id: (Scalars['uuid'] | null)
-    team_id: (Scalars['uuid'] | null)
-    team_name: (Scalars['String'] | null)
-    __typename: 'v_match_lineups_max_fields'
-}
-
-
-/** aggregate min on columns */
-export interface v_match_lineups_min_fields {
-    coach_steam_id: (Scalars['bigint'] | null)
-    id: (Scalars['uuid'] | null)
-    match_id: (Scalars['uuid'] | null)
-    team_id: (Scalars['uuid'] | null)
-    team_name: (Scalars['String'] | null)
-    __typename: 'v_match_lineups_min_fields'
-}
-
-
-/** select columns of table "v_match_lineups" */
-export type v_match_lineups_select_column = 'coach_steam_id' | 'id' | 'match_id' | 'team_id' | 'team_name'
-
-
-/** aggregate stddev on columns */
-export interface v_match_lineups_stddev_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_stddev_fields'
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface v_match_lineups_stddev_pop_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_stddev_pop_fields'
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface v_match_lineups_stddev_samp_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_stddev_samp_fields'
-}
-
-
-/** aggregate sum on columns */
-export interface v_match_lineups_sum_fields {
-    coach_steam_id: (Scalars['bigint'] | null)
-    __typename: 'v_match_lineups_sum_fields'
-}
-
-
-/** aggregate var_pop on columns */
-export interface v_match_lineups_var_pop_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_var_pop_fields'
-}
-
-
-/** aggregate var_samp on columns */
-export interface v_match_lineups_var_samp_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_var_samp_fields'
-}
-
-
-/** aggregate variance on columns */
-export interface v_match_lineups_variance_fields {
-    coach_steam_id: (Scalars['Float'] | null)
-    __typename: 'v_match_lineups_variance_fields'
 }
 
 
@@ -24761,8 +24627,6 @@ export interface match_lineupsGenqlSelection{
     team?: teamsGenqlSelection
     team_id?: boolean | number
     team_name?: boolean | number
-    /** An object relationship */
-    v_match_lineup?: v_match_lineupsGenqlSelection
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -24822,7 +24686,7 @@ export interface match_lineups_avg_order_by {coach_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_lineups". All fields are combined with a logical 'AND'. */
-export interface match_lineups_bool_exp {_and?: (match_lineups_bool_exp[] | null),_not?: (match_lineups_bool_exp | null),_or?: (match_lineups_bool_exp[] | null),can_pick_map_veto?: (Boolean_comparison_exp | null),can_pick_region_veto?: (Boolean_comparison_exp | null),can_update_lineup?: (Boolean_comparison_exp | null),captain?: (v_match_captains_bool_exp | null),coach?: (players_bool_exp | null),coach_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),is_on_lineup?: (Boolean_comparison_exp | null),is_picking_map_veto?: (Boolean_comparison_exp | null),is_picking_region_veto?: (Boolean_comparison_exp | null),is_ready?: (Boolean_comparison_exp | null),lineup_players?: (match_lineup_players_bool_exp | null),lineup_players_aggregate?: (match_lineup_players_aggregate_bool_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),team_name?: (String_comparison_exp | null),v_match_lineup?: (v_match_lineups_bool_exp | null)}
+export interface match_lineups_bool_exp {_and?: (match_lineups_bool_exp[] | null),_not?: (match_lineups_bool_exp | null),_or?: (match_lineups_bool_exp[] | null),can_pick_map_veto?: (Boolean_comparison_exp | null),can_pick_region_veto?: (Boolean_comparison_exp | null),can_update_lineup?: (Boolean_comparison_exp | null),captain?: (v_match_captains_bool_exp | null),coach?: (players_bool_exp | null),coach_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),is_on_lineup?: (Boolean_comparison_exp | null),is_picking_map_veto?: (Boolean_comparison_exp | null),is_picking_region_veto?: (Boolean_comparison_exp | null),is_ready?: (Boolean_comparison_exp | null),lineup_players?: (match_lineup_players_bool_exp | null),lineup_players_aggregate?: (match_lineup_players_aggregate_bool_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),team_name?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_lineups" */
@@ -24830,7 +24694,7 @@ export interface match_lineups_inc_input {coach_steam_id?: (Scalars['bigint'] | 
 
 
 /** input type for inserting data into table "match_lineups" */
-export interface match_lineups_insert_input {captain?: (v_match_captains_obj_rel_insert_input | null),coach?: (players_obj_rel_insert_input | null),coach_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),lineup_players?: (match_lineup_players_arr_rel_insert_input | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),team_name?: (Scalars['String'] | null),v_match_lineup?: (v_match_lineups_obj_rel_insert_input | null)}
+export interface match_lineups_insert_input {captain?: (v_match_captains_obj_rel_insert_input | null),coach?: (players_obj_rel_insert_input | null),coach_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),lineup_players?: (match_lineup_players_arr_rel_insert_input | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),team_name?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -24891,7 +24755,7 @@ export interface match_lineups_on_conflict {constraint: match_lineups_constraint
 
 
 /** Ordering options when selecting data from "match_lineups". */
-export interface match_lineups_order_by {can_pick_map_veto?: (order_by | null),can_pick_region_veto?: (order_by | null),can_update_lineup?: (order_by | null),captain?: (v_match_captains_order_by | null),coach?: (players_order_by | null),coach_steam_id?: (order_by | null),id?: (order_by | null),is_on_lineup?: (order_by | null),is_picking_map_veto?: (order_by | null),is_picking_region_veto?: (order_by | null),is_ready?: (order_by | null),lineup_players_aggregate?: (match_lineup_players_aggregate_order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),team_name?: (order_by | null),v_match_lineup?: (v_match_lineups_order_by | null)}
+export interface match_lineups_order_by {can_pick_map_veto?: (order_by | null),can_pick_region_veto?: (order_by | null),can_update_lineup?: (order_by | null),captain?: (v_match_captains_order_by | null),coach?: (players_order_by | null),coach_steam_id?: (order_by | null),id?: (order_by | null),is_on_lineup?: (order_by | null),is_picking_map_veto?: (order_by | null),is_picking_region_veto?: (order_by | null),is_ready?: (order_by | null),lineup_players_aggregate?: (match_lineup_players_aggregate_order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),team_name?: (order_by | null)}
 
 
 /** primary key columns input for table: match_lineups */
@@ -38629,30 +38493,6 @@ export interface query_rootGenqlSelection{
     order_by?: (v_match_captains_order_by[] | null), 
     /** filter the rows returned */
     where?: (v_match_captains_bool_exp | null)} })
-    /** fetch data from the table: "v_match_lineups" */
-    v_match_lineups?: (v_match_lineupsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (v_match_lineups_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (v_match_lineups_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (v_match_lineups_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "v_match_lineups" */
-    v_match_lineups_aggregate?: (v_match_lineups_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (v_match_lineups_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (v_match_lineups_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (v_match_lineups_bool_exp | null)} })
     /** fetch data from the table: "v_player_arch_nemesis" */
     v_player_arch_nemesis?: (v_player_arch_nemesisGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -42543,38 +42383,6 @@ export interface subscription_rootGenqlSelection{
     cursor: (v_match_captains_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (v_match_captains_bool_exp | null)} })
-    /** fetch data from the table: "v_match_lineups" */
-    v_match_lineups?: (v_match_lineupsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (v_match_lineups_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (v_match_lineups_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (v_match_lineups_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "v_match_lineups" */
-    v_match_lineups_aggregate?: (v_match_lineups_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (v_match_lineups_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (v_match_lineups_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (v_match_lineups_bool_exp | null)} })
-    /** fetch data from the table in a streaming manner: "v_match_lineups" */
-    v_match_lineups_stream?: (v_match_lineupsGenqlSelection & { __args: {
-    /** maximum number of rows returned in a single batch */
-    batch_size: Scalars['Int'], 
-    /** cursor to stream the results returned by the query */
-    cursor: (v_match_lineups_stream_cursor_input | null)[], 
-    /** filter the rows returned */
-    where?: (v_match_lineups_bool_exp | null)} })
     /** fetch data from the table: "v_player_arch_nemesis" */
     v_player_arch_nemesis?: (v_player_arch_nemesisGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -47016,165 +46824,6 @@ export interface v_match_captains_var_samp_fieldsGenqlSelection{
 /** aggregate variance on columns */
 export interface v_match_captains_variance_fieldsGenqlSelection{
     steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** columns and relationships of "v_match_lineups" */
-export interface v_match_lineupsGenqlSelection{
-    coach_steam_id?: boolean | number
-    id?: boolean | number
-    /** An object relationship */
-    lineup?: match_lineupsGenqlSelection
-    /** An object relationship */
-    match?: matchesGenqlSelection
-    match_id?: boolean | number
-    team_id?: boolean | number
-    team_name?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregated selection of "v_match_lineups" */
-export interface v_match_lineups_aggregateGenqlSelection{
-    aggregate?: v_match_lineups_aggregate_fieldsGenqlSelection
-    nodes?: v_match_lineupsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate fields of "v_match_lineups" */
-export interface v_match_lineups_aggregate_fieldsGenqlSelection{
-    avg?: v_match_lineups_avg_fieldsGenqlSelection
-    count?: { __args: {columns?: (v_match_lineups_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
-    max?: v_match_lineups_max_fieldsGenqlSelection
-    min?: v_match_lineups_min_fieldsGenqlSelection
-    stddev?: v_match_lineups_stddev_fieldsGenqlSelection
-    stddev_pop?: v_match_lineups_stddev_pop_fieldsGenqlSelection
-    stddev_samp?: v_match_lineups_stddev_samp_fieldsGenqlSelection
-    sum?: v_match_lineups_sum_fieldsGenqlSelection
-    var_pop?: v_match_lineups_var_pop_fieldsGenqlSelection
-    var_samp?: v_match_lineups_var_samp_fieldsGenqlSelection
-    variance?: v_match_lineups_variance_fieldsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate avg on columns */
-export interface v_match_lineups_avg_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** Boolean expression to filter rows from the table "v_match_lineups". All fields are combined with a logical 'AND'. */
-export interface v_match_lineups_bool_exp {_and?: (v_match_lineups_bool_exp[] | null),_not?: (v_match_lineups_bool_exp | null),_or?: (v_match_lineups_bool_exp[] | null),coach_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),lineup?: (match_lineups_bool_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),team_id?: (uuid_comparison_exp | null),team_name?: (String_comparison_exp | null)}
-
-
-/** input type for inserting data into table "v_match_lineups" */
-export interface v_match_lineups_insert_input {coach_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),lineup?: (match_lineups_obj_rel_insert_input | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),team_id?: (Scalars['uuid'] | null),team_name?: (Scalars['String'] | null)}
-
-
-/** aggregate max on columns */
-export interface v_match_lineups_max_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    id?: boolean | number
-    match_id?: boolean | number
-    team_id?: boolean | number
-    team_name?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate min on columns */
-export interface v_match_lineups_min_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    id?: boolean | number
-    match_id?: boolean | number
-    team_id?: boolean | number
-    team_name?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** input type for inserting object relation for remote table "v_match_lineups" */
-export interface v_match_lineups_obj_rel_insert_input {data: v_match_lineups_insert_input}
-
-
-/** Ordering options when selecting data from "v_match_lineups". */
-export interface v_match_lineups_order_by {coach_steam_id?: (order_by | null),id?: (order_by | null),lineup?: (match_lineups_order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),team_id?: (order_by | null),team_name?: (order_by | null)}
-
-
-/** aggregate stddev on columns */
-export interface v_match_lineups_stddev_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface v_match_lineups_stddev_pop_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface v_match_lineups_stddev_samp_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** Streaming cursor of the table "v_match_lineups" */
-export interface v_match_lineups_stream_cursor_input {
-/** Stream column input with initial value */
-initial_value: v_match_lineups_stream_cursor_value_input,
-/** cursor ordering */
-ordering?: (cursor_ordering | null)}
-
-
-/** Initial value of the column from where the streaming should start */
-export interface v_match_lineups_stream_cursor_value_input {coach_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),team_id?: (Scalars['uuid'] | null),team_name?: (Scalars['String'] | null)}
-
-
-/** aggregate sum on columns */
-export interface v_match_lineups_sum_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate var_pop on columns */
-export interface v_match_lineups_var_pop_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate var_samp on columns */
-export interface v_match_lineups_var_samp_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregate variance on columns */
-export interface v_match_lineups_variance_fieldsGenqlSelection{
-    coach_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -57400,110 +57049,6 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
-    const v_match_lineups_possibleTypes: string[] = ['v_match_lineups']
-    export const isv_match_lineups = (obj?: { __typename?: any } | null): obj is v_match_lineups => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups"')
-      return v_match_lineups_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_aggregate_possibleTypes: string[] = ['v_match_lineups_aggregate']
-    export const isv_match_lineups_aggregate = (obj?: { __typename?: any } | null): obj is v_match_lineups_aggregate => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_aggregate"')
-      return v_match_lineups_aggregate_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_aggregate_fields_possibleTypes: string[] = ['v_match_lineups_aggregate_fields']
-    export const isv_match_lineups_aggregate_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_aggregate_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_aggregate_fields"')
-      return v_match_lineups_aggregate_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_avg_fields_possibleTypes: string[] = ['v_match_lineups_avg_fields']
-    export const isv_match_lineups_avg_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_avg_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_avg_fields"')
-      return v_match_lineups_avg_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_max_fields_possibleTypes: string[] = ['v_match_lineups_max_fields']
-    export const isv_match_lineups_max_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_max_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_max_fields"')
-      return v_match_lineups_max_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_min_fields_possibleTypes: string[] = ['v_match_lineups_min_fields']
-    export const isv_match_lineups_min_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_min_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_min_fields"')
-      return v_match_lineups_min_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_stddev_fields_possibleTypes: string[] = ['v_match_lineups_stddev_fields']
-    export const isv_match_lineups_stddev_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_stddev_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_stddev_fields"')
-      return v_match_lineups_stddev_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_stddev_pop_fields_possibleTypes: string[] = ['v_match_lineups_stddev_pop_fields']
-    export const isv_match_lineups_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_stddev_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_stddev_pop_fields"')
-      return v_match_lineups_stddev_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_stddev_samp_fields_possibleTypes: string[] = ['v_match_lineups_stddev_samp_fields']
-    export const isv_match_lineups_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_stddev_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_stddev_samp_fields"')
-      return v_match_lineups_stddev_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_sum_fields_possibleTypes: string[] = ['v_match_lineups_sum_fields']
-    export const isv_match_lineups_sum_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_sum_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_sum_fields"')
-      return v_match_lineups_sum_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_var_pop_fields_possibleTypes: string[] = ['v_match_lineups_var_pop_fields']
-    export const isv_match_lineups_var_pop_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_var_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_var_pop_fields"')
-      return v_match_lineups_var_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_var_samp_fields_possibleTypes: string[] = ['v_match_lineups_var_samp_fields']
-    export const isv_match_lineups_var_samp_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_var_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_var_samp_fields"')
-      return v_match_lineups_var_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const v_match_lineups_variance_fields_possibleTypes: string[] = ['v_match_lineups_variance_fields']
-    export const isv_match_lineups_variance_fields = (obj?: { __typename?: any } | null): obj is v_match_lineups_variance_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isv_match_lineups_variance_fields"')
-      return v_match_lineups_variance_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
     const v_player_arch_nemesis_possibleTypes: string[] = ['v_player_arch_nemesis']
     export const isv_player_arch_nemesis = (obj?: { __typename?: any } | null): obj is v_player_arch_nemesis => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isv_player_arch_nemesis"')
@@ -60956,14 +60501,6 @@ export const enumVMatchCaptainsSelectColumn = {
    match_lineup_id: 'match_lineup_id' as const,
    placeholder_name: 'placeholder_name' as const,
    steam_id: 'steam_id' as const
-}
-
-export const enumVMatchLineupsSelectColumn = {
-   coach_steam_id: 'coach_steam_id' as const,
-   id: 'id' as const,
-   match_id: 'match_id' as const,
-   team_id: 'team_id' as const,
-   team_name: 'team_name' as const
 }
 
 export const enumVPlayerArchNemesisSelectColumn = {

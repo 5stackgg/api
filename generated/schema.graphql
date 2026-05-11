@@ -13212,9 +13212,6 @@ type match_lineups {
   team: teams
   team_id: uuid
   team_name: String
-
-  """An object relationship"""
-  v_match_lineup: v_match_lineups
 }
 
 """
@@ -13320,7 +13317,6 @@ input match_lineups_bool_exp {
   team: teams_bool_exp
   team_id: uuid_comparison_exp
   team_name: String_comparison_exp
-  v_match_lineup: v_match_lineups_bool_exp
 }
 
 """
@@ -13355,7 +13351,6 @@ input match_lineups_insert_input {
   team: teams_obj_rel_insert_input
   team_id: uuid
   team_name: String
-  v_match_lineup: v_match_lineups_obj_rel_insert_input
 }
 
 """aggregate max on columns"""
@@ -13459,7 +13454,6 @@ input match_lineups_order_by {
   team: teams_order_by
   team_id: order_by
   team_name: order_by
-  v_match_lineup: v_match_lineups_order_by
 }
 
 """primary key columns input for table: match_lineups"""
@@ -38901,46 +38895,6 @@ type query_root {
   ): v_match_captains_aggregate!
 
   """
-  fetch data from the table: "v_match_lineups"
-  """
-  v_match_lineups(
-    """distinct select on columns"""
-    distinct_on: [v_match_lineups_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_match_lineups_order_by!]
-
-    """filter the rows returned"""
-    where: v_match_lineups_bool_exp
-  ): [v_match_lineups!]!
-
-  """
-  fetch aggregated fields from the table: "v_match_lineups"
-  """
-  v_match_lineups_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_match_lineups_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_match_lineups_order_by!]
-
-    """filter the rows returned"""
-    where: v_match_lineups_bool_exp
-  ): v_match_lineups_aggregate!
-
-  """
   fetch data from the table: "v_player_arch_nemesis"
   """
   v_player_arch_nemesis(
@@ -45647,60 +45601,6 @@ type subscription_root {
     """filter the rows returned"""
     where: v_match_captains_bool_exp
   ): [v_match_captains!]!
-
-  """
-  fetch data from the table: "v_match_lineups"
-  """
-  v_match_lineups(
-    """distinct select on columns"""
-    distinct_on: [v_match_lineups_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_match_lineups_order_by!]
-
-    """filter the rows returned"""
-    where: v_match_lineups_bool_exp
-  ): [v_match_lineups!]!
-
-  """
-  fetch aggregated fields from the table: "v_match_lineups"
-  """
-  v_match_lineups_aggregate(
-    """distinct select on columns"""
-    distinct_on: [v_match_lineups_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [v_match_lineups_order_by!]
-
-    """filter the rows returned"""
-    where: v_match_lineups_bool_exp
-  ): v_match_lineups_aggregate!
-
-  """
-  fetch data from the table in a streaming manner: "v_match_lineups"
-  """
-  v_match_lineups_stream(
-    """maximum number of rows returned in a single batch"""
-    batch_size: Int!
-
-    """cursor to stream the results returned by the query"""
-    cursor: [v_match_lineups_stream_cursor_input]!
-
-    """filter the rows returned"""
-    where: v_match_lineups_bool_exp
-  ): [v_match_lineups!]!
 
   """
   fetch data from the table: "v_player_arch_nemesis"
@@ -53687,193 +53587,6 @@ type v_match_captains_var_samp_fields {
 """aggregate variance on columns"""
 type v_match_captains_variance_fields {
   steam_id: Float
-}
-
-"""
-columns and relationships of "v_match_lineups"
-"""
-type v_match_lineups {
-  coach_steam_id: bigint
-  id: uuid
-
-  """An object relationship"""
-  lineup: match_lineups
-
-  """An object relationship"""
-  match: matches
-  match_id: uuid
-  team_id: uuid
-  team_name: String
-}
-
-"""
-aggregated selection of "v_match_lineups"
-"""
-type v_match_lineups_aggregate {
-  aggregate: v_match_lineups_aggregate_fields
-  nodes: [v_match_lineups!]!
-}
-
-"""
-aggregate fields of "v_match_lineups"
-"""
-type v_match_lineups_aggregate_fields {
-  avg: v_match_lineups_avg_fields
-  count(columns: [v_match_lineups_select_column!], distinct: Boolean): Int!
-  max: v_match_lineups_max_fields
-  min: v_match_lineups_min_fields
-  stddev: v_match_lineups_stddev_fields
-  stddev_pop: v_match_lineups_stddev_pop_fields
-  stddev_samp: v_match_lineups_stddev_samp_fields
-  sum: v_match_lineups_sum_fields
-  var_pop: v_match_lineups_var_pop_fields
-  var_samp: v_match_lineups_var_samp_fields
-  variance: v_match_lineups_variance_fields
-}
-
-"""aggregate avg on columns"""
-type v_match_lineups_avg_fields {
-  coach_steam_id: Float
-}
-
-"""
-Boolean expression to filter rows from the table "v_match_lineups". All fields are combined with a logical 'AND'.
-"""
-input v_match_lineups_bool_exp {
-  _and: [v_match_lineups_bool_exp!]
-  _not: v_match_lineups_bool_exp
-  _or: [v_match_lineups_bool_exp!]
-  coach_steam_id: bigint_comparison_exp
-  id: uuid_comparison_exp
-  lineup: match_lineups_bool_exp
-  match: matches_bool_exp
-  match_id: uuid_comparison_exp
-  team_id: uuid_comparison_exp
-  team_name: String_comparison_exp
-}
-
-"""
-input type for inserting data into table "v_match_lineups"
-"""
-input v_match_lineups_insert_input {
-  coach_steam_id: bigint
-  id: uuid
-  lineup: match_lineups_obj_rel_insert_input
-  match: matches_obj_rel_insert_input
-  match_id: uuid
-  team_id: uuid
-  team_name: String
-}
-
-"""aggregate max on columns"""
-type v_match_lineups_max_fields {
-  coach_steam_id: bigint
-  id: uuid
-  match_id: uuid
-  team_id: uuid
-  team_name: String
-}
-
-"""aggregate min on columns"""
-type v_match_lineups_min_fields {
-  coach_steam_id: bigint
-  id: uuid
-  match_id: uuid
-  team_id: uuid
-  team_name: String
-}
-
-"""
-input type for inserting object relation for remote table "v_match_lineups"
-"""
-input v_match_lineups_obj_rel_insert_input {
-  data: v_match_lineups_insert_input!
-}
-
-"""Ordering options when selecting data from "v_match_lineups"."""
-input v_match_lineups_order_by {
-  coach_steam_id: order_by
-  id: order_by
-  lineup: match_lineups_order_by
-  match: matches_order_by
-  match_id: order_by
-  team_id: order_by
-  team_name: order_by
-}
-
-"""
-select columns of table "v_match_lineups"
-"""
-enum v_match_lineups_select_column {
-  """column name"""
-  coach_steam_id
-
-  """column name"""
-  id
-
-  """column name"""
-  match_id
-
-  """column name"""
-  team_id
-
-  """column name"""
-  team_name
-}
-
-"""aggregate stddev on columns"""
-type v_match_lineups_stddev_fields {
-  coach_steam_id: Float
-}
-
-"""aggregate stddev_pop on columns"""
-type v_match_lineups_stddev_pop_fields {
-  coach_steam_id: Float
-}
-
-"""aggregate stddev_samp on columns"""
-type v_match_lineups_stddev_samp_fields {
-  coach_steam_id: Float
-}
-
-"""
-Streaming cursor of the table "v_match_lineups"
-"""
-input v_match_lineups_stream_cursor_input {
-  """Stream column input with initial value"""
-  initial_value: v_match_lineups_stream_cursor_value_input!
-
-  """cursor ordering"""
-  ordering: cursor_ordering
-}
-
-"""Initial value of the column from where the streaming should start"""
-input v_match_lineups_stream_cursor_value_input {
-  coach_steam_id: bigint
-  id: uuid
-  match_id: uuid
-  team_id: uuid
-  team_name: String
-}
-
-"""aggregate sum on columns"""
-type v_match_lineups_sum_fields {
-  coach_steam_id: bigint
-}
-
-"""aggregate var_pop on columns"""
-type v_match_lineups_var_pop_fields {
-  coach_steam_id: Float
-}
-
-"""aggregate var_samp on columns"""
-type v_match_lineups_var_samp_fields {
-  coach_steam_id: Float
-}
-
-"""aggregate variance on columns"""
-type v_match_lineups_variance_fields {
-  coach_steam_id: Float
 }
 
 """
