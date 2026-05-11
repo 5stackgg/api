@@ -413,8 +413,6 @@ export class GameServerNodeController {
     );
     // Set the content length to avoid download issues
     const scriptContent = `
-        sudo -i
-
         if [ -t 1 ]; then
           C_RESET=$'\\033[0m'
           C_STEP=$'\\033[1;36m'
@@ -429,6 +427,13 @@ export class GameServerNodeController {
         ok()   { echo "\${C_OK}    $1\${C_RESET}"; }
         warn() { echo "\${C_WARN}    $1\${C_RESET}"; }
         err()  { echo "\${C_ERR}    $1\${C_RESET}" >&2; }
+
+        if [ "$(id -u)" -ne 0 ]; then
+            err "This script must be run as root."
+            err "Please elevate first by running: sudo su"
+            err "Then re-run the install command."
+            exit 1
+        fi
 
         step "Checking disk space"
         if [ -d "/opt/5stack/serverfiles/game/csgo" ]; then
