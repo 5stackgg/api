@@ -72,6 +72,10 @@ DECLARE
     member RECORD;
     i RECORD;
 BEGIN
+   UPDATE match_lineups
+      SET match_id = NEW.id
+    WHERE id IN (NEW.lineup_1_id, NEW.lineup_2_id);
+
    PERFORM setup_match_maps(NEW.id, NEW.match_options_id);
 
    IF NOT is_tournament_match(NEW) THEN

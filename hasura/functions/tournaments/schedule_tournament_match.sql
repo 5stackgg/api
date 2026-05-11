@@ -111,7 +111,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _match_options_id := clone_match_options(_template_match_options_id);
      END IF;
 
-     -- Create the match first
      INSERT INTO matches (
          status,
          organizer_steam_id,
@@ -124,16 +123,8 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _match_options_id,
          GREATEST(COALESCE(bracket.scheduled_at, now()), now())
      )
-     RETURNING id INTO _match_id;
-         
-     INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_1_id;
-     INSERT INTO match_lineups DEFAULT VALUES RETURNING id INTO _lineup_2_id;
-
-     -- Update match with lineup IDs
-     UPDATE matches 
-     SET lineup_1_id = _lineup_1_id,
-         lineup_2_id = _lineup_2_id
-     WHERE id = _match_id;
+     RETURNING id, lineup_1_id, lineup_2_id
+       INTO _match_id, _lineup_1_id, _lineup_2_id;
 
      SELECT tt.captain_steam_id
      INTO _captain_steam_id_1
