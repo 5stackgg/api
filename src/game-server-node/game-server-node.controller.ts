@@ -733,6 +733,7 @@ UNIT
         },
         plugin_version: true,
         connected: true,
+        enabled: true,
         steam_relay: true,
         is_dedicated: true,
         current_match: {
@@ -750,6 +751,29 @@ UNIT
 
     if (!server) {
       throw Error("server not found");
+    }
+
+    // disabled servers may still be shutting down and pinging; refuse to
+    // bring them back online and force them offline immediately
+    if (server.enabled === false) {
+      if (server.connected) {
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: { id: serverId },
+              _set: {
+                connected: false,
+                offline_at: new Date().toISOString(),
+              },
+            },
+            __typename: true,
+          },
+        });
+      }
+
+      const jobId = `server-offline.${serverId}`;
+      await this.gameUpdateQueue.remove(jobId);
+      return;
     }
 
     if (pluginVersion && server.plugin_version !== pluginVersion) {

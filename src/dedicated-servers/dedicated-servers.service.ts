@@ -473,6 +473,7 @@ export class DedicatedServersService {
       servers_by_pk: {
         __args: { id: serverId },
         game: true,
+        enabled: true,
         connected: true,
         steam_relay: true,
         server_region: {
@@ -480,6 +481,25 @@ export class DedicatedServersService {
         },
       },
     });
+
+    // disabled servers may still be shutting down; never bring them online
+    if (!server.enabled) {
+      if (server.connected) {
+        await this.hasura.mutation({
+          update_servers_by_pk: {
+            __args: {
+              pk_columns: { id: serverId },
+              _set: {
+                connected: false,
+                offline_at: new Date().toISOString(),
+              },
+            },
+            id: true,
+          },
+        });
+      }
+      return;
+    }
 
     if (!server.connected) {
       await this.hasura.mutation({
