@@ -1,8 +1,3 @@
--- Rebuild one map's player_match_map_stats from raw events. Fired by the
--- match_map_rounds trigger at round-end (so mid-round events stay invisible).
--- Inlines attacker_team <> attacked_team rather than calling is_team_kill/
--- is_team_damage — row-typed function calls were a hot spot in EXPLAIN.
-
 CREATE OR REPLACE FUNCTION public.recompute_player_match_map_stats(p_match_map_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -186,6 +181,5 @@ BEGIN
 END;
 $$;
 
--- Re-run only when this file's digest changes — i.e. the aggregation logic
--- above has actually been edited. Existing stats rows are rebuilt to match.
+-- Re-run only when this file's digest changes
 SELECT public.recompute_all_player_match_map_stats();

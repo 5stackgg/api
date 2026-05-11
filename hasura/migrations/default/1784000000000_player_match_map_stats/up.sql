@@ -1,7 +1,3 @@
--- Denormalized per-player per-map stats. The recompute function, all-maps
--- view, and trigger that maintain this table are file-managed under
--- hasura/functions/stats/, hasura/views/, and hasura/triggers/.
-
 CREATE TABLE IF NOT EXISTS public.player_match_map_stats (
   steam_id              bigint  NOT NULL,
   match_map_id          uuid    NOT NULL,

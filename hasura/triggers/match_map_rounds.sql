@@ -1,6 +1,3 @@
--- Recomputes a map's stats whenever its round-summary row changes:
--- INSERT/UPDATE at round end, DELETE on restore_round.
-
 CREATE OR REPLACE FUNCTION public.tai_match_map_rounds_recompute_stats()
 RETURNS trigger
 LANGUAGE plpgsql
