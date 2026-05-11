@@ -23,7 +23,8 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
 
     const isFinished = this.data.status === "Finished";
 
-    let resolvedWinningLineupId: string | undefined = this.data.winning_lineup_id;
+    let resolvedWinningLineupId: string | undefined =
+      this.data.winning_lineup_id;
 
     if (isFinished) {
       const { match_map_rounds } = await this.hasura.query({
@@ -166,8 +167,7 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
     }
 
     const tieDefaultedToLineup2 = lineup1Wins === lineup2Wins;
-    const apiDerivedWinner =
-      lineup1Wins > lineup2Wins ? lineup1Id : lineup2Id;
+    const apiDerivedWinner = lineup1Wins > lineup2Wins ? lineup1Id : lineup2Id;
     const sqlDisagrees = apiDerivedWinner !== matchAfter.winning_lineup_id;
 
     const summaryLine =

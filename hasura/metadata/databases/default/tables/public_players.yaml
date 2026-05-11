@@ -121,6 +121,22 @@ array_relationships:
         table:
           name: lobby_players
           schema: public
+  - name: match_map_stats
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: player_match_map_stats
+          schema: public
+  - name: match_stats
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: player_match_stats_v
+          schema: public
   - name: multi_kills
     using:
       manual_configuration:

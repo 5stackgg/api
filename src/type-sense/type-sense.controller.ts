@@ -140,10 +140,8 @@ export class TypeSenseController {
                     winning_lineup_id:
                       matchLineupPlayer.lineup.id ===
                       matchLineupPlayer.lineup.match.lineup_1_id
-                        ? matchLineupPlayer.lineup.match
-                            .lineup_2_id
-                        : matchLineupPlayer.lineup.match
-                            .lineup_1_id,
+                        ? matchLineupPlayer.lineup.match.lineup_2_id
+                        : matchLineupPlayer.lineup.match.lineup_1_id,
                   },
                 },
                 __typename: true,
