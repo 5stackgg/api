@@ -19078,6 +19078,12 @@ export default {
                     ]
                 }
             ],
+            "match": [
+                1502
+            ],
+            "match_id": [
+                2770
+            ],
             "match_veto_picks": [
                 1316,
                 {
@@ -19338,6 +19344,12 @@ export default {
             "lineup_players_aggregate": [
                 1143
             ],
+            "match": [
+                1511
+            ],
+            "match_id": [
+                2771
+            ],
             "match_veto_picks": [
                 1323
             ],
@@ -19388,6 +19400,12 @@ export default {
             "lineup_players": [
                 1149
             ],
+            "match": [
+                1520
+            ],
+            "match_id": [
+                2770
+            ],
             "match_veto_picks": [
                 1322
             ],
@@ -19414,6 +19432,9 @@ export default {
             "id": [
                 2770
             ],
+            "match_id": [
+                2770
+            ],
             "name": [
                 48
             ],
@@ -19434,6 +19455,9 @@ export default {
             "id": [
                 1660
             ],
+            "match_id": [
+                1660
+            ],
             "team_id": [
                 1660
             ],
@@ -19449,6 +19473,9 @@ export default {
                 147
             ],
             "id": [
+                2770
+            ],
+            "match_id": [
                 2770
             ],
             "name": [
@@ -19469,6 +19496,9 @@ export default {
                 1660
             ],
             "id": [
+                1660
+            ],
+            "match_id": [
                 1660
             ],
             "team_id": [
@@ -19554,6 +19584,12 @@ export default {
             "lineup_players_aggregate": [
                 1148
             ],
+            "match": [
+                1522
+            ],
+            "match_id": [
+                1660
+            ],
             "match_veto_picks_aggregate": [
                 1321
             ],
@@ -19590,6 +19626,9 @@ export default {
                 147
             ],
             "id": [
+                2770
+            ],
+            "match_id": [
                 2770
             ],
             "team_id": [
@@ -19666,6 +19705,9 @@ export default {
                 147
             ],
             "id": [
+                2770
+            ],
+            "match_id": [
                 2770
             ],
             "team_id": [

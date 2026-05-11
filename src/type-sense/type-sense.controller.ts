@@ -99,17 +99,15 @@ export class TypeSenseController {
                 _eq: data.new.player_steam_id,
               },
               lineup: {
-                v_match_lineup: {
-                  match: {
-                    status: {
-                      _nin: [
-                        "Canceled",
-                        "Finished",
-                        "Forfeit",
-                        "Tie",
-                        "Surrendered",
-                      ],
-                    },
+                match: {
+                  status: {
+                    _nin: [
+                      "Canceled",
+                      "Finished",
+                      "Forfeit",
+                      "Tie",
+                      "Surrendered",
+                    ],
                   },
                 },
               },
@@ -118,35 +116,33 @@ export class TypeSenseController {
           id: true,
           lineup: {
             id: true,
-            v_match_lineup: {
-              match: {
-                id: true,
-                status: true,
-                lineup_1_id: true,
-                lineup_2_id: true,
-              },
+            match: {
+              id: true,
+              status: true,
+              lineup_1_id: true,
+              lineup_2_id: true,
             },
           },
         },
       });
 
       for (const matchLineupPlayer of match_lineup_players) {
-        switch (matchLineupPlayer.lineup.v_match_lineup.match.status) {
+        switch (matchLineupPlayer.lineup.match.status) {
           case "Live":
             await this.hasura.mutation({
               update_matches_by_pk: {
                 __args: {
                   pk_columns: {
-                    id: matchLineupPlayer.lineup.v_match_lineup.match.id,
+                    id: matchLineupPlayer.lineup.match.id,
                   },
                   _set: {
                     status: "Forfeit",
                     winning_lineup_id:
                       matchLineupPlayer.lineup.id ===
-                      matchLineupPlayer.lineup.v_match_lineup.match.lineup_1_id
-                        ? matchLineupPlayer.lineup.v_match_lineup.match
+                      matchLineupPlayer.lineup.match.lineup_1_id
+                        ? matchLineupPlayer.lineup.match
                             .lineup_2_id
-                        : matchLineupPlayer.lineup.v_match_lineup.match
+                        : matchLineupPlayer.lineup.match
                             .lineup_1_id,
                   },
                 },
@@ -169,7 +165,7 @@ export class TypeSenseController {
               update_matches_by_pk: {
                 __args: {
                   pk_columns: {
-                    id: matchLineupPlayer.lineup.v_match_lineup.match.id,
+                    id: matchLineupPlayer.lineup.match.id,
                   },
                   _set: {
                     status: "Canceled",

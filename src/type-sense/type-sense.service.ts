@@ -250,19 +250,17 @@ export class TypeSenseService {
               _eq: steamId,
             },
             lineup: {
-              v_match_lineup: {
-                match: {
-                  status: {
-                    _eq: "Live",
-                  },
+              match: {
+                status: {
+                  _eq: "Live",
                 },
               },
             },
           },
         },
         lineup: {
-          v_match_lineup: {
-            match_id: true,
+          match: {
+            id: true,
           },
         },
       },
@@ -271,7 +269,7 @@ export class TypeSenseService {
     if (player.is_banned || player.is_gagged || player.is_muted) {
       for (const matchLineupPlayer of match_lineup_players) {
         await this.matchAssistant.sendServerMatchId(
-          matchLineupPlayer.lineup.v_match_lineup.match_id,
+          matchLineupPlayer.lineup.match.id,
         );
       }
     }
